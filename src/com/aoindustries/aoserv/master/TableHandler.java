@@ -6984,12 +6984,17 @@ final public class TableHandler {
                             + "  sf.*\n"
                             + "from\n"
                             + "  master_servers ms,\n"
-                            + "  servers se,\n"
+                            + "  servers se\n"
+                            + "  left outer join failover_file_replications ffr on se.pkey=ffr.from_server\n"
+                            + "  left outer join servers fs on ffr.to_server=fs.pkey,\n"
                             + "  server_farms sf\n"
                             + "where\n"
                             + "  ms.username=?\n"
                             + "  and ms.server=se.pkey\n"
-                            + "  and se.farm=sf.name",
+                            + "  and (\n"
+                            + "    se.farm=sf.name\n"
+                            + "    or fs.farm=sf.name\n"
+                            + "  )",
                             username
                         );
                     } else MasterServer.writeObjects(
