@@ -229,7 +229,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
                     long existingID=in.readLong();
 
                     if(
-                        !protocolVersion.equals(AOServProtocol.VERSION_1_8)
+                        !protocolVersion.equals(AOServProtocol.VERSION_1_9)
+                        && !protocolVersion.equals(AOServProtocol.VERSION_1_8)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_7)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_6)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_5)
@@ -332,6 +333,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
                                         out.writeLong(process.getConnectorID());
                                     } else process.setConnectorID(existingID);
                                     out.flush();
+
+                                    MasterServer.updateAOServProtocolLastUsed(conn, protocolVersion);
 
                                     while(server.handleRequest(this, in, out, process));
                                 }

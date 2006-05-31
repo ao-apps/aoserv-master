@@ -10141,4 +10141,13 @@ public abstract class MasterServer {
             Profiler.endProfile(Profiler.FAST);
         }
     }
+
+    public static void updateAOServProtocolLastUsed(MasterDatabaseConnection conn, String protocolVersion) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, MasterServer.class, "updateAOServProtocolLastUsed(MasterDatabaseConnection,String)", null);
+        try {
+            conn.executeUpdate("update aoserv_protocols set last_used=now()::date where version=? and (last_used is null or last_used<now()::date)", protocolVersion);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
 }
