@@ -2391,6 +2391,7 @@ public abstract class MasterServer {
                                                     long deadline=in.readLong();
                                                     String clientPriority=in.readUTF().trim();
                                                     String adminPriority=in.readUTF().trim();
+                                                    if(adminPriority.length()==0) adminPriority=null;
                                                     String technology=in.readBoolean()?in.readUTF().trim():null;
                                                     String assignedTo;
                                                     String contactEmails;
@@ -2792,6 +2793,7 @@ public abstract class MasterServer {
                                         {
                                             int ticketID=in.readCompressedInt(); 
                                             String priority=in.readUTF().trim();
+                                            if(priority.length()==0) priority=null;
                                             String username=in.readUTF().trim();
                                             String comments=in.readUTF().trim();
                                             process.setCommand(

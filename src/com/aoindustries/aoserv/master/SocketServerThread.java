@@ -229,7 +229,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
                     long existingID=in.readLong();
 
                     if(
-                        !protocolVersion.equals(AOServProtocol.VERSION_1_9)
+                        !protocolVersion.equals(AOServProtocol.VERSION_1_10)
+                        && !protocolVersion.equals(AOServProtocol.VERSION_1_9)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_8)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_7)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_6)
@@ -288,8 +289,9 @@ final public class SocketServerThread extends Thread implements RequestSource {
                             } catch(SQLException err) {
                                 conn.rollbackAndClose();
                                 throw err;
+                            } finally {
+                                conn.releaseConnection();
                             }
-                            conn.releaseConnection();
 
                             if(message!=null) {
                                 //MasterServer.reportSecurityMessage(this, message, process.getEffectiveUser().length()>0 && password.length()>0);
@@ -301,29 +303,36 @@ final public class SocketServerThread extends Thread implements RequestSource {
                                 boolean isOK=true;
                                 int daemonServer=process.getDaemonServer();
                                 if(daemonServer!=-1) {
-                                    if(MasterServer.getMasterUser(conn, process.getEffectiveUser())==null) {
-                                        conn.releaseConnection();
-                                        out.writeBoolean(false);
-                                        out.writeUTF("Only master users may register a daemon server.");
-                                        out.flush();
-                                        isOK=false;
-                                    } else {
-                                        com.aoindustries.aoserv.client.MasterServer[] servers=MasterServer.getMasterServers(conn, process.getEffectiveUser());
-                                        conn.releaseConnection();
-                                        if(servers.length!=0) {
+                                    try {
+                                        if(MasterServer.getMasterUser(conn, process.getEffectiveUser())==null) {
+                                            conn.releaseConnection();
+                                            out.writeBoolean(false);
+                                            out.writeUTF("Only master users may register a daemon server.");
+                                            out.flush();
                                             isOK=false;
-                                            for(int c=0;c<servers.length;c++) {
-                                                if(servers[c].getServerPKey()==daemonServer) {
-                                                    isOK=true;
-                                                    break;
+                                        } else {
+                                            com.aoindustries.aoserv.client.MasterServer[] servers=MasterServer.getMasterServers(conn, process.getEffectiveUser());
+                                            conn.releaseConnection();
+                                            if(servers.length!=0) {
+                                                isOK=false;
+                                                for(int c=0;c<servers.length;c++) {
+                                                    if(servers[c].getServerPKey()==daemonServer) {
+                                                        isOK=true;
+                                                        break;
+                                                    }
+                                                }
+                                                if(!isOK) {
+                                                    out.writeBoolean(false);
+                                                    out.writeUTF("Master user ("+process.getEffectiveUser()+") not allowed to access server: "+daemonServer);
+                                                    out.flush();
                                                 }
                                             }
-                                            if(!isOK) {
-                                                out.writeBoolean(false);
-                                                out.writeUTF("Master user ("+process.getEffectiveUser()+") not allowed to access server: "+daemonServer);
-                                                out.flush();
-                                            }
                                         }
+                                    } catch(SQLException err) {
+                                        conn.rollbackAndClose();
+                                        throw err;
+                                    } finally {
+                                        conn.releaseConnection();
                                     }
                                 }
                                 if(isOK) {
@@ -334,11 +343,21 @@ final public class SocketServerThread extends Thread implements RequestSource {
                                     } else process.setConnectorID(existingID);
                                     out.flush();
 
-                                    MasterServer.updateAOServProtocolLastUsed(conn, protocolVersion);
+                                    try {
+                                        MasterServer.updateAOServProtocolLastUsed(conn, protocolVersion);
+                                    } catch(SQLException err) {
+                                        conn.rollbackAndClose();
+                                        throw err;
+                                    } finally {
+                                        conn.releaseConnection();
+                                    }
 
                                     while(server.handleRequest(this, in, out, process));
                                 }
                             }
+                        } catch(SQLException err) {
+                            conn.rollbackAndClose();
+                            throw err;
                         } finally {
                             conn.releaseConnection();
                         }

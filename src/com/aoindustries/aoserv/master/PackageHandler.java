@@ -11,6 +11,7 @@ import com.aoindustries.profiler.*;
 import com.aoindustries.sql.*;
 import com.aoindustries.util.*;
 import java.io.*;
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 
@@ -442,9 +443,9 @@ final public class PackageHandler {
                 pstmt.setString(4, version);
                 pstmt.setString(5, display);
                 pstmt.setString(6, description);
-                pstmt.setString(7, setupFee<=0 ? null : SQLUtility.getDecimal(setupFee));
+                pstmt.setBigDecimal(7, setupFee<=0 ? null : new BigDecimal(SQLUtility.getDecimal(setupFee)));
                 pstmt.setString(8, setupFeeTransactionType);
-                pstmt.setString(9, SQLUtility.getDecimal(monthlyRate));
+                pstmt.setBigDecimal(9, new BigDecimal(SQLUtility.getDecimal(monthlyRate)));
                 pstmt.setString(10, monthlyRateTransactionType);
                 pstmt.setInt(11, pkey);
                 conn.incrementUpdateCount();
