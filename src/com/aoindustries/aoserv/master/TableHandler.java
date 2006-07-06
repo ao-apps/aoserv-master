@@ -2,7 +2,7 @@ package com.aoindustries.aoserv.master;
 
 /*
  * Copyright 2001-2006 by AO Industries, Inc.,
- * 2200 Dogwood Ct N, Mobile, Alabama, 36693, U.S.A.
+ * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.Package;
@@ -1109,7 +1109,8 @@ final public class TableHandler {
                             + "  ao2.daemon_connect_bind,\n"
                             + "  ao2.time_zone,\n"
                             + "  ao2.jilter_bind,\n"
-                            + "  ao2.restrict_outbound_email\n"
+                            + "  ao2.restrict_outbound_email,\n"
+                            + "  ao2.daemon_connect_address\n"
                             + "from\n"
                             + "  master_servers ms\n"
                             + "  inner join ao_servers ao on ms.server=ao.server\n"
@@ -1170,7 +1171,8 @@ final public class TableHandler {
                         + "  ao.daemon_connect_bind,\n"
                         + "  ao.time_zone,\n"
                         + "  ao.jilter_bind,\n"
-                        + "  ao.restrict_outbound_email\n"
+                        + "  ao.restrict_outbound_email,\n"
+                        + "  ao.daemon_connect_address\n"
                         + "from\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"

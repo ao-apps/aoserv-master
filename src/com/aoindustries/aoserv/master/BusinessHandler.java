@@ -2,7 +2,7 @@ package com.aoindustries.aoserv.master;
 
 /*
  * Copyright 2001-2006 by AO Industries, Inc.,
- * 2200 Dogwood Ct N, Mobile, Alabama, 36693, U.S.A.
+ * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
@@ -1237,11 +1237,13 @@ final public class BusinessHandler {
                     + "      md.pkey\n"
                     + "    from\n"
                     + "      packages pk,\n"
-                    + "      mysql_databases md\n"
+                    + "      mysql_databases md,\n"
+                    + "      mysql_servers ms\n"
                     + "    where\n"
                     + "      pk.accounting=?\n"
                     + "      and pk.name=md.package\n"
-                    + "      and md.ao_server=?\n"
+                    + "      and md.mysql_server=ms.pkey\n"
+                    + "      and ms.ao_server=?\n"
                     + "    limit 1\n"
                     + "  )\n"
                     + "  is not null\n",
@@ -1263,12 +1265,14 @@ final public class BusinessHandler {
                     + "    from\n"
                     + "      packages pk,\n"
                     + "      usernames un,\n"
-                    + "      mysql_server_users msu\n"
+                    + "      mysql_server_users msu,\n"
+                    + "      mysql_servers ms\n"
                     + "    where\n"
                     + "      pk.accounting=?\n"
                     + "      and pk.name=un.package\n"
                     + "      and un.username=msu.username\n"
-                    + "      and msu.ao_server=?\n"
+                    + "      and msu.mysql_server=ms.pkey\n"
+                    + "      and ms.ao_server=?\n"
                     + "    limit 1\n"
                     + "  )\n"
                     + "  is not null\n",

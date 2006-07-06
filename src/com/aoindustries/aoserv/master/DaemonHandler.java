@@ -2,7 +2,7 @@ package com.aoindustries.aoserv.master;
 
 /*
  * Copyright 2001-2006 by AO Industries, Inc.,
- * 2200 Dogwood Ct N, Mobile, Alabama, 36693, U.S.A.
+ * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
@@ -56,6 +56,8 @@ final public class DaemonHandler {
     public static String getDaemonConnectorIP(MasterDatabaseConnection dbConn, int aoServer) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, DaemonHandler.class, "getDaemonConnectorIP(MasterDatabaseConnection,int)", null);
         try {
+            String address=dbConn.executeStringQuery("select daemon_connect_address from ao_servers where server=?", aoServer);
+            if(address!=null) return address;
             String ip=dbConn.executeStringQuery(
                 "select\n"
                 + "  ia.ip_address\n"
