@@ -637,11 +637,18 @@ final public class TicketHandler implements Runnable {
 
             String oldValue=conn.executeStringQuery("select deadline from tickets where pkey=?", ticketID);
 
-            conn.executeUpdate(
-                "update tickets set deadline=? where pkey=?",
-                deadline==Ticket.NO_DEADLINE?null:new Timestamp(deadline),
-                ticketID
-            );
+            if(deadline==Ticket.NO_DEADLINE) {
+                conn.executeUpdate(
+                    "update tickets set deadline=null where pkey=?",
+                    ticketID
+                );
+            } else {
+                conn.executeUpdate(
+                    "update tickets set deadline=? where pkey=?",
+                    new Timestamp(deadline),
+                    ticketID
+                );
+            }
 
             conn.executeUpdate(
                 "insert into actions(ticket_id, administrator, action_type, old_value, comments) values(?,?,?,?,?)",
