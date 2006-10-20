@@ -3397,6 +3397,60 @@ final public class TableHandler {
                         username
                     );
                     break;
+                case SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS :
+                    if(masterUser!=null) {
+                        if(masterServers.length==0) MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new HttpdSiteAuthenticatedLocation(),
+                            "select * from httpd_site_authenticated_locations"
+                        ); else MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new HttpdSiteAuthenticatedLocation(),
+                            "select\n"
+                            + "  hsal.*\n"
+                            + "from\n"
+                            + "  master_servers ms,\n"
+                            + "  httpd_sites hs,\n"
+                            + "  httpd_site_authenticated_locations hsal\n"
+                            + "where\n"
+                            + "  ms.username=?\n"
+                            + "  and ms.server=hs.ao_server\n"
+                            + "  and hs.pkey=hsal.httpd_site",
+                            username
+                        );
+                    } else MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new HttpdSiteAuthenticatedLocation(),
+                        "select\n"
+                        + "  hsal.*\n"
+                        + "from\n"
+                        + "  usernames un,\n"
+                        + "  packages pk1,\n"
+                        + BU1_PARENTS_JOIN
+                        + "  packages pk2,\n"
+                        + "  httpd_sites hs,\n"
+                        + "  httpd_site_authenticated_locations hsal\n"
+                        + "where\n"
+                        + "  un.username=?\n"
+                        + "  and un.package=pk1.name\n"
+                        + "  and (\n"
+                        + PK1_BU1_PARENTS_WHERE
+                        + "  )\n"
+                        + "  and bu1.accounting=pk2.accounting\n"
+                        + "  and pk2.name=hs.package\n"
+                        + "  and hs.pkey=hsal.httpd_site",
+                        username
+                    );
+                    break;
                 case SchemaTable.HTTPD_SITE_BINDS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
@@ -7135,7 +7189,9 @@ final public class TableHandler {
                         + "  se.backup_hour,\n"
                         + "  se.last_backup_time,\n"
                         + "  se.operating_system_version,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text\n"
+                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
+                        + "  se.minimum_power,\n"
+                        + "  se.maximum_power\n"
                         + "from\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"

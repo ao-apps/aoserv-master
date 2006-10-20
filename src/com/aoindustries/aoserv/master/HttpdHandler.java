@@ -224,6 +224,67 @@ final public class HttpdHandler {
         }
     }
 
+    public static int addHttpdSiteAuthenticatedLocation(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int httpd_site,
+        String path,
+        boolean isRegularExpression,
+        String authName,
+        String authGroupFile,
+        String authUserFile,
+        String require
+    ) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, HttpdHandler.class, "addHttpdSiteAuthenticatedLocation(MasterDatabaseConnection,RequestSource,InvalidateList,int,String,boolean,String,String,String,String)", null);
+        try {
+            checkAccessHttpdSite(conn, source, "addHttpdSiteAuthenticatedLocation", httpd_site);
+            if(isHttpdSiteDisabled(conn, httpd_site)) throw new SQLException("Unable to add HttpdSiteAuthenticatedLocation, HttpdSite disabled: "+httpd_site);
+            String error = HttpdSiteAuthenticatedLocation.validatePath(path);
+            if(error==null) error = HttpdSiteAuthenticatedLocation.validateAuthName(authName);
+            if(error==null) error = HttpdSiteAuthenticatedLocation.validateAuthGroupFile(authGroupFile);
+            if(error==null) error = HttpdSiteAuthenticatedLocation.validateAuthUserFile(authUserFile);
+            if(error==null) error = HttpdSiteAuthenticatedLocation.validateRequire(require);
+            if(error!=null) throw new SQLException("Unable to add HttpdSiteAuthenticatedLocation: "+error);
+
+            int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_authenticated_locations_pkey_seq')");
+            conn.executeUpdate(
+                "insert into\n"
+                + "  httpd_site_authenticated_locations\n"
+                + "values (\n"
+                + "  ?,\n"
+                + "  ?,\n"
+                + "  ?,\n"
+                + "  ?,\n"
+                + "  ?,\n"
+                + "  ?,\n"
+                + "  ?,\n"
+                + "  ?\n"
+                + ")",
+                pkey,
+                httpd_site,
+                path,
+                isRegularExpression,
+                authName,
+                authGroupFile,
+                authUserFile,
+                require
+            );
+
+            invalidateList.addTable(
+                conn,
+                SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
+                getBusinessForHttpdSite(conn, httpd_site),
+                ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, httpd_site)),
+                false
+            );
+
+            return pkey;
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
     public static int addHttpdTomcatContext(
         MasterDatabaseConnection conn,
         RequestSource source,
@@ -2651,6 +2712,11 @@ final public class HttpdHandler {
             );
             if(count>0) throw new SQLException("Site directory on AOServer #"+aoServer+" contains "+count+" CVS "+(count==1?"repository":"repositories")+": "+dir);
 
+            // httpd_site_authenticated_locations
+            if(conn.executeUpdate("delete from httpd_site_authenticated_locations where httpd_site=?", httpdSitePKey)>0) {
+                invalidateList.addTable(conn, SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS, accounting, aoServer, false);
+            }
+
             // httpd_site_binds
             IntList httpdSiteBinds=conn.executeIntListQuery("select pkey from httpd_site_binds where httpd_site=?", httpdSitePKey);
             if(httpdSiteBinds.size()>0) {
@@ -2821,6 +2887,33 @@ final public class HttpdHandler {
             // httpd_sites
             conn.executeUpdate("delete from httpd_sites where pkey=?", httpdSitePKey);
             invalidateList.addTable(conn, SchemaTable.HTTPD_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static void removeHttpdSiteAuthenticatedLocation(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int pkey
+    ) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, HttpdHandler.class, "removeHttpdSiteAuthenticatedLocation(MasterDatabaseConnection,RequestSource,InvalidateList,int)", null);
+        try {
+            int httpd_site=conn.executeIntQuery("select httpd_site from httpd_site_authenticated_locations where pkey=?", pkey);
+            checkAccessHttpdSite(conn, source, "removeHttpdSiteAuthenticatedLocation", httpd_site);
+
+            String accounting=getBusinessForHttpdSite(conn, httpd_site);
+            String hostname=ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, httpd_site));
+
+            conn.executeUpdate("delete from httpd_site_authenticated_locations where pkey=?", pkey);
+            invalidateList.addTable(
+                conn,
+                SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
+                accounting,
+                hostname,
+                false
+            );
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -3188,6 +3281,62 @@ final public class HttpdHandler {
                 SchemaTable.HTTPD_SHARED_TOMCATS,
                 getBusinessForHttpdSharedTomcat(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSharedTomcat(conn, pkey)),
+                false
+            );
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static void setHttpdSiteAuthenticatedLocationAttributes(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int pkey,
+        String path,
+        boolean isRegularExpression,
+        String authName,
+        String authGroupFile,
+        String authUserFile,
+        String require
+    ) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, HttpdHandler.class, "setHttpdSiteAuthenticatedLocationAttributes(MasterDatabaseConnection,RequestSource,InvalidateList,int,String,boolean,String,String,String,String)", null);
+        try {
+            int httpd_site=conn.executeIntQuery("select httpd_site from httpd_site_authenticated_locations where pkey=?", pkey);
+            checkAccessHttpdSite(conn, source, "setHttpdSiteAuthenticatedLocationAttributes", httpd_site);
+            if(isHttpdSiteDisabled(conn, httpd_site)) throw new SQLException("Unable to set HttpdSiteAuthenticatedLocation attributes, HttpdSite disabled: "+httpd_site);
+            String error = HttpdSiteAuthenticatedLocation.validatePath(path);
+            if(error==null) error = HttpdSiteAuthenticatedLocation.validateAuthName(authName);
+            if(error==null) error = HttpdSiteAuthenticatedLocation.validateAuthGroupFile(authGroupFile);
+            if(error==null) error = HttpdSiteAuthenticatedLocation.validateAuthUserFile(authUserFile);
+            if(error==null) error = HttpdSiteAuthenticatedLocation.validateRequire(require);
+            if(error!=null) throw new SQLException("Unable to add HttpdSiteAuthenticatedLocation: "+error);
+            conn.executeUpdate(
+                "update\n"
+                + "  httpd_site_authenticated_locations\n"
+                + "set\n"
+                + "  path=?,\n"
+                + "  is_regular_expression=?,\n"
+                + "  auth_name=?,\n"
+                + "  auth_group_file=?,\n"
+                + "  auth_user_file=?,\n"
+                + "  require=?\n"
+                + "where\n"
+                + "  pkey=?",
+                path,
+                isRegularExpression,
+                authName,
+                authGroupFile,
+                authUserFile,
+                require,
+                pkey
+            );
+
+            invalidateList.addTable(
+                conn,
+                SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
+                getBusinessForHttpdSite(conn, httpd_site),
+                ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, httpd_site)),
                 false
             );
         } finally {

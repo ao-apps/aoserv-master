@@ -70,7 +70,8 @@ final public class DNSHandler {
                 if(mx_priority==DNSRecord.NO_MX_PRIORITY) pstmt.setNull(5, Types.INTEGER);
                 else pstmt.setInt(5, mx_priority);
                 pstmt.setString(6, destination);
-                pstmt.setInt(7, ttl);
+                if(ttl==-1) pstmt.setNull(7, Types.INTEGER);
+                else pstmt.setInt(7, ttl);
                 conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } catch(SQLException err) {

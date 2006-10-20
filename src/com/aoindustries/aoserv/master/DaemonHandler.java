@@ -370,7 +370,17 @@ final public class DaemonHandler {
                 int toServer=FailoverHandler.getToAOServerForFailoverFileReplication(conn, param1);
                 if(toServer!=aoServer) throw new SQLException("(ao_servers.server="+aoServer+")!=((failover_file_replication.pkey="+param1+").to_server="+toServer+")");
 
-                return grantDaemonAccess(conn, aoServer, AOServDaemonProtocol.FAILOVER_FILE_REPLICATION, ServerHandler.getHostnameForServer(conn, fromServer), null, null);
+                // Chunk always will be automatically performed once a month between the 2nd and the 28th, based on mod of ffr.pkey equaling the current day of the month
+                boolean chunkAlways = Calendar.getInstance().get(Calendar.DAY_OF_MONTH)==((param1%27)+2);
+                if(!chunkAlways) chunkAlways = conn.executeBooleanQuery("select chunk_always from failover_file_replications where pkey=?", param1);
+                return grantDaemonAccess(
+                    conn,
+                    aoServer,
+                    AOServDaemonProtocol.FAILOVER_FILE_REPLICATION,
+                    ServerHandler.getHostnameForServer(conn, fromServer),
+                    conn.executeStringQuery("select to_path from failover_file_replications where pkey=?", param1),
+                    chunkAlways ? "t" : "f"
+                );
             } else throw new SQLException("Unknown daemon command code: "+daemonCommandCode);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);

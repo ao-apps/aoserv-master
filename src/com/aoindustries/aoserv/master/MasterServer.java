@@ -1347,6 +1347,42 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
+                                            case SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS :
+                                                {
+                                                    int httpd_site=in.readCompressedInt();
+                                                    String path = in.readUTF();
+                                                    boolean isRegularExpression = in.readBoolean();
+                                                    String authName = in.readUTF();
+                                                    String authGroupFile = in.readUTF();
+                                                    String authUserFile = in.readUTF();
+                                                    String require = in.readUTF();
+                                                    process.setCommand(
+                                                        "add_httpd_site_authenticated_location",
+                                                        Integer.valueOf(httpd_site),
+                                                        path,
+                                                        isRegularExpression?Boolean.TRUE:Boolean.FALSE,
+                                                        authName,
+                                                        authGroupFile,
+                                                        authUserFile,
+                                                        require
+                                                    );
+                                                    int pkey=HttpdHandler.addHttpdSiteAuthenticatedLocation(
+                                                        conn,
+                                                        source,
+                                                        invalidateList,
+                                                        httpd_site,
+                                                        path,
+                                                        isRegularExpression,
+                                                        authName,
+                                                        authGroupFile,
+                                                        authUserFile,
+                                                        require
+                                                    );
+                                                    resp1=AOServProtocol.DONE;
+                                                    resp2Int=pkey;
+                                                    hasResp2Int=true;
+                                                }
+                                                break;							
                                             case SchemaTable.HTTPD_SITE_URLS :
                                                 {
                                                     int hsb_pkey=in.readCompressedInt();
@@ -5933,6 +5969,22 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
+                                            case SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS :
+                                                {
+                                                    int pkey=in.readCompressedInt();
+                                                    process.setCommand(
+                                                        "remove_httpd_site_authenticated_location",
+                                                        Integer.valueOf(pkey)
+                                                    );
+                                                    HttpdHandler.removeHttpdSiteAuthenticatedLocation(
+                                                        conn,
+                                                        source,
+                                                        invalidateList,
+                                                        pkey
+                                                    );
+                                                    resp1=AOServProtocol.DONE;
+                                                }
+                                                break;
                                             case SchemaTable.HTTPD_SITES :
                                                 {
                                                     int pkey=in.readCompressedInt();
@@ -7264,6 +7316,41 @@ public abstract class MasterServer {
                                                 invalidateList,
                                                 pkey,
                                                 is_manual
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
+                                    case AOServProtocol.SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES :
+                                        {
+                                            int pkey=in.readCompressedInt();
+                                            String path=in.readUTF().trim();
+                                            boolean isRegularExpression=in.readBoolean();
+                                            String authName=in.readUTF().trim();
+                                            String authGroupFile=in.readUTF().trim();
+                                            String authUserFile=in.readUTF().trim();
+                                            String require=in.readUTF().trim();
+                                            process.setCommand(
+                                                "set_httpd_site_authenticated_location_attributes",
+                                                Integer.valueOf(pkey),
+                                                path,
+                                                isRegularExpression?Boolean.TRUE:Boolean.FALSE,
+                                                authName,
+                                                authGroupFile,
+                                                authUserFile,
+                                                require
+                                            );
+                                            HttpdHandler.setHttpdSiteAuthenticatedLocationAttributes(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                pkey,
+                                                path,
+                                                isRegularExpression,
+                                                authName,
+                                                authGroupFile,
+                                                authUserFile,
+                                                require
                                             );
                                             resp1=AOServProtocol.DONE;
                                             sendInvalidateList=true;

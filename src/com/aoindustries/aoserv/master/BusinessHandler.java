@@ -696,7 +696,7 @@ final public class BusinessHandler {
                 + "  ?,\n"
                 + "  ?,\n"
                 + "  ?,\n"
-                + "  ?,\n"
+                + "  ?::decimal(9,2),\n"
                 + "  ?,\n"
                 + "  ?\n"
                 + ")"
