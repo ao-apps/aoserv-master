@@ -1056,7 +1056,7 @@ final public class HttpdHandler {
             // Create the HTTP HttpdSiteBind
             int httpSiteBindPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_binds_pkey_seq')");
             conn.executeUpdate(
-                "insert into httpd_site_binds values(?,?,?,?,?,null,null,null,null,false)",
+                "insert into httpd_site_binds values(?,?,?,?,?,null,null,null,null,false,false)",
                 httpSiteBindPKey,
                 httpdSitePKey,
                 httpNetBind,
@@ -1109,7 +1109,7 @@ final public class HttpdHandler {
                 // Create the HTTPS HttpdSiteBind
                 int httpsSiteBindPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_binds_pkey_seq')");
 
-                pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into httpd_site_binds values(?,?,?,?,?,?,?,null,null,false)");
+                pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into httpd_site_binds values(?,?,?,?,?,?,?,null,null,false,false)");
                 try {
                     pstmt.setInt(1, httpsSiteBindPKey);
                     pstmt.setInt(2, httpdSitePKey);
@@ -3361,6 +3361,38 @@ final public class HttpdHandler {
             conn.executeUpdate(
                 "update httpd_site_binds set is_manual=? where pkey=?",
                 isManual,
+                pkey
+            );
+
+            invalidateList.addTable(
+                conn,
+                SchemaTable.HTTPD_SITE_BINDS,
+                getBusinessForHttpdSite(conn, hs),
+                ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, hs)),
+                false
+            );
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static void setHttpdSiteBindRedirectToPrimaryHostname(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int pkey,
+        boolean redirect_to_primary_hostname
+    ) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, HttpdHandler.class, "setHttpdSiteBindRedirectToPrimaryHostname(MasterDatabaseConnection,RequestSource,InvalidateList,int,boolean)", null);
+        try {
+            int hs=getHttpdSiteForHttpdSiteBind(conn, pkey);
+            checkAccessHttpdSite(conn, source, "setHttpdSiteBindRedirectToPrimaryHostname", hs);
+            if(isHttpdSiteBindDisabled(conn, pkey)) throw new SQLException("Unable to set redirect_to_primary_hostname flag: HttpdSiteBind disabled: "+pkey);
+
+            // Update the database
+            conn.executeUpdate(
+                "update httpd_site_binds set redirect_to_primary_hostname=? where pkey=?",
+                redirect_to_primary_hostname,
                 pkey
             );
 

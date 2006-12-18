@@ -619,14 +619,16 @@ final public class LinuxAccountHandler {
 
             String from_type=getTypeForLinuxAccount(conn, from_username);
             if(
-                !from_type.equals(LinuxAccountType.USER)
+                !from_type.equals(LinuxAccountType.APPLICATION)
+                && !from_type.equals(LinuxAccountType.USER)
                 && !from_type.equals(LinuxAccountType.EMAIL)
                 && !from_type.equals(LinuxAccountType.FTPONLY)
             ) throw new SQLException("Not allowed to copy passwords from LinuxAccounts of type '"+from_type+"', username="+from_username);
 
             String to_type=getTypeForLinuxAccount(conn, to_username);
             if(
-                !to_type.equals(LinuxAccountType.USER)
+                !to_type.equals(LinuxAccountType.APPLICATION)
+                && !to_type.equals(LinuxAccountType.USER)
                 && !to_type.equals(LinuxAccountType.EMAIL)
                 && !to_type.equals(LinuxAccountType.FTPONLY)
             ) throw new SQLException("Not allowed to copy passwords to LinuxAccounts of type '"+to_type+"', username="+to_username);

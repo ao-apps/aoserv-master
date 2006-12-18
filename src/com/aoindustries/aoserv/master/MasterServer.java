@@ -7376,6 +7376,26 @@ public abstract class MasterServer {
                                             sendInvalidateList=true;
                                         }
                                         break;
+                                    case AOServProtocol.SET_HTTPD_SITE_BIND_REDIRECT_TO_PRIMARY_HOSTNAME :
+                                        {
+                                            int pkey=in.readCompressedInt();
+                                            boolean redirect_to_primary_hostname=in.readBoolean();
+                                            process.setCommand(
+                                                AOSHCommand.SET_HTTPD_SITE_BIND_REDIRECT_TO_PRIMARY_HOSTNAME,
+                                                Integer.valueOf(pkey),
+                                                redirect_to_primary_hostname?Boolean.TRUE:Boolean.FALSE
+                                            );
+                                            HttpdHandler.setHttpdSiteBindRedirectToPrimaryHostname(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                pkey,
+                                                redirect_to_primary_hostname
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
                                     case AOServProtocol.SET_HTTPD_SITE_IS_MANUAL :
                                         {
                                             int pkey=in.readCompressedInt();

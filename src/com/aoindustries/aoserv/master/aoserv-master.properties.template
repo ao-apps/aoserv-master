@@ -42,11 +42,22 @@ aoserv.master.warning.smtp.server=<smtp_server>
 # The protocols this server will listen on
 aoserv.master.protocols=tcp, ssl
 #aoserv.server.protocols=tcp, ssl, http, https
+aoserv.master.local_ip=192.168.1.128
 
 # TCP server parameters
 aoserv.master.tcp.bind=192.168.1.128
 #aoserv.master.tcp.bind=192.168.1.4
 aoserv.master.tcp.port=4582
+
+# SSL server parameters
+aoserv.master.ssl.bind=<ssl_bind_ip>
+aoserv.master.ssl.port=4583
+aoserv.master.ssl.keystore.password=<keystore_password>
+aoserv.master.ssl.keystore.path=<keystore_path>
+
+# SSL certificates
+aoserv.daemon.client.ssl.truststore.password=<truststore_password>
+aoserv.daemon.client.ssl.truststore.path=<truststore_path>
 
 # Ticket URL
 aoserv.master.ticket.url=<website_prefix>/clientarea/ticket/EditTicket?pkey=
@@ -59,16 +70,6 @@ aoserv.master.ticket.source.imap.1.folder=
 aoserv.master.ticket.source.imap.1.archivefolder=
 aoserv.master.ticket.source.imap.1.ignore_recipients=
 aoserv.master.ticket.source.imap.1.assign_to=
-
-# SSL server parameters
-aoserv.master.ssl.bind=<ssl_bind_ip>
-aoserv.master.ssl.port=4583
-aoserv.master.ssl.keystore.password=<keystore_password>
-aoserv.master.ssl.keystore.path=<keystore_path>
-
-# SSL certificates
-aoserv.daemon.client.ssl.truststore.password=<truststore_password>
-aoserv.daemon.client.ssl.truststore.path=<truststore_path>
 
 # Keys for each of the daemons
 aoserv.daemon.client.key.<hostname>=<password>

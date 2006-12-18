@@ -21,6 +21,12 @@ import java.util.*;
  */
 final public class DaemonHandler {
 
+    /**
+     * The amount of time before a daemon will be accessed again once
+     * flagged as unavailable.
+     */
+    public static final int DAEMON_RETRY_DELAY=60*1000;
+
     private static final Map<Integer,AOServDaemonConnector> connectors=new HashMap<Integer,AOServDaemonConnector>();
 
     public static int getDaemonConcurrency() {
@@ -168,6 +174,7 @@ final public class DaemonHandler {
 		AOServDaemonConnector conn=AOServDaemonConnector.getConnector(
                     aoServer,
                     ip,
+                    MasterConfiguration.getLocalIp(),
                     getDaemonConnectorPort(dbConn, aoServer),
                     getDaemonConnectorProtocol(dbConn, aoServer),
                     MasterConfiguration.getDaemonKey(dbConn, aoServer),
@@ -271,12 +278,6 @@ final public class DaemonHandler {
         }
     }
     
-    /**
-     * The amount of time before a daemon will be access again once
-     * flagged as unavailable.
-     */
-    public static final int DAEMON_RETRY_DELAY=5*60*1000;
-
     private static final Map<Integer,Long> downDaemons=new HashMap<Integer,Long>();
 
     public static void invalidateTable(int tableID) {
