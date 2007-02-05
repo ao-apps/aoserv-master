@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2006 by AO Industries, Inc.,
+ * Copyright 2001-2007 by AO Industries, Inc.,
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
@@ -995,9 +995,9 @@ final public class PackageHandler {
                     + ") values(\n"
                     + "  ?,\n"
                     + "  ?,\n"
-                    + "  ?,\n"
-                    + "  ?,\n"
-                    + "  ?,\n"
+                    + "  ?::integer,\n"
+                    + "  ?::integer,\n"
+                    + "  ?::decimal(9,2),\n"
                     + "  ?\n"
                     + ")",
                     pkey,

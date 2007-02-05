@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2006 by AO Industries, Inc.,
+ * Copyright 2001-2007 by AO Industries, Inc.,
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
@@ -229,7 +229,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
                     long existingID=in.readLong();
 
                     if(
-                        !protocolVersion.equals(AOServProtocol.VERSION_1_19)
+                        !protocolVersion.equals(AOServProtocol.VERSION_1_20)
+                        && !protocolVersion.equals(AOServProtocol.VERSION_1_19)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_18)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_17)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_16)

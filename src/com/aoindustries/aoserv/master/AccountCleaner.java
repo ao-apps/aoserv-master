@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2003-2006 by AO Industries, Inc.,
+ * Copyright 2003-2007 by AO Industries, Inc.,
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
@@ -21,28 +21,6 @@ import java.util.*;
  * @author  AO Industries, Inc.
  */
 final public class AccountCleaner implements CronJob {
-
-    /**
-     * Runs at 5:25 am daily.
-     */
-    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
-        return
-            minute==25
-            && hour==5
-        ;
-    }
-
-    public int getCronJobScheduleMode() {
-        return CRON_JOB_SCHEDULE_SKIP;
-    }
-
-    public String getCronJobName() {
-        return "AccountCleaner";
-    }
-
-    public int getCronJobThreadPriority() {
-        return Thread.NORM_PRIORITY-1;
-    }
 
     /**
      * The maximum time for a cleaning.
@@ -77,6 +55,28 @@ final public class AccountCleaner implements CronJob {
         Profiler.endProfile(Profiler.INSTANTANEOUS);
     }
     
+    /**
+     * Runs at 5:25 am daily.
+     */
+    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
+        return
+            minute==25
+            && hour==5
+        ;
+    }
+
+    public int getCronJobScheduleMode() {
+        return CRON_JOB_SCHEDULE_SKIP;
+    }
+
+    public String getCronJobName() {
+        return "AccountCleaner";
+    }
+
+    public int getCronJobThreadPriority() {
+        return Thread.NORM_PRIORITY-1;
+    }
+
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
         Profiler.startProfile(Profiler.UNKNOWN, AccountCleaner.class, "runCronJob(int,int,int,int,int)", null);
         try {

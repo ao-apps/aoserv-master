@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2000-2006 by AO Industries, Inc.,
+ * Copyright 2000-2007 by AO Industries, Inc.,
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
@@ -5162,6 +5162,23 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case AOServProtocol.GET_WHOIS_HISTORY_WHOIS_OUTPUT :
+                                        {
+                                            int pkey=in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_whois_history_whois_output",
+                                                Integer.valueOf(pkey)
+                                            );
+                                            String whoisOutput=DNSHandler.getWhoisHistoryOutput(
+                                                conn,
+                                                source,
+                                                pkey
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=whoisOutput;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case AOServProtocol.HOLD_TICKET :
                                         {
                                             int ticketID=in.readCompressedInt();
@@ -9164,6 +9181,7 @@ public abstract class MasterServer {
             AccountCleaner.start();
             BackupCleaner.start();
             BackupDatabaseSynchronizer.start();
+            DNSHandler.start();
             EmailHandler.start();
             FailoverHandler.start();
             ReportGenerator.start();

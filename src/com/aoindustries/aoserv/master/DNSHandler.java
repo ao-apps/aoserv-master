@@ -1,23 +1,350 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2006 by AO Industries, Inc.,
+ * Copyright 2001-2007 by AO Industries, Inc.,
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.profiler.*;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.aoserv.client.DNSRecord;
+import com.aoindustries.aoserv.client.DNSType;
+import com.aoindustries.aoserv.client.DNSZone;
+import com.aoindustries.aoserv.client.DNSZoneTable;
+import com.aoindustries.aoserv.client.IPAddress;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.cron.CronDaemon;
+import com.aoindustries.cron.CronJob;
+import com.aoindustries.email.ProcessTimer;
+import com.aoindustries.profiler.Profiler;
+import com.aoindustries.sql.WrappedSQLException;
+import com.aoindustries.util.IntList;
+import com.aoindustries.util.SortedArrayList;
+import com.aoindustries.util.WrappedException;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The <code>DNSHandler</code> handles all the accesses to the DNS tables.
  *
  * @author  AO Industries, Inc.
  */
-final public class DNSHandler {
+final public class DNSHandler implements CronJob {
+
+    /**
+     * The maximum time for a processing pass.
+     */
+    private static final long TIMER_MAX_TIME=20L*60*1000;
+
+    /**
+     * The interval in which the administrators will be reminded.
+     */
+    private static final long TIMER_REMINDER_INTERVAL=6L*60*60*1000;
+
+    private static boolean started=false;
+
+    public static void start() {
+        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "start()", null);
+        try {
+            synchronized(System.out) {
+                if(!started) {
+                    System.out.print("Starting DNSHandler: ");
+                    CronDaemon.addCronJob(new DNSHandler(), MasterServer.getErrorHandler());
+                    started=true;
+                    System.out.println("Done");
+                }
+            }
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+    
+    private DNSHandler() {
+        Profiler.startProfile(Profiler.INSTANTANEOUS, DNSHandler.class, "<init>()", null);
+        Profiler.endProfile(Profiler.INSTANTANEOUS);
+    }
+    
+    /**
+     * Runs at 6:12 am on the 1st, 7th, 13th, 19th, and 25th
+     */
+    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
+        return
+            minute==12
+            && hour==6
+            && (
+                dayOfMonth==1
+                || dayOfMonth==7
+                || dayOfMonth==13
+                || dayOfMonth==19
+                || dayOfMonth==25
+            )
+        ;
+    }
+
+    public int getCronJobScheduleMode() {
+        return CRON_JOB_SCHEDULE_SKIP;
+    }
+
+    public String getCronJobName() {
+        return "DNSHandler";
+    }
+
+    public int getCronJobThreadPriority() {
+        return Thread.NORM_PRIORITY-1;
+    }
+
+    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
+        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "runCronJob(int,int,int,int,int)", null);
+        try {
+            try {
+                ProcessTimer timer=new ProcessTimer(
+                    MasterServer.getRandom(),
+                    MasterConfiguration.getWarningSmtpServer(),
+                    MasterConfiguration.getWarningEmailFrom(),
+                    MasterConfiguration.getWarningEmailTo(),
+                    "DNSHandler - Whois History",
+                    "Looking up whois and cleaning old records",
+                    TIMER_MAX_TIME,
+                    TIMER_REMINDER_INTERVAL
+                );
+                try {
+                    timer.start();
+
+                    // Start the transaction
+                    InvalidateList invalidateList=new InvalidateList();
+                    MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                    try {
+                        boolean connRolledBack=false;
+                        try {
+                            /*
+                             * Remove old records first
+                             */
+                            //  Open account that have balance <= $0.00 and entry is older than one year
+                            int updated = conn.executeUpdate(
+                                "delete from whois_history where pkey in (\n"
+                                + "  select\n"
+                                + "    wh.pkey\n"
+                                + "  from\n"
+                                + "    whois_history wh\n"
+                                + "    inner join businesses bu on wh.accounting=bu.accounting\n"
+                                + "    left outer join account_balances ab on bu.accounting=ab.accounting"
+                                + "  where\n"
+                                // entry is older than one year
+                                + "    (now()-wh.time)>'1 year'::interval\n"
+                                // open account
+                                + "    and bu.canceled is null\n"
+                                // balance is <= $0.00
+                                + "    and (ab.accounting is null or ab.balance<='0.00'::decimal(9,2))"
+                                + ")"
+                            );
+                            if(updated>0) invalidateList.addTable(conn, SchemaTable.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+
+                            // Closed account that have a balance of $0.00, has not had any accounting transactions for one year, and entry is older than one year
+                            updated = conn.executeUpdate(
+                                "delete from whois_history where pkey in (\n"
+                                + "  select\n"
+                                + "    wh.pkey\n"
+                                + "  from\n"
+                                + "    whois_history wh\n"
+                                + "    inner join businesses bu on wh.accounting=bu.accounting\n"
+                                + "    left outer join account_balances ab on bu.accounting=ab.accounting"
+                                + "  where\n"
+                                // entry is older than one year
+                                + "    (now()-wh.time)>'1 year'::interval\n"
+                                // closed account
+                                + "    and bu.canceled is not null\n"
+                                // has not had any accounting transactions for one year
+                                + "    and (select tr.transid from transactions tr where bu.accounting=tr.accounting and tr.time>=(now()-'1 year'::interval) limit 1) is null\n"
+                                // balance is $0.00
+                                + "    and (ab.accounting is null or ab.balance='0.00'::decimal(9,2))"
+                                + ")"
+                            );
+                            if(updated>0) invalidateList.addTable(conn, SchemaTable.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+
+                            /*
+                             * The add new records
+                             */
+                            // Get the set of unique accounting, zone combinations in the system
+                            Set<AccountingAndZone> topLevelZones = getBusinessesAndTopLevelZones(conn);
+
+                            // Perform the whois lookups once per unique zone
+                            Map<String,String> whoisOutputs = new HashMap<String,String>(topLevelZones.size()*4/3+1);
+                            for(AccountingAndZone aaz : topLevelZones) {
+                                String zone = aaz.getZone();
+                                if(!whoisOutputs.containsKey(zone)) {
+                                    String whoisOutput;
+                                    try {
+                                        whoisOutput = getWhoisOutput(zone);
+                                    } catch(IOException err) {
+                                        whoisOutput = err.toString();
+                                    }
+                                    whoisOutputs.put(zone, whoisOutput);
+                                }
+                            }
+
+                            // update database
+                            for(AccountingAndZone aaz : topLevelZones) {
+                                String accounting = aaz.getAccounting();
+                                String zone = aaz.getZone();
+                                String whoisOutput = whoisOutputs.get(zone);
+                                conn.executeUpdate("insert into whois_history (accounting, zone, whois_output) values(?,?,?)", accounting, zone, whoisOutput);
+                                invalidateList.addTable(conn, SchemaTable.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                            }
+                        } catch(IOException err) {
+                            if(conn.rollbackAndClose()) {
+                                connRolledBack=true;
+                                invalidateList=null;
+                            }
+                            throw err;
+                        } catch(SQLException err) {
+                            if(conn.rollbackAndClose()) {
+                                connRolledBack=true;
+                                invalidateList=null;
+                            }
+                            throw err;
+                        } finally {
+                            if(!connRolledBack && !conn.isClosed()) conn.commit();
+                        }
+                    } finally {
+                        conn.releaseConnection();
+                    }
+                    if(invalidateList!=null) MasterServer.invalidateTables(invalidateList, null);
+                } finally {
+                    timer.stop();
+                }
+            } catch(ThreadDeath TD) {
+                throw TD;
+            } catch(Throwable T) {
+                MasterServer.reportError(T, null);
+            }
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    /**
+     * Performs a whois lookup for a zone.  This is not cross-platform capable at this time.
+     */
+    public static String getWhoisOutput(String zone) throws IOException {
+        Process P = Runtime.getRuntime().exec(new String[] {"/usr/bin/whois", zone});
+        try {
+            InputStream in = new BufferedInputStream(P.getInputStream());
+            try {
+                StringBuilder SB = new StringBuilder();
+                int c;
+                while((c=in.read())!=-1) SB.append((char)c);
+                return SB.toString();
+            } finally {
+                in.close();
+            }
+        } finally {
+            try {
+                int retVal = P.waitFor();
+                if(retVal!=0) throw new IOException("/usr/bin/whois '"+zone+"' returned with non-zero value: "+retVal);
+            } catch(InterruptedException err) {
+                InterruptedIOException ioErr = new InterruptedIOException("Interrupted while waiting for whois to complete");
+                ioErr.initCause(err);
+                throw ioErr;
+            }
+        }
+    }
+
+    /**
+     * Gets the set of all unique business accounting code and top level domain (zone) pairs.
+     *
+     * @see  DNSZoneTable#getHostTLD
+     */
+    public static Set<AccountingAndZone> getBusinessesAndTopLevelZones(MasterDatabaseConnection conn) throws IOException, SQLException {
+        List<String> tlds = getDNSTLDs(conn);
+
+        Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
+        try {
+            Statement stmt = dbConn.createStatement();
+            try {
+                String sql = "select distinct\n"
+                           + "  pk.accounting as accounting,\n"
+                           + "  dz.zone as zone\n"
+                           + "from\n"
+                           + "  dns_zones dz\n"
+                           + "  inner join packages pk on dz.package=pk.name\n"
+                           + "where\n"
+                           + "  dz.zone not like '%.in-addr.arpa'\n"
+                           + "union select distinct\n"
+                           + "  pk.accounting as accounting,\n"
+                           + "  ed.domain||'.' as zone\n"
+                           + "from\n"
+                           + "  email_domains ed\n"
+                           + "  inner join packages pk on ed.package=pk.name\n"
+                           + "union select distinct\n"
+                           + "  pk.accounting as accounting,\n"
+                           + "  hsu.hostname||'.' as zone\n"
+                           + "from\n"
+                           + "  httpd_site_urls hsu\n"
+                           + "  inner join httpd_site_binds hsb on hsu.httpd_site_bind=hsb.pkey\n"
+                           + "  inner join httpd_sites hs on hsb.httpd_site=hs.pkey\n"
+                           + "  inner join packages pk on hs.package=pk.name\n"
+                           + "  inner join servers se on hs.ao_server=se.pkey\n"
+                           + "where\n"
+                           // Is not the test URL
+                           + "  hsu.hostname!=(hs.site_name || '.' || se.hostname)";
+                try {
+                    ResultSet results = stmt.executeQuery(sql);
+                    try {
+                        Set<AccountingAndZone> aazs = new HashSet<AccountingAndZone>();
+                        while(results.next()) {
+                            String accounting = results.getString(1);
+                            String zone = results.getString(2);
+                            String tld;
+                            try {
+                                tld = DNSZoneTable.getHostTLD(zone, tlds);
+                            } catch(IllegalArgumentException err) {
+                                MasterServer.getErrorHandler().reportWarning(err, null);
+                                tld = zone;
+                            }
+                            AccountingAndZone aaz = new AccountingAndZone(accounting, tld);
+                            if(!aazs.contains(aaz)) aazs.add(aaz);
+                        }
+                        return aazs;
+                    } finally {
+                        results.close();
+                    }
+                } catch(SQLException err) {
+                    // Include the SQL in the exception
+                    throw new WrappedSQLException(err, sql);
+                }
+            } finally {
+                stmt.close();
+            }
+        } finally {
+            conn.releaseConnection();
+        }
+    }
+
+    /**
+     * Gets the whois output for the specific whois_history record.
+     */
+    public static String getWhoisHistoryOutput(MasterDatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getWhoisHistoryOutput(MasterDatabaseConnection,RequestSource,int)", null);
+        try {
+            String accounting = getBusinessForWhoisHistory(conn, pkey);
+            BusinessHandler.checkAccessBusiness(conn, source, "getWhoisHistoryOutput", accounting);
+            return conn.executeStringQuery("select whois_output from whois_history where pkey=?", pkey);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
 
     /**
      * Creates a new <code>DNSRecord</code>.
@@ -454,6 +781,15 @@ final public class DNSHandler {
         }
     }
 
+    public static String getBusinessForWhoisHistory(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getBusinessForWhoisHistory(MasterDatabaseConnection,int)", null);
+        try {
+            return conn.executeStringQuery("select accounting from whois_history where pkey=?", pkey);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
     public static List<String> getDNSServers(MasterDatabaseConnection conn) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getDNSServers(MasterDatabaseConnection)", null);
         try {
@@ -726,6 +1062,40 @@ final public class DNSHandler {
             }
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+    
+    public static class AccountingAndZone {
+
+        final private String accounting;
+        final private String zone;
+        
+        public AccountingAndZone(String accounting, String zone) {
+            this.accounting = accounting;
+            this.zone = zone;
+        }
+        
+        public String getAccounting() {
+            return accounting;
+        }
+        
+        public String getZone() {
+            return zone;
+        }
+        
+        public int hashCode() {
+            return accounting.hashCode() ^ zone.hashCode();
+        }
+        
+        public boolean equals(Object O) {
+            if(O==null) return false;
+            if(!(O instanceof AccountingAndZone)) return false;
+            AccountingAndZone other = (AccountingAndZone)O;
+            return accounting.equals(other.accounting) && zone.equals(other.zone);
+        }
+        
+        public String toString() {
+            return accounting+'|'+zone;
         }
     }
 }

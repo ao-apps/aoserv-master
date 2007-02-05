@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2006 by AO Industries, Inc.,
+ * Copyright 2001-2007 by AO Industries, Inc.,
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
@@ -8459,6 +8459,48 @@ final public class TableHandler {
                         provideProgress,
                         new USState(),
                         "select * from us_states"
+                    );
+                    break;
+                case SchemaTable.WHOIS_HISTORY :
+                    if(masterUser!=null) {
+                        if(masterServers.length==0) {
+                            MasterServer.writeObjects(
+                                conn,
+                                source,
+                                out,
+                                provideProgress,
+                                new WhoisHistory(),
+                                "select pkey, time, accounting, zone from whois_history"
+                            );
+                        } else {
+                            // The servers don't need access to this information
+                            List<WhoisHistory> emptyList = Collections.emptyList();
+                            MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                        }
+                    } else MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new WhoisHistory(),
+                        "select\n"
+                        + "  wh.pkey,\n"
+                        + "  wh.time,\n"
+                        + "  wh.accounting,\n"
+                        + "  wh.zone\n"
+                        + "from\n"
+                        + "  usernames un,\n"
+                        + "  packages pk,\n"
+                        + BU1_PARENTS_JOIN
+                        + "  whois_history wh\n"
+                        + "where\n"
+                        + "  un.username=?\n"
+                        + "  and un.package=pk.name\n"
+                        + "  and (\n"
+                        + PK_BU1_PARENTS_WHERE
+                        + "  )\n"
+                        + "  and bu1.accounting=wh.accounting",
+                        username
                     );
                     break;
                 default :
