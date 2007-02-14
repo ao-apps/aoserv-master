@@ -198,7 +198,57 @@ final public class BusinessHandler {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
-    
+
+    private static Map<String,Set<String>> cachedPermissions;
+    private static final Object cachedPermissionsLock = new Object();
+
+    public static boolean hasPermission(MasterDatabaseConnection conn, RequestSource source, String permission) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "hasPermission(MasterDatabaseConnection,RequestSource,String)", null);
+        try {
+            synchronized(cachedPermissionsLock) {
+                if(cachedPermissionsLock==null) {
+		    Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
+		    try {
+			Map<String,Set<String>> newCache = new HashMap<String,Set<String>>();
+			conn.incrementQueryCount();
+			ResultSet results=stmt.executeQuery("select username, permission from business_administrator_permissions");
+			while(results.next()) {
+                            String username = results.getString(1);
+                            Set<String> permissions = newCache.get(username);
+                            if(permissions==null) newCache.put(username, permissions = new HashSet<String>());
+                            permissions.add(results.getString(2));
+			}
+			cachedPermissions = newCache;;
+		    } finally {
+			stmt.close();
+		    }
+                }
+                Set<String> permissions = cachedPermissions.get(source.getUsername());
+                return permissions!=null && permissions.contains(permission);
+            }
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static void checkPermission(MasterDatabaseConnection conn, RequestSource source, String action, String permission) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.FAST, BusinessHandler.class, "checkPermission(MasterDatabaseConnection,RequestSource,String,String)", null);
+        try {
+            if(!hasPermission(conn, source, permission)) {
+                String message=
+                    "business_administrator.username="
+                    +source.getUsername()
+                    +" does not have the \""+permission+"\" permission.  Not allowed to make the following call: "
+                    +action
+                ;
+                MasterServer.reportSecurityMessage(source, message);
+                throw new SQLException(message);
+            }
+        } finally {
+            Profiler.endProfile(Profiler.FAST);
+        }
+    }
+
     public static List<String> getAllowedBusinesses(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, BusinessHandler.class, "getAllowedBusinesses(MasterDatabaseConnection,RequestSource)", null);
         try {
@@ -420,10 +470,18 @@ final public class BusinessHandler {
                 pstmt.close();
             }
             
+            // administrators default to having the same permissions as the person who created them
+            conn.executeUpdate(
+                "insert into business_administrator_permissions (username, permission) select ?, permission from business_administrator_permissions where username=?",
+                username,
+                source.getUsername()
+            );
+
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
             
             // Notify all clients of the update
             invalidateList.addTable(conn, SchemaTable.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.BUSINESS_ADMINISTRATOR_PERMISSIONS, accounting, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1010,6 +1068,7 @@ final public class BusinessHandler {
 
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
 
+            conn.executeUpdate("delete from business_administrator_permissions where username=?", username);
             conn.executeUpdate("delete from business_administrators where username=?", username);
 
             // Notify all clients of the update
@@ -1493,6 +1552,9 @@ final public class BusinessHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "setBusinessAdministratorPassword(MasterDatabaseConnection,RequestSource,InvalidateList,String,String)", null);
         try {
+            // An administrator may always reset their own passwords
+            if(!username.equals(source.getUsername())) checkPermission(conn, source, "setBusinessAdministratorPassword", AOServPermission.SET_BUSINESS_ADMINISTRATOR_PASSWORD);
+
             UsernameHandler.checkAccessUsername(conn, source, "setBusinessAdministratorPassword", username);
             if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set password for BusinessAdministrator named '"+LinuxAccount.MAIL+'\'');
 
@@ -1500,8 +1562,8 @@ final public class BusinessHandler {
 
             if(plaintext!=null && plaintext.length()>0) {
                 // Perform the password check here, too.
-                String reason=BusinessAdministrator.checkPasswordDescribe(username, plaintext);
-                if(reason!=null) throw new SQLException("Invalid password: "+reason.replace('\n', '|'));
+                PasswordChecker.Result[] results=BusinessAdministrator.checkPassword(username, plaintext);
+                if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
             }
 
             String encrypted=plaintext==null || plaintext.length()==0?BusinessAdministrator.NO_PASSWORD:UnixCrypt.crypt(plaintext);

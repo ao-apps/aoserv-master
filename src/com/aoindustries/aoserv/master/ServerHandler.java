@@ -70,8 +70,8 @@ final public class ServerHandler {
 
             if(!Username.isValidUsername(username)) throw new SQLException("Invalid username: "+username);
             
-            String result=BusinessAdministrator.checkPasswordDescribe(username, password);
-            if(result!=null) throw new SQLException("Password strength check failed: "+result);
+            PasswordChecker.Result[] results = BusinessAdministrator.checkPassword(username, password);
+            if(PasswordChecker.hasResults(results)) throw new SQLException("Password strength check failed: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
             
             int serverPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('servers_pkey_seq')");
             conn.executeUpdate(

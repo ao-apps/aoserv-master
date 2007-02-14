@@ -1377,6 +1377,8 @@ final public class InterBaseHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, InterBaseHandler.class, "setInterBaseServerUserPassword(MasterDatabaseConnection,RequestSource,int,String)", null);
         try {
+            BusinessHandler.checkPermission(conn, source, "setInterBaseServerUserPassword", AOServPermission.SET_INTERBASE_SERVER_USER_PASSWORD);
+
             checkAccessInterBaseServerUser(conn, source, "setInterBaseServerUserPassword", isu);
             if(isInterBaseServerUserDisabled(conn, isu)) throw new SQLException("Unable to set InterBaseServerUser password, account disabled: "+isu);
 
@@ -1389,8 +1391,8 @@ final public class InterBaseHandler {
             // Perform the password check here, too.
             if(password!=null && password.length()==0) password=InterBaseUser.NO_PASSWORD;
             if(password!=InterBaseUser.NO_PASSWORD) {
-                String reason=InterBaseUser.checkPasswordDescribe(username, password);
-                if(reason!=null) throw new SQLException("Invalid password: "+reason.replace('\n', '|'));
+                PasswordChecker.Result[] results = InterBaseUser.checkPassword(username, password);
+                if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
             }
 
             // Contact the daemon for the update

@@ -5,15 +5,28 @@ package com.aoindustries.aoserv.master;
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.aoserv.daemon.client.*;
-import com.aoindustries.io.*;
-import com.aoindustries.profiler.*;
-import com.aoindustries.sql.*;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.aoserv.client.AOServPermission;
+import com.aoindustries.aoserv.client.LinuxAccount;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.MySQLDatabase;
+import com.aoindustries.aoserv.client.MySQLDatabaseTable;
+import com.aoindustries.aoserv.client.MySQLServerUser;
+import com.aoindustries.aoserv.client.MySQLUser;
+import com.aoindustries.aoserv.client.PasswordChecker;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
+import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.profiler.Profiler;
+import com.aoindustries.util.IntList;
+import com.aoindustries.util.SortedArrayList;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * The <code>MySQLHandler</code> handles all the accesses to the MySQL tables.
@@ -1135,6 +1148,7 @@ final public class MySQLHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, MySQLHandler.class, "setMySQLServerUserPassword(MasterDatabaseConnection,RequestSource,int,String)", null);
         try {
+            BusinessHandler.checkPermission(conn, source, "setMySQLServerUserPassword", AOServPermission.SET_MYSQL_SERVER_USER_PASSWORD);
             checkAccessMySQLServerUser(conn, source, "setMySQLServerUserPassword", mysql_server_user);
             if(isMySQLServerUserDisabled(conn, mysql_server_user)) throw new SQLException("Unable to set MySQLServerUser password, account disabled: "+mysql_server_user);
 
@@ -1147,8 +1161,8 @@ final public class MySQLHandler {
             // Perform the password check here, too.
             if(password!=null && password.length()==0) password=MySQLUser.NO_PASSWORD;
             if(password!=MySQLUser.NO_PASSWORD) {
-                String reason=MySQLUser.checkPasswordDescribe(username, password);
-                if(reason!=null) throw new SQLException("Invalid password: "+reason.replace('\n', '|'));
+                PasswordChecker.Result[] results = MySQLUser.checkPassword(username, password);
+                if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
             }
 
             // Contact the daemon for the update

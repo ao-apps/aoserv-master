@@ -1188,6 +1188,16 @@ final public class TableHandler {
                         username
                     );
                     break;
+                case SchemaTable.AOSERV_PERMISSIONS :
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new AOServPermission(),
+                        "select * from aoserv_permissions"
+                    );
+                    break;
                 case SchemaTable.AOSERV_PROTOCOLS :
                     MasterServer.writeObjects(
                         conn,
@@ -1710,6 +1720,65 @@ final public class TableHandler {
                         + "  and bu1.accounting=pk2.accounting\n"
                         + "  and pk2.name=un2.package\n"
                         + "  and un2.username=ba.username",
+                        username
+                    );
+                    break;
+                case SchemaTable.BUSINESS_ADMINISTRATOR_PERMISSIONS :
+                    if(masterUser!=null) {
+                        if(masterServers.length==0) MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new BusinessAdministratorPermission(),
+                            "select * from business_administrator_permissions"
+                        ); else MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new BusinessAdministratorPermission(),
+                            "select distinct\n"
+                            + "  bp.*\n"
+                            + "from\n"
+                            + "  master_servers ms,\n"
+                            + "  business_servers bs,\n"
+                            + "  packages pk,\n"
+                            + "  usernames un,\n"
+                            + "  business_administrator_permissions bp\n"
+                            + "where\n"
+                            + "  ms.username=?\n"
+                            + "  and ms.server=bs.server\n"
+                            + "  and bs.accounting=pk.accounting\n"
+                            + "  and pk.name=un.package\n"
+                            + "  and un.username=bp.username",
+                            username
+                        );
+                    } else MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new BusinessAdministratorPermission(),
+                        "select\n"
+                        + "  bp.*\n"
+                        + "from\n"
+                        + "  usernames un1,\n"
+                        + "  packages pk1,\n"
+                        + BU1_PARENTS_JOIN
+                        + "  packages pk2,\n"
+                        + "  usernames un2,\n"
+                        + "  business_administrator_permissions bp\n"
+                        + "where\n"
+                        + "  un1.username=?\n"
+                        + "  and un1.package=pk1.name\n"
+                        + "  and (\n"
+                        + "    un2.username=un1.username\n"
+                        + PK1_BU1_PARENTS_OR_WHERE
+                        + "  )\n"
+                        + "  and bu1.accounting=pk2.accounting\n"
+                        + "  and pk2.name=un2.package\n"
+                        + "  and un2.username=bp.username",
                         username
                     );
                     break;

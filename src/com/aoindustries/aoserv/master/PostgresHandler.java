@@ -1067,6 +1067,7 @@ final public class PostgresHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "setPostgresServerUserPassword(MasterDatabaseConnection,RequestSource,int,String)", null);
         try {
+            BusinessHandler.checkPermission(conn, source, "setPostgresServerUserPassword", AOServPermission.SET_POSTGRES_SERVER_USER_PASSWORD);
             checkAccessPostgresServerUser(conn, source, "setPostgresServerUserPassword", postgres_server_user);
             if(isPostgresServerUserDisabled(conn, postgres_server_user)) throw new SQLException("Unable to set PostgresServerUser password, account disabled: "+postgres_server_user);
 
@@ -1079,8 +1080,8 @@ final public class PostgresHandler {
 
             // Perform the password check here, too.
             if(password!=PostgresUser.NO_PASSWORD) {
-                String reason=PostgresUser.checkPasswordDescribe(username, password);
-                if(reason!=null) throw new SQLException("Invalid password: "+reason.replace('\n', '|'));
+                PasswordChecker.Result[] results = PostgresUser.checkPassword(username, password);
+                if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
             }
 
             // Contact the daemon for the update

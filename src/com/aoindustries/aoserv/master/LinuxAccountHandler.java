@@ -1800,6 +1800,7 @@ final public class LinuxAccountHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, LinuxAccountHandler.class, "setLinuxServerAccountPassword(MasterDatabaseConnection,RequestSource,InvalidateList,int,String)", null);
         try {
+            BusinessHandler.checkPermission(conn, source, "setLinuxServerAccountPassword", AOServPermission.SET_LINUX_SERVER_ACCOUNT_PASSWORD);
             checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountPassword", pkey);
             if(isLinuxServerAccountDisabled(conn, pkey)) throw new SQLException("Unable to set LinuxServerAccount password, account disabled: "+pkey);
 
@@ -1812,8 +1813,8 @@ final public class LinuxAccountHandler {
 
             if(password!=null && password.length()>0) {
                 // Perform the password check here, too.
-                String reason=LinuxAccount.checkPasswordDescribe(username, type, password);
-                if(reason!=null) throw new SQLException("Invalid password: "+reason.replace('\n', '|'));
+                PasswordChecker.Result[] results = LinuxAccount.checkPassword(username, type, password);
+                if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
             }
 
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
