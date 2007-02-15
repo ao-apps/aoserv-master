@@ -218,7 +218,7 @@ final public class BusinessHandler {
                             if(permissions==null) newCache.put(username, permissions = new HashSet<String>());
                             permissions.add(results.getString(2));
 			}
-			cachedPermissions = newCache;;
+			cachedPermissions = newCache;
 		    } finally {
 			stmt.close();
 		    }
