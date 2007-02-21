@@ -206,7 +206,7 @@ final public class BusinessHandler {
         Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "hasPermission(MasterDatabaseConnection,RequestSource,String)", null);
         try {
             synchronized(cachedPermissionsLock) {
-                if(cachedPermissionsLock==null) {
+                if(cachedPermissions==null) {
 		    Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
 		    try {
 			Map<String,Set<String>> newCache = new HashMap<String,Set<String>>();
