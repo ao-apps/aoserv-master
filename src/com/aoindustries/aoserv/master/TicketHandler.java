@@ -1358,7 +1358,7 @@ final public class TicketHandler implements Runnable {
                     String[] orAddys=StringUtility.splitString(tos.get(i), '|');
                     if(orAddys.length>0) {
                         MailMessage msg=new MailMessage(MasterConfiguration.getTicketSmtpServer());
-                        msg.from("do-not-reply@aoindustries.com");
+                        msg.from("support@aoindustries.com");
                         msg.to(orAddys[MasterServer.getRandom().nextInt(orAddys.length)]);
                         msg.setSubject(subject);
                         PrintStream email=msg.getPrintStream();
@@ -1374,7 +1374,7 @@ final public class TicketHandler implements Runnable {
         if (cellMessage!=null) {
              try {
                 MailMessage msg = new MailMessage(MasterConfiguration.getTicketSmtpServer());
-                msg.from("tickets@aoindustries.com");
+                msg.from("support@aoindustries.com");
                 msg.to(MasterServer.getRandom().nextBoolean()?"2054542556@mobile.mycingular.com":"2515991027@mobile.mycingular.com");
                 msg.setSubject("URGENT");
                 PrintStream email = msg.getPrintStream();
