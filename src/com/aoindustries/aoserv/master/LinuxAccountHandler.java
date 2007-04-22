@@ -384,7 +384,8 @@ final public class LinuxAccountHandler {
             if(primaryLSG<0) throw new SQLException("Unable to find primary Linux group '"+primaryGroup+"' on AOServer #"+aoServer+" for Linux account '"+username+"'");
 
             int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('linux_server_accounts_pkey_seq')");
-            String farm=ServerHandler.getFarmForServer(conn, aoServer);
+            // Now allocating unique to entire system for server portability between farms
+            //String farm=ServerHandler.getFarmForServer(conn, aoServer);
             conn.executeUpdate(
                 "insert into\n"
                 + "  linux_server_accounts\n"
@@ -407,7 +408,7 @@ final public class LinuxAccountHandler {
                 + "          servers se\n"
                 + "        where\n"
                 + "          lsa.ao_server=se.pkey\n"
-                + "          and se.farm=?\n"
+                //+ "          and se.farm=?\n"
                 + "          and li.id=lsa.uid\n"
                 + "        limit 1\n"
                 + "      ) is null\n"
@@ -438,7 +439,7 @@ final public class LinuxAccountHandler {
                 pkey,
                 username,
                 aoServer,
-                farm,
+                //farm,
                 home,
                 EmailSpamAssassinIntegrationMode.DEFAULT_SPAMASSASSIN_INTEGRATION_MODE
             );
@@ -504,7 +505,8 @@ final public class LinuxAccountHandler {
                 BusinessHandler.checkBusinessAccessServer(conn, source, "addLinuxServerGroup", accounting, aoServer);
             }
 
-            String farm=ServerHandler.getFarmForServer(conn, aoServer);
+            // Now allocating unique to entire system for server portability between farms
+            //String farm=ServerHandler.getFarmForServer(conn, aoServer);
             int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('linux_server_groups_pkey_seq')");
             conn.executeUpdate(
                 "insert into\n"
@@ -528,7 +530,7 @@ final public class LinuxAccountHandler {
                 + "          servers se\n"
                 + "        where\n"
                 + "          lsg.ao_server=se.pkey\n"
-                + "          and se.farm=?\n"
+                //+ "          and se.farm=?\n"
                 + "          and li.id=lsg.gid\n"
                 + "        limit 1\n"
                 + "      ) is null\n"
@@ -540,8 +542,8 @@ final public class LinuxAccountHandler {
                 + ")",
                 pkey,
                 groupName,
-                aoServer,
-                farm
+                aoServer//,
+                //farm
             );
 
             // Notify all clients of the update
