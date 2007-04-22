@@ -21,6 +21,11 @@ import java.util.*;
  */
 final public class HttpdHandler {
 
+    /**
+     * The first port number that may be used for automatic port allocations.
+     */
+    public static final int MINIMUM_AUTO_PORT_NUMBER = 16384;
+
     private final static Map<Integer,Boolean> disabledHttpdSharedTomcats=new HashMap<Integer,Boolean>();
     private final static Map<Integer,Boolean> disabledHttpdSiteBinds=new HashMap<Integer,Boolean>();
     private final static Map<Integer,Boolean> disabledHttpdSites=new HashMap<Integer,Boolean>();
@@ -947,7 +952,8 @@ final public class HttpdHandler {
                     wildcardIP,
                     NetProtocol.TCP,
                     Protocol.JNP,
-                    packageName					
+                    packageName,
+                    MINIMUM_AUTO_PORT_NUMBER
                 );
                 int webserverBind = NetBindHandler.allocateNetBind(
                     conn,
@@ -956,7 +962,8 @@ final public class HttpdHandler {
                     wildcardIP,
                     NetProtocol.TCP,
                     Protocol.WEBSERVER,
-                    packageName					
+                    packageName,
+                    MINIMUM_AUTO_PORT_NUMBER
                 );
                 int rmiBind = NetBindHandler.allocateNetBind(
                     conn,
@@ -965,7 +972,8 @@ final public class HttpdHandler {
                     wildcardIP,
                     NetProtocol.TCP,
                     Protocol.RMI,
-                    packageName					
+                    packageName,
+                    MINIMUM_AUTO_PORT_NUMBER
                 );
                 int hypersonicBind = NetBindHandler.allocateNetBind(
                     conn,
@@ -974,7 +982,8 @@ final public class HttpdHandler {
                     wildcardIP,
                     NetProtocol.TCP,
                     Protocol.HYPERSONIC,
-                    packageName					
+                    packageName,
+                    MINIMUM_AUTO_PORT_NUMBER
                 );
                 int jmxBind = NetBindHandler.allocateNetBind(
                     conn,
@@ -983,7 +992,8 @@ final public class HttpdHandler {
                     wildcardIP,
                     NetProtocol.TCP,
                     Protocol.JMX,
-                    packageName					
+                    packageName,
+                    MINIMUM_AUTO_PORT_NUMBER
                 );
                 pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into httpd_jboss_sites values(?,?,?,?,?,?,?)");
                 try {
@@ -1021,7 +1031,8 @@ final public class HttpdHandler {
                         IPAddressHandler.getLoopbackIPAddress(conn, aoServer),
                         NetProtocol.TCP,
                         Protocol.TOMCAT4_SHUTDOWN,
-                        packageName
+                        packageName,
+                        MINIMUM_AUTO_PORT_NUMBER
                     );
                     conn.executeUpdate(
                         "insert into httpd_tomcat_std_sites values(?,?,?)",
@@ -1042,7 +1053,8 @@ final public class HttpdHandler {
                     IPAddressHandler.getLoopbackIPAddress(conn, aoServer),
                     NetProtocol.TCP,
                     isTomcat4?HttpdJKProtocol.AJP13:HttpdJKProtocol.AJP12,
-                    packageName
+                    packageName,
+                    MINIMUM_AUTO_PORT_NUMBER
                 );
                 // Create the HttpdWorker
                 int httpdWorkerPKey=addHttpdWorker(
@@ -1190,7 +1202,8 @@ final public class HttpdHandler {
                     loopbackIP,
                     NetProtocol.TCP,
                     HttpdJKProtocol.AJP13,
-                    packageName
+                    packageName,
+                    MINIMUM_AUTO_PORT_NUMBER
                 );
 
                 // Create the HttpdWorker
@@ -1209,7 +1222,8 @@ final public class HttpdHandler {
                     loopbackIP,
                     NetProtocol.TCP,
                     Protocol.TOMCAT4_SHUTDOWN,
-                    packageName
+                    packageName,
+                    MINIMUM_AUTO_PORT_NUMBER
                 );
 
                 conn.executeUpdate(
