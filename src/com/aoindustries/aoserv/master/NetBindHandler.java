@@ -17,6 +17,9 @@ import java.sql.*;
  */
 final public class NetBindHandler {
 
+    /**
+     * This lock is used to avoid a race condition between check and insert when allocating net_binds.
+     */
     private static final Object netBindLock=new Object();
 
     public static int addNetBind(
@@ -64,12 +67,13 @@ final public class NetBindHandler {
             IPAddressHandler.checkAccessIPAddress(conn, source, "addNetBind", ipAddress);
             String ipString=IPAddressHandler.getIPStringForIPAddress(conn, ipAddress);
 
-            String farm=ServerHandler.getFarmForServer(conn, aoServer);
+            // Now allocating unique to entire system for server portability between farms
+            //String farm=ServerHandler.getFarmForServer(conn, aoServer);
 
             int pkey;
             synchronized(netBindLock) {
                 if(ipString.equals(IPAddress.WILDCARD_IP)) {
-                    // Wildcard must be unique per farm, with the port completely free
+                    // Wildcard must be unique to system, with the port completely free
                     if(
                         conn.executeBooleanQuery(
                             "select\n"
@@ -81,18 +85,18 @@ final public class NetBindHandler {
                             + "      servers se\n"
                             + "    where\n"
                             + "      nb.ao_server=se.pkey\n"
-                            + "      and se.farm=?\n"
+                            //+ "      and se.farm=?\n"
                             + "      and nb.port=?\n"
                             + "      and nb.net_protocol=?\n"
                             + "    limit 1\n"
                             + "  ) is not null",
-                            farm,
+                            //farm,
                             port,
                             netProtocol
                         )
                     ) throw new SQLException("NetBind already in use: "+aoServer+"->"+ipAddress+":"+port+" ("+netProtocol+')');
                 } else if(ipString.equals(IPAddress.LOOPBACK_IP)) {
-                    // Loopback must be unique per farm and not have wildcard
+                    // Loopback must be unique per system and not have wildcard
                     if(
                         conn.executeBooleanQuery(
                             "select\n"
@@ -105,7 +109,7 @@ final public class NetBindHandler {
                             + "      ip_addresses ia\n"
                             + "    where\n"
                             + "      nb.ao_server=se.pkey\n"
-                            + "      and se.farm=?\n"
+                            //+ "      and se.farm=?\n"
                             + "      and nb.ip_address=ia.pkey\n"
                             + "      and (\n"
                             + "        ia.ip_address='"+IPAddress.WILDCARD_IP+"'\n"
@@ -114,13 +118,13 @@ final public class NetBindHandler {
                             + "      and nb.net_protocol=?\n"
                             + "    limit 1\n"
                             + "  ) is not null",
-                            farm,
+                            //farm,
                             port,
                             netProtocol
                         )
                     ) throw new SQLException("NetBind already in use: "+aoServer+"->"+ipAddress+":"+port+" ("+netProtocol+')');
                 } else {
-                    // Make sure that this port is not already allocated within this farm on this IP or the wildcard
+                    // Make sure that this port is not already allocated within the system on this IP or the wildcard
                     if(
                         conn.executeBooleanQuery(
                             "select\n"
@@ -133,7 +137,7 @@ final public class NetBindHandler {
                             + "      ip_addresses ia\n"
                             + "    where\n"
                             + "      nb.ao_server=se.pkey\n"
-                            + "      and se.farm=?\n"
+                            //+ "      and se.farm=?\n"
                             + "      and nb.ip_address=ia.pkey\n"
                             + "      and (\n"
                             + "        ia.ip_address='"+IPAddress.WILDCARD_IP+"'\n"
@@ -142,7 +146,7 @@ final public class NetBindHandler {
                             + "      and nb.net_protocol=?\n"
                             + "    limit 1\n"
                             + "  ) is not null",
-                            farm,
+                            //farm,
                             ipAddress,
                             port,
                             netProtocol
@@ -191,6 +195,9 @@ final public class NetBindHandler {
         }
     }
 
+    /**
+     * Now allocating unique to entire system for server portability between farms
+     */
     public static int allocateNetBind(
         MasterDatabaseConnection conn,
         InvalidateList invalidateList,
@@ -198,11 +205,12 @@ final public class NetBindHandler {
         int ipAddress,
         String netProtocol,
         String appProtocol,
-        String pack
+        String pack,
+        int minimumPort
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, NetBindHandler.class, "allocateNetBind(MasterDatabaseConnection,InvalidateList,int,int,String,String,String)", null);
+        Profiler.startProfile(Profiler.UNKNOWN, NetBindHandler.class, "allocateNetBind(MasterDatabaseConnection,InvalidateList,int,int,String,String,String,int)", null);
         try {
-            String farm=ServerHandler.getFarmForServer(conn, aoServer);
+            //String farm=ServerHandler.getFarmForServer(conn, aoServer);
             String ipString=IPAddressHandler.getIPStringForIPAddress(conn, ipAddress);
             int pkey;
             synchronized(netBindLock) {
@@ -224,6 +232,7 @@ final public class NetBindHandler {
                         + "    where\n"
                         + "      np.is_user\n"
                         + "      and np.port!="+HttpdWorker.ERROR_CAUSING_PORT+"\n"
+                        + "      and np.port>=?\n"
                         + "      and (\n"
                         + "        select\n"
                         + "          nb.pkey\n"
@@ -232,7 +241,8 @@ final public class NetBindHandler {
                         + "          servers se\n"
                         + "        where\n"
                         + "          nb.ao_server=se.pkey\n"
-                        + "          and se.farm=?\n"
+                        // Now allocating unique to entire system for server portability between farms
+                        //+ "          and se.farm=?\n"
                         + "          and np.port=nb.port\n"
                         + "          and nb.net_protocol=?\n"
                         + "        limit 1\n"
@@ -250,7 +260,8 @@ final public class NetBindHandler {
                         pack,
                         aoServer,
                         ipAddress,
-                        farm,
+                        minimumPort,
+                        //farm,
                         netProtocol,
                         netProtocol,
                         appProtocol
@@ -272,6 +283,7 @@ final public class NetBindHandler {
                         + "    where\n"
                         + "      np.is_user\n"
                         + "      and np.port!="+HttpdWorker.ERROR_CAUSING_PORT+"\n"
+                        + "      and np.port>=?\n"
                         + "      and (\n"
                         + "        select\n"
                         + "          nb.pkey\n"
@@ -281,10 +293,11 @@ final public class NetBindHandler {
                         + "          ip_addresses ia\n"
                         + "        where\n"
                         + "          nb.ao_server=se.pkey\n"
-                        + "          and se.farm=?\n"
+                        // Now allocating unique to entire system for server portability between farms
+                        //+ "          and se.farm=?\n"
                         + "          and nb.ip_address=ia.pkey\n"
                         + "          and (\n"
-                        + "            nb.ip_address=?\n"
+                        + "            ia.ip_address=(select ip_address from ip_addresses where pkey=?)\n"
                         + "            or ia.ip_address='"+IPAddress.WILDCARD_IP+"'\n"
                         + "          )  and np.port=nb.port\n"
                         + "          and nb.net_protocol=?\n"
@@ -303,7 +316,8 @@ final public class NetBindHandler {
                         pack,
                         aoServer,
                         ipAddress,
-                        farm,
+                        minimumPort,
+                        //farm,
                         ipAddress,
                         netProtocol,
                         netProtocol,
