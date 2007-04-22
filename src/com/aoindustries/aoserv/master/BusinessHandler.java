@@ -1728,6 +1728,10 @@ final public class BusinessHandler {
                 synchronized(disabledBusinesses) {
                     disabledBusinesses.clear();
                 }
+            } else if(tableID==SchemaTable.BUSINESS_ADMINISTRATOR_PERMISSIONS) {
+                synchronized(cachedPermissionsLock) {
+                    cachedPermissions = null;
+                }
             }
         } finally {
             Profiler.endProfile(Profiler.FAST);
