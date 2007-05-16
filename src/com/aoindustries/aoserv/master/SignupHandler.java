@@ -7,6 +7,8 @@ package com.aoindustries.aoserv.master;
  */
 import com.aoindustries.aoserv.client.SchemaTable;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
 
@@ -72,13 +74,41 @@ final public class SignupHandler {
         int pkey=conn.executeIntQuery("select nextval('signup_requests_pkey_seq')");
 
         // Add the entry
-        /* TODO
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records values(?,?,?,?,?,?,null,?)");
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup_requests values(?,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null)");
         try {
             pstmt.setInt(1, pkey);
-            pstmt.setString(2, zone);
-            pstmt.setString(3, domain);
-            pstmt.setString(4, type);
+            pstmt.setString(2, accounting);
+            pstmt.setString(3, ip_address);
+            pstmt.setInt(4, package_definition);
+            pstmt.setString(5, business_name);
+            pstmt.setString(6, business_phone);
+            pstmt.setString(7, business_fax);
+            pstmt.setString(8, business_address1);
+            pstmt.setString(9, business_address2);
+            pstmt.setString(10, business_city);
+            pstmt.setString(11, business_state);
+            pstmt.setString(12, business_country);
+            pstmt.setString(13, business_zip);
+            pstmt.setString(14, ba_name);
+            pstmt.setString(15, ba_title);
+            pstmt.setString(16, ba_work_phone);
+            pstmt.setString(17, ba_cell_phone);
+            pstmt.setString(18, ba_home_phone);
+            pstmt.setString(19, ba_fax);
+            pstmt.setString(20, ba_email);
+            pstmt.setString(21, ba_address1);
+            pstmt.setString(22, ba_address2);
+            pstmt.setString(23, ba_city);
+            pstmt.setString(24, ba_state);
+            pstmt.setString(25, ba_country);
+            pstmt.setString(26, ba_zip);
+            pstmt.setString(27, ba_username);
+            pstmt.setString(28, billing_contact);
+            pstmt.setString(29, billing_email);
+            pstmt.setBoolean(30, billing_use_monthly);
+            pstmt.setBoolean(31, billing_pay_one_year);
+            pstmt.setString(32, ciphertext);
+            pstmt.setInt(33, recipient);
 
             conn.incrementUpdateCount();
             pstmt.executeUpdate();
@@ -88,8 +118,26 @@ final public class SignupHandler {
         } finally {
             pstmt.close();
         }
-         * TODO: Add options
-         */
+
+        // Add the signup_options
+        pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup_request_options values(DEFAULT,?,?,?)");
+        try {
+            for(String name : options.keySet()) {
+                String value = options.get(name);
+                pstmt.setInt(1, pkey);
+                pstmt.setString(2, name);
+                pstmt.setString(3, value);
+
+                conn.incrementUpdateCount();
+                pstmt.executeUpdate();
+            }
+        } catch(SQLException err) {
+            System.err.println("Error from query: "+pstmt.toString());
+            throw err;
+        } finally {
+            pstmt.close();
+        }
+
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.SIGNUP_REQUESTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
         invalidateList.addTable(conn, SchemaTable.SIGNUP_REQUEST_OPTIONS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
