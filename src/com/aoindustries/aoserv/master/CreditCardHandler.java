@@ -31,6 +31,20 @@ final public class CreditCardHandler {
         }
     }
 
+    public static void checkAccessEncryptionKey(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.FAST, CreditCardHandler.class, "checkAccessEncryptionKey(MasterDatabaseConnection,RequestSource,String,int)", null);
+        try {
+            BusinessHandler.checkAccessBusiness(
+                conn,
+                source,
+                action,
+                getBusinessForEncryptionKey(conn, pkey)
+            );
+        } finally {
+            Profiler.endProfile(Profiler.FAST);
+        }
+    }
+
     /**
      * Creates a new <code>CreditCard</code>.
      */
@@ -124,6 +138,15 @@ final public class CreditCardHandler {
         Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "getBusinessForCreditCard(MasterDatabaseConnection,int)", null);
         try {
             return conn.executeStringQuery("select accounting from credit_cards where pkey=?", pkey);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static String getBusinessForEncryptionKey(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "getBusinessForEncryptionKey(MasterDatabaseConnection,int)", null);
+        try {
+            return conn.executeStringQuery("select accounting from encryption_keys where pkey=?", pkey);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }

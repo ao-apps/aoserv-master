@@ -182,7 +182,13 @@ final public class PackageHandler {
                 + "  "+Package.DEFAULT_DAILY_SMTP_IN_BANDWIDTH_LIMIT+"::int8,\n"
                 + "  "+Package.DEFAULT_DAILY_SMTP_OUT_LIMIT+",\n"
                 + "  "+Package.DEFAULT_DAILY_SMTP_OUT_BANDWIDTH_LIMIT+"::int8,\n"
-                + "  null\n"
+                + "  null,\n"
+                + "  "+Package.DEFAULT_EMAIL_IN_BURST+"::integer,\n"
+                + "  "+Package.DEFAULT_EMAIL_IN_RATE+"::float4,\n"
+                + "  "+Package.DEFAULT_EMAIL_OUT_BURST+"::integer,\n"
+                + "  "+Package.DEFAULT_EMAIL_OUT_RATE+"::float4,\n"
+                + "  "+Package.DEFAULT_EMAIL_RELAY_BURST+"::integer,\n"
+                + "  "+Package.DEFAULT_EMAIL_RELAY_RATE+"::float4\n"
                 + ")"
             );
             try {

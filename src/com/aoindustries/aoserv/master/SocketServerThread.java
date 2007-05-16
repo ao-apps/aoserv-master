@@ -7,16 +7,22 @@ package com.aoindustries.aoserv.master;
  */
 import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.MasterProcess;
-import com.aoindustries.aoserv.daemon.client.*;
-import com.aoindustries.io.*;
-import com.aoindustries.profiler.*;
-import com.aoindustries.sql.*;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.lang.reflect.*;
-import java.net.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.io.CompressedDataInputStream;
+import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.profiler.Profiler;
+import com.aoindustries.util.IntArrayList;
+import com.aoindustries.util.IntList;
+import com.aoindustries.util.StringUtility;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The <code>AOServServerThread</code> handles a connection once it is accepted.
@@ -229,7 +235,10 @@ final public class SocketServerThread extends Thread implements RequestSource {
                     long existingID=in.readLong();
 
                     if(
-                        !protocolVersion.equals(AOServProtocol.VERSION_1_22)
+                        !protocolVersion.equals(AOServProtocol.VERSION_1_25)
+                        && !protocolVersion.equals(AOServProtocol.VERSION_1_24)
+                        && !protocolVersion.equals(AOServProtocol.VERSION_1_23)
+                        && !protocolVersion.equals(AOServProtocol.VERSION_1_22)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_21)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_20)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_19)

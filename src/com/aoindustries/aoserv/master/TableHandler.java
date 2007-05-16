@@ -56,17 +56,23 @@ final public class TableHandler {
               "  businesses bu1\n"
             + "  left join businesses bu2 on bu1.parent=bu2.accounting\n"
             + "  left join businesses bu3 on bu2.parent=bu3.accounting\n"
-            + "  left join businesses bu4 on bu3.parent=bu4.accounting,\n",
+            + "  left join businesses bu4 on bu3.parent=bu4.accounting\n"
+            + "  left join businesses bu5 on bu4.parent=bu5.accounting\n"
+            + "  left join businesses bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting,\n",
         BU1_PARENTS_JOIN_NO_COMMA=
               "  businesses bu1\n"
             + "  left join businesses bu2 on bu1.parent=bu2.accounting\n"
             + "  left join businesses bu3 on bu2.parent=bu3.accounting\n"
-            + "  left join businesses bu4 on bu3.parent=bu4.accounting\n",
+            + "  left join businesses bu4 on bu3.parent=bu4.accounting\n"
+            + "  left join businesses bu5 on bu4.parent=bu5.accounting\n"
+            + "  left join businesses bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting\n",
         BU2_PARENTS_JOIN=
-              "      businesses bu5\n"
-            + "      left join businesses bu6 on bu5.parent=bu6.accounting\n"
-            + "      left join businesses bu7 on bu6.parent=bu7.accounting\n"
-            + "      left join businesses bu8 on bu7.parent=bu8.accounting,\n"
+              "      businesses bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+"\n"
+            + "      left join businesses bu8 on bu7.parent=bu8.accounting\n"
+            + "      left join businesses bu9 on bu8.parent=bu9.accounting\n"
+            + "      left join businesses bu10 on bu9.parent=bu10.accounting\n"
+            + "      left join businesses bu11 on bu10.parent=bu11.accounting\n"
+            + "      left join businesses bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+" on bu11.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".accounting,\n"
     ;
     
     /**
@@ -78,31 +84,41 @@ final public class TableHandler {
             + "    or pk.accounting=bu1.parent\n"
             + "    or pk.accounting=bu2.parent\n"
             + "    or pk.accounting=bu3.parent\n"
-            + "    or pk.accounting=bu4.parent\n",
+            + "    or pk.accounting=bu4.parent\n"
+            + "    or pk.accounting=bu5.parent\n"
+            + "    or pk.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
         PK1_BU1_PARENTS_OR_WHERE=
               "    or pk1.accounting=bu1.accounting\n"
             + "    or pk1.accounting=bu1.parent\n"
             + "    or pk1.accounting=bu2.parent\n"
             + "    or pk1.accounting=bu3.parent\n"
-            + "    or pk1.accounting=bu4.parent\n",
+            + "    or pk1.accounting=bu4.parent\n"
+            + "    or pk1.accounting=bu5.parent\n"
+            + "    or pk1.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
         PK1_BU1_PARENTS_WHERE=
               "    pk1.accounting=bu1.accounting\n"
             + "    or pk1.accounting=bu1.parent\n"
             + "    or pk1.accounting=bu2.parent\n"
             + "    or pk1.accounting=bu3.parent\n"
-            + "    or pk1.accounting=bu4.parent\n",
+            + "    or pk1.accounting=bu4.parent\n"
+            + "    or pk1.accounting=bu5.parent\n"
+            + "    or pk1.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
         PK3_BU2_PARENTS_OR_WHERE=
-              "        or pk3.accounting=bu5.accounting\n"
-            + "        or pk3.accounting=bu5.parent\n"
-            + "        or pk3.accounting=bu6.parent\n"
-            + "        or pk3.accounting=bu7.parent\n"
-            + "        or pk3.accounting=bu8.parent\n",
-        PK3_BU2_PARENTS_WHERE=
-              "        pk3.accounting=bu5.accounting\n"
-            + "        or pk3.accounting=bu5.parent\n"
-            + "        or pk3.accounting=bu6.parent\n"
-            + "        or pk3.accounting=bu7.parent\n"
+              "        or pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
+            + "        or pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
             + "        or pk3.accounting=bu8.parent\n"
+            + "        or pk3.accounting=bu9.parent\n"
+            + "        or pk3.accounting=bu10.parent\n"
+            + "        or pk3.accounting=bu11.parent\n"
+            + "        or pk3.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n",
+        PK3_BU2_PARENTS_WHERE=
+              "        pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
+            + "        or pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
+            + "        or pk3.accounting=bu8.parent\n"
+            + "        or pk3.accounting=bu9.parent\n"
+            + "        or pk3.accounting=bu10.parent\n"
+            + "        or pk3.accounting=bu11.parent\n"
+            + "        or pk3.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n"
     ;
 
     /**
@@ -2710,6 +2726,46 @@ final public class TableHandler {
                         new EmailSpamAssassinIntegrationMode(),
                         "select * from email_sa_integration_modes"
                     );
+                    break;
+                case SchemaTable.ENCRYPTION_KEYS :
+                    if(masterUser!=null) {
+                        if(masterServers.length==0) {
+                            MasterServer.writeObjects(
+                                conn,
+                                source,
+                                out,
+                                provideProgress,
+                                new EncryptionKey(),
+                                "select * from encryption_keys"
+                            );
+                        } else {
+                            List<EncryptionKey> emptyList = Collections.emptyList();
+                            MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                        }
+                    } else {
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new EncryptionKey(),
+                            "select\n"
+                            + "  ek.*\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk1,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  encryption_keys ek\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk1.name\n"
+                            + "  and (\n"
+                            + PK1_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and bu1.accounting=ek.accounting",
+                            username
+                        );
+                    }
                     break;
                 case SchemaTable.EXPENSE_CATEGORIES :
                     if(BankAccountHandler.isBankAccounting(conn, source)) {
@@ -7283,6 +7339,88 @@ final public class TableHandler {
                         new Shell(),
                         "select * from shells"
                     );
+                    break;
+                case SchemaTable.SIGNUP_REQUEST_OPTIONS :
+                    if(masterUser!=null) {
+                        if(masterServers.length==0) {
+                            MasterServer.writeObjects(
+                                conn,
+                                source,
+                                out,
+                                provideProgress,
+                                new SignupRequestOption(),
+                                "select * from signup_request_options"
+                            );
+                        } else {
+                            List<SignupRequestOption> emptyList = Collections.emptyList();
+                            MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                        }
+                    } else {
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new SignupRequestOption(),
+                            "select\n"
+                            + "  sro.*\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk1,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  signup_requests sr,\n"
+                            + "  signup_request_options sro\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk1.name\n"
+                            + "  and (\n"
+                            + PK1_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and bu1.accounting=sr.accounting\n"
+                            + "  and sr.pkey=sro.request",
+                            username
+                        );
+                    }
+                    break;
+                case SchemaTable.SIGNUP_REQUESTS :
+                    if(masterUser!=null) {
+                        if(masterServers.length==0) {
+                            MasterServer.writeObjects(
+                                conn,
+                                source,
+                                out,
+                                provideProgress,
+                                new SignupRequest(),
+                                "select * from signup_requests"
+                            );
+                        } else {
+                            List<SignupRequest> emptyList = Collections.emptyList();
+                            MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                        }
+                    } else {
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new SignupRequest(),
+                            "select\n"
+                            + "  sr.*\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk1,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  signup_requests sr\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk1.name\n"
+                            + "  and (\n"
+                            + PK1_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and bu1.accounting=sr.accounting",
+                            username
+                        );
+                    }
                     break;
                 case SchemaTable.SPAM_EMAIL_MESSAGES :
                     if(masterUser!=null && masterServers.length==0) MasterServer.writeObjects(

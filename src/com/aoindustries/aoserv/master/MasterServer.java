@@ -2391,6 +2391,132 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
+                                            case SchemaTable.SIGNUP_REQUESTS :
+                                                {
+                                                    String accounting = in.readUTF();
+                                                    String ip_address = in.readUTF();
+                                                    int package_definition = in.readCompressedInt();
+                                                    String business_name = in.readUTF();
+                                                    String business_phone = in.readUTF();
+                                                    String business_fax = in.readBoolean() ? in.readUTF() : null;
+                                                    String business_address1 = in.readUTF();
+                                                    String business_address2 = in.readBoolean() ? in.readUTF() : null;
+                                                    String business_city = in.readUTF();
+                                                    String business_state = in.readBoolean() ? in.readUTF() : null;
+                                                    String business_country = in.readUTF();
+                                                    String business_zip = in.readBoolean() ? in.readUTF() : null;
+                                                    String ba_name = in.readUTF();
+                                                    String ba_title = in.readBoolean() ? in.readUTF() : null;
+                                                    String ba_work_phone = in.readUTF();
+                                                    String ba_cell_phone = in.readBoolean() ? in.readUTF() : null;
+                                                    String ba_home_phone = in.readBoolean() ? in.readUTF() : null;
+                                                    String ba_fax = in.readBoolean() ? in.readUTF() : null;
+                                                    String ba_email = in.readUTF();
+                                                    String ba_address1 = in.readBoolean() ? in.readUTF() : null;
+                                                    String ba_address2 = in.readBoolean() ? in.readUTF() : null;
+                                                    String ba_city = in.readBoolean() ? in.readUTF() : null;
+                                                    String ba_state = in.readBoolean() ? in.readUTF() : null;
+                                                    String ba_country = in.readBoolean() ? in.readUTF() : null;
+                                                    String ba_zip = in.readBoolean() ? in.readUTF() : null;
+                                                    String ba_username = in.readUTF();
+                                                    String billing_contact = in.readUTF();
+                                                    String billing_email = in.readUTF();
+                                                    boolean billing_use_monthly = in.readBoolean();
+                                                    boolean billing_pay_one_year = in.readBoolean();
+                                                    // Encrypted values
+                                                    int recipient = in.readCompressedInt();
+                                                    String ciphertext = in.readUTF();
+                                                    // options
+                                                    int numOptions = in.readCompressedInt();
+                                                    Map<String,String> options = new HashMap<String,String>(numOptions * 4 / 3 + 1);
+                                                    for(int c=0;c<numOptions;c++) {
+                                                        String name = in.readUTF();
+                                                        String value = in.readBoolean() ? in.readUTF() : null;
+                                                        options.put(name, value);
+                                                    }
+                                                    process.setCommand(
+                                                        "add_signup_request",
+                                                        accounting,
+                                                        ip_address,
+                                                        package_definition,
+                                                        business_name,
+                                                        business_phone,
+                                                        business_fax,
+                                                        business_address1,
+                                                        business_address2,
+                                                        business_city,
+                                                        business_state,
+                                                        business_country,
+                                                        business_zip,
+                                                        ba_name,
+                                                        ba_title,
+                                                        ba_work_phone,
+                                                        ba_cell_phone,
+                                                        ba_home_phone,
+                                                        ba_fax,
+                                                        ba_email,
+                                                        ba_address1,
+                                                        ba_address2,
+                                                        ba_city,
+                                                        ba_state,
+                                                        ba_country,
+                                                        ba_zip,
+                                                        ba_username,
+                                                        billing_contact,
+                                                        billing_email,
+                                                        billing_use_monthly,
+                                                        billing_pay_one_year,
+                                                        // Encrypted values
+                                                        recipient,
+                                                        ciphertext,
+                                                        // options
+                                                        numOptions
+                                                    );
+                                                    int pkey=SignupHandler.addSignupRequest(
+                                                        conn,
+                                                        source,
+                                                        invalidateList,
+                                                        accounting,
+                                                        ip_address,
+                                                        package_definition,
+                                                        business_name,
+                                                        business_phone,
+                                                        business_fax,
+                                                        business_address1,
+                                                        business_address2,
+                                                        business_city,
+                                                        business_state,
+                                                        business_country,
+                                                        business_zip,
+                                                        ba_name,
+                                                        ba_title,
+                                                        ba_work_phone,
+                                                        ba_cell_phone,
+                                                        ba_home_phone,
+                                                        ba_fax,
+                                                        ba_email,
+                                                        ba_address1,
+                                                        ba_address2,
+                                                        ba_city,
+                                                        ba_state,
+                                                        ba_country,
+                                                        ba_zip,
+                                                        ba_username,
+                                                        billing_contact,
+                                                        billing_email,
+                                                        billing_use_monthly,
+                                                        billing_pay_one_year,
+                                                        // Encrypted values
+                                                        recipient,
+                                                        ciphertext,
+                                                        // options
+                                                        options
+                                                    );
+                                                    resp1=AOServProtocol.DONE;
+                                                    resp2Int=pkey;
+                                                    hasResp2Int=true;
+                                                }
+                                                break;
                                             case SchemaTable.SPAM_EMAIL_MESSAGES :
                                                 {
                                                     int esr=in.readCompressedInt();
