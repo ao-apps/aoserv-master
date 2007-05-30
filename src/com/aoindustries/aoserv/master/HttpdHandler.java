@@ -2559,13 +2559,6 @@ final public class HttpdHandler {
                     netBind,
                     lowestPKey
                 );
-                invalidateList.addTable(
-                    conn,
-                    SchemaTable.HTTPD_BINDS,
-                    PackageHandler.getBusinessForPackage(conn, packageName),
-                    ServerHandler.getHostnameForServer(conn, aoServer),
-                    false
-                );
             } else {
                 if(
                     conn.executeBooleanQuery(
@@ -2596,6 +2589,22 @@ final public class HttpdHandler {
                     )
                 ) throw new SQLException("HttpdServer has reached its maximum number of HttpdSiteBinds: "+ipAddress+":"+httpPort+" on "+aoServer);
             }
+            // Always invalidate these tables because adding site may grant permissions to these rows
+            invalidateList.addTable(
+                conn,
+                SchemaTable.HTTPD_BINDS,
+                PackageHandler.getBusinessForPackage(conn, packageName),
+                ServerHandler.getHostnameForServer(conn, aoServer),
+                false
+            );
+            invalidateList.addTable(
+                conn,
+                SchemaTable.NET_BINDS,
+                PackageHandler.getBusinessForPackage(conn, packageName),
+                ServerHandler.getHostnameForServer(conn, aoServer),
+                false
+            );
+
             return netBind;
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
