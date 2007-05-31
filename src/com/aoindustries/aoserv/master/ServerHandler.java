@@ -5,14 +5,25 @@ package com.aoindustries.aoserv.master;
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.io.*;
-import com.aoindustries.profiler.*;
-import com.aoindustries.sql.*;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.aoserv.client.BusinessAdministrator;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.PasswordChecker;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.Username;
+import com.aoindustries.profiler.Profiler;
+import com.aoindustries.util.IntList;
+import com.aoindustries.util.LongArrayList;
+import com.aoindustries.util.LongList;
+import com.aoindustries.util.SortedArrayList;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Stack;
 
 /**
  * The <code>ServerHandler</code> handles all the accesses to the Server tables.
@@ -68,7 +79,8 @@ final public class ServerHandler {
 
             if(backup_hour<0 || backup_hour>23) throw new SQLException("Invalid backup_hour: "+backup_hour);
 
-            if(!Username.isValidUsername(username)) throw new SQLException("Invalid username: "+username);
+            String check = Username.checkUsername(username, Locale.getDefault());
+            if(check!=null) throw new SQLException(check);
             
             PasswordChecker.Result[] results = BusinessAdministrator.checkPassword(username, password);
             if(PasswordChecker.hasResults(results)) throw new SQLException("Password strength check failed: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));

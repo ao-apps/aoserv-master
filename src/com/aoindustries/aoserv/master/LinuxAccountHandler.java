@@ -5,14 +5,31 @@ package com.aoindustries.aoserv.master;
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.io.unix.*;
-import com.aoindustries.profiler.*;
-import com.aoindustries.sql.*;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.aoserv.client.AOServPermission;
+import com.aoindustries.aoserv.client.AOServProtocol;
+import com.aoindustries.aoserv.client.EmailSpamAssassinIntegrationMode;
+import com.aoindustries.aoserv.client.HttpdSharedTomcat;
+import com.aoindustries.aoserv.client.HttpdSite;
+import com.aoindustries.aoserv.client.LinuxAccount;
+import com.aoindustries.aoserv.client.LinuxAccountType;
+import com.aoindustries.aoserv.client.LinuxGroup;
+import com.aoindustries.aoserv.client.LinuxGroupAccount;
+import com.aoindustries.aoserv.client.LinuxServerAccount;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.PasswordChecker;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.io.unix.UnixFile;
+import com.aoindustries.profiler.Profiler;
+import com.aoindustries.util.IntList;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * The <code>LinuxAccountHandler</code> handles all the accesses to the Linux tables.
@@ -355,7 +372,7 @@ final public class LinuxAccountHandler {
                 ServerHandler.checkAccessServer(conn, source, "addLinuxServerAccount", aoServer);
                 UsernameHandler.checkUsernameAccessServer(conn, source, "addLinuxServerAccount", username, aoServer);
             }
-            if(!home.equals(LinuxServerAccount.getDefaultHomeDirectory(username))) {
+            if(!home.equals(LinuxServerAccount.getDefaultHomeDirectory(username, Locale.getDefault()))) {
                 // Must be in /www/... or /wwwgroup/...
                 if(
                     (home.length()<=(HttpdSite.WWW_DIRECTORY.length()+1) || !home.substring(0, HttpdSite.WWW_DIRECTORY.length()+1).equals(HttpdSite.WWW_DIRECTORY+'/'))

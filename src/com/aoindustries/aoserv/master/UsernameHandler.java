@@ -5,12 +5,18 @@ package com.aoindustries.aoserv.master;
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.profiler.*;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.aoserv.client.LinuxAccount;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.Username;
+import com.aoindustries.profiler.Profiler;
+import com.aoindustries.util.IntList;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * The <code>UsernameHandler</code> handles all the accesses to the <code>usernames</code> table.
@@ -61,7 +67,8 @@ final public class UsernameHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, UsernameHandler.class, "addUsername(MasterDatabaseConnection,RequestSource,InvalidateList,String,String,boolean)", null);
         try {
-            if(!Username.isValidUsername(username)) throw new SQLException("Invalid username: "+username);
+            String check = Username.checkUsername(username, Locale.getDefault());
+            if(check!=null) throw new SQLException(check);
             if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add Username for user '"+LinuxAccount.MAIL+'\'');
 
             if(!avoidSecurityChecks) {

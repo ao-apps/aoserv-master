@@ -5,13 +5,41 @@ package com.aoindustries.aoserv.master;
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.profiler.*;
-import com.aoindustries.sql.*;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.aoserv.client.AOServPermission;
+import com.aoindustries.aoserv.client.Business;
+import com.aoindustries.aoserv.client.BusinessAdministrator;
+import com.aoindustries.aoserv.client.CountryCode;
+import com.aoindustries.aoserv.client.EmailAddress;
+import com.aoindustries.aoserv.client.LinuxAccount;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.NoticeLog;
+import com.aoindustries.aoserv.client.PasswordChecker;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.Username;
+import com.aoindustries.profiler.Profiler;
+import com.aoindustries.sql.SQLUtility;
+import com.aoindustries.sql.WrappedSQLException;
+import com.aoindustries.util.IntList;
+import com.aoindustries.util.SortedArrayList;
+import com.aoindustries.util.StringUtility;
+import com.aoindustries.util.UnixCrypt;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The <code>BusinessHandler</code> handles all the accesses to the Business tables.
@@ -438,7 +466,8 @@ final public class BusinessHandler {
         try {
             UsernameHandler.checkAccessUsername(conn, source, "addBusinessAdministrator", username);
             if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add BusinessAdministrator named mail");
-            if(!BusinessAdministrator.isValidUsername(username)) throw new SQLException("Invalid BusinessAdministrator username: "+username);
+            String check = Username.checkUsername(username, Locale.getDefault());
+            if(check!=null) throw new SQLException(check);
             if (country!=null && country.equals(CountryCode.US)) state=convertUSState(conn, state);
             
             PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into business_administrators values(?,?,?,?,?,false,?,now(),?,?,?,?,?,?,?,?,?,?,?,null,true)");
