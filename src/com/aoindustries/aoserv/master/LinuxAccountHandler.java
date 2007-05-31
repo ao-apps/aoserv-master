@@ -49,8 +49,8 @@ final public class LinuxAccountHandler {
                 if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
                     IntList lsas = getLinuxServerAccountsForLinuxAccount(conn, username);
                     boolean found = false;
-                    for(int lsa : lsas) {
-                        if(ServerHandler.canAccessServer(conn, source, getAOServerForLinuxServerAccount(conn, lsa))) {
+                    for(Integer lsa : lsas) {
+                        if(ServerHandler.canAccessServer(conn, source, getAOServerForLinuxServerAccount(conn, lsa.intValue()))) {
                             found=true;
                             break;
                         }
