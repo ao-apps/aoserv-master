@@ -2294,12 +2294,14 @@ public abstract class MasterServer {
                                                     int postgresServer=in.readCompressedInt();
                                                     int datdba=in.readCompressedInt();
                                                     int encoding=in.readCompressedInt();
+                                                    boolean enable_postgis=AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_27)>=0?in.readBoolean():false;
                                                     process.setCommand(
                                                         AOSHCommand.ADD_POSTGRES_DATABASE,
                                                         name,
                                                         Integer.valueOf(postgresServer),
                                                         Integer.valueOf(datdba),
-                                                        Integer.valueOf(encoding)
+                                                        Integer.valueOf(encoding),
+                                                        enable_postgis
                                                     );
                                                     int pkey=PostgresHandler.addPostgresDatabase(
                                                         conn,
@@ -2308,7 +2310,8 @@ public abstract class MasterServer {
                                                         name,
                                                         postgresServer,
                                                         datdba,
-                                                        encoding
+                                                        encoding,
+                                                        enable_postgis
                                                     );
                                                     resp1=AOServProtocol.DONE;
                                                     resp2Int=pkey;

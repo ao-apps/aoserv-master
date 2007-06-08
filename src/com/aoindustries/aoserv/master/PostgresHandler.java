@@ -122,9 +122,10 @@ final public class PostgresHandler {
         String name,
         int postgresServer,
         int datdba,
-        int encoding
+        int encoding,
+        boolean enable_postgis
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "addPostgresDatabase(MasterDatabaseConnection,RequestSource,InvalidateList,String,int,int,int)", null);
+        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "addPostgresDatabase(MasterDatabaseConnection,RequestSource,InvalidateList,String,int,int,int,boolean)", null);
         try {
             List<String> reservedWords=getReservedWords(conn);
             // Must be a valid name format
@@ -132,6 +133,11 @@ final public class PostgresHandler {
                 name,
                 reservedWords
             )) throw new SQLException("Invalid PostgreSQL database name: "+name);
+            // If requesting PostGIS, make sure the version of PostgreSQL supports it.
+            if(
+                enable_postgis
+                && conn.executeBooleanQuery("select pv.postgis_version is null from postgres_servers ps inner join postgres_versions pv on ps.version=pv.version where ps.pkey=?", postgresServer)
+            ) throw new SQLException("This version of PostgreSQL doesn't support PostGIS");
 
             // datdba must be on the same server and not be 'mail'
             int datdbaServer=getPostgresServerForPostgresServerUser(conn, datdba);
@@ -141,7 +147,6 @@ final public class PostgresHandler {
             if(isPostgresServerUserDisabled(conn, datdba)) throw new SQLException("Unable to add PostgresDatabase, PostgresServerUser disabled: "+datdba);
             // Look up the accounting code
             String accounting=UsernameHandler.getBusinessForUsername(conn, datdbaUsername);
-
             // Encoding must exist for this version of the database
             if(
                 !conn.executeBooleanQuery(
@@ -184,13 +189,15 @@ final public class PostgresHandler {
                 + "  false,\n"
                 + "  true,\n"
                 + "  "+PostgresDatabase.DEFAULT_BACKUP_LEVEL+",\n"
-                + "  "+PostgresDatabase.DEFAULT_BACKUP_RETENTION+"\n"
+                + "  "+PostgresDatabase.DEFAULT_BACKUP_RETENTION+"\n,"
+                + "  ?\n"
                 + ")",
                 pkey,
                 name,
                 postgresServer,
                 datdba,
-                encoding
+                encoding,
+                enable_postgis
             );
 
             // Notify all clients of the update, the server will detect this change and automatically add the database
