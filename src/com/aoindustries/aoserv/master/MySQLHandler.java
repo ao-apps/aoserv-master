@@ -6,6 +6,8 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.AOServPermission;
+import com.aoindustries.aoserv.client.AOServProtocol;
+import com.aoindustries.aoserv.client.FailoverMySQLReplication;
 import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.MySQLDatabase;
@@ -91,6 +93,26 @@ final public class MySQLHandler {
                 }
             } else {
                 checkAccessMySQLUser(conn, source, action, getUsernameForMySQLServerUser(conn, mysql_server_user));
+            }
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static void checkAccessMySQLServer(MasterDatabaseConnection conn, RequestSource source, String action, int mysql_server) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, MySQLHandler.class, "checkAccessMySQLServer(MasterDatabaseConnection,RequestSource,String,int)", null);
+        try {
+            MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+            if(mu!=null) {
+                if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+                    // Protect by server
+                    int aoServer = getAOServerForMySQLServer(conn, mysql_server);
+                    ServerHandler.checkAccessServer(conn, source, action, aoServer);
+                }
+            } else {
+                // Protect by package
+                String packageName = getPackageForMySQLServer(conn, mysql_server);
+                PackageHandler.checkAccessPackage(conn, source, action, packageName);
             }
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
@@ -1366,6 +1388,33 @@ final public class MySQLHandler {
         }
     }
 
+    public static String getPackageForMySQLServer(MasterDatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, MySQLHandler.class, "getPackageForMySQLServer(MasterDatabaseConnection,int)", null);
+        try {
+            return conn.executeStringQuery("select package from mysql_servers where pkey=?", mysqlServer);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static int getPortForMySQLServer(MasterDatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, MySQLHandler.class, "getAOServerForMySQLServer(MasterDatabaseConnection,int)", null);
+        try {
+            return conn.executeIntQuery("select nb.port from mysql_servers ms inner join net_binds nb on ms.net_bind=nb.pkey where ms.pkey=?", mysqlServer);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static int getMySQLServerForFailoverMySQLReplication(MasterDatabaseConnection conn, int failoverMySQLReplication) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, MySQLHandler.class, "getMySQLServerForFailoverMySQLReplication(MasterDatabaseConnection,int)", null);
+        try {
+            return conn.executeIntQuery("select mysql_server from failover_mysql_replications where pkey=?", failoverMySQLReplication);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
     public static int getPackageForMySQLBackup(BackupDatabaseConnection backupConn, int pkey) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, MySQLHandler.class, "getPackageForMySQLBackup(BackupDatabaseConnection,int)", null);
         try {
@@ -1499,6 +1548,53 @@ final public class MySQLHandler {
             DaemonHandler.getDaemonConnector(conn, aoServer).stopMySQL();
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+    
+    public static void getSlaveStatus(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        int failoverMySQLReplication,
+        CompressedDataOutputStream out
+    ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "setPostgresServerUserPassword", AOServPermission.GET_MYSQL_SLAVE_STATUS);
+        // Check access
+        int mysqlServer = getMySQLServerForFailoverMySQLReplication(conn, failoverMySQLReplication);
+        checkAccessMySQLServer(conn, source, "getSlaveStatus", mysqlServer);
+        int failoverServer = conn.executeIntQuery("select ffr.to_server from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey where fmr.pkey=?", failoverMySQLReplication);
+        if(DaemonHandler.isDaemonAvailable(failoverServer)) {
+            try {
+                String toPath = conn.executeStringQuery("select ffr.to_path from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey where fmr.pkey=?", failoverMySQLReplication);
+                int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
+                FailoverMySQLReplication.SlaveStatus slaveStatus = DaemonHandler.getDaemonConnector(conn, failoverServer).getMySQLSlaveStatus(
+                    toPath+"/"+ServerHandler.getHostnameForServer(conn, aoServer),
+                    ServerHandler.getOperatingSystemVersionForServer(conn, aoServer),
+                    getPortForMySQLServer(conn, mysqlServer)
+                );
+                if(slaveStatus==null) out.writeByte(AOServProtocol.DONE);
+                else {
+                    out.writeByte(AOServProtocol.NEXT);
+                    out.writeNullUTF(slaveStatus.getSlaveIOState());
+                    out.writeNullUTF(slaveStatus.getMasterLogFile());
+                    out.writeNullUTF(slaveStatus.getReadMasterLogPos());
+                    out.writeNullUTF(slaveStatus.getRelayLogFile());
+                    out.writeNullUTF(slaveStatus.getRelayLogPos());
+                    out.writeNullUTF(slaveStatus.getRelayMasterLogFile());
+                    out.writeNullUTF(slaveStatus.getSlaveIORunning());
+                    out.writeNullUTF(slaveStatus.getSlaveSQLRunning());
+                    out.writeNullUTF(slaveStatus.getLastErrno());
+                    out.writeNullUTF(slaveStatus.getLastError());
+                    out.writeNullUTF(slaveStatus.getSkipCounter());
+                    out.writeNullUTF(slaveStatus.getExecMasterLogPos());
+                    out.writeNullUTF(slaveStatus.getRelayLogSpace());
+                    out.writeNullUTF(slaveStatus.getSecondsBehindMaster());
+                }
+            } catch(IOException err) {
+                DaemonHandler.flagDaemonAsDown(failoverServer);
+                throw err;
+            }
+        } else {
+            throw new IOException("Server unavailable");
         }
     }
 }

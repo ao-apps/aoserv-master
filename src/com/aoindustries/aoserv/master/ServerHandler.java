@@ -420,6 +420,15 @@ final public class ServerHandler {
         }
     }
 
+    public static int getOperatingSystemVersionForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, ServerHandler.class, "getOperatingSystemVersionForServer(MasterDatabaseConnection,int)", null);
+        try {
+            return conn.executeIntQuery("select operating_system_version from servers where pkey=?", server);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
     private static Map<String,Integer> pkeysForServers=new HashMap<String,Integer>();
     public static int getPKeyForServer(MasterDatabaseConnection conn, String server) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, ServerHandler.class, "getPKeyForServer(MasterDatabaseConnection,String)", null);

@@ -5014,6 +5014,22 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case AOServProtocol.GET_MYSQL_SLAVE_STATUS :
+                                        {
+                                            int failoverMySQLReplication=in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_mysql_slave_status",
+                                                Integer.valueOf(failoverMySQLReplication)
+                                            );
+                                            MySQLHandler.getSlaveStatus(
+                                                conn,
+                                                source,
+                                                failoverMySQLReplication,
+                                                out
+                                            );
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case AOServProtocol.GET_OBJECT :
                                         {
                                             int clientTableID=in.readCompressedInt();
@@ -9641,7 +9657,7 @@ public abstract class MasterServer {
                 correctCrypted==null
                 || correctCrypted.length()<=2
                 || !UnixCrypt.crypt(password, correctCrypted.substring(0,2)).equals(correctCrypted)
-            ) return "Connection attempted with invalid password: " + password;
+            ) return "Connection attempted with invalid password";
 
             // If connectAs is not authenticateAs, must be authenticated with switch user permissions
             if(!connectAs.equals(authenticateAs)) {
