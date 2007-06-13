@@ -5,7 +5,189 @@ package com.aoindustries.aoserv.master;
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.aoserv.client.AOSHCommand;
+import com.aoindustries.aoserv.client.AOServObject;
+import com.aoindustries.aoserv.client.AOServPermission;
+import com.aoindustries.aoserv.client.AOServProtocol;
+import com.aoindustries.aoserv.client.AOServer;
+import com.aoindustries.aoserv.client.AOServerDaemonHost;
+import com.aoindustries.aoserv.client.Action;
+import com.aoindustries.aoserv.client.ActionType;
+import com.aoindustries.aoserv.client.Architecture;
+import com.aoindustries.aoserv.client.BackupData;
+import com.aoindustries.aoserv.client.BackupLevel;
+import com.aoindustries.aoserv.client.BackupPartition;
+import com.aoindustries.aoserv.client.BackupReport;
+import com.aoindustries.aoserv.client.BackupRetention;
+import com.aoindustries.aoserv.client.Bank;
+import com.aoindustries.aoserv.client.BankAccount;
+import com.aoindustries.aoserv.client.BankTransaction;
+import com.aoindustries.aoserv.client.BankTransactionType;
+import com.aoindustries.aoserv.client.BlackholeEmailAddress;
+import com.aoindustries.aoserv.client.Business;
+import com.aoindustries.aoserv.client.BusinessAdministrator;
+import com.aoindustries.aoserv.client.BusinessAdministratorPermission;
+import com.aoindustries.aoserv.client.BusinessProfile;
+import com.aoindustries.aoserv.client.BusinessServer;
+import com.aoindustries.aoserv.client.CountryCode;
+import com.aoindustries.aoserv.client.CreditCard;
+import com.aoindustries.aoserv.client.CvsRepository;
+import com.aoindustries.aoserv.client.DNSForbiddenZone;
+import com.aoindustries.aoserv.client.DNSRecord;
+import com.aoindustries.aoserv.client.DNSTLD;
+import com.aoindustries.aoserv.client.DNSType;
+import com.aoindustries.aoserv.client.DNSZone;
+import com.aoindustries.aoserv.client.DaemonProfile;
+import com.aoindustries.aoserv.client.DisableLog;
+import com.aoindustries.aoserv.client.DistroFile;
+import com.aoindustries.aoserv.client.DistroFileType;
+import com.aoindustries.aoserv.client.EmailAddress;
+import com.aoindustries.aoserv.client.EmailAttachmentBlock;
+import com.aoindustries.aoserv.client.EmailAttachmentType;
+import com.aoindustries.aoserv.client.EmailDomain;
+import com.aoindustries.aoserv.client.EmailForwarding;
+import com.aoindustries.aoserv.client.EmailList;
+import com.aoindustries.aoserv.client.EmailListAddress;
+import com.aoindustries.aoserv.client.EmailPipe;
+import com.aoindustries.aoserv.client.EmailPipeAddress;
+import com.aoindustries.aoserv.client.EmailSmtpRelay;
+import com.aoindustries.aoserv.client.EmailSmtpRelayType;
+import com.aoindustries.aoserv.client.EmailSpamAssassinIntegrationMode;
+import com.aoindustries.aoserv.client.EncryptionKey;
+import com.aoindustries.aoserv.client.ExpenseCategory;
+import com.aoindustries.aoserv.client.FTPGuestUser;
+import com.aoindustries.aoserv.client.FailoverFileLog;
+import com.aoindustries.aoserv.client.FailoverFileReplication;
+import com.aoindustries.aoserv.client.FailoverFileSchedule;
+import com.aoindustries.aoserv.client.FailoverMySQLReplication;
+import com.aoindustries.aoserv.client.FileBackup;
+import com.aoindustries.aoserv.client.FileBackupDevice;
+import com.aoindustries.aoserv.client.FileBackupRoot;
+import com.aoindustries.aoserv.client.FileBackupSetting;
+import com.aoindustries.aoserv.client.FileBackupStat;
+import com.aoindustries.aoserv.client.HttpdBind;
+import com.aoindustries.aoserv.client.HttpdJBossSite;
+import com.aoindustries.aoserv.client.HttpdJBossVersion;
+import com.aoindustries.aoserv.client.HttpdJKCode;
+import com.aoindustries.aoserv.client.HttpdJKProtocol;
+import com.aoindustries.aoserv.client.HttpdServer;
+import com.aoindustries.aoserv.client.HttpdSharedTomcat;
+import com.aoindustries.aoserv.client.HttpdSite;
+import com.aoindustries.aoserv.client.HttpdSiteAuthenticatedLocation;
+import com.aoindustries.aoserv.client.HttpdSiteBind;
+import com.aoindustries.aoserv.client.HttpdSiteURL;
+import com.aoindustries.aoserv.client.HttpdStaticSite;
+import com.aoindustries.aoserv.client.HttpdTomcatContext;
+import com.aoindustries.aoserv.client.HttpdTomcatDataSource;
+import com.aoindustries.aoserv.client.HttpdTomcatParameter;
+import com.aoindustries.aoserv.client.HttpdTomcatSharedSite;
+import com.aoindustries.aoserv.client.HttpdTomcatSite;
+import com.aoindustries.aoserv.client.HttpdTomcatStdSite;
+import com.aoindustries.aoserv.client.HttpdTomcatVersion;
+import com.aoindustries.aoserv.client.HttpdWorker;
+import com.aoindustries.aoserv.client.IPAddress;
+import com.aoindustries.aoserv.client.IncomingPayment;
+import com.aoindustries.aoserv.client.InterBaseBackup;
+import com.aoindustries.aoserv.client.InterBaseDBGroup;
+import com.aoindustries.aoserv.client.InterBaseDatabase;
+import com.aoindustries.aoserv.client.InterBaseReservedWord;
+import com.aoindustries.aoserv.client.InterBaseServerUser;
+import com.aoindustries.aoserv.client.InterBaseUser;
+import com.aoindustries.aoserv.client.LinuxAccAddress;
+import com.aoindustries.aoserv.client.LinuxAccount;
+import com.aoindustries.aoserv.client.LinuxAccountType;
+import com.aoindustries.aoserv.client.LinuxGroup;
+import com.aoindustries.aoserv.client.LinuxGroupAccount;
+import com.aoindustries.aoserv.client.LinuxGroupType;
+import com.aoindustries.aoserv.client.LinuxServerAccount;
+import com.aoindustries.aoserv.client.LinuxServerGroup;
+import com.aoindustries.aoserv.client.MajordomoList;
+import com.aoindustries.aoserv.client.MajordomoServer;
+import com.aoindustries.aoserv.client.MajordomoVersion;
+import com.aoindustries.aoserv.client.MasterHost;
+import com.aoindustries.aoserv.client.MasterServerProfile;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.MerchantAccount;
+import com.aoindustries.aoserv.client.MonthlyCharge;
+import com.aoindustries.aoserv.client.MySQLBackup;
+import com.aoindustries.aoserv.client.MySQLDBUser;
+import com.aoindustries.aoserv.client.MySQLDatabase;
+import com.aoindustries.aoserv.client.MySQLReservedWord;
+import com.aoindustries.aoserv.client.MySQLServer;
+import com.aoindustries.aoserv.client.MySQLServerUser;
+import com.aoindustries.aoserv.client.MySQLUser;
+import com.aoindustries.aoserv.client.NetBind;
+import com.aoindustries.aoserv.client.NetDevice;
+import com.aoindustries.aoserv.client.NetDeviceID;
+import com.aoindustries.aoserv.client.NetProtocol;
+import com.aoindustries.aoserv.client.NetTcpRedirect;
+import com.aoindustries.aoserv.client.NoticeLog;
+import com.aoindustries.aoserv.client.NoticeType;
+import com.aoindustries.aoserv.client.OperatingSystem;
+import com.aoindustries.aoserv.client.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.Package;
+import com.aoindustries.aoserv.client.PackageCategory;
+import com.aoindustries.aoserv.client.PackageDefinition;
+import com.aoindustries.aoserv.client.PackageDefinitionLimit;
+import com.aoindustries.aoserv.client.PaymentType;
+import com.aoindustries.aoserv.client.PhoneNumber;
+import com.aoindustries.aoserv.client.PostgresBackup;
+import com.aoindustries.aoserv.client.PostgresDatabase;
+import com.aoindustries.aoserv.client.PostgresEncoding;
+import com.aoindustries.aoserv.client.PostgresReservedWord;
+import com.aoindustries.aoserv.client.PostgresServer;
+import com.aoindustries.aoserv.client.PostgresServerUser;
+import com.aoindustries.aoserv.client.PostgresUser;
+import com.aoindustries.aoserv.client.PostgresVersion;
+import com.aoindustries.aoserv.client.PrivateFTPServer;
+import com.aoindustries.aoserv.client.Protocol;
+import com.aoindustries.aoserv.client.Resource;
+import com.aoindustries.aoserv.client.SRCpu;
+import com.aoindustries.aoserv.client.SRDbMySQL;
+import com.aoindustries.aoserv.client.SRDbPostgres;
+import com.aoindustries.aoserv.client.SRDiskAccess;
+import com.aoindustries.aoserv.client.SRDiskMDStat;
+import com.aoindustries.aoserv.client.SRDiskSpace;
+import com.aoindustries.aoserv.client.SRKernel;
+import com.aoindustries.aoserv.client.SRLoad;
+import com.aoindustries.aoserv.client.SRMemory;
+import com.aoindustries.aoserv.client.SRNetDevice;
+import com.aoindustries.aoserv.client.SRNetICMP;
+import com.aoindustries.aoserv.client.SRNetIP;
+import com.aoindustries.aoserv.client.SRNetTCP;
+import com.aoindustries.aoserv.client.SRNetUDP;
+import com.aoindustries.aoserv.client.SRNumUsers;
+import com.aoindustries.aoserv.client.SRPaging;
+import com.aoindustries.aoserv.client.SRProcesses;
+import com.aoindustries.aoserv.client.SRSwapRate;
+import com.aoindustries.aoserv.client.SRSwapSize;
+import com.aoindustries.aoserv.client.SchemaColumn;
+import com.aoindustries.aoserv.client.SchemaForeignKey;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.SchemaType;
+import com.aoindustries.aoserv.client.SendmailSmtpStat;
+import com.aoindustries.aoserv.client.Server;
+import com.aoindustries.aoserv.client.ServerFarm;
+import com.aoindustries.aoserv.client.ServerReport;
+import com.aoindustries.aoserv.client.Shell;
+import com.aoindustries.aoserv.client.SignupRequest;
+import com.aoindustries.aoserv.client.SignupRequestOption;
+import com.aoindustries.aoserv.client.SpamEmailMessage;
+import com.aoindustries.aoserv.client.SystemEmailAlias;
+import com.aoindustries.aoserv.client.Technology;
+import com.aoindustries.aoserv.client.TechnologyClass;
+import com.aoindustries.aoserv.client.TechnologyName;
+import com.aoindustries.aoserv.client.TechnologyVersion;
+import com.aoindustries.aoserv.client.Ticket;
+import com.aoindustries.aoserv.client.TicketPriority;
+import com.aoindustries.aoserv.client.TicketStatus;
+import com.aoindustries.aoserv.client.TicketType;
+import com.aoindustries.aoserv.client.TimeZone;
+import com.aoindustries.aoserv.client.Transaction;
+import com.aoindustries.aoserv.client.TransactionType;
+import com.aoindustries.aoserv.client.USState;
+import com.aoindustries.aoserv.client.Username;
+import com.aoindustries.aoserv.client.WhoisHistory;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.profiler.MethodProfile;
@@ -22,7 +204,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.aoindustries.aoserv.client.*;
 
 /**
  * The <code>TableHandler</code> handles all the accesses to the AOServ tables.
@@ -2925,6 +3106,56 @@ final public class TableHandler {
                         + "  and pk.accounting=bs.accounting\n"
                         + "  and bs.server=ffr.from_server\n"
                         + "  and ffr.pkey=ffs.replication",
+                        username
+                    );
+                    break;
+                case SchemaTable.FAILOVER_MYSQL_REPLICATIONS :
+                    if(masterUser!=null) {
+                        if(masterServers.length==0) MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new FailoverMySQLReplication(),
+                            "select * from failover_mysql_replications"
+                        ); else MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new FailoverMySQLReplication(),
+                            "select\n"
+                            + "  fmr.*\n"
+                            + "from\n"
+                            + "  master_servers ms,\n"
+                            + "  failover_file_replications ffr,\n"
+                            + "  failover_mysql_replications fmr\n"
+                            + "where\n"
+                            + "  ms.username=?\n"
+                            + "  and ms.server=ffr.from_server\n"
+                            + "  and ffr.pkey=fmr.replication",
+                            username
+                        );
+                    } else MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new FailoverMySQLReplication(),
+                        "select\n"
+                        + "  fmr.*\n"
+                        + "from\n"
+                        + "  usernames un,\n"
+                        + "  packages pk,\n"
+                        + "  business_servers bs,\n"
+                        + "  failover_file_replications ffr,\n"
+                        + "  failover_mysql_replications fmr\n"
+                        + "where\n"
+                        + "  un.username=?\n"
+                        + "  and un.package=pk.name\n"
+                        + "  and pk.accounting=bs.accounting\n"
+                        + "  and bs.server=ffr.from_server\n"
+                        + "  and ffr.pkey=fmr.replication",
                         username
                     );
                     break;
