@@ -149,7 +149,7 @@ final public class CvsHandler {
                 );
 		invalidateList.addTable(
                     conn,
-                    SchemaTable.CVS_REPOSITORIES,
+                    SchemaTable.TableID.CVS_REPOSITORIES,
                     LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
                     ServerHandler.getHostnameForServer(conn, aoServer),
                     false
@@ -187,7 +187,7 @@ final public class CvsHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.CVS_REPOSITORIES,
+                SchemaTable.TableID.CVS_REPOSITORIES,
                 LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
                 ServerHandler.getHostnameForServer(conn, LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa)),
                 false
@@ -220,7 +220,7 @@ final public class CvsHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.CVS_REPOSITORIES,
+                SchemaTable.TableID.CVS_REPOSITORIES,
                 LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
                 ServerHandler.getHostnameForServer(conn, LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa)),
                 false
@@ -248,10 +248,10 @@ final public class CvsHandler {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, CvsHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, CvsHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
-            if(tableID==SchemaTable.CVS_REPOSITORIES) {
+            if(tableID==SchemaTable.TableID.CVS_REPOSITORIES) {
                 synchronized(CvsHandler.class) {
                     disabledCvsRepositories.clear();
                 }
@@ -320,7 +320,7 @@ final public class CvsHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.CVS_REPOSITORIES,
+                SchemaTable.TableID.CVS_REPOSITORIES,
                 LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -352,7 +352,7 @@ final public class CvsHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.CVS_REPOSITORIES,
+                SchemaTable.TableID.CVS_REPOSITORIES,
                 LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
                 ServerHandler.getHostnameForServer(conn, LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa)),
                 false
@@ -395,7 +395,7 @@ final public class CvsHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.CVS_REPOSITORIES,
+                SchemaTable.TableID.CVS_REPOSITORIES,
                 LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
                 ServerHandler.getHostnameForServer(conn, LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa)),
                 false

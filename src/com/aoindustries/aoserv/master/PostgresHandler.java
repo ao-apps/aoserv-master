@@ -203,7 +203,7 @@ final public class PostgresHandler {
             // Notify all clients of the update, the server will detect this change and automatically add the database
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_DATABASES,
+                SchemaTable.TableID.POSTGRES_DATABASES,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -247,7 +247,7 @@ final public class PostgresHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_SERVER_USERS,
+                SchemaTable.TableID.POSTGRES_SERVER_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 true
@@ -282,7 +282,7 @@ final public class PostgresHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_USERS,
+                SchemaTable.TableID.POSTGRES_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 InvalidateList.allServers,
                 false
@@ -412,7 +412,7 @@ final public class PostgresHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_BACKUPS,
+                SchemaTable.TableID.POSTGRES_BACKUPS,
                 PackageHandler.getBusinessForPackage(conn, packageNum),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -445,7 +445,7 @@ final public class PostgresHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_SERVER_USERS,
+                SchemaTable.TableID.POSTGRES_SERVER_USERS,
                 getBusinessForPostgresServerUser(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForPostgresServerUser(conn, pkey)),
                 false
@@ -484,7 +484,7 @@ final public class PostgresHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_USERS,
+                SchemaTable.TableID.POSTGRES_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 UsernameHandler.getServersForUsername(conn, username),
                 false
@@ -537,7 +537,7 @@ final public class PostgresHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_SERVER_USERS,
+                SchemaTable.TableID.POSTGRES_SERVER_USERS,
                 UsernameHandler.getBusinessForUsername(conn, pu),
                 ServerHandler.getHostnameForServer(conn, getAOServerForPostgresServerUser(conn, pkey)),
                 false
@@ -569,7 +569,7 @@ final public class PostgresHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_USERS,
+                SchemaTable.TableID.POSTGRES_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 UsernameHandler.getServersForUsername(conn, username),
                 false
@@ -672,21 +672,21 @@ final public class PostgresHandler {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, PostgresHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, PostgresHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
             switch(tableID) {
-                case SchemaTable.POSTGRES_RESERVED_WORDS :
+                case POSTGRES_RESERVED_WORDS :
                     synchronized(reservedWordLock) {
                         reservedWordCache=null;
                     }
                     break;
-                case SchemaTable.POSTGRES_SERVER_USERS :
+                case POSTGRES_SERVER_USERS :
                     synchronized(PostgresHandler.class) {
                         disabledPostgresServerUsers.clear();
                     }
                     break;
-                case SchemaTable.POSTGRES_USERS :
+                case POSTGRES_USERS :
                     synchronized(PostgresHandler.class) {
                         disabledPostgresUsers.clear();
                     }
@@ -876,7 +876,7 @@ final public class PostgresHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_BACKUPS,
+                SchemaTable.TableID.POSTGRES_BACKUPS,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, dbServer),
                 false
@@ -923,7 +923,7 @@ final public class PostgresHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_DATABASES,
+                SchemaTable.TableID.POSTGRES_DATABASES,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -963,7 +963,7 @@ final public class PostgresHandler {
             // Notify all clients of the updates
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_SERVER_USERS,
+                SchemaTable.TableID.POSTGRES_SERVER_USERS,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 true
@@ -1011,7 +1011,7 @@ final public class PostgresHandler {
                 conn.executeUpdate("delete from postgres_server_users where username=?", username);
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.POSTGRES_SERVER_USERS,
+                    SchemaTable.TableID.POSTGRES_SERVER_USERS,
                     accounting,
                     aoServers,
                     false
@@ -1022,7 +1022,7 @@ final public class PostgresHandler {
             conn.executeUpdate("delete from postgres_users where username=?", username);
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_USERS,
+                SchemaTable.TableID.POSTGRES_USERS,
                 accounting,
                 BusinessHandler.getServersForBusiness(conn, accounting),
                 false
@@ -1053,7 +1053,7 @@ final public class PostgresHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_DATABASES,
+                SchemaTable.TableID.POSTGRES_DATABASES,
                 getBusinessForPostgresDatabase(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForPostgresDatabase(conn, pkey)),
                 false
@@ -1074,7 +1074,7 @@ final public class PostgresHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "setPostgresServerUserPassword(MasterDatabaseConnection,RequestSource,int,String)", null);
         try {
-            BusinessHandler.checkPermission(conn, source, "setPostgresServerUserPassword", AOServPermission.SET_POSTGRES_SERVER_USER_PASSWORD);
+            BusinessHandler.checkPermission(conn, source, "setPostgresServerUserPassword", AOServPermission.Permission.set_postgres_server_user_password);
             checkAccessPostgresServerUser(conn, source, "setPostgresServerUserPassword", postgres_server_user);
             if(isPostgresServerUserDisabled(conn, postgres_server_user)) throw new SQLException("Unable to set PostgresServerUser password, account disabled: "+postgres_server_user);
 
@@ -1087,8 +1087,8 @@ final public class PostgresHandler {
 
             // Perform the password check here, too.
             if(password!=PostgresUser.NO_PASSWORD) {
-                PasswordChecker.Result[] results = PostgresUser.checkPassword(username, password);
-                if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
+                PasswordChecker.Result[] results = PostgresUser.checkPassword(Locale.getDefault(), username, password);
+                if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
             }
 
             // Contact the daemon for the update
@@ -1123,7 +1123,7 @@ final public class PostgresHandler {
             
             invalidateList.addTable(
                 conn,
-                SchemaTable.POSTGRES_SERVER_USERS,
+                SchemaTable.TableID.POSTGRES_SERVER_USERS,
                 getBusinessForPostgresServerUser(conn, psu),
                 ServerHandler.getHostnameForServer(conn, getAOServerForPostgresServerUser(conn, psu)),
                 false

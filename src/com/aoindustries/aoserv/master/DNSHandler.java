@@ -149,7 +149,7 @@ final public class DNSHandler implements CronJob {
                                 + "    and (ab.accounting is null or ab.balance<='0.00'::decimal(9,2))"
                                 + ")"
                             );
-                            if(updated>0) invalidateList.addTable(conn, SchemaTable.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                            if(updated>0) invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
                             // Closed account that have a balance of $0.00, has not had any accounting transactions for one year, and entry is older than one year
                             updated = conn.executeUpdate(
@@ -171,7 +171,7 @@ final public class DNSHandler implements CronJob {
                                 + "    and (ab.accounting is null or ab.balance='0.00'::decimal(9,2))"
                                 + ")"
                             );
-                            if(updated>0) invalidateList.addTable(conn, SchemaTable.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                            if(updated>0) invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
                             /*
                              * The add new records
@@ -200,7 +200,7 @@ final public class DNSHandler implements CronJob {
                                 String zone = aaz.getZone();
                                 String whoisOutput = whoisOutputs.get(zone);
                                 conn.executeUpdate("insert into whois_history (accounting, zone, whois_output) values(?,?,?)", accounting, zone, whoisOutput);
-                                invalidateList.addTable(conn, SchemaTable.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                                invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
                             }
                         } catch(IOException err) {
                             if(conn.rollbackAndClose()) {
@@ -407,7 +407,7 @@ final public class DNSHandler implements CronJob {
             } finally {
                 pstmt.close();
             }
-            invalidateList.addTable(conn, SchemaTable.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
             // Update the serial of the zone
             updateDNSZoneSerial(conn, invalidateList, zone);
@@ -545,8 +545,8 @@ final public class DNSHandler implements CronJob {
             }
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -578,7 +578,7 @@ final public class DNSHandler implements CronJob {
             } finally {
                 pstmt.close();
             }
-            invalidateList.addTable(conn, SchemaTable.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
             // Update the serial of the zone
             updateDNSZoneSerial(conn, invalidateList, zone);
@@ -638,8 +638,8 @@ final public class DNSHandler implements CronJob {
             }
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -675,7 +675,7 @@ final public class DNSHandler implements CronJob {
                     );
                     invalidateList.addTable(
                         conn,
-                        SchemaTable.DNS_RECORDS,
+                        SchemaTable.TableID.DNS_RECORDS,
                         getBusinessForDNSZone(conn, tldPlus1),
                         getDNSServers(conn),
                         false
@@ -851,11 +851,11 @@ final public class DNSHandler implements CronJob {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, DNSHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, DNSHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
             switch(tableID) {
-                case SchemaTable.DNS_TLDS :
+                case DNS_TLDS :
                     synchronized(dnstldLock) {
                         dnstldCache=null;
                     }
@@ -903,7 +903,7 @@ final public class DNSHandler implements CronJob {
                         conn.executeUpdate("delete from dns_records where pkey=?", pkey);
                         invalidateList.addTable(
                             conn,
-                            SchemaTable.DNS_RECORDS,
+                            SchemaTable.TableID.DNS_RECORDS,
                             getBusinessForDNSZone(conn, tldPlus1),
                             getDNSServers(conn),
                             false
@@ -937,7 +937,7 @@ final public class DNSHandler implements CronJob {
             conn.executeUpdate("update dns_zones set ttl=? where zone=?", ttl, zone);
             invalidateList.addTable(
                 conn,
-                SchemaTable.DNS_ZONES,
+                SchemaTable.TableID.DNS_ZONES,
                 getBusinessForDNSZone(conn, zone),
                 getDNSServers(conn),
                 false
@@ -972,7 +972,7 @@ final public class DNSHandler implements CronJob {
             // Invalidate the records
             invalidateList.addTable(
                 conn,
-                SchemaTable.DNS_RECORDS,
+                SchemaTable.TableID.DNS_RECORDS,
                 InvalidateList.allBusinesses,
                 InvalidateList.allServers,
                 false
@@ -1015,7 +1015,7 @@ final public class DNSHandler implements CronJob {
             conn.executeUpdate("update dns_zones set serial=? where zone=?", serial, zone);
             invalidateList.addTable(
                 conn,
-                SchemaTable.DNS_ZONES,
+                SchemaTable.TableID.DNS_ZONES,
                 InvalidateList.allBusinesses,
                 InvalidateList.allServers,
                 false
@@ -1057,7 +1057,7 @@ final public class DNSHandler implements CronJob {
                         arpaZone,
                         oct4
                     );
-                    invalidateList.addTable(conn, SchemaTable.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
                 }
             }
         } finally {

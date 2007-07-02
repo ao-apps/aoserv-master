@@ -184,7 +184,7 @@ final public class NetBindHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.NET_BINDS,
+                SchemaTable.TableID.NET_BINDS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -327,7 +327,7 @@ final public class NetBindHandler {
             }
             invalidateList.addTable(
                 conn,
-                SchemaTable.NET_BINDS,
+                SchemaTable.TableID.NET_BINDS,
                 PackageHandler.getBusinessForPackage(conn, pack),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -439,7 +439,7 @@ final public class NetBindHandler {
                 conn.executeUpdate("delete from net_tcp_redirects where net_bind=?", pkey);
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.NET_TCP_REDIRECTS,
+                    SchemaTable.TableID.NET_TCP_REDIRECTS,
                     business,
                     ServerHandler.getHostnameForServer(conn, aoServer),
                     false
@@ -450,7 +450,7 @@ final public class NetBindHandler {
                 conn.executeUpdate("delete from private_ftp_servers where net_bind=?", pkey);
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.PRIVATE_FTP_SERVERS,
+                    SchemaTable.TableID.PRIVATE_FTP_SERVERS,
                     business,
                     ServerHandler.getHostnameForServer(conn, aoServer),
                     false
@@ -460,7 +460,7 @@ final public class NetBindHandler {
             conn.executeUpdate("delete from net_binds where pkey=?", pkey);
             invalidateList.addTable(
                 conn,
-                SchemaTable.NET_BINDS,
+                SchemaTable.TableID.NET_BINDS,
                 business,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -485,7 +485,7 @@ final public class NetBindHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.NET_BINDS,
+                SchemaTable.TableID.NET_BINDS,
                 getBusinessForNetBind(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForNetBind(conn, pkey)),
                 false
@@ -510,7 +510,7 @@ final public class NetBindHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.NET_BINDS,
+                SchemaTable.TableID.NET_BINDS,
                 getBusinessForNetBind(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForNetBind(conn, pkey)),
                 false

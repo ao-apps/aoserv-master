@@ -67,7 +67,7 @@ final public class FailoverHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.FAILOVER_FILE_LOG,
+                SchemaTable.TableID.FAILOVER_FILE_LOG,
                 ServerHandler.getBusinessesForServer(conn, aoServer),
                 aoServer,
                 false
@@ -118,7 +118,7 @@ final public class FailoverHandler implements CronJob {
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.FAILOVER_FILE_REPLICATIONS,
+                SchemaTable.TableID.FAILOVER_FILE_REPLICATIONS,
                 ServerHandler.getBusinessesForServer(conn, aoServer),
                 aoServer,
                 false

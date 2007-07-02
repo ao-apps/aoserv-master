@@ -91,8 +91,8 @@ final public class UsernameHandler {
 
             // Notify all clients of the update
             String accounting=PackageHandler.getBusinessForPackage(conn, packageName);
-            invalidateList.addTable(conn, SchemaTable.USERNAMES, accounting, InvalidateList.allServers, false);
-            //invalidateList.addTable(conn, SchemaTable.PACKAGES, accounting, null);
+            invalidateList.addTable(conn, SchemaTable.TableID.USERNAMES, accounting, InvalidateList.allServers, false);
+            //invalidateList.addTable(conn, SchemaTable.TableID.PACKAGES, accounting, null);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -136,7 +136,7 @@ final public class UsernameHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.USERNAMES,
+                SchemaTable.TableID.USERNAMES,
                 getBusinessForUsername(conn, username),
                 getServersForUsername(conn, username),
                 false
@@ -169,7 +169,7 @@ final public class UsernameHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.USERNAMES,
+                SchemaTable.TableID.USERNAMES,
                 getBusinessForUsername(conn, username),
                 getServersForUsername(conn, username),
                 false
@@ -188,10 +188,10 @@ final public class UsernameHandler {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, UsernameHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, UsernameHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
-            if(tableID==SchemaTable.USERNAMES) {
+            if(tableID==SchemaTable.TableID.USERNAMES) {
                 synchronized(disabledUsernames) {
                     disabledUsernames.clear();
                 }
@@ -259,7 +259,7 @@ final public class UsernameHandler {
             conn.executeUpdate("delete from usernames where username=?", username);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.USERNAMES, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.USERNAMES, accounting, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }

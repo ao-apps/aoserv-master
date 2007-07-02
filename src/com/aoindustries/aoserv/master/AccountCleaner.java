@@ -152,7 +152,7 @@ final public class AccountCleaner implements CronJob {
                                             + "  )",
                                             now
                                         );
-                                        invalidateList.addTable(conn, SchemaTable.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                                        invalidateList.addTable(conn, SchemaTable.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
                                     }
 
                                     // Those that are older than BackupReport.SendmailSmtpStat.MAX_REPORT_AGE
@@ -181,7 +181,7 @@ final public class AccountCleaner implements CronJob {
                                             + "  (?::date-date)>"+BackupReport.MAX_REPORT_AGE,
                                             now
                                         );
-                                        invalidateList.addTable(conn, SchemaTable.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                                        invalidateList.addTable(conn, SchemaTable.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
                                     }
                                 }
 
@@ -935,7 +935,7 @@ final public class AccountCleaner implements CronJob {
                                             + "  )",
                                             now
                                         );
-                                        invalidateList.addTable(conn, SchemaTable.SENDMAIL_SMTP_STATS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                                        invalidateList.addTable(conn, SchemaTable.TableID.SENDMAIL_SMTP_STATS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
                                     }
 
                                     // Those that are older than SendmailSmtpStat.MAX_STATISTICS_AGE
@@ -964,7 +964,7 @@ final public class AccountCleaner implements CronJob {
                                             + "  (?::date-date)>"+SendmailSmtpStat.MAX_STATISTICS_AGE,
                                             now
                                         );
-                                        invalidateList.addTable(conn, SchemaTable.SENDMAIL_SMTP_STATS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                                        invalidateList.addTable(conn, SchemaTable.TableID.SENDMAIL_SMTP_STATS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
                                     }
                                 }
 

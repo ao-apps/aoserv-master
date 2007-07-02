@@ -20,6 +20,7 @@ final public class CreditCardHandler {
     public static void checkAccessCreditCard(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, CreditCardHandler.class, "checkAccessCreditCard(MasterDatabaseConnection,RequestSource,String,int)", null);
         try {
+            BusinessHandler.checkPermission(conn, source, action, AOServPermission.Permission.get_credit_cards);
             BusinessHandler.checkAccessBusiness(
                 conn,
                 source,
@@ -53,54 +54,56 @@ final public class CreditCardHandler {
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,
-        byte[] cardNumber,
         String cardInfo,
-        byte[] expirationMonth,
-        byte[] expirationYear,
-        byte[] cardholderName,
-        byte[] streetAddress,
-        byte[] city,
-        byte[] state,
-        byte[] zip,
-        boolean useMonthly,
+        String processorName,
+        String providerUniqueId,
+        String firstName,
+        String lastName,
+        String companyName,
+        String email,
+        String phone,
+        String fax,
+        String customerTaxId,
+        String streetAddress1,
+        String streetAddress2,
+        String city,
+        String state,
+        String postalCode,
+        String countryCode,
         String description
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "addCreditCard(MasterDatabaseConnection,RequestSource,InvalidateList,String,byte[],String,byte[],byte[],byte[],byte[],byte[],byte[],byte[],boolean,String)", null);
-        try {
-            BusinessHandler.checkAccessBusiness(conn, source, "createBusinessProfile", accounting);
+        BusinessHandler.checkPermission(conn, source, "addCreditCard", AOServPermission.Permission.add_credit_card);
+        BusinessHandler.checkAccessBusiness(conn, source, "addCreditCard", accounting);
 
-            int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('credit_cards_pkey_seq')");
+        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('credit_cards_pkey_seq')");
 
-            int nextPriority=conn.executeIntQuery("select (coalesce(max(priority), 0))+1 from credit_cards where accounting=?", accounting);
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into credit_cards values(?,?,?,?,?,?,?,?,?,?,?,now(),?,?,true,null,null,?,?)");
-            try {
-                pstmt.setInt(1, pkey);
-                pstmt.setString(2, accounting);
-                pstmt.setString(3, new String(cardNumber));
-                pstmt.setString(4, cardInfo);
-                pstmt.setString(5, new String(expirationMonth));
-                pstmt.setString(6, new String(expirationYear));
-                pstmt.setString(7, new String(cardholderName));
-                pstmt.setString(8, new String(streetAddress));
-                pstmt.setString(9, new String(city));
-                pstmt.setString(10, state==null?null:new String(state));
-                pstmt.setString(11, zip==null?null:new String(zip));
-                pstmt.setString(12, source.getUsername());
-                pstmt.setBoolean(13, useMonthly);
-                pstmt.setInt(14, nextPriority);
-                pstmt.setString(15, description);
-                conn.incrementUpdateCount();
-                pstmt.executeUpdate();
-            } finally {
-                pstmt.close();
-            }
+        conn.executeUpdate(
+            "insert into credit_cards values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,false,true,null,null,?)",
+            pkey,
+            accounting,
+            cardInfo,
+            processorName,
+            providerUniqueId,
+            firstName,
+            lastName,
+            companyName,
+            email,
+            phone,
+            fax,
+            customerTaxId,
+            streetAddress1,
+            streetAddress2,
+            city,
+            state,
+            postalCode,
+            countryCode,
+            source.getUsername(),
+            description
+        );
 
-            // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.CREDIT_CARDS, accounting, InvalidateList.allServers, false);
-            return pkey;
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        // Notify all clients of the update
+        invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARDS, accounting, InvalidateList.allServers, false);
+        return pkey;
     }
 
     public static void creditCardDeclined(
@@ -124,7 +127,7 @@ final public class CreditCardHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.CREDIT_CARDS,
+                SchemaTable.TableID.CREDIT_CARDS,
                 CreditCardHandler.getBusinessForCreditCard(conn, pkey),
                 InvalidateList.allServers,
                 false
@@ -160,6 +163,7 @@ final public class CreditCardHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, CreditCardHandler.class, "removeCreditCard(MasterDatabaseConnection,RequestSource,InvalidateList,int)", null);
         try {
+            BusinessHandler.checkPermission(conn, source, "removeCreditCard", AOServPermission.Permission.delete_credit_card);
             checkAccessCreditCard(conn, source, "removeCreditCard", pkey);
 
             removeCreditCard(conn, invalidateList, pkey);
@@ -183,7 +187,7 @@ final public class CreditCardHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.CREDIT_CARDS,
+                SchemaTable.TableID.CREDIT_CARDS,
                 business,
                 BusinessHandler.getServersForBusiness(conn, business),
                 false

@@ -116,7 +116,7 @@ final public class BusinessHandler {
             );
             
             // Notify the clients
-            invalidateList.addTable(conn, SchemaTable.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -230,8 +230,8 @@ final public class BusinessHandler {
     private static Map<String,Set<String>> cachedPermissions;
     private static final Object cachedPermissionsLock = new Object();
 
-    public static boolean hasPermission(MasterDatabaseConnection conn, RequestSource source, String permission) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "hasPermission(MasterDatabaseConnection,RequestSource,String)", null);
+    public static boolean hasPermission(MasterDatabaseConnection conn, RequestSource source, AOServPermission.Permission permission) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "hasPermission(MasterDatabaseConnection,RequestSource,AOServPermission.Permission)", null);
         try {
             synchronized(cachedPermissionsLock) {
                 if(cachedPermissions==null) {
@@ -252,21 +252,21 @@ final public class BusinessHandler {
 		    }
                 }
                 Set<String> permissions = cachedPermissions.get(source.getUsername());
-                return permissions!=null && permissions.contains(permission);
+                return permissions!=null && permissions.contains(permission.name());
             }
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
 
-    public static void checkPermission(MasterDatabaseConnection conn, RequestSource source, String action, String permission) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, BusinessHandler.class, "checkPermission(MasterDatabaseConnection,RequestSource,String,String)", null);
+    public static void checkPermission(MasterDatabaseConnection conn, RequestSource source, String action, AOServPermission.Permission permission) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.FAST, BusinessHandler.class, "checkPermission(MasterDatabaseConnection,RequestSource,String,AOServPermission.Permission)", null);
         try {
             if(!hasPermission(conn, source, permission)) {
                 String message=
                     "business_administrator.username="
                     +source.getUsername()
-                    +" does not have the \""+permission+"\" permission.  Not allowed to make the following call: "
+                    +" does not have the \""+permission.name()+"\" permission.  Not allowed to make the following call: "
                     +action
                 ;
                 MasterServer.reportSecurityMessage(source, message);
@@ -431,8 +431,8 @@ final public class BusinessHandler {
             );
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.BUSINESSES, accounting, defaultServer, false);
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_SERVERS, accounting, defaultServer, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accounting, defaultServer, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accounting, defaultServer, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -509,8 +509,8 @@ final public class BusinessHandler {
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
             
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_ADMINISTRATOR_PERMISSIONS, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATOR_PERMISSIONS, accounting, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -600,7 +600,7 @@ final public class BusinessHandler {
                 pstmt.close();
             }
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_PROFILES, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_PROFILES, accounting, InvalidateList.allServers, false);
             return pkey;
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
@@ -703,9 +703,9 @@ final public class BusinessHandler {
             );
             
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_SERVERS, accounting, server, false);
-            invalidateList.addTable(conn, SchemaTable.SERVERS, accounting, server, false);
-            invalidateList.addTable(conn, SchemaTable.AO_SERVERS, accounting, server, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accounting, server, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accounting, server, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, accounting, server, false);
             return pkey;
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
@@ -739,7 +739,7 @@ final public class BusinessHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.DISABLE_LOG,
+                SchemaTable.TableID.DISABLE_LOG,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -803,7 +803,7 @@ final public class BusinessHandler {
             }
             
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.NOTICE_LOG, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.NOTICE_LOG, accounting, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -837,7 +837,7 @@ final public class BusinessHandler {
             );
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -864,7 +864,7 @@ final public class BusinessHandler {
 
             // Notify all clients of the update
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_ADMINISTRATORS, accounting, getServersForBusiness(conn, accounting), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, getServersForBusiness(conn, accounting), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -892,7 +892,7 @@ final public class BusinessHandler {
             );
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -919,7 +919,7 @@ final public class BusinessHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.BUSINESS_ADMINISTRATORS,
+                SchemaTable.TableID.BUSINESS_ADMINISTRATORS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 UsernameHandler.getServersForUsername(conn, username),
                 false
@@ -1101,7 +1101,7 @@ final public class BusinessHandler {
             conn.executeUpdate("delete from business_administrators where username=?", username);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1513,9 +1513,9 @@ final public class BusinessHandler {
             }
             
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_SERVERS, accounting, server, false);
-            invalidateList.addTable(conn, SchemaTable.SERVERS, accounting, server, false);
-            invalidateList.addTable(conn, SchemaTable.AO_SERVERS, accounting, server, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accounting, server, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accounting, server, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, accounting, server, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1533,7 +1533,7 @@ final public class BusinessHandler {
             conn.executeUpdate("delete from disable_log where pkey=?", pkey);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.DISABLE_LOG, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.DISABLE_LOG, accounting, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1555,18 +1555,18 @@ final public class BusinessHandler {
 
             // Notify all clients of the update
             Collection<String> accts=InvalidateList.getCollection(oldAccounting, newAccounting);
-            invalidateList.addTable(conn, SchemaTable.BUSINESSES, accts, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_PROFILES, accts, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_SERVERS, accts, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.CREDIT_CARDS, accts, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.DISABLE_LOG, accts, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.MONTHLY_CHARGES, accts, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.NOTICE_LOG, accts, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.PACKAGE_DEFINITIONS, accts, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.PACKAGES, accts, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.SERVERS, accts, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.TICKETS, accts, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.TRANSACTIONS, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_PROFILES, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARDS, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.DISABLE_LOG, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.MONTHLY_CHARGES, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.NOTICE_LOG, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.PACKAGE_DEFINITIONS, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.PACKAGES, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, accts, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accts, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1582,7 +1582,7 @@ final public class BusinessHandler {
         Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "setBusinessAdministratorPassword(MasterDatabaseConnection,RequestSource,InvalidateList,String,String)", null);
         try {
             // An administrator may always reset their own passwords
-            if(!username.equals(source.getUsername())) checkPermission(conn, source, "setBusinessAdministratorPassword", AOServPermission.SET_BUSINESS_ADMINISTRATOR_PASSWORD);
+            if(!username.equals(source.getUsername())) checkPermission(conn, source, "setBusinessAdministratorPassword", AOServPermission.Permission.set_business_administrator_password);
 
             UsernameHandler.checkAccessUsername(conn, source, "setBusinessAdministratorPassword", username);
             if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set password for BusinessAdministrator named '"+LinuxAccount.MAIL+'\'');
@@ -1591,8 +1591,8 @@ final public class BusinessHandler {
 
             if(plaintext!=null && plaintext.length()>0) {
                 // Perform the password check here, too.
-                PasswordChecker.Result[] results=BusinessAdministrator.checkPassword(username, plaintext);
-                if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
+                PasswordChecker.Result[] results=BusinessAdministrator.checkPassword(Locale.getDefault(), username, plaintext);
+                if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
             }
 
             String encrypted=plaintext==null || plaintext.length()==0?BusinessAdministrator.NO_PASSWORD:UnixCrypt.crypt(plaintext);
@@ -1601,7 +1601,7 @@ final public class BusinessHandler {
             conn.executeUpdate("update business_administrators set password=? where username=?", encrypted, username);
             
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1663,7 +1663,7 @@ final public class BusinessHandler {
             );
             
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1700,7 +1700,7 @@ final public class BusinessHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.BUSINESS_SERVERS,
+                SchemaTable.TableID.BUSINESS_SERVERS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -1737,10 +1737,10 @@ final public class BusinessHandler {
         }
     }
     
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, BusinessHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, BusinessHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
-            if(tableID==SchemaTable.BUSINESS_ADMINISTRATORS) {
+            if(tableID==SchemaTable.TableID.BUSINESS_ADMINISTRATORS) {
                 synchronized(businessAdministratorsLock) {
                     businessAdministrators=null;
                 }
@@ -1750,14 +1750,14 @@ final public class BusinessHandler {
                 synchronized(businessAdministratorDisableLogs) {
                     businessAdministratorDisableLogs.clear();
                 }
-            } else if(tableID==SchemaTable.BUSINESSES) {
+            } else if(tableID==SchemaTable.TableID.BUSINESSES) {
                 synchronized(usernameBusinessesLock) {
                     usernameBusinesses=null;
                 }
                 synchronized(disabledBusinesses) {
                     disabledBusinesses.clear();
                 }
-            } else if(tableID==SchemaTable.BUSINESS_ADMINISTRATOR_PERMISSIONS) {
+            } else if(tableID==SchemaTable.TableID.BUSINESS_ADMINISTRATOR_PERMISSIONS) {
                 synchronized(cachedPermissionsLock) {
                     cachedPermissions = null;
                 }

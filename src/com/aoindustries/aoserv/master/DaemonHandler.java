@@ -280,13 +280,13 @@ final public class DaemonHandler {
     
     private static final Map<Integer,Long> downDaemons=new HashMap<Integer,Long>();
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, DaemonHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, DaemonHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
             if(
-                tableID==SchemaTable.AO_SERVERS
-                || tableID==SchemaTable.IP_ADDRESSES
-                || tableID==SchemaTable.NET_BINDS
+                tableID==SchemaTable.TableID.AO_SERVERS
+                || tableID==SchemaTable.TableID.IP_ADDRESSES
+                || tableID==SchemaTable.TableID.NET_BINDS
             ) {
                 synchronized(DaemonHandler.class) {
                     connectors.clear();

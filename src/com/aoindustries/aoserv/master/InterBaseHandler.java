@@ -75,7 +75,7 @@ final public class InterBaseHandler {
             // Notify all clients of the update, the server will detect this change and automatically add the database
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_DATABASES,
+                SchemaTable.TableID.INTERBASE_DATABASES,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -147,7 +147,7 @@ final public class InterBaseHandler {
             // Invalidate caches
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_DB_GROUPS,
+                SchemaTable.TableID.INTERBASE_DB_GROUPS,
                 LinuxAccountHandler.getBusinessForLinuxServerGroup(conn, lsg),
                 server,
                 false
@@ -188,7 +188,7 @@ final public class InterBaseHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_SERVER_USERS,
+                SchemaTable.TableID.INTERBASE_SERVER_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 true
@@ -233,7 +233,7 @@ final public class InterBaseHandler {
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_USERS,
+                SchemaTable.TableID.INTERBASE_USERS,
                 accounting,
                 BusinessHandler.getServersForBusiness(conn, accounting),
                 false
@@ -316,7 +316,7 @@ final public class InterBaseHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_BACKUPS,
+                SchemaTable.TableID.INTERBASE_BACKUPS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -470,7 +470,7 @@ final public class InterBaseHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_SERVER_USERS,
+                SchemaTable.TableID.INTERBASE_SERVER_USERS,
                 getBusinessForInterBaseServerUser(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForInterBaseServerUser(conn, pkey)),
                 false
@@ -511,7 +511,7 @@ final public class InterBaseHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_USERS,
+                SchemaTable.TableID.INTERBASE_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 UsernameHandler.getServersForUsername(conn, username),
                 false
@@ -564,7 +564,7 @@ final public class InterBaseHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_SERVER_USERS,
+                SchemaTable.TableID.INTERBASE_SERVER_USERS,
                 UsernameHandler.getBusinessForUsername(conn, iu),
                 ServerHandler.getHostnameForServer(conn, getAOServerForInterBaseServerUser(conn, pkey)),
                 false
@@ -596,7 +596,7 @@ final public class InterBaseHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_USERS,
+                SchemaTable.TableID.INTERBASE_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 UsernameHandler.getServersForUsername(conn, username),
                 false
@@ -919,21 +919,21 @@ final public class InterBaseHandler {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, InterBaseHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, InterBaseHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
             switch(tableID) {
-                case SchemaTable.INTERBASE_RESERVED_WORDS :
+                case INTERBASE_RESERVED_WORDS :
                     synchronized(reservedWordLock) {
                         reservedWordCache=null;
                     }
                     break;
-                case SchemaTable.INTERBASE_SERVER_USERS :
+                case INTERBASE_SERVER_USERS :
                     synchronized(InterBaseHandler.class) {
                         disabledInterBaseServerUsers.clear();
                     }
                     break;
-                case SchemaTable.INTERBASE_USERS :
+                case INTERBASE_USERS :
                     synchronized(InterBaseHandler.class) {
                         disabledInterBaseUsers.clear();
                     }
@@ -1149,7 +1149,7 @@ final public class InterBaseHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_BACKUPS,
+                SchemaTable.TableID.INTERBASE_BACKUPS,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -1200,7 +1200,7 @@ final public class InterBaseHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_DATABASES,
+                SchemaTable.TableID.INTERBASE_DATABASES,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -1247,7 +1247,7 @@ final public class InterBaseHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_DB_GROUPS,
+                SchemaTable.TableID.INTERBASE_DB_GROUPS,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -1281,7 +1281,7 @@ final public class InterBaseHandler {
             // Notify all clients of the updates
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_SERVER_USERS,
+                SchemaTable.TableID.INTERBASE_SERVER_USERS,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 true
@@ -1330,7 +1330,7 @@ final public class InterBaseHandler {
                 conn.executeUpdate("delete from interbase_server_users where username=?", username);
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.INTERBASE_SERVER_USERS,
+                    SchemaTable.TableID.INTERBASE_SERVER_USERS,
                     accounting,
                     aoServers,
                     false
@@ -1341,7 +1341,7 @@ final public class InterBaseHandler {
             conn.executeUpdate("delete from interbase_users where username=?", username);
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_USERS,
+                SchemaTable.TableID.INTERBASE_USERS,
                 accounting,
                 BusinessHandler.getServersForBusiness(conn, accounting),
                 false
@@ -1377,7 +1377,7 @@ final public class InterBaseHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, InterBaseHandler.class, "setInterBaseServerUserPassword(MasterDatabaseConnection,RequestSource,int,String)", null);
         try {
-            BusinessHandler.checkPermission(conn, source, "setInterBaseServerUserPassword", AOServPermission.SET_INTERBASE_SERVER_USER_PASSWORD);
+            BusinessHandler.checkPermission(conn, source, "setInterBaseServerUserPassword", AOServPermission.Permission.set_interbase_server_user_password);
 
             checkAccessInterBaseServerUser(conn, source, "setInterBaseServerUserPassword", isu);
             if(isInterBaseServerUserDisabled(conn, isu)) throw new SQLException("Unable to set InterBaseServerUser password, account disabled: "+isu);
@@ -1391,8 +1391,8 @@ final public class InterBaseHandler {
             // Perform the password check here, too.
             if(password!=null && password.length()==0) password=InterBaseUser.NO_PASSWORD;
             if(password!=InterBaseUser.NO_PASSWORD) {
-                PasswordChecker.Result[] results = InterBaseUser.checkPassword(username, password);
-                if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
+                PasswordChecker.Result[] results = InterBaseUser.checkPassword(Locale.getDefault(), username, password);
+                if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
             }
 
             // Contact the daemon for the update
@@ -1478,7 +1478,7 @@ final public class InterBaseHandler {
             
             invalidateList.addTable(
                 conn,
-                SchemaTable.INTERBASE_SERVER_USERS,
+                SchemaTable.TableID.INTERBASE_SERVER_USERS,
                 getBusinessForInterBaseServerUser(conn, isu),
                 ServerHandler.getHostnameForServer(conn, getAOServerForInterBaseServerUser(conn, isu)),
                 false

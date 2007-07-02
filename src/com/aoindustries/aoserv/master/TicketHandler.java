@@ -219,8 +219,8 @@ final public class TicketHandler implements Runnable {
 */
 
             // Notify all clients of the updates
-            invalidateList.addTable(conn, SchemaTable.TICKETS, accounting, InvalidateList.allServers, false);
-            //invalidateList.addTable(conn, SchemaTable.ACTIONS, accounting, null);
+            invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, accounting, InvalidateList.allServers, false);
+            //invalidateList.addTable(conn, SchemaTable.TableID.ACTIONS, accounting, null);
             return pkey;
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
@@ -256,14 +256,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -321,14 +321,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -372,14 +372,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -424,28 +424,28 @@ final public class TicketHandler implements Runnable {
             String oldAccounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 oldAccounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 oldAccounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -488,14 +488,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -538,14 +538,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -588,14 +588,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -663,14 +663,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -713,14 +713,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -762,14 +762,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -813,14 +813,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -1097,14 +1097,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -1154,14 +1154,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -1214,14 +1214,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -1273,14 +1273,14 @@ final public class TicketHandler implements Runnable {
             String accounting=getBusinessForTicket(conn, ticketID);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TICKETS,
+                SchemaTable.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.ACTIONS,
+                SchemaTable.TableID.ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false

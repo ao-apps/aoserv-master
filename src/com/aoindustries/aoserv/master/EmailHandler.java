@@ -198,7 +198,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_ADDRESSES,
+                SchemaTable.TableID.EMAIL_ADDRESSES,
                 getBusinessForEmailAddress(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailAddress(conn, pkey)),
                 false
@@ -228,7 +228,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_FORWARDING,
+                SchemaTable.TableID.EMAIL_FORWARDING,
                 getBusinessForEmailAddress(conn, address),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailAddress(conn, address)),
                 false
@@ -338,7 +338,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_LISTS,
+                SchemaTable.TableID.EMAIL_LISTS,
                 null,
                 ServerHandler.getHostnameForServer(conn, accountAOServer),
                 false
@@ -392,7 +392,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_LIST_ADDRESSES,
+                SchemaTable.TableID.EMAIL_LIST_ADDRESSES,
                 getBusinessForEmailAddress(conn, address),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailAddress(conn, address)),
                 false
@@ -452,7 +452,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_PIPES,
+                SchemaTable.TableID.EMAIL_PIPES,
                 PackageHandler.getBusinessForPackage(conn, packageName),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -500,7 +500,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_PIPE_ADDRESSES,
+                SchemaTable.TableID.EMAIL_PIPE_ADDRESSES,
                 getBusinessForEmailAddress(conn, address),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailAddress(conn, address)),
                 false
@@ -531,7 +531,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_ACC_ADDRESSES,
+                SchemaTable.TableID.LINUX_ACC_ADDRESSES,
                 getBusinessForEmailAddress(conn, address),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailAddress(conn, address)),
                 false
@@ -563,7 +563,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_DOMAINS,
+                SchemaTable.TableID.EMAIL_DOMAINS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -631,7 +631,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_SMTP_RELAYS,
+                SchemaTable.TableID.EMAIL_SMTP_RELAYS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -798,7 +798,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.SENDMAIL_SMTP_STATS,
+                SchemaTable.TableID.SENDMAIL_SMTP_STATS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -835,7 +835,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.SPAM_EMAIL_MESSAGES,
+                SchemaTable.TableID.SPAM_EMAIL_MESSAGES,
                 InvalidateList.allBusinesses,
                 InvalidateList.allServers,
                 false
@@ -928,7 +928,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.MAJORDOMO_LISTS,
+                SchemaTable.TableID.MAJORDOMO_LISTS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -1043,7 +1043,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.MAJORDOMO_SERVERS,
+                SchemaTable.TableID.MAJORDOMO_SERVERS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
                 ServerHandler.getHostnameForServer(conn, domainAOServer),
                 false
@@ -1075,7 +1075,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_LISTS,
+                SchemaTable.TableID.EMAIL_LISTS,
                 getBusinessForEmailList(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailList(conn, pkey)),
                 false
@@ -1107,7 +1107,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_PIPES,
+                SchemaTable.TableID.EMAIL_PIPES,
                 getBusinessForEmailPipe(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailPipe(conn, pkey)),
                 false
@@ -1139,7 +1139,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_SMTP_RELAYS,
+                SchemaTable.TableID.EMAIL_SMTP_RELAYS,
                 getBusinessForEmailSmtpRelay(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailSmtpRelay(conn, pkey)),
                 false
@@ -1172,7 +1172,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_LISTS,
+                SchemaTable.TableID.EMAIL_LISTS,
                 PackageHandler.getBusinessForPackage(conn, pk),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailList(conn, pkey)),
                 false
@@ -1205,7 +1205,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_PIPES,
+                SchemaTable.TableID.EMAIL_PIPES,
                 PackageHandler.getBusinessForPackage(conn, pk),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailPipe(conn, pkey)),
                 false
@@ -1238,7 +1238,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_SMTP_RELAYS,
+                SchemaTable.TableID.EMAIL_SMTP_RELAYS,
                 PackageHandler.getBusinessForPackage(conn, pk),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailSmtpRelay(conn, pkey)),
                 false
@@ -1563,18 +1563,18 @@ final public class EmailHandler implements CronJob {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, EmailHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, EmailHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
-            if(tableID==SchemaTable.EMAIL_LISTS) {
+            if(tableID==SchemaTable.TableID.EMAIL_LISTS) {
                 synchronized(EmailHandler.class) {
                     disabledEmailLists.clear();
                 }
-            } else if(tableID==SchemaTable.EMAIL_PIPES) {
+            } else if(tableID==SchemaTable.TableID.EMAIL_PIPES) {
                 synchronized(EmailHandler.class) {
                     disabledEmailPipes.clear();
                 }
-            } else if(tableID==SchemaTable.EMAIL_SMTP_RELAYS) {
+            } else if(tableID==SchemaTable.TableID.EMAIL_SMTP_RELAYS) {
                 synchronized(EmailHandler.class) {
                     disabledEmailSmtpRelays.clear();
                 }
@@ -1670,7 +1670,7 @@ final public class EmailHandler implements CronJob {
             );
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.EMAIL_SMTP_RELAYS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_SMTP_RELAYS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1696,7 +1696,7 @@ final public class EmailHandler implements CronJob {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.BLACKHOLE_EMAIL_ADDRESSES,
+                SchemaTable.TableID.BLACKHOLE_EMAIL_ADDRESSES,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -1746,12 +1746,12 @@ final public class EmailHandler implements CronJob {
 
             // Notify all clients of the update
             String server=ServerHandler.getHostnameForServer(conn, aoServer);
-            if(isBlackhole) invalidateList.addTable(conn, SchemaTable.BLACKHOLE_EMAIL_ADDRESSES, accounting, server, false);
-            if(isLinuxAccAddress) invalidateList.addTable(conn, SchemaTable.LINUX_ACC_ADDRESSES, accounting, server, false);
-            if(isEmailForwarding) invalidateList.addTable(conn, SchemaTable.EMAIL_FORWARDING, accounting, server, false);
-            if(isEmailListAddress) invalidateList.addTable(conn, SchemaTable.EMAIL_LIST_ADDRESSES, accounting, server, false);
-            if(isEmailPipeAddress) invalidateList.addTable(conn, SchemaTable.EMAIL_PIPE_ADDRESSES, accounting, server, false);
-            invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, server, false);
+            if(isBlackhole) invalidateList.addTable(conn, SchemaTable.TableID.BLACKHOLE_EMAIL_ADDRESSES, accounting, server, false);
+            if(isLinuxAccAddress) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, server, false);
+            if(isEmailForwarding) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_FORWARDING, accounting, server, false);
+            if(isEmailListAddress) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, server, false);
+            if(isEmailPipeAddress) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, server, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, server, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1776,7 +1776,7 @@ final public class EmailHandler implements CronJob {
             conn.executeUpdate("delete from email_forwarding where pkey=?", ef);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.EMAIL_FORWARDING, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_FORWARDING, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1801,7 +1801,7 @@ final public class EmailHandler implements CronJob {
             conn.executeUpdate("delete from email_list_addresses where pkey=?", ela);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.EMAIL_LIST_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1857,48 +1857,48 @@ final public class EmailHandler implements CronJob {
                 int listnameApprovalEA=conn.executeIntQuery("select listname_approval_add from majordomo_lists where email_list=?", pkey);
 
                 conn.executeUpdate("delete from majordomo_lists where email_list=?", pkey);
-                invalidateList.addTable(conn, SchemaTable.MAJORDOMO_LISTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.MAJORDOMO_LISTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 
                 // Delete the listname_pipe_add
                 conn.executeUpdate("delete from email_pipe_addresses where pkey=?", listnameEPA);
-                invalidateList.addTable(conn, SchemaTable.EMAIL_PIPE_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 if(!isEmailAddressUsed(conn, listnameEA)) {
                     conn.executeUpdate("delete from email_addresses where pkey=?", listnameEA);
-                    invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 }
                 conn.executeUpdate("delete from email_pipes where pkey=?", listnameEP);
-                invalidateList.addTable(conn, SchemaTable.EMAIL_PIPES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 
                 // Delete the listname_list_add
                 conn.executeUpdate("delete from email_list_addresses where pkey=?", listnameListELA);
-                invalidateList.addTable(conn, SchemaTable.EMAIL_LIST_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 if(!isEmailAddressUsed(conn, listnameListEA)) {
                     conn.executeUpdate("delete from email_addresses where pkey=?", listnameListEA);
-                    invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 }
 
                 // Delete the listname_pipe_add
                 conn.executeUpdate("delete from email_pipe_addresses where pkey=?", listnameRequestEPA);
-                invalidateList.addTable(conn, SchemaTable.EMAIL_PIPE_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 if(!isEmailAddressUsed(conn, listnameRequestEA)) {
                     conn.executeUpdate("delete from email_addresses where pkey=?", listnameRequestEA);
-                    invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 }
                 conn.executeUpdate("delete from email_pipes where pkey=?", listnameRequestEP);
-                invalidateList.addTable(conn, SchemaTable.EMAIL_PIPES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
 
                 // Other direct email addresses
                 if(!isEmailAddressUsed(conn, ownerListnameEA)) {
                     conn.executeUpdate("delete from email_addresses where pkey=?", ownerListnameEA);
-                    invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 }
                 if(!isEmailAddressUsed(conn, listnameOwnerEA)) {
                     conn.executeUpdate("delete from email_addresses where pkey=?", listnameOwnerEA);
-                    invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 }
                 if(!isEmailAddressUsed(conn, listnameApprovalEA)) {
                     conn.executeUpdate("delete from email_addresses where pkey=?", listnameApprovalEA);
-                    invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 }
             }
 
@@ -1919,10 +1919,10 @@ final public class EmailHandler implements CronJob {
 
             // Notify all clients of the update
             if(addressesModified) {
-                invalidateList.addTable(conn, SchemaTable.EMAIL_LIST_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
-                invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             }
-            invalidateList.addTable(conn, SchemaTable.EMAIL_LISTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LISTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
 
             // Remove the list file from the server
             DaemonHandler.getDaemonConnector(conn, aoServer).removeEmailList(path);
@@ -1951,7 +1951,7 @@ final public class EmailHandler implements CronJob {
             conn.executeUpdate("delete from linux_acc_addresses where pkey=?", laa);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.LINUX_ACC_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -2001,10 +2001,10 @@ final public class EmailHandler implements CronJob {
 
             // Notify all clients of the update
             if(addressesModified) {
-                invalidateList.addTable(conn, SchemaTable.EMAIL_PIPE_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
-                invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             }
-            invalidateList.addTable(conn, SchemaTable.EMAIL_PIPES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -2029,7 +2029,7 @@ final public class EmailHandler implements CronJob {
             conn.executeUpdate("delete from email_pipe_addresses where pkey=?", epa);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.EMAIL_PIPE_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -2141,13 +2141,13 @@ final public class EmailHandler implements CronJob {
 
             // Notify all clients of the update
             String server=ServerHandler.getHostnameForServer(conn, aoServer);
-            if(beaMod) invalidateList.addTable(conn, SchemaTable.BLACKHOLE_EMAIL_ADDRESSES, accounting, server, false);
-            if(laaMod) invalidateList.addTable(conn, SchemaTable.LINUX_ACC_ADDRESSES, accounting, server, false);
-            if(efMod) invalidateList.addTable(conn, SchemaTable.EMAIL_FORWARDING, accounting, server, false);
-            if(elaMod) invalidateList.addTable(conn, SchemaTable.EMAIL_LIST_ADDRESSES, accounting, server, false);
-            if(epaMod) invalidateList.addTable(conn, SchemaTable.EMAIL_PIPE_ADDRESSES, accounting, server, false);
-            if(eaMod) invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, server, false);
-            invalidateList.addTable(conn, SchemaTable.EMAIL_DOMAINS, accounting, server, false);
+            if(beaMod) invalidateList.addTable(conn, SchemaTable.TableID.BLACKHOLE_EMAIL_ADDRESSES, accounting, server, false);
+            if(laaMod) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, server, false);
+            if(efMod) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_FORWARDING, accounting, server, false);
+            if(elaMod) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, server, false);
+            if(epaMod) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, server, false);
+            if(eaMod) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, server, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_DOMAINS, accounting, server, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -2191,7 +2191,7 @@ final public class EmailHandler implements CronJob {
             );
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.EMAIL_SMTP_RELAYS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_SMTP_RELAYS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -2243,26 +2243,26 @@ final public class EmailHandler implements CronJob {
             // Remove the domain from the database
             String server=ServerHandler.getHostnameForServer(conn, aoServer);
             conn.executeUpdate("delete from majordomo_servers where domain=?", domain);
-            invalidateList.addTable(conn, SchemaTable.MAJORDOMO_SERVERS, accounting, server, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.MAJORDOMO_SERVERS, accounting, server, false);
             
             // Remove the majordomo pipe and address
             conn.executeUpdate("delete from email_pipe_addresses where pkey=?", epa);
-            invalidateList.addTable(conn, SchemaTable.EMAIL_PIPE_ADDRESSES, accounting, server, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, server, false);
             if(!isEmailAddressUsed(conn, ea)) {
                 conn.executeUpdate("delete from email_addresses where pkey=?", ea);
-                invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, server, false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, server, false);
             }
             conn.executeUpdate("delete from email_pipes where pkey=?", ep);
-            invalidateList.addTable(conn, SchemaTable.EMAIL_PIPES, accounting, server, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, server, false);
             
             // Remove the referenced email addresses if not used
             if(!isEmailAddressUsed(conn, omEA)) {
                 conn.executeUpdate("delete from email_addresses where pkey=?", omEA);
-                invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, server, false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, server, false);
             }
             if(!isEmailAddressUsed(conn, moEA)) {
                 conn.executeUpdate("delete from email_addresses where pkey=?", moEA);
-                invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, server, false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, server, false);
             }
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
@@ -2314,7 +2314,7 @@ final public class EmailHandler implements CronJob {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.EMAIL_LISTS,
+                SchemaTable.TableID.EMAIL_LISTS,
                 getBusinessForEmailList(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailList(conn, pkey)),
                 false
@@ -2709,7 +2709,7 @@ final public class EmailHandler implements CronJob {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.MAJORDOMO_SERVERS,
+                SchemaTable.TableID.MAJORDOMO_SERVERS,
                 getBusinessForEmailDomain(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForEmailDomain(conn, pkey)),
                 false

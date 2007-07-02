@@ -42,7 +42,7 @@ final public class FTPHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.FTP_GUEST_USERS,
+                SchemaTable.TableID.FTP_GUEST_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 LinuxAccountHandler.getAOServersForLinuxAccount(conn, username),
                 false
@@ -68,7 +68,7 @@ final public class FTPHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.FTP_GUEST_USERS,
+                SchemaTable.TableID.FTP_GUEST_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 LinuxAccountHandler.getAOServersForLinuxAccount(conn, username),
                 false
@@ -90,7 +90,7 @@ final public class FTPHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.PRIVATE_FTP_SERVERS,
+                SchemaTable.TableID.PRIVATE_FTP_SERVERS,
                 NetBindHandler.getBusinessForNetBind(conn, net_bind),
                 ServerHandler.getHostnameForServer(conn, NetBindHandler.getAOServerForNetBind(conn, net_bind)),
                 false

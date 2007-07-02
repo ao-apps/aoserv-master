@@ -106,7 +106,7 @@ final public class AOServerHandler {
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.SERVERS,
+                SchemaTable.TableID.SERVERS,
                 ServerHandler.getBusinessesForServer(conn, aoServer),
                 aoServer,
                 false

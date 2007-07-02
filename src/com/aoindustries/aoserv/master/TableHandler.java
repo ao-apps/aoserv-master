@@ -31,6 +31,7 @@ import com.aoindustries.aoserv.client.BusinessProfile;
 import com.aoindustries.aoserv.client.BusinessServer;
 import com.aoindustries.aoserv.client.CountryCode;
 import com.aoindustries.aoserv.client.CreditCard;
+import com.aoindustries.aoserv.client.CreditCardProcessor;
 import com.aoindustries.aoserv.client.CvsRepository;
 import com.aoindustries.aoserv.client.DNSForbiddenZone;
 import com.aoindustries.aoserv.client.DNSRecord;
@@ -201,6 +202,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -311,15 +313,15 @@ final public class TableHandler {
         RequestSource source,
         CompressedDataInputStream in,
         CompressedDataOutputStream out,
-        int tableID
+        SchemaTable.TableID tableID
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getObject(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,CompressedDataInputStream,CompressedDataOutputStream,int)", getTableName(conn, tableID));
+        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getObject(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,CompressedDataInputStream,CompressedDataOutputStream,SchemaTable.TableID)", getTableName(conn, tableID));
         try {
             String username=source.getUsername();
             MasterUser masterUser=MasterServer.getMasterUser(conn, username);
             com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
             switch(tableID) {
-                case SchemaTable.ACTIONS :
+                case ACTIONS :
                     int actionId=in.readCompressedInt();
                     if(TicketHandler.canAccessAction(conn, source, actionId)) {
                         MasterServer.writeObject(
@@ -334,7 +336,7 @@ final public class TableHandler {
                         out.writeByte(AOServProtocol.DONE);
                     }
                     break;
-                case SchemaTable.BACKUP_DATA :
+                case BACKUP_DATA :
                     int pkey=in.readCompressedInt();
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObject(
@@ -503,7 +505,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.BACKUP_REPORTS :
+                case BACKUP_REPORTS :
                     pkey=in.readCompressedInt();
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObject(
@@ -558,7 +560,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.BANK_TRANSACTIONS :
+                case BANK_TRANSACTIONS :
                     if(BankAccountHandler.isBankAccounting(conn, source)) {
                         MasterServer.writeObject(
                             conn,
@@ -585,7 +587,7 @@ final public class TableHandler {
                         );
                     } else out.writeByte(AOServProtocol.DONE);
                     break;
-                case SchemaTable.FILE_BACKUPS :
+                case FILE_BACKUPS :
                     pkey=in.readCompressedInt();
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObject(
@@ -699,7 +701,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.SENDMAIL_SMTP_STATS :
+                case SENDMAIL_SMTP_STATS :
                     pkey=in.readCompressedInt();
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObject(
@@ -754,7 +756,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.SPAM_EMAIL_MESSAGES :
+                case SPAM_EMAIL_MESSAGES :
                     pkey=in.readCompressedInt();
                     if(masterUser!=null && masterServers.length==0) MasterServer.writeObject(
                         conn,
@@ -765,7 +767,7 @@ final public class TableHandler {
                         new SpamEmailMessage()
                     ); else throw new SQLException("Only master users may access spam_email_messages.");
                     break;
-                case SchemaTable.TICKETS :
+                case TICKETS :
                     int ticketId=in.readCompressedInt();
                     if(TicketHandler.isTicketAdmin(conn, source)) {
                         MasterServer.writeObject(
@@ -799,7 +801,7 @@ final public class TableHandler {
                         out.writeByte(AOServProtocol.DONE);
                     }
                     break;
-                case SchemaTable.TRANSACTIONS :
+                case TRANSACTIONS :
                     int transid=in.readCompressedInt();
                     if(TransactionHandler.canAccessTransaction(conn, source, transid)) {
                         MasterServer.writeObject(
@@ -834,9 +836,9 @@ final public class TableHandler {
         MasterDatabaseConnection conn,
         BackupDatabaseConnection backupConn,
         RequestSource source,
-        int tableID
+        SchemaTable.TableID tableID
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getCachedRowCount(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,int)", getTableName(conn, tableID));
+        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getCachedRowCount(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,SchemaTable.TableID)", getTableName(conn, tableID));
         try {
             String username=source.getUsername();
 
@@ -846,30 +848,31 @@ final public class TableHandler {
             synchronized(rowCountsPerUsername) {
                 rowCounts=rowCountsPerUsername.get(username);
                 if(rowCounts==null) {
-                    rowCountsPerUsername.put(username, rowCounts=new int[SchemaTable.NUM_TABLES]);
-                    expireTimesPerUsername.put(username, expireTimes=new long[SchemaTable.NUM_TABLES]);
+                    int numTables = SchemaTable.TableID.values().length;
+                    rowCountsPerUsername.put(username, rowCounts=new int[numTables]);
+                    expireTimesPerUsername.put(username, expireTimes=new long[numTables]);
                 } else expireTimes=expireTimesPerUsername.get(username);
             }
 
             // Synchronize on the array to provide a per-user lock
             synchronized(rowCounts) {
-                long expireTime=expireTimes[tableID];
+                long expireTime=expireTimes[tableID.ordinal()];
                 long startTime=System.currentTimeMillis();
                 if(
                     expireTime==0
                     || expireTime<=startTime
                     || expireTime>(startTime+MAX_ROW_COUNT_CACHE_AGE)
                 ) {
-                    rowCounts[tableID]=getRowCount(
+                    rowCounts[tableID.ordinal()]=getRowCount(
                         conn,
                         backupConn,
                         source,
                         tableID
                     );
-                    expireTimes[tableID]=System.currentTimeMillis()+MAX_ROW_COUNT_CACHE_AGE;
+                    expireTimes[tableID.ordinal()]=System.currentTimeMillis()+MAX_ROW_COUNT_CACHE_AGE;
                 }
 
-                return rowCounts[tableID];
+                return rowCounts[tableID.ordinal()];
             }
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
@@ -883,15 +886,15 @@ final public class TableHandler {
         MasterDatabaseConnection conn,
         BackupDatabaseConnection backupConn,
         RequestSource source,
-        int tableID
+        SchemaTable.TableID tableID
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getRowCount(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,int)", getTableName(conn, tableID));
+        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getRowCount(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,SchemaTable.TableID)", getTableName(conn, tableID));
         try {
             String username=source.getUsername();
             MasterUser masterUser=MasterServer.getMasterUser(conn, username);
             com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
             switch(tableID) {
-                case SchemaTable.ACTIONS :
+                case ACTIONS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) return conn.executeIntQuery(
                             Connection.TRANSACTION_READ_COMMITTED,
@@ -921,7 +924,7 @@ final public class TableHandler {
                         + "  and ti.pkey=ac.ticket_id",
                         username
                     );
-                case SchemaTable.BACKUP_DATA :
+                case BACKUP_DATA :
                     if(masterUser!=null) {
                         if(masterServers.length==0) return backupConn.executeIntQuery(
                             Connection.TRANSACTION_READ_COMMITTED,
@@ -1049,7 +1052,7 @@ final public class TableHandler {
                             backupConn.executeUpdate("set enable_seqscan to on");
                         }
                     }
-                case SchemaTable.DISTRO_FILES :
+                case DISTRO_FILES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) {
                             if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_107)<=0) {
@@ -1076,7 +1079,7 @@ final public class TableHandler {
                             return conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, sql.toString());
                         }
                     } else return 0;
-                case SchemaTable.FILE_BACKUPS :
+                case FILE_BACKUPS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) return backupConn.executeIntQuery(
                             Connection.TRANSACTION_READ_COMMITTED,
@@ -1127,7 +1130,7 @@ final public class TableHandler {
                             backupConn.executeUpdate("set enable_seqscan to on");
                         }
                     }
-                case SchemaTable.TICKETS :
+                case TICKETS :
                     if(masterUser!=null) {
                         if(masterServers.length==0 || masterUser.isTicketAdmin()) return conn.executeIntQuery(
                             Connection.TRANSACTION_READ_COMMITTED,
@@ -1173,17 +1176,17 @@ final public class TableHandler {
         CompressedDataInputStream in,
         CompressedDataOutputStream out,
         boolean provideProgress,
-        final int tableID
+        final SchemaTable.TableID tableID
     ) throws IOException, SQLException {
-        final int profilerLevel=tableID==SchemaTable.MASTER_PROCESSES?Profiler.FAST:Profiler.UNKNOWN;
-        Profiler.startProfile(profilerLevel, TableHandler.class, "getTable(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,CompressedDataInputStream,CompressedDataOutputStream,boolean,int)", getTableName(conn, tableID));
+        final int profilerLevel=tableID==SchemaTable.TableID.MASTER_PROCESSES?Profiler.FAST:Profiler.UNKNOWN;
+        Profiler.startProfile(profilerLevel, TableHandler.class, "getTable(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,CompressedDataInputStream,CompressedDataOutputStream,boolean,SchemaTable.TableID)", getTableName(conn, tableID));
         try {
             String username=source.getUsername();
             MasterUser masterUser=MasterServer.getMasterUser(conn, username);
             com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
 
             switch(tableID) {
-                case SchemaTable.ACTIONS :
+                case ACTIONS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -1221,7 +1224,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.ACTION_TYPES :
+                case ACTION_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -1231,7 +1234,7 @@ final public class TableHandler {
                         "select * from action_types"
                     );
                     break;
-                case SchemaTable.AO_SERVER_DAEMON_HOSTS :
+                case AO_SERVER_DAEMON_HOSTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -1261,7 +1264,7 @@ final public class TableHandler {
                         MasterServer.writeObjects(source, out, provideProgress, emptyList);
                     }
                     break;
-                case SchemaTable.AO_SERVERS :
+                case AO_SERVERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -1385,7 +1388,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.AOSERV_PERMISSIONS :
+                case AOSERV_PERMISSIONS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -1395,7 +1398,7 @@ final public class TableHandler {
                         "select * from aoserv_permissions"
                     );
                     break;
-                case SchemaTable.AOSERV_PROTOCOLS :
+                case AOSERV_PROTOCOLS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -1405,7 +1408,7 @@ final public class TableHandler {
                         "select * from aoserv_protocols"
                     );
                     break;
-                case SchemaTable.AOSH_COMMANDS :
+                case AOSH_COMMANDS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -1429,7 +1432,7 @@ final public class TableHandler {
                         source.getProtocolVersion()
                     );
                     break;
-                case SchemaTable.ARCHITECTURES :
+                case ARCHITECTURES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -1439,8 +1442,8 @@ final public class TableHandler {
                         "select * from architectures"
                     );
                     break;
-                case SchemaTable.BACKUP_DATA :
-                    if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.BACKUP_DATA));
+                case BACKUP_DATA :
+                    if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.BACKUP_DATA));
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.fetchObjects(
                             backupConn,
@@ -1587,7 +1590,7 @@ final public class TableHandler {
                         }
                     }
                     break;
-                case SchemaTable.BACKUP_LEVELS :
+                case BACKUP_LEVELS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -1597,7 +1600,7 @@ final public class TableHandler {
                         "select * from backup_levels"
                     );
                     break;
-                case SchemaTable.BACKUP_PARTITIONS :
+                case BACKUP_PARTITIONS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             backupConn,
@@ -1643,7 +1646,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.BACKUP_REPORTS :
+                case BACKUP_REPORTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             backupConn,
@@ -1693,7 +1696,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.BACKUP_RETENTIONS :
+                case BACKUP_RETENTIONS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -1703,7 +1706,7 @@ final public class TableHandler {
                         "select * from backup_retentions"
                     );
                     break;
-                case SchemaTable.BANK_ACCOUNTS :
+                case BANK_ACCOUNTS :
                     if(BankAccountHandler.isBankAccounting(conn, source)) {
                         MasterServer.writeObjects(
                             conn,
@@ -1718,7 +1721,7 @@ final public class TableHandler {
                         MasterServer.writeObjects(source, out, provideProgress, emptyList);
                     }
                     break;
-                case SchemaTable.BANK_TRANSACTIONS :
+                case BANK_TRANSACTIONS :
                     if(BankAccountHandler.isBankAccounting(conn, source)) {
                         MasterServer.writeObjects(
                             conn,
@@ -1733,7 +1736,7 @@ final public class TableHandler {
                         MasterServer.writeObjects(source, out, provideProgress, emptyList);
                     }
                     break;
-                case SchemaTable.BANK_TRANSACTION_TYPES :
+                case BANK_TRANSACTION_TYPES :
                     if(BankAccountHandler.isBankAccounting(conn, source)) {
                         MasterServer.writeObjects(
                             conn,
@@ -1748,7 +1751,7 @@ final public class TableHandler {
                         MasterServer.writeObjects(source, out, provideProgress, emptyList);
                     }
                     break;
-                case SchemaTable.BANKS :
+                case BANKS :
                     if(BankAccountHandler.isBankAccounting(conn, source)) {
                         MasterServer.writeObjects(
                             conn,
@@ -1763,7 +1766,7 @@ final public class TableHandler {
                         MasterServer.writeObjects(source, out, provideProgress, emptyList);
                     }
                     break;
-                case SchemaTable.BLACKHOLE_EMAIL_ADDRESSES :
+                case BLACKHOLE_EMAIL_ADDRESSES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -1821,7 +1824,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.BUSINESS_ADMINISTRATORS :
+                case BUSINESS_ADMINISTRATORS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -1920,7 +1923,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.BUSINESS_ADMINISTRATOR_PERMISSIONS :
+                case BUSINESS_ADMINISTRATOR_PERMISSIONS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -1979,7 +1982,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.BUSINESS_PROFILES :
+                case BUSINESS_PROFILES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2029,7 +2032,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.BUSINESS_SERVERS :
+                case BUSINESS_SERVERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2077,7 +2080,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.BUSINESSES :
+                case BUSINESSES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2125,63 +2128,93 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.CLIENT_JVM_PROFILE :
+                case CLIENT_JVM_PROFILE :
                     throw new IOException("ClientJvmProfiles should be generated, not obtained from the MasterDatabase.getDatabase().");
-                case SchemaTable.CREDIT_CARDS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
+                case CREDIT_CARD_PROCESSORS :
+                    if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_card_processors)) {
+                        if(masterUser!=null) {
+                            if(masterServers.length==0) MasterServer.writeObjects(
+                                conn,
+                                source,
+                                out,
+                                provideProgress,
+                                new CreditCardProcessor(),
+                                "select * from credit_card_processors"
+                            ); else {
+                                List<CreditCardProcessor> emptyList = Collections.emptyList();
+                                MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                            }
+                        } else MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new CreditCardProcessor(),
+                            "select\n"
+                            + "  ccp.*\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  credit_card_processors ccp\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk.name\n"
+                            + "  and (\n"
+                            + PK_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and bu1.accounting=ccp.accounting",
+                            username
+                        );
+                    } else {
+                        // No permission, return empty list
+                        List<CreditCardProcessor> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                    break;
+                case CREDIT_CARDS :
+                    if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_cards)) {
+                        if(masterUser!=null) {
+                            if(masterServers.length==0) MasterServer.writeObjects(
+                                conn,
+                                source,
+                                out,
+                                provideProgress,
+                                new CreditCard(),
+                                "select * from credit_cards"
+                            ); else {
+                                List<CreditCard> emptyList = Collections.emptyList();
+                                MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                            }
+                        } else MasterServer.writeObjects(
                             conn,
                             source,
                             out,
                             provideProgress,
                             new CreditCard(),
-                            "select * from credit_cards"
-                        ); else {
-                            List<CreditCard> emptyList = Collections.emptyList();
-                            MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                        }
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new CreditCard(),
-                        "select\n"
-                        + "  cc.pkey,\n"
-                        + "  cc.accounting,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  cc.card_info,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  cc.created,\n"
-                        + "  cc.created_by,\n"
-                        + "  cc.use_monthly,\n"
-                        + "  cc.active,\n"
-                        + "  cc.deactivated_on,\n"
-                        + "  cc.deactivate_reason,\n"
-                        + "  cc.priority,\n"
-                        + "  cc.description\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  credit_cards cc\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and (\n"
-                        + PK_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=cc.accounting",
-                        username
-                    );
+                            "select\n"
+                            + "  cc.*\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  credit_cards cc\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk.name\n"
+                            + "  and (\n"
+                            + PK_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and bu1.accounting=cc.accounting",
+                            username
+                        );
+                    } else {
+                        // No permission, return empty list
+                        List<CreditCard> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
                     break;
-                case SchemaTable.COUNTRY_CODES :
+                case COUNTRY_CODES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -2191,7 +2224,7 @@ final public class TableHandler {
                         "select * from country_codes"
                     );
                     break;
-                case SchemaTable.CVS_REPOSITORIES :
+                case CVS_REPOSITORIES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2247,7 +2280,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.DAEMON_PROFILE :
+                case DAEMON_PROFILE :
                     {
                         List<DaemonProfile> objs=new ArrayList<DaemonProfile>();
                         if(masterUser!=null && masterServers.length==0) {
@@ -2280,7 +2313,7 @@ final public class TableHandler {
                         MasterServer.writeObjects(source, out, provideProgress, objs);
                     }
                     break;
-                case SchemaTable.DISABLE_LOG :
+                case DISABLE_LOG :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2335,7 +2368,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.DISTRO_FILE_TYPES :
+                case DISTRO_FILE_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -2345,10 +2378,10 @@ final public class TableHandler {
                         "select * from distro_file_types"
                     );
                     break;
-                case SchemaTable.DISTRO_FILES :
+                case DISTRO_FILES :
                     if(masterUser!=null && masterUser.isActive()) {
                         if(masterServers.length==0) {
-                            if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.DISTRO_FILES));
+                            if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.DISTRO_FILES));
                             if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_107)<=0) {
                                 List<DistroFile> emptyList = Collections.emptyList();
                                 MasterServer.writeObjects(source, out, false, emptyList);
@@ -2368,7 +2401,7 @@ final public class TableHandler {
                                 List<DistroFile> emptyList = Collections.emptyList();
                                 MasterServer.writeObjects(source, out, provideProgress, emptyList);
                             } else {
-                                if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.DISTRO_FILES));
+                                if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.DISTRO_FILES));
                                 StringBuilder sql=new StringBuilder();
                                 sql.append("select * from distro_files where operating_system_version in (");
                                 for(int c=0;c<osVersions.size();c++) {
@@ -2390,7 +2423,7 @@ final public class TableHandler {
                         MasterServer.writeObjects(source, out, provideProgress, emptyList);
                     }
                     break;
-                case SchemaTable.DNS_FORBIDDEN_ZONES :
+                case DNS_FORBIDDEN_ZONES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -2400,7 +2433,7 @@ final public class TableHandler {
                         "select * from dns_forbidden_zones"
                     );
                     break;
-                case SchemaTable.DNS_RECORDS :
+                case DNS_RECORDS :
                     if(masterUser!=null) {
                         if(masterServers.length==0 || masterUser.isDNSAdmin()) MasterServer.writeObjects(
                             conn,
@@ -2440,7 +2473,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.DNS_TLDS :
+                case DNS_TLDS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -2450,7 +2483,7 @@ final public class TableHandler {
                         "select * from dns_tlds"
                     );
                     break;
-                case SchemaTable.DNS_TYPES :
+                case DNS_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -2460,7 +2493,7 @@ final public class TableHandler {
                         "select * from dns_types"
                     );
                     break;
-                case SchemaTable.DNS_ZONES :
+                case DNS_ZONES :
                     if(masterUser!=null) {
                         if(masterServers.length==0 || masterUser.isDNSAdmin()) MasterServer.writeObjects(
                             conn,
@@ -2498,7 +2531,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.EMAIL_ADDRESSES :
+                case EMAIL_ADDRESSES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2552,7 +2585,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.EMAIL_ATTACHMENT_BLOCKS :
+                case EMAIL_ATTACHMENT_BLOCKS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2608,7 +2641,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.EMAIL_ATTACHMENT_TYPES :
+                case EMAIL_ATTACHMENT_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -2618,7 +2651,7 @@ final public class TableHandler {
                         "select * from email_attachment_types"
                     );
                     break;
-                case SchemaTable.EMAIL_FORWARDING :
+                case EMAIL_FORWARDING :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2676,7 +2709,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.EMAIL_LIST_ADDRESSES :
+                case EMAIL_LIST_ADDRESSES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2734,7 +2767,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.EMAIL_LISTS :
+                case EMAIL_LISTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2790,7 +2823,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.EMAIL_PIPE_ADDRESSES :
+                case EMAIL_PIPE_ADDRESSES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2848,7 +2881,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.EMAIL_PIPES :
+                case EMAIL_PIPES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -2898,7 +2931,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.EMAIL_SPAMASSASSIN_INTEGRATION_MODES :
+                case EMAIL_SPAMASSASSIN_INTEGRATION_MODES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -2908,7 +2941,7 @@ final public class TableHandler {
                         "select * from email_sa_integration_modes"
                     );
                     break;
-                case SchemaTable.ENCRYPTION_KEYS :
+                case ENCRYPTION_KEYS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) {
                             MasterServer.writeObjects(
@@ -2948,7 +2981,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.EXPENSE_CATEGORIES :
+                case EXPENSE_CATEGORIES :
                     if(BankAccountHandler.isBankAccounting(conn, source)) {
                         MasterServer.writeObjects(
                             conn,
@@ -2963,7 +2996,7 @@ final public class TableHandler {
                         MasterServer.writeObjects(source, out, provideProgress, emptyList);
                     }
                     break;
-                case SchemaTable.FAILOVER_FILE_LOG :
+                case FAILOVER_FILE_LOG :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3013,7 +3046,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.FAILOVER_FILE_REPLICATIONS :
+                case FAILOVER_FILE_REPLICATIONS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3059,7 +3092,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.FAILOVER_FILE_SCHEDULE :
+                case FAILOVER_FILE_SCHEDULE :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3109,7 +3142,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.FAILOVER_MYSQL_REPLICATIONS :
+                case FAILOVER_MYSQL_REPLICATIONS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3159,8 +3192,8 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.FILE_BACKUPS :
-                    if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.FILE_BACKUPS));
+                case FILE_BACKUPS :
+                    if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.FILE_BACKUPS));
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.fetchObjects(
                             backupConn,
@@ -3272,7 +3305,7 @@ final public class TableHandler {
                         }
                     }
                     break;
-                case SchemaTable.FILE_BACKUP_DEVICES :
+                case FILE_BACKUP_DEVICES :
                     MasterServer.writeObjects(
                         backupConn,
                         source,
@@ -3282,7 +3315,7 @@ final public class TableHandler {
                         "select * from file_backup_devices"
                     );
                     break;
-                case SchemaTable.FILE_BACKUP_ROOTS :
+                case FILE_BACKUP_ROOTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             backupConn,
@@ -3342,7 +3375,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.FILE_BACKUP_SETTINGS :
+                case FILE_BACKUP_SETTINGS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3392,7 +3425,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.FILE_BACKUP_STATS :
+                case FILE_BACKUP_STATS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             backupConn,
@@ -3438,7 +3471,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.FTP_GUEST_USERS :
+                case FTP_GUEST_USERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3498,7 +3531,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_BINDS :
+                case HTTPD_BINDS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3563,7 +3596,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_JBOSS_SITES :
+                case HTTPD_JBOSS_SITES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) {
                             MasterServer.writeObjects(
@@ -3621,7 +3654,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_JBOSS_VERSIONS :
+                case HTTPD_JBOSS_VERSIONS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -3631,7 +3664,7 @@ final public class TableHandler {
                         "select * from httpd_jboss_versions"
                     );
                     break;
-                case SchemaTable.HTTPD_JK_CODES :
+                case HTTPD_JK_CODES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -3641,7 +3674,7 @@ final public class TableHandler {
                         "select * from httpd_jk_codes"
                     );
                     break;
-                case SchemaTable.HTTPD_JK_PROTOCOLS :
+                case HTTPD_JK_PROTOCOLS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -3651,7 +3684,7 @@ final public class TableHandler {
                         "select * from httpd_jk_protocols"
                     );
                     break;
-                case SchemaTable.HTTPD_SERVERS :
+                case HTTPD_SERVERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3699,7 +3732,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.HTTPD_SHARED_TOMCATS :
+                case HTTPD_SHARED_TOMCATS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3753,7 +3786,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS :
+                case HTTPD_SITE_AUTHENTICATED_LOCATIONS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3807,7 +3840,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_SITE_BINDS :
+                case HTTPD_SITE_BINDS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3861,7 +3894,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_SITE_URLS :
+                case HTTPD_SITE_URLS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3919,7 +3952,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_SITES :
+                case HTTPD_SITES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -3969,7 +4002,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_STATIC_SITES :
+                case HTTPD_STATIC_SITES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4023,7 +4056,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_TOMCAT_CONTEXTS :
+                case HTTPD_TOMCAT_CONTEXTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4077,7 +4110,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_TOMCAT_DATA_SOURCES :
+                case HTTPD_TOMCAT_DATA_SOURCES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4135,7 +4168,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_TOMCAT_PARAMETERS :
+                case HTTPD_TOMCAT_PARAMETERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4193,7 +4226,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_TOMCAT_SITES :
+                case HTTPD_TOMCAT_SITES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4247,7 +4280,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_TOMCAT_SHARED_SITES :
+                case HTTPD_TOMCAT_SHARED_SITES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4301,7 +4334,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_TOMCAT_STD_SITES :
+                case HTTPD_TOMCAT_STD_SITES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4355,7 +4388,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.HTTPD_TOMCAT_VERSIONS :
+                case HTTPD_TOMCAT_VERSIONS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -4365,7 +4398,7 @@ final public class TableHandler {
                         "select * from httpd_tomcat_versions"
                     );
                     break;
-                case SchemaTable.HTTPD_WORKERS :
+                case HTTPD_WORKERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4419,7 +4452,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.INCOMING_PAYMENTS :
+                case INCOMING_PAYMENTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4461,7 +4494,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.INTERBASE_BACKUPS :
+                case INTERBASE_BACKUPS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             backupConn,
@@ -4511,7 +4544,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.INTERBASE_DATABASES :
+                case INTERBASE_DATABASES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4571,7 +4604,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.INTERBASE_DB_GROUPS :
+                case INTERBASE_DB_GROUPS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4627,7 +4660,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.INTERBASE_RESERVED_WORDS :
+                case INTERBASE_RESERVED_WORDS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -4637,7 +4670,7 @@ final public class TableHandler {
                         "select * from interbase_reserved_words"
                     );
                     break;
-                case SchemaTable.INTERBASE_SERVER_USERS :
+                case INTERBASE_SERVER_USERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4693,7 +4726,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.INTERBASE_USERS :
+                case INTERBASE_USERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4753,7 +4786,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.IP_ADDRESSES :
+                case IP_ADDRESSES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4870,7 +4903,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.LINUX_ACC_ADDRESSES :
+                case LINUX_ACC_ADDRESSES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4928,7 +4961,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.LINUX_ACCOUNTS :
+                case LINUX_ACCOUNTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -4992,7 +5025,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.LINUX_ACCOUNT_TYPES :
+                case LINUX_ACCOUNT_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -5002,7 +5035,7 @@ final public class TableHandler {
                         "select * from linux_account_types"
                     );
                     break;
-                case SchemaTable.LINUX_GROUP_ACCOUNTS :
+                case LINUX_GROUP_ACCOUNTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5102,7 +5135,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.LINUX_GROUPS :
+                case LINUX_GROUPS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5161,7 +5194,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.LINUX_GROUP_TYPES :
+                case LINUX_GROUP_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -5171,9 +5204,9 @@ final public class TableHandler {
                         "select * from linux_group_types"
                     );
                     break;
-                case SchemaTable.LINUX_IDS :
+                case LINUX_IDS :
                     throw new IOException("LinuxIDs should be generated, not obtained from the MasterServer");
-                case SchemaTable.LINUX_SERVER_ACCOUNTS :
+                case LINUX_SERVER_ACCOUNTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5255,7 +5288,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.LINUX_SERVER_GROUPS :
+                case LINUX_SERVER_GROUPS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5313,7 +5346,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.MAJORDOMO_LISTS :
+                case MAJORDOMO_LISTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5367,7 +5400,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.MAJORDOMO_SERVERS :
+                case MAJORDOMO_SERVERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5421,7 +5454,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.MAJORDOMO_VERSIONS :
+                case MAJORDOMO_VERSIONS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -5431,7 +5464,7 @@ final public class TableHandler {
                         "select * from majordomo_versions"
                     );
                     break;
-                case SchemaTable.MASTER_HISTORY :
+                case MASTER_HISTORY :
                     MasterServer.writeHistory(
                         conn,
                         source,
@@ -5441,7 +5474,7 @@ final public class TableHandler {
                         masterServers
                     );
                     break;
-                case SchemaTable.MASTER_HOSTS :
+                case MASTER_HOSTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5500,7 +5533,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.MASTER_PROCESSES :
+                case MASTER_PROCESSES :
                     MasterProcessManager.writeProcesses(
                         conn,
                         out,
@@ -5510,7 +5543,7 @@ final public class TableHandler {
                         masterServers
                     );
                     break;
-                case SchemaTable.MASTER_SERVER_PROFILE :
+                case MASTER_SERVER_PROFILE :
                     {
                         List<MasterServerProfile> objs=new ArrayList<MasterServerProfile>();
                         if(Profiler.getProfilerLevel()>Profiler.NONE) {
@@ -5538,14 +5571,14 @@ final public class TableHandler {
                         MasterServer.writeObjects(source, out, provideProgress, objs);
                     }
                     break;
-                case SchemaTable.MASTER_SERVER_STATS :
+                case MASTER_SERVER_STATS :
                     MasterServer.writeStats(
                         source,
                         out,
                         provideProgress
                     );
                     break;
-                case SchemaTable.MASTER_SERVERS :
+                case MASTER_SERVERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5598,7 +5631,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.MASTER_USERS :
+                case MASTER_USERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5657,7 +5690,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.MERCHANT_ACCOUNTS :
+                case MERCHANT_ACCOUNTS :
                     if(BankAccountHandler.isBankAccounting(conn, source)) {
                         MasterServer.writeObjects(
                             conn,
@@ -5672,7 +5705,7 @@ final public class TableHandler {
                         MasterServer.writeObjects(source, out, provideProgress, emptyList);
                     }
                     break;
-                case SchemaTable.MONTHLY_CHARGES :
+                case MONTHLY_CHARGES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) {
                             MasterServer.writeObjects(
@@ -5719,7 +5752,7 @@ final public class TableHandler {
                         }
                     }
                     break;
-                case SchemaTable.MYSQL_BACKUPS :
+                case MYSQL_BACKUPS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             backupConn,
@@ -5771,7 +5804,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.MYSQL_DATABASES :
+                case MYSQL_DATABASES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5823,7 +5856,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.MYSQL_DB_USERS :
+                case MYSQL_DB_USERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5879,7 +5912,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.MYSQL_RESERVED_WORDS :
+                case MYSQL_RESERVED_WORDS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -5889,7 +5922,7 @@ final public class TableHandler {
                         "select * from mysql_reserved_words"
                     );
                     break;
-                case SchemaTable.MYSQL_SERVER_USERS :
+                case MYSQL_SERVER_USERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5952,7 +5985,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.MYSQL_SERVERS :
+                case MYSQL_SERVERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -5998,7 +6031,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.MYSQL_USERS :
+                case MYSQL_USERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6058,7 +6091,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.NET_BINDS :
+                case NET_BINDS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6192,7 +6225,7 @@ final public class TableHandler {
 			username
                     );
                     break;
-                case SchemaTable.NET_DEVICE_IDS :
+                case NET_DEVICE_IDS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -6202,7 +6235,7 @@ final public class TableHandler {
                         "select * from net_device_ids"
                     );
                     break;
-                case SchemaTable.NET_DEVICES :
+                case NET_DEVICES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6262,9 +6295,9 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.NET_PORTS :
+                case NET_PORTS :
                     throw new IOException("NetPorts should be generated, not obtained from the MasterDatabase.getDatabase().");
-                case SchemaTable.NET_PROTOCOLS :
+                case NET_PROTOCOLS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -6274,7 +6307,7 @@ final public class TableHandler {
                         "select * from net_protocols"
                     );
                     break;
-                case SchemaTable.NET_TCP_REDIRECTS :
+                case NET_TCP_REDIRECTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6328,7 +6361,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.NOTICE_LOG :
+                case NOTICE_LOG :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6364,7 +6397,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.NOTICE_TYPES :
+                case NOTICE_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -6374,7 +6407,7 @@ final public class TableHandler {
                         "select * from notice_types"
                     );
                     break;
-                case SchemaTable.OPERATING_SYSTEM_VERSIONS :
+                case OPERATING_SYSTEM_VERSIONS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -6384,7 +6417,7 @@ final public class TableHandler {
                         "select * from operating_system_versions"
                     );
                     break;
-                case SchemaTable.OPERATING_SYSTEMS :
+                case OPERATING_SYSTEMS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -6394,7 +6427,7 @@ final public class TableHandler {
                         "select * from operating_systems"
                     );
                     break;
-                case SchemaTable.PACKAGE_CATEGORIES :
+                case PACKAGE_CATEGORIES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -6404,7 +6437,7 @@ final public class TableHandler {
                         "select * from package_categories"
                     );
                     break;
-                case SchemaTable.PACKAGE_DEFINITION_LIMITS :
+                case PACKAGE_DEFINITION_LIMITS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6501,7 +6534,7 @@ final public class TableHandler {
                         }
                     }
                     break;
-                case SchemaTable.PACKAGE_DEFINITIONS :
+                case PACKAGE_DEFINITIONS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6601,7 +6634,7 @@ final public class TableHandler {
                         }
                     }
                     break;
-                case SchemaTable.PACKAGES :
+                case PACKAGES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6653,7 +6686,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.PAYMENT_TYPES :
+                case PAYMENT_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -6663,7 +6696,7 @@ final public class TableHandler {
                         "select * from payment_types"
                     );
                     break;
-                case SchemaTable.PHONE_NUMBERS :
+                case PHONE_NUMBERS :
                     if(BankAccountHandler.isAccounting(conn, source)) {
                         MasterServer.writeObjects(
                             conn,
@@ -6678,7 +6711,7 @@ final public class TableHandler {
                         MasterServer.writeObjects(source, out, provideProgress, emptyList);
                     }
                     break;
-                case SchemaTable.POSTGRES_BACKUPS :
+                case POSTGRES_BACKUPS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             backupConn,
@@ -6730,7 +6763,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.POSTGRES_DATABASES :
+                case POSTGRES_DATABASES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6786,7 +6819,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.POSTGRES_ENCODINGS :
+                case POSTGRES_ENCODINGS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -6796,7 +6829,7 @@ final public class TableHandler {
                         "select * from postgres_encodings"
                     );
                     break;
-                case SchemaTable.POSTGRES_RESERVED_WORDS :
+                case POSTGRES_RESERVED_WORDS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -6806,7 +6839,7 @@ final public class TableHandler {
                         "select * from postgres_reserved_words"
                     );
                     break;
-                case SchemaTable.POSTGRES_SERVER_USERS :
+                case POSTGRES_SERVER_USERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6864,7 +6897,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.POSTGRES_SERVERS :
+                case POSTGRES_SERVERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6910,7 +6943,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.POSTGRES_USERS :
+                case POSTGRES_USERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -6970,7 +7003,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.POSTGRES_VERSIONS :
+                case POSTGRES_VERSIONS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -6980,7 +7013,7 @@ final public class TableHandler {
                         "select * from postgres_versions"
                     );
                     break;
-                case SchemaTable.PRIVATE_FTP_SERVERS :
+                case PRIVATE_FTP_SERVERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7036,7 +7069,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.PROTOCOLS :
+                case PROTOCOLS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -7046,7 +7079,7 @@ final public class TableHandler {
                         "select * from protocols"
                     );
                     break;
-                case SchemaTable.RESOURCES :
+                case RESOURCES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -7056,7 +7089,7 @@ final public class TableHandler {
                         "select * from resources"
                     );
                     break;
-                case SchemaTable.SCHEMA_COLUMNS :
+                case SCHEMA_COLUMNS :
                     {
                         List<SchemaColumn> clientColumns=new ArrayList<SchemaColumn>();
                         PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
@@ -7127,7 +7160,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.SCHEMA_FOREIGN_KEYS :
+                case SCHEMA_FOREIGN_KEYS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -7148,7 +7181,7 @@ final public class TableHandler {
                         source.getProtocolVersion()
                     );
                     break;
-                case SchemaTable.SCHEMA_TABLES :
+                case SCHEMA_TABLES :
                     {
                         List<SchemaTable> clientTables=new ArrayList<SchemaTable>();
                         PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
@@ -7207,7 +7240,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.SCHEMA_TYPES :
+                case SCHEMA_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -7217,7 +7250,7 @@ final public class TableHandler {
                         "select * from schema_types order by num"
                     );
                     break;
-                case SchemaTable.EMAIL_DOMAINS :
+                case EMAIL_DOMAINS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7267,7 +7300,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.EMAIL_SMTP_RELAY_TYPES :
+                case EMAIL_SMTP_RELAY_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -7277,7 +7310,7 @@ final public class TableHandler {
                         "select * from email_smtp_relay_types"
                     );
                     break;
-                case SchemaTable.EMAIL_SMTP_RELAYS :
+                case EMAIL_SMTP_RELAYS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7333,7 +7366,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SENDMAIL_SMTP_STATS :
+                case SENDMAIL_SMTP_STATS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7383,7 +7416,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SERVER_FARMS :
+                case SERVER_FARMS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7442,7 +7475,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SERVER_REPORTS :
+                case SERVER_REPORTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7488,7 +7521,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SERVERS :
+                case SERVERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7561,7 +7594,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SHELLS :
+                case SHELLS :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -7571,7 +7604,7 @@ final public class TableHandler {
                         "select * from shells"
                     );
                     break;
-                case SchemaTable.SIGNUP_REQUEST_OPTIONS :
+                case SIGNUP_REQUEST_OPTIONS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) {
                             MasterServer.writeObjects(
@@ -7613,7 +7646,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.SIGNUP_REQUESTS :
+                case SIGNUP_REQUESTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) {
                             MasterServer.writeObjects(
@@ -7653,7 +7686,7 @@ final public class TableHandler {
                         );
                     }
                     break;
-                case SchemaTable.SPAM_EMAIL_MESSAGES :
+                case SPAM_EMAIL_MESSAGES :
                     if(masterUser!=null && masterServers.length==0) MasterServer.writeObjects(
                         conn,
                         source,
@@ -7663,7 +7696,7 @@ final public class TableHandler {
                         "select * from spam_email_messages"
                     ); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());
                     break;
-                case SchemaTable.SR_CPU :
+                case SR_CPU :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7713,7 +7746,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_DB_MYSQL :
+                case SR_DB_MYSQL :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7763,7 +7796,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_DB_POSTGRES :
+                case SR_DB_POSTGRES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7813,7 +7846,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_DISK_ACCESS :
+                case SR_DISK_ACCESS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7863,7 +7896,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_DISK_MDSTAT :
+                case SR_DISK_MDSTAT :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7913,7 +7946,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_DISK_SPACE :
+                case SR_DISK_SPACE :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -7963,7 +7996,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_KERNEL :
+                case SR_KERNEL :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8013,7 +8046,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_LOAD :
+                case SR_LOAD :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8063,7 +8096,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_MEMORY :
+                case SR_MEMORY :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8113,7 +8146,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_NET_DEVICES :
+                case SR_NET_DEVICES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8163,7 +8196,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_NET_ICMP :
+                case SR_NET_ICMP :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8213,7 +8246,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_NET_IP :
+                case SR_NET_IP :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8263,7 +8296,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_NET_TCP :
+                case SR_NET_TCP :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8313,7 +8346,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_NET_UDP :
+                case SR_NET_UDP :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8363,7 +8396,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_NUM_USERS :
+                case SR_NUM_USERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8413,7 +8446,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_PAGING :
+                case SR_PAGING :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8463,7 +8496,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_PROCESSES :
+                case SR_PROCESSES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8513,7 +8546,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_SWAP_RATE :
+                case SR_SWAP_RATE :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8563,7 +8596,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SR_SWAP_SIZE :
+                case SR_SWAP_SIZE :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8613,7 +8646,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.SYSTEM_EMAIL_ALIASES :
+                case SYSTEM_EMAIL_ALIASES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8659,7 +8692,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.TECHNOLOGY_CLASSES :
+                case TECHNOLOGY_CLASSES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -8669,7 +8702,7 @@ final public class TableHandler {
                         "select * from technology_classes"
                     );
                     break;
-                case SchemaTable.TECHNOLOGY_NAMES :
+                case TECHNOLOGY_NAMES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -8679,7 +8712,7 @@ final public class TableHandler {
                         "select * from technology_names"
                     );
                     break;
-                case SchemaTable.TECHNOLOGIES :
+                case TECHNOLOGIES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -8689,7 +8722,7 @@ final public class TableHandler {
                         "select * from technologies"
                     );
                     break;
-                case SchemaTable.TECHNOLOGY_VERSIONS :
+                case TECHNOLOGY_VERSIONS :
                     if(masterUser!=null) MasterServer.writeObjects(
                         conn,
                         source,
@@ -8714,7 +8747,7 @@ final public class TableHandler {
                         + "  technology_versions"
                     );
                     break;
-                case SchemaTable.TICKETS :
+                case TICKETS :
                     if(masterUser!=null) {
                         if(masterServers.length==0 || masterUser.isTicketAdmin()) MasterServer.writeObjects(
                             conn,
@@ -8747,7 +8780,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.TICKET_PRIORITIES :
+                case TICKET_PRIORITIES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -8757,7 +8790,7 @@ final public class TableHandler {
                         "select * from ticket_priorities"
                     );
                     break;
-                case SchemaTable.TICKET_STATI :
+                case TICKET_STATI :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -8767,7 +8800,7 @@ final public class TableHandler {
                         "select * from ticket_stati"
                     );
                     break;
-                case SchemaTable.TICKET_TYPES :
+                case TICKET_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -8777,7 +8810,7 @@ final public class TableHandler {
                         "select * from ticket_types"
                     );
                     break;
-                case SchemaTable.TIME_ZONES :
+                case TIME_ZONES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -8787,7 +8820,7 @@ final public class TableHandler {
                         "select * from time_zones"
                     );
                     break;
-                case SchemaTable.TRANSACTION_TYPES :
+                case TRANSACTION_TYPES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -8797,7 +8830,7 @@ final public class TableHandler {
                         "select * from transaction_types"
                     );
                     break;
-                case SchemaTable.TRANSACTIONS :
+                case TRANSACTIONS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8830,7 +8863,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.USERNAMES :
+                case USERNAMES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
                             conn,
@@ -8889,7 +8922,7 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SchemaTable.US_STATES :
+                case US_STATES :
                     MasterServer.writeObjects(
                         conn,
                         source,
@@ -8899,7 +8932,7 @@ final public class TableHandler {
                         "select * from us_states"
                     );
                     break;
-                case SchemaTable.WHOIS_HISTORY :
+                case WHOIS_HISTORY :
                     if(masterUser!=null) {
                         if(masterServers.length==0) {
                             MasterServer.writeObjects(
@@ -8953,7 +8986,7 @@ final public class TableHandler {
         MasterDatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int tableID,
+        SchemaTable.TableID tableID,
         String server
     ) throws SQLException, IOException {
         Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "invalidate(RequestSource,CompressedDataOutputStream,int)", getTableName(conn, tableID));
@@ -8984,18 +9017,17 @@ final public class TableHandler {
         }
     }
 
-    private static Map<Integer,String> tableNames=new HashMap<Integer,String>();
+    private static Map<SchemaTable.TableID,String> tableNames=new EnumMap<SchemaTable.TableID,String>(SchemaTable.TableID.class);
 
-    public static String getTableName(MasterDatabaseConnection conn, int tableID) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, TableHandler.class, "getTableName(MasterDatabaseConnection,int)", null);
+    public static String getTableName(MasterDatabaseConnection conn, SchemaTable.TableID tableID) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.FAST, TableHandler.class, "getTableName(MasterDatabaseConnection,SchemaTable.TableID)", null);
         try {
-            Integer I=Integer.valueOf(tableID);
             synchronized(tableNames) {
-                String name=tableNames.get(I);
+                String name=tableNames.get(tableID);
                 if(name==null) {
-                    name=conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select name from schema_tables where table_id=?", convertClientTableIDToDBTableID(conn, AOServProtocol.CURRENT_VERSION, tableID));
+                    name=conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select name from schema_tables where table_id=?", convertClientTableIDToDBTableID(conn, AOServProtocol.CURRENT_VERSION, tableID.ordinal()));
                     if(name==null) throw new SQLException("Unable to find table name for table ID: "+tableID);
-                    tableNames.put(I, name);
+                    tableNames.put(tableID, name);
                 }
                 return name;
             }
@@ -9006,6 +9038,9 @@ final public class TableHandler {
 
     private static Map<String,Map<Integer,Integer>> fromClientTableIDs=new HashMap<String,Map<Integer,Integer>>();
 
+    /**
+     * Converts a specific AOServProtocol version table ID to the number used in the database storage.
+     */
     public static int convertClientTableIDToDBTableID(
         MasterDatabaseConnection conn,
         String version,
@@ -9091,7 +9126,12 @@ final public class TableHandler {
         }
     }
 
-    public static int convertFromClientTableID(
+    /**
+     * Converts the client's AOServProtocol-version-specific table ID to the version used by the master's AOServProtocol version.
+     *
+     * @return  The <code>SchemaTable.TableID</code> or <code>null</code> if no match.
+     */
+    public static SchemaTable.TableID convertFromClientTableID(
         MasterDatabaseConnection conn,
         RequestSource source,
         int clientTableID
@@ -9099,21 +9139,26 @@ final public class TableHandler {
         Profiler.startProfile(Profiler.FAST, TableHandler.class, "convertFromClientTableID(MasterDatabaseConnection,RequestSource,int)", null);
         try {
             int dbTableID=convertClientTableIDToDBTableID(conn, source.getProtocolVersion(), clientTableID);
-            if(dbTableID==-1) return -1;
-            return convertDBTableIDToClientTableID(conn, AOServProtocol.CURRENT_VERSION, dbTableID);
+            if(dbTableID==-1) return null;
+            int tableID = convertDBTableIDToClientTableID(conn, AOServProtocol.CURRENT_VERSION, dbTableID);
+            if(tableID==-1) return null;
+            return SchemaTable.TableID.values()[tableID];
         } finally {
             Profiler.endProfile(Profiler.FAST);
         }
     }
 
+    /**
+     * Converts a local (Master AOServProtocol) table ID to a client-version matched table ID.
+     */
     public static int convertToClientTableID(
         MasterDatabaseConnection conn,
         RequestSource source,
-        int tableID
+        SchemaTable.TableID tableID
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, TableHandler.class, "convertToClientTableID(MasterDatabaseConnection,RequestSource,int)", null);
+        Profiler.startProfile(Profiler.FAST, TableHandler.class, "convertToClientTableID(MasterDatabaseConnection,RequestSource,SchemaTable.TableID)", null);
         try {
-            int dbTableID=convertClientTableIDToDBTableID(conn, AOServProtocol.CURRENT_VERSION, tableID);
+            int dbTableID=convertClientTableIDToDBTableID(conn, AOServProtocol.CURRENT_VERSION, tableID.ordinal());
             if(dbTableID==-1) return -1;
             return convertDBTableIDToClientTableID(conn, source.getProtocolVersion(), dbTableID);
         } finally {
@@ -9121,24 +9166,23 @@ final public class TableHandler {
         }
     }
 
-    private static Map<String,Map<Integer,Map<String,Integer>>> clientColumnIndexes=new HashMap<String,Map<Integer,Map<String,Integer>>>();
+    private static Map<String,Map<SchemaTable.TableID,Map<String,Integer>>> clientColumnIndexes=new HashMap<String,Map<SchemaTable.TableID,Map<String,Integer>>>();
 
     public static int getClientColumnIndex(
         MasterDatabaseConnection conn,
         RequestSource source,
-        int tableID,
+        SchemaTable.TableID tableID,
         String columnName
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getClientColumnIndex(MasterDatabaseConnection,RequestSource,int,String)", null);
+        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getClientColumnIndex(MasterDatabaseConnection,RequestSource,SchemaTable.TableID,String)", null);
         try {
             // Get the list of resolved tables for the requested version
             String version=source.getProtocolVersion();
-            Map<Integer,Map<String,Integer>> tables=clientColumnIndexes.get(version);
-            if(tables==null) clientColumnIndexes.put(version, tables=new HashMap<Integer,Map<String,Integer>>());
+            Map<SchemaTable.TableID,Map<String,Integer>> tables=clientColumnIndexes.get(version);
+            if(tables==null) clientColumnIndexes.put(version, tables=new EnumMap<SchemaTable.TableID,Map<String,Integer>>(SchemaTable.TableID.class));
             
             // Find the list of columns for this table
-            Integer tableIDInteger=Integer.valueOf(tableID);
-            Map<String,Integer> columns=tables.get(tableIDInteger);
+            Map<String,Integer> columns=tables.get(tableID);
             if(columns==null) {
                 List<String> clientColumns=conn.executeStringListQuery(
                     Connection.TRANSACTION_READ_COMMITTED,
@@ -9163,7 +9207,7 @@ final public class TableHandler {
                 for(int c=0;c<numColumns;c++) {
                     columns.put(clientColumns.get(c), Integer.valueOf(c));
                 }
-                tables.put(tableIDInteger, columns);
+                tables.put(tableID, columns);
             }
             
             // Return the column or -1 if not found
@@ -9174,15 +9218,15 @@ final public class TableHandler {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, TableHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, TableHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
-            if(tableID==SchemaTable.SCHEMA_TABLES) {
+            if(tableID==SchemaTable.TableID.SCHEMA_TABLES) {
                 synchronized(tableNames) {
                     tableNames.clear();
                 }
             }
-            if(tableID==SchemaTable.AOSERV_PROTOCOLS || tableID==SchemaTable.SCHEMA_TABLES) {
+            if(tableID==SchemaTable.TableID.AOSERV_PROTOCOLS || tableID==SchemaTable.TableID.SCHEMA_TABLES) {
                 synchronized(fromClientTableIDs) {
                     fromClientTableIDs.clear();
                 }
@@ -9190,7 +9234,7 @@ final public class TableHandler {
                     toClientTableIDs.clear();
                 }
             }
-            if(tableID==SchemaTable.AOSERV_PROTOCOLS || tableID==SchemaTable.SCHEMA_COLUMNS) {
+            if(tableID==SchemaTable.TableID.AOSERV_PROTOCOLS || tableID==SchemaTable.TableID.SCHEMA_COLUMNS) {
                 synchronized(clientColumnIndexes) {
                     clientColumnIndexes.clear();
                 }

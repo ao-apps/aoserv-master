@@ -159,7 +159,7 @@ public final class BackupOutputStream extends OutputStream {
                             backupDataPKey
                         );
                     }
-                    invalidateList.addTable(conn, SchemaTable.BACKUP_DATA, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.BACKUP_DATA, InvalidateList.allBusinesses, InvalidateList.allServers, false);
                 } catch(IOException err) {
                     daemonConnection.close();
                     throw err;

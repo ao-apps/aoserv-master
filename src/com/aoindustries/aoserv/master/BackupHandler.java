@@ -101,7 +101,7 @@ public final class BackupHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.FILE_BACKUP_DEVICES,
+                SchemaTable.TableID.FILE_BACKUP_DEVICES,
                 InvalidateList.allBusinesses,
                 InvalidateList.allServers,
                 false
@@ -171,7 +171,7 @@ public final class BackupHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.FILE_BACKUP_SETTINGS,
+                SchemaTable.TableID.FILE_BACKUP_SETTINGS,
                 InvalidateList.getCollection(PackageHandler.getBusinessForPackage(conn, packageNum)),
                 InvalidateList.getServerCollection(conn, server),
                 false
@@ -270,7 +270,7 @@ public final class BackupHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.FILE_BACKUPS,
+                SchemaTable.TableID.FILE_BACKUPS,
                 InvalidateList.getCollection(PackageHandler.getBusinessForPackage(conn, packageNum)),
                 InvalidateList.getServerCollection(conn, server),
                 false
@@ -423,7 +423,7 @@ public final class BackupHandler {
             for(int c=0;c<batchSize;c++) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.FILE_BACKUPS,
+                    SchemaTable.TableID.FILE_BACKUPS,
                     PackageHandler.getBusinessForPackage(conn, packages[c]),
                     server,
                     false
@@ -518,7 +518,7 @@ public final class BackupHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.FILE_BACKUP_STATS,
+                SchemaTable.TableID.FILE_BACKUP_STATS,
                 ServerHandler.getBusinessesForServer(conn, server),
                 InvalidateList.getServerCollection(conn, server),
                 false
@@ -1649,7 +1649,7 @@ public final class BackupHandler {
                 // Notify all clients of the update
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.BACKUP_DATA,
+                    SchemaTable.TableID.BACKUP_DATA,
                     InvalidateList.allBusinesses,
                     server,
                     false
@@ -1814,7 +1814,7 @@ public final class BackupHandler {
                 // Notify all clients of the update
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.BACKUP_DATA,
+                    SchemaTable.TableID.BACKUP_DATA,
                     InvalidateList.allBusinesses,
                     InvalidateList.getServerCollection(conn, server),
                     false
@@ -1866,7 +1866,7 @@ public final class BackupHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.FILE_BACKUPS,
+                SchemaTable.TableID.FILE_BACKUPS,
                 bus,
                 InvalidateList.getServerCollection(conn, ses),
                 false
@@ -4001,17 +4001,17 @@ public final class BackupHandler {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, BackupHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, BackupHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
-            if(tableID==SchemaTable.BACKUP_PARTITIONS) {
+            if(tableID==SchemaTable.TableID.BACKUP_PARTITIONS) {
                 synchronized(backupPartitionsLock) {
                     backupPartitions=null;
                 }
                 synchronized(backupPartitionServers) {
                     backupPartitionServers.clear();
                 }
-            } else if(tableID==SchemaTable.SERVERS) {
+            } else if(tableID==SchemaTable.TableID.SERVERS) {
                 synchronized(backupPartitionsLock) {
                     backupPartitions=null;
                 }
@@ -4117,7 +4117,7 @@ public final class BackupHandler {
                                     // Notify all clients of the update
                                     invalidateList.addTable(
                                         fetchConn,
-                                        SchemaTable.FILE_BACKUPS,
+                                        SchemaTable.TableID.FILE_BACKUPS,
                                         batchAccountings,
                                         InvalidateList.getCollection(serverHostname),
                                         false
@@ -4193,7 +4193,7 @@ public final class BackupHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.FILE_BACKUP_SETTINGS,
+                SchemaTable.TableID.FILE_BACKUP_SETTINGS,
                 InvalidateList.getCollection(PackageHandler.getBusinessForPackage(conn, packageNum)),
                 InvalidateList.getServerCollection(conn, server),
                 false
@@ -4258,7 +4258,7 @@ public final class BackupHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.FILE_BACKUPS,
+                SchemaTable.TableID.FILE_BACKUPS,
                 InvalidateList.getCollection(PackageHandler.getBusinessForPackage(conn, packageNum)),
                 InvalidateList.getServerCollection(conn, server),
                 false
@@ -4300,7 +4300,7 @@ public final class BackupHandler {
                 // Notify all clients of the update
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.BACKUP_DATA,
+                    SchemaTable.TableID.BACKUP_DATA,
                     InvalidateList.allBusinesses,
                     InvalidateList.allServers,
                     false
@@ -4513,14 +4513,14 @@ public final class BackupHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.FILE_BACKUP_SETTINGS,
+                SchemaTable.TableID.FILE_BACKUP_SETTINGS,
                 PackageHandler.getBusinessForPackage(conn, oldPackageNum),
                 server,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.FILE_BACKUP_SETTINGS,
+                SchemaTable.TableID.FILE_BACKUP_SETTINGS,
                 PackageHandler.getBusinessForPackage(conn, packageNum),
                 server,
                 false
@@ -4551,7 +4551,7 @@ public final class BackupHandler {
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.SERVERS,
+                SchemaTable.TableID.SERVERS,
                 ServerHandler.getBusinessesForServer(conn, server),
                 server,
                 false
@@ -4632,7 +4632,7 @@ public final class BackupHandler {
                 for(int c=0;c<size;c++) {
                     invalidateList.addTable(
                         conn,
-                        SchemaTable.FILE_BACKUP_ROOTS,
+                        SchemaTable.TableID.FILE_BACKUP_ROOTS,
                         PackageHandler.getBusinessForPackage(conn, deletePackages.getInt(c)),
                         server,
                         false
@@ -4749,7 +4749,7 @@ public final class BackupHandler {
                     backupConn.executeUpdate("insert into file_backup_roots (parent, file_path, server, package) values("+parents[c]+", "+file_paths[c]+", "+server+", "+packageNum+")");
                     invalidateList.addTable(
                         conn,
-                        SchemaTable.FILE_BACKUP_ROOTS,
+                        SchemaTable.TableID.FILE_BACKUP_ROOTS,
                         PackageHandler.getBusinessForPackage(conn, packageNum),
                         server,
                         false
@@ -4825,7 +4825,7 @@ public final class BackupHandler {
                     backupConn.executeUpdate("delete from file_backup_roots where server="+server+" and file_path="+file_paths[c]+" and package="+packages[c]);
                     invalidateList.addTable(
                         conn,
-                        SchemaTable.FILE_BACKUP_ROOTS,
+                        SchemaTable.TableID.FILE_BACKUP_ROOTS,
                         PackageHandler.getBusinessForPackage(conn, packages[c]),
                         server,
                         false
@@ -4911,7 +4911,7 @@ public final class BackupHandler {
                     );
                     invalidateList.addTable(
                         conn,
-                        SchemaTable.FILE_BACKUP_ROOTS,
+                        SchemaTable.TableID.FILE_BACKUP_ROOTS,
                         PackageHandler.getBusinessForPackage(conn, newRootPackages.getInt(c)),
                         server,
                         false

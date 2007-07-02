@@ -12,6 +12,7 @@ import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.MySQLDatabase;
 import com.aoindustries.aoserv.client.MySQLDatabaseTable;
+import com.aoindustries.aoserv.client.MySQLServer;
 import com.aoindustries.aoserv.client.MySQLServerUser;
 import com.aoindustries.aoserv.client.MySQLUser;
 import com.aoindustries.aoserv.client.PasswordChecker;
@@ -209,7 +210,7 @@ final public class MySQLHandler {
             // Notify all clients of the update, the server will detect this change and automatically add the database
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_DATABASES,
+                SchemaTable.TableID.MYSQL_DATABASES,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -284,7 +285,7 @@ final public class MySQLHandler {
             // Notify all clients of the update, the server will detect this change and automatically update MySQL
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_DB_USERS,
+                SchemaTable.TableID.MYSQL_DB_USERS,
                 getBusinessForMySQLServerUser(conn, mysql_server_user),
                 ServerHandler.getHostnameForServer(conn, getAOServerForMySQLServer(conn, dbServer)),
                 false
@@ -333,7 +334,7 @@ final public class MySQLHandler {
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_SERVER_USERS,
+                SchemaTable.TableID.MYSQL_SERVER_USERS,
                 accounting,
                 aoServer,
                 true
@@ -368,7 +369,7 @@ final public class MySQLHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_USERS,
+                SchemaTable.TableID.MYSQL_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 InvalidateList.allServers,
                 true
@@ -436,7 +437,7 @@ final public class MySQLHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_BACKUPS,
+                SchemaTable.TableID.MYSQL_BACKUPS,
                 PackageHandler.getBusinessForPackage(conn, packageNum),
                 aoServer,
                 false
@@ -469,7 +470,7 @@ final public class MySQLHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_SERVER_USERS,
+                SchemaTable.TableID.MYSQL_SERVER_USERS,
                 getBusinessForMySQLServerUser(conn, pkey),
                 getAOServerForMySQLServer(conn, getMySQLServerForMySQLServerUser(conn, pkey)),
                 false
@@ -508,7 +509,7 @@ final public class MySQLHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_USERS,
+                SchemaTable.TableID.MYSQL_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 UsernameHandler.getServersForUsername(conn, username),
                 false
@@ -562,7 +563,7 @@ final public class MySQLHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_SERVER_USERS,
+                SchemaTable.TableID.MYSQL_SERVER_USERS,
                 UsernameHandler.getBusinessForUsername(conn, mu),
                 getAOServerForMySQLServer(conn, getMySQLServerForMySQLServerUser(conn, pkey)),
                 false
@@ -594,7 +595,7 @@ final public class MySQLHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_USERS,
+                SchemaTable.TableID.MYSQL_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 UsernameHandler.getServersForUsername(conn, username),
                 false
@@ -696,21 +697,21 @@ final public class MySQLHandler {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, MySQLHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, MySQLHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
             switch(tableID) {
-                case SchemaTable.MYSQL_RESERVED_WORDS :
+                case MYSQL_RESERVED_WORDS :
                     synchronized(reservedWordLock) {
                         reservedWordCache=null;
                     }
                     break;
-                case SchemaTable.MYSQL_SERVER_USERS :
+                case MYSQL_SERVER_USERS :
                     synchronized(MySQLHandler.class) {
                         disabledMySQLServerUsers.clear();
                     }
                     break;
-                case SchemaTable.MYSQL_USERS :
+                case MYSQL_USERS :
                     synchronized(MySQLHandler.class) {
                         disabledMySQLUsers.clear();
                     }
@@ -854,7 +855,7 @@ final public class MySQLHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_BACKUPS,
+                SchemaTable.TableID.MYSQL_BACKUPS,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -926,14 +927,14 @@ final public class MySQLHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_DATABASES,
+                SchemaTable.TableID.MYSQL_DATABASES,
                 accounting,
                 aoServer,
                 false
             );
             if(dbUserAccounts.size()>0) invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_DB_USERS,
+                SchemaTable.TableID.MYSQL_DB_USERS,
                 dbUserAccounts,
                 aoServer,
                 false
@@ -964,7 +965,7 @@ final public class MySQLHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_DB_USERS,
+                SchemaTable.TableID.MYSQL_DB_USERS,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -1003,14 +1004,14 @@ final public class MySQLHandler {
             // Notify all clients of the updates
             if(dbUsersExist) invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_DB_USERS,
+                SchemaTable.TableID.MYSQL_DB_USERS,
                 accounting,
                 aoServer,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_SERVER_USERS,
+                SchemaTable.TableID.MYSQL_SERVER_USERS,
                 accounting,
                 aoServer,
                 true
@@ -1089,7 +1090,7 @@ final public class MySQLHandler {
                 for(int mysqlServer : dbUserServers) {
                     invalidateList.addTable(
                         conn,
-                        SchemaTable.MYSQL_DB_USERS,
+                        SchemaTable.TableID.MYSQL_DB_USERS,
                         accounting,
                         getAOServerForMySQLServer(conn, mysqlServer),
                         false
@@ -1104,7 +1105,7 @@ final public class MySQLHandler {
                 for(int mysqlServer : mysqlServers) {
                     invalidateList.addTable(
                         conn,
-                        SchemaTable.MYSQL_SERVER_USERS,
+                        SchemaTable.TableID.MYSQL_SERVER_USERS,
                         accounting,
                         getAOServerForMySQLServer(conn, mysqlServer),
                         false
@@ -1116,7 +1117,7 @@ final public class MySQLHandler {
             conn.executeUpdate("delete from mysql_users where username=?", username);
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_USERS,
+                SchemaTable.TableID.MYSQL_USERS,
                 accounting,
                 BusinessHandler.getServersForBusiness(conn, accounting),
                 false
@@ -1149,7 +1150,7 @@ final public class MySQLHandler {
             int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_DATABASES,
+                SchemaTable.TableID.MYSQL_DATABASES,
                 getBusinessForMySQLDatabase(conn, pkey),
                 aoServer,
                 false
@@ -1170,7 +1171,7 @@ final public class MySQLHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, MySQLHandler.class, "setMySQLServerUserPassword(MasterDatabaseConnection,RequestSource,int,String)", null);
         try {
-            BusinessHandler.checkPermission(conn, source, "setMySQLServerUserPassword", AOServPermission.SET_MYSQL_SERVER_USER_PASSWORD);
+            BusinessHandler.checkPermission(conn, source, "setMySQLServerUserPassword", AOServPermission.Permission.set_mysql_server_user_password);
             checkAccessMySQLServerUser(conn, source, "setMySQLServerUserPassword", mysql_server_user);
             if(isMySQLServerUserDisabled(conn, mysql_server_user)) throw new SQLException("Unable to set MySQLServerUser password, account disabled: "+mysql_server_user);
 
@@ -1183,8 +1184,8 @@ final public class MySQLHandler {
             // Perform the password check here, too.
             if(password!=null && password.length()==0) password=MySQLUser.NO_PASSWORD;
             if(password!=MySQLUser.NO_PASSWORD) {
-                PasswordChecker.Result[] results = MySQLUser.checkPassword(username, password);
-                if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
+                PasswordChecker.Result[] results = MySQLUser.checkPassword(Locale.getDefault(), username, password);
+                if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
             }
 
             // Contact the daemon for the update
@@ -1226,7 +1227,7 @@ final public class MySQLHandler {
             int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
             invalidateList.addTable(
                 conn,
-                SchemaTable.MYSQL_SERVER_USERS,
+                SchemaTable.TableID.MYSQL_SERVER_USERS,
                 getBusinessForMySQLServerUser(conn, msu),
                 aoServer,
                 false
@@ -1551,13 +1552,43 @@ final public class MySQLHandler {
         }
     }
     
+    public static void getMasterStatus(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        int mysqlServer,
+        CompressedDataOutputStream out
+    ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "getMasterStatus", AOServPermission.Permission.get_mysql_master_status);
+        // Check access
+        checkAccessMySQLServer(conn, source, "getMasterStatus", mysqlServer);
+        int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
+        if(DaemonHandler.isDaemonAvailable(aoServer)) {
+            try {
+                MySQLServer.MasterStatus masterStatus = DaemonHandler.getDaemonConnector(conn, aoServer).getMySQLMasterStatus(
+                    mysqlServer
+                );
+                if(masterStatus==null) out.writeByte(AOServProtocol.DONE);
+                else {
+                    out.writeByte(AOServProtocol.NEXT);
+                    out.writeNullUTF(masterStatus.getFile());
+                    out.writeNullUTF(masterStatus.getPosition());
+                }
+            } catch(IOException err) {
+                DaemonHandler.flagDaemonAsDown(aoServer);
+                throw err;
+            }
+        } else {
+            throw new IOException("Server unavailable");
+        }
+    }
+
     public static void getSlaveStatus(
         MasterDatabaseConnection conn,
         RequestSource source,
         int failoverMySQLReplication,
         CompressedDataOutputStream out
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setPostgresServerUserPassword", AOServPermission.GET_MYSQL_SLAVE_STATUS);
+        BusinessHandler.checkPermission(conn, source, "getSlaveStatus", AOServPermission.Permission.get_mysql_slave_status);
         // Check access
         int mysqlServer = getMySQLServerForFailoverMySQLReplication(conn, failoverMySQLReplication);
         checkAccessMySQLServer(conn, source, "getSlaveStatus", mysqlServer);

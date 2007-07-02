@@ -82,8 +82,8 @@ final public class ServerHandler {
             String check = Username.checkUsername(username, Locale.getDefault());
             if(check!=null) throw new SQLException(check);
             
-            PasswordChecker.Result[] results = BusinessAdministrator.checkPassword(username, password);
-            if(PasswordChecker.hasResults(results)) throw new SQLException("Password strength check failed: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
+            PasswordChecker.Result[] results = BusinessAdministrator.checkPassword(Locale.getDefault(), username, password);
+            if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Password strength check failed: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
             
             int serverPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('servers_pkey_seq')");
             conn.executeUpdate(
@@ -109,7 +109,7 @@ final public class ServerHandler {
                 backup_hour,
                 os_version
             );
-            invalidateList.addTable(conn, SchemaTable.SERVERS, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accounting, InvalidateList.allServers, false);
 
             // Build a stack of parents, adding each business_server
             Stack<String> bus=new Stack<String>();
@@ -148,9 +148,9 @@ final public class ServerHandler {
                 null
             );
             conn.executeUpdate("insert into master_users values(?,true,false,false,false,false,false,false)", username);
-            invalidateList.addTable(conn, SchemaTable.MASTER_USERS, packageAccounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.MASTER_USERS, packageAccounting, InvalidateList.allServers, false);
             conn.executeUpdate("insert into master_servers(username, server) values(?,?)", username, serverPKey);
-            invalidateList.addTable(conn, SchemaTable.MASTER_SERVERS, packageAccounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.MASTER_SERVERS, packageAccounting, InvalidateList.allServers, false);
             BusinessHandler.setBusinessAdministratorPassword(conn, source, invalidateList, username, password);
             
             return serverPKey;
@@ -475,22 +475,22 @@ final public class ServerHandler {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, ServerHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, ServerHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
-            if(tableID==SchemaTable.AO_SERVERS) {
+            if(tableID==SchemaTable.TableID.AO_SERVERS) {
                 synchronized(aoServers) {
                     aoServers.clear();
                 }
-            } else if(tableID==SchemaTable.BUSINESS_SERVERS) {
+            } else if(tableID==SchemaTable.TableID.BUSINESS_SERVERS) {
                 synchronized(ServerHandler.class) {
                     usernameServers=null;
                 }
-            } else if(tableID==SchemaTable.MASTER_SERVERS) {
+            } else if(tableID==SchemaTable.TableID.MASTER_SERVERS) {
                 synchronized(ServerHandler.class) {
                     usernameServers=null;
                 }
-            } else if(tableID==SchemaTable.SERVERS) {
+            } else if(tableID==SchemaTable.TableID.SERVERS) {
                 synchronized(allowBackupSameServerForServers) {
                     allowBackupSameServerForServers.clear();
                 }
@@ -509,7 +509,7 @@ final public class ServerHandler {
                 synchronized(pkeysForServers) {
                     pkeysForServers.clear();
                 }
-            } else if(tableID==SchemaTable.SERVER_FARMS) {
+            } else if(tableID==SchemaTable.TableID.SERVER_FARMS) {
                 synchronized(allowBackupSameServerForServers) {
                     allowBackupSameServerForServers.clear();
                 }

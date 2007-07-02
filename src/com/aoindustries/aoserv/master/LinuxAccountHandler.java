@@ -237,7 +237,7 @@ final public class LinuxAccountHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_ACCOUNTS,
+                SchemaTable.TableID.LINUX_ACCOUNTS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 InvalidateList.allServers,
                 false
@@ -284,7 +284,7 @@ final public class LinuxAccountHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_GROUPS,
+                SchemaTable.TableID.LINUX_GROUPS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
                 InvalidateList.allServers,
                 false
@@ -340,7 +340,7 @@ final public class LinuxAccountHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_GROUP_ACCOUNTS,
+                SchemaTable.TableID.LINUX_GROUP_ACCOUNTS,
                 InvalidateList.getCollection(
                     UsernameHandler.getBusinessForUsername(conn, username),
                     getBusinessForLinuxGroup(conn, groupName)
@@ -465,7 +465,7 @@ final public class LinuxAccountHandler {
             String hostname=ServerHandler.getHostnameForServer(conn, aoServer);
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 accounting,
                 hostname,
                 true
@@ -487,7 +487,7 @@ final public class LinuxAccountHandler {
                 );
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.EMAIL_ATTACHMENT_BLOCKS,
+                    SchemaTable.TableID.EMAIL_ATTACHMENT_BLOCKS,
                     accounting,
                     hostname,
                     false
@@ -566,7 +566,7 @@ final public class LinuxAccountHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_GROUPS,
+                SchemaTable.TableID.LINUX_SERVER_GROUPS,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 true
@@ -691,7 +691,7 @@ final public class LinuxAccountHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_ACCOUNTS,
+                SchemaTable.TableID.LINUX_ACCOUNTS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 UsernameHandler.getServersForUsername(conn, username),
                 false
@@ -756,7 +756,7 @@ final public class LinuxAccountHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
                 false
@@ -788,7 +788,7 @@ final public class LinuxAccountHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_ACCOUNTS,
+                SchemaTable.TableID.LINUX_ACCOUNTS,
                 UsernameHandler.getBusinessForUsername(conn, username),
                 UsernameHandler.getServersForUsername(conn, username),
                 false
@@ -821,7 +821,7 @@ final public class LinuxAccountHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 UsernameHandler.getBusinessForUsername(conn, la),
                 ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
                 false
@@ -892,14 +892,14 @@ final public class LinuxAccountHandler {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, LinuxAccountHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, LinuxAccountHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
-            if(tableID==SchemaTable.LINUX_ACCOUNTS) {
+            if(tableID==SchemaTable.TableID.LINUX_ACCOUNTS) {
                 synchronized(LinuxAccountHandler.class) {
                     disabledLinuxAccounts.clear();
                 }
-            } else if(tableID==SchemaTable.LINUX_SERVER_ACCOUNTS) {
+            } else if(tableID==SchemaTable.TableID.LINUX_SERVER_ACCOUNTS) {
                 synchronized(LinuxAccountHandler.class) {
                     disabledLinuxServerAccounts.clear();
                 }
@@ -1115,12 +1115,12 @@ final public class LinuxAccountHandler {
 
             // Notify all clients of the update
             if(addressesModified) {
-                invalidateList.addTable(conn, SchemaTable.LINUX_ACC_ADDRESSES, accounting, aoServers, false);
-                invalidateList.addTable(conn, SchemaTable.EMAIL_ADDRESSES, accounting, aoServers, false);
+                invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, aoServers, false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServers, false);
             }
-            if(ftpModified) invalidateList.addTable(conn, SchemaTable.FTP_GUEST_USERS, accounting, aoServers, false);
-            if(groupAccountModified) invalidateList.addTable(conn, SchemaTable.LINUX_GROUP_ACCOUNTS, accounting, aoServers, false);
-            invalidateList.addTable(conn, SchemaTable.LINUX_ACCOUNTS, accounting, aoServers, false);
+            if(ftpModified) invalidateList.addTable(conn, SchemaTable.TableID.FTP_GUEST_USERS, accounting, aoServers, false);
+            if(groupAccountModified) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accounting, aoServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1172,9 +1172,9 @@ final public class LinuxAccountHandler {
             conn.executeUpdate("delete from linux_groups where name=?", name);
 
             // Notify all clients of the update
-            if(aoServers.size()>0) invalidateList.addTable(conn, SchemaTable.LINUX_SERVER_GROUPS, accounting, aoServers, false);
-            if(groupAccountsModified) invalidateList.addTable(conn, SchemaTable.LINUX_GROUP_ACCOUNTS, accounting, aoServers, false);
-            invalidateList.addTable(conn, SchemaTable.LINUX_GROUPS, accounting, aoServers, false);
+            if(aoServers.size()>0) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, accounting, aoServers, false);
+            if(groupAccountsModified) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accounting, aoServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUPS, accounting, aoServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1234,7 +1234,7 @@ final public class LinuxAccountHandler {
             conn.executeUpdate("delete from linux_group_accounts where pkey=?", pkey);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.LINUX_GROUP_ACCOUNTS, accountings, aoServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accountings, aoServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1305,7 +1305,7 @@ final public class LinuxAccountHandler {
                 conn.executeUpdate("delete from linux_group_accounts where pkey=?", pkey);
 
                 // Notify all clients of the update
-                invalidateList.addTable(conn, SchemaTable.LINUX_GROUP_ACCOUNTS, accountings, aoServers, false);
+                invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accountings, aoServers, false);
             }
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
@@ -1366,11 +1366,11 @@ final public class LinuxAccountHandler {
 
             // Delete the attachment blocks
             conn.executeUpdate("delete from email_attachment_blocks where linux_server_account=?", account);
-            invalidateList.addTable(conn, SchemaTable.EMAIL_ATTACHMENT_BLOCKS, accounting, hostname, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ATTACHMENT_BLOCKS, accounting, hostname, false);
 
             // Delete the account from the server
             conn.executeUpdate("delete from linux_server_accounts where pkey=?", account);
-            invalidateList.addTable(conn, SchemaTable.LINUX_SERVER_ACCOUNTS, accounting, hostname, true);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, accounting, hostname, true);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1432,7 +1432,7 @@ final public class LinuxAccountHandler {
             conn.executeUpdate("delete from linux_server_groups where pkey=?", group);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.LINUX_SERVER_GROUPS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), true);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), true);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1542,7 +1542,7 @@ final public class LinuxAccountHandler {
             );
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.LINUX_SERVER_ACCOUNTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1596,7 +1596,7 @@ final public class LinuxAccountHandler {
             conn.executeUpdate("update linux_accounts set home_phone=? where username=?", phone, username);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.LINUX_ACCOUNTS, accounting, aoServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1624,7 +1624,7 @@ final public class LinuxAccountHandler {
             conn.executeUpdate("update linux_accounts set name=? where username=?", name, username);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.LINUX_ACCOUNTS, accounting, aoServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1651,7 +1651,7 @@ final public class LinuxAccountHandler {
             conn.executeUpdate("update linux_accounts set office_location=? where username=?", location, username);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.LINUX_ACCOUNTS, accounting, aoServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1678,7 +1678,7 @@ final public class LinuxAccountHandler {
             conn.executeUpdate("update linux_accounts set office_phone=? where username=?", phone, username);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.LINUX_ACCOUNTS, accounting, aoServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1705,7 +1705,7 @@ final public class LinuxAccountHandler {
             conn.executeUpdate("update linux_accounts set shell=? where username=?", shell, username);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.LINUX_ACCOUNTS, accounting, aoServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1734,7 +1734,7 @@ final public class LinuxAccountHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
                 false
@@ -1767,7 +1767,7 @@ final public class LinuxAccountHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
                 false
@@ -1800,7 +1800,7 @@ final public class LinuxAccountHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
                 false
@@ -1819,7 +1819,7 @@ final public class LinuxAccountHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, LinuxAccountHandler.class, "setLinuxServerAccountPassword(MasterDatabaseConnection,RequestSource,InvalidateList,int,String)", null);
         try {
-            BusinessHandler.checkPermission(conn, source, "setLinuxServerAccountPassword", AOServPermission.SET_LINUX_SERVER_ACCOUNT_PASSWORD);
+            BusinessHandler.checkPermission(conn, source, "setLinuxServerAccountPassword", AOServPermission.Permission.set_linux_server_account_password);
             checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountPassword", pkey);
             if(isLinuxServerAccountDisabled(conn, pkey)) throw new SQLException("Unable to set LinuxServerAccount password, account disabled: "+pkey);
 
@@ -1832,8 +1832,8 @@ final public class LinuxAccountHandler {
 
             if(password!=null && password.length()>0) {
                 // Perform the password check here, too.
-                PasswordChecker.Result[] results = LinuxAccount.checkPassword(username, type, password);
-                if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results, Locale.getDefault()).replace('\n', '|'));
+                PasswordChecker.Result[] results = LinuxAccount.checkPassword(Locale.getDefault(), username, type, password);
+                if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
             }
 
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
@@ -1851,10 +1851,10 @@ final public class LinuxAccountHandler {
             // Update the ao_servers table for emailmon and ftpmon
             if(username.equals(LinuxAccount.EMAILMON)) {
                 conn.executeUpdate("update ao_servers set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
-                invalidateList.addTable(conn, SchemaTable.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
+                invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
             } else if(username.equals(LinuxAccount.FTPMON)) {
                 conn.executeUpdate("update ao_servers set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
-                invalidateList.addTable(conn, SchemaTable.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
+                invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
             }
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
@@ -1886,7 +1886,7 @@ final public class LinuxAccountHandler {
             
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, lsa),
                 ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, lsa)),
                 false
@@ -1926,7 +1926,7 @@ final public class LinuxAccountHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
                 false
@@ -1959,7 +1959,7 @@ final public class LinuxAccountHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
                 false
@@ -1992,7 +1992,7 @@ final public class LinuxAccountHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
                 false
@@ -2032,7 +2032,7 @@ final public class LinuxAccountHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
                 false
@@ -2065,7 +2065,7 @@ final public class LinuxAccountHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_SERVER_ACCOUNTS,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
                 false
@@ -2516,7 +2516,7 @@ final public class LinuxAccountHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.LINUX_GROUP_ACCOUNTS,
+                SchemaTable.TableID.LINUX_GROUP_ACCOUNTS,
                 InvalidateList.getCollection(UsernameHandler.getBusinessForUsername(conn, username), getBusinessForLinuxGroup(conn, group)),
                 getAOServersForLinuxGroupAccount(conn, pkey),
                 false

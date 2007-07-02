@@ -436,8 +436,8 @@ public abstract class MasterServer {
                                     case AOServProtocol.INVALIDATE_TABLE :
                                         {
                                             int clientTableID=in.readCompressedInt();
-                                            int tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                            if(tableID==-1) throw new IOException("Client table not supported: #"+clientTableID);
+                                            SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+                                            if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                             String server=in.readBoolean()?in.readUTF().trim():null;
                                             process.setCommand(
                                                 AOSHCommand.INVALIDATE,
@@ -460,10 +460,10 @@ public abstract class MasterServer {
                                         break;
                                     case AOServProtocol.ADD : {
                                         int clientTableID=in.readCompressedInt();
-                                        int tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                        if(tableID==-1) throw new IOException("Client table not supported: #"+clientTableID);
+                                        SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+                                        if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                         switch(tableID) {
-                                            case SchemaTable.BUSINESS_ADMINISTRATORS :
+                                            case BUSINESS_ADMINISTRATORS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     String name=in.readUTF().trim();
@@ -524,7 +524,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.BUSINESS_PROFILES :
+                                            case BUSINESS_PROFILES :
                                                 {
                                                     String accounting=in.readUTF().trim();
                                                     String name=in.readUTF().trim();
@@ -587,7 +587,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.BUSINESS_SERVERS :
+                                            case BUSINESS_SERVERS :
                                                 {
                                                     String accounting=in.readUTF().trim();
                                                     int server=in.readCompressedInt();
@@ -611,7 +611,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.BUSINESSES :
+                                            case BUSINESSES :
                                                 {
                                                     String accounting=in.readUTF().trim();
                                                     String contractVersion=in.readBoolean()?in.readUTF().trim():null;
@@ -656,33 +656,62 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.CREDIT_CARDS :
+                                            case CREDIT_CARDS :
                                                 {
-                                                    String accounting=in.readUTF().trim();
-                                                    byte[] cardNumber=new byte[in.readCompressedInt()]; in.readFully(cardNumber);
-                                                    String cardInfo=in.readUTF().trim();
-                                                    byte[] expirationMonth=new byte[in.readCompressedInt()]; in.readFully(expirationMonth);
-                                                    byte[] expirationYear=new byte[in.readCompressedInt()]; in.readFully(expirationYear);
-                                                    byte[] cardholderName=new byte[in.readCompressedInt()]; in.readFully(cardholderName);
-                                                    byte[] streetAddress=new byte[in.readCompressedInt()]; in.readFully(streetAddress);
-                                                    byte[] city=new byte[in.readCompressedInt()]; in.readFully(city);
-                                                    int len=in.readCompressedInt(); byte[] state=len>=0?new byte[len]:null; if(len>=0) in.readFully(state);
-                                                    len=in.readCompressedInt(); byte[] zip=len>=0?new byte[len]:null; if(len>=0) in.readFully(zip);
-                                                    boolean useMonthly=in.readBoolean();
-                                                    String description=in.readBoolean()?in.readUTF().trim():null;
+                                                    // If before version 1.29, do not support add call but read the old values anyway
+                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_28)<=0) {
+                                                        String accounting=in.readUTF().trim();
+                                                        byte[] cardNumber=new byte[in.readCompressedInt()]; in.readFully(cardNumber);
+                                                        String cardInfo=in.readUTF().trim();
+                                                        byte[] expirationMonth=new byte[in.readCompressedInt()]; in.readFully(expirationMonth);
+                                                        byte[] expirationYear=new byte[in.readCompressedInt()]; in.readFully(expirationYear);
+                                                        byte[] cardholderName=new byte[in.readCompressedInt()]; in.readFully(cardholderName);
+                                                        byte[] streetAddress=new byte[in.readCompressedInt()]; in.readFully(streetAddress);
+                                                        byte[] city=new byte[in.readCompressedInt()]; in.readFully(city);
+                                                        int len=in.readCompressedInt(); byte[] state=len>=0?new byte[len]:null; if(len>=0) in.readFully(state);
+                                                        len=in.readCompressedInt(); byte[] zip=len>=0?new byte[len]:null; if(len>=0) in.readFully(zip);
+                                                        boolean useMonthly=in.readBoolean();
+                                                        String description=in.readBoolean()?in.readUTF().trim():null;
+                                                        throw new SQLException("add_credit_card for protocol version "+AOServProtocol.VERSION_1_28+" or older is no longer supported.");
+                                                    }
+                                                    String accounting = in.readUTF().trim();
+                                                    String cardInfo = in.readUTF().trim();
+                                                    String processorName = in.readUTF();
+                                                    String providerUniqueId = in.readUTF();
+                                                    String firstName = in.readUTF().trim();
+                                                    String lastName = in.readUTF().trim();
+                                                    String companyName = in.readNullUTF();
+                                                    String email = in.readNullUTF();
+                                                    String phone = in.readNullUTF();
+                                                    String fax = in.readNullUTF();
+                                                    String customerTaxId = in.readNullUTF();
+                                                    String streetAddress1 = in.readUTF();
+                                                    String streetAddress2 = in.readNullUTF();
+                                                    String city = in.readUTF();
+                                                    String state = in.readNullUTF();
+                                                    String postalCode = in.readNullUTF();
+                                                    String countryCode = in.readUTF();
+                                                    String description = in.readNullUTF();
+                                                    
                                                     process.setCommand(
-                                                        AOSHCommand.ADD_CREDIT_CARD,
+                                                        "add_credit_card",
                                                         accounting,
-                                                        AOServProtocol.FILTERED,
                                                         cardInfo,
-                                                        AOServProtocol.FILTERED,
-                                                        AOServProtocol.FILTERED,
-                                                        AOServProtocol.FILTERED,
-                                                        AOServProtocol.FILTERED,
-                                                        AOServProtocol.FILTERED,
-                                                        AOServProtocol.FILTERED,
-                                                        AOServProtocol.FILTERED,
-                                                        useMonthly?Boolean.TRUE:Boolean.FALSE,
+                                                        processorName,
+                                                        providerUniqueId,
+                                                        firstName,
+                                                        lastName,
+                                                        companyName,
+                                                        email,
+                                                        phone,
+                                                        fax,
+                                                        customerTaxId,
+                                                        streetAddress1,
+                                                        streetAddress2,
+                                                        city,
+                                                        state,
+                                                        postalCode,
+                                                        countryCode,
                                                         description
                                                     );
                                                     int pkey=CreditCardHandler.addCreditCard(
@@ -690,16 +719,22 @@ public abstract class MasterServer {
                                                         source,
                                                         invalidateList,
                                                         accounting,
-                                                        cardNumber,
                                                         cardInfo,
-                                                        expirationMonth,
-                                                        expirationYear,
-                                                        cardholderName,
-                                                        streetAddress,
+                                                        processorName,
+                                                        providerUniqueId,
+                                                        firstName,
+                                                        lastName,
+                                                        companyName,
+                                                        email,
+                                                        phone,
+                                                        fax,
+                                                        customerTaxId,
+                                                        streetAddress1,
+                                                        streetAddress2,
                                                         city,
                                                         state,
-                                                        zip,
-                                                        useMonthly,
+                                                        postalCode,
+                                                        countryCode,
                                                         description
                                                     );
                                                     resp1=AOServProtocol.DONE;
@@ -707,7 +742,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.CVS_REPOSITORIES :
+                                            case CVS_REPOSITORIES :
                                                 {
                                                     int aoServer=in.readCompressedInt();
                                                     String path=in.readUTF().trim();
@@ -737,7 +772,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.DISABLE_LOG :
+                                            case DISABLE_LOG :
                                                 {
                                                     String accounting=in.readUTF().trim();
                                                     String disableReason=in.readBoolean()?in.readUTF().trim():null;
@@ -758,7 +793,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.DNS_RECORDS :
+                                            case DNS_RECORDS :
                                                 {
                                                     String zone=in.readUTF().trim();
                                                     String domain=in.readUTF().trim();
@@ -791,7 +826,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.DNS_ZONES :
+                                            case DNS_ZONES :
                                                 {
                                                     String packageName=in.readUTF().trim();
                                                     String zone=in.readUTF().trim();
@@ -816,7 +851,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_ADDRESSES :
+                                            case EMAIL_ADDRESSES :
                                                 {
                                                     String address=in.readUTF().trim();
                                                     int domain=in.readCompressedInt();
@@ -837,7 +872,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_DOMAINS :
+                                            case EMAIL_DOMAINS :
                                                 {
                                                     String domain=in.readUTF().trim();
                                                     int aoServer=in.readCompressedInt();
@@ -861,7 +896,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_FORWARDING :
+                                            case EMAIL_FORWARDING :
                                                 {
                                                     int address=in.readCompressedInt();
                                                     String destination=in.readUTF().trim();
@@ -882,7 +917,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_LIST_ADDRESSES :
+                                            case EMAIL_LIST_ADDRESSES :
                                                 {
                                                     int address=in.readCompressedInt();
                                                     int email_list=in.readCompressedInt();
@@ -903,7 +938,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_LISTS :
+                                            case EMAIL_LISTS :
                                                 {
                                                     String path=in.readUTF().trim();
                                                     int linuxServerAccount=in.readCompressedInt();
@@ -927,7 +962,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_PIPE_ADDRESSES :
+                                            case EMAIL_PIPE_ADDRESSES :
                                                 {
                                                     int address=in.readCompressedInt();
                                                     int pipe=in.readCompressedInt();
@@ -948,7 +983,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_PIPES :
+                                            case EMAIL_PIPES :
                                                 {
                                                     int ao_server=in.readCompressedInt();
                                                     String path=in.readUTF().trim();
@@ -972,7 +1007,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_SMTP_RELAYS :
+                                            case EMAIL_SMTP_RELAYS :
                                                 {
                                                     process.setPriority(Thread.NORM_PRIORITY+1);
                                                     currentThread.setPriority(Thread.NORM_PRIORITY+1);
@@ -1005,7 +1040,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.FAILOVER_FILE_LOG :
+                                            case FAILOVER_FILE_LOG :
                                                 {
                                                     int replication=in.readCompressedInt();
                                                     long startTime=in.readLong();
@@ -1041,7 +1076,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.FILE_BACKUP_DEVICES :
+                                            case FILE_BACKUP_DEVICES :
                                                 {
                                                     long device=in.readLong();
                                                     boolean can_backup=in.readBoolean();
@@ -1066,7 +1101,7 @@ public abstract class MasterServer {
                                                     hasResp2Short=true;
                                                 }
                                                 break;
-                                            case SchemaTable.FILE_BACKUP_SETTINGS :
+                                            case FILE_BACKUP_SETTINGS :
                                                 {
                                                     int server=in.readCompressedInt();
                                                     String path=in.readUTF();
@@ -1100,7 +1135,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.FILE_BACKUPS :
+                                            case FILE_BACKUPS :
                                                 {
                                                     process.setPriority(Thread.MIN_PRIORITY+1);
                                                     currentThread.setPriority(Thread.MIN_PRIORITY+1);
@@ -1174,7 +1209,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.FILE_BACKUP_STATS :
+                                            case FILE_BACKUP_STATS :
                                                 {
                                                     process.setPriority(Thread.MIN_PRIORITY+1);
                                                     currentThread.setPriority(Thread.MIN_PRIORITY+1);
@@ -1240,7 +1275,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.FTP_GUEST_USERS :
+                                            case FTP_GUEST_USERS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     process.setCommand(
@@ -1256,7 +1291,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_SHARED_TOMCATS :
+                                            case HTTPD_SHARED_TOMCATS :
                                                 {
                                                     String name=in.readUTF().trim();
                                                     int aoServer=in.readCompressedInt();
@@ -1293,7 +1328,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_JBOSS_SITES :
+                                            case HTTPD_JBOSS_SITES :
                                                 {
                                                     int aoServer=in.readCompressedInt();
                                                     String siteName=in.readUTF().trim();
@@ -1347,7 +1382,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS :
+                                            case HTTPD_SITE_AUTHENTICATED_LOCATIONS :
                                                 {
                                                     int httpd_site=in.readCompressedInt();
                                                     String path = in.readUTF();
@@ -1383,7 +1418,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;							
-                                            case SchemaTable.HTTPD_SITE_URLS :
+                                            case HTTPD_SITE_URLS :
                                                 {
                                                     int hsb_pkey=in.readCompressedInt();
                                                     String hostname=in.readUTF().trim();
@@ -1404,7 +1439,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_TOMCAT_CONTEXTS :
+                                            case HTTPD_TOMCAT_CONTEXTS :
                                                 {
                                                     int tomcat_site=in.readCompressedInt();
                                                     String className=in.readBoolean()?in.readUTF().trim():null;
@@ -1458,7 +1493,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;							
-                                            case SchemaTable.HTTPD_TOMCAT_DATA_SOURCES :
+                                            case HTTPD_TOMCAT_DATA_SOURCES :
                                                 {
                                                     int tomcat_context=in.readCompressedInt();
                                                     String name=in.readUTF();
@@ -1504,7 +1539,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;							
-                                            case SchemaTable.HTTPD_TOMCAT_PARAMETERS :
+                                            case HTTPD_TOMCAT_PARAMETERS :
                                                 {
                                                     int tomcat_context=in.readCompressedInt();
                                                     String name=in.readUTF();
@@ -1535,7 +1570,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;							
-                                            case SchemaTable.HTTPD_TOMCAT_SHARED_SITES :
+                                            case HTTPD_TOMCAT_SHARED_SITES :
                                                 {
                                                     int aoServer=in.readCompressedInt();
                                                     String siteName=in.readUTF().trim();
@@ -1592,7 +1627,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_TOMCAT_STD_SITES :
+                                            case HTTPD_TOMCAT_STD_SITES :
                                                 {
                                                     int aoServer=in.readCompressedInt();
                                                     String siteName=in.readUTF().trim();
@@ -1645,7 +1680,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;							
-                                            case SchemaTable.INCOMING_PAYMENTS :
+                                            case INCOMING_PAYMENTS :
                                                 {
                                                     int transid=in.readCompressedInt();
                                                     byte[] cardName=new byte[in.readCompressedInt()]; in.readFully(cardName);
@@ -1673,7 +1708,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.INTERBASE_DATABASES :
+                                            case INTERBASE_DATABASES :
                                                 {
                                                     String name=in.readUTF().trim();
                                                     int dbGroup=in.readCompressedInt();
@@ -1697,7 +1732,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.INTERBASE_DB_GROUPS :
+                                            case INTERBASE_DB_GROUPS :
                                                 {
                                                     String name=in.readUTF();
                                                     int lsg=in.readCompressedInt();
@@ -1718,7 +1753,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.INTERBASE_SERVER_USERS :
+                                            case INTERBASE_SERVER_USERS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     int aoServer=in.readCompressedInt();
@@ -1739,7 +1774,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.INTERBASE_USERS :
+                                            case INTERBASE_USERS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     String firstname=in.readBoolean()?in.readUTF().trim():null;
@@ -1764,7 +1799,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_ACC_ADDRESSES :
+                                            case LINUX_ACC_ADDRESSES :
                                                 {
                                                     int address=in.readCompressedInt();
                                                     String username=in.readUTF().trim();
@@ -1785,7 +1820,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_ACCOUNTS :
+                                            case LINUX_ACCOUNTS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     String primary_group=in.readUTF().trim();
@@ -1823,7 +1858,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_GROUP_ACCOUNTS :
+                                            case LINUX_GROUP_ACCOUNTS :
                                                 {
                                                     String groupName=in.readUTF().trim();
                                                     String username=in.readUTF().trim();
@@ -1846,7 +1881,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_GROUPS :
+                                            case LINUX_GROUPS :
                                                 {
                                                     String groupName=in.readUTF().trim();
                                                     String packageName=in.readUTF().trim();
@@ -1869,7 +1904,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_SERVER_ACCOUNTS :
+                                            case LINUX_SERVER_ACCOUNTS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     int aoServer=in.readCompressedInt();
@@ -1894,7 +1929,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_SERVER_GROUPS :
+                                            case LINUX_SERVER_GROUPS :
                                                 {
                                                     String groupName=in.readUTF().trim();
                                                     int aoServer=in.readCompressedInt();
@@ -1916,7 +1951,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.MAJORDOMO_LISTS :
+                                            case MAJORDOMO_LISTS :
                                                 {
                                                     int majordomoServer=in.readCompressedInt();
                                                     String listName=in.readUTF().trim();
@@ -1937,7 +1972,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.MAJORDOMO_SERVERS :
+                                            case MAJORDOMO_SERVERS :
                                                 {
                                                     int emailDomain=in.readCompressedInt();
                                                     int lsa=in.readCompressedInt();
@@ -1962,7 +1997,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.MYSQL_DATABASES :
+                                            case MYSQL_DATABASES :
                                                 {
                                                     String name=in.readUTF().trim();
                                                     int mysqlServer=in.readCompressedInt();
@@ -1986,7 +2021,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.MYSQL_DB_USERS :
+                                            case MYSQL_DB_USERS :
                                                 {
                                                     int mysql_database=in.readCompressedInt();
                                                     int mysql_server_user=in.readCompressedInt();
@@ -2072,7 +2107,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.MYSQL_SERVER_USERS :
+                                            case MYSQL_SERVER_USERS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     int mysqlServer=in.readCompressedInt();
@@ -2096,7 +2131,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.MYSQL_USERS :
+                                            case MYSQL_USERS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     process.setCommand(
@@ -2112,7 +2147,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.NET_BINDS :
+                                            case NET_BINDS :
                                                 {
                                                     int aoServer=in.readCompressedInt();
                                                     String packageName=in.readUTF().trim();
@@ -2157,7 +2192,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.NOTICE_LOG :
+                                            case NOTICE_LOG :
                                                 {
                                                     String accounting=in.readUTF().trim();
                                                     String billingContact=in.readUTF().trim();
@@ -2188,7 +2223,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.PACKAGES :
+                                            case PACKAGES :
                                                 {
                                                     String packageName=in.readUTF().trim();
                                                     String accounting=in.readUTF().trim();
@@ -2243,7 +2278,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.PACKAGE_DEFINITIONS :
+                                            case PACKAGE_DEFINITIONS :
                                                 {
                                                     String accounting=in.readUTF().trim();
                                                     String category=in.readUTF().trim();
@@ -2288,7 +2323,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.POSTGRES_DATABASES :
+                                            case POSTGRES_DATABASES :
                                                 {
                                                     String name=in.readUTF().trim();
                                                     int postgresServer=in.readCompressedInt();
@@ -2318,7 +2353,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.POSTGRES_SERVER_USERS :
+                                            case POSTGRES_SERVER_USERS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     int postgresServer=in.readCompressedInt();
@@ -2339,7 +2374,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.POSTGRES_USERS :
+                                            case POSTGRES_USERS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     process.setCommand(
@@ -2355,7 +2390,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.SENDMAIL_SMTP_STATS :
+                                            case SENDMAIL_SMTP_STATS :
                                                 {
                                                     process.setPriority(Thread.NORM_PRIORITY-1);
                                                     currentThread.setPriority(Thread.NORM_PRIORITY-1);
@@ -2394,7 +2429,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.SIGNUP_REQUESTS :
+                                            case SIGNUP_REQUESTS :
                                                 {
                                                     String accounting = in.readUTF();
                                                     String ip_address = in.readUTF();
@@ -2520,7 +2555,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.SPAM_EMAIL_MESSAGES :
+                                            case SPAM_EMAIL_MESSAGES :
                                                 {
                                                     int esr=in.readCompressedInt();
                                                     String message=in.readUTF().trim();
@@ -2541,7 +2576,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.TICKETS :
+                                            case TICKETS :
                                                 {
                                                     String accounting;
                                                     if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_126)>=0) {
@@ -2605,7 +2640,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.TRANSACTIONS :
+                                            case TRANSACTIONS :
                                                 {
                                                     String accounting=in.readUTF().trim();
                                                     String sourceAccounting=in.readUTF().trim();
@@ -2652,7 +2687,7 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case SchemaTable.USERNAMES :
+                                            case USERNAMES :
                                                 {
                                                     String packageName=in.readUTF().trim();
                                                     String username=in.readUTF().trim();
@@ -3212,12 +3247,12 @@ public abstract class MasterServer {
                                     case AOServProtocol.DISABLE :
                                         {
                                             int clientTableID=in.readCompressedInt();
-                                            int tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                            if(tableID==-1) throw new IOException("Client table not supported: #"+clientTableID);
+                                            SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+                                            if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                             int disableLog=in.readCompressedInt();
                                             Integer dlObj=Integer.valueOf(disableLog);
                                             switch(tableID) {
-                                                case SchemaTable.BUSINESSES :
+                                                case BUSINESSES :
                                                     {
                                                         String accounting=in.readUTF().trim();
                                                         process.setCommand(
@@ -3234,7 +3269,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.BUSINESS_ADMINISTRATORS :
+                                                case BUSINESS_ADMINISTRATORS :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -3251,7 +3286,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.CVS_REPOSITORIES :
+                                                case CVS_REPOSITORIES :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3268,7 +3303,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.EMAIL_LISTS :
+                                                case EMAIL_LISTS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3285,7 +3320,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.EMAIL_PIPES :
+                                                case EMAIL_PIPES :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3302,7 +3337,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.EMAIL_SMTP_RELAYS :
+                                                case EMAIL_SMTP_RELAYS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3319,7 +3354,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.HTTPD_SHARED_TOMCATS :
+                                                case HTTPD_SHARED_TOMCATS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3336,7 +3371,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.HTTPD_SITES :
+                                                case HTTPD_SITES :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3353,7 +3388,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.HTTPD_SITE_BINDS :
+                                                case HTTPD_SITE_BINDS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3370,7 +3405,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.INTERBASE_SERVER_USERS :
+                                                case INTERBASE_SERVER_USERS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3387,7 +3422,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.INTERBASE_USERS :
+                                                case INTERBASE_USERS :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -3404,7 +3439,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.LINUX_ACCOUNTS :
+                                                case LINUX_ACCOUNTS :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -3421,7 +3456,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.LINUX_SERVER_ACCOUNTS :
+                                                case LINUX_SERVER_ACCOUNTS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3438,7 +3473,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.MYSQL_SERVER_USERS :
+                                                case MYSQL_SERVER_USERS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3455,7 +3490,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.MYSQL_USERS :
+                                                case MYSQL_USERS :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -3472,7 +3507,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.PACKAGES :
+                                                case PACKAGES :
                                                     {
                                                         String name=in.readUTF().trim();
                                                         process.setCommand(
@@ -3489,7 +3524,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.POSTGRES_SERVER_USERS :
+                                                case POSTGRES_SERVER_USERS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3506,7 +3541,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.POSTGRES_USERS :
+                                                case POSTGRES_USERS :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -3523,7 +3558,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.USERNAMES :
+                                                case USERNAMES :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -3610,10 +3645,10 @@ public abstract class MasterServer {
                                     case AOServProtocol.ENABLE :
                                         {
                                             int clientTableID=in.readCompressedInt();
-                                            int tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                            if(tableID==-1) throw new IOException("Client table not supported: #"+clientTableID);
+                                            SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+                                            if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                             switch(tableID) {
-                                                case SchemaTable.BUSINESSES :
+                                                case BUSINESSES :
                                                     {
                                                         String accounting=in.readUTF().trim();
                                                         process.setCommand(
@@ -3628,7 +3663,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.BUSINESS_ADMINISTRATORS :
+                                                case BUSINESS_ADMINISTRATORS :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -3643,7 +3678,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.CVS_REPOSITORIES :
+                                                case CVS_REPOSITORIES :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3658,7 +3693,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.EMAIL_LISTS :
+                                                case EMAIL_LISTS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3673,7 +3708,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.EMAIL_PIPES :
+                                                case EMAIL_PIPES :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3688,7 +3723,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.EMAIL_SMTP_RELAYS :
+                                                case EMAIL_SMTP_RELAYS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3703,7 +3738,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.HTTPD_SHARED_TOMCATS :
+                                                case HTTPD_SHARED_TOMCATS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3718,7 +3753,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.HTTPD_SITES :
+                                                case HTTPD_SITES :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3733,7 +3768,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.HTTPD_SITE_BINDS :
+                                                case HTTPD_SITE_BINDS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3748,7 +3783,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.INTERBASE_SERVER_USERS :
+                                                case INTERBASE_SERVER_USERS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3763,7 +3798,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.INTERBASE_USERS :
+                                                case INTERBASE_USERS :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -3778,7 +3813,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.LINUX_ACCOUNTS :
+                                                case LINUX_ACCOUNTS :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -3793,7 +3828,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.LINUX_SERVER_ACCOUNTS :
+                                                case LINUX_SERVER_ACCOUNTS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3808,7 +3843,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.MYSQL_SERVER_USERS :
+                                                case MYSQL_SERVER_USERS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3823,7 +3858,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.MYSQL_USERS :
+                                                case MYSQL_USERS :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -3838,7 +3873,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.PACKAGES :
+                                                case PACKAGES :
                                                     {
                                                         String name=in.readUTF().trim();
                                                         process.setCommand(
@@ -3853,7 +3888,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.POSTGRES_SERVER_USERS :
+                                                case POSTGRES_SERVER_USERS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -3868,7 +3903,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.POSTGRES_USERS :
+                                                case POSTGRES_USERS :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -3883,7 +3918,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.USERNAMES :
+                                                case USERNAMES :
                                                     {
                                                         String username=in.readUTF().trim();
                                                         process.setCommand(
@@ -4665,8 +4700,8 @@ public abstract class MasterServer {
                                     case AOServProtocol.GET_CACHED_ROW_COUNT :
                                         {
                                             int clientTableID=in.readCompressedInt();
-                                            int tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                            if(tableID==-1) throw new IOException("Client table not supported: #"+clientTableID);
+                                            SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+                                            if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                             process.setCommand(
                                                 "get_cached_row_count",
                                                 TableHandler.getTableName(
@@ -5014,6 +5049,22 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case AOServProtocol.GET_MYSQL_MASTER_STATUS :
+                                        {
+                                            int mysqlServer=in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_mysql_master_status",
+                                                Integer.valueOf(mysqlServer)
+                                            );
+                                            MySQLHandler.getMasterStatus(
+                                                conn,
+                                                source,
+                                                mysqlServer,
+                                                out
+                                            );
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case AOServProtocol.GET_MYSQL_SLAVE_STATUS :
                                         {
                                             int failoverMySQLReplication=in.readCompressedInt();
@@ -5033,8 +5084,8 @@ public abstract class MasterServer {
                                     case AOServProtocol.GET_OBJECT :
                                         {
                                             int clientTableID=in.readCompressedInt();
-                                            int tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                            if(tableID==-1) throw new IOException("Client table not supported: #"+clientTableID);
+                                            SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+                                            if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                             process.setCommand(
                                                 "get_object",
                                                 TableHandler.getTableName(
@@ -5082,8 +5133,8 @@ public abstract class MasterServer {
                                     case AOServProtocol.GET_ROW_COUNT :
                                         {
                                             int clientTableID=in.readCompressedInt();
-                                            int tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                            if(tableID==-1) throw new IOException("Client table not supported: #"+clientTableID);
+                                            SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+                                            if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                             process.setCommand(
                                                 "get_row_count",
                                                 TableHandler.getTableName(
@@ -5127,17 +5178,17 @@ public abstract class MasterServer {
                                         {
                                             boolean provideProgress=in.readBoolean();
                                             int clientTableID=in.readCompressedInt();
-                                            int tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                            if(tableID==-1) {
+                                            SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+                                            if(tableID==null) {
                                                 writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());                                                
                                             } else {
                                                 if(
-                                                    tableID==SchemaTable.BACKUP_DATA
-                                                    || tableID==SchemaTable.DISTRO_FILES
-                                                    || tableID==SchemaTable.FILE_BACKUPS
-                                                    || tableID==SchemaTable.INTERBASE_BACKUPS
-                                                    || tableID==SchemaTable.MYSQL_BACKUPS
-                                                    || tableID==SchemaTable.POSTGRES_BACKUPS
+                                                    tableID==SchemaTable.TableID.BACKUP_DATA
+                                                    || tableID==SchemaTable.TableID.DISTRO_FILES
+                                                    || tableID==SchemaTable.TableID.FILE_BACKUPS
+                                                    || tableID==SchemaTable.TableID.INTERBASE_BACKUPS
+                                                    || tableID==SchemaTable.TableID.MYSQL_BACKUPS
+                                                    || tableID==SchemaTable.TableID.POSTGRES_BACKUPS
                                                 ) {
                                                     process.setPriority(Thread.NORM_PRIORITY-1);
                                                     currentThread.setPriority(Thread.NORM_PRIORITY-1);
@@ -5817,10 +5868,10 @@ public abstract class MasterServer {
                                         break;
                                     case AOServProtocol.REMOVE : {
                                         int clientTableID=in.readCompressedInt();
-                                        int tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                        if(tableID==-1) throw new IOException("Client table not supported: #"+clientTableID);
+                                        SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+                                        if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                         switch(tableID) {
-                                            case SchemaTable.BLACKHOLE_EMAIL_ADDRESSES :
+                                            case BLACKHOLE_EMAIL_ADDRESSES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -5836,7 +5887,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.BUSINESS_ADMINISTRATORS :
+                                            case BUSINESS_ADMINISTRATORS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     process.setCommand(
@@ -5852,7 +5903,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.BUSINESS_SERVERS :
+                                            case BUSINESS_SERVERS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -5868,7 +5919,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.CREDIT_CARDS :
+                                            case CREDIT_CARDS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -5884,7 +5935,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.CVS_REPOSITORIES :
+                                            case CVS_REPOSITORIES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -5900,7 +5951,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.DNS_RECORDS :
+                                            case DNS_RECORDS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -5916,7 +5967,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.DNS_ZONES :
+                                            case DNS_ZONES :
                                                 {
                                                     String zone=in.readUTF().trim();
                                                     process.setCommand(
@@ -5932,7 +5983,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_ADDRESSES :
+                                            case EMAIL_ADDRESSES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -5948,7 +5999,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_DOMAINS :
+                                            case EMAIL_DOMAINS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -5964,7 +6015,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_FORWARDING :
+                                            case EMAIL_FORWARDING :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -5980,7 +6031,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_LIST_ADDRESSES :
+                                            case EMAIL_LIST_ADDRESSES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -5996,7 +6047,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_LISTS :
+                                            case EMAIL_LISTS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6012,7 +6063,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_PIPE_ADDRESSES :
+                                            case EMAIL_PIPE_ADDRESSES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6028,7 +6079,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_PIPES :
+                                            case EMAIL_PIPES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6044,7 +6095,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.EMAIL_SMTP_RELAYS :
+                                            case EMAIL_SMTP_RELAYS :
                                                 {
                                                     process.setPriority(Thread.NORM_PRIORITY+1);
                                                     currentThread.setPriority(Thread.NORM_PRIORITY+1);
@@ -6063,7 +6114,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.FILE_BACKUP_SETTINGS :
+                                            case FILE_BACKUP_SETTINGS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6079,7 +6130,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.FILE_BACKUPS :
+                                            case FILE_BACKUPS :
                                                 {
                                                     process.setPriority(Thread.MIN_PRIORITY+1);
                                                     currentThread.setPriority(Thread.MIN_PRIORITY+1);
@@ -6099,7 +6150,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.FTP_GUEST_USERS :
+                                            case FTP_GUEST_USERS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     process.setCommand(
@@ -6115,7 +6166,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_SHARED_TOMCATS :
+                                            case HTTPD_SHARED_TOMCATS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6131,7 +6182,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS :
+                                            case HTTPD_SITE_AUTHENTICATED_LOCATIONS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6147,7 +6198,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_SITES :
+                                            case HTTPD_SITES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6163,7 +6214,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_SITE_URLS :
+                                            case HTTPD_SITE_URLS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6179,7 +6230,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_TOMCAT_CONTEXTS :
+                                            case HTTPD_TOMCAT_CONTEXTS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6195,7 +6246,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_TOMCAT_DATA_SOURCES :
+                                            case HTTPD_TOMCAT_DATA_SOURCES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6211,7 +6262,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.HTTPD_TOMCAT_PARAMETERS :
+                                            case HTTPD_TOMCAT_PARAMETERS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6227,7 +6278,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.INCOMING_PAYMENTS :
+                                            case INCOMING_PAYMENTS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6243,7 +6294,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.INTERBASE_BACKUPS :
+                                            case INTERBASE_BACKUPS :
                                                 {
                                                     process.setPriority(Thread.MIN_PRIORITY+1);
                                                     currentThread.setPriority(Thread.MIN_PRIORITY+1);
@@ -6263,7 +6314,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.INTERBASE_DATABASES :
+                                            case INTERBASE_DATABASES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6279,7 +6330,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.INTERBASE_DB_GROUPS :
+                                            case INTERBASE_DB_GROUPS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6295,7 +6346,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.INTERBASE_SERVER_USERS :
+                                            case INTERBASE_SERVER_USERS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6311,7 +6362,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.INTERBASE_USERS :
+                                            case INTERBASE_USERS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     process.setCommand(
@@ -6327,7 +6378,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_ACC_ADDRESSES :
+                                            case LINUX_ACC_ADDRESSES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6343,7 +6394,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_ACCOUNTS :
+                                            case LINUX_ACCOUNTS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     process.setCommand(
@@ -6359,7 +6410,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_GROUP_ACCOUNTS :
+                                            case LINUX_GROUP_ACCOUNTS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6375,7 +6426,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_GROUPS :
+                                            case LINUX_GROUPS :
                                                 {
                                                     String name=in.readUTF().trim();
                                                     process.setCommand(
@@ -6391,7 +6442,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_SERVER_ACCOUNTS :
+                                            case LINUX_SERVER_ACCOUNTS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6407,7 +6458,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.LINUX_SERVER_GROUPS :
+                                            case LINUX_SERVER_GROUPS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6423,7 +6474,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.MAJORDOMO_SERVERS :
+                                            case MAJORDOMO_SERVERS :
                                                 {
                                                     int domain=in.readCompressedInt();
                                                     process.setCommand(
@@ -6439,7 +6490,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.MYSQL_BACKUPS :
+                                            case MYSQL_BACKUPS :
                                                 {
                                                     process.setPriority(Thread.MIN_PRIORITY+1);
                                                     currentThread.setPriority(Thread.MIN_PRIORITY+1);
@@ -6459,7 +6510,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.MYSQL_DATABASES :
+                                            case MYSQL_DATABASES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6475,7 +6526,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.MYSQL_DB_USERS :
+                                            case MYSQL_DB_USERS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6491,7 +6542,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.MYSQL_SERVER_USERS :
+                                            case MYSQL_SERVER_USERS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6507,7 +6558,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.MYSQL_USERS :
+                                            case MYSQL_USERS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     process.setCommand(
@@ -6523,7 +6574,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.NET_BINDS :
+                                            case NET_BINDS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6539,7 +6590,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.PACKAGE_DEFINITIONS :
+                                            case PACKAGE_DEFINITIONS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6555,7 +6606,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.POSTGRES_BACKUPS :
+                                            case POSTGRES_BACKUPS :
                                                 {
                                                     process.setPriority(Thread.MIN_PRIORITY+1);
                                                     currentThread.setPriority(Thread.MIN_PRIORITY+1);
@@ -6575,7 +6626,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.POSTGRES_DATABASES :
+                                            case POSTGRES_DATABASES :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6591,7 +6642,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.POSTGRES_SERVER_USERS :
+                                            case POSTGRES_SERVER_USERS :
                                                 {
                                                     int pkey=in.readCompressedInt();
                                                     process.setCommand(
@@ -6607,7 +6658,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.POSTGRES_USERS :
+                                            case POSTGRES_USERS :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     process.setCommand(
@@ -6623,7 +6674,7 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case SchemaTable.USERNAMES :
+                                            case USERNAMES :
                                                 {
                                                     String username=in.readUTF().trim();
                                                     process.setCommand(
@@ -6987,10 +7038,10 @@ public abstract class MasterServer {
                                         {
                                             short days=in.readShort();
                                             int clientTableID=in.readCompressedInt();
-                                            int tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                            if(tableID==-1) throw new IOException("Client table not supported: #"+clientTableID);
+                                            SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+                                            if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                             switch(tableID) {
-                                                case SchemaTable.CVS_REPOSITORIES :
+                                                case CVS_REPOSITORIES :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -7007,7 +7058,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.EMAIL_LISTS :
+                                                case EMAIL_LISTS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -7024,11 +7075,11 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.HTTPD_SHARED_TOMCATS :
+                                                case HTTPD_SHARED_TOMCATS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         int clientColumnID=in.readCompressedInt();
-                                                        if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.HTTPD_SHARED_TOMCATS, "config_backup_retention")) {
+                                                        if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.TableID.HTTPD_SHARED_TOMCATS, "config_backup_retention")) {
                                                             process.setCommand(
                                                                 AOSHCommand.SET_HTTPD_SHARED_TOMCAT_CONFIG_BACKUP_RETENTION,
                                                                 Integer.valueOf(pkey),
@@ -7041,7 +7092,7 @@ public abstract class MasterServer {
                                                                 pkey,
                                                                 days
                                                             );
-                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.HTTPD_SHARED_TOMCATS, "file_backup_retention")) {
+                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.TableID.HTTPD_SHARED_TOMCATS, "file_backup_retention")) {
                                                             process.setCommand(
                                                                 AOSHCommand.SET_HTTPD_SHARED_TOMCAT_FILE_BACKUP_RETENTION,
                                                                 Integer.valueOf(pkey),
@@ -7054,7 +7105,7 @@ public abstract class MasterServer {
                                                                 pkey,
                                                                 days
                                                             );
-                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.HTTPD_SHARED_TOMCATS, "log_backup_retention")) {
+                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.TableID.HTTPD_SHARED_TOMCATS, "log_backup_retention")) {
                                                             process.setCommand(
                                                                 AOSHCommand.SET_HTTPD_SHARED_TOMCAT_LOG_BACKUP_RETENTION,
                                                                 Integer.valueOf(pkey),
@@ -7070,11 +7121,11 @@ public abstract class MasterServer {
                                                         } else throw new IOException("Unknown client column ID for set_httpd_shared_tomcat_backup_retention: " + clientColumnID);
                                                     }
                                                     break;
-                                                case SchemaTable.HTTPD_SITES :
+                                                case HTTPD_SITES :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         int clientColumnID=in.readCompressedInt();
-                                                        if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.HTTPD_SITES, "config_backup_retention")) {
+                                                        if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.TableID.HTTPD_SITES, "config_backup_retention")) {
                                                             process.setCommand(
                                                                 AOSHCommand.SET_HTTPD_SITE_CONFIG_BACKUP_RETENTION,
                                                                 Integer.valueOf(pkey),
@@ -7087,7 +7138,7 @@ public abstract class MasterServer {
                                                                 pkey,
                                                                 days
                                                             );
-                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.HTTPD_SITES, "file_backup_retention")) {
+                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.TableID.HTTPD_SITES, "file_backup_retention")) {
                                                             process.setCommand(
                                                                 AOSHCommand.SET_HTTPD_SITE_FILE_BACKUP_RETENTION,
                                                                 Integer.valueOf(pkey),
@@ -7100,7 +7151,7 @@ public abstract class MasterServer {
                                                                 pkey,
                                                                 days
                                                             );
-                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.HTTPD_SITES, "ftp_backup_retention")) {
+                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.TableID.HTTPD_SITES, "ftp_backup_retention")) {
                                                             process.setCommand(
                                                                 AOSHCommand.SET_HTTPD_SITE_FTP_BACKUP_RETENTION,
                                                                 Integer.valueOf(pkey),
@@ -7113,7 +7164,7 @@ public abstract class MasterServer {
                                                                 pkey,
                                                                 days
                                                             );
-                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.HTTPD_SITES, "log_backup_retention")) {
+                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.TableID.HTTPD_SITES, "log_backup_retention")) {
                                                             process.setCommand(
                                                                 AOSHCommand.SET_HTTPD_SITE_LOG_BACKUP_RETENTION,
                                                                 Integer.valueOf(pkey),
@@ -7129,11 +7180,11 @@ public abstract class MasterServer {
                                                         } else throw new IOException("Unknown column ID for set_httpd_site_backup_retention: " + clientColumnID);
                                                     }
                                                     break;
-                                                case SchemaTable.LINUX_SERVER_ACCOUNTS :
+                                                case LINUX_SERVER_ACCOUNTS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         int clientColumnID=in.readCompressedInt();
-                                                        if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.LINUX_SERVER_ACCOUNTS, "cron_backup_retention")) {
+                                                        if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, "cron_backup_retention")) {
                                                             process.setCommand(
                                                                 AOSHCommand.SET_LINUX_SERVER_ACCOUNT_CRON_BACKUP_RETENTION,
                                                                 Integer.valueOf(pkey),
@@ -7146,7 +7197,7 @@ public abstract class MasterServer {
                                                                 pkey,
                                                                 days
                                                             );
-                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.LINUX_SERVER_ACCOUNTS, "home_backup_retention")) {
+                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, "home_backup_retention")) {
                                                             process.setCommand(
                                                                 AOSHCommand.SET_LINUX_SERVER_ACCOUNT_HOME_BACKUP_RETENTION,
                                                                 Integer.valueOf(pkey),
@@ -7159,7 +7210,7 @@ public abstract class MasterServer {
                                                                 pkey,
                                                                 days
                                                             );
-                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.LINUX_SERVER_ACCOUNTS, "inbox_backup_retention")) {
+                                                        } else if(clientColumnID==TableHandler.getClientColumnIndex(conn, source, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, "inbox_backup_retention")) {
                                                             process.setCommand(
                                                                 AOSHCommand.SET_LINUX_SERVER_ACCOUNT_INBOX_BACKUP_RETENTION,
                                                                 Integer.valueOf(pkey),
@@ -7175,7 +7226,7 @@ public abstract class MasterServer {
                                                         } else throw new IOException("Unknown column ID for set_linux_server_account_backup_retention: " + clientColumnID);
                                                     }
                                                     break;
-                                                case SchemaTable.MAJORDOMO_SERVERS :
+                                                case MAJORDOMO_SERVERS :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -7192,7 +7243,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.MYSQL_DATABASES :
+                                                case MYSQL_DATABASES :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -7209,7 +7260,7 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case SchemaTable.POSTGRES_DATABASES :
+                                                case POSTGRES_DATABASES :
                                                     {
                                                         int pkey=in.readCompressedInt();
                                                         process.setCommand(
@@ -8950,11 +9001,11 @@ public abstract class MasterServer {
                                     case AOServProtocol.WAIT_FOR_REBUILD :
                                         {
                                             int clientTableID=in.readCompressedInt();
-                                            int tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                            if(tableID==-1) throw new IOException("Client table not supported: #"+clientTableID);
+                                            SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+                                            if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                             int aoServer=in.readCompressedInt();
                                             switch(tableID) {
-                                                case SchemaTable.HTTPD_SITES :
+                                                case HTTPD_SITES :
                                                     process.setCommand(
                                                         AOSHCommand.WAIT_FOR_HTTPD_SITE_REBUILD,
                                                         Integer.valueOf(aoServer)
@@ -8965,7 +9016,7 @@ public abstract class MasterServer {
                                                         aoServer
                                                     );
                                                     break;
-                                                case SchemaTable.INTERBASE_USERS :
+                                                case INTERBASE_USERS :
                                                     process.setCommand(
                                                         AOSHCommand.WAIT_FOR_INTERBASE_REBUILD,
                                                         Integer.valueOf(aoServer)
@@ -8976,7 +9027,7 @@ public abstract class MasterServer {
                                                         aoServer
                                                     );
                                                     break;
-                                                case SchemaTable.LINUX_ACCOUNTS :
+                                                case LINUX_ACCOUNTS :
                                                     process.setCommand(
                                                         AOSHCommand.WAIT_FOR_LINUX_ACCOUNT_REBUILD,
                                                         Integer.valueOf(aoServer)
@@ -8987,7 +9038,7 @@ public abstract class MasterServer {
                                                         aoServer
                                                     );
                                                     break;
-                                                case SchemaTable.MYSQL_DATABASES :
+                                                case MYSQL_DATABASES :
                                                     process.setCommand(
                                                         AOSHCommand.WAIT_FOR_MYSQL_DATABASE_REBUILD,
                                                         Integer.valueOf(aoServer)
@@ -8998,7 +9049,7 @@ public abstract class MasterServer {
                                                         aoServer
                                                     );
                                                     break;
-                                                case SchemaTable.MYSQL_DB_USERS :
+                                                case MYSQL_DB_USERS :
                                                     process.setCommand(
                                                         AOSHCommand.WAIT_FOR_MYSQL_DB_USER_REBUILD,
                                                         Integer.valueOf(aoServer)
@@ -9009,7 +9060,7 @@ public abstract class MasterServer {
                                                         aoServer
                                                     );
                                                     break;
-                                                case SchemaTable.MYSQL_USERS :
+                                                case MYSQL_USERS :
                                                     process.setCommand(
                                                         AOSHCommand.WAIT_FOR_MYSQL_USER_REBUILD,
                                                         Integer.valueOf(aoServer)
@@ -9020,7 +9071,7 @@ public abstract class MasterServer {
                                                         aoServer
                                                     );
                                                     break;
-                                                case SchemaTable.POSTGRES_DATABASES :
+                                                case POSTGRES_DATABASES :
                                                     process.setCommand(
                                                         AOSHCommand.WAIT_FOR_POSTGRES_DATABASE_REBUILD,
                                                         Integer.valueOf(aoServer)
@@ -9031,7 +9082,7 @@ public abstract class MasterServer {
                                                         aoServer
                                                     );
                                                     break;
-                                                case SchemaTable.POSTGRES_SERVERS :
+                                                case POSTGRES_SERVERS :
                                                     process.setCommand(
                                                         AOSHCommand.WAIT_FOR_POSTGRES_SERVER_REBUILD,
                                                         Integer.valueOf(aoServer)
@@ -9042,7 +9093,7 @@ public abstract class MasterServer {
                                                         aoServer
                                                     );
                                                     break;
-                                                case SchemaTable.POSTGRES_USERS :
+                                                case POSTGRES_USERS :
                                                     process.setCommand(
                                                         AOSHCommand.WAIT_FOR_POSTGRES_USER_REBUILD,
                                                         Integer.valueOf(aoServer)
@@ -9067,8 +9118,8 @@ public abstract class MasterServer {
                                 // Convert the invalidate list to client table IDs before releasing the connection
                                 if(sendInvalidateList) {
                                     clientInvalidateList=new IntArrayList();
-                                    for(int c=0;c<SchemaTable.NUM_TABLES;c++) {
-                                        if(invalidateList.isInvalid(c)) clientInvalidateList.add(TableHandler.convertToClientTableID(conn, source, c));
+                                    for(SchemaTable.TableID tableID : SchemaTable.TableID.values()) {
+                                        if(invalidateList.isInvalid(tableID)) clientInvalidateList.add(TableHandler.convertToClientTableID(conn, source, tableID));
                                     }
                                 }
                             } catch (SQLException err) {
@@ -9191,7 +9242,7 @@ public abstract class MasterServer {
                         // Build the list with a connection, but don't send until the connection is released
                         try {
                             try {
-                                for(int tableID=0;tableID<SchemaTable.NUM_TABLES;tableID++) {
+                                for(SchemaTable.TableID tableID : SchemaTable.TableID.values()) {
                                     int clientTableID=TableHandler.convertToClientTableID(conn, source, tableID);
                                     if(clientTableID!=-1) {
                                         List<String> affectedBusinesses=invalidateList.getAffectedBusinesses(tableID);
@@ -9226,13 +9277,13 @@ public abstract class MasterServer {
                                                         break;
                                                     }
                                                     if(
-                                                        tableID==SchemaTable.AO_SERVERS
-                                                        || tableID==SchemaTable.IP_ADDRESSES
-                                                        || tableID==SchemaTable.LINUX_ACCOUNTS
-                                                        || tableID==SchemaTable.LINUX_SERVER_ACCOUNTS
-                                                        || tableID==SchemaTable.NET_DEVICES
-                                                        || tableID==SchemaTable.SERVERS
-                                                        || tableID==SchemaTable.USERNAMES
+                                                        tableID==SchemaTable.TableID.AO_SERVERS
+                                                        || tableID==SchemaTable.TableID.IP_ADDRESSES
+                                                        || tableID==SchemaTable.TableID.LINUX_ACCOUNTS
+                                                        || tableID==SchemaTable.TableID.LINUX_SERVER_ACCOUNTS
+                                                        || tableID==SchemaTable.TableID.NET_DEVICES
+                                                        || tableID==SchemaTable.TableID.SERVERS
+                                                        || tableID==SchemaTable.TableID.USERNAMES
                                                     ) {
                                                         // These tables invalidations are also sent to the servers failover parent
                                                         int failoverServer=ServerHandler.getFailoverServer(conn, server);
@@ -10390,19 +10441,19 @@ public abstract class MasterServer {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, MasterServer.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, MasterServer.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
-            if(tableID==SchemaTable.MASTER_HOSTS) {
+            if(tableID==SchemaTable.TableID.MASTER_HOSTS) {
                 synchronized(MasterServer.class) {
                     masterHosts=null;
                 }
-            } else if(tableID==SchemaTable.MASTER_SERVERS) {
+            } else if(tableID==SchemaTable.TableID.MASTER_SERVERS) {
                 synchronized(MasterServer.class) {
                     masterHosts=null;
                     masterServers=null;
                 }
-            } else if(tableID==SchemaTable.MASTER_USERS) {
+            } else if(tableID==SchemaTable.TableID.MASTER_USERS) {
                 synchronized(MasterServer.class) {
                     masterHosts=null;
                     masterServers=null;

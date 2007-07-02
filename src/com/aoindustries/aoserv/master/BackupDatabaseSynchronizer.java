@@ -34,19 +34,19 @@ public final class BackupDatabaseSynchronizer implements Runnable {
     /**
      * The list of tables that are synchronized.
      */
-    private static final int[] tableIDs={
-        SchemaTable.AO_SERVERS,
-        SchemaTable.BACKUP_LEVELS,
-        SchemaTable.BACKUP_RETENTIONS,
-        SchemaTable.BUSINESS_SERVERS,
-        SchemaTable.BUSINESSES,
-        SchemaTable.MASTER_SERVERS,
-        SchemaTable.MYSQL_SERVERS,
-        SchemaTable.PACKAGES,
-        SchemaTable.POSTGRES_SERVERS,
-        SchemaTable.SERVER_FARMS,
-        SchemaTable.SERVERS,
-        SchemaTable.USERNAMES
+    private static final SchemaTable.TableID[] tableIDs={
+        SchemaTable.TableID.AO_SERVERS,
+        SchemaTable.TableID.BACKUP_LEVELS,
+        SchemaTable.TableID.BACKUP_RETENTIONS,
+        SchemaTable.TableID.BUSINESS_SERVERS,
+        SchemaTable.TableID.BUSINESSES,
+        SchemaTable.TableID.MASTER_SERVERS,
+        SchemaTable.TableID.MYSQL_SERVERS,
+        SchemaTable.TableID.PACKAGES,
+        SchemaTable.TableID.POSTGRES_SERVERS,
+        SchemaTable.TableID.SERVER_FARMS,
+        SchemaTable.TableID.SERVERS,
+        SchemaTable.TableID.USERNAMES
     };
     
     /**
@@ -137,8 +137,8 @@ public final class BackupDatabaseSynchronizer implements Runnable {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, BackupDatabaseSynchronizer.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, BackupDatabaseSynchronizer.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
             for(int c=0;c<tableIDs.length;c++) {
                 if(tableID==tableIDs[c]) {

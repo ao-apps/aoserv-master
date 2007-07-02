@@ -5,12 +5,19 @@ package com.aoindustries.aoserv.master;
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.profiler.*;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.profiler.Profiler;
+import com.aoindustries.util.IntCollection;
+import com.aoindustries.util.SortedArrayList;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * In the request lifecycle, table invalidations occur after the database connection has been committed
@@ -22,7 +29,7 @@ import java.util.*;
  */
 final public class InvalidateList {
 
-    private static String[] tableNames=new String[SchemaTable.NUM_TABLES];
+    final private static String[] tableNames=new String[SchemaTable.TableID.values().length];
 
     /**
      * Indicates that all servers or businesses should receive the invalidate signal.
@@ -31,8 +38,8 @@ final public class InvalidateList {
     public static final Collection<String> allBusinesses=Collections.unmodifiableCollection(new ArrayList<String>());
     public static final Collection<String> allServers=Collections.unmodifiableCollection(new ArrayList<String>());
 
-    private Map<Integer,List<String>> serverLists=new HashMap<Integer,List<String>>();
-    private Map<Integer,List<String>> businessLists=new HashMap<Integer,List<String>>();
+    private Map<SchemaTable.TableID,List<String>> serverLists=new EnumMap<SchemaTable.TableID,List<String>>(SchemaTable.TableID.class);
+    private Map<SchemaTable.TableID,List<String>> businessLists=new EnumMap<SchemaTable.TableID,List<String>>(SchemaTable.TableID.class);
 
     public void clear() {
         Profiler.startProfile(Profiler.FAST, InvalidateList.class, "clear()", null);
@@ -49,12 +56,12 @@ final public class InvalidateList {
 
     public void addTable(
         MasterDatabaseConnection conn,
-        int tableID,
+        SchemaTable.TableID tableID,
         String business,
         int server,
         boolean recurse
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,int,String,int,boolean)", null);
+        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,SchemaTable.TableID,String,int,boolean)", null);
         try {
             addTable(
                 conn,
@@ -70,12 +77,12 @@ final public class InvalidateList {
 
     public void addTable(
         MasterDatabaseConnection conn,
-        int tableID,
+        SchemaTable.TableID tableID,
         String business,
         String server,
         boolean recurse
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,int,String,String,boolean)", null);
+        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,SchemaTable.TableID,String,String,boolean)", null);
         try {
             addTable(
                 conn,
@@ -91,12 +98,12 @@ final public class InvalidateList {
 
     public void addTable(
         MasterDatabaseConnection conn,
-        int tableID,
+        SchemaTable.TableID tableID,
         Collection<String> businesses,
         int server,
         boolean recurse
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,int,Collection<String>,int,boolean)", null);
+        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,SchemaTable.TableID,Collection<String>,int,boolean)", null);
         try {
             addTable(
                 conn,
@@ -112,12 +119,12 @@ final public class InvalidateList {
 
     public void addTable(
         MasterDatabaseConnection conn,
-        int tableID,
+        SchemaTable.TableID tableID,
         String business,
         IntCollection servers,
         boolean recurse
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,int,String,IntCollection,boolean)", null);
+        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,SchemaTable.TableID,String,IntCollection,boolean)", null);
         try {
             addTable(
                 conn,
@@ -133,12 +140,12 @@ final public class InvalidateList {
 
     public void addTable(
         MasterDatabaseConnection conn,
-        int tableID,
+        SchemaTable.TableID tableID,
         Collection<String> businesses,
         IntCollection servers,
         boolean recurse
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,int,Collection<String>,IntCollection,boolean)", null);
+        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,SchemaTable.TableID,Collection<String>,IntCollection,boolean)", null);
         try {
             addTable(
                 conn,
@@ -154,12 +161,12 @@ final public class InvalidateList {
 
     public void addTable(
         MasterDatabaseConnection conn,
-        int tableID,
+        SchemaTable.TableID tableID,
         String business,
         Collection<String> servers,
         boolean recurse
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,int,String,Collection<String>,boolean)", null);
+        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,SchemaTable.TableID,String,Collection<String>,boolean)", null);
         try {
             addTable(
                 conn,
@@ -175,26 +182,25 @@ final public class InvalidateList {
 
     public void addTable(
         MasterDatabaseConnection conn,
-        int tableID,
+        SchemaTable.TableID tableID,
         Collection<String> businesses,
         Collection<String> servers,
         boolean recurse
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,int,Collection<String>,Collection<String>,boolean)", null);
+        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,SchemaTable.TableID,Collection<String>,Collection<String>,boolean)", null);
         try {
             // Warn about any mismatches
             if(businesses==allServers) MasterServer.reportWarning(new IllegalArgumentException("businesses==allServers"), null);
             if(servers==allBusinesses) MasterServer.reportWarning(new IllegalArgumentException("servers==allBusinesses"), null);
 
-            if(tableNames[tableID]==null) tableNames[tableID]=TableHandler.getTableName(conn, tableID);
-            Integer tableIDInteger = Integer.valueOf(tableID);
+            if(tableNames[tableID.ordinal()]==null) tableNames[tableID.ordinal()]=TableHandler.getTableName(conn, tableID);
 
             // Add to the business lists
             {
-                List<String> SV=businessLists.get(tableIDInteger);
+                List<String> SV=businessLists.get(tableID);
                 if(SV==null) {
                     SV=new SortedArrayList<String>();
-                    businessLists.put(tableIDInteger, SV);
+                    businessLists.put(tableID, SV);
                 }
                 if(!SV.contains(ALL)) {
                     if(businesses==null || businesses==allBusinesses) {
@@ -211,10 +217,10 @@ final public class InvalidateList {
 
             // Add to the server lists
             {
-                List<String> SV=serverLists.get(tableIDInteger);
+                List<String> SV=serverLists.get(tableID);
                 if(SV==null) {
                     SV=new SortedArrayList<String>();
-                    serverLists.put(tableIDInteger, SV);
+                    serverLists.put(tableID, SV);
                 }
                 if(!SV.contains(ALL)) {
                     if(servers==null || servers==allServers) {
@@ -232,98 +238,98 @@ final public class InvalidateList {
             // Recursively invalidate those tables who's filters might have been effected
             if(recurse) {
                 switch(tableID) {
-                    case SchemaTable.AO_SERVERS :
-                        addTable(conn, SchemaTable.INTERBASE_SERVER_USERS, businesses, servers, true);
-                        addTable(conn, SchemaTable.LINUX_SERVER_ACCOUNTS, businesses, servers, true);
-                        addTable(conn, SchemaTable.LINUX_SERVER_GROUPS, businesses, servers, true);
-                        addTable(conn, SchemaTable.MYSQL_SERVERS, businesses, servers, true);
-                        addTable(conn, SchemaTable.NET_DEVICES, businesses, servers, true);
-                        addTable(conn, SchemaTable.POSTGRES_SERVERS, businesses, servers, true);
+                    case AO_SERVERS :
+                        addTable(conn, SchemaTable.TableID.INTERBASE_SERVER_USERS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.MYSQL_SERVERS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.NET_DEVICES, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.POSTGRES_SERVERS, businesses, servers, true);
                         break;
-                    case SchemaTable.BUSINESS_SERVERS :
-                        addTable(conn, SchemaTable.SERVERS, businesses, servers, true);
+                    case BUSINESS_SERVERS :
+                        addTable(conn, SchemaTable.TableID.SERVERS, businesses, servers, true);
                         break;
-                    case SchemaTable.BUSINESSES :
-                        addTable(conn, SchemaTable.BUSINESS_PROFILES, businesses, servers, true);
+                    case BUSINESSES :
+                        addTable(conn, SchemaTable.TableID.BUSINESS_PROFILES, businesses, servers, true);
                         break;
-                    case SchemaTable.EMAIL_DOMAINS :
-                        addTable(conn, SchemaTable.EMAIL_ADDRESSES, businesses, servers, true);
-                        addTable(conn, SchemaTable.MAJORDOMO_SERVERS, businesses, servers, true);
+                    case EMAIL_DOMAINS :
+                        addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.MAJORDOMO_SERVERS, businesses, servers, true);
                         break;
-                    case SchemaTable.FAILOVER_FILE_REPLICATIONS :
-                        addTable(conn, SchemaTable.SERVERS, businesses, servers, true);
-                        addTable(conn, SchemaTable.NET_DEVICES, businesses, servers, true);
-                        addTable(conn, SchemaTable.IP_ADDRESSES, businesses, servers, true);
-                        addTable(conn, SchemaTable.NET_BINDS, businesses, servers, true);
+                    case FAILOVER_FILE_REPLICATIONS :
+                        addTable(conn, SchemaTable.TableID.SERVERS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.NET_DEVICES, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
                         break;
-                    case SchemaTable.FILE_BACKUPS :
-                        addTable(conn, SchemaTable.BACKUP_DATA, businesses, servers, true);
+                    case FILE_BACKUPS :
+                        addTable(conn, SchemaTable.TableID.BACKUP_DATA, businesses, servers, true);
                         break;
-                    case SchemaTable.HTTPD_BINDS :
-                        addTable(conn, SchemaTable.IP_ADDRESSES, businesses, servers, true);
-                        addTable(conn, SchemaTable.NET_BINDS, businesses, servers, true);
+                    case HTTPD_BINDS :
+                        addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
                         break;
-                    case SchemaTable.HTTPD_SITE_BINDS :
-                        addTable(conn, SchemaTable.HTTPD_BINDS, businesses, servers, true);
+                    case HTTPD_SITE_BINDS :
+                        addTable(conn, SchemaTable.TableID.HTTPD_BINDS, businesses, servers, true);
                         break;
-                    case SchemaTable.INTERBASE_BACKUPS :
-                        addTable(conn, SchemaTable.BACKUP_DATA, businesses, servers, true);
+                    case INTERBASE_BACKUPS :
+                        addTable(conn, SchemaTable.TableID.BACKUP_DATA, businesses, servers, true);
                         break;
-                    case SchemaTable.INTERBASE_SERVER_USERS :
-                        addTable(conn, SchemaTable.INTERBASE_USERS, businesses, servers, true);
+                    case INTERBASE_SERVER_USERS :
+                        addTable(conn, SchemaTable.TableID.INTERBASE_USERS, businesses, servers, true);
                         break;
-                    case SchemaTable.LINUX_ACCOUNTS :
-                        addTable(conn, SchemaTable.FTP_GUEST_USERS, businesses, servers, true);
-                        addTable(conn, SchemaTable.USERNAMES, businesses, servers, true);
+                    case LINUX_ACCOUNTS :
+                        addTable(conn, SchemaTable.TableID.FTP_GUEST_USERS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.USERNAMES, businesses, servers, true);
                         break;
-                    case SchemaTable.LINUX_SERVER_ACCOUNTS :
-                        addTable(conn, SchemaTable.LINUX_ACCOUNTS, businesses, servers, true);
-                        addTable(conn, SchemaTable.LINUX_GROUP_ACCOUNTS, businesses, servers, true);
+                    case LINUX_SERVER_ACCOUNTS :
+                        addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, businesses, servers, true);
                         break;
-                    case SchemaTable.LINUX_SERVER_GROUPS :
-                        addTable(conn, SchemaTable.EMAIL_LISTS, businesses, servers, true);
-                        addTable(conn, SchemaTable.LINUX_GROUPS, businesses, servers, true);
-                        addTable(conn, SchemaTable.LINUX_GROUP_ACCOUNTS, businesses, servers, true);
+                    case LINUX_SERVER_GROUPS :
+                        addTable(conn, SchemaTable.TableID.EMAIL_LISTS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.LINUX_GROUPS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, businesses, servers, true);
                         break;
-                    case SchemaTable.MAJORDOMO_SERVERS :
-                        addTable(conn, SchemaTable.MAJORDOMO_LISTS, businesses, servers, true);
+                    case MAJORDOMO_SERVERS :
+                        addTable(conn, SchemaTable.TableID.MAJORDOMO_LISTS, businesses, servers, true);
                         break;
-                    case SchemaTable.MYSQL_BACKUPS :
-                        addTable(conn, SchemaTable.BACKUP_DATA, businesses, servers, true);
+                    case MYSQL_BACKUPS :
+                        addTable(conn, SchemaTable.TableID.BACKUP_DATA, businesses, servers, true);
                         break;
-                    case SchemaTable.MYSQL_SERVER_USERS :
-                        addTable(conn, SchemaTable.MYSQL_USERS, businesses, servers, true);
+                    case MYSQL_SERVER_USERS :
+                        addTable(conn, SchemaTable.TableID.MYSQL_USERS, businesses, servers, true);
                         break;
-                    case SchemaTable.MYSQL_SERVERS :
-                        addTable(conn, SchemaTable.NET_BINDS, businesses, servers, true);
-                        addTable(conn, SchemaTable.MYSQL_DATABASES, businesses, servers, true);
-                        addTable(conn, SchemaTable.MYSQL_SERVER_USERS, businesses, servers, true);
+                    case MYSQL_SERVERS :
+                        addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.MYSQL_DATABASES, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.MYSQL_SERVER_USERS, businesses, servers, true);
                         break;
-                    case SchemaTable.NET_DEVICES :
-                        addTable(conn, SchemaTable.IP_ADDRESSES, businesses, servers, true);
+                    case NET_DEVICES :
+                        addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);
                         break;
-                    case SchemaTable.PACKAGE_DEFINITIONS :
-                        addTable(conn, SchemaTable.PACKAGE_DEFINITION_LIMITS, businesses, servers, true);
+                    case PACKAGE_DEFINITIONS :
+                        addTable(conn, SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS, businesses, servers, true);
                         break;
-                    case SchemaTable.PACKAGES :
-                        addTable(conn, SchemaTable.PACKAGE_DEFINITIONS, businesses, servers, true);
+                    case PACKAGES :
+                        addTable(conn, SchemaTable.TableID.PACKAGE_DEFINITIONS, businesses, servers, true);
                         break;
-                    case SchemaTable.POSTGRES_BACKUPS :
-                        addTable(conn, SchemaTable.BACKUP_DATA, businesses, servers, true);
+                    case POSTGRES_BACKUPS :
+                        addTable(conn, SchemaTable.TableID.BACKUP_DATA, businesses, servers, true);
                         break;
-                    case SchemaTable.POSTGRES_SERVER_USERS :
-                        addTable(conn, SchemaTable.POSTGRES_USERS, businesses, servers, true);
+                    case POSTGRES_SERVER_USERS :
+                        addTable(conn, SchemaTable.TableID.POSTGRES_USERS, businesses, servers, true);
                         break;
-                    case SchemaTable.POSTGRES_SERVERS :
-                        addTable(conn, SchemaTable.NET_BINDS, businesses, servers, true);
-                        addTable(conn, SchemaTable.POSTGRES_DATABASES, businesses, servers, true);
-                        addTable(conn, SchemaTable.POSTGRES_SERVER_USERS, businesses, servers, true);
+                    case POSTGRES_SERVERS :
+                        addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.POSTGRES_DATABASES, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.POSTGRES_SERVER_USERS, businesses, servers, true);
                         break;
-                    case SchemaTable.SERVERS :
-                        addTable(conn, SchemaTable.AO_SERVERS, businesses, servers, true);
+                    case SERVERS :
+                        addTable(conn, SchemaTable.TableID.AO_SERVERS, businesses, servers, true);
                         break;
-                    case SchemaTable.USERNAMES :
-                        addTable(conn, SchemaTable.BUSINESS_ADMINISTRATORS, businesses, servers, true);
+                    case USERNAMES :
+                        addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, businesses, servers, true);
                         break;
                 }
             }
@@ -332,8 +338,8 @@ final public class InvalidateList {
         }
     }
 
-    public List<String> getAffectedBusinesses(int tableID) {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "getAffectedBusinesses(int)", null);
+    public List<String> getAffectedBusinesses(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "getAffectedBusinesses(SchemaTable.TableID)", null);
         try {
             List<String> SV=businessLists.get(tableID);
             if(SV!=null || serverLists.containsKey(tableID)) {
@@ -347,8 +353,8 @@ final public class InvalidateList {
         }
     }
 
-    public List<String> getAffectedServers(int tableID) {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "getAffectedServers(int)", null);
+    public List<String> getAffectedServers(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "getAffectedServers(SchemaTable.TableID)", null);
         try {
             List<String> SV=serverLists.get(tableID);
             if(SV!=null || businessLists.containsKey(tableID)) {
@@ -365,25 +371,25 @@ final public class InvalidateList {
     public void invalidateMasterCaches() {
         Profiler.startProfile(Profiler.FAST, InvalidateList.class, "invalidateMasterCaches()", null);
         try {
-            for(int c=0;c<SchemaTable.NUM_TABLES;c++) {
-                if(serverLists.containsKey(c) || businessLists.containsKey(c)) {
-                    BackupDatabaseSynchronizer.invalidateTable(c);
-                    BackupHandler.invalidateTable(c);
-                    BusinessHandler.invalidateTable(c);
-                    CvsHandler.invalidateTable(c);
-                    DaemonHandler.invalidateTable(c);
-                    DNSHandler.invalidateTable(c);
-                    EmailHandler.invalidateTable(c);
-                    HttpdHandler.invalidateTable(c);
-                    InterBaseHandler.invalidateTable(c);
-                    LinuxAccountHandler.invalidateTable(c);
-                    MasterServer.invalidateTable(c);
-                    MySQLHandler.invalidateTable(c);
-                    PackageHandler.invalidateTable(c);
-                    PostgresHandler.invalidateTable(c);
-                    ServerHandler.invalidateTable(c);
-                    TableHandler.invalidateTable(c);
-                    UsernameHandler.invalidateTable(c);
+            for(SchemaTable.TableID tableID : SchemaTable.TableID.values()) {
+                if(serverLists.containsKey(tableID) || businessLists.containsKey(tableID)) {
+                    BackupDatabaseSynchronizer.invalidateTable(tableID);
+                    BackupHandler.invalidateTable(tableID);
+                    BusinessHandler.invalidateTable(tableID);
+                    CvsHandler.invalidateTable(tableID);
+                    DaemonHandler.invalidateTable(tableID);
+                    DNSHandler.invalidateTable(tableID);
+                    EmailHandler.invalidateTable(tableID);
+                    HttpdHandler.invalidateTable(tableID);
+                    InterBaseHandler.invalidateTable(tableID);
+                    LinuxAccountHandler.invalidateTable(tableID);
+                    MasterServer.invalidateTable(tableID);
+                    MySQLHandler.invalidateTable(tableID);
+                    PackageHandler.invalidateTable(tableID);
+                    PostgresHandler.invalidateTable(tableID);
+                    ServerHandler.invalidateTable(tableID);
+                    TableHandler.invalidateTable(tableID);
+                    UsernameHandler.invalidateTable(tableID);
                 }
             }
         } finally {
@@ -391,8 +397,8 @@ final public class InvalidateList {
         }
     }
 
-    public boolean isInvalid(int tableID) {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "isInvalid(int)", null);
+    public boolean isInvalid(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "isInvalid(SchemaTable.TableID)", null);
         try {
             return serverLists.containsKey(tableID) || businessLists.containsKey(tableID);
         } finally {

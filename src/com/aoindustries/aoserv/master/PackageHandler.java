@@ -206,7 +206,7 @@ final public class PackageHandler {
             }
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.PACKAGES, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.PACKAGES, accounting, InvalidateList.allServers, false);
             
             return pkey;
         } finally {
@@ -278,7 +278,7 @@ final public class PackageHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.PACKAGE_DEFINITIONS,
+                SchemaTable.TableID.PACKAGE_DEFINITIONS,
                 accounting,
                 BusinessHandler.getServersForBusiness(conn, accounting),
                 false
@@ -383,14 +383,14 @@ final public class PackageHandler {
             IntList servers=BusinessHandler.getServersForBusiness(conn, accounting);
             invalidateList.addTable(
                 conn,
-                SchemaTable.PACKAGE_DEFINITIONS,
+                SchemaTable.TableID.PACKAGE_DEFINITIONS,
                 accounting,
                 servers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.PACKAGE_DEFINITION_LIMITS,
+                SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
                 accounting,
                 servers,
                 false
@@ -465,7 +465,7 @@ final public class PackageHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.PACKAGE_DEFINITIONS,
+                SchemaTable.TableID.PACKAGE_DEFINITIONS,
                 accounting,
                 BusinessHandler.getServersForBusiness(conn, accounting),
                 false
@@ -540,7 +540,7 @@ final public class PackageHandler {
             String accounting=getBusinessForPackage(conn, name);
             invalidateList.addTable(
                 conn,
-                SchemaTable.PACKAGES,
+                SchemaTable.TableID.PACKAGES,
                 accounting,
                 BusinessHandler.getServersForBusiness(conn, accounting),
                 false
@@ -573,7 +573,7 @@ final public class PackageHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.PACKAGES,
+                SchemaTable.TableID.PACKAGES,
                 accounting,
                 BusinessHandler.getServersForBusiness(conn, accounting),
                 false
@@ -723,10 +723,10 @@ final public class PackageHandler {
         }
     }
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, PackageHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, PackageHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
-            if(tableID==SchemaTable.PACKAGES) {
+            if(tableID==SchemaTable.TableID.PACKAGES) {
                 synchronized(PackageHandler.class) {
                     disabledPackages.clear();
                 }
@@ -950,14 +950,14 @@ final public class PackageHandler {
             
             invalidateList.addTable(
                 conn,
-                SchemaTable.PACKAGE_DEFINITIONS,
+                SchemaTable.TableID.PACKAGE_DEFINITIONS,
                 getBusinessForPackageDefinition(conn, pkey),
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.PACKAGE_DEFINITIONS,
+                SchemaTable.TableID.PACKAGE_DEFINITIONS,
                 getBusinessesForPackageDefinition(conn, pkey),
                 InvalidateList.allServers,
                 false
@@ -1017,14 +1017,14 @@ final public class PackageHandler {
             
             invalidateList.addTable(
                 conn,
-                SchemaTable.PACKAGE_DEFINITION_LIMITS,
+                SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
                 getBusinessForPackageDefinition(conn, pkey),
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.PACKAGE_DEFINITION_LIMITS,
+                SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
                 getBusinessesForPackageDefinition(conn, pkey),
                 InvalidateList.allServers,
                 false
@@ -1064,7 +1064,7 @@ final public class PackageHandler {
             if(conn.executeUpdate("delete from package_definition_limits where package_definition=?", pkey)>0) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.PACKAGE_DEFINITION_LIMITS,
+                    SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
                     accounting,
                     servers,
                     false
@@ -1074,7 +1074,7 @@ final public class PackageHandler {
             conn.executeUpdate("delete from package_definitions where pkey=?", pkey);
             invalidateList.addTable(
                 conn,
-                SchemaTable.PACKAGE_DEFINITIONS,
+                SchemaTable.TableID.PACKAGE_DEFINITIONS,
                 accounting,
                 servers,
                 false

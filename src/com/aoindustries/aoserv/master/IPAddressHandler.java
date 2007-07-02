@@ -94,14 +94,14 @@ final public class IPAddressHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.IP_ADDRESSES,
+                SchemaTable.TableID.IP_ADDRESSES,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, fromServer),
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.IP_ADDRESSES,
+                SchemaTable.TableID.IP_ADDRESSES,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, toServer),
                 false
@@ -136,7 +136,7 @@ final public class IPAddressHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.IP_ADDRESSES,
+                SchemaTable.TableID.IP_ADDRESSES,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -202,7 +202,7 @@ final public class IPAddressHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.IP_ADDRESSES,
+                SchemaTable.TableID.IP_ADDRESSES,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -270,7 +270,7 @@ final public class IPAddressHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.IP_ADDRESSES,
+                SchemaTable.TableID.IP_ADDRESSES,
                 InvalidateList.getCollection(oldAccounting, newAccounting),
                 aoServer,
                 false
@@ -431,7 +431,7 @@ final public class IPAddressHandler {
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.IP_ADDRESSES,
+                SchemaTable.TableID.IP_ADDRESSES,
                 getBusinessForIPAddress(conn, ipAddress),
                 ServerHandler.getHostnameForServer(conn, getAOServerForIPAddress(conn, ipAddress)),
                 false

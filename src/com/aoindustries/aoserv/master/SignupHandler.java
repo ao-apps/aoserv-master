@@ -139,8 +139,8 @@ final public class SignupHandler {
         }
 
         // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.SIGNUP_REQUESTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-        invalidateList.addTable(conn, SchemaTable.SIGNUP_REQUEST_OPTIONS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, SchemaTable.TableID.SIGNUP_REQUESTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, SchemaTable.TableID.SIGNUP_REQUEST_OPTIONS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
         return pkey;
     }

@@ -69,7 +69,7 @@ final public class TransactionHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.INCOMING_PAYMENTS,
+                SchemaTable.TableID.INCOMING_PAYMENTS,
                 TransactionHandler.getBusinessForTransaction(conn, transid),
                 InvalidateList.allServers,
                 false
@@ -124,7 +124,7 @@ final public class TransactionHandler {
             );
 
             // Notify all clients of the updates
-            invalidateList.addTable(conn, SchemaTable.TRANSACTIONS, accounting, BusinessHandler.getServersForBusiness(conn, accounting), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accounting, BusinessHandler.getServersForBusiness(conn, accounting), false);
             return transid;
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
@@ -538,7 +538,7 @@ final public class TransactionHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.INCOMING_PAYMENTS,
+                SchemaTable.TableID.INCOMING_PAYMENTS,
                 getBusinessForTransaction(conn, transid),
                 InvalidateList.allServers,
                 false
@@ -580,7 +580,7 @@ final public class TransactionHandler {
             }
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.TRANSACTIONS, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -629,7 +629,7 @@ final public class TransactionHandler {
             }
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.TRANSACTIONS, accounting, InvalidateList.allServers, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }

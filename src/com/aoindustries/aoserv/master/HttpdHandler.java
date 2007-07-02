@@ -114,7 +114,7 @@ final public class HttpdHandler {
             }
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_WORKERS,
+                SchemaTable.TableID.HTTPD_WORKERS,
                 NetBindHandler.getBusinessForNetBind(conn, netBindPKey),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -157,7 +157,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITE_URLS,
+                SchemaTable.TableID.HTTPD_SITE_URLS,
                 getBusinessForHttpdSite(conn, hs),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, hs)),
                 false
@@ -278,7 +278,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
+                SchemaTable.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
                 getBusinessForHttpdSite(conn, httpd_site),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, httpd_site)),
                 false
@@ -374,7 +374,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_TOMCAT_CONTEXTS,
+                SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS,
                 getBusinessForHttpdSite(conn, tomcat_site),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, tomcat_site)),
                 false
@@ -449,7 +449,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_TOMCAT_DATA_SOURCES,
+                SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES,
                 getBusinessForHttpdSite(conn, tomcat_site),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, tomcat_site)),
                 false
@@ -509,7 +509,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_TOMCAT_PARAMETERS,
+                SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS,
                 getBusinessForHttpdSite(conn, tomcat_site),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, tomcat_site)),
                 false
@@ -876,7 +876,7 @@ final public class HttpdHandler {
             } finally {
                 pstmt.close();
             }
-            invalidateList.addTable(conn, SchemaTable.HTTPD_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
 
             // Create the HttpdTomcatSite
             conn.executeUpdate(
@@ -885,7 +885,7 @@ final public class HttpdHandler {
                 tomcatVersion,
                 useApache
             );
-            invalidateList.addTable(conn, SchemaTable.HTTPD_TOMCAT_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
 
             // Add the default httpd_tomcat_context
             int htcPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
@@ -912,7 +912,7 @@ final public class HttpdHandler {
                 httpdSitePKey,
                 HttpdSite.WWW_DIRECTORY+'/'+siteName+"/webapps/"+HttpdTomcatContext.ROOT_DOC_BASE
             );
-            invalidateList.addTable(conn, SchemaTable.HTTPD_TOMCAT_CONTEXTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             
             if(!isTomcat4) {
                 htcPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
@@ -939,7 +939,7 @@ final public class HttpdHandler {
                     httpdSitePKey,
                     conn.executeStringQuery("select install_dir from httpd_tomcat_versions where version=?", tomcatVersion)+"/webapps/examples"
                 );
-                invalidateList.addTable(conn, SchemaTable.HTTPD_TOMCAT_CONTEXTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             }
 
             if ("jboss".equals(siteType)) {
@@ -1012,7 +1012,7 @@ final public class HttpdHandler {
                 } finally {
                     pstmt.close();
                 }
-                invalidateList.addTable(conn, SchemaTable.HTTPD_JBOSS_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_JBOSS_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             } else if ("tomcat_shared".equals(siteType)) {
                 // Create the HttpdTomcatSharedSite
                 conn.executeUpdate(
@@ -1020,7 +1020,7 @@ final public class HttpdHandler {
                     httpdSitePKey,
                     sharedTomcatPkey
                 );
-                invalidateList.addTable(conn, SchemaTable.HTTPD_TOMCAT_SHARED_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SHARED_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             } else if ("tomcat_standard".equals(siteType)) {
                 // Create the HttpdTomcatStdSite
                 if(isTomcat4) {
@@ -1041,7 +1041,7 @@ final public class HttpdHandler {
                         LinuxAccountTable.generatePassword(MasterServer.getRandom())
                     );
                 } else conn.executeUpdate("insert into httpd_tomcat_std_sites values(?,null,null)", httpdSitePKey);
-                invalidateList.addTable(conn, SchemaTable.HTTPD_TOMCAT_STD_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             }
 
             if(!isTomcat4 || !"tomcat_shared".equals(siteType)) {
@@ -1075,7 +1075,7 @@ final public class HttpdHandler {
                 "/logs/"+siteName+"/http/access_log",
                 "/logs/"+siteName+"/http/error_log"
             );
-            invalidateList.addTable(conn, SchemaTable.HTTPD_SITE_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
 
             conn.executeUpdate(
                 "insert into httpd_site_urls(httpd_site_bind, hostname, is_primary) values(?,?,true)",
@@ -1094,7 +1094,7 @@ final public class HttpdHandler {
                 httpSiteBindPKey,
                 testURL
             );
-            invalidateList.addTable(conn, SchemaTable.HTTPD_SITE_URLS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_URLS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
 
             String wildcardHttps=conn.executeStringQuery(
                 "select\n"
@@ -1138,14 +1138,14 @@ final public class HttpdHandler {
                 } finally {
                     pstmt.close();
                 }
-                invalidateList.addTable(conn, SchemaTable.HTTPD_SITE_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
 
                 conn.executeUpdate(
                     "insert into httpd_site_urls(httpd_site_bind, hostname, is_primary) values(?,?,true)",
                     httpsSiteBindPKey,
                     httpsHostname
                 );
-                invalidateList.addTable(conn, SchemaTable.HTTPD_SITE_URLS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_URLS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             }
             return httpdSitePKey;
         } finally {
@@ -1300,7 +1300,7 @@ final public class HttpdHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SHARED_TOMCATS,
+                SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
                 UsernameHandler.getBusinessForUsername(conn, linuxServerAccount),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -1650,7 +1650,7 @@ final public class HttpdHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SHARED_TOMCATS,
+                SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
                 getBusinessForHttpdSharedTomcat(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSharedTomcat(conn, pkey)),
                 false
@@ -1689,7 +1689,7 @@ final public class HttpdHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITES,
+                SchemaTable.TableID.HTTPD_SITES,
                 getBusinessForHttpdSite(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, pkey)),
                 false
@@ -1722,7 +1722,7 @@ final public class HttpdHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITE_BINDS,
+                SchemaTable.TableID.HTTPD_SITE_BINDS,
                 getBusinessForHttpdSite(conn, httpdSite),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, httpdSite)),
                 false
@@ -1757,7 +1757,7 @@ final public class HttpdHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SHARED_TOMCATS,
+                SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
                 PackageHandler.getBusinessForPackage(conn, pk),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSharedTomcat(conn, pkey)),
                 false
@@ -1792,7 +1792,7 @@ final public class HttpdHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITES,
+                SchemaTable.TableID.HTTPD_SITES,
                 PackageHandler.getBusinessForPackage(conn, pk),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, pkey)),
                 false
@@ -1825,7 +1825,7 @@ final public class HttpdHandler {
             // Notify all clients of the update
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITE_BINDS,
+                SchemaTable.TableID.HTTPD_SITE_BINDS,
                 getBusinessForHttpdSite(conn, hs),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, hs)),
                 false
@@ -2230,18 +2230,18 @@ final public class HttpdHandler {
         }
     }*/
 
-    public static void invalidateTable(int tableID) {
-        Profiler.startProfile(Profiler.FAST, HttpdHandler.class, "invalidateTable(int)", null);
+    public static void invalidateTable(SchemaTable.TableID tableID) {
+        Profiler.startProfile(Profiler.FAST, HttpdHandler.class, "invalidateTable(SchemaTable.TableID)", null);
         try {
-            if(tableID==SchemaTable.HTTPD_SHARED_TOMCATS) {
+            if(tableID==SchemaTable.TableID.HTTPD_SHARED_TOMCATS) {
                 synchronized(HttpdHandler.class) {
                     disabledHttpdSharedTomcats.clear();
                 }
-            } else if(tableID==SchemaTable.HTTPD_SITE_BINDS) {
+            } else if(tableID==SchemaTable.TableID.HTTPD_SITE_BINDS) {
                 synchronized(HttpdHandler.class) {
                     disabledHttpdSiteBinds.clear();
                 }
-            } else if(tableID==SchemaTable.HTTPD_SITES) {
+            } else if(tableID==SchemaTable.TableID.HTTPD_SITES) {
                 synchronized(HttpdHandler.class) {
                     disabledHttpdSites.clear();
                 }
@@ -2464,7 +2464,7 @@ final public class HttpdHandler {
                 }
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.NET_BINDS,
+                    SchemaTable.TableID.NET_BINDS,
                     PackageHandler.getBusinessForPackage(conn, packageName),
                     ServerHandler.getHostnameForServer(conn, aoServer),
                     false
@@ -2592,14 +2592,14 @@ final public class HttpdHandler {
             // Always invalidate these tables because adding site may grant permissions to these rows
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_BINDS,
+                SchemaTable.TableID.HTTPD_BINDS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.NET_BINDS,
+                SchemaTable.TableID.NET_BINDS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -2643,7 +2643,7 @@ final public class HttpdHandler {
             conn.executeUpdate("delete from httpd_shared_tomcats where pkey=?", pkey);
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SHARED_TOMCATS,
+                SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
                 accounting,
                 ServerHandler.getHostnameForServer(conn, aoServer),
                 false
@@ -2652,15 +2652,15 @@ final public class HttpdHandler {
             if(tomcat4Worker!=-1) {
                 int nb=conn.executeIntQuery("select net_bind from httpd_workers where pkey=?", tomcat4Worker);
                 conn.executeUpdate("delete from httpd_workers where pkey=?", tomcat4Worker);
-                invalidateList.addTable(conn, SchemaTable.HTTPD_WORKERS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_WORKERS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
 
                 conn.executeUpdate("delete from net_binds where pkey=?", nb);
-                invalidateList.addTable(conn, SchemaTable.NET_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.NET_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             }
 
             if(tomcat4ShutdownPort!=-1) {
                 conn.executeUpdate("delete from net_binds where pkey=?", tomcat4ShutdownPort);
-                invalidateList.addTable(conn, SchemaTable.NET_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.NET_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             }
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
@@ -2737,7 +2737,7 @@ final public class HttpdHandler {
 
             // httpd_site_authenticated_locations
             if(conn.executeUpdate("delete from httpd_site_authenticated_locations where httpd_site=?", httpdSitePKey)>0) {
-                invalidateList.addTable(conn, SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS, accounting, aoServer, false);
+                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS, accounting, aoServer, false);
             }
 
             // httpd_site_binds
@@ -2756,7 +2756,7 @@ final public class HttpdHandler {
                         // dns_records
                         String hostname=conn.executeStringQuery("select hostname from httpd_site_urls where pkey=?", httpdSiteURL);
                         conn.executeUpdate("delete from httpd_site_urls where pkey=?", httpdSiteURL);
-                        invalidateList.addTable(conn, SchemaTable.HTTPD_SITE_URLS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                        invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_URLS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                         DNSHandler.removeUnusedDNSRecord(conn, invalidateList, hostname, tlds);
                     }
                     
@@ -2764,7 +2764,7 @@ final public class HttpdHandler {
                     if(!httpdBinds.contains(hb)) httpdBinds.add(hb);
                 }
                 conn.executeUpdate("delete from httpd_site_binds where httpd_site=?", httpdSitePKey);
-                invalidateList.addTable(conn, SchemaTable.HTTPD_SITE_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 
                 for(int c=0;c<httpdBinds.size();c++) {
                     int httpdBind=httpdBinds.getInt(c);
@@ -2812,7 +2812,7 @@ final public class HttpdHandler {
                     for(int c=0;c<htdss.size();c++) {
                         conn.executeUpdate("delete from httpd_tomcat_data_sources where pkey=?", htdss.getInt(c));
                     }
-                    invalidateList.addTable(conn, SchemaTable.HTTPD_TOMCAT_DATA_SOURCES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 }
 
                 // httpd_tomcat_parameters
@@ -2821,7 +2821,7 @@ final public class HttpdHandler {
                     for(int c=0;c<htps.size();c++) {
                         conn.executeUpdate("delete from httpd_tomcat_parameters where pkey=?", htps.getInt(c));
                     }
-                    invalidateList.addTable(conn, SchemaTable.HTTPD_TOMCAT_PARAMETERS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 }
 
                 // httpd_tomcat_contexts
@@ -2830,7 +2830,7 @@ final public class HttpdHandler {
                     for(int c=0;c<htcs.size();c++) {
                         conn.executeUpdate("delete from httpd_tomcat_contexts where pkey=?", htcs.getInt(c));
                     }
-                    invalidateList.addTable(conn, SchemaTable.HTTPD_TOMCAT_CONTEXTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 }
 
                 // httpd_workers
@@ -2842,7 +2842,7 @@ final public class HttpdHandler {
                         conn.executeUpdate("delete from httpd_workers where pkey=?", httpdWorker);
                         NetBindHandler.removeNetBind(conn, invalidateList, netBind);
                     }
-                    invalidateList.addTable(conn, SchemaTable.HTTPD_WORKERS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_WORKERS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 }
 
                 // httpd_tomcat_shared_sites
@@ -2863,7 +2863,7 @@ final public class HttpdHandler {
                     }
 
                     conn.executeUpdate("delete from httpd_tomcat_shared_sites where tomcat_site=?", httpdSitePKey);
-                    invalidateList.addTable(conn, SchemaTable.HTTPD_TOMCAT_SHARED_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SHARED_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                 }
 
                 // httpd_tomcat_std_sites
@@ -2871,11 +2871,11 @@ final public class HttpdHandler {
                     int tomcat4ShutdownPort=conn.executeIntQuery("select coalesce(tomcat4_shutdown_port, -1) from httpd_tomcat_std_sites where tomcat_site=?", httpdSitePKey);
 
                     conn.executeUpdate("delete from httpd_tomcat_std_sites where tomcat_site=?", httpdSitePKey);
-                    invalidateList.addTable(conn, SchemaTable.HTTPD_TOMCAT_STD_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
 
                     if(tomcat4ShutdownPort!=-1) {
                         conn.executeUpdate("delete from net_binds where pkey=?", tomcat4ShutdownPort);
-                        invalidateList.addTable(conn, SchemaTable.NET_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                        invalidateList.addTable(conn, SchemaTable.TableID.NET_BINDS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                     }
                 }
 
@@ -2889,7 +2889,7 @@ final public class HttpdHandler {
                     int jmx_bind=conn.executeIntQuery("select jmx_bind from httpd_jboss_sites where tomcat_site=?", httpdSitePKey);
 
                     conn.executeUpdate("delete from httpd_jboss_sites where tomcat_site=?", httpdSitePKey);
-                    invalidateList.addTable(conn, SchemaTable.HTTPD_JBOSS_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                    invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_JBOSS_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
                     NetBindHandler.removeNetBind(conn, invalidateList, jnp_bind);
                     NetBindHandler.removeNetBind(conn, invalidateList, webserver_bind);
                     NetBindHandler.removeNetBind(conn, invalidateList, rmi_bind);
@@ -2898,18 +2898,18 @@ final public class HttpdHandler {
                 }
 
                 conn.executeUpdate("delete from httpd_tomcat_sites where httpd_site=?", httpdSitePKey);
-                invalidateList.addTable(conn, SchemaTable.HTTPD_TOMCAT_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             }
 
             // httpd_static_sites
             if(conn.executeBooleanQuery("select (select httpd_site from httpd_static_sites where httpd_site=? limit 1) is not null", httpdSitePKey)) {
                 conn.executeUpdate("delete from httpd_static_sites where httpd_site=?", httpdSitePKey);
-                invalidateList.addTable(conn, SchemaTable.HTTPD_STATIC_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_STATIC_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
             }
             
             // httpd_sites
             conn.executeUpdate("delete from httpd_sites where pkey=?", httpdSitePKey);
-            invalidateList.addTable(conn, SchemaTable.HTTPD_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITES, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -2932,7 +2932,7 @@ final public class HttpdHandler {
             conn.executeUpdate("delete from httpd_site_authenticated_locations where pkey=?", pkey);
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
+                SchemaTable.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
                 accounting,
                 hostname,
                 false
@@ -2969,7 +2969,7 @@ final public class HttpdHandler {
             conn.executeUpdate("delete from httpd_site_urls where pkey=?", pkey);
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITE_URLS,
+                SchemaTable.TableID.HTTPD_SITE_URLS,
                 getBusinessForHttpdSite(conn, hs),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, hs)),
                 false
@@ -2998,7 +2998,7 @@ final public class HttpdHandler {
             if(conn.executeUpdate("delete from httpd_tomcat_data_sources where tomcat_context=?", pkey)>0) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.HTTPD_TOMCAT_DATA_SOURCES,
+                    SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES,
                     accounting,
                     hostname,
                     false
@@ -3008,7 +3008,7 @@ final public class HttpdHandler {
             if(conn.executeUpdate("delete from httpd_tomcat_parameters where tomcat_context=?", pkey)>0) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.HTTPD_TOMCAT_PARAMETERS,
+                    SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS,
                     accounting,
                     hostname,
                     false
@@ -3018,7 +3018,7 @@ final public class HttpdHandler {
             conn.executeUpdate("delete from httpd_tomcat_contexts where pkey=?", pkey);
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_TOMCAT_CONTEXTS,
+                SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS,
                 accounting,
                 hostname,
                 false
@@ -3046,7 +3046,7 @@ final public class HttpdHandler {
             conn.executeUpdate("delete from httpd_tomcat_data_sources where pkey=?", pkey);
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_TOMCAT_DATA_SOURCES,
+                SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES,
                 accounting,
                 hostname,
                 false
@@ -3074,7 +3074,7 @@ final public class HttpdHandler {
             conn.executeUpdate("delete from httpd_tomcat_parameters where pkey=?", pkey);
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_TOMCAT_PARAMETERS,
+                SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS,
                 accounting,
                 hostname,
                 false
@@ -3123,7 +3123,7 @@ final public class HttpdHandler {
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_TOMCAT_DATA_SOURCES,
+                SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES,
                 accounting,
                 hostname,
                 false
@@ -3162,7 +3162,7 @@ final public class HttpdHandler {
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_TOMCAT_PARAMETERS,
+                SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS,
                 accounting,
                 hostname,
                 false
@@ -3208,7 +3208,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SHARED_TOMCATS,
+                SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
                 getBusinessForHttpdSharedTomcat(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSharedTomcat(conn, pkey)),
                 false
@@ -3239,7 +3239,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SHARED_TOMCATS,
+                SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
                 getBusinessForHttpdSharedTomcat(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSharedTomcat(conn, pkey)),
                 false
@@ -3270,7 +3270,7 @@ final public class HttpdHandler {
             
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SHARED_TOMCATS,
+                SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
                 getBusinessForHttpdSharedTomcat(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSharedTomcat(conn, pkey)),
                 false
@@ -3301,7 +3301,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SHARED_TOMCATS,
+                SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
                 getBusinessForHttpdSharedTomcat(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSharedTomcat(conn, pkey)),
                 false
@@ -3357,7 +3357,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
+                SchemaTable.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
                 getBusinessForHttpdSite(conn, httpd_site),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, httpd_site)),
                 false
@@ -3389,7 +3389,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITE_BINDS,
+                SchemaTable.TableID.HTTPD_SITE_BINDS,
                 getBusinessForHttpdSite(conn, hs),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, hs)),
                 false
@@ -3421,7 +3421,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITE_BINDS,
+                SchemaTable.TableID.HTTPD_SITE_BINDS,
                 getBusinessForHttpdSite(conn, hs),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, hs)),
                 false
@@ -3457,7 +3457,7 @@ final public class HttpdHandler {
             
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITE_BINDS,
+                SchemaTable.TableID.HTTPD_SITE_BINDS,
                 getBusinessForHttpdSite(conn, hs),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, hs)),
                 false
@@ -3488,7 +3488,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITES,
+                SchemaTable.TableID.HTTPD_SITES,
                 getBusinessForHttpdSite(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, pkey)),
                 false
@@ -3519,7 +3519,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITES,
+                SchemaTable.TableID.HTTPD_SITES,
                 getBusinessForHttpdSite(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, pkey)),
                 false
@@ -3550,7 +3550,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITES,
+                SchemaTable.TableID.HTTPD_SITES,
                 getBusinessForHttpdSite(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, pkey)),
                 false
@@ -3581,7 +3581,7 @@ final public class HttpdHandler {
             
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITES,
+                SchemaTable.TableID.HTTPD_SITES,
                 getBusinessForHttpdSite(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, pkey)),
                 false
@@ -3612,7 +3612,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITES,
+                SchemaTable.TableID.HTTPD_SITES,
                 getBusinessForHttpdSite(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, pkey)),
                 false
@@ -3644,7 +3644,7 @@ final public class HttpdHandler {
             
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITES,
+                SchemaTable.TableID.HTTPD_SITES,
                 getBusinessForHttpdSite(conn, pkey),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, pkey)),
                 false
@@ -3738,7 +3738,7 @@ final public class HttpdHandler {
 
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_TOMCAT_CONTEXTS,
+                SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS,
                 getBusinessForHttpdSite(conn, tomcat_site),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, tomcat_site)),
                 false
@@ -3765,7 +3765,7 @@ final public class HttpdHandler {
             conn.executeUpdate("update httpd_site_urls set is_primary=(pkey=?) where httpd_site_bind=?", pkey, hsb);
             invalidateList.addTable(
                 conn,
-                SchemaTable.HTTPD_SITE_URLS,
+                SchemaTable.TableID.HTTPD_SITE_URLS,
                 getBusinessForHttpdSite(conn, hs),
                 ServerHandler.getHostnameForServer(conn, getAOServerForHttpdSite(conn, hs)),
                 false
