@@ -832,6 +832,10 @@ final public class TableHandler {
 
     private static final int MAX_ROW_COUNT_CACHE_AGE=60*60*1000;
 
+    /** Copy used to avoid multiple array copies on each access. */
+    private static final SchemaTable.TableID[] tableIDs = SchemaTable.TableID.values();
+    private static final int numTables = tableIDs.length;
+
     public static int getCachedRowCount(
         MasterDatabaseConnection conn,
         BackupDatabaseConnection backupConn,
@@ -848,7 +852,6 @@ final public class TableHandler {
             synchronized(rowCountsPerUsername) {
                 rowCounts=rowCountsPerUsername.get(username);
                 if(rowCounts==null) {
-                    int numTables = SchemaTable.TableID.values().length;
                     rowCountsPerUsername.put(username, rowCounts=new int[numTables]);
                     expireTimesPerUsername.put(username, expireTimes=new long[numTables]);
                 } else expireTimes=expireTimesPerUsername.get(username);
@@ -9142,7 +9145,7 @@ final public class TableHandler {
             if(dbTableID==-1) return null;
             int tableID = convertDBTableIDToClientTableID(conn, AOServProtocol.CURRENT_VERSION, dbTableID);
             if(tableID==-1) return null;
-            return SchemaTable.TableID.values()[tableID];
+            return tableIDs[tableID];
         } finally {
             Profiler.endProfile(Profiler.FAST);
         }

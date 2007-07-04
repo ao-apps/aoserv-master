@@ -29,7 +29,11 @@ import java.util.Map;
  */
 final public class InvalidateList {
 
-    final private static String[] tableNames=new String[SchemaTable.TableID.values().length];
+    /** Copy once to avoid repeated copies. */
+    final private static SchemaTable.TableID[] tableIDs = SchemaTable.TableID.values();
+    final private static int numTables = tableIDs.length;
+
+    final private static String[] tableNames=new String[numTables];
 
     /**
      * Indicates that all servers or businesses should receive the invalidate signal.
@@ -371,7 +375,7 @@ final public class InvalidateList {
     public void invalidateMasterCaches() {
         Profiler.startProfile(Profiler.FAST, InvalidateList.class, "invalidateMasterCaches()", null);
         try {
-            for(SchemaTable.TableID tableID : SchemaTable.TableID.values()) {
+            for(SchemaTable.TableID tableID : tableIDs) {
                 if(serverLists.containsKey(tableID) || businessLists.containsKey(tableID)) {
                     BackupDatabaseSynchronizer.invalidateTable(tableID);
                     BackupHandler.invalidateTable(tableID);
@@ -437,7 +441,7 @@ final public class InvalidateList {
         try {
             if(serverPKeys.isEmpty()) return Collections.emptyList();
             Collection<String> coll = new ArrayList<String>(serverPKeys.size());
-            for(Integer pkey : serverPKeys) coll.add(ServerHandler.getHostnameForServer(conn, pkey));
+            for(Integer pkey : serverPKeys) coll.add(ServerHandler.getHostnameForServer(conn, pkey.intValue()));
             return coll;
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);

@@ -196,4 +196,142 @@ final public class CreditCardHandler {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
+    
+    public static void updateCreditCard(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int pkey,
+        String firstName,
+        String lastName,
+        String companyName,
+        String email,
+        String phone,
+        String fax,
+        String customerTaxId,
+        String streetAddress1,
+        String streetAddress2,
+        String city,
+        String state,
+        String postalCode,
+        String countryCode,
+        String description
+    ) throws IOException, SQLException {
+        // Permission checks
+        BusinessHandler.checkPermission(conn, source, "updateCreditCard", AOServPermission.Permission.edit_credit_card);
+        checkAccessCreditCard(conn, source, "updateCreditCard", pkey);
+        
+        // Update row
+        conn.executeUpdate(
+            "update\n"
+            + "  credit_cards\n"
+            + "set\n"
+            + "  first_name=?,\n"
+            + "  last_name=?,\n"
+            + "  company_name=?,\n"
+            + "  email=?,\n"
+            + "  phone=?,\n"
+            + "  fax=?,\n"
+            + "  customer_tax_id=?,\n"
+            + "  street_address1=?,\n"
+            + "  street_address2=?,\n"
+            + "  city=?,\n"
+            + "  state=?,\n"
+            + "  postal_code=?,\n"
+            + "  country_code=?,\n"
+            + "  description=?\n"
+            + "where\n"
+            + "  pkey=?",
+            firstName,
+            lastName,
+            companyName,
+            email,
+            phone,
+            fax,
+            customerTaxId,
+            streetAddress1,
+            streetAddress2,
+            city,
+            state,
+            postalCode,
+            countryCode,
+            description,
+            pkey
+        );
+        
+        String accounting = getBusinessForCreditCard(conn, pkey);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.CREDIT_CARDS,
+            accounting,
+            BusinessHandler.getServersForBusiness(conn, accounting),
+            false
+        );
+    }
+
+    public static void updateCreditCardCardInfo(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int pkey,
+        String cardInfo
+    ) throws IOException, SQLException {
+        // Permission checks
+        BusinessHandler.checkPermission(conn, source, "updateCreditCardCardInfo", AOServPermission.Permission.edit_credit_card);
+        checkAccessCreditCard(conn, source, "updateCreditCardCardInfo", pkey);
+        
+        // Update row
+        conn.executeUpdate(
+            "update\n"
+            + "  credit_cards\n"
+            + "set\n"
+            + "  card_info=?\n"
+            + "where\n"
+            + "  pkey=?",
+            cardInfo,
+            pkey
+        );
+        
+        String accounting = getBusinessForCreditCard(conn, pkey);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.CREDIT_CARDS,
+            accounting,
+            BusinessHandler.getServersForBusiness(conn, accounting),
+            false
+        );
+    }
+
+    public static void reactivateCreditCard(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int pkey
+    ) throws IOException, SQLException {
+        // Permission checks
+        BusinessHandler.checkPermission(conn, source, "reactivateCreditCard", AOServPermission.Permission.edit_credit_card);
+        checkAccessCreditCard(conn, source, "reactivateCreditCard", pkey);
+        
+        // Update row
+        conn.executeUpdate(
+            "update\n"
+            + "  credit_cards\n"
+            + "set\n"
+            + "  active=true,\n"
+            + "  deactivated_on=null,\n"
+            + "  deactivate_reason=null\n"
+            + "where\n"
+            + "  pkey=?",
+            pkey
+        );
+
+        String accounting = getBusinessForCreditCard(conn, pkey);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.CREDIT_CARDS,
+            accounting,
+            BusinessHandler.getServersForBusiness(conn, accounting),
+            false
+        );
+    }
 }
