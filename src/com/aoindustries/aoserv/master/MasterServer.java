@@ -8907,6 +8907,27 @@ public abstract class MasterServer {
                                                 sendInvalidateList=true;
                                             }
                                             break;
+                                        case SET_CREDIT_CARD_USE_MONTHLY :
+                                           {
+                                                String accounting = in.readUTF();
+                                                int pkey=in.readCompressedInt();
+
+                                                process.setCommand(
+                                                    "set_credit_card_use_monthly",
+                                                    accounting,
+                                                    Integer.valueOf(pkey)
+                                                );
+                                                CreditCardHandler.setCreditCardUseMonthly(
+                                                    conn,
+                                                    source,
+                                                    invalidateList,
+                                                    accounting,
+                                                    pkey
+                                                );
+                                                resp1=AOServProtocol.DONE;
+                                                sendInvalidateList=true;
+                                            }
+                                            break;
                                          case UPDATE_CREDIT_CARD :
                                             {
                                                 int pkey=in.readCompressedInt();

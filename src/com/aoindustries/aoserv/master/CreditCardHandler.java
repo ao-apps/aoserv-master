@@ -334,4 +334,36 @@ final public class CreditCardHandler {
             false
         );
     }
+
+    public static void setCreditCardUseMonthly(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        String accounting,
+        int pkey
+    ) throws IOException, SQLException {
+        // Permission checks
+        BusinessHandler.checkPermission(conn, source, "setCreditCardUseMonthly", AOServPermission.Permission.edit_credit_card);
+
+        if(pkey==-1) {
+            // Clear only
+            conn.executeUpdate("update credit_cards set use_monthly=false where accounting=? and use_monthly", accounting);
+        } else {
+            checkAccessCreditCard(conn, source, "setCreditCardUseMonthly", pkey);
+
+            // Make sure accounting codes match
+            if(!accounting.equals(getBusinessForCreditCard(conn, pkey))) throw new SQLException("credit card and business accounting codes do not match");
+
+            // Perform clear and set in one SQL statement - I thinks myself clever right now.
+            conn.executeUpdate("update credit_cards set use_monthly=(pkey=?) where accounting=? and use_monthly!=(pkey=?)", pkey, accounting, pkey);
+        }
+
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.CREDIT_CARDS,
+            accounting,
+            BusinessHandler.getServersForBusiness(conn, accounting),
+            false
+        );
+    }
 }
