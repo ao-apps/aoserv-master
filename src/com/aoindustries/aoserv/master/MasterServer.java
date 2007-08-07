@@ -756,6 +756,157 @@ public abstract class MasterServer {
                                                         hasResp2Int=true;
                                                     }
                                                     break;
+                                                case CREDIT_CARD_TRANSACTIONS :
+                                                    {
+                                                        String accounting = in.readUTF();
+                                                        String processor = in.readUTF();
+                                                        boolean testMode = in.readBoolean();
+                                                        int duplicateWindow = in.readCompressedInt();
+                                                        String orderNumber = in.readNullUTF();
+                                                        String currencyCode = in.readUTF();
+                                                        String amount = in.readUTF();
+                                                        String taxAmount = in.readNullUTF();
+                                                        boolean taxExempt = in.readBoolean();
+                                                        String shippingAmount = in.readNullUTF();
+                                                        String dutyAmount = in.readNullUTF();
+                                                        String shippingFirstName = in.readNullUTF();
+                                                        String shippingLastName = in.readNullUTF();
+                                                        String shippingCompanyName = in.readNullUTF();
+                                                        String shippingStreetAddress1 = in.readNullUTF();
+                                                        String shippingStreetAddress2 = in.readNullUTF();
+                                                        String shippingCity = in.readNullUTF();
+                                                        String shippingState = in.readNullUTF();
+                                                        String shippingPostalCode = in.readNullUTF();
+                                                        String shippingCountryCode = in.readNullUTF();
+                                                        boolean emailCustomer = in.readBoolean();
+                                                        String merchantEmail = in.readNullUTF();
+                                                        String invoiceNumber = in.readNullUTF();
+                                                        String purchaseOrderNumber = in.readNullUTF();
+                                                        String description = in.readNullUTF();
+                                                        String creditCardCreatedBy = in.readUTF();
+                                                        String creditCardAccounting = in.readUTF();
+                                                        String creditCardProviderUniqueId = in.readNullUTF();
+                                                        String creditCardMaskedCardNumber = in.readUTF();
+                                                        String creditCardFirstName = in.readUTF();
+                                                        String creditCardLastName = in.readUTF();
+                                                        String creditCardCompanyName = in.readNullUTF();
+                                                        String creditCardEmail = in.readNullUTF();
+                                                        String creditCardPhone = in.readNullUTF();
+                                                        String creditCardFax = in.readNullUTF();
+                                                        String creditCardCustomerTaxId = in.readNullUTF();
+                                                        String creditCardStreetAddress1 = in.readUTF();
+                                                        String creditCardStreetAddress2 = in.readNullUTF();
+                                                        String creditCardCity = in.readUTF();
+                                                        String creditCardState = in.readNullUTF();
+                                                        String creditCardPostalCode = in.readNullUTF();
+                                                        String creditCardCountryCode = in.readUTF();
+                                                        String creditCardComments = in.readNullUTF();
+                                                        long authorizationTime = in.readLong();
+                                                        String authorizationUsername = in.readUTF();
+
+                                                        process.setCommand(
+                                                            "add_credit_card_transaction",
+                                                            accounting,
+                                                            processor,
+                                                            testMode,
+                                                            duplicateWindow,
+                                                            orderNumber,
+                                                            currencyCode,
+                                                            amount,
+                                                            taxAmount,
+                                                            taxExempt,
+                                                            shippingAmount,
+                                                            dutyAmount,
+                                                            shippingFirstName,
+                                                            shippingLastName,
+                                                            shippingCompanyName,
+                                                            shippingStreetAddress1,
+                                                            shippingStreetAddress2,
+                                                            shippingCity,
+                                                            shippingState,
+                                                            shippingPostalCode,
+                                                            shippingCountryCode,
+                                                            emailCustomer,
+                                                            merchantEmail,
+                                                            invoiceNumber,
+                                                            purchaseOrderNumber,
+                                                            description,
+                                                            creditCardCreatedBy,
+                                                            creditCardAccounting,
+                                                            creditCardProviderUniqueId,
+                                                            creditCardMaskedCardNumber,
+                                                            creditCardFirstName,
+                                                            creditCardLastName,
+                                                            creditCardCompanyName,
+                                                            creditCardEmail,
+                                                            creditCardPhone,
+                                                            creditCardFax,
+                                                            creditCardCustomerTaxId,
+                                                            creditCardStreetAddress1,
+                                                            creditCardStreetAddress2,
+                                                            creditCardCity,
+                                                            creditCardState,
+                                                            creditCardPostalCode,
+                                                            creditCardCountryCode,
+                                                            creditCardComments,
+                                                            authorizationTime,
+                                                            authorizationUsername
+                                                        );
+                                                        int pkey=CreditCardHandler.addCreditCardTransaction(
+                                                            conn,
+                                                            source,
+                                                            invalidateList,
+                                                            accounting,
+                                                            processor,
+                                                            testMode,
+                                                            duplicateWindow,
+                                                            orderNumber,
+                                                            currencyCode,
+                                                            amount,
+                                                            taxAmount,
+                                                            taxExempt,
+                                                            shippingAmount,
+                                                            dutyAmount,
+                                                            shippingFirstName,
+                                                            shippingLastName,
+                                                            shippingCompanyName,
+                                                            shippingStreetAddress1,
+                                                            shippingStreetAddress2,
+                                                            shippingCity,
+                                                            shippingState,
+                                                            shippingPostalCode,
+                                                            shippingCountryCode,
+                                                            emailCustomer,
+                                                            merchantEmail,
+                                                            invoiceNumber,
+                                                            purchaseOrderNumber,
+                                                            description,
+                                                            creditCardCreatedBy,
+                                                            creditCardAccounting,
+                                                            creditCardProviderUniqueId,
+                                                            creditCardMaskedCardNumber,
+                                                            creditCardFirstName,
+                                                            creditCardLastName,
+                                                            creditCardCompanyName,
+                                                            creditCardEmail,
+                                                            creditCardPhone,
+                                                            creditCardFax,
+                                                            creditCardCustomerTaxId,
+                                                            creditCardStreetAddress1,
+                                                            creditCardStreetAddress2,
+                                                            creditCardCity,
+                                                            creditCardState,
+                                                            creditCardPostalCode,
+                                                            creditCardCountryCode,
+                                                            creditCardComments,
+                                                            authorizationTime,
+                                                            authorizationUsername
+                                                        );
+                                                        resp1=AOServProtocol.DONE;
+                                                        resp2Int=pkey;
+                                                        hasResp2Int=true;
+                                                    }
+                                                    break;
                                                 case CVS_REPOSITORIES :
                                                     {
                                                         int aoServer=in.readCompressedInt();

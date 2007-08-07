@@ -220,6 +220,23 @@ final public class EmailHandler implements CronJob {
         try {
             if (!EmailAddress.isValidEmailAddress(destination)) throw new SQLException("Invalid email forwarding destination: " + destination);
 
+            if(destination.toLowerCase().endsWith("@comcast.net")) throw new SQLException(
+                "We no longer allow forwarding to comcast accounts.  Comcast blocks mail servers\n"
+                + "that forward spam originating from other networks.  Our spam filters are\n"
+                + "associated with email inboxes, not forwarding settings.  Our forwarding\n"
+                + "configuration assumes the final recipient account will provide spam filters.\n"
+                + "Also, our spam filters rely heavily on feedback from the mail client, and\n"
+                + "this feedback is not available from forwarded email.  For this reason we\n"
+                + "will not provide filters on the forwarded email.\n"
+                + "\n"
+                + "Please create an email inbox, associate your email address with the inbox and\n"
+                + "obtain your email directly from our mail servers over POP3 or IMAP instead of\n"
+                + "forwarding to comcast.net.\n"
+                + "\n"
+                + "Sorry for any inconvenience, but Comcast's unprecedented blocking policy and\n"
+                + "our standard installation of SpamAssassin filters are not compatible.\n"
+            );
+
             checkAccessEmailAddress(conn, source, "addEmailForwarding", address);
 
             int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('email_forwarding_pkey_seq')");

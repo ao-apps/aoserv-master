@@ -366,4 +366,168 @@ final public class CreditCardHandler {
             false
         );
     }
+
+    /**
+     * Creates a new <code>CreditCardTransaction</code>.
+     */
+    public static int addCreditCardTransaction(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        String accounting,
+        String processor,
+        boolean testMode,
+        int duplicateWindow,
+        String orderNumber,
+        String currencyCode,
+        String amount,
+        String taxAmount,
+        boolean taxExempt,
+        String shippingAmount,
+        String dutyAmount,
+        String shippingFirstName,
+        String shippingLastName,
+        String shippingCompanyName,
+        String shippingStreetAddress1,
+        String shippingStreetAddress2,
+        String shippingCity,
+        String shippingState,
+        String shippingPostalCode,
+        String shippingCountryCode,
+        boolean emailCustomer,
+        String merchantEmail,
+        String invoiceNumber,
+        String purchaseOrderNumber,
+        String description,
+        String creditCardCreatedBy,
+        String creditCardAccounting,
+        String creditCardProviderUniqueId,
+        String creditCardMaskedCardNumber,
+        String creditCardFirstName,
+        String creditCardLastName,
+        String creditCardCompanyName,
+        String creditCardEmail,
+        String creditCardPhone,
+        String creditCardFax,
+        String creditCardCustomerTaxId,
+        String creditCardStreetAddress1,
+        String creditCardStreetAddress2,
+        String creditCardCity,
+        String creditCardState,
+        String creditCardPostalCode,
+        String creditCardCountryCode,
+        String creditCardComments,
+        long authorizationTime,
+        String authorizationUsername
+    ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "addCreditCardTransaction", AOServPermission.Permission.add_credit_card_transaction);
+        BusinessHandler.checkAccessBusiness(conn, source, "addCreditCardTransaction", accounting);
+        BusinessHandler.checkAccessBusiness(conn, source, "addCreditCardTransaction", creditCardAccounting);
+        UsernameHandler.checkAccessUsername(conn, source, "addCreditCardTransaction", creditCardCreatedBy);
+        UsernameHandler.checkAccessUsername(conn, source, "addCreditCardTransaction", authorizationUsername);
+
+        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('credit_card_transactions_pkey_seq')");
+
+        conn.executeUpdate(
+            "insert into credit_card_transactions (\n"
+            + "  pkey,\n"
+            + "  accounting,\n"
+            + "  processor_id,\n"
+            + "  test_mode,\n"
+            + "  duplicate_window,\n"
+            + "  order_number,\n"
+            + "  currency_code,\n"
+            + "  amount,\n"
+            + "  tax_amount,\n"
+            + "  tax_exempt,\n"
+            + "  shipping_amount,\n"
+            + "  duty_amount,\n"
+            + "  shipping_first_name,\n"
+            + "  shipping_last_name,\n"
+            + "  shipping_company_name,\n"
+            + "  shipping_street_address1,\n"
+            + "  shipping_street_address2,\n"
+            + "  shipping_city,\n"
+            + "  shipping_state,\n"
+            + "  shipping_postal_code,\n"
+            + "  shipping_country_code,\n"
+            + "  email_customer,\n"
+            + "  merchant_email,\n"
+            + "  invoice_number,\n"
+            + "  purchase_order_number,\n"
+            + "  description,\n"
+            + "  credit_card_created_by,\n"
+            + "  credit_card_accounting,\n"
+            + "  credit_card_provider_unique_id,\n"
+            + "  credit_card_masked_card_number,\n"
+            + "  credit_card_first_name,\n"
+            + "  credit_card_last_name,\n"
+            + "  credit_card_company_name,\n"
+            + "  credit_card_email,\n"
+            + "  credit_card_phone,\n"
+            + "  credit_card_fax,\n"
+            + "  credit_card_customer_tax_id,\n"
+            + "  credit_card_street_address1,\n"
+            + "  credit_card_street_address2,\n"
+            + "  credit_card_city,\n"
+            + "  credit_card_state,\n"
+            + "  credit_card_postal_code,\n"
+            + "  credit_card_country_code,\n"
+            + "  credit_card_comments,\n"
+            + "  authorization_time,\n"
+            + "  authorization_username,\n"
+            + "  status\n"
+            + ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING')",
+            pkey,
+            accounting,
+            processor,
+            testMode,
+            duplicateWindow,
+            orderNumber,
+            currencyCode,
+            amount,
+            taxAmount,
+            taxExempt,
+            shippingAmount,
+            dutyAmount,
+            shippingFirstName,
+            shippingLastName,
+            shippingCompanyName,
+            shippingStreetAddress1,
+            shippingStreetAddress2,
+            shippingCity,
+            shippingState,
+            shippingPostalCode,
+            shippingCountryCode,
+            emailCustomer,
+            merchantEmail,
+            invoiceNumber,
+            purchaseOrderNumber,
+            description,
+            creditCardCreatedBy,
+            creditCardAccounting,
+            creditCardProviderUniqueId,
+            creditCardMaskedCardNumber,
+            creditCardFirstName,
+            creditCardLastName,
+            creditCardCompanyName,
+            creditCardEmail,
+            creditCardPhone,
+            creditCardFax,
+            creditCardCustomerTaxId,
+            creditCardStreetAddress1,
+            creditCardStreetAddress2,
+            creditCardCity,
+            creditCardState,
+            creditCardPostalCode,
+            creditCardCountryCode,
+            creditCardComments,
+            new Timestamp(authorizationTime),
+            authorizationUsername
+        );
+
+        // Notify all clients of the update
+        invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
+        return pkey;
+    }
 }
