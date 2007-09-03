@@ -688,9 +688,10 @@ public abstract class MasterServer {
                                                             String description=in.readBoolean()?in.readUTF().trim():null;
                                                             throw new SQLException("add_credit_card for protocol version "+AOServProtocol.VERSION_1_28+" or older is no longer supported.");
                                                         }
-                                                        String accounting = in.readUTF().trim();
-                                                        String cardInfo = in.readUTF().trim();
                                                         String processorName = in.readUTF();
+                                                        String accounting = in.readUTF().trim();
+                                                        String groupName = in.readNullUTF();
+                                                        String cardInfo = in.readUTF().trim();
                                                         String providerUniqueId = in.readUTF();
                                                         String firstName = in.readUTF().trim();
                                                         String lastName = in.readUTF().trim();
@@ -705,13 +706,15 @@ public abstract class MasterServer {
                                                         String state = in.readNullUTF();
                                                         String postalCode = in.readNullUTF();
                                                         String countryCode = in.readUTF();
+                                                        String principalName = in.readNullUTF();
                                                         String description = in.readNullUTF();
 
                                                         process.setCommand(
                                                             "add_credit_card",
-                                                            accounting,
-                                                            cardInfo,
                                                             processorName,
+                                                            accounting,
+                                                            groupName,
+                                                            cardInfo,
                                                             providerUniqueId,
                                                             firstName,
                                                             lastName,
@@ -726,15 +729,17 @@ public abstract class MasterServer {
                                                             state,
                                                             postalCode,
                                                             countryCode,
+                                                            principalName,
                                                             description
                                                         );
                                                         int pkey=CreditCardHandler.addCreditCard(
                                                             conn,
                                                             source,
                                                             invalidateList,
-                                                            accounting,
-                                                            cardInfo,
                                                             processorName,
+                                                            accounting,
+                                                            groupName,
+                                                            cardInfo,
                                                             providerUniqueId,
                                                             firstName,
                                                             lastName,
@@ -749,6 +754,7 @@ public abstract class MasterServer {
                                                             state,
                                                             postalCode,
                                                             countryCode,
+                                                            principalName,
                                                             description
                                                         );
                                                         resp1=AOServProtocol.DONE;
@@ -758,8 +764,9 @@ public abstract class MasterServer {
                                                     break;
                                                 case CREDIT_CARD_TRANSACTIONS :
                                                     {
-                                                        String accounting = in.readUTF();
                                                         String processor = in.readUTF();
+                                                        String accounting = in.readUTF();
+                                                        String groupName = in.readNullUTF();
                                                         boolean testMode = in.readBoolean();
                                                         int duplicateWindow = in.readCompressedInt();
                                                         String orderNumber = in.readNullUTF();
@@ -784,7 +791,9 @@ public abstract class MasterServer {
                                                         String purchaseOrderNumber = in.readNullUTF();
                                                         String description = in.readNullUTF();
                                                         String creditCardCreatedBy = in.readUTF();
+                                                        String creditCardPrincipalName = in.readNullUTF();
                                                         String creditCardAccounting = in.readUTF();
+                                                        String creditCardGroupName = in.readNullUTF();
                                                         String creditCardProviderUniqueId = in.readNullUTF();
                                                         String creditCardMaskedCardNumber = in.readUTF();
                                                         String creditCardFirstName = in.readUTF();
@@ -802,12 +811,13 @@ public abstract class MasterServer {
                                                         String creditCardCountryCode = in.readUTF();
                                                         String creditCardComments = in.readNullUTF();
                                                         long authorizationTime = in.readLong();
-                                                        String authorizationUsername = in.readUTF();
+                                                        String authorizationPrincipalName = in.readNullUTF();
 
                                                         process.setCommand(
                                                             "add_credit_card_transaction",
-                                                            accounting,
                                                             processor,
+                                                            accounting,
+                                                            groupName,
                                                             testMode,
                                                             duplicateWindow,
                                                             orderNumber,
@@ -832,7 +842,9 @@ public abstract class MasterServer {
                                                             purchaseOrderNumber,
                                                             description,
                                                             creditCardCreatedBy,
+                                                            creditCardPrincipalName,
                                                             creditCardAccounting,
+                                                            creditCardGroupName,
                                                             creditCardProviderUniqueId,
                                                             creditCardMaskedCardNumber,
                                                             creditCardFirstName,
@@ -850,14 +862,15 @@ public abstract class MasterServer {
                                                             creditCardCountryCode,
                                                             creditCardComments,
                                                             authorizationTime,
-                                                            authorizationUsername
+                                                            authorizationPrincipalName
                                                         );
                                                         int pkey=CreditCardHandler.addCreditCardTransaction(
                                                             conn,
                                                             source,
                                                             invalidateList,
-                                                            accounting,
                                                             processor,
+                                                            accounting,
+                                                            groupName,
                                                             testMode,
                                                             duplicateWindow,
                                                             orderNumber,
@@ -882,7 +895,9 @@ public abstract class MasterServer {
                                                             purchaseOrderNumber,
                                                             description,
                                                             creditCardCreatedBy,
+                                                            creditCardPrincipalName,
                                                             creditCardAccounting,
+                                                            creditCardGroupName,
                                                             creditCardProviderUniqueId,
                                                             creditCardMaskedCardNumber,
                                                             creditCardFirstName,
@@ -900,7 +915,7 @@ public abstract class MasterServer {
                                                             creditCardCountryCode,
                                                             creditCardComments,
                                                             authorizationTime,
-                                                            authorizationUsername
+                                                            authorizationPrincipalName
                                                         );
                                                         resp1=AOServProtocol.DONE;
                                                         resp2Int=pkey;
@@ -1845,34 +1860,6 @@ public abstract class MasterServer {
                                                         hasResp2Int=true;
                                                     }
                                                     break;							
-                                                case INCOMING_PAYMENTS :
-                                                    {
-                                                        int transid=in.readCompressedInt();
-                                                        byte[] cardName=new byte[in.readCompressedInt()]; in.readFully(cardName);
-                                                        byte[] cardNumber=new byte[in.readCompressedInt()]; in.readFully(cardNumber);
-                                                        byte[] expMonth=new byte[in.readCompressedInt()]; in.readFully(expMonth);
-                                                        byte[] expYear=new byte[in.readCompressedInt()]; in.readFully(expYear);
-                                                        process.setCommand(
-                                                            AOSHCommand.ADD_INCOMING_PAYMENT,
-                                                            Integer.valueOf(transid),
-                                                            AOServProtocol.FILTERED,
-                                                            AOServProtocol.FILTERED,
-                                                            AOServProtocol.FILTERED,
-                                                            AOServProtocol.FILTERED
-                                                        );
-                                                        TransactionHandler.addIncomingPayment(
-                                                            conn,
-                                                            source,
-                                                            invalidateList,
-                                                            transid,
-                                                            cardName,
-                                                            cardNumber,
-                                                            expMonth,
-                                                            expYear
-                                                        );
-                                                        resp1=AOServProtocol.DONE;
-                                                    }
-                                                    break;
                                                 case INTERBASE_DATABASES :
                                                     {
                                                         String name=in.readUTF().trim();
@@ -2814,8 +2801,9 @@ public abstract class MasterServer {
                                                         String description=in.readUTF().trim();
                                                         int quantity=in.readCompressedInt();
                                                         int rate=in.readCompressedInt();
-                                                        String paymentType=in.readBoolean()?in.readUTF():null;
-                                                        String paymentInfo=in.readBoolean()?in.readUTF():null;
+                                                        String paymentType = in.readNullUTF();
+                                                        String paymentInfo = in.readNullUTF();
+                                                        String processor = in.readNullUTF();
                                                         byte payment_confirmed=in.readByte();
                                                         process.setCommand(
                                                             AOSHCommand.ADD_TRANSACTION,
@@ -2828,6 +2816,7 @@ public abstract class MasterServer {
                                                             SQLUtility.getDecimal(rate),
                                                             paymentType,
                                                             paymentInfo,
+                                                            processor,
                                                             payment_confirmed==Transaction.CONFIRMED?"Y"
                                                             :payment_confirmed==Transaction.NOT_CONFIRMED?"N"
                                                             :"W"
@@ -2845,6 +2834,7 @@ public abstract class MasterServer {
                                                             rate,
                                                             paymentType,
                                                             paymentInfo,
+                                                            processor,
                                                             payment_confirmed
                                                         );
                                                         resp1=AOServProtocol.DONE;
@@ -3404,6 +3394,95 @@ public abstract class MasterServer {
                                                     invalidateList,
                                                     transid,
                                                     reason
+                                                );
+                                                resp1=AOServProtocol.DONE;
+                                                sendInvalidateList=true;
+                                            }
+                                            break;
+                                        case CREDIT_CARD_TRANSACTION_SALE_COMPLETED :
+                                            {
+                                                int pkey = in.readCompressedInt();
+                                                String authorizationCommunicationResult = in.readNullUTF();
+                                                String authorizationProviderErrorCode = in.readNullUTF();
+                                                String authorizationErrorCode = in.readNullUTF();
+                                                String authorizationProviderErrorMessage = in.readNullUTF();
+                                                String authorizationProviderUniqueId = in.readNullUTF();
+                                                String providerApprovalResult = in.readNullUTF();
+                                                String approvalResult = in.readNullUTF();
+                                                String providerDeclineReason = in.readNullUTF();
+                                                String declineReason = in.readNullUTF();
+                                                String providerReviewReason = in.readNullUTF();
+                                                String reviewReason = in.readNullUTF();
+                                                String providerCvvResult = in.readNullUTF();
+                                                String cvvResult = in.readNullUTF();
+                                                String providerAvsResult = in.readNullUTF();
+                                                String avsResult = in.readNullUTF();
+                                                String approvalCode = in.readNullUTF();
+                                                long captureTime = in.readLong();
+                                                String capturePrincipalName = in.readNullUTF();
+                                                String captureCommunicationResult = in.readNullUTF();
+                                                String captureProviderErrorCode = in.readNullUTF();
+                                                String captureErrorCode = in.readNullUTF();
+                                                String captureProviderErrorMessage = in.readNullUTF();
+                                                String captureProviderUniqueId = in.readNullUTF();
+                                                String status = in.readNullUTF();
+                                                process.setCommand(
+                                                    "credit_card_transaction_sale_completed",
+                                                    Integer.valueOf(pkey),
+                                                    authorizationCommunicationResult,
+                                                    authorizationProviderErrorCode,
+                                                    authorizationErrorCode,
+                                                    authorizationProviderErrorMessage,
+                                                    authorizationProviderUniqueId,
+                                                    providerApprovalResult,
+                                                    approvalResult,
+                                                    providerDeclineReason,
+                                                    declineReason,
+                                                    providerReviewReason,
+                                                    reviewReason,
+                                                    providerCvvResult,
+                                                    cvvResult,
+                                                    providerAvsResult,
+                                                    avsResult,
+                                                    approvalCode,
+                                                    captureTime==0 ? null : Long.valueOf(captureTime),
+                                                    capturePrincipalName,
+                                                    captureCommunicationResult,
+                                                    captureProviderErrorCode,
+                                                    captureErrorCode,
+                                                    captureProviderErrorMessage,
+                                                    captureProviderUniqueId,
+                                                    status
+                                                );
+                                                CreditCardHandler.creditCardTransactionSaleCompleted(
+                                                    conn,
+                                                    source,
+                                                    invalidateList,
+                                                    pkey,
+                                                    authorizationCommunicationResult,
+                                                    authorizationProviderErrorCode,
+                                                    authorizationErrorCode,
+                                                    authorizationProviderErrorMessage,
+                                                    authorizationProviderUniqueId,
+                                                    providerApprovalResult,
+                                                    approvalResult,
+                                                    providerDeclineReason,
+                                                    declineReason,
+                                                    providerReviewReason,
+                                                    reviewReason,
+                                                    providerCvvResult,
+                                                    cvvResult,
+                                                    providerAvsResult,
+                                                    avsResult,
+                                                    approvalCode,
+                                                    captureTime,
+                                                    capturePrincipalName,
+                                                    captureCommunicationResult,
+                                                    captureProviderErrorCode,
+                                                    captureErrorCode,
+                                                    captureProviderErrorMessage,
+                                                    captureProviderUniqueId,
+                                                    status
                                                 );
                                                 resp1=AOServProtocol.DONE;
                                                 sendInvalidateList=true;
@@ -6443,22 +6522,6 @@ public abstract class MasterServer {
                                                         resp1=AOServProtocol.DONE;
                                                     }
                                                     break;
-                                                case INCOMING_PAYMENTS :
-                                                    {
-                                                        int pkey=in.readCompressedInt();
-                                                        process.setCommand(
-                                                            AOSHCommand.REMOVE_INCOMING_PAYMENT,
-                                                            Integer.valueOf(pkey)
-                                                        );
-                                                        TransactionHandler.removeIncomingPayment(
-                                                            conn,
-                                                            source,
-                                                            invalidateList,
-                                                            pkey
-                                                        );
-                                                        resp1=AOServProtocol.DONE;
-                                                    }
-                                                    break;
                                                 case INTERBASE_BACKUPS :
                                                     {
                                                         process.setPriority(Thread.MIN_PRIORITY+1);
@@ -8987,29 +9050,27 @@ public abstract class MasterServer {
                                         case TRANSACTION_APPROVED :
                                             {
                                                 int transid=in.readCompressedInt();
-                                                String paymentType=in.readUTF().trim();
-                                                String paymentInfo=in.readBoolean()?in.readUTF().trim():null;
-                                                String merchant=in.readBoolean()?in.readUTF().trim():null;
-                                                String apr_num;
-                                                if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_128)<0) apr_num=Integer.toString(in.readCompressedInt());
-                                                else apr_num=in.readUTF();
+                                                if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_28)<=0) {
+                                                    String paymentType=in.readUTF();
+                                                    String paymentInfo=in.readBoolean()?in.readUTF():null;
+                                                    String merchant=in.readBoolean()?in.readUTF():null;
+                                                    String apr_num;
+                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_128)<0) apr_num=Integer.toString(in.readCompressedInt());
+                                                    else apr_num=in.readUTF();
+                                                    throw new SQLException("approve_transaction for protocol version "+AOServProtocol.VERSION_1_28+" or older is no longer supported.");
+                                                }
+                                                int creditCardTransaction = in.readCompressedInt();
                                                 process.setCommand(
-                                                    AOSHCommand.APPROVE_TRANSACTION,
+                                                    "approve_transaction",
                                                     Integer.valueOf(transid),
-                                                    paymentType,
-                                                    paymentInfo,
-                                                    merchant,
-                                                    apr_num
+                                                    Integer.valueOf(creditCardTransaction)
                                                 );
                                                 TransactionHandler.transactionApproved(
                                                     conn,
                                                     source,
                                                     invalidateList,
                                                     transid,
-                                                    paymentType,
-                                                    paymentInfo,
-                                                    merchant,
-                                                    apr_num
+                                                    creditCardTransaction
                                                 );
                                                 resp1=AOServProtocol.DONE;
                                                 sendInvalidateList=true;
@@ -9018,24 +9079,44 @@ public abstract class MasterServer {
                                         case TRANSACTION_DECLINED :
                                             {
                                                 int transid=in.readCompressedInt();
-                                                String paymentType=in.readUTF().trim();
-                                                String paymentInfo=in.readBoolean()?in.readUTF().trim():null;
-                                                String merchant=in.readBoolean()?in.readUTF().trim():null;
+                                                if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_28)<=0) {
+                                                    String paymentType=in.readUTF().trim();
+                                                    String paymentInfo=in.readBoolean()?in.readUTF().trim():null;
+                                                    String merchant=in.readBoolean()?in.readUTF().trim():null;
+                                                    throw new SQLException("decline_transaction for protocol version "+AOServProtocol.VERSION_1_28+" or older is no longer supported.");
+                                                }
+                                                int creditCardTransaction = in.readCompressedInt();
                                                 process.setCommand(
-                                                    AOSHCommand.DECLINE_TRANSACTION,
+                                                    "decline_transaction",
                                                     Integer.valueOf(transid),
-                                                    paymentType,
-                                                    paymentInfo,
-                                                    merchant
+                                                    Integer.valueOf(creditCardTransaction)
                                                 );
                                                 TransactionHandler.transactionDeclined(
                                                     conn,
                                                     source,
                                                     invalidateList,
                                                     transid,
-                                                    paymentType,
-                                                    paymentInfo,
-                                                    merchant
+                                                    creditCardTransaction
+                                                );
+                                                resp1=AOServProtocol.DONE;
+                                                sendInvalidateList=true;
+                                            }
+                                            break;
+                                        case TRANSACTION_HELD :
+                                            {
+                                                int transid=in.readCompressedInt();
+                                                int creditCardTransaction = in.readCompressedInt();
+                                                process.setCommand(
+                                                    "hold_transaction",
+                                                    Integer.valueOf(transid),
+                                                    Integer.valueOf(creditCardTransaction)
+                                                );
+                                                TransactionHandler.transactionHeld(
+                                                    conn,
+                                                    source,
+                                                    invalidateList,
+                                                    transid,
+                                                    creditCardTransaction
                                                 );
                                                 resp1=AOServProtocol.DONE;
                                                 sendInvalidateList=true;

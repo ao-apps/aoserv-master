@@ -32,6 +32,34 @@ final public class CreditCardHandler {
         }
     }
 
+    public static void checkAccessCreditCardProcessor(MasterDatabaseConnection conn, RequestSource source, String action, String processor) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.FAST, CreditCardHandler.class, "checkAccessCreditCardProcessor(MasterDatabaseConnection,RequestSource,String,String)", null);
+        try {
+            BusinessHandler.checkAccessBusiness(
+                conn,
+                source,
+                action,
+                getBusinessForCreditCardProcessor(conn, processor)
+            );
+        } finally {
+            Profiler.endProfile(Profiler.FAST);
+        }
+    }
+
+    public static void checkAccessCreditCardTransaction(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.FAST, CreditCardHandler.class, "checkAccessCreditCardTransaction(MasterDatabaseConnection,RequestSource,String,int)", null);
+        try {
+            checkAccessCreditCardProcessor(
+                conn,
+                source,
+                action,
+                getCreditCardProcessorForCreditCardTransaction(conn, pkey)
+            );
+        } finally {
+            Profiler.endProfile(Profiler.FAST);
+        }
+    }
+
     public static void checkAccessEncryptionKey(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, CreditCardHandler.class, "checkAccessEncryptionKey(MasterDatabaseConnection,RequestSource,String,int)", null);
         try {
@@ -53,9 +81,10 @@ final public class CreditCardHandler {
         MasterDatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String accounting,
-        String cardInfo,
         String processorName,
+        String accounting,
+        String groupName,
+        String cardInfo,
         String providerUniqueId,
         String firstName,
         String lastName,
@@ -70,6 +99,7 @@ final public class CreditCardHandler {
         String state,
         String postalCode,
         String countryCode,
+        String principalName,
         String description
     ) throws IOException, SQLException {
         BusinessHandler.checkPermission(conn, source, "addCreditCard", AOServPermission.Permission.add_credit_card);
@@ -78,11 +108,12 @@ final public class CreditCardHandler {
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('credit_cards_pkey_seq')");
 
         conn.executeUpdate(
-            "insert into credit_cards values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,false,true,null,null,?)",
+            "insert into credit_cards values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,false,true,null,null,?)",
             pkey,
-            accounting,
-            cardInfo,
             processorName,
+            accounting,
+            groupName,
+            cardInfo,
             providerUniqueId,
             firstName,
             lastName,
@@ -98,6 +129,7 @@ final public class CreditCardHandler {
             postalCode,
             countryCode,
             source.getUsername(),
+            principalName,
             description
         );
 
@@ -141,6 +173,24 @@ final public class CreditCardHandler {
         Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "getBusinessForCreditCard(MasterDatabaseConnection,int)", null);
         try {
             return conn.executeStringQuery("select accounting from credit_cards where pkey=?", pkey);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static String getBusinessForCreditCardProcessor(MasterDatabaseConnection conn, String processor) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "getBusinessForCreditCardProcessor(MasterDatabaseConnection,String)", null);
+        try {
+            return conn.executeStringQuery("select accounting from credit_card_processors where provider_id=?", processor);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static String getCreditCardProcessorForCreditCardTransaction(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "getCreditCardProcessorForCreditCardTransaction(MasterDatabaseConnection,int)", null);
+        try {
+            return conn.executeStringQuery("select processor_id from credit_card_transactions where pkey=?", pkey);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -374,8 +424,9 @@ final public class CreditCardHandler {
         MasterDatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String accounting,
         String processor,
+        String accounting,
+        String groupName,
         boolean testMode,
         int duplicateWindow,
         String orderNumber,
@@ -400,7 +451,9 @@ final public class CreditCardHandler {
         String purchaseOrderNumber,
         String description,
         String creditCardCreatedBy,
+        String creditCardPrincipalName,
         String creditCardAccounting,
+        String creditCardGroupName,
         String creditCardProviderUniqueId,
         String creditCardMaskedCardNumber,
         String creditCardFirstName,
@@ -418,21 +471,22 @@ final public class CreditCardHandler {
         String creditCardCountryCode,
         String creditCardComments,
         long authorizationTime,
-        String authorizationUsername
+        String authorizationPrincipalName
     ) throws IOException, SQLException {
         BusinessHandler.checkPermission(conn, source, "addCreditCardTransaction", AOServPermission.Permission.add_credit_card_transaction);
+        checkAccessCreditCardProcessor(conn, source, "addCreditCardTransaction", processor);
         BusinessHandler.checkAccessBusiness(conn, source, "addCreditCardTransaction", accounting);
         BusinessHandler.checkAccessBusiness(conn, source, "addCreditCardTransaction", creditCardAccounting);
         UsernameHandler.checkAccessUsername(conn, source, "addCreditCardTransaction", creditCardCreatedBy);
-        UsernameHandler.checkAccessUsername(conn, source, "addCreditCardTransaction", authorizationUsername);
 
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('credit_card_transactions_pkey_seq')");
 
         conn.executeUpdate(
             "insert into credit_card_transactions (\n"
             + "  pkey,\n"
-            + "  accounting,\n"
             + "  processor_id,\n"
+            + "  accounting,\n"
+            + "  group_name,\n"
             + "  test_mode,\n"
             + "  duplicate_window,\n"
             + "  order_number,\n"
@@ -457,7 +511,9 @@ final public class CreditCardHandler {
             + "  purchase_order_number,\n"
             + "  description,\n"
             + "  credit_card_created_by,\n"
+            + "  credit_card_principal_name,\n"
             + "  credit_card_accounting,\n"
+            + "  credit_card_group_name,\n"
             + "  credit_card_provider_unique_id,\n"
             + "  credit_card_masked_card_number,\n"
             + "  credit_card_first_name,\n"
@@ -476,11 +532,13 @@ final public class CreditCardHandler {
             + "  credit_card_comments,\n"
             + "  authorization_time,\n"
             + "  authorization_username,\n"
+            + "  authorization_principal_name,\n"
             + "  status\n"
-            + ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING')",
+            + ") values (?,?,?,?,?,?,?,?,?::decimal(9,2),?::decimal(9,2),?,?::decimal(9,2),?::decimal(9,2),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING')",
             pkey,
-            accounting,
             processor,
+            accounting,
+            groupName,
             testMode,
             duplicateWindow,
             orderNumber,
@@ -505,7 +563,9 @@ final public class CreditCardHandler {
             purchaseOrderNumber,
             description,
             creditCardCreatedBy,
+            creditCardPrincipalName,
             creditCardAccounting,
+            creditCardGroupName,
             creditCardProviderUniqueId,
             creditCardMaskedCardNumber,
             creditCardFirstName,
@@ -523,11 +583,114 @@ final public class CreditCardHandler {
             creditCardCountryCode,
             creditCardComments,
             new Timestamp(authorizationTime),
-            authorizationUsername
+            source.getUsername(),
+            authorizationPrincipalName
         );
 
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
         return pkey;
+    }
+
+    public static void creditCardTransactionSaleCompleted(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int pkey,
+        String authorizationCommunicationResult,
+        String authorizationProviderErrorCode,
+        String authorizationErrorCode,
+        String authorizationProviderErrorMessage,
+        String authorizationProviderUniqueId,
+        String providerApprovalResult,
+        String approvalResult,
+        String providerDeclineReason,
+        String declineReason,
+        String providerReviewReason,
+        String reviewReason,
+        String providerCvvResult,
+        String cvvResult,
+        String providerAvsResult,
+        String avsResult,
+        String approvalCode,
+        long captureTime,
+        String capturePrincipalName,
+        String captureCommunicationResult,
+        String captureProviderErrorCode,
+        String captureErrorCode,
+        String captureProviderErrorMessage,
+        String captureProviderUniqueId,
+        String status
+    ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "creditCardTransactionSaleCompleted", AOServPermission.Permission.credit_card_transaction_sale_completed);
+        checkAccessCreditCardTransaction(conn, source, "creditCardTransactionSaleCompleted", pkey);
+        if(capturePrincipalName!=null) UsernameHandler.checkAccessUsername(conn, source, "creditCardTransactionSaleCompleted", capturePrincipalName);
+
+        String processor = getCreditCardProcessorForCreditCardTransaction(conn, pkey);
+        String accounting = getBusinessForCreditCardProcessor(conn, processor);
+
+        int updated = conn.executeUpdate(
+            "update\n"
+            + "  credit_card_transactions\n"
+            + "set\n"
+            + "  authorization_communication_result=?,\n"
+            + "  authorization_provider_error_code=?,\n"
+            + "  authorization_error_code=?,\n"
+            + "  authorization_provider_error_message=?,\n"
+            + "  authorization_provider_unique_id=?,\n"
+            + "  authorization_provider_approval_result=?,\n"
+            + "  authorization_approval_result=?,\n"
+            + "  authorization_provider_decline_reason=?,\n"
+            + "  authorization_decline_reason=?,\n"
+            + "  authorization_provider_review_reason=?,\n"
+            + "  authorization_review_reason=?,\n"
+            + "  authorization_provider_cvv_result=?,\n"
+            + "  authorization_cvv_result=?,\n"
+            + "  authorization_provider_avs_result=?,\n"
+            + "  authorization_avs_result=?,\n"
+            + "  authorization_approval_code=?,\n"
+            + "  capture_time=?::timestamp,\n"
+            + "  capture_username=?,\n"
+            + "  capture_principal_name=?,\n"
+            + "  capture_communication_result=?,\n"
+            + "  capture_provider_error_code=?,\n"
+            + "  capture_error_code=?,\n"
+            + "  capture_provider_error_message=?,\n"
+            + "  capture_provider_unique_id=?,\n"
+            + "  status=?\n"
+            + "where\n"
+            + "  pkey=?\n"
+            + "  and status='PROCESSING'",
+            authorizationCommunicationResult,
+            authorizationProviderErrorCode,
+            authorizationErrorCode,
+            authorizationProviderErrorMessage,
+            authorizationProviderUniqueId,
+            providerApprovalResult,
+            approvalResult,
+            providerDeclineReason,
+            declineReason,
+            providerReviewReason,
+            reviewReason,
+            providerCvvResult,
+            cvvResult,
+            providerAvsResult,
+            avsResult,
+            approvalCode,
+            captureTime==0 ? null : new Timestamp(captureTime),
+            source.getUsername(),
+            capturePrincipalName,
+            captureCommunicationResult,
+            captureProviderErrorCode,
+            captureErrorCode,
+            captureProviderErrorMessage,
+            captureProviderUniqueId,
+            status,
+            pkey
+        );
+        if(updated!=1) throw new SQLException("Unable to find credit_card_transactions with pkey="+pkey+" and status='PROCESSING'");
+
+        // Notify all clients of the update
+        invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
     }
 }

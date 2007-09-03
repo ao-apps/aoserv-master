@@ -40,46 +40,6 @@ final public class TransactionHandler {
     }
 
     /**
-     * Adds an incoming payment.
-     */
-    public static void addIncomingPayment(
-        MasterDatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int transid,
-        byte[] cardName,
-        byte[] cardNumber,
-        byte[] expMonth,
-        byte[] expYear
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TransactionHandler.class, "addIncomingPayment(MasterDatabaseConnection,RequestSource,InvalidateList,int,byte[],byte[],byte[],byte[])", null);
-        try {
-            BankAccountHandler.checkAccounting(conn, source, "addIncomingPayment");
-            checkAccessTransaction(conn, source, "addIncomingPayment", transid);
-
-            conn.executeUpdate(
-                "insert into incoming_payments values(?,?,?,?,?)",
-                transid,
-                new String(cardName),
-                new String(cardNumber),
-                new String(expMonth),
-                new String(expYear)
-            );
-
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.INCOMING_PAYMENTS,
-                TransactionHandler.getBusinessForTransaction(conn, transid),
-                InvalidateList.allServers,
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    /**
      * Adds a transaction.
      */
     public static int addTransaction(
@@ -95,9 +55,10 @@ final public class TransactionHandler {
         int rate,
         String paymentType,
         String paymentInfo,
+        String processor,
         byte payment_confirmed
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TransactionHandler.class, "addTransaction(MasterDatabaseConnection,RequestSource,InvalidateList,String,String,String,String,String,int,int,String,String,byte)", null);
+        Profiler.startProfile(Profiler.UNKNOWN, TransactionHandler.class, "addTransaction(MasterDatabaseConnection,RequestSource,InvalidateList,String,String,String,String,String,int,int,String,String,String,byte)", null);
 
         try {
             BankAccountHandler.checkAccounting(conn, source, "addTransaction");
@@ -109,7 +70,7 @@ final public class TransactionHandler {
             int transid=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('transactions_transid_seq')");
 
             conn.executeUpdate(
-                "insert into transactions values(now(),?,?,?,?,?,?,?::decimal(8,3),?::decimal(9,2),?,?,null,null,?)",
+                "insert into transactions values(now(),?,?,?,?,?,?,?::decimal(8,3),?::decimal(9,2),?,?,?,null,null,?)",
                 transid,
                 accounting,
                 sourceAccounting,
@@ -120,6 +81,7 @@ final public class TransactionHandler {
                 SQLUtility.getDecimal(rate),
                 paymentType,
                 paymentInfo,
+                processor,
                 payment_confirmed==Transaction.CONFIRMED?"Y":payment_confirmed==Transaction.NOT_CONFIRMED?"N":"W"
             );
 
@@ -522,62 +484,26 @@ final public class TransactionHandler {
         }
     }
 
-    public static void removeIncomingPayment(
-        MasterDatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int transid
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TransactionHandler.class, "removeIncomingPayment(MasterDatabaseConnection,RequestSource,InvalidateList,int)", null);
-        try {
-            BankAccountHandler.checkAccounting(conn, source, "removeIncomingPayment");
-            checkAccessTransaction(conn, source, "removeIncomingPayment", transid);
-
-            conn.executeUpdate("delete from incoming_payments where transid=?", transid);
-
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.INCOMING_PAYMENTS,
-                getBusinessForTransaction(conn, transid),
-                InvalidateList.allServers,
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
     public static void transactionApproved(
         MasterDatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int transid,
-        String paymentType,
-        String paymentInfo,
-        String merchant,
-        String apr_num
+        int creditCardTransaction
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TransactionHandler.class, "transactionApproved(MasterDatabaseConnection,RequestSource,InvalidateList,int,String,String,String,String)", null);
+        Profiler.startProfile(Profiler.UNKNOWN, TransactionHandler.class, "transactionApproved(MasterDatabaseConnection,RequestSource,InvalidateList,int,int)", null);
         try {
             BankAccountHandler.checkAccounting(conn, source, "transactionApproved");
             checkAccessTransaction(conn, source, "transactionApproved", transid);
+            CreditCardHandler.checkAccessCreditCardTransaction(conn, source, "transactionApproved", creditCardTransaction);
 
             String accounting=getBusinessForTransaction(conn, transid);
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
-                "update transactions set payment_type=?, payment_info=?, merchant_account=?, apr_num=?, payment_confirmed='Y' where transid=?"
+            int updateCount = conn.executeUpdate(
+                "update transactions set credit_card_transaction=?, payment_confirmed='Y' where transid=? and payment_confirmed='W'",
+                creditCardTransaction,
+                transid
             );
-            try {
-                pstmt.setString(1, paymentType);
-                pstmt.setString(2, paymentInfo);
-                pstmt.setString(3, merchant);
-                pstmt.setString(4, apr_num);
-                pstmt.setInt(5, transid);
-                conn.incrementUpdateCount();
-                pstmt.executeUpdate();
-            } finally {
-                pstmt.close();
-            }
+            if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W'");
 
             // Notify all clients of the update
             invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
@@ -591,42 +517,43 @@ final public class TransactionHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int transid,
-        String paymentType,
-        String paymentInfo,
-        String merchant
+        int creditCardTransaction
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TransactionHandler.class, "transactionDeclined(MasterDatabaseConnection,RequestSource,InvalidateList,int,String,String,String)", null);
+        Profiler.startProfile(Profiler.UNKNOWN, TransactionHandler.class, "transactionDeclined(MasterDatabaseConnection,RequestSource,InvalidateList,int,int)", null);
         try {
             BankAccountHandler.checkAccounting(conn, source, "transactionDeclined");
             checkAccessTransaction(conn, source, "transactionDeclined", transid);
+            CreditCardHandler.checkAccessCreditCardTransaction(conn, source, "transactionApproved", creditCardTransaction);
 
             String accounting=getBusinessForTransaction(conn, transid);
-            PreparedStatement pstmt = conn
-                .getConnection(
-                    Connection.TRANSACTION_READ_COMMITTED,
-                    false
-                ).prepareStatement(
-                    "update\n"
-                    + "  transactions\n"
-                    + "set\n"
-                    + "  payment_type=?,\n"
-                    + "  payment_info=?,\n"
-                    + "  merchant_account=?,\n"
-                    + "  payment_confirmed='N'\n"
-                    + "where\n"
-                    + "  transid=?"
-                )
-            ;
-            try {
-                pstmt.setString(1, paymentType);
-                pstmt.setString(2, paymentInfo);
-                pstmt.setString(3, merchant);
-                pstmt.setInt(4, transid);
-                conn.incrementUpdateCount();
-                pstmt.executeUpdate();
-            } finally {
-                pstmt.close();
-            }
+            
+            int updateCount = conn.executeUpdate("update transactions set credit_card_transaction=?, payment_confirmed='N' where transid=? and payment_confirmed='W'", creditCardTransaction, transid);
+            if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W'");
+
+            // Notify all clients of the update
+            invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static void transactionHeld(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int transid,
+        int creditCardTransaction
+    ) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, TransactionHandler.class, "transactionHeld(MasterDatabaseConnection,RequestSource,InvalidateList,int,int)", null);
+        try {
+            BankAccountHandler.checkAccounting(conn, source, "transactionHeld");
+            checkAccessTransaction(conn, source, "transactionHeld", transid);
+            CreditCardHandler.checkAccessCreditCardTransaction(conn, source, "transactionHeld", creditCardTransaction);
+
+            String accounting=getBusinessForTransaction(conn, transid);
+            
+            int updateCount = conn.executeUpdate("update transactions set credit_card_transaction=? where transid=? and payment_confirmed='W' and credit_card_transaction is null", creditCardTransaction, transid);
+            if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W' and credit_card_transaction is null");
 
             // Notify all clients of the update
             invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);

@@ -32,6 +32,7 @@ import com.aoindustries.aoserv.client.BusinessServer;
 import com.aoindustries.aoserv.client.CountryCode;
 import com.aoindustries.aoserv.client.CreditCard;
 import com.aoindustries.aoserv.client.CreditCardProcessor;
+import com.aoindustries.aoserv.client.CreditCardTransaction;
 import com.aoindustries.aoserv.client.CvsRepository;
 import com.aoindustries.aoserv.client.DNSForbiddenZone;
 import com.aoindustries.aoserv.client.DNSRecord;
@@ -87,7 +88,6 @@ import com.aoindustries.aoserv.client.HttpdTomcatStdSite;
 import com.aoindustries.aoserv.client.HttpdTomcatVersion;
 import com.aoindustries.aoserv.client.HttpdWorker;
 import com.aoindustries.aoserv.client.IPAddress;
-import com.aoindustries.aoserv.client.IncomingPayment;
 import com.aoindustries.aoserv.client.InterBaseBackup;
 import com.aoindustries.aoserv.client.InterBaseDBGroup;
 import com.aoindustries.aoserv.client.InterBaseDatabase;
@@ -108,7 +108,6 @@ import com.aoindustries.aoserv.client.MajordomoVersion;
 import com.aoindustries.aoserv.client.MasterHost;
 import com.aoindustries.aoserv.client.MasterServerProfile;
 import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.MerchantAccount;
 import com.aoindustries.aoserv.client.MonthlyCharge;
 import com.aoindustries.aoserv.client.MySQLBackup;
 import com.aoindustries.aoserv.client.MySQLDBUser;
@@ -570,7 +569,7 @@ final public class TableHandler {
                             + "  time::date,\n"
                             + "  transid,\n"
                             + "  bank_account,\n"
-                            + "  merchant_account,\n"
+                            + "  processor,\n"
                             + "  administrator,\n"
                             + "  type,\n"
                             + "  expense_code,\n"
@@ -2214,6 +2213,48 @@ final public class TableHandler {
                     } else {
                         // No permission, return empty list
                         List<CreditCard> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                    break;
+                case CREDIT_CARD_TRANSACTIONS :
+                    if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_card_transactions)) {
+                        if(masterUser!=null) {
+                            if(masterServers.length==0) MasterServer.writeObjects(
+                                conn,
+                                source,
+                                out,
+                                provideProgress,
+                                new CreditCardTransaction(),
+                                "select * from credit_card_transactions"
+                            ); else {
+                                List<CreditCardTransaction> emptyList = Collections.emptyList();
+                                MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                            }
+                        } else MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new CreditCardTransaction(),
+                            "select\n"
+                            + "  cct.*\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  credit_card_transactions cct\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk.name\n"
+                            + "  and (\n"
+                            + PK_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and bu1.accounting=cct.accounting",
+                            username
+                        );
+                    } else {
+                        // No permission, return empty list
+                        List<CreditCardTransaction> emptyList = Collections.emptyList();
                         MasterServer.writeObjects(source, out, provideProgress, emptyList);
                     }
                     break;
@@ -4455,48 +4496,6 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case INCOMING_PAYMENTS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new IncomingPayment(),
-                            "select * from incoming_payments"
-                        ); else {
-                            List<IncomingPayment> emptyList = Collections.emptyList();
-                            MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                        }
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new IncomingPayment(),
-                        "select\n"
-                        + "  ip.transid,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text\n"
-                        + "from\n"
-                        + "  usernames un1,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  transactions tr,\n"
-                        + "  incoming_payments ip\n"
-                        + "where\n"
-                        + "  un1.username=?\n"
-                        + "  and un1.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=tr.accounting\n"
-                        + "  and tr.transid=ip.transid",
-                        username
-                    );
-                    break;
                 case INTERBASE_BACKUPS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
@@ -5692,21 +5691,6 @@ final public class TableHandler {
                         + "  and un2.username=mu.username",
                         username
                     );
-                    break;
-                case MERCHANT_ACCOUNTS :
-                    if(BankAccountHandler.isBankAccounting(conn, source)) {
-                        MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new MerchantAccount(),
-                            "select * from merchant_accounts"
-                        );
-                    } else {
-                        List<MerchantAccount> emptyList = Collections.emptyList();
-                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                    }
                     break;
                 case MONTHLY_CHARGES :
                     if(masterUser!=null) {
