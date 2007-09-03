@@ -70,7 +70,7 @@ final public class TransactionHandler {
             int transid=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('transactions_transid_seq')");
 
             conn.executeUpdate(
-                "insert into transactions values(now(),?,?,?,?,?,?,?::decimal(8,3),?::decimal(9,2),?,?,?,null,null,?)",
+                "insert into transactions values(now(),?,?,?,?,?,?,?::decimal(8,3),?::decimal(9,2),?,?,?,null,?)",
                 transid,
                 accounting,
                 sourceAccounting,
