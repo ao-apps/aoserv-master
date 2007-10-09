@@ -2839,7 +2839,7 @@ public final class BackupHandler {
                     while(results.next()) {
                         BackupData bd=new BackupData();
                         bd.init(results);
-                        int pkey=bd.getPKey();
+                        int pkey=bd.getPkey();
                         for(int c=0;c<batchSize;c++) {
                             if(pkeys[c]==pkey) bds[c]=bd;
                         }
@@ -3114,7 +3114,7 @@ public final class BackupHandler {
                         while(results.next()) {
                             FileBackup fb=new FileBackup();
                             fb.init(results);
-                            int pkey=fb.getPKey();
+                            int pkey=fb.getPkey();
                             for(int c=0;c<batchSize;c++) {
                                 if(pkeys[c]==pkey) fbs[c]=fb;
                             }

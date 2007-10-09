@@ -7116,7 +7116,7 @@ final public class TableHandler {
                                     }
                                     clientColumns.add(
                                         new SchemaColumn(
-                                            tempSC.getPKey(),
+                                            tempSC.getPkey(),
                                             tableName,
                                             tempSC.getColumnName(),
                                             clientColumnIndex++,
