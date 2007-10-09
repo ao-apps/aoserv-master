@@ -265,9 +265,9 @@ final public class PackageHandler {
                 pstmt.setString(5, version);
                 pstmt.setString(6, display);
                 pstmt.setString(7, description);
-                pstmt.setString(8, setupFee<=0 ? null : SQLUtility.getDecimal(setupFee));
+                pstmt.setBigDecimal(8, setupFee<=0 ? null : new BigDecimal(SQLUtility.getDecimal(setupFee)));
                 pstmt.setString(9, setupFeeTransactionType);
-                pstmt.setString(10, SQLUtility.getDecimal(monthlyRate));
+                pstmt.setBigDecimal(10, new BigDecimal(SQLUtility.getDecimal(monthlyRate)));
                 pstmt.setString(11, monthlyRateTransactionType);
                 conn.incrementUpdateCount();
                 pstmt.executeUpdate();
