@@ -2739,7 +2739,7 @@ final public class EmailHandler implements CronJob {
     /**
      * Runs at 4:20 am daily.
      */
-    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
+    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         return
             minute==20
             && hour==4
@@ -2781,8 +2781,8 @@ final public class EmailHandler implements CronJob {
         Profiler.endProfile(Profiler.INSTANTANEOUS);
     }
 
-    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
-        Profiler.startProfile(Profiler.UNKNOWN, EmailHandler.class, "runCronJob(int,int,int,int,int)", null);
+    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+        Profiler.startProfile(Profiler.UNKNOWN, EmailHandler.class, "runCronJob(int,int,int,int,int,int)", null);
         try {
             try {
                 MasterDatabase.getDatabase().executeUpdate("delete from sendmail_smtp_stats where date<=(now()-'1 year'::interval)");

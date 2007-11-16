@@ -150,7 +150,7 @@ final public class FailoverHandler implements CronJob {
     /**
      * Runs at 1:20 am daily.
      */
-    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
+    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         return
             minute==45
             && hour==1
@@ -192,8 +192,8 @@ final public class FailoverHandler implements CronJob {
         Profiler.endProfile(Profiler.INSTANTANEOUS);
     }
 
-    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
-        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "runCronJob(int,int,int,int,int)", null);
+    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "runCronJob(int,int,int,int,int,int)", null);
         try {
             try {
                 MasterDatabase.getDatabase().executeUpdate("delete from failover_file_log where end_time <= (now()-'1 year'::interval)");

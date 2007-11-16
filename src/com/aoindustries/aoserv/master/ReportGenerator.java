@@ -63,7 +63,7 @@ final public class ReportGenerator implements CronJob {
     /**
      * Runs at <code>BackupReport.BACKUP_REPORT_HOUR</code>:<code>BackupReport.BACKUP_REPORT_MINUTE</code> am daily.
      */
-    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
+    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         return
             minute==BackupReport.BACKUP_REPORT_MINUTE
             && hour==BackupReport.BACKUP_REPORT_HOUR
@@ -82,8 +82,8 @@ final public class ReportGenerator implements CronJob {
         return Thread.NORM_PRIORITY-2;
     }
 
-    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
-        Profiler.startProfile(Profiler.UNKNOWN, ReportGenerator.class, "runCronJob(int,int,int,int,int)", null);
+    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+        Profiler.startProfile(Profiler.UNKNOWN, ReportGenerator.class, "runCronJob(int,int,int,int,int,int)", null);
         try {
             try {
                 ProcessTimer timer=new ProcessTimer(

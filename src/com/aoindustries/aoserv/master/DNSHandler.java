@@ -79,7 +79,7 @@ final public class DNSHandler implements CronJob {
     /**
      * Runs at 6:12 am on the 1st, 7th, 13th, 19th, and 25th
      */
-    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
+    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         return
             minute==12
             && hour==6
@@ -105,8 +105,8 @@ final public class DNSHandler implements CronJob {
         return Thread.NORM_PRIORITY-1;
     }
 
-    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "runCronJob(int,int,int,int,int)", null);
+    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "runCronJob(int,int,int,int,int,int)", null);
         try {
             try {
                 ProcessTimer timer=new ProcessTimer(

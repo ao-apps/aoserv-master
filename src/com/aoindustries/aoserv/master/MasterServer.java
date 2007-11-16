@@ -9750,6 +9750,7 @@ public abstract class MasterServer {
             AccountCleaner.start();
             BackupCleaner.start();
             BackupDatabaseSynchronizer.start();
+            CreditCardHandler.start();
             DNSHandler.start();
             EmailHandler.start();
             FailoverHandler.start();

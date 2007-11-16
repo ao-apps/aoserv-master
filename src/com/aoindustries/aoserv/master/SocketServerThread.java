@@ -54,7 +54,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
     /**
      * The version of the protocol the client is running.
      */
-    private final String protocolVersion;
+    private String protocolVersion;
 
     /**
      * The server if this is a connection from a daemon.
@@ -83,49 +83,6 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 server.getProtocol(),
                 server.isSecure()
             );
-            boolean done=false;
-            try {
-                this.protocolVersion=in.readUTF();
-                process.setAOServProtocol(protocolVersion);
-                if(in.readBoolean()) {
-                    String daemonServerHostname=in.readUTF();
-                    MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
-                    try {
-                        process.setDeamonServer(ServerHandler.getPKeyForServer(conn, daemonServerHostname));
-                    } catch(IOException err) {
-                        conn.rollbackAndClose();
-                        throw err;
-                    } catch(SQLException err) {
-                        conn.rollbackAndClose();
-                        throw err;
-                    } finally {
-                        conn.releaseConnection();
-                    }
-                } else process.setDeamonServer(-1);
-                process.setEffectiveUser(in.readUTF());
-                process.setAuthenticatedUser(in.readUTF());
-                setName(
-                    "SocketServerThread"
-                    + "?"
-                    + host
-                    + ":"
-                    + socket.getPort()
-                    + "->"
-                    + socket.getLocalAddress().getHostAddress()
-                    + ":"
-                    + socket.getLocalPort()
-                    + " as "
-                    + process.getEffectiveUser()
-                    + " ("
-                    + process.getAuthenticatedUser()
-                    + ")"
-                );
-                done=true;
-            } finally {
-                if(!done) {
-                    MasterProcessManager.removeProcess(process);
-                }
-            }
             isClosed=false;
             start();
         } finally {
@@ -231,6 +188,42 @@ final public class SocketServerThread extends Thread implements RequestSource {
         try {
             try {
                 try {
+                    this.protocolVersion=in.readUTF();
+                    process.setAOServProtocol(protocolVersion);
+                    if(in.readBoolean()) {
+                        String daemonServerHostname=in.readUTF();
+                        MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                        try {
+                            process.setDeamonServer(ServerHandler.getPKeyForServer(conn, daemonServerHostname));
+                        } catch(IOException err) {
+                            conn.rollbackAndClose();
+                            throw err;
+                        } catch(SQLException err) {
+                            conn.rollbackAndClose();
+                            throw err;
+                        } finally {
+                            conn.releaseConnection();
+                        }
+                    } else process.setDeamonServer(-1);
+                    process.setEffectiveUser(in.readUTF());
+                    process.setAuthenticatedUser(in.readUTF());
+                    String host=socket.getInetAddress().getHostAddress();
+                    setName(
+                        "SocketServerThread"
+                        + "?"
+                        + host
+                        + ":"
+                        + socket.getPort()
+                        + "->"
+                        + socket.getLocalAddress().getHostAddress()
+                        + ":"
+                        + socket.getLocalPort()
+                        + " as "
+                        + process.getEffectiveUser()
+                        + " ("
+                        + process.getAuthenticatedUser()
+                        + ")"
+                    );
                     String password=in.readUTF();
                     long existingID=in.readLong();
 

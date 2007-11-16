@@ -58,7 +58,7 @@ final public class AccountCleaner implements CronJob {
     /**
      * Runs at 5:25 am daily.
      */
-    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
+    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         return
             minute==25
             && hour==5
@@ -77,8 +77,8 @@ final public class AccountCleaner implements CronJob {
         return Thread.NORM_PRIORITY-1;
     }
 
-    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek) {
-        Profiler.startProfile(Profiler.UNKNOWN, AccountCleaner.class, "runCronJob(int,int,int,int,int)", null);
+    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+        Profiler.startProfile(Profiler.UNKNOWN, AccountCleaner.class, "runCronJob(int,int,int,int,int,int)", null);
         try {
             try {
                 ProcessTimer timer=new ProcessTimer(
