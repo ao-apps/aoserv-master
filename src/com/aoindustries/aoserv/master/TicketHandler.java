@@ -199,7 +199,7 @@ final public class TicketHandler implements Runnable {
             //    ActionType.OPEN_TICKET
             //);
 
-            /*
+            
             if(
                 clientPriority.equals(TicketPriority.URGENT)
                 && !packageName.equals(BusinessHandler.getRootBusiness()))
@@ -216,7 +216,7 @@ final public class TicketHandler implements Runnable {
                 ;
                 sendEmail("support@aoindustries.com", "URGENT ticket notification", message, "ID: "+pkey+" "+details);
             }
-*/
+
 
             // Notify all clients of the updates
             invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, accounting, InvalidateList.allServers, false);
@@ -600,7 +600,7 @@ final public class TicketHandler implements Runnable {
                 InvalidateList.allServers,
                 false
             );
-/*
+
             if(
                 priority.equals(TicketPriority.URGENT)
                 && accounting!=null && !accounting.equals(BusinessHandler.getRootBusiness())
@@ -611,7 +611,7 @@ final public class TicketHandler implements Runnable {
                 ;
                 sendEmail("support@aoindustries.com", "URGENT ticket notification", message, "ID: "+ticketID+" "+details);
             }
-*/
+
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1375,7 +1375,7 @@ final public class TicketHandler implements Runnable {
              try {
                 MailMessage msg = new MailMessage(MasterConfiguration.getTicketSmtpServer());
                 msg.from("support@aoindustries.com");
-                msg.to(MasterServer.getRandom().nextBoolean()?"2054542556@mobile.mycingular.com":"2515991027@mobile.mycingular.com");
+                msg.to(MasterServer.getRandom().nextBoolean()?"2514584757@tmomail.net":"2514584757@tmomail.net");
                 msg.setSubject("URGENT");
                 PrintStream email = msg.getPrintStream();
                 email.print(cellMessage);
