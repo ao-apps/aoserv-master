@@ -14,413 +14,11 @@ import java.util.List;
 /**
  * Finds the optimal mapping of virtual machines to physical resources to balance customer needs and redundant resources.
  *
- * TODO: Provide separate control over secondary processor type, currently only secondary architecture considered.
+ * TODO: Provide separate control over secondary processor type, currently only secondary architecture and number of cores are considered.
+ * TODO: Have separate core count and CPU weight.  Cores<=count on box, sum of primary weight <= # of cores on box, each virtualServer adds cores*weight to overall weight.
+ * TODO: Make sure can actually map extents and spindle counts to drives.
  *
  * @author  AO Industries, Inc.
- *
-* Mapping found with 121419042 skips
-* gw1.fc.aoindustries.com
-*   Primary:
-*   Secondary:
-*       From xen917-4.fc.aoindustries.com:
-*           www1.fc.enduraquest.com
-*       From xen914-5.fc.lnxhosting.ca:
-*           www1.fc.objectevolution.com
-*           www1.fc.showsandshoots.com
- * xen907-2.fc.aoindustries.com
-    Primary:
-        www1.nl.pertinence.net:
-            Processor Cores: 1.0
-            Primary RAM....: 2048
-            Device: /dev/xvda
-                32MB Extents......: 4480
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.125
-        Total:
-    Secondary:
-        From xen907-1.fc.aoindustries.com:
-            www8.kc.aoindustries.com
-                Processor Cores: 0.25
-                Secondary RAM..: 0
-                Device: /dev/xvda
-                    32MB Extents........: 2688
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.0625
-            www4.kc.aoindustries.com
-                Processor Cores: 0.25
-                Secondary RAM..: 0
-                Device: /dev/xvda
-                    32MB Extents........: 2688
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.0625
-*           www5.kc.aoindustries.com
-        From xen914-5.fc.lnxhosting.ca:
-            www7.fc.aoindustries.com
-                Processor Cores: 0.25
-                Secondary RAM..: 0
-                Device: /dev/xvda
-                    32MB Extents........: 1736
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.0625
-            Total:
-gw2.fc.aoindustries.com
-    Primary:
-        Total:
-    Secondary:
-        From xen907-2.fc.aoindustries.com:
-            www1.nl.pertinence.net
-                Processor Cores: 1.0
-                Secondary RAM..: 2048
-                Device: /dev/xvda
-                    32MB Extents........: 4480
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.03125
-            Total:
-xen914-1.fc.aoindustries.com
-    Primary:
-        www1.kc.aoindustries.com:
-            Processor Cores: 0.25
-            Primary RAM....: 2048
-            Device: /dev/xvda
-                32MB Extents......: 3584
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.25
-        Total:
-    Secondary:
-xen917-1.fc.aoindustries.com
-    Primary:
-        Total:
-    Secondary:
-        From xen914-1.fc.aoindustries.com:
-            www1.kc.aoindustries.com
-                Processor Cores: 0.25
-                Secondary RAM..: 2048
-                Device: /dev/xvda
-                    32MB Extents........: 3584
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.0625
-            Total:
-        From xen917-3.fc.aoindustries.com:
-            w1.fc.insightsys.com
-                Processor Cores: 1.0
-                Secondary RAM..: 1024
-                Device: /dev/xvda
-                    32MB Extents........: 1792
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.03125
-            Total:
-        From xen907-1.fc.aoindustries.com:
-            daissystems.com
-                Processor Cores: 1.0
-                Secondary RAM..: 1024
-                Device: /dev/xvda
-                    32MB Extents........: 4480
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.25
-S           ao1.kc.aoindustries.com
-            ns1.aoindustries.com
-                Processor Cores: 0.0625
-                Secondary RAM..: 256
-                Device: /dev/xvda
-                    32MB Extents........: 896
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.03125
-            ns4.aoindustries.com
-                Processor Cores: 0.0625
-                Secondary RAM..: 256
-                Device: /dev/xvda
-                    32MB Extents........: 896
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.03125
-            Total:
-        From xen914-5.fc.lnxhosting.ca:
-            www1.kc.artizen.com
-                Processor Cores: 1.0
-                Secondary RAM..: 1024
-                Device: /dev/xvda
-                    32MB Extents........: 896
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.0625
-            www.swimconnection.com
-                Processor Cores: 1.0
-                Secondary RAM..: 1024
-                Device: /dev/xvda
-                    32MB Extents........: 2688
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.0625
-            Total:
-xen917-2.fc.aoindustries.com
-    Primary:
-        www.keepandshare.com:
-            Processor Cores: 4.0
-            Primary RAM....: 2048
-            Device: /dev/xvda
-                32MB Extents......: 3584
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.25
-        Total:
-    Secondary:
-xen907-5.fc.aoindustries.com
-    Primary:
-        www1.fc.newmediaworks.com:
-            Processor Cores: 2.0
-            Primary RAM....: 4096
-            Device: /dev/xvda
-                32MB Extents......: 1792
-                Primary Type......: RAID1_7200
-                Primary Allocation: 1.0
-        Total:
-    Secondary:
-* xen917-4.fc.aoindustries.com
-*   Primary:
-*       www1.fc.enduraquest.com:
-*   Secondary:
-xen914-2.fc.aoindustries.com
-    Primary:
-        Total:
-    Secondary:
-        From xen917-2.fc.aoindustries.com:
-            www.keepandshare.com
-                Processor Cores: 4.0
-                Secondary RAM..: 2048
-                Device: /dev/xvda
-                    32MB Extents........: 3584
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.0625
-            Total:
-        From xen907-5.fc.aoindustries.com:
-            www1.fc.newmediaworks.com
-                Processor Cores: 2.0
-                Secondary RAM..: 4096
-                Device: /dev/xvda
-                    32MB Extents........: 1792
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.25
-            Total:
-        From xen907-1.fc.aoindustries.com:
-            ipharos.com
-                Processor Cores: 4.0
-                Secondary RAM..: 4096
-                Device: /dev/xvda
-                    32MB Extents........: 1792
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 1.0
-            Total:
-        From xen914-5.fc.lnxhosting.ca:
-            www2.kc.aoindustries.com
-                Processor Cores: 0.25
-                Secondary RAM..: 1024
-                Device: /dev/xvda
-                    32MB Extents........: 2688
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.0625
-            www3.kc.aoindustries.com
-                Processor Cores: 0.25
-                Secondary RAM..: 1024
-                Device: /dev/xvda
-                    32MB Extents........: 1792
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.0625
-*           master.aoindustries.com
-            www1.fc.softwaremiracles.com
-                Processor Cores: 0.0625
-                Secondary RAM..: 512
-                Device: /dev/xvda
-                    32MB Extents........: 896
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.03125
-            Total:
-xen917-3.fc.aoindustries.com
-    Primary:
-        w1.fc.insightsys.com:
-            Processor Cores: 1.0
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 1792
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.125
-        Total:
-    Secondary:
-        From xen907-1.fc.aoindustries.com:
-            www2.fc.newmediaworks.com
-                Processor Cores: 2.0
-                Secondary RAM..: 4096
-                Device: /dev/xvda
-                    32MB Extents........: 1792
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.25
-            Total:
-        From xen914-5.fc.lnxhosting.ca:
-            www1.fc.lnxhosting.ca
-                Processor Cores: 2.0
-                Secondary RAM..: 4096
-                Device: /dev/xvda
-                    32MB Extents........: 1792
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.03125
-                Device: /dev/xvdb
-                    32MB Extents........: 8064
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.03125
-            Total:
-xen907-1.fc.aoindustries.com
-    Primary:
-        ipharos.com:
-            Processor Cores: 4.0
-            Primary RAM....: 4096
-            Device: /dev/xvda
-                32MB Extents......: 1792
-                Primary Type......: RAID1_15000
-                Primary Allocation: 1.0
-        www2.fc.newmediaworks.com:
-            Processor Cores: 2.0
-            Primary RAM....: 4096
-            Device: /dev/xvda
-                32MB Extents......: 1792
-                Primary Type......: RAID1_7200
-                Primary Allocation: 1.0
-        www8.kc.aoindustries.com:
-            Processor Cores: 0.25
-            Primary RAM....: 2048
-            Device: /dev/xvda
-                32MB Extents......: 2688
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.25
-        daissystems.com:
-            Processor Cores: 1.0
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 4480
-                Primary Type......: RAID1_7200
-                Primary Allocation: 1.0
-        www4.kc.aoindustries.com:
-            Processor Cores: 0.25
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 2688
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.25
-        www5.kc.aoindustries.com:
-            Processor Cores: 0.25
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 2688
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.25
-S       ao1.kc.aoindustries.com:
-        ns1.aoindustries.com:
-            Processor Cores: 0.0625
-            Primary RAM....: 256
-            Device: /dev/xvda
-                32MB Extents......: 896
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.125
-        ns4.aoindustries.com:
-            Processor Cores: 0.0625
-            Primary RAM....: 256
-            Device: /dev/xvda
-                32MB Extents......: 896
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.125
-        Total:
-    Secondary:
-        From xen914-5.fc.lnxhosting.ca:
-            www6.kc.aoindustries.com
-                Processor Cores: 0.25
-                Secondary RAM..: 1024
-                Device: /dev/xvda
-                    32MB Extents........: 1792
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.0625
-            www9.fc.aoindustries.com
-                Processor Cores: 0.25
-                Secondary RAM..: 1024
-                Device: /dev/xvda
-                    32MB Extents........: 1792
-                    Secondary Type......: RAID1_7200
-                    Secondary Allocation: 0.0625
-            Total:
-xen914-5.fc.lnxhosting.ca
-    Primary:
-        www1.fc.lnxhosting.ca:
-            Processor Cores: 2.0
-            Primary RAM....: 4096
-            Device: /dev/xvda
-                32MB Extents......: 1792
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.125
-            Device: /dev/xvdb
-                32MB Extents......: 8064
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.125
-        www1.fc.objectevolution.com:
-            Processor Cores: 1.0
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 896
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.125
-        www1.fc.showsandshoots.com:
-            Processor Cores: 1.0
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 896
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.125
-S       www1.kc.artizen.com:
-        www.swimconnection.com:
-            Processor Cores: 1.0
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 2688
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.25
-        www2.kc.aoindustries.com:
-            Processor Cores: 0.25
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 2688
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.25
-        www3.kc.aoindustries.com:
-            Processor Cores: 0.25
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 1792
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.25
-        www6.kc.aoindustries.com:
-            Processor Cores: 0.25
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 1792
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.25
-        www7.fc.aoindustries.com:
-            Processor Cores: 0.25
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 1736
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.25
-        www9.fc.aoindustries.com:
-            Processor Cores: 0.25
-            Primary RAM....: 1024
-            Device: /dev/xvda
-                32MB Extents......: 1792
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.25
-S       master.aoindustries.com:
-        www1.fc.softwaremiracles.com:
-            Processor Cores: 0.0625
-            Primary RAM....: 512
-            Device: /dev/xvda
-                32MB Extents......: 896
-                Primary Type......: RAID1_7200
-                Primary Allocation: 0.125
-        Total:
-    Secondary:
-BUILD SUCCESSFUL (total time: 11 minutes 8 seconds)
  */
 public final class ClusterOptimizer {
 
@@ -583,7 +181,7 @@ public final class ClusterOptimizer {
     }
 
     /**
-     * TODO: Load this directly from the servers.
+     * Need to load this directly from the servers.
      */
     private static List<Server> getServers() {
         List<Server> servers = new ArrayList<Server>();
@@ -616,6 +214,7 @@ public final class ClusterOptimizer {
                     new Disk("/dev/sdf1", DiskType.RAID1_7200, 7450),
                     new Disk("/dev/sdg1", DiskType.RAID1_7200, 7450),
                     new Disk("/dev/sdh1", DiskType.RAID1_7200, 7450),
+                    new Disk("/dev/sdi1", DiskType.RAID1_7200, 7450*2), // TODO: These are not purchased yet - estimated size
                     new Disk("/dev/md3", DiskType.RAID1_15000, 4375)
                 }
             )
@@ -707,12 +306,13 @@ public final class ClusterOptimizer {
                 3200,
                 8,
                 new Disk[] {
-                    new Disk("/dev/md3", DiskType.RAID1_7200, 9198),
+                    new Disk("/dev/md3", DiskType.RAID1_7200, 7450*4), // TODO: These are not purchased yet - estimated size
                     new Disk("/dev/md4", DiskType.RAID1_7200, 9198),
                     new Disk("/dev/md5", DiskType.RAID1_7200, 9198)
                 }
             )
         );
+        /* powered-down after installation of xen917-5.fc.aoindustries.com
         servers.add(
             new Server(
                 "xen917-1.fc.aoindustries.com",
@@ -729,6 +329,7 @@ public final class ClusterOptimizer {
                 }
             )
         );
+         */
         servers.add(
             new Server(
                 "xen917-2.fc.aoindustries.com",
@@ -773,6 +374,21 @@ public final class ClusterOptimizer {
                 }
             )
         );
+        servers.add(
+            new Server(
+                "xen917-5.fc.aoindustries.com",
+                Rack.FC_9_17,
+                16384,
+                ProcessorType.XEON_LV,
+                ProcessorArchitecture.X86_64,
+                2333,
+                8,
+                new Disk[] {
+                    new Disk("/dev/sdc1", DiskType.RAID1_7200, 7450*2), // TODO: These are not purchased yet.  Estimated size for the 2x500 GB for CARR
+                    new Disk("/dev/sdd1", DiskType.RAID1_7200, 8700)  // These are the internal drives - Need separate hot-swap pair
+                }
+            )
+        );
         Collections.sort(servers);
         return servers;
     }
@@ -798,15 +414,43 @@ public final class ClusterOptimizer {
         );
         virtualServers.add(
             new VirtualServer(
+                "centos5.aoindustries.com",
+                256,
+                256,
+                ProcessorType.XEON_LV,
+                null,
+                -1,
+                .0625f,
+                new VirtualDisk[] {
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+                }
+            )
+        );
+        virtualServers.add(
+            new VirtualServer(
+                "centos5-build64.aoindustries.com",
+                256,
+                256,
+                ProcessorType.XEON_LV,
+                null,
+                -1,
+                .0625f,
+                new VirtualDisk[] {
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+                }
+            )
+        );
+        virtualServers.add(
+            new VirtualServer(
                 "daissystems.com",
                 1024,
                 1024,
                 null,
                 null,
                 -1,
-                1.0f,
+                0.5f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 4480, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .25f)
+                    new VirtualDisk("/dev/xvda", 4480, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -818,9 +462,37 @@ public final class ClusterOptimizer {
                 ProcessorType.XEON_LV,
                 null,
                 -1,
-                4.0f,
+                1.0f, // 4 * .25
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_15000, 1.0f, DiskType.RAID1_7200, 1.0f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_15000, .5f, DiskType.RAID1_7200, .5f)
+                }
+            )
+        );
+        virtualServers.add(
+            new VirtualServer(
+                "db1.fc.ipharos.com",
+                2048, // Need 4096
+                2048, // Need 4096
+                ProcessorType.XEON_LV,
+                null,
+                2000,
+                3.0f, // 4 * .75 - Need 4 * 1.0
+                new VirtualDisk[] {
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_15000, .5f, DiskType.RAID1_7200, 1.0f) // Need to be 1792, .5, .5 once ipharos.com is gone - and secondary on 15k
+                }
+            )
+        );
+        virtualServers.add(
+            new VirtualServer(
+                "www1.fc.ipharos.com",
+                2048, // Need 4096
+                2048, // Need 4096
+                ProcessorType.XEON_LV,
+                null,
+                2333,
+                1.0f, // 4 * .25 - Need 4 * 1.0
+                new VirtualDisk[] {
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .5f) // Need to be 1792, .5, .5 once ipharos.com is gone
                 }
             )
         );
@@ -834,7 +506,7 @@ public final class ClusterOptimizer {
                 -1,
                 .0625f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -869,15 +541,14 @@ public final class ClusterOptimizer {
         virtualServers.add(
             new VirtualServer(
                 "w1.fc.insightsys.com",
-                1024,
-                1024,
+                2048,
+                2048,
                 null,
                 null,
                 -1,
-                1.0f,
+                .5f,
                 new VirtualDisk[] {
-                    // TODO: More disk I/O here
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, 1.0f)
                 }
             )
         );
@@ -885,13 +556,13 @@ public final class ClusterOptimizer {
             new VirtualServer(
                 "www1.fc.enduraquest.com",
                 4096,
-                2048, // TODO: Had a fast solution at 1024, slow at 2048
+                4096,
                 ProcessorType.CORE2,
                 null,
                 -1,
                 2.0f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_10000, 1.0f, DiskType.RAID1_7200, .125f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_10000, 1.0f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
@@ -905,8 +576,23 @@ public final class ClusterOptimizer {
                 3200,
                 2.0f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f),
-                    new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
+                    // new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f) // Was 
+                }
+            )
+        );
+        virtualServers.add(
+            new VirtualServer(
+                "backup1.lnxhosting.ca",
+                512,
+                512,
+                ProcessorType.P4_XEON,
+                ProcessorArchitecture.X86_64,
+                3200,
+                0.5f,
+                new VirtualDisk[] {
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f),
+                    new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -920,7 +606,7 @@ public final class ClusterOptimizer {
                 -1,
                 2.0f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .25f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .5f)
                 }
             )
         );
@@ -932,25 +618,25 @@ public final class ClusterOptimizer {
                 null,
                 null,
                 -1,
-                1.0f,
+                0.5f,
                 new VirtualDisk[] {
                     // TODO: More disk I/O here
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
         virtualServers.add(
             new VirtualServer(
                 "www1.fc.showsandshoots.com",
-                1024,
-                1024,
+                512, // Was 1024
+                512,
                 null,
                 null,
                 -1,
-                1.0f,
+                0.5f,
                 new VirtualDisk[] {
                     // TODO: More disk I/O here
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -964,7 +650,7 @@ public final class ClusterOptimizer {
                 -1,
                 .0625f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -978,7 +664,7 @@ public final class ClusterOptimizer {
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 3584, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .0625f)
+                    new VirtualDisk("/dev/xvda", 3584, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
@@ -990,9 +676,9 @@ public final class ClusterOptimizer {
                 null,
                 null,
                 -1,
-                1.0f,
+                0.5f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .0625f)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -1006,7 +692,7 @@ public final class ClusterOptimizer {
                 -1,
                 1.0f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 4480, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+                    new VirtualDisk("/dev/xvda", 5376, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .25f) // was 4480
                 }
             )
         );
@@ -1020,7 +706,7 @@ public final class ClusterOptimizer {
                 -1,
                 2.0f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .25f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .5f)
                 }
             )
         );
@@ -1028,13 +714,13 @@ public final class ClusterOptimizer {
             new VirtualServer(
                 "www2.kc.aoindustries.com",
                 1024,
-                1024,
+                0, // Need 1024
                 null,
                 null,
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .0625f)
+                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
@@ -1042,13 +728,13 @@ public final class ClusterOptimizer {
             new VirtualServer(
                 "www3.kc.aoindustries.com",
                 1024,
-                1024,
+                0, // Need 1024
                 null,
                 null,
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .0625f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
@@ -1056,13 +742,13 @@ public final class ClusterOptimizer {
             new VirtualServer(
                 "www4.kc.aoindustries.com",
                 1024,
-                0,
+                0, // Need 1024
                 null,
                 null,
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .0625f)
+                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
@@ -1070,13 +756,13 @@ public final class ClusterOptimizer {
             new VirtualServer(
                 "www5.kc.aoindustries.com",
                 1024,
-                0,
+                0, // Need 1024
                 null,
                 null,
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .0625f)
+                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
@@ -1084,13 +770,13 @@ public final class ClusterOptimizer {
             new VirtualServer(
                 "www6.kc.aoindustries.com",
                 1024,
-                1024,
+                0, // Need 1024
                 null,
                 null,
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .0625f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
@@ -1098,13 +784,13 @@ public final class ClusterOptimizer {
             new VirtualServer(
                 "www7.fc.aoindustries.com",
                 1024,
-                0,
+                0, // Need 1024
                 null,
                 null,
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1736, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .0625f)
+                    new VirtualDisk("/dev/xvda", 1736, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
@@ -1112,13 +798,13 @@ public final class ClusterOptimizer {
             new VirtualServer(
                 "www8.kc.aoindustries.com",
                 2048,
-                0,
+                0, // Need 2048
                 null,
                 null,
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .0625f)
+                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
@@ -1132,22 +818,21 @@ public final class ClusterOptimizer {
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .0625f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
         virtualServers.add(
             new VirtualServer(
                 "www.keepandshare.com",
-                2048,
-                2048,
-                ProcessorType.P4_XEON,
+                8192,
+                4096, // Need 8192
+                ProcessorType.XEON_LV,
                 null,
-                2667,
-                4.0f,
+                2333,
+                6.0f, // 8 * .75 each - Need 8 * 1.0
                 new VirtualDisk[] {
-                    // TODO: More disk I/O here
-                    new VirtualDisk("/dev/xvda", 3584, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .0625f)
+                    new VirtualDisk("/dev/xvda", 7450*2, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .5f) // TODO: Estimated size
                 }
             )
         );
@@ -1158,7 +843,7 @@ public final class ClusterOptimizer {
                 1024,
                 null,
                 null,
-                3200,  // TODO: If possible, make this 3200, had solution at -1
+                -1,  // TODO: If possible, make this 3200, had solution at -1
                 1.0f,
                 new VirtualDisk[] {
                     // TODO: More disk I/O here
@@ -1216,7 +901,9 @@ public final class ClusterOptimizer {
          * These are the quick checks that don't need to worry about the actual mappings to specific primary and secondary disk
          * arrays.
          */
-        System.out.println("Worst-case permutations: " + Math.pow(servers.size(), virtualServers.size()));
+        //System.out.println(servers.size());
+        //System.out.println(virtualServers.size());
+        System.out.println("Worst-case permutations: " + (Math.pow(servers.size(), virtualServers.size()) * Math.pow(servers.size()-1, virtualServers.size())));
         int[] selectedPrimaries = new int[virtualServers.size()];
         int[] selectedSecondaries = new int[virtualServers.size()];
         mapServers(servers, virtualServers, selectedPrimaries, selectedSecondaries, 0);
@@ -1248,14 +935,12 @@ public final class ClusterOptimizer {
             System.out.print(" Mapped "+mapped+", skipped "+skipped);
             if(mapped==0) System.out.println();
             else System.out.println(", skip/map ratio: "+SQLUtility.getDecimal(skipped*100/mapped));
-            /*
             for(SkipType skipType : SkipType.values()) {
                 System.out.print(skipType.name());
                 System.out.print(' ');
                 for(int c=skipType.name().length(); c<44; c++) System.out.print(' ');
                 System.out.println(skipType.counter);
             }
-             */
             lastMapDisplayedTime = currentTime;
         }
 
