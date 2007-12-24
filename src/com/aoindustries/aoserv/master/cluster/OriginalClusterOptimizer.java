@@ -1,4 +1,4 @@
-package com.aoindustries.aoserv.master;
+package com.aoindustries.aoserv.master.cluster;
 
 /*
  * Copyright 2007 by AO Industries, Inc.,
@@ -17,10 +17,10 @@ import java.util.List;
  * TODO: Provide separate control over secondary processor type, currently only secondary architecture and number of cores are considered.
  * TODO: Have separate core count and CPU weight.  Cores<=count on box, sum of primary weight <= # of cores on box, each virtualServer adds cores*weight to overall weight.
  * TODO: Make sure can actually map extents and spindle counts to drives.
- *
+ * TODO: If two virtual servers are interchangeable, don't try both combinations - implications?
  * @author  AO Industries, Inc.
  */
-public final class ClusterOptimizer {
+public final class OriginalClusterOptimizer {
 
     private static final int EXTENTS_SIZE = 33554432;
 
@@ -592,7 +592,7 @@ public final class ClusterOptimizer {
                 0.5f,
                 new VirtualDisk[] {
                     new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f),
-                    new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
+                    new VirtualDisk("/dev/xvdb", 8064+896*4, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -606,7 +606,7 @@ public final class ClusterOptimizer {
                 -1,
                 2.0f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .5f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
@@ -621,15 +621,15 @@ public final class ClusterOptimizer {
                 0.5f,
                 new VirtualDisk[] {
                     // TODO: More disk I/O here
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .125f)
+                    new VirtualDisk("/dev/xvda", 896*2, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
         virtualServers.add(
             new VirtualServer(
                 "www1.fc.showsandshoots.com",
-                512, // Was 1024
-                512,
+                512, // Need 1024
+                512, // Need 1024
                 null,
                 null,
                 -1,
@@ -648,7 +648,7 @@ public final class ClusterOptimizer {
                 null,
                 null,
                 -1,
-                .0625f,
+                .25f,
                 new VirtualDisk[] {
                     new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
                 }
@@ -664,7 +664,7 @@ public final class ClusterOptimizer {
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 3584, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .25f)
+                    new VirtualDisk("/dev/xvda", 3584+896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -692,7 +692,7 @@ public final class ClusterOptimizer {
                 -1,
                 1.0f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 5376, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .25f) // was 4480
+                    new VirtualDisk("/dev/xvda", 4480+896*2, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -706,7 +706,7 @@ public final class ClusterOptimizer {
                 -1,
                 2.0f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .5f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .25f)
                 }
             )
         );
@@ -720,7 +720,7 @@ public final class ClusterOptimizer {
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .25f)
+                    new VirtualDisk("/dev/xvda", 2688+896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -734,7 +734,7 @@ public final class ClusterOptimizer {
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -748,7 +748,7 @@ public final class ClusterOptimizer {
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
+                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -762,7 +762,7 @@ public final class ClusterOptimizer {
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
+                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -776,7 +776,7 @@ public final class ClusterOptimizer {
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -790,7 +790,7 @@ public final class ClusterOptimizer {
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1736, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
+                    new VirtualDisk("/dev/xvda", 1792+896, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -804,7 +804,7 @@ public final class ClusterOptimizer {
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .25f)
+                    new VirtualDisk("/dev/xvda", 2688+896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -818,7 +818,8 @@ public final class ClusterOptimizer {
                 -1,
                 .25f,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .25f)
+            // TODO: More disk +896 here
+                    new VirtualDisk("/dev/xvda", 1792+896, DiskType.RAID1_7200, 0.125f, DiskType.RAID1_7200, .125f)
                 }
             )
         );
@@ -923,7 +924,7 @@ public final class ClusterOptimizer {
 
         long currentTime = System.currentTimeMillis();
         long timeSince = currentTime-lastMapDisplayedTime;
-        if(lastMapDisplayedTime==-1 || timeSince<0 || timeSince>=60000) {
+        if(lastMapDisplayedTime==-1 || timeSince<0 || timeSince>=30000) {
             for(int d=0;d<currentVirtualServer;d++) {
                 if(d>0) System.out.print('/');
                 //if(selectedPrimaries[d]<10) System.out.print('0');
