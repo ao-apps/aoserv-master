@@ -250,6 +250,11 @@ public final class Server implements Comparable<Server> {
     int[] allocatedSecondaryRAMs = null;
 
     /**
+     * The maximum secondary RAM allocated on any of the primary servers.
+     */
+    int maximumAllocatedSecondaryRAM = 0;
+
+    /**
      * The allocated processor weight during the recursive processing.
      */
     int allocatedProcessorWeight = 0;
