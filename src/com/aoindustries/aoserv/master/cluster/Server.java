@@ -225,7 +225,9 @@ public final class Server implements Comparable<Server> {
             )
         );
         Collections.sort(servers);
-        return servers.toArray(new Server[servers.size()]);
+        Server[] array = servers.toArray(new Server[servers.size()]);
+        for(Server server : array) server.allocatedSecondaryRAMs = new int[array.length];
+        return array;
     }
 
     final String hostname;

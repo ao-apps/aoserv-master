@@ -584,6 +584,9 @@ public final class VirtualServer implements Comparable<VirtualServer> {
     final int processorWeight;
     final VirtualDisk[] virtualDisks;
 
+    int selectedPrimaryServerIndex = -1;
+    int selectedSecondaryServerIndex = -1;
+
     VirtualServer(
         String hostname,
         String primaryServerHostname,

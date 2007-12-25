@@ -22,7 +22,7 @@ import java.util.List;
  */
 public final class ClusterOptimizer {
 
-    private static final int EXTENTS_SIZE = 33554432;
+    private static final long EXTENTS_SIZE = 33554432;
 
     private enum SkipType {
         PRIMARY_MANUAL_SERVER_MISMATCH,
@@ -49,9 +49,7 @@ public final class ClusterOptimizer {
         
         printTotals(servers, virtualServers);
 
-        int[] selectedPrimaries = new int[virtualServers.length];
-        int[] selectedSecondaries = new int[virtualServers.length];
-        mapServers(servers, virtualServers, selectedPrimaries, selectedSecondaries, 0);
+        mapServers(servers, virtualServers, 0);
         System.out.println("Done!!!  Mapped "+mapped);
     }
 
@@ -69,10 +67,10 @@ public final class ClusterOptimizer {
             }
         }
         System.out.println("Servers:");
-        System.out.println("    Total Processor Cores........: " + totalProcessorCores);
-        System.out.println("    Total RAM....................: " + totalRam + " MB (" + StringUtility.getApproximateSize(totalRam*1048576)+")");
-        System.out.println("    Total Disk Space.............: " + totalDisk + " extents (" + StringUtility.getApproximateSize(totalDisk*EXTENTS_SIZE)+")");
-        System.out.println("    Total Disk Arrays............: " + totalDiskArrays);
+        System.out.println("    Total Processor Cores: " + totalProcessorCores);
+        System.out.println("    Total RAM............: " + totalRam + " MB (" + StringUtility.getApproximateSize(totalRam*1048576)+')');
+        System.out.println("    Total Disk Space.....: " + totalDisk + " extents (" + StringUtility.getApproximateSize(totalDisk*EXTENTS_SIZE)+')');
+        System.out.println("    Total Disk Arrays....: " + totalDiskArrays);
 
         long totalVirtualProcessorAllocation = 0;
         long totalMinimumRam = 0;
@@ -88,9 +86,9 @@ public final class ClusterOptimizer {
         }
         System.out.println("Virtual Servers:");
         System.out.println("    Total Processor Cores: " + SQLUtility.getMilliDecimal(totalVirtualProcessorAllocation));
-        System.out.println("    Total Primary RAM............: " + totalMinimumRam + " MB (" + StringUtility.getApproximateSize(totalMinimumRam*1048576)+")");
-        System.out.println("    Total Virtual Disk Space.....: " + totalVirtualDisk + " extents (" + StringUtility.getApproximateSize(totalVirtualDisk*EXTENTS_SIZE)+")");
-        System.out.println("    Total Virtual Disk Arrays....: " + SQLUtility.getMilliDecimal(totalVirtualDiskWeight));
+        System.out.println("    Total Primary RAM....: " + totalMinimumRam + " MB (" + StringUtility.getApproximateSize(totalMinimumRam*1048576)+')');
+        System.out.println("    Total Disk Space.....: " + totalVirtualDisk + " extents (" + StringUtility.getApproximateSize(totalVirtualDisk*EXTENTS_SIZE)+')');
+        System.out.println("    Total Disk Arrays....: " + SQLUtility.getMilliDecimal(totalVirtualDiskWeight));
     }
 
     private static long mapped=0;
@@ -104,7 +102,7 @@ public final class ClusterOptimizer {
      * These are the quick checks that don't need to worry about the actual mappings to specific primary and secondary disk
      * arrays.
      */
-    private static void mapServers(Server[] servers, VirtualServer[] virtualServers, int[] selectedPrimaries, int[] selectedSecondaries, int currentVirtualServer) {
+    private static void mapServers(Server[] servers, VirtualServer[] virtualServers, int currentVirtualServer) {
         final int serversSize = servers.length;
         final int virtualServersSize = virtualServers.length;
 
@@ -114,10 +112,10 @@ public final class ClusterOptimizer {
             for(int d=0;d<currentVirtualServer;d++) {
                 if(d>0) System.out.print('/');
                 //if(selectedPrimaries[d]<10) System.out.print('0');
-                System.out.print(selectedPrimaries[d]);
+                System.out.print(virtualServers[d].selectedPrimaryServerIndex);
                 System.out.print('.');
                 //if(selectedSecondaries[d]<10) System.out.print('0');
-                System.out.print(selectedSecondaries[d]);
+                System.out.print(virtualServers[d].selectedSecondaryServerIndex);
             }
             if(mapped!=0 || skipped!=0) {
                 System.out.print(" Mapped "+mapped+", skipped "+skipped);
@@ -145,7 +143,7 @@ public final class ClusterOptimizer {
                 System.out.println(server.hostname);
                 System.out.println("    Primary:");
                 for(int virtualServerIndex=0;virtualServerIndex<virtualServersSize;virtualServerIndex++) {
-                    if(selectedPrimaries[virtualServerIndex]==serverIndex) {
+                    if(virtualServers[virtualServerIndex].selectedPrimaryServerIndex==serverIndex) {
                         VirtualServer virtualServer = virtualServers[virtualServerIndex];
                         System.out.println("        "+virtualServer.hostname+":");
                         System.out.println("            Processor Cores.: "+virtualServer.processorCores);
@@ -153,7 +151,7 @@ public final class ClusterOptimizer {
                         System.out.println("            Primary RAM.....: "+virtualServer.primaryRam);
                         for(VirtualDisk virtualDisk : virtualServer.virtualDisks) {
                             System.out.println("            Device: "+virtualDisk.device);
-                            System.out.println("                32MB Extents..: "+virtualDisk.extents);
+                            System.out.println("                32MB Extents..: "+virtualDisk.extents+" ("+StringUtility.getApproximateSize(virtualDisk.extents*EXTENTS_SIZE)+')');
                             System.out.println("                Primary Type..: "+virtualDisk.primaryDiskType);
                             System.out.println("                Primary Weight: "+SQLUtility.getMilliDecimal(virtualDisk.primaryWeight));
                         }
@@ -164,7 +162,7 @@ public final class ClusterOptimizer {
                 for(int failedPrimaryServerIndex=0;failedPrimaryServerIndex<serversSize;failedPrimaryServerIndex++) {
                     boolean isFirst = true;
                     for(int virtualServerIndex=0;virtualServerIndex<virtualServersSize;virtualServerIndex++) {
-                        if(selectedPrimaries[virtualServerIndex]==failedPrimaryServerIndex && selectedSecondaries[virtualServerIndex]==serverIndex) {
+                        if(virtualServers[virtualServerIndex].selectedPrimaryServerIndex==failedPrimaryServerIndex && virtualServers[virtualServerIndex].selectedSecondaryServerIndex==serverIndex) {
                             Server failedPrimaryServer = servers[failedPrimaryServerIndex];
                             VirtualServer secondaryVirtualServer = virtualServers[virtualServerIndex];
                             if(isFirst) {
@@ -177,7 +175,7 @@ public final class ClusterOptimizer {
                             System.out.println("                Secondary RAM...: "+secondaryVirtualServer.secondaryRam);
                             for(VirtualDisk virtualDisk : secondaryVirtualServer.virtualDisks) {
                                 System.out.println("                Device: "+virtualDisk.device);
-                                System.out.println("                    32MB Extents....: "+virtualDisk.extents);
+                                System.out.println("                    32MB Extents....: "+virtualDisk.extents+" ("+StringUtility.getApproximateSize(virtualDisk.extents*EXTENTS_SIZE)+')');
                                 System.out.println("                    Secondary Type..: "+virtualDisk.secondaryDiskType);
                                 System.out.println("                    Secondary Weight: "+SQLUtility.getMilliDecimal(virtualDisk.secondaryWeight));
                             }
@@ -208,12 +206,12 @@ public final class ClusterOptimizer {
                             || primaryServer.processorSpeed>=virtualServer.minimumProcessorSpeed
                         )
                     ) {
-                        selectedPrimaries[currentVirtualServer]=primaryServerIndex;
+                        virtualServers[currentVirtualServer].selectedPrimaryServerIndex = primaryServerIndex;
                         // Stop processing if primaryServer past capacity on either processor cores or RAM
                         long totalPrimaryServerVirtualProcessorAllocation = 0;
                         long totalPrimaryServerMinimumRam = 0;
                         for(int d=0;d<=currentVirtualServer;d++) {
-                            if(selectedPrimaries[d]==primaryServerIndex) {
+                            if(virtualServers[d].selectedPrimaryServerIndex==primaryServerIndex) {
                                 VirtualServer mappedVirtualServer = virtualServers[d];
                                 totalPrimaryServerVirtualProcessorAllocation += mappedVirtualServer.processorCores*mappedVirtualServer.processorWeight;
                                 totalPrimaryServerMinimumRam += mappedVirtualServer.primaryRam;
@@ -229,7 +227,7 @@ public final class ClusterOptimizer {
                                         //float totalSecondaryVirtualProcessorCores = totalPrimaryServerVirtualProcessorAllocation;
                                         long totalSecondaryMinimumRam = totalPrimaryServerMinimumRam;
                                         for(int f=0;f<currentVirtualServer;f++) {
-                                            if(selectedPrimaries[f]==failedPrimaryServerIndex && selectedSecondaries[f]==primaryServerIndex) {
+                                            if(virtualServers[f].selectedPrimaryServerIndex==failedPrimaryServerIndex && virtualServers[f].selectedSecondaryServerIndex==primaryServerIndex) {
                                                 VirtualServer mappedVirtualServer = virtualServers[f];
                                                 //totalSecondaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
                                                 totalSecondaryMinimumRam += mappedVirtualServer.secondaryRam;
@@ -254,7 +252,7 @@ public final class ClusterOptimizer {
                                         long totalVirtualDisk = 0;
                                         long totalVirtualDiskWeight = 0;
                                         for(int d=0;d<=currentVirtualServer;d++) {
-                                            if(selectedPrimaries[d]==primaryServerIndex) {
+                                            if(virtualServers[d].selectedPrimaryServerIndex==primaryServerIndex) {
                                                 VirtualServer mappedVirtualServer = virtualServers[d];
                                                 for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
                                                     if(virtualDisk.primaryDiskType==diskType) {
@@ -265,7 +263,7 @@ public final class ClusterOptimizer {
                                             }
                                         }
                                         for(int d=0;d<currentVirtualServer;d++) {
-                                            if(selectedSecondaries[d]==primaryServerIndex) {
+                                            if(virtualServers[d].selectedSecondaryServerIndex==primaryServerIndex) {
                                                 VirtualServer mappedVirtualServer = virtualServers[d];
                                                 for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
                                                     if(virtualDisk.secondaryDiskType==diskType) {
@@ -303,7 +301,7 @@ public final class ClusterOptimizer {
                                                 // Allow for manual configuration of secondary
                                                 if(virtualServer.secondaryServerHostname==null || virtualServer.secondaryServerHostname.equals(secondaryServer.hostname)) {
                                                     // Make sure the secondary architecture matches any requirements
-                                                    selectedSecondaries[currentVirtualServer]=secondaryServerIndex;
+                                                    virtualServers[currentVirtualServer].selectedSecondaryServerIndex=secondaryServerIndex;
                                                     if(virtualServer.requiredProcessorArchitecture==null || secondaryServer.processorArchitecture==virtualServer.requiredProcessorArchitecture) {
                                                         // Make sure secondary has at least total number of cores matching secondary cores.
                                                         // Note: we don't care about weight here - just make it run somewhere when in failover.
@@ -313,7 +311,7 @@ public final class ClusterOptimizer {
                                                             //float totalPrimaryVirtualProcessorCores = 0;
                                                             long totalPrimaryMinimumRam = 0;
                                                             for(int g=0;g<=currentVirtualServer;g++) {
-                                                                if(selectedPrimaries[g]==secondaryServerIndex) {
+                                                                if(virtualServers[g].selectedPrimaryServerIndex==secondaryServerIndex) {
                                                                     VirtualServer mappedVirtualServer = virtualServers[g];
                                                                     //totalPrimaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
                                                                     totalPrimaryMinimumRam += mappedVirtualServer.primaryRam;
@@ -325,7 +323,7 @@ public final class ClusterOptimizer {
                                                                     //float totalSecondaryVirtualProcessorCores = totalPrimaryVirtualProcessorCores;
                                                                     long totalSecondaryMinimumRam = totalPrimaryMinimumRam;
                                                                     for(int h=0;h<=currentVirtualServer;h++) {
-                                                                        if(selectedPrimaries[h]==failedPrimaryIndex && selectedSecondaries[h]==secondaryServerIndex) {
+                                                                        if(virtualServers[h].selectedPrimaryServerIndex==failedPrimaryIndex && virtualServers[h].selectedSecondaryServerIndex==secondaryServerIndex) {
                                                                             VirtualServer mappedVirtualServer = virtualServers[h];
                                                                             //totalSecondaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
                                                                             totalSecondaryMinimumRam += mappedVirtualServer.secondaryRam;
@@ -349,7 +347,7 @@ public final class ClusterOptimizer {
                                                                     long totalVirtualDisk = 0;
                                                                     long totalVirtualDiskWeight = 0;
                                                                     for(int d=0;d<=currentVirtualServer;d++) {
-                                                                        if(selectedPrimaries[d]==secondaryServerIndex) {
+                                                                        if(virtualServers[d].selectedPrimaryServerIndex==secondaryServerIndex) {
                                                                             VirtualServer mappedVirtualServer = virtualServers[d];
                                                                             for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
                                                                                 if(virtualDisk.primaryDiskType==diskType) {
@@ -361,7 +359,7 @@ public final class ClusterOptimizer {
                                                                     }
                                                                     // Also add total required for secondaries
                                                                     for(int d=0;d<=currentVirtualServer;d++) {
-                                                                        if(selectedSecondaries[d]==secondaryServerIndex) {
+                                                                        if(virtualServers[d].selectedSecondaryServerIndex==secondaryServerIndex) {
                                                                             VirtualServer mappedVirtualServer = virtualServers[d];
                                                                             for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
                                                                                 if(virtualDisk.secondaryDiskType==diskType) {
@@ -391,7 +389,7 @@ public final class ClusterOptimizer {
                                                                     }
                                                                 }
                                                                 if(!needsSkip) {
-                                                                    mapServers(servers, virtualServers, selectedPrimaries, selectedSecondaries, currentVirtualServer+1);
+                                                                    mapServers(servers, virtualServers, currentVirtualServer+1);
                                                                 } else {
                                                                     skipped++;
                                                                 }
