@@ -914,6 +914,7 @@ public final class OriginalClusterOptimizer {
     private static long mapped=0;
     private static long skipped=0;
     private static long lastMapDisplayedTime = -1;
+    private static long callCounter = 0;
 
     /**
      * TODO: How can we optimize further knowing that multiple virtual servers have exactly the same configuration (and therefore don't affect the overall results when switched positions)
@@ -922,27 +923,34 @@ public final class OriginalClusterOptimizer {
         final int serversSize = servers.size();
         final int virtualServersSize = virtualServers.size();
 
+        callCounter++;
         long currentTime = System.currentTimeMillis();
         long timeSince = currentTime-lastMapDisplayedTime;
         if(lastMapDisplayedTime==-1 || timeSince<0 || timeSince>=30000) {
-            for(int d=0;d<currentVirtualServer;d++) {
-                if(d>0) System.out.print('/');
-                //if(selectedPrimaries[d]<10) System.out.print('0');
-                System.out.print(selectedPrimaries[d]);
-                System.out.print('.');
-                //if(selectedSecondaries[d]<10) System.out.print('0');
-                System.out.print(selectedSecondaries[d]);
-            }
-            System.out.print(" Mapped "+mapped+", skipped "+skipped);
-            if(mapped==0) System.out.println();
-            else System.out.println(", skip/map ratio: "+SQLUtility.getDecimal(skipped*100/mapped));
-            for(SkipType skipType : SkipType.values()) {
-                System.out.print(skipType.name());
-                System.out.print(' ');
-                for(int c=skipType.name().length(); c<44; c++) System.out.print(' ');
-                System.out.println(skipType.counter);
+            if(mapped!=0 || skipped!=0) {
+                for(int d=0;d<currentVirtualServer;d++) {
+                    if(d>0) System.out.print('/');
+                    //if(selectedPrimaries[d]<10) System.out.print('0');
+                    System.out.print(selectedPrimaries[d]);
+                    System.out.print('.');
+                    //if(selectedSecondaries[d]<10) System.out.print('0');
+                    System.out.print(selectedSecondaries[d]);
+                }
+                System.out.print(" Mapped "+mapped+", skipped "+skipped);
+                if(mapped!=0) System.out.print(", skip/map ratio: "+SQLUtility.getDecimal(skipped*100/mapped));
+                if(timeSince>0) System.out.print(", "+(callCounter*1000/timeSince)+" calls/sec");
+                System.out.println();
+                /*
+                for(SkipType skipType : SkipType.values()) {
+                    System.out.print(skipType.name());
+                    System.out.print(' ');
+                    for(int c=skipType.name().length(); c<44; c++) System.out.print(' ');
+                    System.out.println(skipType.counter);
+                }
+                 */
             }
             lastMapDisplayedTime = currentTime;
+            callCounter = 0;
         }
 
         if(currentVirtualServer==virtualServersSize) {
@@ -951,6 +959,7 @@ public final class OriginalClusterOptimizer {
             // TODO: that provides proper disk array isolation and space allocation.
             // TODO: For each server, verify that all virtual primary and secondary (per single failure) servers match requirements.
             mapped++;
+            /*
             System.out.println("Mapping found with "+skipped+" skips");
             for(int serverIndex=0;serverIndex<serversSize;serverIndex++) {
                 Server server = servers.get(serverIndex);
@@ -999,6 +1008,7 @@ public final class OriginalClusterOptimizer {
                 }
             }
             System.exit(0);
+             */
         } else {
             final VirtualServer virtualServer = virtualServers.get(currentVirtualServer);
             for(int primaryServerIndex=0; primaryServerIndex<serversSize; primaryServerIndex++) {
