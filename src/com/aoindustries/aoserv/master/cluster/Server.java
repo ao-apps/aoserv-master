@@ -276,6 +276,12 @@ public final class Server implements Comparable<Server> {
      * results in the smallest skip/map ratio (and hopefully quicker finding of optimal layouts).
      */
     public int compareTo(Server other) {
+        /*
+        return -realCompareTo(other);
+    }
+
+    public int realCompareTo(Server other) {
+         */
         if(ram<other.ram) return -1;
         if(ram>other.ram) return 1;
         return processorCores-other.processorCores;
