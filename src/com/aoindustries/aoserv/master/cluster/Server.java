@@ -225,6 +225,7 @@ public final class Server implements Comparable<Server> {
             )
         );
         Collections.sort(servers);
+        // Collections.shuffle(servers);
         Server[] array = servers.toArray(new Server[servers.size()]);
         for(Server server : array) server.allocatedSecondaryRAMs = new int[array.length];
         return array;
@@ -282,8 +283,20 @@ public final class Server implements Comparable<Server> {
 
     public int realCompareTo(Server other) {
          */
+        // By Disk Extents
+        long totalExtents = 0;
+        for(Disk disk : disks) totalExtents += disk.extents;
+        long otherTotalExtents = 0;
+        for(Disk disk : other.disks) otherTotalExtents += disk.extents;
+        if(totalExtents<otherTotalExtents) return -1;
+        if(totalExtents>otherTotalExtents) return 1;
+        // By RAM
         if(ram<other.ram) return -1;
         if(ram>other.ram) return 1;
-        return processorCores-other.processorCores;
+        // By Processor Cores
+        int diff = processorCores-other.processorCores;
+        if(diff!=0) return diff;
+        
+        return 0;
     }
 }

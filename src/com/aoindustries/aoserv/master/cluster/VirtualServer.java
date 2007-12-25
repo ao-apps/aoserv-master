@@ -25,7 +25,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 512,
-                512,
+                0, // Was 512,
                 null,
                 null,
                 -1,
@@ -42,7 +42,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 256,
-                256,
+                0, // Was 256,
                 ProcessorType.XEON_LV,
                 null,
                 -1,
@@ -59,7 +59,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 256,
-                256,
+                0, // Was 256,
                 ProcessorType.XEON_LV,
                 null,
                 -1,
@@ -76,7 +76,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                512, // Desire 1024
+                0, // Was 512, // Desire 1024
                 null,
                 null,
                 -1,
@@ -93,7 +93,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen907-1.fc.aoindustries.com",
                 null,
                 4096,
-                4096,
+                0, // Was 2048, // Desire 4096
                 null,
                 null,
                 -1,
@@ -110,7 +110,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen907-1.fc.aoindustries.com",
                 null,
                 2048, // Need 4096
-                2048, // Need 4096
+                0, // Was 2048, // Need 4096
                 null,
                 null,
                 -1,
@@ -127,7 +127,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen917-5.fc.aoindustries.com",
                 null,
                 2048, // Need 4096
-                2048, // Need 4096
+                0, // Was 2048, // Need 4096
                 null,
                 null,
                 -1,
@@ -144,7 +144,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                1024,
+                0, // Was 1024,
                 null,
                 null,
                 -1,
@@ -161,7 +161,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 256,
-                256,
+                0, // Was 256,
                 null,
                 null,
                 -1,
@@ -178,7 +178,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 256,
-                256,
+                0, // Was 256,
                 null,
                 null,
                 -1,
@@ -195,7 +195,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 2048,
-                2048,
+                0, // Was 1024, // Desire 2048,
                 null,
                 null,
                 -1,
@@ -212,7 +212,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen917-4.fc.aoindustries.com",
                 null,
                 4096,
-                2048, // Need 4096
+                0, // Was 2048, // Desire 4096
                 null,
                 null,
                 -1,
@@ -229,7 +229,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen914-5.fc.lnxhosting.ca",
                 null,
                 4096,
-                2048, // Desire 4096
+                0, // Was 2048, // Desire 4096
                 null,
                 ProcessorArchitecture.X86_64,
                 -1,
@@ -237,7 +237,6 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 1, // Desire 500,
                 new VirtualDisk[] {
                     new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
-                    // new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f) // Was 
                 }
             )
         );
@@ -247,7 +246,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen914-5.fc.lnxhosting.ca",
                 null,
                 512,
-                512,
+                0, // Was 512,
                 null,
                 null,
                 -1,
@@ -265,7 +264,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 4096,
-                4096,
+                0, // Was 4096,
                 null,
                 null,
                 -1,
@@ -282,7 +281,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                1024,
+                0, // Was 1024,
                 null,
                 null,
                 -1,
@@ -300,7 +299,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 512, // Desire 1024
-                512, // Desire 1024
+                0, // Was 512, // Desire 1024
                 null,
                 null,
                 -1,
@@ -318,7 +317,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 512,
-                512,
+                0, // Was 512,
                 null,
                 null,
                 -1,
@@ -335,7 +334,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 2048,
-                2048,
+                0, // Was 1024, // Desire 2048,
                 null,
                 null,
                 -1,
@@ -352,7 +351,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                1024,
+                0, // Need 512 // Desire 1024
                 null,
                 null,
                 -1,
@@ -369,7 +368,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 2048,
-                1024, // Desire 2048
+                0, // Was 1024, // Desire 2048
                 null,
                 null,
                 -1,
@@ -386,7 +385,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen907-5.fc.aoindustries.com",
                 null,
                 4096,
-                4096,
+                0, // Was 2048, // Desire 4096,
                 null,
                 null,
                 -1,
@@ -403,7 +402,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Need 1024
+                0, // Was 1024,
                 null,
                 null,
                 -1,
@@ -522,7 +521,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                1024, // Need 1024
+                0, // Need 1024
                 null,
                 null,
                 -1,
@@ -539,7 +538,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen917-5.fc.aoindustries.com",
                 null,
                 8192,
-                4096, // Desire 8192
+                0, // Was 2048, // Need 4096 // Desire 8192
                 null,
                 null,
                 -1,
@@ -556,7 +555,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                1024,
+                0, // Need 512 // Desire 1024,
                 null,
                 null,
                 -1,  // TODO: If possible, make this 3200, had solution at -1
@@ -569,6 +568,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             )
         );
         Collections.sort(virtualServers);
+        // Collections.shuffle(virtualServers);
         return virtualServers.toArray(new VirtualServer[virtualServers.size()]);
     }
 
@@ -623,8 +623,31 @@ public final class VirtualServer implements Comparable<VirtualServer> {
 
     public int realCompareTo(VirtualServer other) {
          */
+        // By manual configuration first
+        if(primaryServerHostname!=null) {
+            if(other.primaryServerHostname==null) return -1;
+        } else {
+            if(other.primaryServerHostname!=null) return 1;
+        }
+        if(secondaryServerHostname!=null) {
+            if(other.secondaryServerHostname==null) return -1;
+        } else {
+            if(other.secondaryServerHostname!=null) return 1;
+        }
+        // By Disk Extents
+        long totalExtents = 0;
+        for(VirtualDisk virtualDisk : virtualDisks) totalExtents += virtualDisk.extents;
+        long otherTotalExtents = 0;
+        for(VirtualDisk virtualDisk : other.virtualDisks) otherTotalExtents += virtualDisk.extents;
+        if(totalExtents<otherTotalExtents) return 1;
+        if(totalExtents>otherTotalExtents) return -1;
+        // By RAM
         if(primaryRam<other.primaryRam) return 1;
         if(primaryRam>other.primaryRam) return -1;
-        return (other.processorCores*other.processorWeight) - (processorCores*processorWeight);
+        // By Processor Cores
+        int diff = (other.processorCores*other.processorWeight) - (processorCores*processorWeight);
+        if(diff!=0) return diff;
+        
+        return 0;
     }
 }
