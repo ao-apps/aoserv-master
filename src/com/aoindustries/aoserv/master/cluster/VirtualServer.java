@@ -25,14 +25,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 512,
-                0, // Was 512,
+                512,
                 null,
                 null,
                 -1,
-                1,
+                2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
                 }
             )
         );
@@ -42,14 +42,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 256,
-                0, // Was 256,
+                256,
                 ProcessorType.XEON_LV,
                 null,
                 -1,
-                1,
+                2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 62, DiskType.RAID1_7200, 16)
                 }
             )
         );
@@ -59,14 +59,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 256,
-                0, // Was 256,
+                256,
                 ProcessorType.XEON_LV,
                 null,
                 -1,
-                1,
+                2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 62, DiskType.RAID1_7200, 16)
                 }
             )
         );
@@ -76,14 +76,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Was 512, // Desire 1024
+                1024,
                 null,
                 null,
                 -1,
                 2,
                 1, // Desire 250,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 4480, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 4480, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62)
                 }
             )
         );
@@ -93,14 +93,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen907-1.fc.aoindustries.com",
                 null,
                 4096,
-                0, // Was 2048, // Desire 4096
+                2048, // Desire 4096
                 null,
                 null,
                 -1,
                 4,
                 1, // Need 1000
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_15000, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_15000, 250, DiskType.RAID1_7200, 250)
                 }
             )
         );
@@ -110,14 +110,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen907-1.fc.aoindustries.com",
                 null,
                 2048, // Need 4096
-                0, // Was 2048, // Need 4096
+                2048, // Need 4096
                 null,
                 null,
                 -1,
                 4,
                 1, // Need 1000
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_15000, 1, DiskType.RAID1_7200, 1) // Need to be 1792, .5, .5 once ipharos.com is gone - and secondary on 15k
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_15000, 250, DiskType.RAID1_7200, 250) // Need to be 1792, .5, .5 once ipharos.com is gone - and secondary on 15k
                 }
             )
         );
@@ -127,14 +127,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen917-5.fc.aoindustries.com",
                 null,
                 2048, // Need 4096
-                0, // Was 2048, // Need 4096
+                2048, // Need 4096
                 null,
                 null,
                 -1,
                 4,
                 1, // Need 1000
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1) // Need to be 1792, .5, .5 once ipharos.com is gone
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 250) // Need to be 1792, .5, .5 once ipharos.com is gone
                 }
             )
         );
@@ -144,14 +144,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Was 1024,
+                1024,
                 null,
                 null,
                 -1,
-                1,
+                2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
                 }
             )
         );
@@ -161,14 +161,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 256,
-                0, // Was 256,
+                256,
                 null,
                 null,
                 -1,
-                1,
+                2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
                 }
             )
         );
@@ -178,14 +178,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 256,
-                0, // Was 256,
+                256,
                 null,
                 null,
                 -1,
-                1,
+                2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
                 }
             )
         );
@@ -195,14 +195,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 2048,
-                0, // Was 1024, // Desire 2048,
+                2048,
                 null,
                 null,
                 -1,
                 1,
                 1, // Desire 500,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 125)
                 }
             )
         );
@@ -212,14 +212,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen917-4.fc.aoindustries.com",
                 null,
                 4096,
-                0, // Was 2048, // Desire 4096
+                2048, // Desire 4096
                 null,
                 null,
                 -1,
                 2,
                 1, // Need 1000,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_10000, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_10000, 1000, DiskType.RAID1_7200, 125)
                 }
             )
         );
@@ -229,14 +229,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen914-5.fc.lnxhosting.ca",
                 null,
                 4096,
-                0, // Was 2048, // Desire 4096
+                4096,
                 null,
                 ProcessorArchitecture.X86_64,
                 -1,
                 4,
                 1, // Desire 500,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
                 }
             )
         );
@@ -246,15 +246,15 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen914-5.fc.lnxhosting.ca",
                 null,
                 512,
-                0, // Was 512,
+                512,
                 null,
                 null,
                 -1,
                 2,
                 1, // Desire 250,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1),
-                    new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 125) // Need more space
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31),
+                    new VirtualDisk("/dev/xvdb", 8064+896*2, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31) // Need more space
                 }
             )
         );
@@ -264,14 +264,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 4096,
-                0, // Was 4096,
+                4096,
                 null,
                 null,
                 -1,
                 2,
                 1, // Need 1000
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62)
                 }
             )
         );
@@ -281,7 +281,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Was 1024,
+                1024,
                 null,
                 null,
                 -1,
@@ -289,7 +289,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 1, // Need 1000
                 new VirtualDisk[] {
                     // TODO: More disk I/O here
-                    new VirtualDisk("/dev/xvda", 896*2, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 896*2, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62)
                 }
             )
         );
@@ -299,15 +299,15 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 512, // Desire 1024
-                0, // Was 512, // Desire 1024
+                512, // Desire 1024
                 null,
                 null,
                 -1,
-                1,
+                2,
                 1, // Desire 1000
                 new VirtualDisk[] {
                     // TODO: More disk I/O here
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62)
                 }
             )
         );
@@ -317,14 +317,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 512,
-                0, // Was 512,
+                512,
                 null,
                 null,
                 -1,
-                1,
+                2,
                 1, // Desire 250,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62)
                 }
             )
         );
@@ -334,14 +334,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 2048,
-                0, // Was 1024, // Desire 2048,
+                2048,
                 null,
                 null,
                 -1,
                 2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 3584, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1) // Need more space
+                    new VirtualDisk("/dev/xvda", 3584+896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62) // Need more space
                 }
             )
         );
@@ -351,14 +351,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Need 512 // Desire 1024
+                1024,
                 null,
                 null,
                 -1,
                 1,
                 1, // Need 1000
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
                 }
             )
         );
@@ -368,14 +368,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 2048,
-                0, // Was 1024, // Desire 2048
+                1024,
                 null,
                 null,
                 -1,
                 2,
                 1, // Desire 250,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 4480, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1) // Need more space
+                    new VirtualDisk("/dev/xvda", 4480+896*2, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62) // Need more space
                 }
             )
         );
@@ -385,14 +385,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen907-5.fc.aoindustries.com",
                 null,
                 4096,
-                0, // Was 2048, // Desire 4096,
+                4096,
                 null,
                 null,
                 -1,
                 2,
                 1, // Need 1000
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62)
                 }
             )
         );
@@ -402,14 +402,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Was 1024,
+                1024,
                 null,
                 null,
                 -1,
                 2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1) // Need more space
+                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62) // Desire more space
                 }
             )
         );
@@ -419,14 +419,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Need 1024
+                1024,
                 null,
                 null,
                 -1,
                 2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62)
                 }
             )
         );
@@ -436,14 +436,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Need 1024
+                1024,
                 null,
                 null,
                 -1,
                 2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62)
                 }
             )
         );
@@ -453,14 +453,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Need 1024
+                1024,
                 null,
                 null,
                 -1,
                 2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62)
                 }
             )
         );
@@ -470,14 +470,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Need 1024
+                1024,
                 null,
                 null,
                 -1,
                 2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62)
                 }
             )
         );
@@ -487,14 +487,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Need 1024
+                1024,
                 null,
                 null,
                 -1,
                 2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1) // Need more space
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62) // Desire more space
                 }
             )
         );
@@ -504,14 +504,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 2048,
-                0, // Need 2048
+                2048,
                 null,
                 null,
                 -1,
                 2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1) // Need more space
+                    new VirtualDisk("/dev/xvda", 2688+896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62) // Need more space
                 }
             )
         );
@@ -521,14 +521,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Need 1024
+                1024,
                 null,
                 null,
                 -1,
                 2,
                 1,
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1) // Need more space
+                    new VirtualDisk("/dev/xvda", 1792+896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62) // Need more space
                 }
             )
         );
@@ -538,14 +538,14 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen917-5.fc.aoindustries.com",
                 null,
                 8192,
-                0, // Was 2048, // Need 4096 // Desire 8192
+                4096, // Desire 8192
                 null,
                 null,
                 -1,
                 8,
-                1, // Need 1000 here
+                750, // Need 1000
                 new VirtualDisk[] {
-                    new VirtualDisk("/dev/xvda", 7450*2, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1) // TODO: Estimated size
+                    new VirtualDisk("/dev/xvda", 7450*2, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 250) // TODO: Estimated size
                 }
             )
         );
@@ -555,7 +555,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 null,
                 null,
                 1024,
-                0, // Need 512 // Desire 1024,
+                1024,
                 null,
                 null,
                 -1,  // TODO: If possible, make this 3200, had solution at -1
@@ -563,7 +563,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 1, // Need 1000
                 new VirtualDisk[] {
                     // TODO: More disk I/O here
-                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 1, DiskType.RAID1_7200, 1)
+                    new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 62)
                 }
             )
         );
@@ -634,19 +634,19 @@ public final class VirtualServer implements Comparable<VirtualServer> {
         } else {
             if(other.secondaryServerHostname!=null) return 1;
         }
-        // By Disk Extents
-        long totalExtents = 0;
-        for(VirtualDisk virtualDisk : virtualDisks) totalExtents += virtualDisk.extents;
-        long otherTotalExtents = 0;
-        for(VirtualDisk virtualDisk : other.virtualDisks) otherTotalExtents += virtualDisk.extents;
-        if(totalExtents<otherTotalExtents) return 1;
-        if(totalExtents>otherTotalExtents) return -1;
         // By RAM
         if(primaryRam<other.primaryRam) return 1;
         if(primaryRam>other.primaryRam) return -1;
         // By Processor Cores
         int diff = (other.processorCores*other.processorWeight) - (processorCores*processorWeight);
         if(diff!=0) return diff;
+        // By Disk Extents
+        long totalExtents = 0;
+        for(VirtualDisk virtualDisk : virtualDisks) totalExtents += virtualDisk.extents;
+        long otherTotalExtents = 0;
+        for(VirtualDisk virtualDisk : other.virtualDisks) otherTotalExtents += virtualDisk.extents;
+        if(totalExtents<otherTotalExtents) return -1;
+        if(totalExtents>otherTotalExtents) return 1;
         
         return 0;
     }

@@ -49,7 +49,6 @@ public final class Server implements Comparable<Server> {
                     new Disk("/dev/sdg1", DiskType.RAID1_7200, 7450),
                     new Disk("/dev/sdh1", DiskType.RAID1_7200, 7450),
                     new Disk("/dev/sdi1", DiskType.RAID1_7200, 7450*2), // TODO: These are not purchased yet - estimated size
-                    //new Disk("/dev/sdj1", DiskType.RAID1_7200, 7450*2), // TODO: These are not purchased yet - estimated size
                     new Disk("/dev/md3", DiskType.RAID1_15000, 4375)
                 }
             )
@@ -221,6 +220,7 @@ public final class Server implements Comparable<Server> {
                 new Disk[] {
                     new Disk("/dev/sdc1", DiskType.RAID1_7200, 7450*2), // TODO: These are not purchased yet.  Estimated size for the 2x500 GB for CARR
                     new Disk("/dev/sdd1", DiskType.RAID1_7200, 8700)  // These are the internal drives - estimated size.  Need separate hot-swap pair
+                    //new Disk("/dev/sde1", DiskType.RAID1_7200, 7450*2) // TODO: These are not purchased yet.  Estimated size for the 2x500 GB for AO
                 }
             )
         );
@@ -283,6 +283,13 @@ public final class Server implements Comparable<Server> {
 
     public int realCompareTo(Server other) {
          */
+        // By RAM
+        if(ram<other.ram) return -1;
+        if(ram>other.ram) return 1;
+        // By Processor Cores
+        int diff = processorCores-other.processorCores;
+        if(diff!=0) return diff;
+        /*
         // By Disk Extents
         long totalExtents = 0;
         for(Disk disk : disks) totalExtents += disk.extents;
@@ -290,13 +297,15 @@ public final class Server implements Comparable<Server> {
         for(Disk disk : other.disks) otherTotalExtents += disk.extents;
         if(totalExtents<otherTotalExtents) return -1;
         if(totalExtents>otherTotalExtents) return 1;
-        // By RAM
-        if(ram<other.ram) return -1;
-        if(ram>other.ram) return 1;
-        // By Processor Cores
-        int diff = processorCores-other.processorCores;
-        if(diff!=0) return diff;
-        
+         */
+        // By Biggest Disk
+        int mostExtents = 0;
+        for(Disk disk : disks) if(disk.extents>mostExtents) mostExtents = disk.extents;
+        long otherMostExtents = 0;
+        for(Disk disk : other.disks) if(disk.extents>otherMostExtents) otherMostExtents = disk.extents;
+        if(mostExtents<otherMostExtents) return 1;
+        if(mostExtents>otherMostExtents) return -1;
+
         return 0;
     }
 }

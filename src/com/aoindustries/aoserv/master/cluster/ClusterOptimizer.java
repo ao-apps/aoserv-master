@@ -15,12 +15,15 @@ import java.util.List;
  * Finds the optimal mapping of virtual machines to physical resources to balance customer needs and redundant resources.
  *
  * TODO: If two virtual servers are interchangeable, don't try both combinations - how? - implications?
+ * TODO: If two servers are interchangeable, don't try both combinations - how? - implications?
  *
  * @author  AO Industries, Inc.
  */
 public final class ClusterOptimizer {
 
     private static final boolean FIND_ALL_PERMUTATIONS = false;
+
+    private static final boolean TERMINATE_ON_FIRST_MATCH = false;
 
     private static final boolean TRACE = false;
 
@@ -115,7 +118,7 @@ public final class ClusterOptimizer {
                 if(mapped!=0) System.out.print(", skip/map ratio: "+SQLUtility.getDecimal(skipped*100/mapped));
                 if(timeSince>0) System.out.print(", "+(callCounter/timeSince)+" calls/ms");
                 System.out.println();
-                displaySkipTypes();
+                //displaySkipTypes();
             }
             lastMapDisplayedTime = currentTime;
             callCounter = 0;
@@ -206,7 +209,7 @@ public final class ClusterOptimizer {
 
         if(currentVirtualServer==virtualServersSize) {
             mapped++;
-            if(!FIND_ALL_PERMUTATIONS) {
+            if(TERMINATE_ON_FIRST_MATCH) {
                 displayMapping(virtualServers, servers);
                 displaySkipTypes();
                 System.exit(0);
@@ -300,8 +303,7 @@ public final class ClusterOptimizer {
                                     final Disk previousPrimaryDisk = primaryDisks[previousPrimaryDiskIndex];
                                     if(
                                         previousPrimaryDisk.diskType==primaryDisk.diskType
-                                        && previousPrimaryDisk.extents==primaryDisk.extents
-                                        && previousPrimaryDisk.allocatedExtents==oldPrimaryDiskAllocatedExtents
+                                        && (previousPrimaryDisk.extents-previousPrimaryDisk.allocatedExtents)==(primaryDisk.extents-oldPrimaryDiskAllocatedExtents)
                                         && previousPrimaryDisk.allocatedWeight==oldPrimaryDiskAllocatedWeight
                                     ) {
                                         matchesPrevious = true;
@@ -436,8 +438,7 @@ public final class ClusterOptimizer {
                                     final Disk previousSecondaryDisk = secondaryDisks[previousSecondaryDiskIndex];
                                     if(
                                         previousSecondaryDisk.diskType==secondaryDisk.diskType
-                                        && previousSecondaryDisk.extents==secondaryDisk.extents
-                                        && previousSecondaryDisk.allocatedExtents==oldSecondaryDiskAllocatedExtents
+                                        && (previousSecondaryDisk.extents-previousSecondaryDisk.allocatedExtents)==(secondaryDisk.extents-oldSecondaryDiskAllocatedExtents)
                                         && previousSecondaryDisk.allocatedWeight==oldSecondaryDiskAllocatedWeight
                                     ) {
                                         matchesPrevious = true;
