@@ -17,7 +17,7 @@ public final class Server implements Comparable<Server> {
     /**
      * Need to load this directly from the servers.
      */
-    static List<Server> getServers() {
+    static Server[] getServers() {
         List<Server> servers = new ArrayList<Server>();
         servers.add(
             new Server(
@@ -220,12 +220,12 @@ public final class Server implements Comparable<Server> {
                 8,
                 new Disk[] {
                     new Disk("/dev/sdc1", DiskType.RAID1_7200, 7450*2), // TODO: These are not purchased yet.  Estimated size for the 2x500 GB for CARR
-                    new Disk("/dev/sdd1", DiskType.RAID1_7200, 8700)  // These are the internal drives - Need separate hot-swap pair
+                    new Disk("/dev/sdd1", DiskType.RAID1_7200, 8700)  // These are the internal drives - estimated size.  Need separate hot-swap pair
                 }
             )
         );
         Collections.sort(servers);
-        return servers;
+        return servers.toArray(new Server[servers.size()]);
     }
 
     final String hostname;
@@ -236,6 +236,21 @@ public final class Server implements Comparable<Server> {
     final int processorSpeed;
     final int processorCores;
     final Disk[] disks;
+
+    /**
+     * The primary RAM allocated during the recursive processing.
+     */
+    int allocatedPrimaryRAM;
+
+    /**
+     * The allocated secondary RAM on a per-primary-server basis.
+     */
+    int[] allocatedSecondaryRAMs = null;
+
+    /**
+     * The allocated processor weight during the recursive processing.
+     */
+    int allocatedProcessorWeight = 0;
 
     Server(String hostname, Rack rack, int ram, ProcessorType processorType, ProcessorArchitecture processorArchitecture, int processorSpeed, int processorCores, Disk[] disks) {
         this.hostname = hostname;

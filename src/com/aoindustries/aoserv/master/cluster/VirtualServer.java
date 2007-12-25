@@ -17,7 +17,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
     /**
      * TODO: Load this directly from the database.
      */
-    static List<VirtualServer> getVirtualServers() {
+    static VirtualServer[] getVirtualServers() {
         List<VirtualServer> virtualServers = new ArrayList<VirtualServer>();
         virtualServers.add(
             new VirtualServer(
@@ -569,7 +569,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             )
         );
         Collections.sort(virtualServers);
-        return virtualServers;
+        return virtualServers.toArray(new VirtualServer[virtualServers.size()]);
     }
 
     final String hostname;
