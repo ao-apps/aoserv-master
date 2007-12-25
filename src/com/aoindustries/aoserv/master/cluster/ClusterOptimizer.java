@@ -47,12 +47,12 @@ public final class ClusterOptimizer {
     public static void main(String[] args) {
         Server[] servers = Server.getServers();
         VirtualServer[] virtualServers = VirtualServer.getVirtualServers();
-        printTotals(servers, virtualServers);
-        mapServers(servers, virtualServers, 0);
+        printTotals(virtualServers, servers);
+        mapVirtualServersToPrimaryServers(virtualServers, servers, 0);
         System.out.println("Done!!!  Mapped "+mapped);
     }
 
-    private static void printTotals(Server[] servers, VirtualServer[] virtualServers) {
+    private static void printTotals(VirtualServer[] virtualServers, Server[] servers) {
         long totalProcessorCores = 0;
         long totalRam = 0;
         long totalDisk = 0;
@@ -92,7 +92,7 @@ public final class ClusterOptimizer {
 
     private static long lastMapDisplayedTime = -1;
     private static long callCounter = 0;
-    private static void displayProgress(Server[] servers, VirtualServer[] virtualServers, int currentVirtualServer) {
+    private static void displayProgress(VirtualServer[] virtualServers, Server[] servers, int currentVirtualServer) {
         callCounter++;
         long currentTime = System.currentTimeMillis();
         long timeSince = currentTime-lastMapDisplayedTime;
@@ -122,7 +122,7 @@ public final class ClusterOptimizer {
         }
     }
 
-    private static void displayMapping(Server[] servers, VirtualServer[] virtualServers) {
+    private static void displayMapping(VirtualServer[] virtualServers, Server[] servers) {
         final int serversSize = servers.length;
         final int virtualServersSize = virtualServers.length;
 
@@ -189,15 +189,15 @@ public final class ClusterOptimizer {
      * These are the quick checks that don't need to worry about the actual mappings to specific primary and secondary disk
      * arrays.
      */
-    private static void mapServers(Server[] servers, VirtualServer[] virtualServers, int currentVirtualServer) {
+    private static void mapVirtualServersToPrimaryServers(VirtualServer[] virtualServers, Server[] servers, int currentVirtualServer) {
         final int serversSize = servers.length;
         final int virtualServersSize = virtualServers.length;
 
-        displayProgress(servers, virtualServers, currentVirtualServer);
+        displayProgress(virtualServers, servers, currentVirtualServer);
 
         if(currentVirtualServer==virtualServersSize) {
             mapped++;
-            displayMapping(servers, virtualServers);
+            displayMapping(virtualServers, servers);
             System.exit(0);
         } else {
             final VirtualServer virtualServer = virtualServers[currentVirtualServer];
@@ -231,129 +231,9 @@ public final class ClusterOptimizer {
                                 primaryServer.allocatedProcessorWeight = newAllocatedProcessorWeight;
                                 primaryServer.allocatedPrimaryRAM = newAllocatedPrimaryRAM;
 
-                                // TODO: I don't think I'm allocating all disks properly here
-                                // Allocate each of the virtual disks
-                                final VirtualDisk[] virtualDisks = virtualServer.virtualDisks;
-                                final int virtualDisksSize = virtualDisks.length;
-                                for(int virtualDiskIndex = 0 ; virtualDiskIndex<virtualDisksSize ; virtualDiskIndex++) {
-                                    final VirtualDisk virtualDisk = virtualDisks[virtualDiskIndex];
+                                // Try all the combinations of virtualDisk to disk mappings (recursively)
+                                mapVirtualDisksToPrimaryDisks(virtualServers, servers, currentVirtualServer, virtualServer.virtualDisks, primaryServer.disks, 0);
 
-                                    // Try to allocate to each disk on the primary server
-                                    final Disk[] primaryDisks = primaryServer.disks;
-                                    final int primaryDisksSize = primaryDisks.length;
-                                    for(int primaryDiskIndex = 0 ; primaryDiskIndex<primaryDisksSize ; primaryDiskIndex++) {
-                                        final Disk primaryDisk = primaryDisks[primaryDiskIndex];
-
-                                        // Skip this primary disk if the type doesn't match
-                                        if(virtualDisk.primaryDiskType==primaryDisk.diskType) {
-                                            // Make sure has enough extents
-                                            final int oldPrimaryDiskAllocatedExtents = primaryDisk.allocatedExtents;
-                                            final int newPrimaryDiskAllocatedExtents = oldPrimaryDiskAllocatedExtents + virtualDisk.extents;
-                                            if(primaryDisk.extents >= newPrimaryDiskAllocatedExtents) {
-                                                final int oldPrimaryDiskAllocatedWeight = primaryDisk.allocatedWeight;
-                                                final int newPrimaryDiskAllocatedWeight = oldPrimaryDiskAllocatedWeight + virtualDisk.primaryWeight;
-                                                if(newPrimaryDiskAllocatedWeight<=1000) {
-                                                    virtualDisk.selectedPrimaryDisk = primaryDisk;
-                                                    primaryDisk.allocatedExtents = newPrimaryDiskAllocatedExtents;
-                                                    primaryDisk.allocatedWeight = newPrimaryDiskAllocatedWeight;
-                                                    // Now try each of the possible secondary mappings (to all servers except the primary)
-                                                    for(int secondaryServerIndex=0; secondaryServerIndex<serversSize; secondaryServerIndex++) {
-                                                        if(secondaryServerIndex!=primaryServerIndex) {
-                                                            final Server secondaryServer = servers[secondaryServerIndex];
-
-                                                            // Allow for manual configuration of secondary
-                                                            if(virtualServer.secondaryServerHostname==null || virtualServer.secondaryServerHostname.equals(secondaryServer.hostname)) {
-                                                                // Make sure the secondary architecture matches any requirements
-                                                                if(
-                                                                    virtualServer.requiredProcessorArchitecture==null
-                                                                    || secondaryServer.processorArchitecture==virtualServer.requiredProcessorArchitecture
-                                                                ) {
-                                                                    // Make sure secondary has at least total number of cores matching secondary cores.
-                                                                    // Note: we don't care about weight here - just make it run somewhere when in failover.
-                                                                    if(secondaryServer.processorCores>=virtualServer.processorCores) {
-                                                                        // Make sure that the combined primary mapping plus secondary RAM does not exceed the total of this possible secondary machine
-                                                                        // for any one primary failure.  The loop represents the failure of each server, one at a time.
-                                                                        final int oldAllocatedSecondaryRAM = secondaryServer.allocatedSecondaryRAMs[primaryServerIndex];
-                                                                        final int newAllocatedSecondaryRAM = oldAllocatedSecondaryRAM + virtualServer.secondaryRam;
-                                                                        if(secondaryServer.ram >= (secondaryServer.allocatedPrimaryRAM+newAllocatedSecondaryRAM)) {
-                                                                            virtualServers[currentVirtualServer].selectedSecondaryServerIndex = secondaryServerIndex;
-                                                                            secondaryServer.allocatedSecondaryRAMs[primaryServerIndex] = newAllocatedSecondaryRAM;
-                                                                            final int oldMaximumAllocatedSecondaryRAM = secondaryServer.maximumAllocatedSecondaryRAM;
-                                                                            if(newAllocatedSecondaryRAM>oldMaximumAllocatedSecondaryRAM) secondaryServer.maximumAllocatedSecondaryRAM = newAllocatedSecondaryRAM;
-
-                                                                            // Try to allocate to each disk on the secondary server
-                                                                            final Disk[] secondaryDisks = secondaryServer.disks;
-                                                                            final int secondaryDisksSize = secondaryDisks.length;
-                                                                            for(int secondaryDiskIndex = 0 ; secondaryDiskIndex<secondaryDisksSize ; secondaryDiskIndex++) {
-                                                                                final Disk secondaryDisk = secondaryDisks[secondaryDiskIndex];
-
-                                                                                // Skip this secondary disk if the type doesn't match
-                                                                                if(virtualDisk.secondaryDiskType==secondaryDisk.diskType) {
-                                                                                    // Make sure has enough extents
-                                                                                    final int oldSecondaryDiskAllocatedExtents = secondaryDisk.allocatedExtents;
-                                                                                    final int newSecondaryDiskAllocatedExtents = oldSecondaryDiskAllocatedExtents + virtualDisk.extents;
-                                                                                    if(secondaryDisk.extents >= newSecondaryDiskAllocatedExtents) {
-                                                                                        final int oldSecondaryDiskAllocatedWeight = secondaryDisk.allocatedWeight;
-                                                                                        final int newSecondaryDiskAllocatedWeight = oldSecondaryDiskAllocatedWeight + virtualDisk.secondaryWeight;
-                                                                                        if(newSecondaryDiskAllocatedWeight<=1000) {
-                                                                                            virtualDisk.selectedSecondaryDisk = secondaryDisk;
-                                                                                            secondaryDisk.allocatedExtents = newSecondaryDiskAllocatedExtents;
-                                                                                            secondaryDisk.allocatedWeight = newSecondaryDiskAllocatedWeight;
-                                                                                            mapServers(servers, virtualServers, currentVirtualServer+1);
-                                                                                            virtualDisk.selectedSecondaryDisk = null;
-                                                                                            secondaryDisk.allocatedExtents = oldSecondaryDiskAllocatedExtents;
-                                                                                            secondaryDisk.allocatedWeight = oldSecondaryDiskAllocatedWeight;
-                                                                                        } else {
-                                                                                            skipped++;
-                                                                                            SkipType.SECONDARY_DISK_WEIGHT_EXCEEDED.counter++;
-                                                                                        }
-                                                                                    } else {
-                                                                                        skipped++;
-                                                                                        SkipType.SECONDARY_DISK_EXTENTS_EXCEEDED.counter++;
-                                                                                    }
-                                                                                } else {
-                                                                                    skipped++;
-                                                                                    SkipType.SECONDARY_DISK_TYPE_MISMATCH.counter++;
-                                                                                }
-                                                                            }
-                                                                            virtualServers[currentVirtualServer].selectedSecondaryServerIndex = -1;
-                                                                            secondaryServer.allocatedSecondaryRAMs[primaryServerIndex] = oldAllocatedSecondaryRAM;
-                                                                            secondaryServer.maximumAllocatedSecondaryRAM = oldMaximumAllocatedSecondaryRAM;
-                                                                        } else {
-                                                                            skipped++;
-                                                                            SkipType.SECONDARY_RAM_EXCEEDED.counter++;
-                                                                        }
-                                                                    } else {
-                                                                        skipped++;
-                                                                        SkipType.SECONDARY_CORES_EXCEEDED.counter++;
-                                                                    }
-                                                                } else {
-                                                                    skipped++;
-                                                                    SkipType.SECONDARY_PROCESSOR_MISMATCH.counter++;
-                                                                }
-                                                            } else {
-                                                                skipped++;
-                                                                SkipType.SECONDARY_MANUAL_SERVER_MISMATCH.counter++;
-                                                            }
-                                                        }
-                                                    }
-                                                    virtualDisk.selectedPrimaryDisk = null;
-                                                    primaryDisk.allocatedExtents = oldPrimaryDiskAllocatedExtents;
-                                                    primaryDisk.allocatedWeight = oldPrimaryDiskAllocatedWeight;
-                                                } else {
-                                                    skipped++;
-                                                    SkipType.PRIMARY_DISK_WEIGHT_EXCEEDED.counter++;
-                                                }
-                                            } else {
-                                                skipped++;
-                                                SkipType.PRIMARY_DISK_EXTENTS_EXCEEDED.counter++;
-                                            }
-                                        } else {
-                                            skipped++;
-                                            SkipType.PRIMARY_DISK_TYPE_MISMATCH.counter++;
-                                        }
-                                    }
-                                }
                                 virtualServers[currentVirtualServer].selectedPrimaryServerIndex = -1;
                                 primaryServer.allocatedProcessorWeight = oldAllocatedProcessorWeight;
                                 primaryServer.allocatedPrimaryRAM = oldAllocatedPrimaryRAM;
@@ -372,6 +252,158 @@ public final class ClusterOptimizer {
                 } else {
                     skipped++;
                     SkipType.PRIMARY_MANUAL_SERVER_MISMATCH.counter++;
+                }
+            }
+        }
+    }
+
+    private static void mapVirtualDisksToPrimaryDisks(VirtualServer[] virtualServers, Server[] servers, int currentVirtualServer, VirtualDisk[] virtualDisks, Disk[] primaryDisks, int currentVirtualDisk) {
+        final int primaryDisksSize = primaryDisks.length;
+        final int virtualDisksSize = virtualDisks.length;
+
+        if(currentVirtualDisk==virtualDisksSize) {
+            // All virtual disks are mapped to primary server now
+            mapVirtualServersToSecondaryServers(virtualServers, servers, currentVirtualServer);
+        } else {
+            final VirtualDisk virtualDisk = virtualDisks[currentVirtualDisk];
+
+            // Try each primary disk
+            for(int primaryDiskIndex=0; primaryDiskIndex<primaryDisksSize; primaryDiskIndex++) {
+                final Disk primaryDisk = primaryDisks[primaryDiskIndex];
+
+                // Skip this primary disk if the type doesn't match
+                if(virtualDisk.primaryDiskType==primaryDisk.diskType) {
+                    // Make sure has enough extents
+                    final int oldPrimaryDiskAllocatedExtents = primaryDisk.allocatedExtents;
+                    final int newPrimaryDiskAllocatedExtents = oldPrimaryDiskAllocatedExtents + virtualDisk.extents;
+                    if(primaryDisk.extents >= newPrimaryDiskAllocatedExtents) {
+                        final int oldPrimaryDiskAllocatedWeight = primaryDisk.allocatedWeight;
+                        final int newPrimaryDiskAllocatedWeight = oldPrimaryDiskAllocatedWeight + virtualDisk.primaryWeight;
+                        if(newPrimaryDiskAllocatedWeight<=1000) {
+                            virtualDisk.selectedPrimaryDisk = primaryDisk;
+                            primaryDisk.allocatedExtents = newPrimaryDiskAllocatedExtents;
+                            primaryDisk.allocatedWeight = newPrimaryDiskAllocatedWeight;
+
+                            mapVirtualDisksToPrimaryDisks(virtualServers, servers, currentVirtualServer, virtualDisks, primaryDisks, currentVirtualDisk+1);
+
+                            virtualDisk.selectedPrimaryDisk = null;
+                            primaryDisk.allocatedExtents = oldPrimaryDiskAllocatedExtents;
+                            primaryDisk.allocatedWeight = oldPrimaryDiskAllocatedWeight;
+                        } else {
+                            skipped++;
+                            SkipType.PRIMARY_DISK_WEIGHT_EXCEEDED.counter++;
+                        }
+                    } else {
+                        skipped++;
+                        SkipType.PRIMARY_DISK_EXTENTS_EXCEEDED.counter++;
+                    }
+                } else {
+                    skipped++;
+                    SkipType.PRIMARY_DISK_TYPE_MISMATCH.counter++;
+                }
+            }
+        }
+    }
+
+    private static void mapVirtualServersToSecondaryServers(VirtualServer[] virtualServers, Server[] servers, int currentVirtualServer) {
+        final int serversSize = servers.length;
+        final VirtualServer virtualServer = virtualServers[currentVirtualServer];
+        final int primaryServerIndex = virtualServers[currentVirtualServer].selectedPrimaryServerIndex;
+
+        // Now try each of the possible secondary mappings (to all servers except the primary)
+        for(int secondaryServerIndex=0; secondaryServerIndex<serversSize; secondaryServerIndex++) {
+            if(secondaryServerIndex!=primaryServerIndex) {
+                final Server secondaryServer = servers[secondaryServerIndex];
+
+                // Allow for manual configuration of secondary
+                if(virtualServer.secondaryServerHostname==null || virtualServer.secondaryServerHostname.equals(secondaryServer.hostname)) {
+                    // Make sure the secondary architecture matches any requirements
+                    if(
+                        virtualServer.requiredProcessorArchitecture==null
+                        || secondaryServer.processorArchitecture==virtualServer.requiredProcessorArchitecture
+                    ) {
+                        // Make sure secondary has at least total number of cores matching secondary cores.
+                        // Note: we don't care about weight here - just make it run somewhere when in failover.
+                        if(secondaryServer.processorCores>=virtualServer.processorCores) {
+                            // Make sure that the combined primary mapping plus secondary RAM does not exceed the total of this possible secondary machine
+                            // for any one primary failure.  The loop represents the failure of each server, one at a time.
+                            final int oldAllocatedSecondaryRAM = secondaryServer.allocatedSecondaryRAMs[primaryServerIndex];
+                            final int newAllocatedSecondaryRAM = oldAllocatedSecondaryRAM + virtualServer.secondaryRam;
+                            if(secondaryServer.ram >= (secondaryServer.allocatedPrimaryRAM+newAllocatedSecondaryRAM)) {
+                                virtualServers[currentVirtualServer].selectedSecondaryServerIndex = secondaryServerIndex;
+                                secondaryServer.allocatedSecondaryRAMs[primaryServerIndex] = newAllocatedSecondaryRAM;
+                                final int oldMaximumAllocatedSecondaryRAM = secondaryServer.maximumAllocatedSecondaryRAM;
+                                if(newAllocatedSecondaryRAM>oldMaximumAllocatedSecondaryRAM) secondaryServer.maximumAllocatedSecondaryRAM = newAllocatedSecondaryRAM;
+
+                                // Try all the combinations of virtualDisk to disk mappings (recursively)
+                                mapVirtualDisksToSecondaryDisks(virtualServers, servers, currentVirtualServer, virtualServer.virtualDisks, secondaryServer.disks, 0);
+
+                                virtualServers[currentVirtualServer].selectedSecondaryServerIndex = -1;
+                                secondaryServer.allocatedSecondaryRAMs[primaryServerIndex] = oldAllocatedSecondaryRAM;
+                                secondaryServer.maximumAllocatedSecondaryRAM = oldMaximumAllocatedSecondaryRAM;
+                            } else {
+                                skipped++;
+                                SkipType.SECONDARY_RAM_EXCEEDED.counter++;
+                            }
+                        } else {
+                            skipped++;
+                            SkipType.SECONDARY_CORES_EXCEEDED.counter++;
+                        }
+                    } else {
+                        skipped++;
+                        SkipType.SECONDARY_PROCESSOR_MISMATCH.counter++;
+                    }
+                } else {
+                    skipped++;
+                    SkipType.SECONDARY_MANUAL_SERVER_MISMATCH.counter++;
+                }
+            }
+        }
+    }
+
+    private static void mapVirtualDisksToSecondaryDisks(VirtualServer[] virtualServers, Server[] servers, int currentVirtualServer, VirtualDisk[] virtualDisks, Disk[] secondaryDisks, int currentVirtualDisk) {
+        final int secondaryDisksSize = secondaryDisks.length;
+        final int virtualDisksSize = virtualDisks.length;
+
+        if(currentVirtualDisk==virtualDisksSize) {
+            // All virtual disks are mapped to secondary server now
+            mapVirtualServersToPrimaryServers(virtualServers, servers, currentVirtualServer+1);
+        } else {
+            final VirtualDisk virtualDisk = virtualDisks[currentVirtualDisk];
+
+            // Try each secondary disk
+            for(int secondaryDiskIndex=0; secondaryDiskIndex<secondaryDisksSize; secondaryDiskIndex++) {
+                final Disk secondaryDisk = secondaryDisks[secondaryDiskIndex];
+
+                // Skip this secondary disk if the type doesn't match
+                if(virtualDisk.secondaryDiskType==secondaryDisk.diskType) {
+                    // Make sure has enough extents
+                    final int oldSecondaryDiskAllocatedExtents = secondaryDisk.allocatedExtents;
+                    final int newSecondaryDiskAllocatedExtents = oldSecondaryDiskAllocatedExtents + virtualDisk.extents;
+                    if(secondaryDisk.extents >= newSecondaryDiskAllocatedExtents) {
+                        final int oldSecondaryDiskAllocatedWeight = secondaryDisk.allocatedWeight;
+                        final int newSecondaryDiskAllocatedWeight = oldSecondaryDiskAllocatedWeight + virtualDisk.secondaryWeight;
+                        if(newSecondaryDiskAllocatedWeight<=1000) {
+                            virtualDisk.selectedSecondaryDisk = secondaryDisk;
+                            secondaryDisk.allocatedExtents = newSecondaryDiskAllocatedExtents;
+                            secondaryDisk.allocatedWeight = newSecondaryDiskAllocatedWeight;
+
+                            mapVirtualDisksToSecondaryDisks(virtualServers, servers, currentVirtualServer, virtualDisks, secondaryDisks, currentVirtualDisk+1);
+
+                            virtualDisk.selectedSecondaryDisk = null;
+                            secondaryDisk.allocatedExtents = oldSecondaryDiskAllocatedExtents;
+                            secondaryDisk.allocatedWeight = oldSecondaryDiskAllocatedWeight;
+                        } else {
+                            skipped++;
+                            SkipType.SECONDARY_DISK_WEIGHT_EXCEEDED.counter++;
+                        }
+                    } else {
+                        skipped++;
+                        SkipType.SECONDARY_DISK_EXTENTS_EXCEEDED.counter++;
+                    }
+                } else {
+                    skipped++;
+                    SkipType.SECONDARY_DISK_TYPE_MISMATCH.counter++;
                 }
             }
         }
