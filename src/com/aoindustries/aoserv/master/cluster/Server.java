@@ -220,7 +220,6 @@ public final class Server implements Comparable<Server> {
                 new Disk[] {
                     new Disk("/dev/sdc1", DiskType.RAID1_7200, 7450*2), // TODO: These are not purchased yet.  Estimated size for the 2x500 GB for CARR
                     new Disk("/dev/sdd1", DiskType.RAID1_7200, 8700)  // These are the internal drives - estimated size.  Need separate hot-swap pair
-                    //new Disk("/dev/sde1", DiskType.RAID1_7200, 7450*2) // TODO: These are not purchased yet.  Estimated size for the 2x500 GB for AO
                 }
             )
         );

@@ -16,6 +16,8 @@ import java.util.List;
  *
  * TODO: If two virtual servers are interchangeable, don't try both combinations - how? - implications?
  * TODO: If two servers are interchangeable, don't try both combinations - how? - implications?
+ * TODO: Allow to specify that two virtual servers may not use the same primary xen machine (like ns1 and ns4 in California)
+ * TODO: Avoid the reprocessing of similar sub-trees to try to conver the NP-hardness to exponential complexity (with lots of RAM used)
  *
  * @author  AO Industries, Inc.
  */
@@ -23,7 +25,7 @@ public final class ClusterOptimizer {
 
     private static final boolean FIND_ALL_PERMUTATIONS = false;
 
-    private static final boolean TERMINATE_ON_FIRST_MATCH = false;
+    private static final boolean TERMINATE_ON_FIRST_MATCH = true;
 
     private static final boolean TRACE = false;
 
@@ -118,7 +120,7 @@ public final class ClusterOptimizer {
                 if(mapped!=0) System.out.print(", skip/map ratio: "+SQLUtility.getDecimal(skipped*100/mapped));
                 if(timeSince>0) System.out.print(", "+(callCounter/timeSince)+" calls/ms");
                 System.out.println();
-                //displaySkipTypes();
+                displaySkipTypes();
             }
             lastMapDisplayedTime = currentTime;
             callCounter = 0;

@@ -36,4 +36,19 @@ public final class VirtualDisk {
         this.secondaryDiskType = secondaryDiskType;
         this.secondaryWeight = secondaryWeight;
     }
+
+    public boolean equals(Object O) {
+        return O!=null && (O instanceof VirtualDisk) && equals((VirtualDisk)O);
+    }
+
+    public boolean equals(VirtualDisk other) {
+        return
+            extents==other.extents
+            && primaryDiskType==other.primaryDiskType
+            && primaryWeight==other.primaryWeight
+            && secondaryDiskType==other.secondaryDiskType
+            && secondaryWeight==other.secondaryWeight
+            && device.equals(other.device)
+        ;
+    }
 }
