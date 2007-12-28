@@ -17,7 +17,16 @@ import java.util.List;
  * TODO: If two virtual servers are interchangeable, don't try both combinations - how? - implications?
  * TODO: If two servers are interchangeable, don't try both combinations - how? - implications?
  * TODO: Allow to specify that two virtual servers may not use the same primary xen machine (like ns1 and ns4 in California)
- * TODO: Avoid the reprocessing of similar sub-trees to try to conver the NP-hardness to exponential complexity (with lots of RAM used)
+ * TODO: Avoid the reprocessing of similar sub-trees to try to convert the NP-hardness to exponential complexity (with lots of RAM used)
+ * TODO: Also map cores and weights onto CPUs, with the following patterns:
+ *       1 core into any of the CPUs
+ *       2 cores into pairs of CPUs (0-1, 2-3, 3-4, 5-6, 7-8, 9-10, ...)
+ *       4 cores into sets of CPUs (0-3, 4-7, 8-11, 12-15, ...)
+ *       8 cores into sets of CPUs (0-7, 8-15, ...)
+ *       ...
+ *       Require that cores be a power of 2, so easier to map to CPUs consistently.
+ * TODO: Change weight to be 1024, so powers of two add up well (like 512+256+64+64+64+32+16+16 equals a full CPU)
+ * TODO: If all else fails, integrate this with the aoserv daemon code and run massively parallel processing of subtrees.  (More brute force)
  *
  * @author  AO Industries, Inc.
  */
