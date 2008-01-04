@@ -202,10 +202,10 @@ final public class TicketHandler implements Runnable {
             
             if(
                 clientPriority.equals(TicketPriority.URGENT)
-                && !packageName.equals(BusinessHandler.getRootBusiness()))
+                && !accounting.equals(BusinessHandler.getRootBusiness()))
             {
                 String message = 
-                    "Package:    "+packageName+"\n"+
+                    "Business:   "+accounting+"\n"+
                     "Username:   "+username+"\n"+
                     "Type:       "+type+"\n"+
                     "Deadline:   "+(deadline==-1?"":SQLUtility.getDate(deadline))+"\n"+
