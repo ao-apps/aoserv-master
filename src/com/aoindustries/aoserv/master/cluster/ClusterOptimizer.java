@@ -32,7 +32,7 @@ import java.util.List;
  */
 public final class ClusterOptimizer {
 
-    private static final boolean FIND_ALL_PERMUTATIONS = false;
+    private static final boolean FIND_ALL_PERMUTATIONS = true;
 
     private static final boolean TERMINATE_ON_FIRST_MATCH = true;
 

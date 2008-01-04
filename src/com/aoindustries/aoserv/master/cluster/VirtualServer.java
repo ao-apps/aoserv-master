@@ -400,7 +400,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "www2.kc.aoindustries.com",
                 null,
                 null,
-                1024,
+                1536, // Had solution at 1024
                 1024,
                 null,
                 null,
