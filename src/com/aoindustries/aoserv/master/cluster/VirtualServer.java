@@ -25,7 +25,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "ao1.kc.aoindustries.com",
                 null,
                 null,
-                512,
+                1024,
                 512,
                 null,
                 null,
@@ -579,6 +579,23 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 250, // Need 1000
                 new VirtualDisk[] {
                     new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
+                }
+            )
+        );
+        virtualServers.add(
+            new VirtualServer(
+                "www1.fc.everylocalad.com",
+                null,
+                null,
+                256,
+                256,
+                null,
+                null,
+                -1,
+                2,
+                250, // Need 500
+                new VirtualDisk[] {
+                    new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 32)
                 }
             )
         );
