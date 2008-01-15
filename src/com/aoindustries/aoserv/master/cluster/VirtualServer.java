@@ -40,10 +40,10 @@ public final class VirtualServer implements Comparable<VirtualServer> {
         virtualServers.add(
             new VirtualServer(
                 "centos5.aoindustries.com",
-                "xen917-5.fc.aoindustries.com",
+                null,
                 null,
                 256,
-                256,
+                0,
                 ProcessorType.XEON_LV,
                 null,
                 -1,
@@ -57,10 +57,10 @@ public final class VirtualServer implements Comparable<VirtualServer> {
         virtualServers.add(
             new VirtualServer(
                 "centos5-build64.aoindustries.com",
-                "xen917-5.fc.aoindustries.com",
+                null,
                 null,
                 256,
-                256,
+                0,
                 ProcessorType.XEON_LV,
                 null,
                 -1,
@@ -94,7 +94,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen907-1.fc.aoindustries.com",
                 "xen917-5.fc.aoindustries.com",
                 4096,
-                2048, // Desire 4096
+                0, // Need 2048, Desire 4096
                 null,
                 null,
                 -1,
@@ -111,7 +111,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen907-1.fc.aoindustries.com",
                 "xen917-5.fc.aoindustries.com",
                 2048, // Need 4096
-                2048, // Need 4096
+                0, // Need 4096
                 null,
                 null,
                 -1,
@@ -128,7 +128,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 "xen917-5.fc.aoindustries.com",
                 null, // "xen907-1.fc.aoindustries.com",
                 2048, // Need 4096
-                1024, // Need 4096
+                0, // Need 4096
                 null,
                 null,
                 -1,
@@ -204,6 +204,23 @@ public final class VirtualServer implements Comparable<VirtualServer> {
                 125, // Desire 500,
                 new VirtualDisk[] {
                     new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 250)
+                }
+            )
+        );
+        virtualServers.add(
+            new VirtualServer(
+                "www1.limlom.com",
+                "xen917-5.fc.aoindustries.com",
+                null,
+                2048,
+                0,  // Need 2048
+                null,
+                null,
+                -1,
+                1,
+                250, // Desire 1000,
+                new VirtualDisk[] {
+                    new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 125)
                 }
             )
         );

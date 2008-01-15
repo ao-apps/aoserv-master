@@ -220,8 +220,8 @@ public final class Server implements Comparable<Server> {
                 new Disk[] {
                     new Disk("/dev/sdc1", DiskType.RAID1_7200, 7450*2), // TODO: These are not purchased yet.  Estimated size for the 2x500 GB for CARR
                     new Disk("/dev/sdb1", DiskType.RAID1_7200, 9536),
-                    new Disk("/dev/sde1", DiskType.RAID1_7200, 9536),  // TODO: Not purchased yet
-                    new Disk("/dev/md3", DiskType.RAID1_15000, 4375) // TODO: This has been purchased but has not arrived yet
+                    new Disk("/dev/sde1", DiskType.RAID1_7200, 7450*2), // TODO: Not purchased yet, estimated size
+                    new Disk("/dev/md3", DiskType.RAID1_15000, 4375)
                 }
             )
         );
