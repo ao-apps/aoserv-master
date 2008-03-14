@@ -5325,6 +5325,23 @@ public abstract class MasterServer {
                                                 sendInvalidateList=false;
                                             }
                                             break;
+                                        case GET_NET_DEVICE_BONDING_REPORT :
+                                            {
+                                                int pkey = in.readCompressedInt();
+                                                process.setCommand(
+                                                    "get_net_device_bonding_report",
+                                                    Integer.valueOf(pkey)
+                                                );
+                                                String report = NetDeviceHandler.getNetDeviceBondingReport(
+                                                    conn,
+                                                    source,
+                                                    pkey
+                                                );
+                                                resp1=AOServProtocol.DONE;
+                                                resp2String=report;
+                                                sendInvalidateList=false;
+                                            }
+                                            break;
                                         case GET_OBJECT :
                                             {
                                                 int clientTableID=in.readCompressedInt();
