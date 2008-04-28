@@ -60,6 +60,7 @@ final public class SignupHandler {
         boolean billing_use_monthly,
         boolean billing_pay_one_year,
         // Encrypted values
+        int from,
         int recipient,
         String ciphertext,
         // options
@@ -68,13 +69,14 @@ final public class SignupHandler {
         // Security checks
         BusinessHandler.checkAccessBusiness(conn, source, "addSignupRequest", accounting);
         PackageHandler.checkAccessPackageDefinition(conn, source, "addSignupRequest", package_definition);
+        CreditCardHandler.checkAccessEncryptionKey(conn, source, "addSignupRequest", from);
         CreditCardHandler.checkAccessEncryptionKey(conn, source, "addSignupRequest", recipient);
 
         // Make all database changes in one big transaction
         int pkey=conn.executeIntQuery("select nextval('signup_requests_pkey_seq')");
 
         // Add the entry
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup_requests values(?,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null)");
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup_requests values(?,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null)");
         try {
             pstmt.setInt(1, pkey);
             pstmt.setString(2, accounting);
@@ -108,7 +110,8 @@ final public class SignupHandler {
             pstmt.setBoolean(30, billing_use_monthly);
             pstmt.setBoolean(31, billing_pay_one_year);
             pstmt.setString(32, ciphertext);
-            pstmt.setInt(33, recipient);
+            pstmt.setInt(33, from);
+            pstmt.setInt(34, recipient);
 
             conn.incrementUpdateCount();
             pstmt.executeUpdate();

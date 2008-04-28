@@ -35,14 +35,22 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
         this.invalidateList = invalidateList;
     }
 
+    @Override
     public String storeCreditCard(Principal principal, CreditCard creditCard, Locale userLocale) throws SQLException {
         throw new SQLException("Method not implemented for direct master server persistence.");
     }
 
-    public void updateMaskedCardNumber(Principal principal, CreditCard creditCard, String maskedCardNumber, Locale userLocale) throws SQLException {
+    @Override
+    public void updateCardNumber(Principal principal, CreditCard creditCard, String maskedCardNumber, String cardNumber, byte expirationMonth, short expirationYear, Locale userLocale) throws SQLException {
         throw new SQLException("Method not implemented for direct master server persistence.");
     }
 
+    @Override
+    public void updateExpiration(Principal principal, CreditCard creditCard, byte expirationMonth, short expirationYear, Locale userLocale) throws SQLException {
+        throw new SQLException("Method not implemented for direct master server persistence.");
+    }
+
+    @Override
     public void deleteCreditCard(Principal principal, CreditCard creditCard, Locale userLocale) throws SQLException {
         throw new SQLException("Method not implemented for direct master server persistence.");
     }
@@ -51,9 +59,10 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
         return amount==null ? null : amount.toString();
     }
 
+    @Override
     public String insertTransaction(Principal principal, Group group, Transaction transaction, Locale userLocale) throws SQLException {
         try {
-            String providerId = transaction.getProviderId();
+            //String providerId = transaction.getProviderId();
             TransactionRequest transactionRequest = transaction.getTransactionRequest();
             CreditCard creditCard = transaction.getCreditCard();
             // Get the createdBy from the credit card persistence mechanism
@@ -133,10 +142,11 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
      *
      * The current status must be PROCESSING.
      */
+    @Override
     public void saleCompleted(Principal principal, Transaction transaction, Locale userLocale) throws SQLException {
         try {
-            long currentTime = System.currentTimeMillis();
-            String providerId = transaction.getProviderId();
+            //long currentTime = System.currentTimeMillis();
+            //String providerId = transaction.getProviderId();
 
             AuthorizationResult authorizationResult = transaction.getAuthorizationResult();
             TransactionResult.CommunicationResult authorizationCommunicationResult = authorizationResult.getCommunicationResult();
@@ -189,6 +199,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
         }
     }
 
+    @Override
     public void voidCompleted(Principal principal, Transaction transaction, Locale userLocale) throws SQLException {
         throw new SQLException("Method not implemented for direct master server persistence.");
     }

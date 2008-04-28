@@ -111,10 +111,6 @@ final public class UsernameHandler {
             BusinessHandler.checkAccessDisableLog(conn, source, "disableUsername", disableLog, false);
             checkAccessUsername(conn, source, "disableUsername", username);
             if(
-                InterBaseHandler.isInterBaseUser(conn, username)
-                && !InterBaseHandler.isInterBaseUserDisabled(conn, username)
-            ) throw new SQLException("Cannot disable Username '"+username+"': InterBaseUser not disabled: "+username);
-            if(
                 LinuxAccountHandler.isLinuxAccount(conn, username)
                 && !LinuxAccountHandler.isLinuxAccountDisabled(conn, username)
             ) throw new SQLException("Cannot disable Username '"+username+"': LinuxAccount not disabled: "+username);

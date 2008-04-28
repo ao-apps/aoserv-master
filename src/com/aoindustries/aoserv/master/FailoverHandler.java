@@ -37,8 +37,8 @@ final public class FailoverHandler implements CronJob {
             String mustring = source.getUsername();
             MasterUser mu = MasterServer.getMasterUser(conn, mustring);
             if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not access failover_file_log.");
-            int aoServer=getFromAOServerForFailoverFileReplication(conn, replication);
-            ServerHandler.checkAccessServer(conn, source, "add_failover_file_log", aoServer);
+            int server=getFromServerForFailoverFileReplication(conn, replication);
+            ServerHandler.checkAccessServer(conn, source, "add_failover_file_log", server);
 
             int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('failover_file_log_pkey_seq')");
             conn.executeUpdate(
@@ -68,8 +68,8 @@ final public class FailoverHandler implements CronJob {
             invalidateList.addTable(
                 conn,
                 SchemaTable.TableID.FAILOVER_FILE_LOG,
-                ServerHandler.getBusinessesForServer(conn, aoServer),
-                aoServer,
+                ServerHandler.getBusinessesForServer(conn, server),
+                server,
                 false
             );
             return pkey;
@@ -78,51 +78,19 @@ final public class FailoverHandler implements CronJob {
         }
     }
     
-    public static int getFromAOServerForFailoverFileReplication(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "getFromAOServerForFailoverFileReplication(MasterDatabaseConnection,int)", null);
+    public static int getFromServerForFailoverFileReplication(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "getFromServerForFailoverFileReplication(MasterDatabaseConnection,int)", null);
         try {
-            return conn.executeIntQuery("select from_server from failover_file_replications where pkey=?", pkey);
+            return conn.executeIntQuery("select server from failover_file_replications where pkey=?", pkey);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
 
-    public static int getToAOServerForFailoverFileReplication(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "getToAOServerForFailoverFileReplication(MasterDatabaseConnection,int)", null);
+    public static int getBackupPartitionForFailoverFileReplication(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "getBackupPartitionForFailoverFileReplication(MasterDatabaseConnection,int)", null);
         try {
-            return conn.executeIntQuery("select to_server from failover_file_replications where pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    public static void setLastFailoverReplicationTime(
-        MasterDatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int ffr,
-        long time
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "setLastFailoverReplicationTime(MasterDatabaseConnection,RequestSource,InvalidateList,int,long)", null);
-        try {
-            String username=source.getUsername();
-            MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-            if(masterUser==null) throw new SQLException("Only master users allowed to set the last failover replication time.");
-            int aoServer=getFromAOServerForFailoverFileReplication(conn, ffr);
-            ServerHandler.checkAccessServer(conn, source, "setLastBackupTime", aoServer);
-
-            conn.executeUpdate(
-                "update failover_file_replications set last_start_time=? where pkey=?",
-                new Timestamp(time),
-                ffr
-            );
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.FAILOVER_FILE_REPLICATIONS,
-                ServerHandler.getBusinessesForServer(conn, aoServer),
-                aoServer,
-                false
-            );
+            return conn.executeIntQuery("select backup_partition from failover_file_replications where pkey=?", pkey);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -138,7 +106,7 @@ final public class FailoverHandler implements CronJob {
         Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "getFailoverFileLogs(MasterDatabaseConnection,RequestSource,CompressedDataOutputStream,int,int)", null);
         try {
             // Check access for the from server
-            int fromServer = getFromAOServerForFailoverFileReplication(conn, replication);
+            int fromServer = getFromServerForFailoverFileReplication(conn, replication);
             ServerHandler.checkAccessServer(conn, source, "getFailoverFileLogs", fromServer);
 
             MasterServer.writeObjects(conn, source, out, false, new FailoverFileLog(), "select * from failover_file_log where replication=? order by start_time desc limit ?", replication, maxRows);

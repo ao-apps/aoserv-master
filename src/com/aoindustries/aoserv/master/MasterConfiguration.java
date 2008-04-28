@@ -171,7 +171,7 @@ public final class MasterConfiguration {
     }
 
     public static String getDaemonKey(MasterDatabaseConnection conn, int aoServer) throws IOException, SQLException {
-        return getProperty("aoserv.daemon.client.key."+ServerHandler.getHostnameForServer(conn, aoServer));
+        return getProperty("aoserv.daemon.client.key."+ServerHandler.getHostnameForAOServer(conn, aoServer));
     }
 
     public static int getProfilerLevel() throws IOException {

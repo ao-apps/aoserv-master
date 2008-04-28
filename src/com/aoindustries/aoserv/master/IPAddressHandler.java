@@ -96,14 +96,14 @@ final public class IPAddressHandler {
                 conn,
                 SchemaTable.TableID.IP_ADDRESSES,
                 accounting,
-                ServerHandler.getHostnameForServer(conn, fromServer),
+                fromServer,
                 false
             );
             invalidateList.addTable(
                 conn,
                 SchemaTable.TableID.IP_ADDRESSES,
                 accounting,
-                ServerHandler.getHostnameForServer(conn, toServer),
+                toServer,
                 false
             );
         } finally {
@@ -138,7 +138,7 @@ final public class IPAddressHandler {
                 conn,
                 SchemaTable.TableID.IP_ADDRESSES,
                 accounting,
-                ServerHandler.getHostnameForServer(conn, aoServer),
+                aoServer,
                 false
             );
 
@@ -204,7 +204,7 @@ final public class IPAddressHandler {
                 conn,
                 SchemaTable.TableID.IP_ADDRESSES,
                 accounting,
-                ServerHandler.getHostnameForServer(conn, aoServer),
+                aoServer,
                 false
             );
             
@@ -433,7 +433,7 @@ final public class IPAddressHandler {
                 conn,
                 SchemaTable.TableID.IP_ADDRESSES,
                 getBusinessForIPAddress(conn, ipAddress),
-                ServerHandler.getHostnameForServer(conn, getAOServerForIPAddress(conn, ipAddress)),
+                getAOServerForIPAddress(conn, ipAddress),
                 false
             );
         } finally {

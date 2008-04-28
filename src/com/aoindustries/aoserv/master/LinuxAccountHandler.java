@@ -434,12 +434,6 @@ final public class LinuxAccountHandler {
                 + "    limit 1\n"
                 + "  ),\n"
                 + "  ?,\n"
-                + "  "+LinuxServerAccount.DEFAULT_CRON_BACKUP_LEVEL+",\n"
-                + "  "+LinuxServerAccount.DEFAULT_CRON_BACKUP_RETENTION+",\n"
-                + "  "+LinuxServerAccount.DEFAULT_HOME_BACKUP_LEVEL+",\n"
-                + "  "+LinuxServerAccount.DEFAULT_HOME_BACKUP_RETENTION+",\n"
-                + "  "+LinuxServerAccount.DEFAULT_INBOX_BACKUP_LEVEL+",\n"
-                + "  "+LinuxServerAccount.DEFAULT_INBOX_BACKUP_RETENTION+",\n"
                 + "  null,\n"
                 + "  null,\n"
                 + "  null,\n"
@@ -462,12 +456,11 @@ final public class LinuxAccountHandler {
             );
             // Notify all clients of the update
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
-            String hostname=ServerHandler.getHostnameForServer(conn, aoServer);
             invalidateList.addTable(
                 conn,
                 SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 accounting,
-                hostname,
+                aoServer,
                 true
             );
             // If it is a email type, add the default attachment blocks
@@ -489,7 +482,7 @@ final public class LinuxAccountHandler {
                     conn,
                     SchemaTable.TableID.EMAIL_ATTACHMENT_BLOCKS,
                     accounting,
-                    hostname,
+                    aoServer,
                     false
                 );
             }
@@ -551,6 +544,15 @@ final public class LinuxAccountHandler {
                 + "          and li.id=lsg.gid\n"
                 + "        limit 1\n"
                 + "      ) is null\n"
+                + "      and (\n"
+                + "        select\n"
+                + "          ffr.pkey\n"
+                + "        from\n"
+                + "          failover_file_replications ffr\n"
+                + "        where\n"
+                + "          ffr.quota_gid=li.id\n"
+                + "        limit 1\n"
+                + "      ) is null\n"
                 + "    order by\n"
                 + "      id\n"
                 + "    limit 1\n"
@@ -568,7 +570,7 @@ final public class LinuxAccountHandler {
                 conn,
                 SchemaTable.TableID.LINUX_SERVER_GROUPS,
                 accounting,
-                ServerHandler.getHostnameForServer(conn, aoServer),
+                aoServer,
                 true
             );
             return pkey;
@@ -758,7 +760,7 @@ final public class LinuxAccountHandler {
                 conn,
                 SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
+                getAOServerForLinuxServerAccount(conn, pkey),
                 false
             );
         } finally {
@@ -823,7 +825,7 @@ final public class LinuxAccountHandler {
                 conn,
                 SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 UsernameHandler.getBusinessForUsername(conn, la),
-                ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
+                getAOServerForLinuxServerAccount(conn, pkey),
                 false
             );
         } finally {
@@ -1084,17 +1086,6 @@ final public class LinuxAccountHandler {
                 int aoServer=aoServers.getInt(c);
                 conn.executeUpdate("update linux_server_accounts set autoresponder_from=null where username=? and ao_server=?", username, aoServer);
             }
-            // Delete the email configurations that depend on this account
-            IntList addresses=conn.executeIntListQuery("select email_address from linux_acc_addresses where linux_account=?", username);
-            int size=addresses.size();
-            boolean addressesModified=size>0;
-            for(int c=0;c<size;c++) {
-                int address=addresses.getInt(c);
-                conn.executeUpdate("delete from linux_acc_addresses where email_address=?", address);
-                if(!EmailHandler.isEmailAddressUsed(conn, address)) {
-                    conn.executeUpdate("delete from email_addresses where pkey=?", address);
-                }
-            }
             // Delete any FTP guest user info attached to this account
             boolean ftpModified=conn.executeIntQuery("select count(*) from ftp_guest_users where username=?", username)>0;
             if(ftpModified) conn.executeUpdate("delete from ftp_guest_users where username=?", username);
@@ -1113,11 +1104,6 @@ final public class LinuxAccountHandler {
 
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
 
-            // Notify all clients of the update
-            if(addressesModified) {
-                invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, aoServers, false);
-                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServers, false);
-            }
             if(ftpModified) invalidateList.addTable(conn, SchemaTable.TableID.FTP_GUEST_USERS, accounting, aoServers, false);
             if(groupAccountModified) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accounting, aoServers, false);
             invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
@@ -1361,16 +1347,33 @@ final public class LinuxAccountHandler {
             );
             if(count>0) throw new SQLException("Home directory on "+aoServer+" contains "+count+" CVS "+(count==1?"repository":"repositories")+": "+home);
 
+            // Delete the email configurations that depend on this account
+            IntList addresses=conn.executeIntListQuery("select email_address from linux_acc_addresses where linux_server_account=?", account);
+            int size=addresses.size();
+            boolean addressesModified=size>0;
+            for(int c=0;c<size;c++) {
+                int address=addresses.getInt(c);
+                conn.executeUpdate("delete from linux_acc_addresses where email_address=?", address);
+                if(!EmailHandler.isEmailAddressUsed(conn, address)) {
+                    conn.executeUpdate("delete from email_addresses where pkey=?", address);
+                }
+            }
+
             String accounting=getBusinessForLinuxServerAccount(conn, account);
-            String hostname=ServerHandler.getHostnameForServer(conn, aoServer);
 
             // Delete the attachment blocks
             conn.executeUpdate("delete from email_attachment_blocks where linux_server_account=?", account);
-            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ATTACHMENT_BLOCKS, accounting, hostname, false);
+            invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ATTACHMENT_BLOCKS, accounting, aoServer, false);
 
             // Delete the account from the server
             conn.executeUpdate("delete from linux_server_accounts where pkey=?", account);
-            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, accounting, hostname, true);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, accounting, aoServer, true);
+
+            // Notify all clients of the update
+            if(addressesModified) {
+                invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
+                invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+            }
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1432,7 +1435,7 @@ final public class LinuxAccountHandler {
             conn.executeUpdate("delete from linux_server_groups where pkey=?", group);
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), true);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, accounting, aoServer, true);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1462,8 +1465,8 @@ final public class LinuxAccountHandler {
 
             // The from must be on this account
             if(from!=-1) {
-                String fromUN=conn.executeStringQuery("select linux_account from linux_acc_addresses where pkey=?", from);
-                if(!fromUN.equals(username)) throw new SQLException("((linux_acc_address.pkey="+from+").linux_account="+fromUN+")!=((linux_server_account.pkey="+pkey+").username="+username+")");
+                int fromLSA=conn.executeIntQuery("select linux_server_account from linux_acc_addresses where pkey=?", from);
+                if(fromLSA!=pkey) throw new SQLException("((linux_acc_address.pkey="+from+").linux_server_account="+fromLSA+")!=((linux_server_account.pkey="+pkey+").username="+username+")");
             }
 
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
@@ -1542,7 +1545,7 @@ final public class LinuxAccountHandler {
             );
 
             // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, accounting, ServerHandler.getHostnameForServer(conn, aoServer), false);
+            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, accounting, aoServer, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1711,105 +1714,6 @@ final public class LinuxAccountHandler {
         }
     }
 
-    public static void setLinuxServerAccountCronBackupRetention(
-        MasterDatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int pkey,
-        short days
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, LinuxAccountHandler.class, "setLinuxServerAccountCronBackupRetention(MasterDatabaseConnection,RequestSource,InvalidateList,int,short)", null);
-        try {
-            // Security checks
-            checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountCronBackupRetention", pkey);
-            String username=getUsernameForLinuxServerAccount(conn, pkey);
-            if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the cron table backup retention for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
-
-            // Update the database
-            conn.executeUpdate(
-                "update linux_server_accounts set cron_backup_retention=?::smallint where pkey=?",
-                days,
-                pkey
-            );
-
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
-                getBusinessForLinuxServerAccount(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    public static void setLinuxServerAccountHomeBackupRetention(
-        MasterDatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int pkey,
-        short days
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, LinuxAccountHandler.class, "setLinuxServerAccountHomeBackupRetention(MasterDatabaseConnection,RequestSource,InvalidateList,int,short)", null);
-        try {
-            // Security checks
-            checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountHomeBackupRetention", pkey);
-            String username=getUsernameForLinuxServerAccount(conn, pkey);
-            if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the home directory backup retention for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
-
-            // Update the database
-            conn.executeUpdate(
-                "update linux_server_accounts set home_backup_retention=?::smallint where pkey=?",
-                days,
-                pkey
-            );
-
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
-                getBusinessForLinuxServerAccount(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    public static void setLinuxServerAccountInboxBackupRetention(
-        MasterDatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int pkey,
-        short days
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, LinuxAccountHandler.class, "setLinuxServerAccountInboxBackupRetention(MasterDatabaseConnection,RequestSource,InvalidateList,int,short)", null);
-        try {
-            // Security checks
-            checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountInboxBackupRetention", pkey);
-            String username=getUsernameForLinuxServerAccount(conn, pkey);
-            if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the email inbox backup retention for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
-
-            // Update the database
-            conn.executeUpdate(
-                "update linux_server_accounts set inbox_backup_retention=?::smallint where pkey=?",
-                days,
-                pkey
-            );
-
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
-                getBusinessForLinuxServerAccount(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
     public static void setLinuxServerAccountPassword(
         MasterDatabaseConnection conn,
         RequestSource source,
@@ -1849,13 +1753,13 @@ final public class LinuxAccountHandler {
             }
 
             // Update the ao_servers table for emailmon and ftpmon
-            if(username.equals(LinuxAccount.EMAILMON)) {
+            /*if(username.equals(LinuxAccount.EMAILMON)) {
                 conn.executeUpdate("update ao_servers set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
                 invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
             } else if(username.equals(LinuxAccount.FTPMON)) {
                 conn.executeUpdate("update ao_servers set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
                 invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
-            }
+            }*/
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -1888,7 +1792,7 @@ final public class LinuxAccountHandler {
                 conn,
                 SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, lsa),
-                ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, lsa)),
+                getAOServerForLinuxServerAccount(conn, lsa),
                 false
             );
         } finally {
@@ -1928,7 +1832,7 @@ final public class LinuxAccountHandler {
                 conn,
                 SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
+                getAOServerForLinuxServerAccount(conn, pkey),
                 false
             );
         } finally {
@@ -1961,7 +1865,7 @@ final public class LinuxAccountHandler {
                 conn,
                 SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
+                getAOServerForLinuxServerAccount(conn, pkey),
                 false
             );
         } finally {
@@ -1994,7 +1898,7 @@ final public class LinuxAccountHandler {
                 conn,
                 SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
+                getAOServerForLinuxServerAccount(conn, pkey),
                 false
             );
         } finally {
@@ -2034,7 +1938,7 @@ final public class LinuxAccountHandler {
                 conn,
                 SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
+                getAOServerForLinuxServerAccount(conn, pkey),
                 false
             );
         } finally {
@@ -2067,7 +1971,7 @@ final public class LinuxAccountHandler {
                 conn,
                 SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
                 getBusinessForLinuxServerAccount(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForLinuxServerAccount(conn, pkey)),
+                getAOServerForLinuxServerAccount(conn, pkey),
                 false
             );
         } finally {

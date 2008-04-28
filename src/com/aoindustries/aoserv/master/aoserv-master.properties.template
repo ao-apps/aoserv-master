@@ -18,14 +18,6 @@ aoserv.master.db.password=<postgres_app_password>
 aoserv.master.db.connections=<max_num_connections>
 aoserv.master.db.max_connection_age=
 
-# The backup database connection details
-aoserv.master.backup.db.driver=org.postgresql.Driver
-aoserv.master.backup.db.user=<postgres_app_username>
-aoserv.master.backup.db.url=<postgres_jdbc_url>
-aoserv.master.backup.db.password=<postgres_app_password>
-aoserv.master.backup.db.connections=<max_num_connections>
-aoserv.master.backup.db.max_connection_age=
-
 # The people responsible for system security
 aoserv.master.security.email.to=aoserv@aoindustries.com
 aoserv.master.security.email.from=master@<hostname>

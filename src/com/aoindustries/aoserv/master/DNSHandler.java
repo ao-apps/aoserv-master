@@ -11,6 +11,7 @@ import com.aoindustries.aoserv.client.DNSZone;
 import com.aoindustries.aoserv.client.DNSZoneTable;
 import com.aoindustries.aoserv.client.IPAddress;
 import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
@@ -295,10 +296,10 @@ final public class DNSHandler implements CronJob {
                            + "  inner join httpd_site_binds hsb on hsu.httpd_site_bind=hsb.pkey\n"
                            + "  inner join httpd_sites hs on hsb.httpd_site=hs.pkey\n"
                            + "  inner join packages pk on hs.package=pk.name\n"
-                           + "  inner join servers se on hs.ao_server=se.pkey\n"
+                           + "  inner join ao_servers ao on hs.ao_server=ao.server\n"
                            + "where\n"
                            // Is not the test URL
-                           + "  hsu.hostname!=(hs.site_name || '.' || se.hostname)";
+                           + "  hsu.hostname!=(hs.site_name || '.' || ao.hostname)";
                 try {
                     ResultSet results = stmt.executeQuery(sql);
                     try {
@@ -790,10 +791,10 @@ final public class DNSHandler implements CronJob {
         }
     }
 
-    public static List<String> getDNSServers(MasterDatabaseConnection conn) throws IOException, SQLException {
+    public static IntList getDNSServers(MasterDatabaseConnection conn) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getDNSServers(MasterDatabaseConnection)", null);
         try {
-            return conn.executeStringListQuery("select se.hostname from ao_servers ao, servers se where ao.is_dns and ao.server=se.pkey");
+            return conn.executeIntListQuery("select distinct ao_server from net_binds where app_protocol=?", Protocol.DNS);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }

@@ -364,23 +364,47 @@ final public class DaemonHandler {
             if(masterUser==null) throw new SQLException("Only master users allowed to request daemon access.");
             if(daemonCommandCode==AOServDaemonProtocol.FAILOVER_FILE_REPLICATION) {
                 // Current user must be able to access the from server
-                int fromServer=FailoverHandler.getFromAOServerForFailoverFileReplication(conn, param1);
+                int fromServer=FailoverHandler.getFromServerForFailoverFileReplication(conn, param1);
                 ServerHandler.checkAccessServer(conn, source, "requestDaemonAccess", fromServer);
 
                 // The to server must match server
-                int toServer=FailoverHandler.getToAOServerForFailoverFileReplication(conn, param1);
-                if(toServer!=aoServer) throw new SQLException("(ao_servers.server="+aoServer+")!=((failover_file_replication.pkey="+param1+").to_server="+toServer+")");
+                int backupPartition = FailoverHandler.getBackupPartitionForFailoverFileReplication(conn, param1);
+                int toServer = BackupHandler.getAOServerForBackupPartition(conn, backupPartition);
+                if(toServer!=aoServer) throw new SQLException("(ao_servers.server="+aoServer+")!=((failover_file_replication.pkey="+param1+").backup_partition.ao_server="+toServer+")");
 
-                // Chunk always will be automatically performed once a month between the 2nd and the 28th, based on mod of ffr.pkey equaling the current day of the month
-                boolean chunkAlways = Calendar.getInstance().get(Calendar.DAY_OF_MONTH)==((param1%27)+2);
-                if(!chunkAlways) chunkAlways = conn.executeBooleanQuery("select chunk_always from failover_file_replications where pkey=?", param1);
+                // The toPath includes the server name
+                String serverName;
+                if(ServerHandler.isAOServer(conn, fromServer)) {
+                    serverName = ServerHandler.getHostnameForAOServer(conn, fromServer);
+                } else {
+                    serverName =
+                        PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer))
+                        +'/'
+                        + ServerHandler.getNameForServer(conn, fromServer)
+                    ;
+                }
+                String toPath =
+                    conn.executeStringQuery("select bp.path from failover_file_replications ffr inner join backup_partitions bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", param1)
+                    +'/'
+                    +serverName
+                ;
+                int quota_gid = conn.executeIntQuery("select coalesce(quota_gid, -1) from failover_file_replications where pkey=?", param1);
+
+                // Verify that the backup_partition is the correct type
+                boolean isQuotaEnabled = conn.executeBooleanQuery("select bp.quota_enabled from failover_file_replications ffr inner join backup_partitions bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", param1);
+                if(quota_gid==-1) {
+                    if(isQuotaEnabled) throw new SQLException("quota_gid is null when quota_enabled=true: failover_file_replications.pkey="+param1);
+                } else {
+                    if(!isQuotaEnabled) throw new SQLException("quota_gid is not null when quota_enabled=false: failover_file_replications.pkey="+param1);
+                }
+
                 return grantDaemonAccess(
                     conn,
                     aoServer,
                     AOServDaemonProtocol.FAILOVER_FILE_REPLICATION,
-                    ServerHandler.getHostnameForServer(conn, fromServer),
-                    conn.executeStringQuery("select to_path from failover_file_replications where pkey=?", param1),
-                    chunkAlways ? "t" : "f"
+                    serverName,
+                    toPath,
+                    quota_gid==-1 ? null : Integer.toString(quota_gid)
                 );
             } else throw new SQLException("Unknown daemon command code: "+daemonCommandCode);
         } finally {

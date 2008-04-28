@@ -14,8 +14,6 @@ import com.aoindustries.aoserv.client.AOServerDaemonHost;
 import com.aoindustries.aoserv.client.Action;
 import com.aoindustries.aoserv.client.ActionType;
 import com.aoindustries.aoserv.client.Architecture;
-import com.aoindustries.aoserv.client.BackupData;
-import com.aoindustries.aoserv.client.BackupLevel;
 import com.aoindustries.aoserv.client.BackupPartition;
 import com.aoindustries.aoserv.client.BackupReport;
 import com.aoindustries.aoserv.client.BackupRetention;
@@ -62,11 +60,7 @@ import com.aoindustries.aoserv.client.FailoverFileLog;
 import com.aoindustries.aoserv.client.FailoverFileReplication;
 import com.aoindustries.aoserv.client.FailoverFileSchedule;
 import com.aoindustries.aoserv.client.FailoverMySQLReplication;
-import com.aoindustries.aoserv.client.FileBackup;
-import com.aoindustries.aoserv.client.FileBackupDevice;
-import com.aoindustries.aoserv.client.FileBackupRoot;
 import com.aoindustries.aoserv.client.FileBackupSetting;
-import com.aoindustries.aoserv.client.FileBackupStat;
 import com.aoindustries.aoserv.client.HttpdBind;
 import com.aoindustries.aoserv.client.HttpdJBossSite;
 import com.aoindustries.aoserv.client.HttpdJBossVersion;
@@ -88,12 +82,6 @@ import com.aoindustries.aoserv.client.HttpdTomcatStdSite;
 import com.aoindustries.aoserv.client.HttpdTomcatVersion;
 import com.aoindustries.aoserv.client.HttpdWorker;
 import com.aoindustries.aoserv.client.IPAddress;
-import com.aoindustries.aoserv.client.InterBaseBackup;
-import com.aoindustries.aoserv.client.InterBaseDBGroup;
-import com.aoindustries.aoserv.client.InterBaseDatabase;
-import com.aoindustries.aoserv.client.InterBaseReservedWord;
-import com.aoindustries.aoserv.client.InterBaseServerUser;
-import com.aoindustries.aoserv.client.InterBaseUser;
 import com.aoindustries.aoserv.client.LinuxAccAddress;
 import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.LinuxAccountType;
@@ -109,7 +97,6 @@ import com.aoindustries.aoserv.client.MasterHost;
 import com.aoindustries.aoserv.client.MasterServerProfile;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.MonthlyCharge;
-import com.aoindustries.aoserv.client.MySQLBackup;
 import com.aoindustries.aoserv.client.MySQLDBUser;
 import com.aoindustries.aoserv.client.MySQLDatabase;
 import com.aoindustries.aoserv.client.MySQLReservedWord;
@@ -130,8 +117,6 @@ import com.aoindustries.aoserv.client.PackageCategory;
 import com.aoindustries.aoserv.client.PackageDefinition;
 import com.aoindustries.aoserv.client.PackageDefinitionLimit;
 import com.aoindustries.aoserv.client.PaymentType;
-import com.aoindustries.aoserv.client.PhoneNumber;
-import com.aoindustries.aoserv.client.PostgresBackup;
 import com.aoindustries.aoserv.client.PostgresDatabase;
 import com.aoindustries.aoserv.client.PostgresEncoding;
 import com.aoindustries.aoserv.client.PostgresReservedWord;
@@ -142,33 +127,12 @@ import com.aoindustries.aoserv.client.PostgresVersion;
 import com.aoindustries.aoserv.client.PrivateFTPServer;
 import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.aoserv.client.Resource;
-import com.aoindustries.aoserv.client.SRCpu;
-import com.aoindustries.aoserv.client.SRDbMySQL;
-import com.aoindustries.aoserv.client.SRDbPostgres;
-import com.aoindustries.aoserv.client.SRDiskAccess;
-import com.aoindustries.aoserv.client.SRDiskMDStat;
-import com.aoindustries.aoserv.client.SRDiskSpace;
-import com.aoindustries.aoserv.client.SRKernel;
-import com.aoindustries.aoserv.client.SRLoad;
-import com.aoindustries.aoserv.client.SRMemory;
-import com.aoindustries.aoserv.client.SRNetDevice;
-import com.aoindustries.aoserv.client.SRNetICMP;
-import com.aoindustries.aoserv.client.SRNetIP;
-import com.aoindustries.aoserv.client.SRNetTCP;
-import com.aoindustries.aoserv.client.SRNetUDP;
-import com.aoindustries.aoserv.client.SRNumUsers;
-import com.aoindustries.aoserv.client.SRPaging;
-import com.aoindustries.aoserv.client.SRProcesses;
-import com.aoindustries.aoserv.client.SRSwapRate;
-import com.aoindustries.aoserv.client.SRSwapSize;
 import com.aoindustries.aoserv.client.SchemaColumn;
 import com.aoindustries.aoserv.client.SchemaForeignKey;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.SchemaType;
-import com.aoindustries.aoserv.client.SendmailSmtpStat;
 import com.aoindustries.aoserv.client.Server;
 import com.aoindustries.aoserv.client.ServerFarm;
-import com.aoindustries.aoserv.client.ServerReport;
 import com.aoindustries.aoserv.client.Shell;
 import com.aoindustries.aoserv.client.SignupRequest;
 import com.aoindustries.aoserv.client.SignupRequestOption;
@@ -308,13 +272,12 @@ final public class TableHandler {
      */
     public static void getObject(
         MasterDatabaseConnection conn,
-        BackupDatabaseConnection backupConn,
         RequestSource source,
         CompressedDataInputStream in,
         CompressedDataOutputStream out,
         SchemaTable.TableID tableID
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getObject(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,CompressedDataInputStream,CompressedDataOutputStream,SchemaTable.TableID)", getTableName(conn, tableID));
+        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getObject(MasterDatabaseConnection,RequestSource,CompressedDataInputStream,CompressedDataOutputStream,SchemaTable.TableID)", getTableName(conn, tableID));
         try {
             String username=source.getUsername();
             MasterUser masterUser=MasterServer.getMasterUser(conn, username);
@@ -335,187 +298,19 @@ final public class TableHandler {
                         out.writeByte(AOServProtocol.DONE);
                     }
                     break;
-                case BACKUP_DATA :
+                case BACKUP_REPORTS :
+                {
                     int pkey=in.readCompressedInt();
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObject(
-                            backupConn,
-                            source,
-                            out,
-                            "select * from backup_data where pkey=?",
-                            pkey,
-                            new BackupData()
-                        ); else MasterServer.writeObject(
-                            backupConn,
-                            source,
-                            out,
-                            "select\n"
-                            + "  bd.*\n"
-                            + "from\n"
-                            + "  backup_data bd\n"
-                            + "where\n"
-                            + "  bd.pkey=?\n"
-                            + "  and (\n"
-                            + "    (\n"
-                            + "      select\n"
-                            + "        fb.backup_data\n"
-                            + "      from\n"
-                            + "        master_servers ms,\n"
-                            + "        file_backups fb\n"
-                            + "      where\n"
-                            + "        ms.username=?\n"
-                            + "        and ms.server=fb.server\n"
-                            + "        and fb.backup_data=bd.pkey\n"
-                            + "      limit 1\n"
-                            + "    ) is not null\n"
-                            + "    or (\n"
-                            + "      select\n"
-                            + "        ib.backup_data\n"
-                            + "      from\n"
-                            + "        master_servers ms,\n"
-                            + "        interbase_backups ib\n"
-                            + "      where\n"
-                            + "        ms.username=?\n"
-                            + "        and ms.server=ib.ao_server\n"
-                            + "        and ib.backup_data=bd.pkey\n"
-                            + "      limit 1\n"
-                            + "    ) is not null\n"
-                            + "    or (\n"
-                            + "      select\n"
-                            + "        mb.backup_data\n"
-                            + "      from\n"
-                            + "        master_servers ms,\n"
-                            + "        mysql_servers mys,\n"
-                            + "        mysql_backups mb\n"
-                            + "      where\n"
-                            + "        ms.username=?\n"
-                            + "        and ms.server=mys.ao_server\n"
-                            + "        and mys.pkey=mb.mysql_server\n"
-                            + "        and mb.backup_data=bd.pkey\n"
-                            + "      limit 1\n"
-                            + "    ) is not null\n"
-                            + "    or (\n"
-                            + "      select\n"
-                            + "        pb.backup_data\n"
-                            + "      from\n"
-                            + "        master_servers ms,\n"
-                            + "        postgres_servers ps,\n"
-                            + "        postgres_backups pb\n"
-                            + "      where\n"
-                            + "        ms.username=?\n"
-                            + "        and ms.server=ps.ao_server\n"
-                            + "        and ps.pkey=pb.postgres_server\n"
-                            + "        and pb.backup_data=bd.pkey\n"
-                            + "      limit 1\n"
-                            + "    ) is not null\n"
-                            + "  )",
-                            pkey,
-                            username,
-                            username,
-                            username,
-                            username,
-                            new BackupData()
-                        );
-                    } else {
-                        IntList packages=PackageHandler.getIntPackages(conn, source);
-                        int size=packages.size();
-                        StringBuilder sql=new StringBuilder();
-                        sql.append(
-                            "select\n"
-                            + "  bd.*\n"
-                            + "from\n"
-                            + "  backup_data bd\n"
-                            + "where\n"
-                            + "  bd.pkey=?\n"
-                            + "  and (\n"
-                            + "    (\n"
-                            + "      select\n"
-                            + "        fb.backup_data\n"
-                            + "      from\n"
-                            + "        file_backups fb\n"
-                            + "      where\n"
-                            + "        fb.backup_data=bd.pkey\n"
-                            + "        and fb.package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + "      limit 1\n"
-                            + "    ) is not null\n"
-                            + "    or (\n"
-                            + "      select\n"
-                            + "        ib.backup_data\n"
-                            + "      from\n"
-                            + "        interbase_backups ib\n"
-                            + "      where\n"
-                            + "        ib.backup_data=bd.pkey\n"
-                            + "        and ib.package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + "      limit 1\n"
-                            + "    ) is not null\n"
-                            + "    or (\n"
-                            + "      select\n"
-                            + "        mb.backup_data\n"
-                            + "      from\n"
-                            + "        mysql_backups mb\n"
-                            + "      where\n"
-                            + "        mb.backup_data=bd.pkey\n"
-                            + "        and mb.package in (\n");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + "      limit 1\n"
-                            + "    ) is not null\n"
-                            + "    or (\n"
-                            + "      select\n"
-                            + "        pb.backup_data\n"
-                            + "      from\n"
-                            + "        postgres_backups pb\n"
-                            + "      where\n"
-                            + "        pb.backup_data=bd.pkey\n"
-                            + "        and pb.package in (\n");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + "      limit 1\n"
-                            + "    ) is not null\n"
-                            + "  )");
-
-                        MasterServer.writeObject(
-                            backupConn,
-                            source,
-                            out,
-                            sql.toString(),
-                            pkey,
-                            new BackupData()
-                        );
-                    }
-                    break;
-                case BACKUP_REPORTS :
-                    pkey=in.readCompressedInt();
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObject(
-                            backupConn,
+                            conn,
                             source,
                             out,
                             "select * from backup_reports where pkey=?",
                             pkey,
                             new BackupReport()
                         ); else MasterServer.writeObject(
-                            backupConn,
+                            conn,
                             source,
                             out,
                             "select\n"
@@ -533,7 +328,7 @@ final public class TableHandler {
                         );
                     } else {
                         MasterServer.writeObject(
-                            backupConn,
+                            conn,
                             source,
                             out,
                             "select\n"
@@ -559,6 +354,7 @@ final public class TableHandler {
                         );
                     }
                     break;
+                }
                 case BANK_TRANSACTIONS :
                     if(BankAccountHandler.isBankAccounting(conn, source)) {
                         MasterServer.writeObject(
@@ -586,185 +382,18 @@ final public class TableHandler {
                         );
                     } else out.writeByte(AOServProtocol.DONE);
                     break;
-                case FILE_BACKUPS :
-                    pkey=in.readCompressedInt();
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObject(
-                            backupConn,
-                            source,
-                            out,
-                            "select\n"
-                            + "  fb.pkey,\n"
-                            + "  fb.server,\n"
-                            + "  fp.path,\n"
-                            + "  fb.device,\n"
-                            + "  fb.inode,\n"
-                            + "  fb.package,\n"
-                            + "  fb.mode,\n"
-                            + "  fb.uid,\n"
-                            + "  fb.gid,\n"
-                            + "  fb.backup_data,\n"
-                            + "  fb.create_time,\n"
-                            + "  fb.modify_time,\n"
-                            + "  fb.remove_time,\n"
-                            + "  fb.backup_level,\n"
-                            + "  fb.backup_retention,\n"
-                            + "  fb.symlink_target,\n"
-                            + "  fb.device_id\n"
-                            + "from\n"
-                            + "  file_backups fb,\n"
-                            + "  file_paths fp\n"
-                            + "where\n"
-                            + "  fb.pkey=?\n"
-                            + "  and fb.file_path=fp.pkey",
-                            pkey,
-                            new FileBackup()
-                        ); else MasterServer.writeObject(
-                            backupConn,
-                            source,
-                            out,
-                            "select\n"
-                            + "  fb.pkey,\n"
-                            + "  fb.server,\n"
-                            + "  fp.path,\n"
-                            + "  fb.device,\n"
-                            + "  fb.inode,\n"
-                            + "  fb.package,\n"
-                            + "  fb.mode,\n"
-                            + "  fb.uid,\n"
-                            + "  fb.gid,\n"
-                            + "  fb.backup_data,\n"
-                            + "  fb.create_time,\n"
-                            + "  fb.modify_time,\n"
-                            + "  fb.remove_time,\n"
-                            + "  fb.backup_level,\n"
-                            + "  fb.backup_retention,\n"
-                            + "  fb.symlink_target,\n"
-                            + "  fb.device_id\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  file_backups fb,\n"
-                            + "  file_paths fp\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=fb.server\n"
-                            + "  and fb.pkey=?\n"
-                            + "  and fb.file_path=fp.pkey",
-                            username,
-                            pkey,
-                            new FileBackup()
-                        );
-                    } else {
-                        IntList packages=PackageHandler.getIntPackages(conn, source);
-                        int size=packages.size();
-                        StringBuilder sql=new StringBuilder();
-                        sql.append(
-                            "select\n"
-                            + "  fb.pkey,\n"
-                            + "  fb.server,\n"
-                            + "  fp.path,\n"
-                            + "  fb.device,\n"
-                            + "  fb.inode,\n"
-                            + "  fb.package,\n"
-                            + "  fb.mode,\n"
-                            + "  fb.uid,\n"
-                            + "  fb.gid,\n"
-                            + "  fb.backup_data,\n"
-                            + "  fb.create_time,\n"
-                            + "  fb.modify_time,\n"
-                            + "  fb.remove_time,\n"
-                            + "  fb.backup_level,\n"
-                            + "  fb.backup_retention,\n"
-                            + "  fb.symlink_target,\n"
-                            + "  fb.device_id\n"
-                            + "from\n"
-                            + "  file_backups fb,\n"
-                            + "  file_paths fp\n"
-                            + "where\n"
-                            + "  fb.pkey=?\n"
-                            + "  and fb.package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(")\n"
-                                + "  and fb.file_path=fp.pkey");
-
-                        MasterServer.writeObject(
-                            backupConn,
-                            source,
-                            out,
-                            sql.toString(),
-                            pkey,
-                            new FileBackup()
-                        );
-                    }
-                    break;
-                case SENDMAIL_SMTP_STATS :
-                    pkey=in.readCompressedInt();
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObject(
-                            conn,
-                            source,
-                            out,
-                            "select * from sendmail_smtp_stats where pkey=?",
-                            pkey,
-                            new SendmailSmtpStat()
-                        ); else MasterServer.writeObject(
-                            conn,
-                            source,
-                            out,
-                            "select\n"
-                            + "  sss.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  sendmail_smtp_stats sss\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sss.ao_server\n"
-                            + "  and sss.pkey=?",
-                            username,
-                            pkey,
-                            new SendmailSmtpStat()
-                        );
-                    } else {
-                        MasterServer.writeObject(
-                            conn,
-                            source,
-                            out,
-                            "select\n"
-                            + "  sss.*\n"
-                            + "from\n"
-                            + "  usernames un,\n"
-                            + "  packages pk1,\n"
-                            + BU1_PARENTS_JOIN
-                            + "  packages pk2,\n"
-                            + "  sendmail_smtp_stats sss\n"
-                            + "where\n"
-                            + "  un.username=?\n"
-                            + "  and un.package=pk1.name\n"
-                            + "  and (\n"
-                            + PK1_BU1_PARENTS_WHERE
-                            + "  )\n"
-                            + "  and bu1.accounting=pk2.accounting\n"
-                            + "  and pk2.name=sss.package\n"
-                            + "  and sss.pkey=?",
-                            username,
-                            pkey,
-                            new SendmailSmtpStat()
-                        );
-                    }
-                    break;
                 case SPAM_EMAIL_MESSAGES :
-                    pkey=in.readCompressedInt();
-                    if(masterUser!=null && masterServers.length==0) MasterServer.writeObject(
-                        conn,
-                        source,
-                        out,
-                        "select * from spam_email_messages where pkey=?",
-                        pkey,
-                        new SpamEmailMessage()
-                    ); else throw new SQLException("Only master users may access spam_email_messages.");
+                    {
+                        int pkey=in.readCompressedInt();
+                        if(masterUser!=null && masterServers.length==0) MasterServer.writeObject(
+                            conn,
+                            source,
+                            out,
+                            "select * from spam_email_messages where pkey=?",
+                            pkey,
+                            new SpamEmailMessage()
+                        ); else throw new SQLException("Only master users may access spam_email_messages.");
+                    }
                     break;
                 case TICKETS :
                     int ticketId=in.readCompressedInt();
@@ -837,11 +466,10 @@ final public class TableHandler {
 
     public static int getCachedRowCount(
         MasterDatabaseConnection conn,
-        BackupDatabaseConnection backupConn,
         RequestSource source,
         SchemaTable.TableID tableID
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getCachedRowCount(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,SchemaTable.TableID)", getTableName(conn, tableID));
+        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getCachedRowCount(MasterDatabaseConnection,RequestSource,SchemaTable.TableID)", getTableName(conn, tableID));
         try {
             String username=source.getUsername();
 
@@ -867,7 +495,6 @@ final public class TableHandler {
                 ) {
                     rowCounts[tableID.ordinal()]=getRowCount(
                         conn,
-                        backupConn,
                         source,
                         tableID
                     );
@@ -886,11 +513,10 @@ final public class TableHandler {
      */
     public static int getRowCount(
         MasterDatabaseConnection conn,
-        BackupDatabaseConnection backupConn,
         RequestSource source,
         SchemaTable.TableID tableID
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getRowCount(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,SchemaTable.TableID)", getTableName(conn, tableID));
+        Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "getRowCount(MasterDatabaseConnection,RequestSource,SchemaTable.TableID)", getTableName(conn, tableID));
         try {
             String username=source.getUsername();
             MasterUser masterUser=MasterServer.getMasterUser(conn, username);
@@ -926,134 +552,6 @@ final public class TableHandler {
                         + "  and ti.pkey=ac.ticket_id",
                         username
                     );
-                case BACKUP_DATA :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) return backupConn.executeIntQuery(
-                            Connection.TRANSACTION_READ_COMMITTED,
-                            true,
-                            true,
-                            "select count(*) from backup_data"
-                        ); else {
-                            backupConn.executeUpdate("set enable_seqscan to off");
-                            try {
-                                return backupConn.executeIntQuery(
-                                    Connection.TRANSACTION_READ_COMMITTED,
-                                    false,  // Make sure to use the same connection in conn
-                                    true,
-                                    "select\n"
-                                    + "  count(*)\n"
-                                    + "from (\n"
-                                    + "  select\n"
-                                    + "    fb.backup_data as bd_pk\n"
-                                    + "  from\n"
-                                    + "    master_servers ms,\n"
-                                    + "    file_backups fb\n"
-                                    + "  where\n"
-                                    + "    ms.username=?\n"
-                                    + "    and ms.server=fb.server\n"
-                                    + "  union select\n"
-                                    + "    ib.backup_data\n"
-                                    + "  from\n"
-                                    + "    master_servers ms,\n"
-                                    + "    interbase_backups ib\n"
-                                    + "  where\n"
-                                    + "    ms.username=?\n"
-                                    + "    and ms.server=ib.ao_server\n"
-                                    + "  union select\n"
-                                    + "    mb.backup_data\n"
-                                    + "  from\n"
-                                    + "    master_servers ms,\n"
-                                    + "    mysql_servers mys,\n"
-                                    + "    mysql_backups mb\n"
-                                    + "  where\n"
-                                    + "    ms.username=?\n"
-                                    + "    and ms.server=mys.ao_server\n"
-                                    + "    and mys.pkey=mb.mysql_server\n"
-                                    + "  union select\n"
-                                    + "    pb.backup_data\n"
-                                    + "  from\n"
-                                    + "    master_servers ms,\n"
-                                    + "    postgres_servers ps,\n"
-                                    + "    postgres_backups pb\n"
-                                    + "  where\n"
-                                    + "    ms.username=?\n"
-                                    + "    and ms.server=ps.ao_server\n"
-                                    + "    and ps.pkey=pb.postgres_server\n"
-                                    + ") as bd",
-                                    username,
-                                    username,
-                                    username,
-                                    username
-                                );
-                            } finally {
-                                backupConn.executeUpdate("set enable_seqscan to on");
-                            }
-                        }
-                    } else {
-                        IntList packages=PackageHandler.getIntPackages(conn, source);
-                        int size=packages.size();
-                        StringBuilder sql=new StringBuilder();
-                        sql.append(
-                            "select\n"
-                            + "  count(*)\n"
-                            + "from (\n"
-                            + "  select\n"
-                            + "    backup_data\n"
-                            + "  from\n"
-                            + "    file_backups\n"
-                            + "  where\n"
-                            + "    package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + "  union select\n"
-                            + "    backup_data\n"
-                            + "  from\n"
-                            + "    interbase_backups\n"
-                            + "  where\n"
-                            + "    package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + "  union select\n"
-                            + "    backup_data\n"
-                            + "  from\n"
-                            + "    mysql_backups\n"
-                            + "  where\n"
-                            + "    package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + "  union select\n"
-                            + "    backup_data\n"
-                            + "  from\n"
-                            + "    postgres_backups\n"
-                            + "  where\n"
-                            + "    package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + ") bd");
-
-                        backupConn.executeUpdate("set enable_seqscan to off");
-                        try {
-                            return backupConn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, sql.toString());
-                        } finally {
-                            backupConn.executeUpdate("set enable_seqscan to on");
-                        }
-                    }
                 case DISTRO_FILES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) {
@@ -1081,57 +579,6 @@ final public class TableHandler {
                             return conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, sql.toString());
                         }
                     } else return 0;
-                case FILE_BACKUPS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) return backupConn.executeIntQuery(
-                            Connection.TRANSACTION_READ_COMMITTED,
-                            true,
-                            true,
-                            "select count(*) from file_backups"
-                        ); else {
-                            backupConn.executeUpdate("set enable_seqscan to off");
-                            try {
-                                return backupConn.executeIntQuery(
-                                    Connection.TRANSACTION_READ_COMMITTED,
-                                    false,  // Make sure to use the same connection as enable_seqscan
-                                    true,
-                                    "select\n"
-                                    + "  count(*)\n"
-                                    + "from\n"
-                                    + "  master_servers ms,\n"
-                                    + "  file_backups fb\n"
-                                    + "where\n"
-                                    + "  ms.username=?\n"
-                                    + "  and ms.server=fb.server",
-                                    username
-                                );
-                            } finally {
-                                backupConn.executeUpdate("set enable_seqscan to on");
-                            }
-                        }
-                    } else {
-                        IntList packages=PackageHandler.getIntPackages(conn, source);
-                        int size=packages.size();
-                        StringBuilder sql=new StringBuilder();
-                        sql.append("select\n"
-                                + "  count(*)\n"
-                                + "from\n"
-                                + "  file_backups\n"
-                                + "where\n"
-                                + "  package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(')');
-
-                        backupConn.executeUpdate("set enable_seqscan to off");
-                        try {
-                            return backupConn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, sql.toString());
-                        } finally {
-                            backupConn.executeUpdate("set enable_seqscan to on");
-                        }
-                    }
                 case TICKETS :
                     if(masterUser!=null) {
                         if(masterServers.length==0 || masterUser.isTicketAdmin()) return conn.executeIntQuery(
@@ -1173,7 +620,6 @@ final public class TableHandler {
      */
     public static void getTable(
         MasterDatabaseConnection conn,
-        BackupDatabaseConnection backupConn,
         RequestSource source,
         CompressedDataInputStream in,
         CompressedDataOutputStream out,
@@ -1181,7 +627,7 @@ final public class TableHandler {
         final SchemaTable.TableID tableID
     ) throws IOException, SQLException {
         final int profilerLevel=tableID==SchemaTable.TableID.MASTER_PROCESSES?Profiler.FAST:Profiler.UNKNOWN;
-        Profiler.startProfile(profilerLevel, TableHandler.class, "getTable(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,CompressedDataInputStream,CompressedDataOutputStream,boolean,SchemaTable.TableID)", getTableName(conn, tableID));
+        Profiler.startProfile(profilerLevel, TableHandler.class, "getTable(MasterDatabaseConnection,RequestSource,CompressedDataInputStream,CompressedDataOutputStream,boolean,SchemaTable.TableID)", getTableName(conn, tableID));
         try {
             String username=source.getUsername();
             MasterUser masterUser=MasterServer.getMasterUser(conn, username);
@@ -1282,38 +728,7 @@ final public class TableHandler {
                             provideProgress,
                             new AOServer(),
                             "select distinct\n"
-                            + "  ao2.server,\n"
-                            + "  ao2.num_cpu,\n"
-                            + "  ao2.cpu_speed,\n"
-                            + "  ao2.ram,\n"
-                            + "  ao2.rack,\n"
-                            + "  ao2.disk,\n"
-                            + "  ao2.wildcard_https,\n"
-                            + "  ao2.is_interbase,\n"
-                            + "  ao2.is_dns,\n"
-                            + "  ao2.is_router,\n"
-                            + "  ao2.iptables_name,\n"
-                            + "  ao2.daemon_bind,\n"
-                            + "  ao2.daemon_key,\n"
-                            + "  ao2.pool_size,\n"
-                            + "  ao2.distro_hour,\n"
-                            + "  ao2.last_distro_time,\n"
-                            + "  ao2.failover_server,\n"
-                            + "  ao2.server_report_delay,\n"
-                            + "  ao2.server_report_interval,\n"
-                            + "  ao2.is_qmail,\n"
-                            + "  ao2.daemon_device_id,\n"
-                            + "  ao2.xeroscape_name,\n"
-                            + "  ao2.value,\n"
-                            + "  ao2.monitoring_enabled,\n"
-                            + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                            + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                            + "  ao2.daemon_connect_bind,\n"
-                            + "  ao2.time_zone,\n"
-                            + "  ao2.jilter_bind,\n"
-                            + "  ao2.restrict_outbound_email,\n"
-                            + "  ao2.daemon_connect_address,\n"
-                            + "  ao2.failover_batch_size\n"
+                            + "  ao2.*\n"
                             + "from\n"
                             + "  master_servers ms\n"
                             + "  inner join ao_servers ao on ms.server=ao.server\n"
@@ -1322,7 +737,8 @@ final public class TableHandler {
                             // Allow its failover children
                             + "  left join ao_servers fs on ao.server=fs.failover_server\n"
                             // Allow servers it replicates to
-                            + "  left join failover_file_replications ffr on ms.server=ffr.from_server,\n"
+                            + "  left join failover_file_replications ffr on ms.server=ffr.server\n"
+                            + "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
                             + "  ao_servers ao2\n"
                             + "where\n"
                             + "  ms.username=?\n"
@@ -1333,8 +749,8 @@ final public class TableHandler {
                             + "    or ff.server=ao2.server\n"
                             // Allow its failover children
                             + "    or fs.server=ao2.server\n"
-                            // Allow servers is replicates to
-                            + "    or ffr.to_server=ao2.server\n"
+                            // Allow servers it replicates to
+                            + "    or bp.ao_server=ao2.server\n"
                             + "  )",
                             username
                         );
@@ -1346,31 +762,13 @@ final public class TableHandler {
                         new AOServer(),
                         "select\n"
                         + "  ao.server,\n"
-                        + "  ao.num_cpu,\n"
-                        + "  ao.cpu_speed,\n"
-                        + "  ao.ram,\n"
-                        + "  ao.rack,\n"
-                        + "  ao.disk,\n"
-                        + "  ao.wildcard_https,\n"
-                        + "  ao.is_interbase,\n"
-                        + "  ao.is_dns,\n"
-                        + "  ao.is_router,\n"
-                        + "  ao.iptables_name,\n"
                         + "  ao.daemon_bind,\n"
                         + "  '"+AOServProtocol.FILTERED+"'::text,\n"
                         + "  ao.pool_size,\n"
                         + "  ao.distro_hour,\n"
                         + "  ao.last_distro_time,\n"
                         + "  ao.failover_server,\n"
-                        + "  ao.server_report_delay,\n"
-                        + "  ao.server_report_interval,\n"
-                        + "  ao.is_qmail,\n"
                         + "  ao.daemon_device_id,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  '0.00'::decimal(9,2),\n"
-                        + "  ao.monitoring_enabled,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
                         + "  ao.daemon_connect_bind,\n"
                         + "  ao.time_zone,\n"
                         + "  ao.jilter_bind,\n"
@@ -1444,175 +842,17 @@ final public class TableHandler {
                         "select * from architectures"
                     );
                     break;
-                case BACKUP_DATA :
-                    if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.BACKUP_DATA));
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.fetchObjects(
-                            backupConn,
-                            source,
-                            out,
-                            new BackupData(),
-                            "select * from backup_data"
-                        ); else {
-                            backupConn.executeUpdate("set enable_seqscan to off");
-                            try {
-                                MasterServer.fetchObjects(
-                                    backupConn,
-                                    source,
-                                    out,
-                                    new BackupData(),
-                                    "select\n"
-                                    + "  bd.pkey as bd_pk,\n"
-                                    + "  bd.created,\n"
-                                    + "  bd.backup_partition,\n"
-                                    + "  bd.data_size,\n"
-                                    + "  bd.compressed_size,\n"
-                                    + "  bd.md5_hi,\n"
-                                    + "  bd.md5_lo,\n"
-                                    + "  bd.is_stored\n"
-                                    + "from\n"
-                                    + "  master_servers ms,\n"
-                                    + "  file_backups fb,\n"
-                                    + "  backup_data bd\n"
-                                    + "where\n"
-                                    + "  ms.username=?\n"
-                                    + "  and ms.server=fb.server\n"
-                                    + "  and fb.backup_data=bd.pkey\n"
-                                    + "union select\n"
-                                    + "  bd.*\n"
-                                    + "from\n"
-                                    + "  master_servers ms,\n"
-                                    + "  interbase_backups ib,\n"
-                                    + "  backup_data bd\n"
-                                    + "where\n"
-                                    + "  ms.username=?\n"
-                                    + "  and ms.server=ib.ao_server\n"
-                                    + "  and ib.backup_data=bd.pkey\n"
-                                    + "union select\n"
-                                    + "  bd.*\n"
-                                    + "from\n"
-                                    + "  master_servers ms,\n"
-                                    + "  mysql_servers mys,\n"
-                                    + "  mysql_backups mb,\n"
-                                    + "  backup_data bd\n"
-                                    + "where\n"
-                                    + "  ms.username=?\n"
-                                    + "  and ms.server=mys.ao_server\n"
-                                    + "  and mys.pkey=mb.mysql_server\n"
-                                    + "  and mb.backup_data=bd.pkey\n"
-                                    + "union select\n"
-                                    + "  bd.*\n"
-                                    + "from\n"
-                                    + "  master_servers ms,\n"
-                                    + "  postgres_servers ps,\n"
-                                    + "  postgres_backups pb,\n"
-                                    + "  backup_data bd\n"
-                                    + "where\n"
-                                    + "  ms.username=?\n"
-                                    + "  and ms.server=ps.ao_server\n"
-                                    + "  and ps.pkey=pb.postgres_server\n"
-                                    + "  and pb.backup_data=bd.pkey",
-                                    username,
-                                    username,
-                                    username,
-                                    username
-                                );
-                            } finally {
-                                backupConn.executeUpdate("set enable_seqscan to on");
-                            }
-                        }
-                    } else {
-                        IntList packages=PackageHandler.getIntPackages(conn, source);
-                        int size=packages.size();
-                        StringBuilder sql=new StringBuilder();
-
-                        sql.append(
-                            "select\n"
-                            + "  bd1.*\n"
-                            + "from\n"
-                            + "  file_backups fb,\n"
-                            + "  backup_data bd1\n"
-                            + "where\n"
-                            + "  fb.package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + "  and fb.backup_data=bd1.pkey\n"
-                            + "union select\n"
-                            + "  bd2.*\n"
-                            + "from\n"
-                            + "  interbase_backups ib,\n"
-                            + "  backup_data bd2\n"
-                            + "where\n"
-                            + "  ib.package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + "  and ib.backup_data=bd2.pkey\n"
-                            + "union select\n"
-                            + "  bd3.*\n"
-                            + "from\n"
-                            + "  mysql_backups mb,\n"
-                            + "  backup_data bd3\n"
-                            + "where\n"
-                            + "  mb.package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + "  and mb.backup_data=bd3.pkey\n"
-                            + "union select\n"
-                            + "  bd4.*\n"
-                            + "from\n"
-                            + "  postgres_backups pb,\n"
-                            + "  backup_data bd4\n"
-                            + "where\n"
-                            + "  pb.package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(
-                            ")\n"
-                            + "  and pb.backup_data=bd4.pkey");
-
-                        backupConn.executeUpdate("set enable_seqscan to off");
-                        try {
-                            MasterServer.fetchObjects(backupConn, source, out, new BackupData(), sql.toString());
-                        } finally {
-                            backupConn.executeUpdate("set enable_seqscan to on");
-                        }
-                    }
-                    break;
-                case BACKUP_LEVELS :
-                    MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new BackupLevel(),
-                        "select * from backup_levels"
-                    );
-                    break;
                 case BACKUP_PARTITIONS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
-                            backupConn,
+                            conn,
                             source,
                             out,
                             provideProgress,
                             new BackupPartition(),
                             "select * from backup_partitions"
                         ); else MasterServer.writeObjects(
-                            backupConn,
+                            conn,
                             source,
                             out,
                             provideProgress,
@@ -1628,7 +868,7 @@ final public class TableHandler {
                             username
                         );
                     } else MasterServer.writeObjects(
-                        backupConn,
+                        conn,
                         source,
                         out,
                         provideProgress,
@@ -1651,14 +891,14 @@ final public class TableHandler {
                 case BACKUP_REPORTS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
-                            backupConn,
+                            conn,
                             source,
                             out,
                             provideProgress,
                             new BackupReport(),
                             "select * from backup_reports"
                         ); else MasterServer.writeObjects(
-                            backupConn,
+                            conn,
                             source,
                             out,
                             provideProgress,
@@ -1674,7 +914,7 @@ final public class TableHandler {
                             username
                         );
                     } else MasterServer.writeObjects(
-                        backupConn,
+                        conn,
                         source,
                         out,
                         provideProgress,
@@ -2835,7 +2075,7 @@ final public class TableHandler {
                             + "where\n"
                             + "  ms.username=?\n"
                             + "  and ms.server=lsg.ao_server\n"
-                            + "  and lsg.pkey=el.linux_group",
+                            + "  and lsg.pkey=el.linux_server_group",
                             username
                         );
                     } else MasterServer.writeObjects(
@@ -2863,7 +2103,7 @@ final public class TableHandler {
                         + "  and bu1.accounting=pk2.accounting\n"
                         + "  and pk2.name=lg.package\n"
                         + "  and lg.name=lsg.name\n"
-                        + "  and lsg.pkey=el.linux_group",
+                        + "  and lsg.pkey=el.linux_server_group",
                         username
                     );
                     break;
@@ -3063,7 +2303,7 @@ final public class TableHandler {
                             + "  failover_file_log ffl\n"
                             + "where\n"
                             + "  ms.username=?\n"
-                            + "  and ms.server=ffr.from_server\n"
+                            + "  and ms.server=ffr.server\n"
                             + "  and ffr.pkey=ffl.replication",
                             username
                         );
@@ -3085,7 +2325,7 @@ final public class TableHandler {
                         + "  un.username=?\n"
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=ffr.from_server\n"
+                        + "  and bs.server=ffr.server\n"
                         + "  and ffr.pkey=ffl.replication",
                         username
                     );
@@ -3112,7 +2352,7 @@ final public class TableHandler {
                             + "  failover_file_replications ffr\n"
                             + "where\n"
                             + "  ms.username=?\n"
-                            + "  and ms.server=ffr.from_server",
+                            + "  and ms.server=ffr.server",
                             username
                         );
                     } else MasterServer.writeObjects(
@@ -3132,7 +2372,7 @@ final public class TableHandler {
                         + "  un.username=?\n"
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=ffr.from_server",
+                        + "  and bs.server=ffr.server",
                         username
                     );
                     break;
@@ -3159,7 +2399,7 @@ final public class TableHandler {
                             + "  failover_file_schedule ffs\n"
                             + "where\n"
                             + "  ms.username=?\n"
-                            + "  and ms.server=ffr.from_server\n"
+                            + "  and ms.server=ffr.server\n"
                             + "  and ffr.pkey=ffs.replication",
                             username
                         );
@@ -3181,7 +2421,7 @@ final public class TableHandler {
                         + "  un.username=?\n"
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=ffr.from_server\n"
+                        + "  and bs.server=ffr.server\n"
                         + "  and ffr.pkey=ffs.replication",
                         username
                     );
@@ -3209,7 +2449,7 @@ final public class TableHandler {
                             + "  failover_mysql_replications fmr\n"
                             + "where\n"
                             + "  ms.username=?\n"
-                            + "  and ms.server=ffr.from_server\n"
+                            + "  and ms.server=ffr.server\n"
                             + "  and ffr.pkey=fmr.replication",
                             username
                         );
@@ -3231,191 +2471,8 @@ final public class TableHandler {
                         + "  un.username=?\n"
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=ffr.from_server\n"
+                        + "  and bs.server=ffr.server\n"
                         + "  and ffr.pkey=fmr.replication",
-                        username
-                    );
-                    break;
-                case FILE_BACKUPS :
-                    if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.FILE_BACKUPS));
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.fetchObjects(
-                            backupConn,
-                            source,
-                            out,
-                            new FileBackup(),
-                            "select\n"
-                            + "  fb.pkey,\n"
-                            + "  fb.server,\n"
-                            + "  fp.path,\n"
-                            + "  fb.device,\n"
-                            + "  fb.inode,\n"
-                            + "  fb.package,\n"
-                            + "  fb.mode,\n"
-                            + "  fb.uid,\n"
-                            + "  fb.gid,\n"
-                            + "  fb.backup_data,\n"
-                            + "  fb.create_time,\n"
-                            + "  fb.modify_time,\n"
-                            + "  fb.remove_time,\n"
-                            + "  fb.backup_level,\n"
-                            + "  fb.backup_retention,\n"
-                            + "  fb.symlink_target,\n"
-                            + "  fb.device_id\n"
-                            + "from\n"
-                            + "  file_backups fb,\n"
-                            + "  file_paths fp\n"
-                            + "where\n"
-                            + "  fb.file_path=fp.pkey"
-                        ); else {
-                            backupConn.executeUpdate("set enable_seqscan to off");
-                            try {
-                                MasterServer.fetchObjects(
-                                    backupConn,
-                                    source,
-                                    out,
-                                    new FileBackup(),
-                                    "select\n"
-                                    + "  fb.pkey,\n"
-                                    + "  fb.server,\n"
-                                    + "  fp.path,\n"
-                                    + "  fb.device,\n"
-                                    + "  fb.inode,\n"
-                                    + "  fb.package,\n"
-                                    + "  fb.mode,\n"
-                                    + "  fb.uid,\n"
-                                    + "  fb.gid,\n"
-                                    + "  fb.backup_data,\n"
-                                    + "  fb.create_time,\n"
-                                    + "  fb.modify_time,\n"
-                                    + "  fb.remove_time,\n"
-                                    + "  fb.backup_level,\n"
-                                    + "  fb.backup_retention,\n"
-                                    + "  fb.symlink_target,\n"
-                                    + "  fb.device_id\n"
-                                    + "from\n"
-                                    + "  master_servers ms,\n"
-                                    + "  file_backups fb\n"
-                                    + "where\n"
-                                    + "  ms.username=?\n"
-                                    + "  and ms.server=fb.server\n"
-                                    + "  and fb.file_path=fp.pkey",
-                                    username
-                                );
-                            } finally {
-                                backupConn.executeUpdate("set enable_seqscan to on");
-                            }
-                        }
-                    } else {
-                        IntList packages=PackageHandler.getIntPackages(conn,  source);
-                        int size=packages.size();
-                        StringBuilder sql=new StringBuilder();
-                        sql.append(
-                            "select\n"
-                            + "  fb.pkey,\n"
-                            + "  fb.server,\n"
-                            + "  fp.path,\n"
-                            + "  fb.device,\n"
-                            + "  fb.inode,\n"
-                            + "  fb.package,\n"
-                            + "  fb.mode,\n"
-                            + "  fb.uid,\n"
-                            + "  fb.gid,\n"
-                            + "  fb.backup_data,\n"
-                            + "  fb.create_time,\n"
-                            + "  fb.modify_time,\n"
-                            + "  fb.remove_time,\n"
-                            + "  fb.backup_level,\n"
-                            + "  fb.backup_retention,\n"
-                            + "  fb.symlink_target,\n"
-                            + "  fb.device_id\n"
-                            + "from\n"
-                            + "  file_backups fb,\n"
-                            + "  file_paths fp\n"
-                            + "where\n"
-                            + "  fb.package in (");
-                        for(int c=0;c<size;c++) {
-                            if(c>0) sql.append(',');
-                            sql.append(packages.getInt(c));
-                        }
-                        sql.append(")\n"
-                                +  "  and fb.file_path=fp.pkey");
-
-                        backupConn.executeUpdate("set enable_seqscan to off");
-                        try {
-                            MasterServer.fetchObjects(backupConn, source, out, new FileBackup(), sql.toString());
-                        } finally {
-                            backupConn.executeUpdate("set enable_seqscan to on");
-                        }
-                    }
-                    break;
-                case FILE_BACKUP_DEVICES :
-                    MasterServer.writeObjects(
-                        backupConn,
-                        source,
-                        out,
-                        provideProgress,
-                        new FileBackupDevice(),
-                        "select * from file_backup_devices"
-                    );
-                    break;
-                case FILE_BACKUP_ROOTS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            backupConn,
-                            source,
-                            out,
-                            provideProgress,
-                            new FileBackupRoot(),
-                            "select fbr.pkey, fp.path, fbr.server, fbr.package from file_backup_roots fbr, file_paths fp where fbr.file_path=fp.pkey"
-                        ); else MasterServer.writeObjects(
-                            backupConn,
-                            source,
-                            out,
-                            provideProgress,
-                            new FileBackupRoot(),
-                            "select\n"
-                            + "  fbr.pkey,\n"
-                            + "  fp.path,\n"
-                            + "  fbr.server,\n"
-                            + "  fbr.package\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  file_backup_roots fbr,\n"
-                            + "  file_paths fp\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=fbr.server\n"
-                            + "  and fbr.file_path=fp.pkey",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        backupConn,
-                        source,
-                        out,
-                        provideProgress,
-                        new FileBackupRoot(),
-                        "select\n"
-                        + "  fbr.pkey,\n"
-                        + "  fp.path,\n"
-                        + "  fbr.server,\n"
-                        + "  fbr.package\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
-                        + "  file_backup_roots fbr,\n"
-                        + "  file_paths fp\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.pkey=fbr.package\n"
-                        + "  and fbr.file_path=fp.pkey",
                         username
                     );
                     break;
@@ -3438,10 +2495,12 @@ final public class TableHandler {
                             + "  fbs.*\n"
                             + "from\n"
                             + "  master_servers ms,\n"
+                            + "  failover_file_replications ffr,\n"
                             + "  file_backup_settings fbs\n"
                             + "where\n"
                             + "  ms.username=?\n"
-                            + "  and ms.server=fbs.server",
+                            + "  and ms.server=ffr.server\n"
+                            + "  and ffr.pkey=fbs.replication",
                             username
                         );
                     } else MasterServer.writeObjects(
@@ -3457,6 +2516,8 @@ final public class TableHandler {
                         + "  packages pk1,\n"
                         + BU1_PARENTS_JOIN
                         + "  packages pk2,\n"
+                        + "  servers se,\n"
+                        + "  failover_file_replications ffr,\n"
                         + "  file_backup_settings fbs\n"
                         + "where\n"
                         + "  un.username=?\n"
@@ -3465,53 +2526,9 @@ final public class TableHandler {
                         + PK1_BU1_PARENTS_WHERE
                         + "  )\n"
                         + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.pkey=fbs.package",
-                        username
-                    );
-                    break;
-                case FILE_BACKUP_STATS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            backupConn,
-                            source,
-                            out,
-                            provideProgress,
-                            new FileBackupStat(),
-                            "select * from file_backup_stats"
-                        ); else MasterServer.writeObjects(
-                            backupConn,
-                            source,
-                            out,
-                            provideProgress,
-                            new FileBackupStat(),
-                            "select\n"
-                            + "  fbs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  file_backup_stats fbs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=fbs.server",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        backupConn,
-                        source,
-                        out,
-                        provideProgress,
-                        new FileBackupStat(),
-                        "select\n"
-                        + "  fbs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  file_backup_stats fbs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=fbs.server",
+                        + "  and pk2.pkey=se.package\n"
+                        + "  and se.pkey=ffr.server\n"
+                        + "  and ffr.pkey=fbs.server",
                         username
                     );
                     break;
@@ -4496,298 +3513,6 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case INTERBASE_BACKUPS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            backupConn,
-                            source,
-                            out,
-                            provideProgress,
-                            new InterBaseBackup(),
-                            "select * from interbase_backups"
-                        ); else MasterServer.writeObjects(
-                            backupConn,
-                            source,
-                            out,
-                            provideProgress,
-                            new InterBaseBackup(),
-                            "select\n"
-                            + "  ib.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  interbase_backups ib\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=ib.ao_server",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        backupConn,
-                        source,
-                        out,
-                        provideProgress,
-                        new InterBaseBackup(),
-                        "select\n"
-                        + "  ib.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
-                        + "  interbase_backups ib\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.pkey=ib.package",
-                        username
-                    );
-                    break;
-                case INTERBASE_DATABASES :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new InterBaseDatabase(),
-                            "select * from interbase_databases"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new InterBaseDatabase(),
-                            "select\n"
-                            + "  id.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  linux_server_groups lsg,\n"
-                            + "  interbase_db_groups idg,\n"
-                            + "  interbase_databases id\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=lsg.ao_server\n"
-                            + "  and lsg.pkey=idg.linux_server_group\n"
-                            + "  and idg.pkey=id.db_group",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new InterBaseDatabase(),
-                        "select\n"
-                        + "  id.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
-                        + "  linux_groups lg,\n"
-                        + "  linux_server_groups lsg,\n"
-                        + "  interbase_db_groups idg,\n"
-                        + "  interbase_databases id\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.name=lg.package\n"
-                        + "  and lg.name=lsg.name\n"
-                        + "  and lsg.pkey=idg.linux_server_group\n"
-                        + "  and idg.pkey=id.db_group",
-                        username
-                    );
-                    break;
-                case INTERBASE_DB_GROUPS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new InterBaseDBGroup(),
-                            "select * from interbase_db_groups"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new InterBaseDBGroup(),
-                            "select\n"
-                            + "  idg.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  linux_server_groups lsg,\n"
-                            + "  interbase_db_groups idg\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=lsg.ao_server\n"
-                            + "  and lsg.pkey=idg.linux_server_group",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new InterBaseDBGroup(),
-                        "select\n"
-                        + "  idg.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
-                        + "  linux_groups lg,\n"
-                        + "  linux_server_groups lsg,\n"
-                        + "  interbase_db_groups idg\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.name=lg.package\n"
-                        + "  and lg.name=lsg.name\n"
-                        + "  and lsg.pkey=idg.linux_server_group",
-                        username
-                    );
-                    break;
-                case INTERBASE_RESERVED_WORDS :
-                    MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new InterBaseReservedWord(),
-                        "select * from interbase_reserved_words"
-                    );
-                    break;
-                case INTERBASE_SERVER_USERS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new InterBaseServerUser(),
-                            "select * from interbase_server_users"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new InterBaseServerUser(),
-                            "select\n"
-                            + "  isu.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  interbase_server_users isu\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=isu.ao_server",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new InterBaseServerUser(),
-                        "select\n"
-                        + "  isu.pkey,\n"
-                        + "  isu.username,\n"
-                        + "  isu.ao_server,\n"
-                        + "  isu.disable_log,\n"
-                        + "  case when isu.predisable_password is null then null else '"+AOServProtocol.FILTERED+"' end\n"
-                        + "from\n"
-                        + "  usernames un1,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
-                        + "  usernames un2,\n"
-                        + "  interbase_server_users isu\n"
-                        + "where\n"
-                        + "  un1.username=?\n"
-                        + "  and un1.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.name=un2.package\n"
-                        + "  and un2.username=isu.username",
-                        username
-                    );
-                    break;
-                case INTERBASE_USERS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new InterBaseUser(),
-                            "select * from interbase_users"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new InterBaseUser(),
-                            "select distinct\n"
-                            + "  iu.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  ao_servers ao,\n"
-                            + "  business_servers bs,\n"
-                            + "  packages pk,\n"
-                            + "  usernames un,\n"
-                            + "  interbase_users iu\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=ao.server\n"
-                            + "  and ao.server=bs.server\n"
-                            + "  and bs.accounting=pk.accounting\n"
-                            + "  and pk.name=un.package\n"
-                            + "  and un.username=iu.username",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new InterBaseUser(),
-                        "select\n"
-                        + "  iu.*\n"
-                        + "from\n"
-                        + "  usernames un1,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
-                        + "  usernames un2,\n"
-                        + "  interbase_users iu\n"
-                        + "where\n"
-                        + "  un1.username=?\n"
-                        + "  and un1.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.name=un2.package\n"
-                        + "  and un2.username=iu.username",
-                        username
-                    );
-                    break;
                 case IP_ADDRESSES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
@@ -4821,9 +3546,10 @@ final public class TableHandler {
                             + "          ffr.pkey\n"
                             + "        from\n"
                             + "          failover_file_replications ffr\n"
+                            + "          inner join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
                             + "        where\n"
-                            + "          ms.server=ffr.from_server\n"
-                            + "          and ffr.to_server=nd.ao_server\n"
+                            + "          ms.server=ffr.server\n"
+                            + "          and bp.ao_server=nd.ao_server\n"
                             + "        limit 1\n"
                             + "      ) is not null\n"
                             + "    )\n"
@@ -5249,12 +3975,6 @@ final public class TableHandler {
                         + "  lsa.ao_server,\n"
                         + "  lsa.uid,\n"
                         + "  lsa.home,\n"
-                        + "  lsa.cron_backup_level,\n"
-                        + "  lsa.cron_backup_retention,\n"
-                        + "  lsa.home_backup_level,\n"
-                        + "  lsa.home_backup_retention,\n"
-                        + "  lsa.inbox_backup_level,\n"
-                        + "  lsa.inbox_backup_retention,\n"
                         + "  lsa.autoresponder_from,\n"
                         + "  lsa.autoresponder_subject,\n"
                         + "  lsa.autoresponder_path,\n"
@@ -5739,58 +4459,6 @@ final public class TableHandler {
                         }
                     }
                     break;
-                case MYSQL_BACKUPS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            backupConn,
-                            source,
-                            out,
-                            provideProgress,
-                            new MySQLBackup(),
-                            "select * from mysql_backups"
-                        ); else MasterServer.writeObjects(
-                            backupConn,
-                            source,
-                            out,
-                            provideProgress,
-                            new MySQLBackup(),
-                            "select\n"
-                            + "  mb.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  mysql_servers mys,\n"
-                            + "  mysql_backups mb\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=mys.ao_server\n"
-                            + "  and mys.pkey=mb.mysql_server",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        backupConn,
-                        source,
-                        out,
-                        provideProgress,
-                        new MySQLBackup(),
-                        "select\n"
-                        + "  mb.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
-                        + "  mysql_backups mb\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.pkey=mb.package",
-                        username
-                    );
-                    break;
                 case MYSQL_DATABASES :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
@@ -6109,9 +4777,10 @@ final public class TableHandler {
                             + "        ffr.pkey\n"
                             + "      from\n"
                             + "        failover_file_replications ffr\n"
+                            + "        inner join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
                             + "      where\n"
-                            + "        ms.server=ffr.from_server\n"
-                            + "        and ffr.to_server=nb.ao_server\n"
+                            + "        ms.server=ffr.server\n"
+                            + "        and bp.ao_server=nb.ao_server\n"
                             + "        and (\n"
                             + "          nb.app_protocol='"+Protocol.AOSERV_DAEMON+"'\n"
                             + "          or nb.app_protocol='"+Protocol.AOSERV_DAEMON_SSL+"'\n"
@@ -6253,9 +4922,10 @@ final public class TableHandler {
                             + "        ffr.pkey\n"
                             + "      from\n"
                             + "        failover_file_replications ffr\n"
+                            + "        inner join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
                             + "      where\n"
-                            + "        ms.server=ffr.from_server\n"
-                            + "        and ffr.to_server=nd.ao_server\n"
+                            + "        ms.server=ffr.server\n"
+                            + "        and bp.ao_server=nd.ao_server\n"
                             + "      limit 1\n"
                             + "    ) is not null\n"
                             + "  )",
@@ -6681,73 +5351,6 @@ final public class TableHandler {
                         provideProgress,
                         new PaymentType(),
                         "select * from payment_types"
-                    );
-                    break;
-                case PHONE_NUMBERS :
-                    if(BankAccountHandler.isAccounting(conn, source)) {
-                        MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new PhoneNumber(),
-                            "select * from phone_numbers"
-                        );
-                    } else {
-                        List<PhoneNumber> emptyList = Collections.emptyList();
-                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                    }
-                    break;
-                case POSTGRES_BACKUPS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            backupConn,
-                            source,
-                            out,
-                            provideProgress,
-                            new PostgresBackup(),
-                            "select * from postgres_backups"
-                        ); else MasterServer.writeObjects(
-                            backupConn,
-                            source,
-                            out,
-                            provideProgress,
-                            new PostgresBackup(),
-                            "select\n"
-                            + "  pb.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  postgres_servers ps,\n"
-                            + "  postgres_backups pb\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=ps.ao_server\n"
-                            + "  and ps.pkey=pb.postgres_server",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        backupConn,
-                        source,
-                        out,
-                        provideProgress,
-                        new PostgresBackup(),
-                        "select\n"
-                        + "  pb.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
-                        + "  postgres_backups pb\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.pkey=pb.package",
-                        username
                     );
                     break;
                 case POSTGRES_DATABASES :
@@ -7203,10 +5806,8 @@ final public class TableHandler {
                                             tempST.getDisplay(),
                                             tempST.isPublic(),
                                             tempST.getDescription(),
-                                            tempST.getDataverseEditor(),
                                             tempST.getSinceVersion(),
-                                            tempST.getLastVersion(),
-                                            tempST.getDefaultOrderBy()
+                                            tempST.getLastVersion()
                                         )
                                     );
                                 }
@@ -7353,56 +5954,6 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SENDMAIL_SMTP_STATS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SendmailSmtpStat(),
-                            "select * from sendmail_smtp_stats"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SendmailSmtpStat(),
-                            "select\n"
-                            + "  sss.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  sendmail_smtp_stats sss\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sss.ao_server",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SendmailSmtpStat(),
-                        "select\n"
-                        + "  sss.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
-                        + "  sendmail_smtp_stats sss\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.name=sss.package",
-                        username
-                    );
-                    break;
                 case SERVER_FARMS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
@@ -7423,8 +5974,9 @@ final public class TableHandler {
                             + "from\n"
                             + "  master_servers ms,\n"
                             + "  servers se\n"
-                            + "  left outer join failover_file_replications ffr on se.pkey=ffr.from_server\n"
-                            + "  left outer join servers fs on ffr.to_server=fs.pkey,\n"
+                            + "  left outer join failover_file_replications ffr on se.pkey=ffr.server\n"
+                            + "  left outer join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
+                            + "  left outer join servers fs on bp.ao_server=fs.pkey,\n"
                             + "  server_farms sf\n"
                             + "where\n"
                             + "  ms.username=?\n"
@@ -7462,52 +6014,6 @@ final public class TableHandler {
                         username
                     );
                     break;
-                case SERVER_REPORTS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new ServerReport(),
-                            "select * from server_reports"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new ServerReport(),
-                            "select\n"
-                            + "  sr.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new ServerReport(),
-                        "select\n"
-                        + "  sr.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server",
-                        username
-                    );
-                    break;
                 case SERVERS :
                     if(masterUser!=null) {
                         if(masterServers.length==0) MasterServer.writeObjects(
@@ -7533,7 +6039,8 @@ final public class TableHandler {
                             // Allow its failover children
                             + "  left join ao_servers fs on ao.server=fs.failover_server\n"
                             // Allow servers it replicates to
-                            + "  left join failover_file_replications ffr on ao.server=ffr.from_server,\n"
+                            + "  left join failover_file_replications ffr on ms.server=ffr.server\n"
+                            + "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
                             + "  servers se\n"
                             + "where\n"
                             + "  ms.username=?\n"
@@ -7544,8 +6051,8 @@ final public class TableHandler {
                             + "    or ff.server=se.pkey\n"
                             // Allow its failover children
                             + "    or fs.server=se.pkey\n"
-                            // Allow servers is replicates to
-                            + "    or ffr.to_server=se.pkey\n"
+                            // Allow servers it replicates to
+                            + "    or bp.ao_server=se.pkey\n"
                             + "  )",
                             username
                         );
@@ -7556,18 +6063,7 @@ final public class TableHandler {
                         provideProgress,
                         new Server(),
                         "select\n"
-                        + "  se.pkey,\n"
-                        + "  se.hostname,\n"
-                        + "  se.farm,\n"
-                        + "  se.owner,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  se.description,\n"
-                        + "  se.backup_hour,\n"
-                        + "  se.last_backup_time,\n"
-                        + "  se.operating_system_version,\n"
-                        + "  '"+AOServProtocol.FILTERED+"'::text,\n"
-                        + "  se.minimum_power,\n"
-                        + "  se.maximum_power\n"
+                        + "  se.*\n"
                         + "from\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
@@ -7682,956 +6178,6 @@ final public class TableHandler {
                         new SpamEmailMessage(),
                         "select * from spam_email_messages"
                     ); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());
-                    break;
-                case SR_CPU :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRCpu(),
-                            "select * from sr_cpu"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRCpu(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_cpu srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRCpu(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_cpu srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_DB_MYSQL :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRDbMySQL(),
-                            "select * from sr_db_mysql"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRDbMySQL(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_db_mysql srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRDbMySQL(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_db_mysql srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_DB_POSTGRES :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRDbPostgres(),
-                            "select * from sr_db_postgres"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRDbPostgres(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_db_postgres srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRDbPostgres(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_db_postgres srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_DISK_ACCESS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRDiskAccess(),
-                            "select * from sr_disk_access"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRDiskAccess(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_disk_access srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRDiskAccess(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_disk_access srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_DISK_MDSTAT :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRDiskMDStat(),
-                            "select * from sr_disk_mdstat"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRDiskMDStat(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_disk_mdstat srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRDiskMDStat(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_disk_mdstat srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_DISK_SPACE :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRDiskSpace(),
-                            "select * from sr_disk_space"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRDiskSpace(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_disk_space srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRDiskSpace(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_disk_space srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_KERNEL :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRKernel(),
-                            "select * from sr_kernel"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRKernel(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_kernel srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRKernel(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_kernel srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_LOAD :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRLoad(),
-                            "select * from sr_load"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRLoad(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_load srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRLoad(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_load srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_MEMORY :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRMemory(),
-                            "select * from sr_memory"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRMemory(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_memory srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRMemory(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_memory srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_NET_DEVICES :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNetDevice(),
-                            "select * from sr_net_devices"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNetDevice(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_net_devices srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRNetDevice(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_net_devices srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_NET_ICMP :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNetICMP(),
-                            "select * from sr_net_icmp"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNetICMP(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_net_icmp srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRNetICMP(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_net_icmp srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_NET_IP :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNetIP(),
-                            "select * from sr_net_ip"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNetIP(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_net_ip srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRNetIP(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_net_ip srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_NET_TCP :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNetTCP(),
-                            "select * from sr_net_tcp"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNetTCP(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_net_tcp srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRNetTCP(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_net_tcp srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_NET_UDP :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNetUDP(),
-                            "select * from sr_net_udp"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNetUDP(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_net_udp srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRNetUDP(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_net_udp srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_NUM_USERS :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNumUsers(),
-                            "select * from sr_num_users"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRNumUsers(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_num_users srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRNumUsers(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_num_users srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_PAGING :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRPaging(),
-                            "select * from sr_paging"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRPaging(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_paging srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRPaging(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_paging srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_PROCESSES :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRProcesses(),
-                            "select * from sr_processes"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRProcesses(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_processes srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRProcesses(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_processes srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_SWAP_RATE :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRSwapRate(),
-                            "select * from sr_swap_rate"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRSwapRate(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_swap_rate srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRSwapRate(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_swap_rate srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
-                    break;
-                case SR_SWAP_SIZE :
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRSwapSize(),
-                            "select * from sr_swap_size"
-                        ); else MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new SRSwapSize(),
-                            "select\n"
-                            + "  srs.*\n"
-                            + "from\n"
-                            + "  master_servers ms,\n"
-                            + "  server_reports sr,\n"
-                            + "  sr_swap_size srs\n"
-                            + "where\n"
-                            + "  ms.username=?\n"
-                            + "  and ms.server=sr.ao_server\n"
-                            + "  and sr.pkey=srs.server_report",
-                            username
-                        );
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new SRSwapSize(),
-                        "select\n"
-                        + "  srs.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  business_servers bs,\n"
-                        + "  server_reports sr,\n"
-                        + "  sr_swap_size srs\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=sr.ao_server\n"
-                        + "  and sr.pkey=srs.server_report",
-                        username
-                    );
                     break;
                 case SYSTEM_EMAIL_ALIASES :
                     if(masterUser!=null) {
@@ -8974,12 +6520,18 @@ final public class TableHandler {
         RequestSource source,
         InvalidateList invalidateList,
         SchemaTable.TableID tableID,
-        String server
+        int server
     ) throws SQLException, IOException {
         Profiler.startProfile(Profiler.UNKNOWN, TableHandler.class, "invalidate(RequestSource,CompressedDataOutputStream,int)", getTableName(conn, tableID));
         try {
             checkInvalidator(conn, source, "invalidate");
-            invalidateList.addTable(conn, tableID, InvalidateList.allBusinesses, server==null ? null : InvalidateList.getCollection(server), true);
+            invalidateList.addTable(
+                conn,
+                tableID,
+                InvalidateList.allBusinesses,
+                server==-1 ? InvalidateList.allServers : InvalidateList.getServerCollection(server),
+                true
+            );
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -9012,7 +6564,7 @@ final public class TableHandler {
             synchronized(tableNames) {
                 String name=tableNames.get(tableID);
                 if(name==null) {
-                    name=conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select name from schema_tables where table_id=?", convertClientTableIDToDBTableID(conn, AOServProtocol.CURRENT_VERSION, tableID.ordinal()));
+                    name=conn.executeStringQuery("select name from schema_tables where table_id=?", convertClientTableIDToDBTableID(conn, AOServProtocol.CURRENT_VERSION, tableID.ordinal()));
                     if(name==null) throw new SQLException("Unable to find table name for table ID: "+tableID);
                     tableNames.put(tableID, name);
                 }

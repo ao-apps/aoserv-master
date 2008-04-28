@@ -26,16 +26,6 @@ final public class PostgresHandler {
     private final static Map<Integer,Boolean> disabledPostgresServerUsers=new HashMap<Integer,Boolean>();
     private final static Map<String,Boolean> disabledPostgresUsers=new HashMap<String,Boolean>();
 
-    public static void checkAccessPostgresBackup(MasterDatabaseConnection conn, BackupDatabaseConnection backupConn, RequestSource source, String action, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "checkAccessPostgresBackup(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,String,int)", null);
-        try {
-            if(MasterServer.getMasterUser(conn, source.getUsername())!=null) checkAccessPostgresServer(conn, source, action, getPostgresServerForPostgresBackup(backupConn, pkey));
-            else PackageHandler.checkAccessPackage(conn, source, action, getPackageForPostgresBackup(backupConn, pkey));
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
     public static void checkAccessPostgresDatabase(MasterDatabaseConnection conn, RequestSource source, String action, int postgres_database) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "checkAccessPostgresDatabase(MasterDatabaseConnection,RequestSource,String,int)", null);
         try {
@@ -188,8 +178,6 @@ final public class PostgresHandler {
                 + "  ?,\n"
                 + "  false,\n"
                 + "  true,\n"
-                + "  "+PostgresDatabase.DEFAULT_BACKUP_LEVEL+",\n"
-                + "  "+PostgresDatabase.DEFAULT_BACKUP_RETENTION+"\n,"
                 + "  ?\n"
                 + ")",
                 pkey,
@@ -205,7 +193,7 @@ final public class PostgresHandler {
                 conn,
                 SchemaTable.TableID.POSTGRES_DATABASES,
                 accounting,
-                ServerHandler.getHostnameForServer(conn, aoServer),
+                aoServer,
                 false
             );
             return pkey;
@@ -249,7 +237,7 @@ final public class PostgresHandler {
                 conn,
                 SchemaTable.TableID.POSTGRES_SERVER_USERS,
                 UsernameHandler.getBusinessForUsername(conn, username),
-                ServerHandler.getHostnameForServer(conn, aoServer),
+                aoServer,
                 true
             );
             return pkey;
@@ -292,137 +280,6 @@ final public class PostgresHandler {
         }
     }
 
-    /**
-     * Backs up a PostgresDatabase by dumping it and passing the data
-     * to the backup server for that database server.
-     */
-    public static int backupPostgresDatabase(
-        MasterDatabaseConnection conn,
-        BackupDatabaseConnection backupConn,
-        RequestSource source, 
-        InvalidateList invalidateList,
-        int pkey
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "backupPostgresDatabase(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,InvalidateList,int)", null);
-        try {
-            checkAccessPostgresDatabase(conn, source, "backupPostgresDatabase", pkey);
-
-            // Get the backup_retention
-            short backup_level=conn.executeShortQuery("select backup_level from postgres_databases where pkey=?", pkey);
-            if(backup_level==0) throw new SQLException("Unable to backup PostgresDatabase with a backup_level of 0: "+pkey);
-            short backup_retention=conn.executeShortQuery("select backup_retention from postgres_databases where pkey=?", pkey);
-
-            // Figure out where the dump is coming from
-            int packageNum=getPackageForPostgresDatabase(conn, pkey);
-            int postgresServer=getPostgresServerForPostgresDatabase(conn, pkey);
-            int aoServer=getAOServerForPostgresServer(conn, postgresServer);
-            String name=conn.executeStringQuery("select name from postgres_databases where pkey=?", pkey);
-            String minorVersion=getMinorVersionForPostgresServer(conn, postgresServer);
-            int port=getPortForPostgresServer(conn, postgresServer);
-
-            // Stream from one server to the other
-            long startTime=System.currentTimeMillis();
-            AOServDaemonConnector connector=DaemonHandler.getDaemonConnector(conn, aoServer);
-
-            int backupData;
-
-            // Establish the connection to the source
-            AOServDaemonConnection sourceConn=connector.getConnection();
-            try {
-                CompressedDataOutputStream sourceOut=sourceConn.getOutputStream();
-                sourceOut.writeCompressedInt(AOServDaemonProtocol.BACKUP_POSTGRES_DATABASE);
-                sourceOut.writeUTF(minorVersion);
-                sourceOut.writeUTF(name);
-                sourceOut.writeCompressedInt(port);
-                sourceOut.flush();
-
-                CompressedDataInputStream sourceIn=sourceConn.getInputStream();
-                int sourceCode=sourceIn.read();
-                if(sourceCode!=AOServDaemonProtocol.NEXT) {
-                    if (sourceCode == AOServDaemonProtocol.IO_EXCEPTION) throw new IOException(sourceIn.readUTF());
-                    if (sourceCode == AOServDaemonProtocol.SQL_EXCEPTION) throw new SQLException(sourceIn.readUTF());
-                    throw new IOException("Unknown result: " + sourceCode);
-                }
-                long dataSize=sourceIn.readLong();
-                long compressedSize=sourceIn.readLong();
-                long md5_hi=sourceIn.readLong();
-                long md5_lo=sourceIn.readLong();
-
-                Object[] OA=BackupHandler.findOrAddBackupData(conn, backupConn, source, invalidateList, aoServer, dataSize, md5_hi, md5_lo);
-                backupData=((Integer)OA[0]).intValue();
-                boolean hasData=((Boolean)OA[1]).booleanValue();
-                if(!hasData) {
-                    int toServer=((Integer)OA[2]).intValue();
-                    int backupPartition=((Integer)OA[3]).intValue();
-                    String relativePath = BackupData.getRelativePathPrefix(backupData) + name + ".sql.gz";
-                    long key=DaemonHandler.grantDaemonAccess(conn, toServer, AOServDaemonProtocol.BACKUP_POSTGRES_DATABASE_SEND_DATA, relativePath, Integer.toString(backupPartition), MD5.getMD5String(md5_hi, md5_lo));
-                    sourceOut.writeBoolean(true);
-                    sourceOut.writeLong(key);
-                    sourceOut.writeCompressedInt(toServer);
-                    sourceOut.writeUTF(DaemonHandler.getDaemonConnectorIP(conn, toServer));
-                    sourceOut.writeCompressedInt(DaemonHandler.getDaemonConnectorPort(conn, toServer));
-                    sourceOut.writeUTF(DaemonHandler.getDaemonConnectorProtocol(conn, toServer));
-                    sourceOut.writeCompressedInt(DaemonHandler.getDaemonConnectorPoolSize(conn, toServer));
-                    sourceOut.flush();
-                    sourceCode = sourceIn.read();
-                    if(sourceCode!=AOServDaemonProtocol.DONE) {
-                        if (sourceCode == AOServDaemonProtocol.IO_EXCEPTION) throw new IOException(sourceIn.readUTF());
-                        if (sourceCode == AOServDaemonProtocol.SQL_EXCEPTION) throw new SQLException(sourceIn.readUTF());
-                        throw new IOException("Unknown result: " + sourceCode);
-                    }
-                    backupConn.executeUpdate(
-                        "update backup_data set compressed_size=?, is_stored=true where pkey=?",
-                        compressedSize,
-                        backupData
-                    );
-                } else {
-                    sourceOut.writeBoolean(false);
-                    sourceOut.flush();
-                }
-            } catch(IOException err) {
-                sourceConn.close();
-                throw err;
-            } catch(SQLException err) {
-                sourceConn.close();
-                throw err;
-            } finally {
-                connector.releaseConnection(sourceConn);
-            }
-            long endTime=System.currentTimeMillis();
-
-            // Add to the backup database
-            int backupPKey=backupConn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('postgres_backups_pkey_seq')");
-            PreparedStatement pstmt=backupConn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into postgres_backups values(?,?,?,?,?,?,?,?,?)");
-            try {
-                pstmt.setInt(1, backupPKey);
-                pstmt.setInt(2, packageNum);
-                pstmt.setString(3, name);
-                pstmt.setInt(4, postgresServer);
-                pstmt.setTimestamp(5, new Timestamp(startTime));
-                pstmt.setTimestamp(6, new Timestamp(endTime));
-                pstmt.setInt(7, backupData);
-                pstmt.setShort(8, backup_level);
-                pstmt.setShort(9, backup_retention);
-                backupConn.incrementUpdateCount();
-                pstmt.executeUpdate();
-            } finally {
-                pstmt.close();
-            }
-
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_BACKUPS,
-                PackageHandler.getBusinessForPackage(conn, packageNum),
-                ServerHandler.getHostnameForServer(conn, aoServer),
-                false
-            );
-            return backupPKey;
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
     public static void disablePostgresServerUser(
         MasterDatabaseConnection conn,
         RequestSource source,
@@ -447,7 +304,7 @@ final public class PostgresHandler {
                 conn,
                 SchemaTable.TableID.POSTGRES_SERVER_USERS,
                 getBusinessForPostgresServerUser(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForPostgresServerUser(conn, pkey)),
+                getAOServerForPostgresServerUser(conn, pkey),
                 false
             );
         } finally {
@@ -539,7 +396,7 @@ final public class PostgresHandler {
                 conn,
                 SchemaTable.TableID.POSTGRES_SERVER_USERS,
                 UsernameHandler.getBusinessForUsername(conn, pu),
-                ServerHandler.getHostnameForServer(conn, getAOServerForPostgresServerUser(conn, pkey)),
+                getAOServerForPostgresServerUser(conn, pkey),
                 false
             );
         } finally {
@@ -825,68 +682,6 @@ final public class PostgresHandler {
     }
 
     /**
-     * Removes a PostgresBackup from the system.
-     */
-    public static void removePostgresBackup(
-        MasterDatabaseConnection conn,
-        BackupDatabaseConnection backupConn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int pkey
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "removePostgresBackup(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,InvalidateList,int)", null);
-        try {
-            checkAccessPostgresBackup(conn, backupConn, source, "removePostgresBackup", pkey);
-
-            removePostgresBackup(
-                conn,
-                backupConn,
-                invalidateList,
-                pkey
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    public static void removePostgresBackup(
-        MasterDatabaseConnection conn,
-        BackupDatabaseConnection backupConn,
-        InvalidateList invalidateList,
-        int pkey
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "removePostgresBackup(MasterDatabaseConnection,BackupDatabaseConnection,InvalidateList,pkey)", null);
-        try {
-            String accounting=backupConn.executeStringQuery("select pk.accounting from postgres_backups pb, packages pk where pb.pkey=? and pb.package=pk.pkey", pkey);
-            int dbServer=backupConn.executeIntQuery(
-                "select\n"
-                + "  ps.ao_server\n"
-                + "from\n"
-                + "  postgres_backups pb,\n"
-                + "  postgres_servers ps\n"
-                + "where\n"
-                + "  pb.pkey=?\n"
-                + "  and pb.postgres_server=ps.pkey",
-                pkey
-            );
-
-            // Remove the backup database entry
-            backupConn.executeUpdate("delete from postgres_backups where pkey=?", pkey);
-
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_BACKUPS,
-                accounting,
-                ServerHandler.getHostnameForServer(conn, dbServer),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    /**
      * Removes a PostgresDatabase from the system.
      */
     public static void removePostgresDatabase(
@@ -925,7 +720,7 @@ final public class PostgresHandler {
                 conn,
                 SchemaTable.TableID.POSTGRES_DATABASES,
                 accounting,
-                ServerHandler.getHostnameForServer(conn, aoServer),
+                aoServer,
                 false
             );
         } finally {
@@ -965,7 +760,7 @@ final public class PostgresHandler {
                 conn,
                 SchemaTable.TableID.POSTGRES_SERVER_USERS,
                 accounting,
-                ServerHandler.getHostnameForServer(conn, aoServer),
+                aoServer,
                 true
             );
         } finally {
@@ -1025,37 +820,6 @@ final public class PostgresHandler {
                 SchemaTable.TableID.POSTGRES_USERS,
                 accounting,
                 BusinessHandler.getServersForBusiness(conn, accounting),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    public static void setPostgresDatabaseBackupRetention(
-        MasterDatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int pkey,
-        short days
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "setPostgresDatabaseBackupRetention(MasterDatabaseConnection,RequestSource,InvalidateList,int,short)", null);
-        try {
-            // Security checks
-            checkAccessPostgresDatabase(conn, source, "setPostgresDatabaseBackupRetention", pkey);
-
-            // Update the database
-            conn.executeUpdate(
-                "update postgres_databases set backup_retention=?::smallint where pkey=?",
-                days,
-                pkey
-            );
-
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_DATABASES,
-                getBusinessForPostgresDatabase(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForPostgresDatabase(conn, pkey)),
                 false
             );
         } finally {
@@ -1125,7 +889,7 @@ final public class PostgresHandler {
                 conn,
                 SchemaTable.TableID.POSTGRES_SERVER_USERS,
                 getBusinessForPostgresServerUser(conn, psu),
-                ServerHandler.getHostnameForServer(conn, getAOServerForPostgresServerUser(conn, psu)),
+                getAOServerForPostgresServerUser(conn, psu),
                 false
             );
         } finally {
@@ -1194,30 +958,6 @@ final public class PostgresHandler {
                 + "  and pd.datdba=psu.pkey\n"
                 + "  and psu.username=un.username\n"
                 + "  and un.package=pk.name",
-                pkey
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    public static int getPackageForPostgresBackup(BackupDatabaseConnection backupConn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getPackageForPostgresBackup(BackupDatabaseConnection,int)", null);
-        try {
-            return backupConn.executeIntQuery(
-                "select package from postgres_backups where pkey=?",
-                pkey
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    public static int getPostgresServerForPostgresBackup(BackupDatabaseConnection backupConn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getPostgresServerForPostgresBackup(BackupDatabaseConnection,int)", null);
-        try {
-            return backupConn.executeIntQuery(
-                "select postgres_server from postgres_backups where pkey=?",
                 pkey
             );
         } finally {
@@ -1365,49 +1105,6 @@ final public class PostgresHandler {
                 + "  and psu.postgres_server=ps.pkey",
                 postgres_server_user
             );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    public static void removeExpiredPostgresBackups(
-        MasterDatabaseConnection conn,
-        BackupDatabaseConnection backupConn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int aoServer
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "removeExpiredPostgresBackups(MasterDatabaseConnection,BackupDatabaseConnection,RequestSource,InvalidateList,int)", null);
-        try {
-            String username=source.getUsername();
-            MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-            if(masterUser==null) throw new SQLException("non-master user "+username+" not allowed to removeExpiredPostgresBackups");
-            ServerHandler.checkAccessServer(conn, source, "removeExpiredPostgresBackups", aoServer);
-
-            // Get the list of pkeys that should be removed
-            IntList pkeys=backupConn.executeIntListQuery(
-                "select\n"
-                + "  pb.pkey\n"
-                + "from\n"
-                + "  postgres_servers ps,\n"
-                + "  postgres_backups pb\n"
-                + "where\n"
-                + "  ps.ao_server=?\n"
-                + "  and ps.pkey=pb.postgres_server\n"
-                + "  and now()>=(pb.end_time+(pb.backup_retention || ' days')::interval)",
-                aoServer
-            );
-            
-            // Remove each file
-            int size=pkeys.size();
-            for(int c=0;c<size;c++) {
-                removePostgresBackup(
-                    conn,
-                    backupConn,
-                    invalidateList,
-                    pkeys.getInt(c)
-                );
-            }
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }

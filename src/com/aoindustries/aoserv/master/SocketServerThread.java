@@ -194,7 +194,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                         String daemonServerHostname=in.readUTF();
                         MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
                         try {
-                            process.setDeamonServer(ServerHandler.getPKeyForServer(conn, daemonServerHostname));
+                            process.setDeamonServer(ServerHandler.getServerForAOServerHostname(conn, daemonServerHostname));
                         } catch(IOException err) {
                             conn.rollbackAndClose();
                             throw err;
@@ -228,7 +228,9 @@ final public class SocketServerThread extends Thread implements RequestSource {
                     long existingID=in.readLong();
 
                     if(
-                        !protocolVersion.equals(AOServProtocol.VERSION_1_29)
+                        !protocolVersion.equals(AOServProtocol.VERSION_1_31)
+                        && !protocolVersion.equals(AOServProtocol.VERSION_1_30)
+                        && !protocolVersion.equals(AOServProtocol.VERSION_1_29)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_28)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_27)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_26)

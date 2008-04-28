@@ -16,9 +16,6 @@ import java.sql.SQLException;
  */
 final public class NetDeviceHandler {
 
-    /**
-     * Gets the contents of a user cron table.
-     */
     public static String getNetDeviceBondingReport(MasterDatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, NetDeviceHandler.class, "getNetDeviceBondingReport(MasterDatabaseConnection,RequestSource,int)", null);
         try {

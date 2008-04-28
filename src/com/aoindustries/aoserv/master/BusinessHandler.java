@@ -353,18 +353,18 @@ final public class BusinessHandler {
         InvalidateList invalidateList,
         String accounting,
         String contractVersion,
-        String defaultServer,
+        int defaultServer,
         String parent,
         boolean can_add_backup_servers,
         boolean can_add_businesses,
         boolean can_see_prices,
         boolean billParent
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "addBusiness(MasterDatabaseConnection,RequestSource,InvalidateList,String,String,String,String,boolean,boolean,boolean,boolean)", null);
+        Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "addBusiness(MasterDatabaseConnection,RequestSource,InvalidateList,String,String,int,String,boolean,boolean,boolean,boolean)", null);
         try {
             if(!Business.isValidAccounting(accounting)) throw new SQLException("Invalid accounting code: "+accounting);
             
-            checkAddBusiness(conn, source, "addBusiness", parent, ServerHandler.getPKeyForServer(conn, defaultServer));
+            checkAddBusiness(conn, source, "addBusiness", parent, defaultServer);
 
             if(isBusinessDisabled(conn, parent)) throw new SQLException("Unable to add Business '"+accounting+"', parent is disabled: "+parent);
 
@@ -405,10 +405,8 @@ final public class BusinessHandler {
                 + "  accounting,\n"
                 + "  server,\n"
                 + "  is_default,\n"
-                + "  can_configure_backup,\n"
                 + "  can_control_apache,\n"
                 + "  can_control_cron,\n"
-                + "  can_control_interbase,\n"
                 + "  can_control_mysql,\n"
                 + "  can_control_postgresql,\n"
                 + "  can_control_xfs,\n"
@@ -422,12 +420,10 @@ final public class BusinessHandler {
                 + "  false,\n"
                 + "  false,\n"
                 + "  false,\n"
-                + "  false,\n"
-                + "  false,\n"
                 + "  false\n"
                 + ")",
                 accounting,
-                ServerHandler.getPKeyForServer(conn, defaultServer)
+                defaultServer
             );
 
             // Notify all clients of the update
@@ -615,16 +611,15 @@ final public class BusinessHandler {
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,
-        int server,
-        boolean can_configure_backup
+        int server
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "addBusinessServer(MasterDatabaseConnection,RequestSource,InvalidateList,String,int,boolean)", null);
+        Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "addBusinessServer(MasterDatabaseConnection,RequestSource,InvalidateList,String,int)", null);
         try {
             // Must be allowed to access the Business
             checkAccessBusiness(conn, source, "addBusinessServer", accounting);
             if(!accounting.equals(getRootBusiness())) ServerHandler.checkAccessServer(conn, source, "addBusinessServer", server);
 
-            return addBusinessServer(conn, invalidateList, accounting, server, can_configure_backup);
+            return addBusinessServer(conn, invalidateList, accounting, server);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -637,10 +632,9 @@ final public class BusinessHandler {
         MasterDatabaseConnection conn,
         InvalidateList invalidateList,
         String accounting,
-        int server,
-        boolean can_configure_backup
+        int server
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "addBusinessServer(MasterDatabaseConnection,InvalidateList,String,int,boolean)", null);
+        Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "addBusinessServer(MasterDatabaseConnection,InvalidateList,String,int)", null);
         try {
             if(isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add BusinessServer, Business disabled: "+accounting);
 
@@ -670,36 +664,14 @@ final public class BusinessHandler {
                 )
             ) throw new SQLException("Unable to add business_server, parent does not have access to server.  accounting="+accounting+", server="+server);
 
-            if(
-                can_configure_backup
-                && !accounting.equals(getRootBusiness())
-                && !conn.executeBooleanQuery(
-                    Connection.TRANSACTION_READ_COMMITTED,
-                    true,
-                    true,
-                    "select\n"
-                    + "  bs.can_configure_backup\n"
-                    + "from\n"
-                    + "  businesses bu,\n"
-                    + "  business_servers bs\n"
-                    + "where\n"
-                    + "  bu.accounting=?\n"
-                    + "  and bu.parent=bs.accounting\n"
-                    + "  and bs.server=?",
-                    accounting,
-                    server
-                )
-            ) throw new SQLException("Unable to add business_server, can_configure_backup permission requested but parent not allowed to configure backup");
-
             boolean hasDefault=conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select (select pkey from business_servers where accounting=? and is_default limit 1) is not null", accounting);
 
             conn.executeUpdate(
-                "insert into business_servers values(?,?,?,?,?,false,false,false,false,false,false,false)",
+                "insert into business_servers values(?,?,?,?,false,false,false,false,false,false,false)",
                 pkey,
                 accounting,
                 server,
-                !hasDefault,
-                can_configure_backup
+                !hasDefault
             );
             
             // Notify all clients of the update

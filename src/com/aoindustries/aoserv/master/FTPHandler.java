@@ -92,7 +92,7 @@ final public class FTPHandler {
                 conn,
                 SchemaTable.TableID.PRIVATE_FTP_SERVERS,
                 NetBindHandler.getBusinessForNetBind(conn, net_bind),
-                ServerHandler.getHostnameForServer(conn, NetBindHandler.getAOServerForNetBind(conn, net_bind)),
+                NetBindHandler.getAOServerForNetBind(conn, net_bind),
                 false
             );
         } finally {

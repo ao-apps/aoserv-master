@@ -154,38 +154,78 @@ final public class CreditCardHandler implements CronJob {
         String postalCode,
         String countryCode,
         String principalName,
-        String description
+        String description,
+        String encryptedCardNumber,
+        String encryptedExpiration,
+        int encryptionFrom,
+        int encryptionRecipient
     ) throws IOException, SQLException {
         BusinessHandler.checkPermission(conn, source, "addCreditCard", AOServPermission.Permission.add_credit_card);
         BusinessHandler.checkAccessBusiness(conn, source, "addCreditCard", accounting);
+        if(encryptionFrom!=-1) checkAccessEncryptionKey(conn, source, "addCreditCard", encryptionFrom);
+        if(encryptionRecipient!=-1) checkAccessEncryptionKey(conn, source, "addCreditCard", encryptionRecipient);
 
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('credit_cards_pkey_seq')");
 
-        conn.executeUpdate(
-            "insert into credit_cards values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,false,true,null,null,?)",
-            pkey,
-            processorName,
-            accounting,
-            groupName,
-            cardInfo,
-            providerUniqueId,
-            firstName,
-            lastName,
-            companyName,
-            email,
-            phone,
-            fax,
-            customerTaxId,
-            streetAddress1,
-            streetAddress2,
-            city,
-            state,
-            postalCode,
-            countryCode,
-            source.getUsername(),
-            principalName,
-            description
-        );
+        if(encryptedCardNumber==null && encryptedExpiration==null && encryptionFrom==-1 && encryptionRecipient==-1) {
+            conn.executeUpdate(
+                "insert into credit_cards values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,false,true,null,null,?,null,null,null,null,null,null)",
+                pkey,
+                processorName,
+                accounting,
+                groupName,
+                cardInfo,
+                providerUniqueId,
+                firstName,
+                lastName,
+                companyName,
+                email,
+                phone,
+                fax,
+                customerTaxId,
+                streetAddress1,
+                streetAddress2,
+                city,
+                state,
+                postalCode,
+                countryCode,
+                source.getUsername(),
+                principalName,
+                description
+            );
+        } else if(encryptedCardNumber!=null && encryptedExpiration!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
+            conn.executeUpdate(
+                "insert into credit_cards values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,false,true,null,null,?,?,?,?,?,?,?)",
+                pkey,
+                processorName,
+                accounting,
+                groupName,
+                cardInfo,
+                providerUniqueId,
+                firstName,
+                lastName,
+                companyName,
+                email,
+                phone,
+                fax,
+                customerTaxId,
+                streetAddress1,
+                streetAddress2,
+                city,
+                state,
+                postalCode,
+                countryCode,
+                source.getUsername(),
+                principalName,
+                description,
+                encryptedCardNumber,
+                encryptionFrom,
+                encryptionRecipient,
+                encryptedExpiration,
+                encryptionFrom,
+                encryptionRecipient
+            );
+        } else throw new SQLException("encryptedCardNumber, encryptedExpiration, encryptionFrom, and encryptionRecipient must either all be null or none null");
 
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARDS, accounting, InvalidateList.allServers, false);
@@ -373,29 +413,110 @@ final public class CreditCardHandler implements CronJob {
         );
     }
 
-    public static void updateCreditCardCardInfo(
+    public static void updateCreditCardNumberAndExpiration(
         MasterDatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
-        String cardInfo
+        String maskedCardNumber,
+        String encryptedCardNumber,
+        String encryptedExpiration,
+        int encryptionFrom,
+        int encryptionRecipient
     ) throws IOException, SQLException {
         // Permission checks
-        BusinessHandler.checkPermission(conn, source, "updateCreditCardCardInfo", AOServPermission.Permission.edit_credit_card);
-        checkAccessCreditCard(conn, source, "updateCreditCardCardInfo", pkey);
+        BusinessHandler.checkPermission(conn, source, "updateCreditCardNumberAndExpiration", AOServPermission.Permission.edit_credit_card);
+        checkAccessCreditCard(conn, source, "updateCreditCardNumberAndExpiration", pkey);
         
+        if(encryptionFrom!=-1) checkAccessEncryptionKey(conn, source, "updateCreditCardNumberAndExpiration", encryptionFrom);
+        if(encryptionRecipient!=-1) checkAccessEncryptionKey(conn, source, "updateCreditCardNumberAndExpiration", encryptionRecipient);
+
+        if(encryptedCardNumber==null && encryptedExpiration==null && encryptionFrom==-1 && encryptionRecipient==-1) {
+            // Update row
+            conn.executeUpdate(
+                "update\n"
+                + "  credit_cards\n"
+                + "set\n"
+                + "  card_info=?,\n"
+                + "  encrypted_card_number=null,\n"
+                + "  encryption_card_number_from=null,\n"
+                + "  encryption_card_number_recipient=null,\n"
+                + "  encrypted_expiration=null,\n"
+                + "  encryption_expiration_from=null,\n"
+                + "  encryption_expiration_recipient=null\n"
+                + "where\n"
+                + "  pkey=?",
+                maskedCardNumber,
+                pkey
+            );
+        } else if(encryptedCardNumber!=null && encryptedExpiration!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
+            // Update row
+            conn.executeUpdate(
+                "update\n"
+                + "  credit_cards\n"
+                + "set\n"
+                + "  card_info=?,\n"
+                + "  encrypted_card_number=?,\n"
+                + "  encryption_card_number_from=?,\n"
+                + "  encryption_card_number_recipient=?,\n"
+                + "  encrypted_expiration=?,\n"
+                + "  encryption_expiration_from=?,\n"
+                + "  encryption_expiration_recipient=?\n"
+                + "where\n"
+                + "  pkey=?",
+                maskedCardNumber,
+                encryptedCardNumber,
+                encryptionFrom,
+                encryptionRecipient,
+                encryptedExpiration,
+                encryptionFrom,
+                encryptionRecipient,
+                pkey
+            );
+        } else throw new SQLException("encryptedCardNumber, encryptedExpiration, encryptionFrom, and encryptionRecipient must either all be null or none null");
+
+        String accounting = getBusinessForCreditCard(conn, pkey);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.CREDIT_CARDS,
+            accounting,
+            BusinessHandler.getServersForBusiness(conn, accounting),
+            false
+        );
+    }
+
+    public static void updateCreditCardExpiration(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int pkey,
+        String encryptedExpiration,
+        int encryptionFrom,
+        int encryptionRecipient
+    ) throws IOException, SQLException {
+        // Permission checks
+        BusinessHandler.checkPermission(conn, source, "updateCreditCardExpiration", AOServPermission.Permission.edit_credit_card);
+        checkAccessCreditCard(conn, source, "updateCreditCardExpiration", pkey);
+        
+        checkAccessEncryptionKey(conn, source, "updateCreditCardExpiration", encryptionFrom);
+        checkAccessEncryptionKey(conn, source, "updateCreditCardExpiration", encryptionRecipient);
+
         // Update row
         conn.executeUpdate(
             "update\n"
             + "  credit_cards\n"
             + "set\n"
-            + "  card_info=?\n"
+            + "  encrypted_expiration=?,\n"
+            + "  encryption_expiration_from=?,\n"
+            + "  encryption_expiration_recipient=?\n"
             + "where\n"
             + "  pkey=?",
-            cardInfo,
+            encryptedExpiration,
+            encryptionFrom,
+            encryptionRecipient,
             pkey
         );
-        
+
         String accounting = getBusinessForCreditCard(conn, pkey);
         invalidateList.addTable(
             conn,

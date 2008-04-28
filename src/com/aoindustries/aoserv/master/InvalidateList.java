@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
  */
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.profiler.Profiler;
+import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntCollection;
 import com.aoindustries.util.SortedArrayList;
 import java.io.IOException;
@@ -38,18 +39,19 @@ final public class InvalidateList {
     /**
      * Indicates that all servers or businesses should receive the invalidate signal.
      */
-    private static final String ALL="*** ALL ***";
+    private static final String ALL_BUSINESSES="*** ALL ***";
+    private static final int ALL_SERVERS = Integer.MIN_VALUE;
     public static final Collection<String> allBusinesses=Collections.unmodifiableCollection(new ArrayList<String>());
-    public static final Collection<String> allServers=Collections.unmodifiableCollection(new ArrayList<String>());
+    public static final IntCollection allServers=new IntArrayList();
 
-    private Map<SchemaTable.TableID,List<String>> serverLists=new EnumMap<SchemaTable.TableID,List<String>>(SchemaTable.TableID.class);
+    private Map<SchemaTable.TableID,List<Integer>> serverLists=new EnumMap<SchemaTable.TableID,List<Integer>>(SchemaTable.TableID.class);
     private Map<SchemaTable.TableID,List<String>> businessLists=new EnumMap<SchemaTable.TableID,List<String>>(SchemaTable.TableID.class);
 
     public void clear() {
         Profiler.startProfile(Profiler.FAST, InvalidateList.class, "clear()", null);
         try {
             // Clear the servers
-            Iterator<List<String>> sLists = serverLists.values().iterator();
+            Iterator<List<Integer>> sLists = serverLists.values().iterator();
             while(sLists.hasNext()) sLists.next().clear();
             Iterator<List<String>> bLists = businessLists.values().iterator();
             while(bLists.hasNext()) bLists.next().clear();
@@ -71,28 +73,7 @@ final public class InvalidateList {
                 conn,
                 tableID,
                 getCollection(business),
-                getServerCollection(conn, server),
-                recurse
-            );
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
-    }
-
-    public void addTable(
-        MasterDatabaseConnection conn,
-        SchemaTable.TableID tableID,
-        String business,
-        String server,
-        boolean recurse
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,SchemaTable.TableID,String,String,boolean)", null);
-        try {
-            addTable(
-                conn,
-                tableID,
-                getCollection(business),
-                getCollection(server),
+                getServerCollection(server),
                 recurse
             );
         } finally {
@@ -113,7 +94,7 @@ final public class InvalidateList {
                 conn,
                 tableID,
                 businesses,
-                getServerCollection(conn, server),
+                getServerCollection(server),
                 recurse
             );
         } finally {
@@ -134,7 +115,7 @@ final public class InvalidateList {
                 conn,
                 tableID,
                 getCollection(business),
-                getServerCollection(conn, servers),
+                servers,
                 recurse
             );
         } finally {
@@ -151,52 +132,6 @@ final public class InvalidateList {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,SchemaTable.TableID,Collection<String>,IntCollection,boolean)", null);
         try {
-            addTable(
-                conn,
-                tableID,
-                businesses,
-                getServerCollection(conn, servers),
-                recurse
-            );
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
-    }
-
-    public void addTable(
-        MasterDatabaseConnection conn,
-        SchemaTable.TableID tableID,
-        String business,
-        Collection<String> servers,
-        boolean recurse
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,SchemaTable.TableID,String,Collection<String>,boolean)", null);
-        try {
-            addTable(
-                conn,
-                tableID,
-                getCollection(business),
-                servers,
-                recurse
-            );
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
-    }
-
-    public void addTable(
-        MasterDatabaseConnection conn,
-        SchemaTable.TableID tableID,
-        Collection<String> businesses,
-        Collection<String> servers,
-        boolean recurse
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, InvalidateList.class, "addTable(MasterDatabaseConnection,SchemaTable.TableID,Collection<String>,Collection<String>,boolean)", null);
-        try {
-            // Warn about any mismatches
-            if(businesses==allServers) MasterServer.reportWarning(new IllegalArgumentException("businesses==allServers"), null);
-            if(servers==allBusinesses) MasterServer.reportWarning(new IllegalArgumentException("servers==allBusinesses"), null);
-
             if(tableNames[tableID.ordinal()]==null) tableNames[tableID.ordinal()]=TableHandler.getTableName(conn, tableID);
 
             // Add to the business lists
@@ -206,10 +141,10 @@ final public class InvalidateList {
                     SV=new SortedArrayList<String>();
                     businessLists.put(tableID, SV);
                 }
-                if(!SV.contains(ALL)) {
+                if(!SV.contains(ALL_BUSINESSES)) {
                     if(businesses==null || businesses==allBusinesses) {
                         SV.clear();
-                        SV.add(ALL);
+                        SV.add(ALL_BUSINESSES);
                     } else {
                         for(String accounting : businesses) {
                             if(accounting==null) MasterServer.reportWarning(new RuntimeException("Warning: accounting is null"), null);
@@ -221,19 +156,19 @@ final public class InvalidateList {
 
             // Add to the server lists
             {
-                List<String> SV=serverLists.get(tableID);
+                List<Integer> SV=serverLists.get(tableID);
                 if(SV==null) {
-                    SV=new SortedArrayList<String>();
+                    SV=new SortedArrayList<Integer>();
                     serverLists.put(tableID, SV);
                 }
-                if(!SV.contains(ALL)) {
+                if(!SV.contains(ALL_SERVERS)) {
                     if(servers==null || servers==allServers) {
                         SV.clear();
-                        SV.add(ALL);
+                        SV.add(ALL_SERVERS);
                     } else {
-                        for(String hostname : servers) {
-                            if(hostname==null) MasterServer.reportWarning(new RuntimeException("Warning: hostname is null"), null);
-                            else if(!SV.contains(hostname)) SV.add(hostname);
+                        for(Integer pkey : servers) {
+                            if(pkey==null) MasterServer.reportWarning(new RuntimeException("Warning: pkey is null"), null);
+                            else if(!SV.contains(pkey)) SV.add(pkey);
                         }
                     }
                 }
@@ -243,7 +178,6 @@ final public class InvalidateList {
             if(recurse) {
                 switch(tableID) {
                     case AO_SERVERS :
-                        addTable(conn, SchemaTable.TableID.INTERBASE_SERVER_USERS, businesses, servers, true);
                         addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, businesses, servers, true);
                         addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, businesses, servers, true);
                         addTable(conn, SchemaTable.TableID.MYSQL_SERVERS, businesses, servers, true);
@@ -266,21 +200,12 @@ final public class InvalidateList {
                         addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);
                         addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
                         break;
-                    case FILE_BACKUPS :
-                        addTable(conn, SchemaTable.TableID.BACKUP_DATA, businesses, servers, true);
-                        break;
                     case HTTPD_BINDS :
                         addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);
                         addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
                         break;
                     case HTTPD_SITE_BINDS :
                         addTable(conn, SchemaTable.TableID.HTTPD_BINDS, businesses, servers, true);
-                        break;
-                    case INTERBASE_BACKUPS :
-                        addTable(conn, SchemaTable.TableID.BACKUP_DATA, businesses, servers, true);
-                        break;
-                    case INTERBASE_SERVER_USERS :
-                        addTable(conn, SchemaTable.TableID.INTERBASE_USERS, businesses, servers, true);
                         break;
                     case LINUX_ACCOUNTS :
                         addTable(conn, SchemaTable.TableID.FTP_GUEST_USERS, businesses, servers, true);
@@ -298,9 +223,6 @@ final public class InvalidateList {
                     case MAJORDOMO_SERVERS :
                         addTable(conn, SchemaTable.TableID.MAJORDOMO_LISTS, businesses, servers, true);
                         break;
-                    case MYSQL_BACKUPS :
-                        addTable(conn, SchemaTable.TableID.BACKUP_DATA, businesses, servers, true);
-                        break;
                     case MYSQL_SERVER_USERS :
                         addTable(conn, SchemaTable.TableID.MYSQL_USERS, businesses, servers, true);
                         break;
@@ -317,9 +239,6 @@ final public class InvalidateList {
                         break;
                     case PACKAGES :
                         addTable(conn, SchemaTable.TableID.PACKAGE_DEFINITIONS, businesses, servers, true);
-                        break;
-                    case POSTGRES_BACKUPS :
-                        addTable(conn, SchemaTable.TableID.BACKUP_DATA, businesses, servers, true);
                         break;
                     case POSTGRES_SERVER_USERS :
                         addTable(conn, SchemaTable.TableID.POSTGRES_USERS, businesses, servers, true);
@@ -349,7 +268,7 @@ final public class InvalidateList {
             if(SV!=null || serverLists.containsKey(tableID)) {
                 if(SV==null) return new SortedArrayList<String>();
                 if(SV.size()==0) return SV;
-                if(SV.contains(ALL)) return new SortedArrayList<String>();
+                if(SV.contains(ALL_BUSINESSES)) return new SortedArrayList<String>();
                 return SV;
             } else return null;
         } finally {
@@ -357,14 +276,14 @@ final public class InvalidateList {
         }
     }
 
-    public List<String> getAffectedServers(SchemaTable.TableID tableID) {
+    public List<Integer> getAffectedServers(SchemaTable.TableID tableID) {
         Profiler.startProfile(Profiler.FAST, InvalidateList.class, "getAffectedServers(SchemaTable.TableID)", null);
         try {
-            List<String> SV=serverLists.get(tableID);
+            List<Integer> SV=serverLists.get(tableID);
             if(SV!=null || businessLists.containsKey(tableID)) {
-                if(SV==null) return new SortedArrayList<String>();
+                if(SV==null) return new SortedArrayList<Integer>();
                 if(SV.size()==0) return SV;
-                if(SV.contains(ALL)) return new SortedArrayList<String>();
+                if(SV.contains(ALL_SERVERS)) return new SortedArrayList<Integer>();
                 return SV;
             } else return null;
         } finally {
@@ -377,15 +296,12 @@ final public class InvalidateList {
         try {
             for(SchemaTable.TableID tableID : tableIDs) {
                 if(serverLists.containsKey(tableID) || businessLists.containsKey(tableID)) {
-                    BackupDatabaseSynchronizer.invalidateTable(tableID);
-                    BackupHandler.invalidateTable(tableID);
                     BusinessHandler.invalidateTable(tableID);
                     CvsHandler.invalidateTable(tableID);
                     DaemonHandler.invalidateTable(tableID);
                     DNSHandler.invalidateTable(tableID);
                     EmailHandler.invalidateTable(tableID);
                     HttpdHandler.invalidateTable(tableID);
-                    InterBaseHandler.invalidateTable(tableID);
                     LinuxAccountHandler.invalidateTable(tableID);
                     MasterServer.invalidateTable(tableID);
                     MySQLHandler.invalidateTable(tableID);
@@ -423,28 +339,16 @@ final public class InvalidateList {
         }
     }
 
-    public static Collection<String> getServerCollection(MasterDatabaseConnection conn, int ... serverPKeys) throws IOException, SQLException {
+    public static IntCollection getServerCollection(int ... serverPKeys) throws IOException, SQLException {
         final int PROFILER_LEVEL=Profiler.FAST;
-        Profiler.startProfile(PROFILER_LEVEL, InvalidateList.class, "getServerCollection(MasterDatabaseConnection,int...)", null);
+        Profiler.startProfile(PROFILER_LEVEL, InvalidateList.class, "getServerCollection(int...)", null);
         try {
-            if(serverPKeys.length==0) return Collections.emptyList();
-            Collection<String> coll = new ArrayList<String>(serverPKeys.length);
-            for(int pkey : serverPKeys) coll.add(ServerHandler.getHostnameForServer(conn, pkey));
+            if(serverPKeys.length==0) return new IntArrayList(0);
+            IntCollection coll = new IntArrayList(serverPKeys.length);
+            for(int pkey : serverPKeys) coll.add(pkey);
             return coll;
         } finally {
             Profiler.endProfile(PROFILER_LEVEL);
-        }
-    }
-
-    public static Collection<String> getServerCollection(MasterDatabaseConnection conn, IntCollection serverPKeys) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, InvalidateList.class, "getServerCollection(MasterDatabaseConnection,IntCollection)", null);
-        try {
-            if(serverPKeys.isEmpty()) return Collections.emptyList();
-            Collection<String> coll = new ArrayList<String>(serverPKeys.size());
-            for(Integer pkey : serverPKeys) coll.add(ServerHandler.getHostnameForServer(conn, pkey.intValue()));
-            return coll;
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
 }

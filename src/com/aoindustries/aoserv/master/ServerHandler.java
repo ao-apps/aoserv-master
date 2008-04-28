@@ -15,6 +15,7 @@ import com.aoindustries.util.IntList;
 import com.aoindustries.util.LongArrayList;
 import com.aoindustries.util.LongList;
 import com.aoindustries.util.SortedArrayList;
+import com.aoindustries.util.SortedIntArrayList;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -32,8 +33,9 @@ import java.util.Stack;
  */
 final public class ServerHandler {
 
-    private static Map<String,List<String>> usernameServers;
+    private static Map<String,List<Integer>> usernameServers;
 
+    /*
     public static int addBackupServer(
         MasterDatabaseConnection conn,
         RequestSource source,
@@ -42,14 +44,13 @@ final public class ServerHandler {
         String farm,
         int owner,
         String description,
-        int backup_hour,
         int os_version,
         String username,
         String password,
         String contact_phone,
         String contact_email
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, ServerHandler.class, "addBackupServer(MasterDatabaseConnection,RequestSource,InvalidateList,String,String,int,String,int,int,String,String,String,String)", null);
+        Profiler.startProfile(Profiler.UNKNOWN, ServerHandler.class, "addBackupServer(MasterDatabaseConnection,RequestSource,InvalidateList,String,String,int,String,int,String,String,String,String)", null);
         try {
             // Security and validity checks
             String accounting=UsernameHandler.getBusinessForUsername(conn, source.getUsername());
@@ -77,8 +78,6 @@ final public class ServerHandler {
 
             PackageHandler.checkAccessPackage(conn, source, "addBackupServer", owner);
 
-            if(backup_hour<0 || backup_hour>23) throw new SQLException("Invalid backup_hour: "+backup_hour);
-
             String check = Username.checkUsername(username, Locale.getDefault());
             if(check!=null) throw new SQLException(check);
             
@@ -96,7 +95,6 @@ final public class ServerHandler {
                 + "  ?,\n"
                 + "  'orion',\n"
                 + "  ?,\n"
-                + "  ?,\n"
                 + "  null,\n"
                 + "  ?,\n"
                 + "  null\n"
@@ -106,7 +104,6 @@ final public class ServerHandler {
                 farm,
                 PackageHandler.getBusinessForPackage(conn, owner),
                 description,
-                backup_hour,
                 os_version
             );
             invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accounting, InvalidateList.allServers, false);
@@ -157,9 +154,9 @@ final public class ServerHandler {
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
-    }
+    }*/
 
-    public static void checkAccessServer(MasterDatabaseConnection conn, RequestSource source, String action, String server) throws IOException, SQLException {
+    /*public static void checkAccessServer(MasterDatabaseConnection conn, RequestSource source, String action, String server) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, ServerHandler.class, "checkAccessServer(MasterDatabaseConnection,RequestSource,String,String)", null);
         try {
             if(!canAccessServer(conn, source, server)) {
@@ -177,7 +174,7 @@ final public class ServerHandler {
         } finally {
             Profiler.endProfile(Profiler.FAST);
         }
-    }
+    }*/
 
     public static void checkAccessServer(MasterDatabaseConnection conn, RequestSource source, String action, int server) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, ServerHandler.class, "checkAccessServer(MasterDatabaseConnection,RequestSource,String,int)", null);
@@ -199,6 +196,7 @@ final public class ServerHandler {
         }
     }
 
+    /*
     public static boolean canAccessServer(MasterDatabaseConnection conn, RequestSource source, String server) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, ServerHandler.class, "canAccessServer(MasterDatabaseConnection,RequestSource,String)", null);
         try {
@@ -206,14 +204,12 @@ final public class ServerHandler {
         } finally {
             Profiler.endProfile(Profiler.FAST);
         }
-    }
+    }*/
 
     public static boolean canAccessServer(MasterDatabaseConnection conn, RequestSource source, int server) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, ServerHandler.class, "canAccessServer(MasterDatabaseConnection,RequestSource,int)", null);
         try {
-            String hostname=getHostnameForServer(conn, server);
-            if(hostname==null) throw new SQLException("Unable to find hostname for server: "+server);
-            return canAccessServer(conn, source, hostname);
+            return getAllowedServers(conn, source).contains(server);
         } finally {
             Profiler.endProfile(Profiler.FAST);
         }
@@ -241,40 +237,38 @@ final public class ServerHandler {
     /**
      * Gets the servers that are allowed for the provided username.
      */
-    static List<String> getAllowedServers(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+    static List<Integer> getAllowedServers(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, ServerHandler.class, "getAllowedServers(MasterDatabaseConnection,RequestSource)", null);
         try {
 	    synchronized(ServerHandler.class) {
 		String username=source.getUsername();
-		if(usernameServers==null) usernameServers=new HashMap<String,List<String>>();
-		List<String> SV=usernameServers.get(username);
+		if(usernameServers==null) usernameServers=new HashMap<String,List<Integer>>();
+		List<Integer> SV=usernameServers.get(username);
 		if(SV==null) {
-		    SV=new SortedArrayList<String>();
+		    SV=new SortedIntArrayList();
                     MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
                     if(mu!=null) {
                         com.aoindustries.aoserv.client.MasterServer[] masterServers = MasterServer.getMasterServers(conn, source.getUsername());
                         if(masterServers.length!=0) {
                             for(com.aoindustries.aoserv.client.MasterServer masterServer : masterServers) {
-                                SV.add(ServerHandler.getHostnameForServer(conn, masterServer.getServerPKey()));
+                                SV.add(masterServer.getServerPKey());
                             }
                         } else {
-                            SV.addAll(conn.executeStringListQuery("select hostname from servers"));
+                            SV.addAll(conn.executeIntListQuery("select pkey from servers"));
                         }
                     } else {
                         SV.addAll(
-                            conn.executeStringListQuery(
+                            conn.executeIntListQuery(
                                 "select\n"
-                                + "  se.hostname\n"
+                                + "  bs.server\n"
                                 + "from\n"
                                 + "  usernames un,\n"
                                 + "  packages pk,\n"
-                                + "  business_servers bs,\n"
-                                + "  servers se\n"
+                                + "  business_servers bs\n"
                                 + "where\n"
                                 + "  un.username=?\n"
                                 + "  and un.package=pk.name\n"
-                                + "  and pk.accounting=bs.accounting\n"
-                                + "  and bs.server=se.pkey",
+                                + "  and pk.accounting=bs.accounting",
                                 username
                             )
                         );
@@ -283,63 +277,6 @@ final public class ServerHandler {
 		}
 		return SV;
 	    }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
-    }
-
-    private static final Map<Integer,String> backupFarmsForServers=new HashMap<Integer,String>();
-    public static String getBackupFarmForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, ServerHandler.class, "getBackupFarmForServer(MasterDatabaseConnection,int)", null);
-        try {
-            Integer I=Integer.valueOf(server);
-            synchronized(backupFarmsForServers) {
-                String O=backupFarmsForServers.get(I);
-                if(O!=null) return O;
-                String backupFarm=conn.executeStringQuery(
-                    Connection.TRANSACTION_READ_COMMITTED,
-                    true,
-                    true,
-                    "select\n"
-                    + "  sf.backup_farm\n"
-                    + "from\n"
-                    + "  servers se,\n"
-                    + "  server_farms sf\n"
-                    + "where\n"
-                    + "  se.pkey=?\n"
-                    + "  and se.farm=sf.name",
-                    server
-                );
-                backupFarmsForServers.put(I, backupFarm);
-                return backupFarm;
-            }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
-    }
-
-    private static final Map<Integer,Boolean> allowBackupSameServerForServers=new HashMap<Integer,Boolean>();
-    public static boolean getAllowBackupSameServerForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, ServerHandler.class, "getAllowBackupSameServerForServer(MasterDatabaseConnection,int)", null);
-        try {
-            Integer I=Integer.valueOf(server);
-            synchronized(allowBackupSameServerForServers) {
-                Boolean O=allowBackupSameServerForServers.get(I);
-                if(O!=null) return O.booleanValue();
-                boolean allowSame=conn.executeBooleanQuery(
-                    "select\n"
-                    + "  sf.allow_same_server_backup\n"
-                    + "from\n"
-                    + "  servers se,\n"
-                    + "  server_farms sf\n"
-                    + "where\n"
-                    + "  se.pkey=?\n"
-                    + "  and se.farm=sf.name",
-                    server
-                );
-                allowBackupSameServerForServers.put(I, allowSame);
-                return allowSame;
-            }
         } finally {
             Profiler.endProfile(Profiler.FAST);
         }
@@ -354,29 +291,27 @@ final public class ServerHandler {
         }
     }
 
-    private static Map<String,Integer> failoverServers=new HashMap<String,Integer>();
-    public static int getFailoverServer(MasterDatabaseConnection conn, String server) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, ServerHandler.class, "getFailoverServer(MasterDatabaseConnection,String)", null);
+    private static Map<Integer,Integer> failoverServers=new HashMap<Integer,Integer>();
+    public static int getFailoverServer(MasterDatabaseConnection conn, int aoServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.FAST, ServerHandler.class, "getFailoverServer(MasterDatabaseConnection,int)", null);
         try {
             synchronized(failoverServers) {
-                if(failoverServers.containsKey(server)) return failoverServers.get(server).intValue();
+                if(failoverServers.containsKey(aoServer)) return failoverServers.get(aoServer).intValue();
                 int failoverServer=conn.executeIntQuery(
                     "select\n"
                     + "  coalesce(\n"
                     + "    (\n"
                     + "      select\n"
-                    + "        ao.failover_server\n"
+                    + "        failover_server\n"
                     + "      from\n"
-                    + "        servers se,\n"
-                    + "        ao_servers ao\n"
+                    + "        ao_servers\n"
                     + "      where\n"
-                    + "        se.hostname=?\n"
-                    + "        and se.pkey=ao.server\n"
+                    + "        server=?\n"
                     + "    ), -1\n"
                     + "  )",
-                    server
+                    aoServer
                 );
-                failoverServers.put(server, Integer.valueOf(failoverServer));
+                failoverServers.put(aoServer, failoverServer);
                 return failoverServer;
             }
         } finally {
@@ -402,16 +337,16 @@ final public class ServerHandler {
         }
     }
 
-    private static Map<Integer,String> hostnamesForServers=new HashMap<Integer,String>();
-    public static String getHostnameForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, ServerHandler.class, "getHostnameForServer(MasterDatabaseConnection,int)", null);
+    private static Map<Integer,String> hostnamesForAOServers=new HashMap<Integer,String>();
+    public static String getHostnameForAOServer(MasterDatabaseConnection conn, int aoServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.FAST, ServerHandler.class, "getHostnameForAOServer(MasterDatabaseConnection,int)", null);
         try {
-            Integer I=Integer.valueOf(server);
-            synchronized(hostnamesForServers) {
-                String hostname=hostnamesForServers.get(I);
+            Integer I=Integer.valueOf(aoServer);
+            synchronized(hostnamesForAOServers) {
+                String hostname=hostnamesForAOServers.get(I);
                 if(hostname==null) {
-                    hostname=conn.executeStringQuery("select hostname from servers where pkey=?", server);
-                    hostnamesForServers.put(I, hostname);
+                    hostname=conn.executeStringQuery("select hostname from ao_servers where server=?", aoServer);
+                    hostnamesForAOServers.put(I, hostname);
                 }
                 return hostname;
             }
@@ -420,27 +355,30 @@ final public class ServerHandler {
         }
     }
 
+    /**
+     * Gets the operating system version for a server or <code>-1</code> if not available.
+     */
     public static int getOperatingSystemVersionForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, ServerHandler.class, "getOperatingSystemVersionForServer(MasterDatabaseConnection,int)", null);
         try {
-            return conn.executeIntQuery("select operating_system_version from servers where pkey=?", server);
+            return conn.executeIntQuery("select coalesce((select operating_system_version from servers where pkey=?), -1)", server);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
 
-    private static Map<String,Integer> pkeysForServers=new HashMap<String,Integer>();
-    public static int getPKeyForServer(MasterDatabaseConnection conn, String server) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, ServerHandler.class, "getPKeyForServer(MasterDatabaseConnection,String)", null);
+    private static Map<String,Integer> serversForAOServers=new HashMap<String,Integer>();
+    public static int getServerForAOServerHostname(MasterDatabaseConnection conn, String aoServerHostname) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.FAST, ServerHandler.class, "getServerForAOServerHostname(MasterDatabaseConnection,String)", null);
         try {
-            synchronized(pkeysForServers) {
-                Integer I=pkeysForServers.get(server);
-                int pkey;
+            synchronized(serversForAOServers) {
+                Integer I=serversForAOServers.get(aoServerHostname);
+                int server;
                 if(I==null) {
-                    pkey=conn.executeIntQuery("select pkey from servers where hostname=?", server);
-                    pkeysForServers.put(server, Integer.valueOf(pkey));
-                } else pkey=I.intValue();
-                return pkey;
+                    server=conn.executeIntQuery("select server from ao_servers where hostname=?", aoServerHostname);
+                    serversForAOServers.put(aoServerHostname, server);
+                } else server=I.intValue();
+                return server;
             }
         } finally {
             Profiler.endProfile(Profiler.FAST);
@@ -491,31 +429,19 @@ final public class ServerHandler {
                     usernameServers=null;
                 }
             } else if(tableID==SchemaTable.TableID.SERVERS) {
-                synchronized(allowBackupSameServerForServers) {
-                    allowBackupSameServerForServers.clear();
-                }
-                synchronized(backupFarmsForServers) {
-                    backupFarmsForServers.clear();
-                }
                 synchronized(failoverServers) {
                     failoverServers.clear();
                 }
                 synchronized(farmsForServers) {
                     farmsForServers.clear();
                 }
-                synchronized(hostnamesForServers) {
-                    hostnamesForServers.clear();
+                synchronized(hostnamesForAOServers) {
+                    hostnamesForAOServers.clear();
                 }
-                synchronized(pkeysForServers) {
-                    pkeysForServers.clear();
+                synchronized(serversForAOServers) {
+                    serversForAOServers.clear();
                 }
             } else if(tableID==SchemaTable.TableID.SERVER_FARMS) {
-                synchronized(allowBackupSameServerForServers) {
-                    allowBackupSameServerForServers.clear();
-                }
-                synchronized(backupFarmsForServers) {
-                    backupFarmsForServers.clear();
-                }
             }
         } finally {
             Profiler.endProfile(Profiler.FAST);
@@ -629,6 +555,30 @@ final public class ServerHandler {
                     }
                 }
             }
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+    
+    /**
+     * Gets the package that owns the server.
+     */
+    public static int getPackageForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, ServerHandler.class, "getPackageForServer(MasterDatabaseConnection,int)", null);
+        try {
+            return conn.executeIntQuery("select package from servers where pkey=?", server);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+   
+    /**
+     * Gets the per-package unique name of the server.
+     */
+    public static int getNameForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, ServerHandler.class, "getPackageForServer(MasterDatabaseConnection,int)", null);
+        try {
+            return conn.executeIntQuery("select name from servers where pkey=?", server);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }

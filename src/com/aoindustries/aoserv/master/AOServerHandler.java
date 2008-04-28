@@ -268,4 +268,37 @@ final public class AOServerHandler {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
+
+    public static String get3wareRaidReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, AOServerHandler.class, "get3wareRaidReport(MasterDatabaseConnection,RequestSource,int)", null);
+        try {
+            ServerHandler.checkAccessServer(conn, source, "get3wareRaidReport", aoServer);
+
+            return DaemonHandler.getDaemonConnector(conn, aoServer).get3wareRaidReport();
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static String getMdRaidReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, AOServerHandler.class, "getMdRaidReport(MasterDatabaseConnection,RequestSource,int)", null);
+        try {
+            ServerHandler.checkAccessServer(conn, source, "getMdRaidReport", aoServer);
+
+            return DaemonHandler.getDaemonConnector(conn, aoServer).getMdRaidReport();
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static String getDrbdReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, AOServerHandler.class, "getDrbdReport(MasterDatabaseConnection,RequestSource,int)", null);
+        try {
+            ServerHandler.checkAccessServer(conn, source, "getDrbdReport", aoServer);
+
+            return DaemonHandler.getDaemonConnector(conn, aoServer).getDrbdReport();
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
 }

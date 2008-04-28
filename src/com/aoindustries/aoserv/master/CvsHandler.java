@@ -137,8 +137,6 @@ final public class CvsHandler {
                     + "  ?,\n"
                     + "  ?,\n"
                     + "  now(),\n"
-                    + "  "+CvsRepository.DEFAULT_BACKUP_LEVEL+",\n"
-                    + "  "+CvsRepository.DEFAULT_BACKUP_RETENTION+",\n"
                     + "  null\n"
                     + ")",
                     pkey,
@@ -151,7 +149,7 @@ final public class CvsHandler {
                     conn,
                     SchemaTable.TableID.CVS_REPOSITORIES,
                     LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
-                    ServerHandler.getHostnameForServer(conn, aoServer),
+                    aoServer,
                     false
                 );
 		return pkey;
@@ -189,7 +187,7 @@ final public class CvsHandler {
                 conn,
                 SchemaTable.TableID.CVS_REPOSITORIES,
                 LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
-                ServerHandler.getHostnameForServer(conn, LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa)),
+                LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa),
                 false
             );
         } finally {
@@ -222,7 +220,7 @@ final public class CvsHandler {
                 conn,
                 SchemaTable.TableID.CVS_REPOSITORIES,
                 LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
-                ServerHandler.getHostnameForServer(conn, LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa)),
+                LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa),
                 false
             );
         } finally {
@@ -322,39 +320,7 @@ final public class CvsHandler {
                 conn,
                 SchemaTable.TableID.CVS_REPOSITORIES,
                 LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
-                ServerHandler.getHostnameForServer(conn, aoServer),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    public static void setBackupRetention(
-        MasterDatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int pkey,
-        short days
-    ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, CvsHandler.class, "setBackupRetention(MasterDatabaseConnection,RequestSource,InvalidateList,int,short)", null);
-        try {
-            // Security checks
-            int lsa=getLinuxServerAccountForCvsRepository(conn, pkey);
-            LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "setBackupRetention", lsa);
-
-            // Update the database
-            conn.executeUpdate(
-                "update cvs_repositories set backup_retention=?::smallint where pkey=?",
-                days,
-                pkey
-            );
-
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.CVS_REPOSITORIES,
-                LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
-                ServerHandler.getHostnameForServer(conn, LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa)),
+                aoServer,
                 false
             );
         } finally {
@@ -397,7 +363,7 @@ final public class CvsHandler {
                 conn,
                 SchemaTable.TableID.CVS_REPOSITORIES,
                 LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
-                ServerHandler.getHostnameForServer(conn, LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa)),
+                LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa),
                 false
             );
         } finally {

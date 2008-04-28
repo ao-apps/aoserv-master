@@ -186,7 +186,7 @@ final public class NetBindHandler {
                 conn,
                 SchemaTable.TableID.NET_BINDS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
-                ServerHandler.getHostnameForServer(conn, aoServer),
+                aoServer,
                 false
             );
             return pkey;
@@ -329,7 +329,7 @@ final public class NetBindHandler {
                 conn,
                 SchemaTable.TableID.NET_BINDS,
                 PackageHandler.getBusinessForPackage(conn, pack),
-                ServerHandler.getHostnameForServer(conn, aoServer),
+                aoServer,
                 false
             );
             return pkey;
@@ -441,7 +441,7 @@ final public class NetBindHandler {
                     conn,
                     SchemaTable.TableID.NET_TCP_REDIRECTS,
                     business,
-                    ServerHandler.getHostnameForServer(conn, aoServer),
+                    aoServer,
                     false
                 );
             }
@@ -452,7 +452,7 @@ final public class NetBindHandler {
                     conn,
                     SchemaTable.TableID.PRIVATE_FTP_SERVERS,
                     business,
-                    ServerHandler.getHostnameForServer(conn, aoServer),
+                    aoServer,
                     false
                 );
             }
@@ -462,7 +462,7 @@ final public class NetBindHandler {
                 conn,
                 SchemaTable.TableID.NET_BINDS,
                 business,
-                ServerHandler.getHostnameForServer(conn, aoServer),
+                aoServer,
                 false
             );
         } finally {
@@ -487,7 +487,7 @@ final public class NetBindHandler {
                 conn,
                 SchemaTable.TableID.NET_BINDS,
                 getBusinessForNetBind(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForNetBind(conn, pkey)),
+                getAOServerForNetBind(conn, pkey),
                 false
             );
         } finally {
@@ -512,7 +512,7 @@ final public class NetBindHandler {
                 conn,
                 SchemaTable.TableID.NET_BINDS,
                 getBusinessForNetBind(conn, pkey),
-                ServerHandler.getHostnameForServer(conn, getAOServerForNetBind(conn, pkey)),
+                getAOServerForNetBind(conn, pkey),
                 false
             );
         } finally {
