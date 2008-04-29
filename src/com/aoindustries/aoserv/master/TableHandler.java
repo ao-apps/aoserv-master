@@ -762,6 +762,7 @@ final public class TableHandler {
                         new AOServer(),
                         "select\n"
                         + "  ao.server,\n"
+                        + "  ao.hostname,\n"
                         + "  ao.daemon_bind,\n"
                         + "  '"+AOServProtocol.FILTERED+"'::text,\n"
                         + "  ao.pool_size,\n"
@@ -2528,7 +2529,7 @@ final public class TableHandler {
                         + "  and bu1.accounting=pk2.accounting\n"
                         + "  and pk2.pkey=se.package\n"
                         + "  and se.pkey=ffr.server\n"
-                        + "  and ffr.pkey=fbs.server",
+                        + "  and ffr.pkey=fbs.replication",
                         username
                     );
                     break;
@@ -3623,7 +3624,7 @@ final public class TableHandler {
                             + "      and pk5.accounting=bs5.accounting\n"
                             + "      and bs5.server=nd5.ao_server\n"
                             + "      and nd5.pkey=ia5.net_device\n"
-                            + "      and ia5.ip_address='"+IPAddress.LOOPBACK_IP+"'\n"
+                            + "      and (ia5.ip_address='"+IPAddress.LOOPBACK_IP+"' or ia5.is_overflow)\n"
                             + "  )",
                             username,
                             username,

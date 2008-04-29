@@ -927,7 +927,7 @@ final public class MySQLHandler {
 		+ "  mysql_databases md\n"
 		+ "where\n"
 		+ "  msu.username=?\n"
-		+ "  and msu.pkey=mdu.mysql_user\n"
+		+ "  and msu.pkey=mdu.mysql_server_user\n"
 		+ "  and mdu.mysql_database=md.pkey\n"
 		+ "group by\n"
 		+ "  md.mysql_server",
