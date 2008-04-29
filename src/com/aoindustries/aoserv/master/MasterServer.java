@@ -4324,19 +4324,24 @@ public abstract class MasterServer {
                                         {
                                             int clientTableID=in.readCompressedInt();
                                             SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
-                                            if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
-                                            process.setCommand(
-                                                "get_row_count",
-                                                TableHandler.getTableName(
+                                            int count;
+                                            if(tableID==null) {
+                                                reportWarning("Client table not supported: #"+clientTableID+", returning 0 from get_row_count");
+                                                count = 0;
+                                            } else {
+                                                process.setCommand(
+                                                    "get_row_count",
+                                                    TableHandler.getTableName(
+                                                        conn,
+                                                        tableID
+                                                    )
+                                                );
+                                                count=TableHandler.getRowCount(
                                                     conn,
+                                                    source,
                                                     tableID
-                                                )
-                                            );
-                                            int count=TableHandler.getRowCount(
-                                                conn,
-                                                source,
-                                                tableID
-                                            );
+                                                );
+                                            }
                                             resp1=AOServProtocol.DONE;
                                             resp2Int=count;
                                             hasResp2Int=true;
