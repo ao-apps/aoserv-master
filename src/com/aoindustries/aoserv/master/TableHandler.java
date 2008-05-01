@@ -865,7 +865,20 @@ final public class TableHandler {
                             + "  backup_partitions bp\n"
                             + "where\n"
                             + "  ms.username=?\n"
-                            + "  and ms.server=bp.ao_server",
+                            + "  and (\n"
+                            + "    ms.server=bp.ao_server\n"
+                            + "    or (\n"
+                            + "      select\n"
+                            + "        ffr.pkey\n"
+                            + "      from\n"
+                            + "        failover_file_replications ffr\n"
+                            + "        inner join backup_partitions bp2 on ffr.backup_partition=bp2.pkey\n"
+                            + "      where\n"
+                            + "        ms.server=ffr.server\n"
+                            + "        and bp.ao_server=bp2.ao_server\n"
+                            + "      limit 1\n"
+                            + "    ) is not null\n"
+                            + "  )",
                             username
                         );
                     } else MasterServer.writeObjects(

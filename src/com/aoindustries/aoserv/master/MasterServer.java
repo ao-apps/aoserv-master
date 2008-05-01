@@ -450,7 +450,7 @@ public abstract class MasterServer {
                                             int server;
                                             if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_30)<=0) {
                                                 String hostname=in.readBoolean()?in.readUTF().trim():null;
-                                                server = ServerHandler.getServerForAOServerHostname(conn, hostname);
+                                                server = hostname==null ? -1 : ServerHandler.getServerForAOServerHostname(conn, hostname);
                                             } else {
                                                 server = in.readCompressedInt();
                                             }
@@ -460,7 +460,7 @@ public abstract class MasterServer {
                                                     conn,
                                                     tableID
                                                 ),
-                                                server
+                                                server==-1 ? null : Integer.valueOf(server)
                                             );
                                             TableHandler.invalidate(
                                                 conn,
