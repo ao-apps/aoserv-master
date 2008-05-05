@@ -41,7 +41,7 @@ import java.util.Locale;
  *
  * @author  AO Industries, Inc.
  */
-final public class CreditCardHandler implements CronJob {
+final public class CreditCardHandler /*implements CronJob*/ {
 
     /**
      * The maximum time for a processing pass.
@@ -56,6 +56,7 @@ final public class CreditCardHandler implements CronJob {
     private static boolean started=false;
 
     public static void start() {
+        /*
         Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "start()", null);
         try {
             synchronized(System.out) {
@@ -68,7 +69,7 @@ final public class CreditCardHandler implements CronJob {
             }
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        }*/
     }
 
     public static void checkAccessCreditCard(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
@@ -1555,26 +1556,27 @@ final public class CreditCardHandler implements CronJob {
     /**
      * Runs at 12:12 am on the first day of the month.
      */
-    public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+    /*public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         return
             minute==12
             && hour==0
             && dayOfMonth==1
         ;
-    }
+    }*/
 
-    public int getCronJobScheduleMode() {
+    /*public int getCronJobScheduleMode() {
         return CRON_JOB_SCHEDULE_SKIP;
-    }
+    }*/
 
-    public String getCronJobName() {
+    /*public String getCronJobName() {
         return "CreditCardHandler";
-    }
+    }*/
 
-    public int getCronJobThreadPriority() {
+    /*public int getCronJobThreadPriority() {
         return Thread.NORM_PRIORITY+1;
-    }
+    }*/
 
+    /*
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "runCronJob(int,int,int,int,int,int)", null);
         try {
@@ -1593,5 +1595,5 @@ final public class CreditCardHandler implements CronJob {
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
-    }
+    }*/
 }
