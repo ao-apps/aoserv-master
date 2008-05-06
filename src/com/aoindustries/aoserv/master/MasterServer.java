@@ -8388,12 +8388,10 @@ public abstract class MasterServer {
             try {
                 // Create the list of objects first
                 List<MasterServerStat> objs=new ArrayList<MasterServerStat>();
-                addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_CONCURRENCY, Integer.toString(BufferManager.getByteBufferUsedCount()), "Current number of byte[] buffers allocated");
-                addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_SIZE, Integer.toString(BufferManager.getByteBufferCount()), "Number of byte[] buffers created");
+                addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getByteBufferCreates()), "Number of byte[] buffers created");
                 addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_USES, Long.toString(BufferManager.getByteBufferUses()), "Total number of byte[] buffers allocated");
 
-                addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_CONCURRENCY, Integer.toString(BufferManager.getCharBufferUsedCount()), "Current number of char[] buffers allocated");
-                addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_SIZE, Integer.toString(BufferManager.getCharBufferCount()), "Number of char[] buffers created");
+                addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getCharBufferCreates()), "Number of char[] buffers created");
                 addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_USES, Long.toString(BufferManager.getCharBufferUses()), "Total number of char[] buffers allocated");
 
                 addStat(objs, MasterServerStat.DAEMON_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonConcurrency()), "Number of active daemon connections");

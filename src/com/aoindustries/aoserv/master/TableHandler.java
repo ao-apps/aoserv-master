@@ -898,7 +898,20 @@ final public class TableHandler {
                         + "  un.username=?\n"
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=bp.ao_server",
+                        + "  and (\n"
+                        + "    bs.server=bp.ao_server\n"
+                        + "    or (\n"
+                        + "      select\n"
+                        + "        ffr.pkey\n"
+                        + "      from\n"
+                        + "        failover_file_replications ffr\n"
+                        + "        inner join backup_partitions bp2 on ffr.backup_partition=bp2.pkey\n"
+                        + "      where\n"
+                        + "        bs.server=ffr.server\n"
+                        + "        and bp.ao_server=bp2.ao_server\n"
+                        + "      limit 1\n"
+                        + "    ) is not null\n"
+                        + "  )",
                         username
                     );
                     break;
@@ -3638,7 +3651,29 @@ final public class TableHandler {
                             + "      and bs5.server=nd5.ao_server\n"
                             + "      and nd5.pkey=ia5.net_device\n"
                             + "      and (ia5.ip_address='"+IPAddress.LOOPBACK_IP+"' or ia5.is_overflow)\n"
+                            + "  ) or ia.pkey in (\n"
+                            + "    select \n"
+                            + "      ia6.pkey\n"
+                            + "    from\n"
+                            + "      usernames un6,\n"
+                            + "      packages pk6,\n"
+                            + "      business_servers bs6,\n"
+                            + "      failover_file_replications ffr6,\n"
+                            + "      backup_partitions bp6,\n"
+                            + "      ao_servers ao6,\n"
+                            + "      net_devices nd6,\n"
+                            + "      ip_addresses ia6\n"
+                            + "    where\n"
+                            + "      un6.username=?\n"
+                            + "      and un6.package=pk6.name\n"
+                            + "      and pk6.accounting=bs6.accounting\n"
+                            + "      and bs6.server=ffr6.server\n"
+                            + "      and ffr6.backup_partition=bp6.pkey\n"
+                            + "      and bp6.ao_server=ao6.server\n"
+                            + "      and ao6.server=nd6.ao_server and ao6.daemon_device_id=nd6.device_id\n"
+                            + "      and nd6.pkey=ia6.net_device and not ia6.is_alias\n"
                             + "  )",
+                            username,
                             username,
                             username,
                             username
