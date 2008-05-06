@@ -760,7 +760,7 @@ final public class TableHandler {
                         out,
                         provideProgress,
                         new AOServer(),
-                        "select\n"
+                        "select distinct\n"
                         + "  ao.server,\n"
                         + "  ao.hostname,\n"
                         + "  ao.daemon_bind,\n"
@@ -779,13 +779,20 @@ final public class TableHandler {
                         + "from\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  business_servers bs,\n"
+                        + "  business_servers bs\n"
+                        // Allow servers it replicates to
+                        + "  left join failover_file_replications ffr on bs.server=ffr.server\n"
+                        + "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
                         + "  ao_servers ao\n"
                         + "where\n"
                         + "  un.username=?\n"
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=ao.server",
+                        + "  and (\n"
+                        + "    bs.server=ao.server\n"
+                        // Allow servers it replicates to
+                        + "    or bp.ao_server=ao.server\n"
+                        + "  )",
                         username
                     );
                     break;
@@ -3574,9 +3581,11 @@ final public class TableHandler {
                             + "        from\n"
                             + "          failover_file_replications ffr\n"
                             + "          inner join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
+                            + "          inner join ao_servers bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
                             + "        where\n"
                             + "          ms.server=ffr.server\n"
                             + "          and bp.ao_server=nd.ao_server\n"
+                            + "          and bpao.daemon_device_id=nd.device_id\n" // Only allow access to the device device ID for failovers
                             + "        limit 1\n"
                             + "      ) is not null\n"
                             + "    )\n"
@@ -4972,9 +4981,11 @@ final public class TableHandler {
                             + "      from\n"
                             + "        failover_file_replications ffr\n"
                             + "        inner join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
+                            + "        inner join ao_servers bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
                             + "      where\n"
                             + "        ms.server=ffr.server\n"
                             + "        and bp.ao_server=nd.ao_server\n"
+                            + "        and bpao.daemon_device_id=nd.device_id\n" // Only allow access to the device device ID for failovers
                             + "      limit 1\n"
                             + "    ) is not null\n"
                             + "  )",
@@ -4986,18 +4997,25 @@ final public class TableHandler {
                         out,
                         provideProgress,
                         new NetDevice(),
-                        "select\n"
+                        "select distinct\n"
                         + "  nd.*\n"
                         + "from\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  business_servers bs,\n"
+                        + "  business_servers bs\n"
+                        // Allow failover destinations
+                        + "  left outer join failover_file_replications ffr on bs.server=ffr.server\n"
+                        + "  left outer join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
+                        + "  left outer join ao_servers bpao on bp.ao_server=bpao.server,\n"
                         + "  net_devices nd\n"
                         + "where\n"
                         + "  un.username=?\n"
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=nd.ao_server",
+                        + "  and (\n"
+                        + "    bs.server=nd.ao_server\n"
+                        + "    or (bp.ao_server=nd.ao_server and nd.device_id=bpao.daemon_device_id)\n"
+                        + "  )",
                         username
                     );
                     break;
@@ -6111,18 +6129,25 @@ final public class TableHandler {
                         out,
                         provideProgress,
                         new Server(),
-                        "select\n"
+                        "select distinct\n"
                         + "  se.*\n"
                         + "from\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  business_servers bs,\n"
+                        + "  business_servers bs\n"
+                        // Allow servers it replicates to
+                        + "  left join failover_file_replications ffr on bs.server=ffr.server\n"
+                        + "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
                         + "  servers se\n"
                         + "where\n"
                         + "  un.username=?\n"
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bs.accounting\n"
-                        + "  and bs.server=se.pkey",
+                        + "  and (\n"
+                        + "    bs.server=se.pkey\n"
+                        // Allow servers it replicates to
+                        + "    or bp.ao_server=se.pkey\n"
+                        + "  )",
                         username
                     );
                     break;
