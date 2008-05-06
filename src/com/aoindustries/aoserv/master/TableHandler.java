@@ -894,7 +894,7 @@ final public class TableHandler {
                         out,
                         provideProgress,
                         new BackupPartition(),
-                        "select\n"
+                        "select distinct\n"
                         + "  bp.*\n"
                         + "from\n"
                         + "  usernames un,\n"

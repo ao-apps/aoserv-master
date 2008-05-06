@@ -59,11 +59,11 @@ final public class BusinessHandler {
     public static boolean canAccessBusiness(MasterDatabaseConnection conn, RequestSource source, String accounting) throws IOException, SQLException {
         Profiler.startProfile(Profiler.FAST, BusinessHandler.class, "canAccessBusiness(MasterDatabaseConnection,RequestSource,String)", null);
         try {
-            String username=source.getUsername();
+            //String username=source.getUsername();
             return
                 getAllowedBusinesses(conn, source)
                 .contains(
-                    UsernameHandler.getBusinessForUsername(conn, username)
+                    accounting //UsernameHandler.getBusinessForUsername(conn, username)
                 )
             ;
         } finally {
