@@ -5,16 +5,12 @@ package com.aoindustries.aoserv.master;
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
-import com.aoindustries.aoserv.client.Username;
 import com.aoindustries.profiler.Profiler;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.LongArrayList;
 import com.aoindustries.util.LongList;
-import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.SortedIntArrayList;
 import java.io.IOException;
 import java.sql.Connection;
@@ -22,9 +18,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Stack;
 
 /**
  * The <code>ServerHandler</code> handles all the accesses to the Server tables.
@@ -575,10 +569,10 @@ final public class ServerHandler {
     /**
      * Gets the per-package unique name of the server.
      */
-    public static int getNameForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
+    public static String getNameForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, ServerHandler.class, "getPackageForServer(MasterDatabaseConnection,int)", null);
         try {
-            return conn.executeIntQuery("select name from servers where pkey=?", server);
+            return conn.executeStringQuery("select name from servers where pkey=?", server);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }

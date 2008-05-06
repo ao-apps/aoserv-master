@@ -359,13 +359,18 @@ final public class DaemonHandler {
         Profiler.startProfile(Profiler.UNKNOWN, DaemonHandler.class, "requestDaemonAccess(MasterDatabaseConnection,RequestSource,int,int,int)", null);
         try {
             // Security checks
-            String username=source.getUsername();
-            MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-            if(masterUser==null) throw new SQLException("Only master users allowed to request daemon access.");
+            //String username=source.getUsername();
+            //MasterUser masterUser=MasterServer.getMasterUser(conn, username);
+            //if(masterUser==null) throw new SQLException("Only master users allowed to request daemon access.");
+            // Sometime later we might restrict certain command codes to certain users
+
             if(daemonCommandCode==AOServDaemonProtocol.FAILOVER_FILE_REPLICATION) {
-                // Current user must be able to access the from server
+                // Current user must have the same exact package as the from server
+                String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
                 int fromServer=FailoverHandler.getFromServerForFailoverFileReplication(conn, param1);
-                ServerHandler.checkAccessServer(conn, source, "requestDaemonAccess", fromServer);
+                String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer));
+                if(!userPackage.equals(serverPackage)) throw new SQLException("business_administrators.username.package!=servers.package.name: Not allowed to request daemon access for FAILOVER_FILE_REPLICATION");
+                //ServerHandler.checkAccessServer(conn, source, "requestDaemonAccess", fromServer);
 
                 // The to server must match server
                 int backupPartition = FailoverHandler.getBackupPartitionForFailoverFileReplication(conn, param1);

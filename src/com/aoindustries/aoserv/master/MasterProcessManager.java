@@ -87,7 +87,11 @@ final public class MasterProcessManager {
                     // Stupor-user
                     objs.add(process);
                 } else {
-                    if(UsernameHandler.canAccessUsername(conn, source, process.getEffectiveUser())) objs.add(process);
+                    String effectiveUser = process.getEffectiveUser();
+                    if(
+                        effectiveUser!=null
+                        && UsernameHandler.canAccessUsername(conn, source, effectiveUser)
+                    ) objs.add(process);
                 }
             }
             MasterServer.writeObjectsSynced(source, out, provideProgress, objs);

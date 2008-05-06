@@ -4932,7 +4932,30 @@ final public class TableHandler {
                         + "      and un5.package=pk5.name\n"
                         + "      and pk5.accounting=bs5.accounting\n"
                         + "      and bs5.server=ps5.ao_server\n"
-			+ "  )",
+			+ "  ) or nb.pkey in (\n"
+                        // Allow net_binds of receiving failover_file_replications (exact package match - no tree inheritence)
+                        + "    select\n"
+                        + "      nb6.pkey\n"
+                        + "    from\n"
+                        + "      usernames un6,\n"
+                        + "      packages pk6,\n"
+                        + "      servers se6,\n"
+                        + "      failover_file_replications ffr6,\n"
+                        + "      backup_partitions bp6,\n"
+                        + "      net_binds nb6\n"
+                        + "    where\n"
+                        + "      un6.username=?\n"
+                        + "      and un6.package=pk6.name\n"
+                        + "      and pk6.pkey=se6.package\n"
+                        + "      and se6.pkey=ffr6.server\n"
+                        + "      and ffr6.backup_partition=bp6.pkey\n"
+                        + "      and bp6.ao_server=nb6.ao_server\n"
+                        + "      and (\n"
+                        + "        nb6.app_protocol='"+Protocol.AOSERV_DAEMON+"'\n"
+                        + "        or nb6.app_protocol='"+Protocol.AOSERV_DAEMON_SSL+"'\n"
+                        + "      )\n"
+                        + "  )",
+                        username,
                         username,
                         username,
 			username,
