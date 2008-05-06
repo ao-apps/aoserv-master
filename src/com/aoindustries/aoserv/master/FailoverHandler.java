@@ -34,11 +34,16 @@ final public class FailoverHandler implements CronJob {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "addFailoverFileLog(MasterDatabaseConnection,RequestSource,InvalidateList,int,long,long,int,int,long,boolean)", null);
         try {
-            String mustring = source.getUsername();
-            MasterUser mu = MasterServer.getMasterUser(conn, mustring);
-            if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not access failover_file_log.");
+            //String mustring = source.getUsername();
+            //MasterUser mu = MasterServer.getMasterUser(conn, mustring);
+            //if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not access failover_file_log.");
+            
+            // The server must be an exact package match to allow adding log entries
             int server=getFromServerForFailoverFileReplication(conn, replication);
-            ServerHandler.checkAccessServer(conn, source, "add_failover_file_log", server);
+            String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
+            String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+            if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_log for servers that have the same package and the business_administrator adding the log entry");
+            //ServerHandler.checkAccessServer(conn, source, "add_failover_file_log", server);
 
             int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('failover_file_log_pkey_seq')");
             conn.executeUpdate(
