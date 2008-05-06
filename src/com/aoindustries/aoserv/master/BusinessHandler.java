@@ -667,7 +667,7 @@ final public class BusinessHandler {
             boolean hasDefault=conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select (select pkey from business_servers where accounting=? and is_default limit 1) is not null", accounting);
 
             conn.executeUpdate(
-                "insert into business_servers values(?,?,?,?,false,false,false,false,false,false,false)",
+                "insert into business_servers values(?,?,?,?,false,false,false,false,false,false)",
                 pkey,
                 accounting,
                 server,
