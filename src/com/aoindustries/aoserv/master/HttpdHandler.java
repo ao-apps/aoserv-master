@@ -1088,57 +1088,6 @@ final public class HttpdHandler {
             );
             invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_URLS, accounting, aoServer, false);
 
-            String wildcardHttps=conn.executeStringQuery(
-                "select\n"
-                + "  wildcard_https\n"
-                + "from\n"
-                + "  ao_servers\n"
-                + "where\n"
-                + "  server=?",
-                aoServer
-            );
-            String httpsHostname=wildcardHttps;
-            if(httpsHostname!=null) {
-                int httpsPort = 443;
-                httpsHostname = siteName+"."+httpsHostname;
-                DNSHandler.addDNSRecord(
-                    conn,
-                    invalidateList,
-                    httpsHostname,
-                    IPAddressHandler.getIPStringForIPAddress(conn, ipAddress),
-                    tlds
-                );
-                int httpsNetBind=getHttpdBind(conn, invalidateList, packageName, aoServer, ipAddress, httpsPort, Protocol.HTTPS, isTomcat4);
-
-                // Create the HTTPS HttpdSiteBind
-                int httpsSiteBindPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_binds_pkey_seq')");
-
-                pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into httpd_site_binds values(?,?,?,?,?,?,?,null,null,false,false)");
-                try {
-                    pstmt.setInt(1, httpsSiteBindPKey);
-                    pstmt.setInt(2, httpdSitePKey);
-                    pstmt.setInt(3, httpsNetBind);
-                    pstmt.setString(4, "/logs/"+siteName+"/https/access_log");
-                    pstmt.setString(5, "/logs/"+siteName+"/https/error_log");
-                    pstmt.setString(6, "/etc/ssl/certs/"+wildcardHttps+".cert");
-                    pstmt.setString(7, "/etc/ssl/private/"+wildcardHttps+".key");
-                    conn.incrementUpdateCount();
-                    pstmt.executeUpdate();
-                } catch(SQLException err) {
-                    System.err.println("Error from query: "+pstmt.toString());
-                    throw err;
-                } finally {
-                    pstmt.close();
-                }
-                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BINDS, accounting, aoServer, false);
-
-                conn.executeUpdate(
-                    "insert into httpd_site_urls(httpd_site_bind, hostname, is_primary) values(?,?,true)",
-                    httpsSiteBindPKey,
-                    httpsHostname
-                );
-                invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_URLS, accounting, aoServer, false);
-            }
             return httpdSitePKey;
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
