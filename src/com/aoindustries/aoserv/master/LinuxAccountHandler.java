@@ -308,7 +308,10 @@ final public class LinuxAccountHandler {
             if(groupName.equals(LinuxGroup.MAIL)) throw new SQLException("Not allowed to add LinuxGroupAccount for group '"+LinuxGroup.MAIL+'\'');
             if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add LinuxGroupAccount for user '"+LinuxAccount.MAIL+'\'');
             if(!skipSecurityChecks) {
-                checkAccessLinuxGroup(conn, source, "addLinuxGroupAccount", groupName);
+                if(
+                    !groupName.equals(LinuxGroup.FTPONLY)
+                    && !groupName.equals(LinuxGroup.MAILONLY)
+                ) checkAccessLinuxGroup(conn, source, "addLinuxGroupAccount", groupName);
                 checkAccessLinuxAccount(conn, source, "addLinuxGroupAccount", username);
                 if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to add LinuxGroupAccount, LinuxAccount disabled: "+username);
             }
