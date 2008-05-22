@@ -21,6 +21,7 @@ import com.aoindustries.aoserv.client.Ticket;
 import com.aoindustries.aoserv.client.Transaction;
 import com.aoindustries.aoserv.client.TransactionSearchCriteria;
 import com.aoindustries.email.ErrorMailer;
+import com.aoindustries.io.BitRateProvider;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.io.FifoFile;
@@ -7309,7 +7310,7 @@ public abstract class MasterServer {
                                         }
                                         break;
                                     case REACTIVATE_CREDIT_CARD :
-                                       {
+                                        {
                                             int pkey=in.readCompressedInt();
                                             process.setCommand(
                                                 "reactivate_credit_card",
@@ -7326,7 +7327,7 @@ public abstract class MasterServer {
                                         }
                                         break;
                                     case SET_CREDIT_CARD_USE_MONTHLY :
-                                       {
+                                        {
                                             String accounting = in.readUTF();
                                             int pkey=in.readCompressedInt();
 
@@ -7341,6 +7342,55 @@ public abstract class MasterServer {
                                                 invalidateList,
                                                 accounting,
                                                 pkey
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
+                                    case SET_FAILOVER_FILE_REPLICATION_BIT_RATE :
+                                        {
+                                            int pkey = in.readCompressedInt();
+                                            int bitRate = in.readCompressedInt();
+
+                                            process.setCommand(
+                                                "set_failover_file_replication_bit_rate",
+                                                pkey,
+                                                bitRate==BitRateProvider.UNLIMITED_BANDWIDTH ? "unlimited" : Integer.toString(bitRate)
+                                            );
+                                            FailoverHandler.setFailoverFileReplicationBitRate(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                pkey,
+                                                bitRate
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
+                                    case SET_FAILOVER_FILE_SCHEDULES :
+                                        {
+                                            int replication = in.readCompressedInt();
+                                            int size = in.readCompressedInt();
+                                            List<Short> hours = new ArrayList<Short>(size);
+                                            List<Short> minutes = new ArrayList<Short>(size);
+                                            for(int c=0;c<size;c++) {
+                                                hours.add(in.readShort());
+                                                minutes.add(in.readShort());
+                                            }
+
+                                            process.setCommand(
+                                                "set_failover_file_schedules",
+                                                replication,
+                                                size
+                                            );
+                                            FailoverHandler.setFailoverFileSchedules(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                replication,
+                                                hours,
+                                                minutes
                                             );
                                             resp1=AOServProtocol.DONE;
                                             sendInvalidateList=true;

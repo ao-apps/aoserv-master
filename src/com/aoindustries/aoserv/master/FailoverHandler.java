@@ -5,13 +5,18 @@ package com.aoindustries.aoserv.master;
  * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.FailoverFileLog;
+import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
+import com.aoindustries.io.BitRateProvider;
 import com.aoindustries.io.CompressedDataOutputStream;
-import com.aoindustries.profiler.*;
-import java.io.*;
-import java.sql.*;
+import com.aoindustries.util.IntList;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * The <code>FailoverHandler</code> handles all the accesses to the failover tables.
@@ -32,73 +37,148 @@ final public class FailoverHandler implements CronJob {
         long bytes,
         boolean isSuccessful
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "addFailoverFileLog(MasterDatabaseConnection,RequestSource,InvalidateList,int,long,long,int,int,long,boolean)", null);
-        try {
-            //String mustring = source.getUsername();
-            //MasterUser mu = MasterServer.getMasterUser(conn, mustring);
-            //if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not access failover_file_log.");
-            
-            // The server must be an exact package match to allow adding log entries
-            int server=getFromServerForFailoverFileReplication(conn, replication);
-            String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
-            String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
-            if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_log for servers that have the same package and the business_administrator adding the log entry");
-            //ServerHandler.checkAccessServer(conn, source, "add_failover_file_log", server);
+        //String mustring = source.getUsername();
+        //MasterUser mu = MasterServer.getMasterUser(conn, mustring);
+        //if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not access failover_file_log.");
 
-            int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('failover_file_log_pkey_seq')");
-            conn.executeUpdate(
-                "insert into\n"
-                + "  failover_file_log\n"
-                + "values(\n"
-                + "  ?,\n"
-                + "  ?,\n"
-                + "  ?,\n"
-                + "  ?,\n"
-                + "  ?,\n"
-                + "  ?,\n"
-                + "  ?,\n"
-                + "  ?\n"
-                + ")",
-                pkey,
+        // The server must be an exact package match to allow adding log entries
+        int server=getFromServerForFailoverFileReplication(conn, replication);
+        String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
+        String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+        if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_log for servers that have the same package and the business_administrator adding the log entry");
+        //ServerHandler.checkAccessServer(conn, source, "add_failover_file_log", server);
+
+        int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('failover_file_log_pkey_seq')");
+        conn.executeUpdate(
+            "insert into\n"
+            + "  failover_file_log\n"
+            + "values(\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?\n"
+            + ")",
+            pkey,
+            replication,
+            new Timestamp(startTime),
+            new Timestamp(endTime),
+            scanned,
+            updated,
+            bytes,
+            isSuccessful
+        );
+
+        // Notify all clients of the update
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.FAILOVER_FILE_LOG,
+            ServerHandler.getBusinessesForServer(conn, server),
+            server,
+            false
+        );
+        return pkey;
+    }
+    
+    public static void setFailoverFileReplicationBitRate(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int pkey,
+        int bitRate
+    ) throws IOException, SQLException {
+        if(
+            bitRate!=BitRateProvider.UNLIMITED_BANDWIDTH
+            && bitRate<BitRateProvider.MINIMUM_BIT_RATE
+        ) throw new SQLException("Bit rate too low: "+bitRate+"<"+BitRateProvider.MINIMUM_BIT_RATE);
+
+        // The server must be an exact package match to allow setting the bit rate
+        int server=getFromServerForFailoverFileReplication(conn, pkey);
+        String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
+        String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+        if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_replications.max_bit_rate for servers that have the same package and the business_administrator setting the bit rate");
+
+        if(bitRate==BitRateProvider.UNLIMITED_BANDWIDTH) conn.executeUpdate("update failover_file_replications set max_bit_rate=null where pkey=?", pkey);
+        else conn.executeUpdate("update failover_file_replications set max_bit_rate=? where pkey=?", bitRate, pkey);
+
+        // Notify all clients of the update
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.FAILOVER_FILE_REPLICATIONS,
+            ServerHandler.getBusinessesForServer(conn, server),
+            server,
+            false
+        );
+    }
+
+    public static void setFailoverFileSchedules(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int replication,
+        List<Short> hours,
+        List<Short> minutes
+    ) throws IOException, SQLException {
+        // The server must be an exact package match to allow setting the schedule
+        int server=getFromServerForFailoverFileReplication(conn, replication);
+        String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
+        String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+        if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_schedule for servers that have the same package and the business_administrator setting the schedule");
+
+        // If not modified, invalidation will not be performed
+        boolean modified = false;
+
+        // Get the list of all the pkeys that currently exist
+        IntList pkeys = conn.executeIntListQuery("select pkey from failover_file_schedule where replication=?", replication);
+        int size = hours.size();
+        for(int c=0;c<size;c++) {
+            // If it exists, remove pkey from the list, otherwise add
+            short hour = hours.get(c);
+            short minute = minutes.get(c);
+            int existingPkey = conn.executeIntQuery(
+                "select coalesce((select pkey from failover_file_schedule where replication=? and hour=? and minute=?), -1)",
                 replication,
-                new Timestamp(startTime),
-                new Timestamp(endTime),
-                scanned,
-                updated,
-                bytes,
-                isSuccessful
+                hour,
+                minute
             );
+            if(existingPkey==-1) {
+                // Doesn't exist, add
+                conn.executeUpdate("insert into failover_file_schedule (replication, hour, minute, enabled) values(?,?,?,true)", replication, hour, minute);
+                modified = true;
+            } else {
+                // Remove from the list that will be removed
+                if(!pkeys.removeByValue(existingPkey)) throw new SQLException("pkeys doesn't contain pkey="+existingPkey);
+            }
+        }
+        // Delete the unmatched pkeys
+        if(pkeys.size()>0) {
+            for(int c=0,len=pkeys.size(); c<len; c++) {
+                conn.executeUpdate("delete from failover_file_schedule where pkey=?", pkeys.getInt(c));
+            }
+            modified = true;
+        }
 
-            // Notify all clients of the update
+        // Notify all clients of the update
+        if(modified) {
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.FAILOVER_FILE_LOG,
+                SchemaTable.TableID.FAILOVER_FILE_SCHEDULE,
                 ServerHandler.getBusinessesForServer(conn, server),
                 server,
                 false
             );
-            return pkey;
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-    
-    public static int getFromServerForFailoverFileReplication(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "getFromServerForFailoverFileReplication(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeIntQuery("select server from failover_file_replications where pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
 
+    public static int getFromServerForFailoverFileReplication(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeIntQuery("select server from failover_file_replications where pkey=?", pkey);
+    }
+
     public static int getBackupPartitionForFailoverFileReplication(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "getBackupPartitionForFailoverFileReplication(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeIntQuery("select backup_partition from failover_file_replications where pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntQuery("select backup_partition from failover_file_replications where pkey=?", pkey);
     }
 
     public static void getFailoverFileLogs(
@@ -108,16 +188,11 @@ final public class FailoverHandler implements CronJob {
         int replication,
         int maxRows
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "getFailoverFileLogs(MasterDatabaseConnection,RequestSource,CompressedDataOutputStream,int,int)", null);
-        try {
-            // Check access for the from server
-            int fromServer = getFromServerForFailoverFileReplication(conn, replication);
-            ServerHandler.checkAccessServer(conn, source, "getFailoverFileLogs", fromServer);
+        // Check access for the from server
+        int fromServer = getFromServerForFailoverFileReplication(conn, replication);
+        ServerHandler.checkAccessServer(conn, source, "getFailoverFileLogs", fromServer);
 
-            MasterServer.writeObjects(conn, source, out, false, new FailoverFileLog(), "select * from failover_file_log where replication=? order by start_time desc limit ?", replication, maxRows);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        MasterServer.writeObjects(conn, source, out, false, new FailoverFileLog(), "select * from failover_file_log where replication=? order by start_time desc limit ?", replication, maxRows);
     }
 
     /**
@@ -145,38 +220,26 @@ final public class FailoverHandler implements CronJob {
     private static boolean started=false;
     
     public static void start() {
-        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "start()", null);
-        try {
-            synchronized(System.out) {
-                if(!started) {
-                    System.out.print("Starting FailoverHandler: ");
-                    CronDaemon.addCronJob(new FailoverHandler(), MasterServer.getErrorHandler());
-                    started=true;
-                    System.out.println("Done");
-                }
+        synchronized(System.out) {
+            if(!started) {
+                System.out.print("Starting FailoverHandler: ");
+                CronDaemon.addCronJob(new FailoverHandler(), MasterServer.getErrorHandler());
+                started=true;
+                System.out.println("Done");
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
 
     private FailoverHandler() {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, FailoverHandler.class, "<init>()", null);
-        Profiler.endProfile(Profiler.INSTANTANEOUS);
     }
 
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-        Profiler.startProfile(Profiler.UNKNOWN, FailoverHandler.class, "runCronJob(int,int,int,int,int,int)", null);
         try {
-            try {
-                MasterDatabase.getDatabase().executeUpdate("delete from failover_file_log where end_time <= (now()-'1 year'::interval)");
-            } catch(ThreadDeath TD) {
-                throw TD;
-            } catch(Throwable T) {
-                MasterServer.reportError(T, null);
-            }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+            MasterDatabase.getDatabase().executeUpdate("delete from failover_file_log where end_time <= (now()-'1 year'::interval)");
+        } catch(ThreadDeath TD) {
+            throw TD;
+        } catch(Throwable T) {
+            MasterServer.reportError(T, null);
         }
     }
 }
