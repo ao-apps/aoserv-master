@@ -6046,6 +6046,34 @@ public abstract class MasterServer {
                                             sendInvalidateList=true;
                                         }
                                         break;
+                                    case SET_FILE_BACKUP_SETTINGS_ALL_AT_ONCE :
+                                        {
+                                            int replication = in.readCompressedInt();
+                                            int size = in.readCompressedInt();
+                                            List<String> paths = new ArrayList<String>(size);
+                                            List<Boolean> backupEnableds = new ArrayList<Boolean>(size);
+                                            for(int c=0;c<size;c++) {
+                                                paths.add(in.readUTF());
+                                                backupEnableds.add(in.readBoolean());
+                                            }
+
+                                            process.setCommand(
+                                                "set_file_backup_settings_all_at_once",
+                                                replication,
+                                                size
+                                            );
+                                            FailoverHandler.setFileBackupSettingsAllAtOnce(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                replication,
+                                                paths,
+                                                backupEnableds
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
                                     case SET_HTTPD_SHARED_TOMCAT_IS_MANUAL :
                                         {
                                             int pkey=in.readCompressedInt();

@@ -45,7 +45,7 @@ final public class FailoverHandler implements CronJob {
         int server=getFromServerForFailoverFileReplication(conn, replication);
         String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
         String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
-        if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_log for servers that have the same package and the business_administrator adding the log entry");
+        if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_log for servers that have the same package as the business_administrator adding the log entry");
         //ServerHandler.checkAccessServer(conn, source, "add_failover_file_log", server);
 
         int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('failover_file_log_pkey_seq')");
@@ -99,7 +99,7 @@ final public class FailoverHandler implements CronJob {
         int server=getFromServerForFailoverFileReplication(conn, pkey);
         String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
         String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
-        if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_replications.max_bit_rate for servers that have the same package and the business_administrator setting the bit rate");
+        if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_replications.max_bit_rate for servers that have the same package as the business_administrator setting the bit rate");
 
         if(bitRate==BitRateProvider.UNLIMITED_BANDWIDTH) conn.executeUpdate("update failover_file_replications set max_bit_rate=null where pkey=?", pkey);
         else conn.executeUpdate("update failover_file_replications set max_bit_rate=? where pkey=?", bitRate, pkey);
@@ -126,7 +126,7 @@ final public class FailoverHandler implements CronJob {
         int server=getFromServerForFailoverFileReplication(conn, replication);
         String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
         String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
-        if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_schedule for servers that have the same package and the business_administrator setting the schedule");
+        if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_schedule for servers that have the same package as the business_administrator setting the schedule");
 
         // If not modified, invalidation will not be performed
         boolean modified = false;
@@ -166,6 +166,74 @@ final public class FailoverHandler implements CronJob {
             invalidateList.addTable(
                 conn,
                 SchemaTable.TableID.FAILOVER_FILE_SCHEDULE,
+                ServerHandler.getBusinessesForServer(conn, server),
+                server,
+                false
+            );
+        }
+    }
+
+    public static void setFileBackupSettingsAllAtOnce(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int replication,
+        List<String> paths,
+        List<Boolean> backupEnableds
+    ) throws IOException, SQLException {
+        // The server must be an exact package match to allow setting the schedule
+        int server=getFromServerForFailoverFileReplication(conn, replication);
+        String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
+        String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+        if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set file_backup_settings for servers that have the same package as the business_administrator making the settings");
+
+        // If not modified, invalidation will not be performed
+        boolean modified = false;
+
+        // Get the list of all the pkeys that currently exist
+        IntList pkeys = conn.executeIntListQuery("select pkey from file_backup_settings where replication=?", replication);
+        int size = paths.size();
+        for(int c=0;c<size;c++) {
+            // If it exists, remove pkey from the list, otherwise add
+            String path = paths.get(c);
+            boolean backupEnabled = backupEnableds.get(c);
+            int existingPkey = conn.executeIntQuery(
+                "select coalesce((select pkey from file_backup_settings where replication=? and path=?), -1)",
+                replication,
+                path
+            );
+            if(existingPkey==-1) {
+                // Doesn't exist, add
+                conn.executeUpdate("insert into file_backup_settings (replication, path, backup_enabled) values(?,?,?)", replication, path, backupEnabled);
+                modified = true;
+            } else {
+                // Update the enabled flag if it doesn't match
+                if(
+                    conn.executeUpdate(
+                        "update file_backup_settings set backup_enabled=? where pkey=? and not backup_enabled=?",
+                        backupEnabled,
+                        existingPkey,
+                        backupEnabled
+                    )==1
+                ) modified = true;
+
+                // Remove from the list that will be removed
+                if(!pkeys.removeByValue(existingPkey)) throw new SQLException("pkeys doesn't contain pkey="+existingPkey);
+            }
+        }
+        // Delete the unmatched pkeys
+        if(pkeys.size()>0) {
+            for(int c=0,len=pkeys.size(); c<len; c++) {
+                conn.executeUpdate("delete from file_backup_settings where pkey=?", pkeys.getInt(c));
+            }
+            modified = true;
+        }
+
+        // Notify all clients of the update
+        if(modified) {
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.FILE_BACKUP_SETTINGS,
                 ServerHandler.getBusinessesForServer(conn, server),
                 server,
                 false
