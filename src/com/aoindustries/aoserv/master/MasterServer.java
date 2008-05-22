@@ -8012,20 +8012,23 @@ public abstract class MasterServer {
             }
 
             List<String> protocols=MasterConfiguration.getProtocols();
-            int protocolSize=protocols.size();
-            for(int c=0;c<protocolSize;c++) {
-                String protocol=protocols.get(c);
+            if(protocols.isEmpty()) throw new IllegalArgumentException("protocols is empty");
+            for(String protocol : protocols) {
                 List<String> binds=MasterConfiguration.getBinds(protocol);
-                int port=MasterConfiguration.getPort(protocol);
-                int size = binds.size();
-                for (int d = 0; d < size; d++) {
-                    String bind = binds.get(d);
-                    if(TCPServer.PROTOCOL.equals(protocol)) new TCPServer(bind, port);
-                    else if(SSLServer.PROTOCOL.equals(protocol)) new SSLServer(bind, port);
-                    else throw new IllegalArgumentException("Unknown protocol: "+protocol);
+                if(binds.isEmpty()) throw new IllegalArgumentException("binds is empty for protocol="+protocol);
+
+                List<Integer> ports = MasterConfiguration.getPorts(protocol);
+                if(ports.isEmpty()) throw new IllegalArgumentException("ports is empty for protocol="+protocol);
+
+                for(String bind : binds) {
+                    for(int port : ports) {
+                        if(TCPServer.PROTOCOL.equals(protocol)) new TCPServer(bind, port);
+                        else if(SSLServer.PROTOCOL.equals(protocol)) new SSLServer(bind, port);
+                        else throw new IllegalArgumentException("Unknown protocol: "+protocol);
+                    }
                 }
             }
-            
+
             AccountCleaner.start();
             CreditCardHandler.start();
             DNSHandler.start();

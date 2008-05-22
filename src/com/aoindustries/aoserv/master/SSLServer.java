@@ -44,6 +44,7 @@ public class SSLServer extends TCPServer {
         super(serverBind, serverPort);
     }
 
+    @Override
     public String getProtocol() {
         Profiler.startProfile(Profiler.INSTANTANEOUS, SSLServer.class, "getProtocol()", null);
         try {
@@ -56,6 +57,7 @@ public class SSLServer extends TCPServer {
     /**
      * Determines if communication on this server is secure.
      */
+    @Override
     public boolean isSecure() throws UnknownHostException {
         Profiler.startProfile(Profiler.INSTANTANEOUS, SSLServer.class, "isSecure()", null);
         try {
@@ -65,6 +67,7 @@ public class SSLServer extends TCPServer {
         }
     }
 
+    @Override
     public void run() {
         Profiler.startProfile(Profiler.UNKNOWN, SSLServer.class, "run()", null);
         try {
@@ -127,7 +130,7 @@ public class SSLServer extends TCPServer {
                     reportError(T, null);
                 }
                 try {
-                    thread.sleep(15000);
+                    Thread.sleep(15000);
                 } catch (InterruptedException err) {
                     reportWarning(err, null);
                 }

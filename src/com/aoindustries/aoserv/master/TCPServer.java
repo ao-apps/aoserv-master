@@ -130,7 +130,7 @@ public class TCPServer extends MasterServer implements Runnable {
                     );
                 }
                 try {
-                    thread.sleep(15000);
+                    Thread.sleep(15000);
                 } catch (InterruptedException err) {
                     reportWarning(err, null);
                 }

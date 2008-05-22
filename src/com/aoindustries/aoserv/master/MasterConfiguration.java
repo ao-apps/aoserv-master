@@ -12,6 +12,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -108,8 +109,14 @@ public final class MasterConfiguration {
         return StringUtility.splitStringCommaSpace(getProperty("aoserv.master."+protocol+".bind"));
     }
 
-    public static int getPort(String protocol) throws IOException {
-        return Integer.parseInt(getProperty("aoserv.master."+protocol+".port"));
+    public static List<Integer> getPorts(String protocol) throws IOException {
+        String ports = getProperty("aoserv.master."+protocol+".ports");
+        List<String> strings = StringUtility.splitStringCommaSpace(ports);
+        List<Integer> ints = new ArrayList<Integer>(strings.size());
+        for(int c=0,len=strings.size();c<len;c++) {
+            ints.add(Integer.parseInt(strings.get(c)));
+        }
+        return ints;
     }
 
     public static int getHistorySize() throws IOException {
