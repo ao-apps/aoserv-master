@@ -199,6 +199,20 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
         }
     }
 
+    /**
+     * Stores the results of an authorize transaction:
+     * <ol>
+     *   <li>authorizationResult</li>
+     *   <li>status</li>
+     * </ol>
+     *
+     * The current status must be PROCESSING.
+     */
+    @Override
+    public void authorizeCompleted(Principal principal, Transaction transaction, Locale userLocale) throws SQLException {
+        throw new SQLException("Method not implemented for direct master server persistence.");
+    }
+
     @Override
     public void voidCompleted(Principal principal, Transaction transaction, Locale userLocale) throws SQLException {
         throw new SQLException("Method not implemented for direct master server persistence.");
