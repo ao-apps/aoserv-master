@@ -3061,6 +3061,74 @@ public abstract class MasterServer {
                                             sendInvalidateList=true;
                                         }
                                         break;
+                                    case CREDIT_CARD_TRANSACTION_AUTHORIZE_COMPLETED :
+                                        {
+                                            int pkey = in.readCompressedInt();
+                                            String authorizationCommunicationResult = in.readNullUTF();
+                                            String authorizationProviderErrorCode = in.readNullUTF();
+                                            String authorizationErrorCode = in.readNullUTF();
+                                            String authorizationProviderErrorMessage = in.readNullUTF();
+                                            String authorizationProviderUniqueId = in.readNullUTF();
+                                            String providerApprovalResult = in.readNullUTF();
+                                            String approvalResult = in.readNullUTF();
+                                            String providerDeclineReason = in.readNullUTF();
+                                            String declineReason = in.readNullUTF();
+                                            String providerReviewReason = in.readNullUTF();
+                                            String reviewReason = in.readNullUTF();
+                                            String providerCvvResult = in.readNullUTF();
+                                            String cvvResult = in.readNullUTF();
+                                            String providerAvsResult = in.readNullUTF();
+                                            String avsResult = in.readNullUTF();
+                                            String approvalCode = in.readNullUTF();
+                                            String status = in.readNullUTF();
+                                            process.setCommand(
+                                                "credit_card_transaction_authorize_completed",
+                                                Integer.valueOf(pkey),
+                                                authorizationCommunicationResult,
+                                                authorizationProviderErrorCode,
+                                                authorizationErrorCode,
+                                                authorizationProviderErrorMessage,
+                                                authorizationProviderUniqueId,
+                                                providerApprovalResult,
+                                                approvalResult,
+                                                providerDeclineReason,
+                                                declineReason,
+                                                providerReviewReason,
+                                                reviewReason,
+                                                providerCvvResult,
+                                                cvvResult,
+                                                providerAvsResult,
+                                                avsResult,
+                                                approvalCode,
+                                                status
+                                            );
+                                            CreditCardHandler.creditCardTransactionAuthorizeCompleted(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                pkey,
+                                                authorizationCommunicationResult,
+                                                authorizationProviderErrorCode,
+                                                authorizationErrorCode,
+                                                authorizationProviderErrorMessage,
+                                                authorizationProviderUniqueId,
+                                                providerApprovalResult,
+                                                approvalResult,
+                                                providerDeclineReason,
+                                                declineReason,
+                                                providerReviewReason,
+                                                reviewReason,
+                                                providerCvvResult,
+                                                cvvResult,
+                                                providerAvsResult,
+                                                avsResult,
+                                                approvalCode,
+                                                status
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
                                     case DISABLE :
                                         {
                                             int clientTableID=in.readCompressedInt();

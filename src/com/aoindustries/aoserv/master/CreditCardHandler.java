@@ -1046,6 +1046,133 @@ final public class CreditCardHandler /*implements CronJob*/ {
         invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
     }
 
+    public static void creditCardTransactionAuthorizeCompleted(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int pkey,
+        String authorizationCommunicationResult,
+        String authorizationProviderErrorCode,
+        String authorizationErrorCode,
+        String authorizationProviderErrorMessage,
+        String authorizationProviderUniqueId,
+        String providerApprovalResult,
+        String approvalResult,
+        String providerDeclineReason,
+        String declineReason,
+        String providerReviewReason,
+        String reviewReason,
+        String providerCvvResult,
+        String cvvResult,
+        String providerAvsResult,
+        String avsResult,
+        String approvalCode,
+        String status
+    ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "creditCardTransactionAuthorizeCompleted", AOServPermission.Permission.credit_card_transaction_authorize_completed);
+        checkAccessCreditCardTransaction(conn, source, "creditCardTransactionAuthorizeCompleted", pkey);
+
+        String processor = getCreditCardProcessorForCreditCardTransaction(conn, pkey);
+        String accounting = getBusinessForCreditCardProcessor(conn, processor);
+
+        creditCardTransactionAuthorizeCompleted(
+            conn,
+            invalidateList,
+            pkey,
+            authorizationCommunicationResult,
+            authorizationProviderErrorCode,
+            authorizationErrorCode,
+            authorizationProviderErrorMessage,
+            authorizationProviderUniqueId,
+            providerApprovalResult,
+            approvalResult,
+            providerDeclineReason,
+            declineReason,
+            providerReviewReason,
+            reviewReason,
+            providerCvvResult,
+            cvvResult,
+            providerAvsResult,
+            avsResult,
+            approvalCode,
+            status
+        );
+    }
+
+    public static void creditCardTransactionAuthorizeCompleted(
+        MasterDatabaseConnection conn,
+        InvalidateList invalidateList,
+        int pkey,
+        String authorizationCommunicationResult,
+        String authorizationProviderErrorCode,
+        String authorizationErrorCode,
+        String authorizationProviderErrorMessage,
+        String authorizationProviderUniqueId,
+        String providerApprovalResult,
+        String approvalResult,
+        String providerDeclineReason,
+        String declineReason,
+        String providerReviewReason,
+        String reviewReason,
+        String providerCvvResult,
+        String cvvResult,
+        String providerAvsResult,
+        String avsResult,
+        String approvalCode,
+        String status
+    ) throws IOException, SQLException {
+        String processor = getCreditCardProcessorForCreditCardTransaction(conn, pkey);
+        String accounting = getBusinessForCreditCardProcessor(conn, processor);
+
+        int updated = conn.executeUpdate(
+            "update\n"
+            + "  credit_card_transactions\n"
+            + "set\n"
+            + "  authorization_communication_result=?,\n"
+            + "  authorization_provider_error_code=?,\n"
+            + "  authorization_error_code=?,\n"
+            + "  authorization_provider_error_message=?,\n"
+            + "  authorization_provider_unique_id=?,\n"
+            + "  authorization_provider_approval_result=?,\n"
+            + "  authorization_approval_result=?,\n"
+            + "  authorization_provider_decline_reason=?,\n"
+            + "  authorization_decline_reason=?,\n"
+            + "  authorization_provider_review_reason=?,\n"
+            + "  authorization_review_reason=?,\n"
+            + "  authorization_provider_cvv_result=?,\n"
+            + "  authorization_cvv_result=?,\n"
+            + "  authorization_provider_avs_result=?,\n"
+            + "  authorization_avs_result=?,\n"
+            + "  authorization_approval_code=?,\n"
+            + "  status=?\n"
+            + "where\n"
+            + "  pkey=?\n"
+            + "  and status='PROCESSING'",
+            authorizationCommunicationResult,
+            authorizationProviderErrorCode,
+            authorizationErrorCode,
+            authorizationProviderErrorMessage,
+            authorizationProviderUniqueId,
+            providerApprovalResult,
+            approvalResult,
+            providerDeclineReason,
+            declineReason,
+            providerReviewReason,
+            reviewReason,
+            providerCvvResult,
+            cvvResult,
+            providerAvsResult,
+            avsResult,
+            approvalCode,
+            status,
+            pkey
+        );
+        if(updated!=1) throw new SQLException("Unable to find credit_card_transactions with pkey="+pkey+" and status='PROCESSING'");
+
+        // Notify all clients of the update
+        invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
+    }
+
     private static class AutomaticPayment {
         final private String accounting;
         final private BigDecimal amount;
