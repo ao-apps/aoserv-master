@@ -97,6 +97,9 @@ final public class BusinessHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "cancelBusiness(MasterDatabaseConnection,RequestSource,InvalidateList,String,String)", null);
         try {
+            // Check permissions
+            checkPermission(conn, source, "cancelBusiness", AOServPermission.Permission.cancel_business);
+
             // Check access to business
             checkAccessBusiness(conn, source, "cancelBusiness", accounting);
             
