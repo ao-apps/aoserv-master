@@ -779,10 +779,10 @@ final public class TableHandler {
                         + "from\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  business_servers bs\n"
+                        + "  business_servers bs,\n"
                         // Allow servers it replicates to
-                        + "  left join failover_file_replications ffr on bs.server=ffr.server\n"
-                        + "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
+                        //+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
+                        //+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
                         + "  ao_servers ao\n"
                         + "where\n"
                         + "  un.username=?\n"
@@ -791,7 +791,7 @@ final public class TableHandler {
                         + "  and (\n"
                         + "    bs.server=ao.server\n"
                         // Allow servers it replicates to
-                        + "    or bp.ao_server=ao.server\n"
+                        //+ "    or bp.ao_server=ao.server\n"
                         + "  )",
                         username
                     );
@@ -907,17 +907,17 @@ final public class TableHandler {
                         + "  and pk.accounting=bs.accounting\n"
                         + "  and (\n"
                         + "    bs.server=bp.ao_server\n"
-                        + "    or (\n"
-                        + "      select\n"
-                        + "        ffr.pkey\n"
-                        + "      from\n"
-                        + "        failover_file_replications ffr\n"
-                        + "        inner join backup_partitions bp2 on ffr.backup_partition=bp2.pkey\n"
-                        + "      where\n"
-                        + "        bs.server=ffr.server\n"
-                        + "        and bp.ao_server=bp2.ao_server\n"
-                        + "      limit 1\n"
-                        + "    ) is not null\n"
+                        //+ "    or (\n"
+                        //+ "      select\n"
+                        //+ "        ffr.pkey\n"
+                        //+ "      from\n"
+                        //+ "        failover_file_replications ffr\n"
+                        //+ "        inner join backup_partitions bp2 on ffr.backup_partition=bp2.pkey\n"
+                        //+ "      where\n"
+                        //+ "        bs.server=ffr.server\n"
+                        //+ "        and bp.ao_server=bp2.ao_server\n"
+                        //+ "      limit 1\n"
+                        //+ "    ) is not null\n"
                         + "  )",
                         username
                     );
@@ -3660,7 +3660,7 @@ final public class TableHandler {
                             + "      and bs5.server=nd5.ao_server\n"
                             + "      and nd5.pkey=ia5.net_device\n"
                             + "      and (ia5.ip_address='"+IPAddress.LOOPBACK_IP+"' or ia5.is_overflow)\n"
-                            + "  ) or ia.pkey in (\n"
+                            /*+ "  ) or ia.pkey in (\n"
                             + "    select \n"
                             + "      ia6.pkey\n"
                             + "    from\n"
@@ -3680,12 +3680,12 @@ final public class TableHandler {
                             + "      and ffr6.backup_partition=bp6.pkey\n"
                             + "      and bp6.ao_server=ao6.server\n"
                             + "      and ao6.server=nd6.ao_server and ao6.daemon_device_id=nd6.device_id\n"
-                            + "      and nd6.pkey=ia6.net_device and not ia6.is_alias\n"
+                            + "      and nd6.pkey=ia6.net_device and not ia6.is_alias\n"*/
                             + "  )",
                             username,
                             username,
-                            username,
-                            username
+                            username//,
+                            //username
                         );
                     }
                     break;
@@ -4932,7 +4932,7 @@ final public class TableHandler {
                         + "      and un5.package=pk5.name\n"
                         + "      and pk5.accounting=bs5.accounting\n"
                         + "      and bs5.server=ps5.ao_server\n"
-			+ "  ) or nb.pkey in (\n"
+			/*+ "  ) or nb.pkey in (\n"
                         // Allow net_binds of receiving failover_file_replications (exact package match - no tree inheritence)
                         + "    select\n"
                         + "      nb6.pkey\n"
@@ -4953,13 +4953,13 @@ final public class TableHandler {
                         + "      and (\n"
                         + "        nb6.app_protocol='"+Protocol.AOSERV_DAEMON+"'\n"
                         + "        or nb6.app_protocol='"+Protocol.AOSERV_DAEMON_SSL+"'\n"
-                        + "      )\n"
+                        + "      )\n"*/
                         + "  )",
                         username,
                         username,
                         username,
-			username,
-			username
+			username//,
+			//username
                     );
                     break;
                 case NET_DEVICE_IDS :
@@ -5025,11 +5025,11 @@ final public class TableHandler {
                         + "from\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  business_servers bs\n"
+                        + "  business_servers bs,\n"
                         // Allow failover destinations
-                        + "  left outer join failover_file_replications ffr on bs.server=ffr.server\n"
-                        + "  left outer join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
-                        + "  left outer join ao_servers bpao on bp.ao_server=bpao.server,\n"
+                        //+ "  left outer join failover_file_replications ffr on bs.server=ffr.server\n"
+                        //+ "  left outer join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
+                        //+ "  left outer join ao_servers bpao on bp.ao_server=bpao.server,\n"
                         + "  net_devices nd\n"
                         + "where\n"
                         + "  un.username=?\n"
@@ -5037,7 +5037,7 @@ final public class TableHandler {
                         + "  and pk.accounting=bs.accounting\n"
                         + "  and (\n"
                         + "    bs.server=nd.ao_server\n"
-                        + "    or (bp.ao_server=nd.ao_server and nd.device_id=bpao.daemon_device_id)\n"
+                        //+ "    or (bp.ao_server=nd.ao_server and nd.device_id=bpao.daemon_device_id)\n"
                         + "  )",
                         username
                     );
@@ -6157,10 +6157,10 @@ final public class TableHandler {
                         + "from\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  business_servers bs\n"
+                        + "  business_servers bs,\n"
                         // Allow servers it replicates to
-                        + "  left join failover_file_replications ffr on bs.server=ffr.server\n"
-                        + "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
+                        //+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
+                        //+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
                         + "  servers se\n"
                         + "where\n"
                         + "  un.username=?\n"
@@ -6169,7 +6169,7 @@ final public class TableHandler {
                         + "  and (\n"
                         + "    bs.server=se.pkey\n"
                         // Allow servers it replicates to
-                        + "    or bp.ao_server=se.pkey\n"
+                        //+ "    or bp.ao_server=se.pkey\n"
                         + "  )",
                         username
                     );
