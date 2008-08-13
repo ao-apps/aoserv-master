@@ -375,14 +375,16 @@ final public class DNSHandler implements CronJob {
                 if(mx_priority!=DNSRecord.NO_MX_PRIORITY) throw new SQLException("No mx_priority allowed for type="+type);
             }
 
-            // Must have a valid destination type
-            try {
-                DNSType.checkDestination(
-                    destination,
-                    conn.executeBooleanQuery("select param_ip from dns_types where type=?", type)
-                );
-            } catch(IllegalArgumentException err) {
-                throw new SQLException("Invalid destination: "+err.getMessage());
+            // Must have a valid destination type unless is a TXT entry
+            if(!DNSType.TXT.equals(type)) {
+                try {
+                    DNSType.checkDestination(
+                        destination,
+                        conn.executeBooleanQuery("select param_ip from dns_types where type=?", type)
+                    );
+                } catch(IllegalArgumentException err) {
+                    throw new SQLException("Invalid destination: "+err.getMessage());
+                }
             }
 
             // Make all database changes in one big transaction
