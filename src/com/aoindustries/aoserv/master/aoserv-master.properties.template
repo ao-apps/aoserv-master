@@ -39,11 +39,11 @@ aoserv.master.local_ip=192.168.1.128
 # TCP server parameters
 aoserv.master.tcp.bind=192.168.1.128
 #aoserv.master.tcp.bind=192.168.1.4
-aoserv.master.tcp.port=4582
+aoserv.master.tcp.ports=4582
 
 # SSL server parameters
 aoserv.master.ssl.bind=<ssl_bind_ip>
-aoserv.master.ssl.port=4583
+aoserv.master.ssl.ports=4583
 aoserv.master.ssl.keystore.password=<keystore_password>
 aoserv.master.ssl.keystore.path=<keystore_path>
 

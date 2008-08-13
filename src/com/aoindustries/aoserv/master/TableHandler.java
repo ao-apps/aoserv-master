@@ -4328,16 +4328,16 @@ final public class TableHandler {
                         List<MasterServerProfile> objs=new ArrayList<MasterServerProfile>();
                         if(Profiler.getProfilerLevel()>Profiler.NONE) {
                             // Get all the methods
-                            MethodProfile[] profs=Profiler.getMethodProfiles();
-                            int len=profs.length;
+                            List<MethodProfile> profs=Profiler.getMethodProfiles();
+                            int len=profs.size();
                             //objs.ensureCapacity(len);
                             for(int c=0;c<len;c++) {
-                                MethodProfile mp=profs[c];
+                                MethodProfile mp=profs.get(c);
                                 Object param1=mp.getParameter1();
                                 objs.add(
                                     new MasterServerProfile(
                                         mp.getLevel(),
-                                        mp.getProfiledClass().getName(),
+                                        mp.getProfiledClassName(),
                                         mp.getMethodName(),
                                         param1==null?null:param1.toString(),
                                         mp.getUseCount(),

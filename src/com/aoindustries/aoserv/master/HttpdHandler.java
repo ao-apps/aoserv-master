@@ -2887,7 +2887,7 @@ final public class HttpdHandler {
                     + "  (\n"
                     + "    select hostname from httpd_site_urls where pkey=?\n"
                     + "  )=(\n"
-                    + "    select hs.site_name||'.'||se.hostname from httpd_sites hs, servers se where hs.pkey=? and hs.ao_server=se.pkey\n"
+                    + "    select hs.site_name||'.'||ao.hostname from httpd_sites hs, ao_servers ao where hs.pkey=? and hs.ao_server=ao.server\n"
                     + "  )",
                     pkey,
                     hs

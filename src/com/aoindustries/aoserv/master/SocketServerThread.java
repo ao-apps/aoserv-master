@@ -228,7 +228,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
                     long existingID=in.readLong();
 
                     if(
-                        !protocolVersion.equals(AOServProtocol.VERSION_1_31)
+                        !protocolVersion.equals(AOServProtocol.VERSION_1_32)
+                        && !protocolVersion.equals(AOServProtocol.VERSION_1_31)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_30)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_29)
                         && !protocolVersion.equals(AOServProtocol.VERSION_1_28)
