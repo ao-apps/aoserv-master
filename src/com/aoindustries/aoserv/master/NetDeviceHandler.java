@@ -2,7 +2,7 @@ package com.aoindustries.aoserv.master;
 
 /*
  * Copyright 2008 by AO Industries, Inc.,
- * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
+ * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.profiler.Profiler;
@@ -19,19 +19,20 @@ final public class NetDeviceHandler {
     public static String getNetDeviceBondingReport(MasterDatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, NetDeviceHandler.class, "getNetDeviceBondingReport(MasterDatabaseConnection,RequestSource,int)", null);
         try {
-            int aoServer = getAOServerForNetDevice(conn, pkey);
-            ServerHandler.checkAccessServer(conn, source, "getNetDeviceBondingReport", aoServer);
+            int server = getServerForNetDevice(conn, pkey);
+            if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
+            ServerHandler.checkAccessServer(conn, source, "getNetDeviceBondingReport", server);
 
-            return DaemonHandler.getDaemonConnector(conn, aoServer).getNetDeviceBondingReport(pkey);
+            return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceBondingReport(pkey);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
 
-    public static int getAOServerForNetDevice(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, NetDeviceHandler.class, "getAOServerForNetDevice(MasterDatabaseConnection,int)", null);
+    public static int getServerForNetDevice(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, NetDeviceHandler.class, "getServerForNetDevice(MasterDatabaseConnection,int)", null);
         try {
-            return conn.executeIntQuery("select ao_server from net_devices where pkey=?", pkey);
+            return conn.executeIntQuery("select server from net_devices where pkey=?", pkey);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }

@@ -1,8 +1,8 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2007 by AO Industries, Inc.,
- * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
+ * Copyright 2001-2008 by AO Industries, Inc.,
+ * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.DNSRecord;
@@ -680,7 +680,7 @@ final public class DNSHandler implements CronJob {
                         conn,
                         SchemaTable.TableID.DNS_RECORDS,
                         getBusinessForDNSZone(conn, tldPlus1),
-                        getDNSServers(conn),
+                        getDNSAOServers(conn),
                         false
                     );
                     updateDNSZoneSerial(conn, invalidateList, tldPlus1);
@@ -793,10 +793,10 @@ final public class DNSHandler implements CronJob {
         }
     }
 
-    public static IntList getDNSServers(MasterDatabaseConnection conn) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getDNSServers(MasterDatabaseConnection)", null);
+    public static IntList getDNSAOServers(MasterDatabaseConnection conn) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getDNSAOServers(MasterDatabaseConnection)", null);
         try {
-            return conn.executeIntListQuery("select distinct ao_server from net_binds where app_protocol=?", Protocol.DNS);
+            return conn.executeIntListQuery("select distinct server from net_binds where app_protocol=? and server in (select server from ao_servers)", Protocol.DNS);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -908,7 +908,7 @@ final public class DNSHandler implements CronJob {
                             conn,
                             SchemaTable.TableID.DNS_RECORDS,
                             getBusinessForDNSZone(conn, tldPlus1),
-                            getDNSServers(conn),
+                            getDNSAOServers(conn),
                             false
                         );
                         updateDNSZoneSerial(conn, invalidateList, tldPlus1);
@@ -942,7 +942,7 @@ final public class DNSHandler implements CronJob {
                 conn,
                 SchemaTable.TableID.DNS_ZONES,
                 getBusinessForDNSZone(conn, zone),
-                getDNSServers(conn),
+                getDNSAOServers(conn),
                 false
             );
             updateDNSZoneSerial(conn, invalidateList, zone);

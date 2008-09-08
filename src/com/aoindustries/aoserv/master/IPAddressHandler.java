@@ -1,8 +1,8 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2007 by AO Industries, Inc.,
- * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
+ * Copyright 2001-2008 by AO Industries, Inc.,
+ * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
@@ -23,7 +23,7 @@ final public class IPAddressHandler {
             MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
             if(mu!=null) {
                 if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
-                    ServerHandler.checkAccessServer(conn, source, action, getAOServerForIPAddress(conn, ipAddress));
+                    ServerHandler.checkAccessServer(conn, source, action, getServerForIPAddress(conn, ipAddress));
                 }
             } else {
                 PackageHandler.checkAccessPackage(conn, source, action, getPackageForIPAddress(conn, ipAddress));
@@ -54,8 +54,8 @@ final public class IPAddressHandler {
             String ip=getIPStringForIPAddress(conn, ipAddress);
             int pos=ip.lastIndexOf('.');
             String octet=ip.substring(pos+1);
-            int aoServer=getAOServerForIPAddress(conn, ipAddress);
-            String farm=ServerHandler.getFarmForServer(conn, aoServer);
+            int server=getServerForIPAddress(conn, ipAddress);
+            String farm=ServerHandler.getFarmForServer(conn, server);
             String hostname="unassigned"+octet+'.'+farm+'.'+DNSZone.API_ZONE;
             hostname=hostname.substring(0, hostname.length()-1);
             return hostname;
@@ -75,14 +75,14 @@ final public class IPAddressHandler {
         try {
             checkAccessIPAddress(conn, source, "moveIPAddress", ipAddress);
             ServerHandler.checkAccessServer(conn, source, "moveIPAddress", toServer);
-            int fromServer=getAOServerForIPAddress(conn, ipAddress);
+            int fromServer=getServerForIPAddress(conn, ipAddress);
             ServerHandler.checkAccessServer(conn, source, "moveIPAddress", fromServer);
 
             String accounting=getBusinessForIPAddress(conn, ipAddress);
 
             // Update ip_addresses
             int netDevice=conn.executeIntQuery(
-                "select pkey from net_devices where ao_server=? and device_id='"+NetDeviceID.ETH0+"'",
+                "select pkey from net_devices where server=? and device_id='"+NetDeviceID.ETH0+"'",
                 toServer
             );
             conn.executeUpdate(
@@ -128,7 +128,7 @@ final public class IPAddressHandler {
             if(!isDHCPAddress(conn, ipAddress)) throw new SQLException("IPAddress is not DHCP-enabled: "+ipAddress);
 
             String accounting=getBusinessForIPAddress(conn, ipAddress);
-            int aoServer=getAOServerForIPAddress(conn, ipAddress);
+            int server=getServerForIPAddress(conn, ipAddress);
 
             // Update the table
             conn.executeUpdate("update ip_addresses set ip_address=? where pkey=?", dhcpAddress, ipAddress);
@@ -138,7 +138,7 @@ final public class IPAddressHandler {
                 conn,
                 SchemaTable.TableID.IP_ADDRESSES,
                 accounting,
-                aoServer,
+                server,
                 false
             );
 
@@ -194,7 +194,7 @@ final public class IPAddressHandler {
             ) throw new SQLException("Not allowed to set the hostname for "+ip);
 
             String accounting=getBusinessForIPAddress(conn, ipAddress);
-            int aoServer=getAOServerForIPAddress(conn, ipAddress);
+            int server=getServerForIPAddress(conn, ipAddress);
 
             // Update the table
             conn.executeUpdate("update ip_addresses set hostname=? where pkey=?", hostname, ipAddress);
@@ -204,7 +204,7 @@ final public class IPAddressHandler {
                 conn,
                 SchemaTable.TableID.IP_ADDRESSES,
                 accounting,
-                aoServer,
+                server,
                 false
             );
             
@@ -249,7 +249,7 @@ final public class IPAddressHandler {
         try {
             String oldAccounting=getBusinessForIPAddress(conn, ipAddress);
             String newAccounting=PackageHandler.getBusinessForPackage(conn, newPackage);
-            int aoServer=getAOServerForIPAddress(conn, ipAddress);
+            int server=getServerForIPAddress(conn, ipAddress);
 
             // Make sure that the IP Address is not in use
             int count=conn.executeIntQuery(
@@ -272,7 +272,7 @@ final public class IPAddressHandler {
                 conn,
                 SchemaTable.TableID.IP_ADDRESSES,
                 InvalidateList.getCollection(oldAccounting, newAccounting),
-                aoServer,
+                server,
                 false
             );
         } finally {
@@ -292,13 +292,13 @@ final public class IPAddressHandler {
                 + "      from\n"
                 + "        ip_addresses ia,\n"
                 + "        net_devices nd\n"
-                + "        left join net_binds nb on nd.ao_server=nb.ao_server and nb.port in (80, 443) and nb.net_protocol='"+NetProtocol.TCP+"'\n"
+                + "        left join net_binds nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol='"+NetProtocol.TCP+"'\n"
                 + "        left join httpd_binds hb on nb.pkey=hb.net_bind\n"
                 + "        left join httpd_servers hs on hb.httpd_server=hs.pkey\n"
                 + "      where\n"
                 + "        ia.is_overflow\n"
                 + "        and ia.net_device=nd.pkey\n"
-                + "        and nd.ao_server=?\n"
+                + "        and nd.server=?\n"
                 + "        and (\n"
                 + "          nb.ip_address is null\n"
                 + "          or ia.pkey=nb.ip_address\n"
@@ -325,7 +325,7 @@ final public class IPAddressHandler {
                 + "            net_binds nb2,\n"
                 + "            httpd_site_binds hsb2\n"
                 + "          where\n"
-                + "            nb2.ao_server=?\n"
+                + "            nb2.server=?\n"
                 + "            and nb2.ip_address=ia.pkey\n"
                 + "            and (\n"
                 + "              nb2.port=80\n"
@@ -362,10 +362,10 @@ final public class IPAddressHandler {
         }
     }
 
-    public static int getAOServerForIPAddress(MasterDatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, IPAddressHandler.class, "getAOServerForIPAddress(MasterDatabaseConnection,int)", null);
+    public static int getServerForIPAddress(MasterDatabaseConnection conn, int ipAddress) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, IPAddressHandler.class, "getServerForIPAddress(MasterDatabaseConnection,int)", null);
         try {
-            return conn.executeIntQuery("select nd.ao_server from ip_addresses ia, net_devices nd where ia.pkey=? and ia.net_device=nd.pkey", ipAddress);
+            return conn.executeIntQuery("select nd.server from ip_addresses ia, net_devices nd where ia.pkey=? and ia.net_device=nd.pkey", ipAddress);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -389,7 +389,7 @@ final public class IPAddressHandler {
         }
     }
 
-    public static int getLoopbackIPAddress(MasterDatabaseConnection conn, int aoServer) throws IOException, SQLException {
+    public static int getLoopbackIPAddress(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, IPAddressHandler.class, "getLoopbackIPAddress(MasterDatabaseConnection,int)", null);
         try {
             return conn.executeIntQuery(
@@ -401,10 +401,10 @@ final public class IPAddressHandler {
                 + "where\n"
                 + "  ia.ip_address=?\n"
                 + "  and ia.net_device=nd.pkey\n"
-                + "  and nd.ao_server=?\n"
+                + "  and nd.server=?\n"
                 + "limit 1",
                 IPAddress.LOOPBACK_IP,
-                aoServer
+                server
             );
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
@@ -433,7 +433,7 @@ final public class IPAddressHandler {
                 conn,
                 SchemaTable.TableID.IP_ADDRESSES,
                 getBusinessForIPAddress(conn, ipAddress),
-                getAOServerForIPAddress(conn, ipAddress),
+                getServerForIPAddress(conn, ipAddress),
                 false
             );
         } finally {

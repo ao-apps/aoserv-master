@@ -2,7 +2,7 @@ package com.aoindustries.aoserv.master;
 
 /*
  * Copyright 2000-2008 by AO Industries, Inc.,
- * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
+ * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.AOSHCommand;
@@ -2094,7 +2094,7 @@ public abstract class MasterServer {
                                                 break;
                                             case NET_BINDS :
                                                 {
-                                                    int aoServer=in.readCompressedInt();
+                                                    int server=in.readCompressedInt();
                                                     String packageName=in.readUTF().trim();
                                                     int ipAddress=in.readCompressedInt();
                                                     int port=in.readCompressedInt();
@@ -2110,7 +2110,7 @@ public abstract class MasterServer {
                                                     } else monitoringEnabled=in.readBoolean();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_NET_BIND,
-                                                        Integer.valueOf(aoServer),
+                                                        Integer.valueOf(server),
                                                         packageName,
                                                         Integer.valueOf(ipAddress),
                                                         Integer.valueOf(port),
@@ -2123,7 +2123,7 @@ public abstract class MasterServer {
                                                         conn,
                                                         source,
                                                         invalidateList,
-                                                        aoServer,
+                                                        server,
                                                         packageName,
                                                         ipAddress,
                                                         port,

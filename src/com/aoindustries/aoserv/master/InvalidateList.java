@@ -1,8 +1,8 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2007 by AO Industries, Inc.,
- * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
+ * Copyright 2001-2008 by AO Industries, Inc.,
+ * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.SchemaTable;
@@ -181,7 +181,6 @@ final public class InvalidateList {
                         addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, businesses, servers, true);
                         addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, businesses, servers, true);
                         addTable(conn, SchemaTable.TableID.MYSQL_SERVERS, businesses, servers, true);
-                        addTable(conn, SchemaTable.TableID.NET_DEVICES, businesses, servers, true);
                         addTable(conn, SchemaTable.TableID.POSTGRES_SERVERS, businesses, servers, true);
                         break;
                     case BUSINESS_SERVERS :
@@ -250,6 +249,7 @@ final public class InvalidateList {
                         break;
                     case SERVERS :
                         addTable(conn, SchemaTable.TableID.AO_SERVERS, businesses, servers, true);
+                        addTable(conn, SchemaTable.TableID.NET_DEVICES, businesses, servers, true);
                         break;
                     case USERNAMES :
                         addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, businesses, servers, true);

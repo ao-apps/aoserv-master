@@ -1,8 +1,8 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2007 by AO Industries, Inc.,
- * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
+ * Copyright 2001-2008 by AO Industries, Inc.,
+ * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
@@ -91,8 +91,8 @@ final public class DaemonHandler {
                     + "where\n"
                     + "  ao.server=?\n"
                     + "  and ao.daemon_connect_bind=nb.pkey\n"
-                    + "  and nb.ao_server=ao2.server\n"
-                    + "  and ao2.server=nd.ao_server\n"
+                    + "  and nb.server=ao2.server\n"
+                    + "  and ao2.server=nd.server\n"
                     + "  and ao2.daemon_device_id=nd.device_id\n"
                     + "  and nd.pkey=ia.net_device\n"
                     + "  and not ia.is_alias\n"

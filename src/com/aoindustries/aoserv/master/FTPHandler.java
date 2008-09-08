@@ -1,8 +1,8 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2007 by AO Industries, Inc.,
- * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
+ * Copyright 2001-2008 by AO Industries, Inc.,
+ * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
@@ -92,7 +92,7 @@ final public class FTPHandler {
                 conn,
                 SchemaTable.TableID.PRIVATE_FTP_SERVERS,
                 NetBindHandler.getBusinessForNetBind(conn, net_bind),
-                NetBindHandler.getAOServerForNetBind(conn, net_bind),
+                NetBindHandler.getServerForNetBind(conn, net_bind),
                 false
             );
         } finally {

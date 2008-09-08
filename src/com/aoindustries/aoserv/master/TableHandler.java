@@ -1,8 +1,8 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2007 by AO Industries, Inc.,
- * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
+ * Copyright 2001-2008 by AO Industries, Inc.,
+ * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.AOSHCommand;
@@ -2649,7 +2649,7 @@ final public class TableHandler {
                             + "  httpd_binds hb\n"
                             + "where\n"
                             + "  ms.username=?\n"
-                            + "  and ms.server=nb.ao_server\n"
+                            + "  and ms.server=nb.server\n"
                             + "  and nb.pkey=hb.net_bind",
                             username
                         );
@@ -2684,7 +2684,7 @@ final public class TableHandler {
                         + "group by\n"
                         + "  hb.net_bind,\n"
                         + "  hb.httpd_server,\n"
-                        + "  nb.ao_server,\n"
+                        + "  nb.server,\n"
                         + "  nb.ip_address,\n"
                         + "  nb.port,\n"
                         + "  nb.net_protocol",
@@ -3516,7 +3516,7 @@ final public class TableHandler {
                             + "  httpd_workers hw\n"
                             + "where\n"
                             + "  ms.username=?\n"
-                            + "  and ms.server=nb.ao_server\n"
+                            + "  and ms.server=nb.server\n"
                             + "  and nb.pkey=hw.net_bind",
                             username
                         );
@@ -3573,8 +3573,8 @@ final public class TableHandler {
                             + "  ia.ip_address='"+IPAddress.WILDCARD_IP+"' or (\n"
                             + "    ms.username=?\n"
                             + "    and (\n"
-                            + "      ms.server=nd.ao_server\n"
-                            + "      or ff.server=nd.ao_server\n"
+                            + "      ms.server=nd.server\n"
+                            + "      or ff.server=nd.server\n"
                             + "      or (\n"
                             + "        select\n"
                             + "          ffr.pkey\n"
@@ -3584,7 +3584,7 @@ final public class TableHandler {
                             + "          inner join ao_servers bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
                             + "        where\n"
                             + "          ms.server=ffr.server\n"
-                            + "          and bp.ao_server=nd.ao_server\n"
+                            + "          and bp.ao_server=nd.server\n"
                             + "          and bpao.daemon_device_id=nd.device_id\n" // Only allow access to the device device ID for failovers
                             + "        limit 1\n"
                             + "      ) is not null\n"
@@ -3657,7 +3657,7 @@ final public class TableHandler {
                             + "      un5.username=?\n"
                             + "      and un5.package=pk5.name\n"
                             + "      and pk5.accounting=bs5.accounting\n"
-                            + "      and bs5.server=nd5.ao_server\n"
+                            + "      and bs5.server=nd5.server\n"
                             + "      and nd5.pkey=ia5.net_device\n"
                             + "      and (ia5.ip_address='"+IPAddress.LOOPBACK_IP+"' or ia5.is_overflow)\n"
                             /*+ "  ) or ia.pkey in (\n"
@@ -4829,7 +4829,7 @@ final public class TableHandler {
                             + "  ms.username=?\n"
                             + "  and ms.server=se.pkey\n"
                             + "  and (\n"
-                            + "    ms.server=nb.ao_server\n"
+                            + "    ms.server=nb.server\n"
                             + "    or (\n"
                             + "      select\n"
                             + "        ffr.pkey\n"
@@ -4838,7 +4838,7 @@ final public class TableHandler {
                             + "        inner join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
                             + "      where\n"
                             + "        ms.server=ffr.server\n"
-                            + "        and bp.ao_server=nb.ao_server\n"
+                            + "        and bp.ao_server=nb.server\n"
                             + "        and (\n"
                             + "          nb.app_protocol='"+Protocol.AOSERV_DAEMON+"'\n"
                             + "          or nb.app_protocol='"+Protocol.AOSERV_DAEMON_SSL+"'\n"
@@ -4857,7 +4857,7 @@ final public class TableHandler {
                         "select\n"
                         + "  nb.pkey,\n"
                         + "  nb.package,\n"
-                        + "  nb.ao_server,\n"
+                        + "  nb.server,\n"
                         + "  nb.ip_address,\n"
                         + "  nb.port,\n"
                         + "  nb.net_protocol,\n"
@@ -4996,8 +4996,8 @@ final public class TableHandler {
                             + "where\n"
                             + "  ms.username=?\n"
                             + "  and (\n"
-                            + "    ms.server=nd.ao_server\n"
-                            + "    or ff.server=nd.ao_server\n"
+                            + "    ms.server=nd.server\n"
+                            + "    or ff.server=nd.server\n"
                             + "    or (\n"
                             + "      select\n"
                             + "        ffr.pkey\n"
@@ -5007,7 +5007,7 @@ final public class TableHandler {
                             + "        inner join ao_servers bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
                             + "      where\n"
                             + "        ms.server=ffr.server\n"
-                            + "        and bp.ao_server=nd.ao_server\n"
+                            + "        and bp.ao_server=nd.server\n"
                             + "        and bpao.daemon_device_id=nd.device_id\n" // Only allow access to the device device ID for failovers
                             + "      limit 1\n"
                             + "    ) is not null\n"
@@ -5036,7 +5036,7 @@ final public class TableHandler {
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bs.accounting\n"
                         + "  and (\n"
-                        + "    bs.server=nd.ao_server\n"
+                        + "    bs.server=nd.server\n"
                         //+ "    or (bp.ao_server=nd.ao_server and nd.device_id=bpao.daemon_device_id)\n"
                         + "  )",
                         username
@@ -5077,7 +5077,7 @@ final public class TableHandler {
                             + "  net_tcp_redirects ntr\n"
                             + "where\n"
                             + "  ms.username=?\n"
-                            + "  and ms.server=nb.ao_server\n"
+                            + "  and ms.server=nb.server\n"
                             + "  and nb.pkey=ntr.net_bind",
                             username
                         );
@@ -5716,7 +5716,7 @@ final public class TableHandler {
                             + "  private_ftp_servers pfs\n"
                             + "where\n"
                             + "  ms.username=?\n"
-                            + "  and ms.server=nb.ao_server\n"
+                            + "  and ms.server=nb.server\n"
                             + "  and nb.pkey=pfs.net_bind",
                             username
                         );

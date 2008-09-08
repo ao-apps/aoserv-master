@@ -1,8 +1,8 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2007 by AO Industries, Inc.,
- * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
+ * Copyright 2001-2008 by AO Industries, Inc.,
+ * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
@@ -38,7 +38,9 @@ final public class HttpdHandler {
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, HttpdHandler.class, "addHttpdWorker(MasterDatabaseConnection,int,int,InvalidateList)", null);
         try {
-            int aoServer=NetBindHandler.getAOServerForNetBind(conn, netBindPKey);
+            int server=NetBindHandler.getServerForNetBind(conn, netBindPKey);
+            if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
+            int aoServer = server;
             int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_workers_pkey_seq')");
             if(httpdSitePKey==-1) {
                 conn.executeUpdate(
@@ -60,7 +62,7 @@ final public class HttpdHandler {
                     + "          net_binds nb\n"
                     + "        where\n"
                     + "          hw.net_bind=nb.pkey\n"
-                    + "          and nb.ao_server=?\n"
+                    + "          and nb.server=?\n"
                     + "          and hjc.code=hw.code\n"
                     + "        limit 1\n"
                     + "      ) is null\n"
@@ -95,7 +97,7 @@ final public class HttpdHandler {
                     + "          net_binds nb\n"
                     + "        where\n"
                     + "          hw.net_bind=nb.pkey\n"
-                    + "          and nb.ao_server=?\n"
+                    + "          and nb.server=?\n"
                     + "          and hjc.code=hw.code\n"
                     + "        limit 1\n"
                     + "      ) is null\n"
@@ -771,7 +773,7 @@ final public class HttpdHandler {
             if(ipAddress!=-1) {
                 IPAddressHandler.checkAccessIPAddress(conn, source, methodName, ipAddress);
                 // The IP must be on the provided server
-                int ipServer=IPAddressHandler.getAOServerForIPAddress(conn, ipAddress);
+                int ipServer=IPAddressHandler.getServerForIPAddress(conn, ipAddress);
                 if(ipServer!=aoServer) throw new SQLException("IP address "+ipAddress+" is not hosted on AOServer #"+aoServer);
                 if(isTomcat4) {
                     int[] ports=new int[] {80, 443};
@@ -2338,7 +2340,7 @@ final public class HttpdHandler {
         try {
             // First, find the net_bind
             int netBind;
-            PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select pkey, app_protocol from net_binds where ao_server=? and ip_address=? and port=? and net_protocol='"+NetProtocol.TCP+'\'');
+            PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select pkey, app_protocol from net_binds where server=? and ip_address=? and port=? and net_protocol='"+NetProtocol.TCP+'\'');
             try {
                 pstmt.setInt(1, aoServer);
                 pstmt.setInt(2, ipAddress);

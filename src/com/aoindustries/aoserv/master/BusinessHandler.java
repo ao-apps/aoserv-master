@@ -1,8 +1,8 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2007 by AO Industries, Inc.,
- * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
+ * Copyright 2001-2008 by AO Industries, Inc.,
+ * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.AOServPermission;
@@ -1225,7 +1225,7 @@ final public class BusinessHandler {
                     + "      pk.accounting=?\n"
                     + "      and pk.name=ia.package\n"
                     + "      and ia.net_device=nd.pkey\n"
-                    + "      and nd.ao_server=?\n"
+                    + "      and nd.server=?\n"
                     + "    limit 1\n"
                     + "  )\n"
                     + "  is not null\n",
@@ -1360,7 +1360,7 @@ final public class BusinessHandler {
                     + "    where\n"
                     + "      pk.accounting=?\n"
                     + "      and pk.name=nb.package\n"
-                    + "      and nb.ao_server=?\n"
+                    + "      and nb.server=?\n"
                     + "    limit 1\n"
                     + "  )\n"
                     + "  is not null\n",

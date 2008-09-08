@@ -1,8 +1,8 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2007 by AO Industries, Inc.,
- * 816 Azalea Rd, Mobile, Alabama, 36693, U.S.A.
+ * Copyright 2001-2008 by AO Industries, Inc.,
+ * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
@@ -26,7 +26,7 @@ final public class NetBindHandler {
         MasterDatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int aoServer,
+        int server,
         String packageName,
         int ipAddress,
         int port,
@@ -61,7 +61,7 @@ final public class NetBindHandler {
                 ) throw new SQLException("Only master users may override the net protocol for a service.");
             }
             
-            ServerHandler.checkAccessServer(conn, source, "addNetBind", aoServer);
+            ServerHandler.checkAccessServer(conn, source, "addNetBind", server);
             PackageHandler.checkAccessPackage(conn, source, "addNetBind", packageName);
             if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add net bind, package disabled: "+packageName);
             IPAddressHandler.checkAccessIPAddress(conn, source, "addNetBind", ipAddress);
@@ -84,7 +84,7 @@ final public class NetBindHandler {
                             + "      net_binds nb,\n"
                             + "      servers se\n"
                             + "    where\n"
-                            + "      nb.ao_server=se.pkey\n"
+                            + "      nb.server=se.pkey\n"
                             //+ "      and se.farm=?\n"
                             + "      and nb.port=?\n"
                             + "      and nb.net_protocol=?\n"
@@ -94,7 +94,7 @@ final public class NetBindHandler {
                             port,
                             netProtocol
                         )
-                    ) throw new SQLException("NetBind already in use: "+aoServer+"->"+ipAddress+":"+port+" ("+netProtocol+')');
+                    ) throw new SQLException("NetBind already in use: "+server+"->"+ipAddress+":"+port+" ("+netProtocol+')');
                 } else if(ipString.equals(IPAddress.LOOPBACK_IP)) {
                     // Loopback must be unique per system and not have wildcard
                     if(
@@ -108,7 +108,7 @@ final public class NetBindHandler {
                             + "      servers se,\n"
                             + "      ip_addresses ia\n"
                             + "    where\n"
-                            + "      nb.ao_server=se.pkey\n"
+                            + "      nb.server=se.pkey\n"
                             //+ "      and se.farm=?\n"
                             + "      and nb.ip_address=ia.pkey\n"
                             + "      and (\n"
@@ -122,7 +122,7 @@ final public class NetBindHandler {
                             port,
                             netProtocol
                         )
-                    ) throw new SQLException("NetBind already in use: "+aoServer+"->"+ipAddress+":"+port+" ("+netProtocol+')');
+                    ) throw new SQLException("NetBind already in use: "+server+"->"+ipAddress+":"+port+" ("+netProtocol+')');
                 } else {
                     // Make sure that this port is not already allocated within the system on this IP or the wildcard
                     if(
@@ -136,7 +136,7 @@ final public class NetBindHandler {
                             + "      servers se,\n"
                             + "      ip_addresses ia\n"
                             + "    where\n"
-                            + "      nb.ao_server=se.pkey\n"
+                            + "      nb.server=se.pkey\n"
                             //+ "      and se.farm=?\n"
                             + "      and nb.ip_address=ia.pkey\n"
                             + "      and (\n"
@@ -151,7 +151,7 @@ final public class NetBindHandler {
                             port,
                             netProtocol
                         )
-                    ) throw new SQLException("NetBind already in use: "+aoServer+"->"+ipAddress+":"+port+" ("+netProtocol+')');
+                    ) throw new SQLException("NetBind already in use: "+server+"->"+ipAddress+":"+port+" ("+netProtocol+')');
                 }
 
                 // Add the port to the DB
@@ -172,7 +172,7 @@ final public class NetBindHandler {
                     + ")",
                     pkey,
                     packageName,
-                    aoServer,
+                    server,
                     ipAddress,
                     port,
                     netProtocol,
@@ -186,7 +186,7 @@ final public class NetBindHandler {
                 conn,
                 SchemaTable.TableID.NET_BINDS,
                 PackageHandler.getBusinessForPackage(conn, packageName),
-                aoServer,
+                server,
                 false
             );
             return pkey;
@@ -201,7 +201,7 @@ final public class NetBindHandler {
     public static int allocateNetBind(
         MasterDatabaseConnection conn,
         InvalidateList invalidateList,
-        int aoServer,
+        int server,
         int ipAddress,
         String netProtocol,
         String appProtocol,
@@ -240,7 +240,7 @@ final public class NetBindHandler {
                         + "          net_binds nb,\n"
                         + "          servers se\n"
                         + "        where\n"
-                        + "          nb.ao_server=se.pkey\n"
+                        + "          nb.server=se.pkey\n"
                         // Now allocating unique to entire system for server portability between farms
                         //+ "          and se.farm=?\n"
                         + "          and np.port=nb.port\n"
@@ -258,7 +258,7 @@ final public class NetBindHandler {
                         + ")",
                         pkey,
                         pack,
-                        aoServer,
+                        server,
                         ipAddress,
                         minimumPort,
                         //farm,
@@ -292,7 +292,7 @@ final public class NetBindHandler {
                         + "          servers se,\n"
                         + "          ip_addresses ia\n"
                         + "        where\n"
-                        + "          nb.ao_server=se.pkey\n"
+                        + "          nb.server=se.pkey\n"
                         // Now allocating unique to entire system for server portability between farms
                         //+ "          and se.farm=?\n"
                         + "          and nb.ip_address=ia.pkey\n"
@@ -314,7 +314,7 @@ final public class NetBindHandler {
                         + ")",
                         pkey,
                         pack,
-                        aoServer,
+                        server,
                         ipAddress,
                         minimumPort,
                         //farm,
@@ -329,7 +329,7 @@ final public class NetBindHandler {
                 conn,
                 SchemaTable.TableID.NET_BINDS,
                 PackageHandler.getBusinessForPackage(conn, pack),
-                aoServer,
+                server,
                 false
             );
             return pkey;
@@ -352,7 +352,7 @@ final public class NetBindHandler {
 
     public static int getNetBind(
         MasterDatabaseConnection conn,
-        int aoServer,
+        int server,
         int ipAddress,
         int port,
         String netProtocol
@@ -368,13 +368,13 @@ final public class NetBindHandler {
                 + "      from\n"
                 + "        net_binds\n"
                 + "      where\n"
-                + "        ao_server=?\n"
+                + "        server=?\n"
                 + "        and ip_address=?\n"
                 + "        and port=?\n"
                 + "        and net_protocol=?\n"
                 + "    ), -1\n"
                 + "  )",
-                aoServer,
+                server,
                 ipAddress,
                 port,
                 netProtocol
@@ -384,13 +384,13 @@ final public class NetBindHandler {
         }
     }
 
-    public static int getAOServerForNetBind(
+    public static int getServerForNetBind(
         MasterDatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, NetBindHandler.class, "getAOServerForNetBind(MasterDatabaseConnection,pkey)", null);
         try {
-            return conn.executeIntQuery("select ao_server from net_binds where pkey=?", pkey);
+            return conn.executeIntQuery("select server from net_binds where pkey=?", pkey);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
@@ -434,14 +434,14 @@ final public class NetBindHandler {
         Profiler.startProfile(Profiler.UNKNOWN, NetBindHandler.class, "removeNetBind(MasterDatabaseConnection,InvalidateList,pkey)", null);
         try {
             String business=getBusinessForNetBind(conn, pkey);
-            int aoServer=getAOServerForNetBind(conn, pkey);
+            int server=getServerForNetBind(conn, pkey);
             if(conn.executeBooleanQuery("select (select net_bind from net_tcp_redirects where net_bind=?) is not null", pkey)) {
                 conn.executeUpdate("delete from net_tcp_redirects where net_bind=?", pkey);
                 invalidateList.addTable(
                     conn,
                     SchemaTable.TableID.NET_TCP_REDIRECTS,
                     business,
-                    aoServer,
+                    server,
                     false
                 );
             }
@@ -452,7 +452,7 @@ final public class NetBindHandler {
                     conn,
                     SchemaTable.TableID.PRIVATE_FTP_SERVERS,
                     business,
-                    aoServer,
+                    server,
                     false
                 );
             }
@@ -462,7 +462,7 @@ final public class NetBindHandler {
                 conn,
                 SchemaTable.TableID.NET_BINDS,
                 business,
-                aoServer,
+                server,
                 false
             );
         } finally {
@@ -487,7 +487,7 @@ final public class NetBindHandler {
                 conn,
                 SchemaTable.TableID.NET_BINDS,
                 getBusinessForNetBind(conn, pkey),
-                getAOServerForNetBind(conn, pkey),
+                getServerForNetBind(conn, pkey),
                 false
             );
         } finally {
@@ -512,7 +512,7 @@ final public class NetBindHandler {
                 conn,
                 SchemaTable.TableID.NET_BINDS,
                 getBusinessForNetBind(conn, pkey),
-                getAOServerForNetBind(conn, pkey),
+                getServerForNetBind(conn, pkey),
                 false
             );
         } finally {
