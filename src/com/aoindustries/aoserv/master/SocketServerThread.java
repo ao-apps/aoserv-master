@@ -54,7 +54,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
     /**
      * The version of the protocol the client is running.
      */
-    private String protocolVersion;
+    private AOServProtocol.Version protocolVersion;
 
     /**
      * The server if this is a connection from a daemon.
@@ -148,7 +148,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
         }
     }
 
-    final public String getProtocolVersion() {
+    final public AOServProtocol.Version getProtocolVersion() {
         return protocolVersion;
     }
 
@@ -183,13 +183,14 @@ final public class SocketServerThread extends Thread implements RequestSource {
         }
     }
 
+    @Override
     public void run() {
         Profiler.startProfile(Profiler.IO, SocketServerThread.class, "run()", null);
         try {
             try {
                 try {
-                    this.protocolVersion=in.readUTF();
-                    process.setAOServProtocol(protocolVersion);
+                    this.protocolVersion=AOServProtocol.Version.getVersion(in.readUTF());
+                    process.setAOServProtocol(protocolVersion.getVersion());
                     if(in.readBoolean()) {
                         String daemonServerHostname=in.readUTF();
                         MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
@@ -228,78 +229,82 @@ final public class SocketServerThread extends Thread implements RequestSource {
                     long existingID=in.readLong();
 
                     if(
-                        !protocolVersion.equals(AOServProtocol.VERSION_1_34)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_33)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_32)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_31)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_30)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_29)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_28)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_27)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_26)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_25)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_24)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_23)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_22)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_21)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_20)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_19)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_18)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_17)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_16)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_15)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_14)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_13)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_12)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_11)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_10)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_9)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_8)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_7)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_6)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_5)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_4)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_3)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_2)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_1)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_130)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_129)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_128)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_127)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_126)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_125)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_124)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_123)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_122)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_121)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_120)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_119)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_118)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_117)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_116)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_115)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_114)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_113)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_112)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_111)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_110)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_109)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_108)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_107)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_106)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_105)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_104)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_103)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_102)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_101)
-                        && !protocolVersion.equals(AOServProtocol.VERSION_1_0_A_100)
+                        protocolVersion!=AOServProtocol.Version.VERSION_1_38
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_37
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_36
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_35
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_34
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_33
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_32
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_31
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_30
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_29
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_28
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_27
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_26
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_25
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_24
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_23
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_22
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_21
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_20
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_19
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_18
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_17
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_16
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_15
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_14
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_13
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_12
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_11
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_10
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_9
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_8
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_7
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_6
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_5
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_4
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_3
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_2
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_1
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_130
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_129
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_128
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_127
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_126
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_125
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_124
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_123
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_122
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_121
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_120
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_119
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_118
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_117
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_116
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_115
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_114
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_113
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_112
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_111
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_110
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_109
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_108
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_107
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_106
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_105
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_104
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_103
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_102
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_101
+                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_100
                     ) {
                         out.writeBoolean(false);
                         out.writeUTF(
                         "Client ("+socket.getInetAddress().getHostAddress()+":"+socket.getPort()+") requesting AOServ Protocol version "
                         +protocolVersion
                         +", server ("+socket.getLocalAddress().getHostAddress()+":"+socket.getLocalPort()+") supporting versions "
-                        +StringUtility.buildList(AOServProtocol.getVersions())
+                        +StringUtility.buildList(AOServProtocol.Version.values())
                         +".  Please upgrade the client code to match the server."
                         );
                         out.flush();
@@ -375,7 +380,9 @@ final public class SocketServerThread extends Thread implements RequestSource {
                                         conn.releaseConnection();
                                     }
 
-                                    while(server.handleRequest(this, in, out, process));
+                                    while(server.handleRequest(this, in, out, process)) {
+                                        // Do nothing in loop
+                                    }
                                 }
                             }
                         } catch(SQLException err) {

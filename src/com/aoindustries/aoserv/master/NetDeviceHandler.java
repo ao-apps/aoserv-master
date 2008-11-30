@@ -29,6 +29,19 @@ final public class NetDeviceHandler {
         }
     }
 
+    public static String getNetDeviceStatisticsReport(MasterDatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, NetDeviceHandler.class, "getNetDeviceStatisticsReport(MasterDatabaseConnection,RequestSource,int)", null);
+        try {
+            int server = getServerForNetDevice(conn, pkey);
+            if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
+            ServerHandler.checkAccessServer(conn, source, "getNetDeviceStatisticsReport", server);
+
+            return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceStatisticsReport(pkey);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
     public static int getServerForNetDevice(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, NetDeviceHandler.class, "getServerForNetDevice(MasterDatabaseConnection,int)", null);
         try {

@@ -14,7 +14,6 @@ import com.aoindustries.util.*;
 import com.oreilly.servlet.*;
 import java.io.*;
 import java.sql.*;
-import java.text.ParseException;
 import java.util.*;
 import javax.mail.*;
 import javax.mail.internet.*;
@@ -1375,7 +1374,7 @@ final public class TicketHandler implements Runnable {
              try {
                 MailMessage msg = new MailMessage(MasterConfiguration.getTicketSmtpServer());
                 msg.from("support@aoindustries.com");
-                msg.to(MasterServer.getRandom().nextBoolean()?"2514584757@tmomail.net":"2514584757@tmomail.net");
+                msg.to("2054542556@tmomail.net");
                 msg.setSubject("URGENT");
                 PrintStream email = msg.getPrintStream();
                 email.print(cellMessage);

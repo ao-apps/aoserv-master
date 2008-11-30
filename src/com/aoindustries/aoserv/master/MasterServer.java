@@ -114,24 +114,14 @@ public abstract class MasterServer {
      * Creates a new, running <code>AOServServer</code>.
      */
     protected MasterServer(String serverBind, int serverPort) {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, MasterServer.class, "<init>(String,int)", null);
-        try {
-            this.serverBind = serverBind;
-            this.serverPort = serverPort;
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        this.serverBind = serverBind;
+        this.serverPort = serverPort;
     }
 
     private static void addCacheListener(RequestSource source) {
-	Profiler.startProfile(Profiler.FAST, MasterServer.class, "addCacheListener(RequestSource)", null);
-	try {
-            synchronized(cacheListeners) {
-                cacheListeners.add(source);
-            }
-	} finally {
-            Profiler.endProfile(Profiler.FAST);
-	}
+        synchronized(cacheListeners) {
+            cacheListeners.add(source);
+        }
     }
 
     private static void appendParam(String S, StringBuilder SB) {
@@ -161,132 +151,77 @@ public abstract class MasterServer {
      * Gets the interface address this server is listening on.
      */
     final public String getBindAddress() {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, MasterServer.class, "getBindAddress()", null);
-        try {
-            return serverBind;
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        return serverBind;
     }
 
     public static long getNextConnectorID() {
-	Profiler.startProfile(Profiler.FAST, MasterServer.class, "getNextConnectorID()", null);
-	try {
-	    synchronized(MasterServer.class) {
-		long time=System.currentTimeMillis();
-		long id;
-		if(lastID<time) id=time;
-		else id=lastID+1;
-		lastID=id;
-		return id;
-	    }
-	} finally {
-            Profiler.endProfile(Profiler.FAST);
-	}
+        synchronized(MasterServer.class) {
+            long time=System.currentTimeMillis();
+            long id;
+            if(lastID<time) id=time;
+            else id=lastID+1;
+            lastID=id;
+            return id;
+        }
     }
 
     /**
      * Gets the interface port this server is listening on.
      */
     final public int getPort() {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, MasterServer.class, "getPort()", null);
-        try {
-            return serverPort;
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        return serverPort;
     }
 
     abstract public String getProtocol();
 
     private static Random random;
     public static Random getRandom() {
-        Profiler.startProfile(Profiler.FAST, MasterServer.class, "getRandom()", null);
-        try {
-	    synchronized(MasterServer.class) {
-                String algorithm="SHA1PRNG";
-		try {
-		    if(random==null) random=SecureRandom.getInstance(algorithm);
-		    return random;
-		} catch(NoSuchAlgorithmException err) {
-		    throw new WrappedException(err, new Object[] {"algorithm="+algorithm});
-		}
-	    }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        synchronized(MasterServer.class) {
+            String algorithm="SHA1PRNG";
+            try {
+                if(random==null) random=SecureRandom.getInstance(algorithm);
+                return random;
+            } catch(NoSuchAlgorithmException err) {
+                throw new WrappedException(err, new Object[] {"algorithm="+algorithm});
+            }
         }
     }
 
     public static int getRequestConcurrency() {
-	Profiler.startProfile(Profiler.INSTANTANEOUS, MasterServer.class, "getRequestConcurrency()", null);
-	try {
-            return concurrency;
-	} finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-	}
+        return concurrency;
     }
 
     private static final Object connectionsLock=new Object();
     private static long connections=0;
     protected static void incConnectionCount() {
-	Profiler.startProfile(Profiler.FAST, MasterServer.class, "incConnectionCount()", null);
-	try {
-            synchronized(connectionsLock) {
-                connections++;
-            }
-	} finally {
-            Profiler.endProfile(Profiler.FAST);
+        synchronized(connectionsLock) {
+            connections++;
         }
     }
     public static long getRequestConnections() {
-	Profiler.startProfile(Profiler.FAST, MasterServer.class, "getRequestConnections()", null);
-	try {
-            synchronized(connectionsLock) {
-                return connections;
-            }
-	} finally {
-            Profiler.endProfile(Profiler.FAST);
-	}
+        synchronized(connectionsLock) {
+            return connections;
+        }
     }
 
     public static int getRequestMaxConcurrency() {
-	Profiler.startProfile(Profiler.INSTANTANEOUS, MasterServer.class, "getRequestMaxConcurrency()", null);
-	try {
-            return maxConcurrency;
-	} finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-	}
+        return maxConcurrency;
     }
 
     public static long getRequestTotalTime() {
-	Profiler.startProfile(Profiler.FAST, MasterServer.class, "getRequestTotalTime()", null);
-	try {
-	    synchronized(MasterServer.class) {
-		return totalTime;
-	    }
-	} finally {
-            Profiler.endProfile(Profiler.FAST);
-	}
+        synchronized(MasterServer.class) {
+            return totalTime;
+        }
     }
 
     public static long getRequestTransactions() {
-	Profiler.startProfile(Profiler.FAST, MasterServer.class, "getRequestTransactions()", null);
-	try {
-	    synchronized(MasterServer.class) {
-		return requestCount;
-	    }
-	} finally {
-            Profiler.endProfile(Profiler.FAST);
-	}
+        synchronized(MasterServer.class) {
+            return requestCount;
+        }
     }
 
     public static long getStartTime() {
-	Profiler.startProfile(Profiler.INSTANTANEOUS, MasterServer.class, "getStartTime()", null);
-	try {
-            return startTime;
-	} finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-	}
+        return startTime;
     }
 
     /** Used to avoid cloning of array for each access. */
@@ -449,7 +384,7 @@ public abstract class MasterServer {
                                             SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
                                             if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                             int server;
-                                            if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_30)<=0) {
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
                                                 String hostname=in.readBoolean()?in.readUTF().trim():null;
                                                 server = hostname==null ? -1 : ServerHandler.getServerForAOServerHostname(conn, hostname);
                                             } else {
@@ -608,8 +543,8 @@ public abstract class MasterServer {
                                                     String accounting=in.readUTF().trim();
                                                     int server=in.readCompressedInt();
                                                     if(
-                                                        AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_102)>=0
-                                                        && AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_30)<=0
+                                                        source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_102)>=0
+                                                        && source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0
                                                     ) {
                                                         boolean can_configure_backup=in.readBoolean();
                                                     }
@@ -636,7 +571,7 @@ public abstract class MasterServer {
                                                     String contractVersion=in.readBoolean()?in.readUTF().trim():null;
                                                     int defaultServer;
                                                     String hostname;
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_30)<=0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
                                                         defaultServer = -1;
                                                         hostname = in.readUTF().trim();
                                                     } else {
@@ -645,13 +580,13 @@ public abstract class MasterServer {
                                                     }
                                                     String parent=in.readUTF().trim();
                                                     boolean can_add_backup_servers=
-                                                        AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_102)>=0
+                                                        source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_102)>=0
                                                         ?in.readBoolean()
                                                         :false
                                                     ;
                                                     boolean can_add_businesses=in.readBoolean();
                                                     boolean can_see_prices=
-                                                        AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_103)>=0
+                                                        source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_103)>=0
                                                         ?in.readBoolean()
                                                         :true
                                                     ;
@@ -690,7 +625,7 @@ public abstract class MasterServer {
                                             case CREDIT_CARDS :
                                                 {
                                                     // If before version 1.29, do not support add call but read the old values anyway
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_28)<=0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_28)<=0) {
                                                         String accounting=in.readUTF().trim();
                                                         byte[] cardNumber=new byte[in.readCompressedInt()]; in.readFully(cardNumber);
                                                         String cardInfo=in.readUTF().trim();
@@ -703,7 +638,7 @@ public abstract class MasterServer {
                                                         len=in.readCompressedInt(); byte[] zip=len>=0?new byte[len]:null; if(len>=0) in.readFully(zip);
                                                         boolean useMonthly=in.readBoolean();
                                                         String description=in.readBoolean()?in.readUTF().trim():null;
-                                                        throw new SQLException("add_credit_card for protocol version "+AOServProtocol.VERSION_1_28+" or older is no longer supported.");
+                                                        throw new SQLException("add_credit_card for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
                                                     }
                                                     String processorName = in.readUTF();
                                                     String accounting = in.readUTF().trim();
@@ -729,7 +664,7 @@ public abstract class MasterServer {
                                                     String encryptedExpiration;
                                                     int encryptionFrom;
                                                     int encryptionRecipient;
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_30)<=0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
                                                         encryptedCardNumber = null;
                                                         encryptedExpiration = null;
                                                         encryptionFrom = -1;
@@ -1300,11 +1235,11 @@ public abstract class MasterServer {
                                                 {
                                                     int replication=in.readCompressedInt();
                                                     String path=in.readUTF();
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_30)<=0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
                                                         int packageNum=in.readCompressedInt();
                                                     }
                                                     boolean backupEnabled;
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_30)<=0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
                                                         short backupLevel=in.readShort();
                                                         short backupRetention=in.readShort();
                                                         boolean recurse=in.readBoolean();
@@ -1312,8 +1247,8 @@ public abstract class MasterServer {
                                                     } else {
                                                         backupEnabled = in.readBoolean();
                                                     }
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_31)<0) {
-                                                        throw new IOException(AOSHCommand.ADD_FILE_BACKUP_SETTING+" call not supported for AOServProtocol < "+AOServProtocol.VERSION_1_31+", please upgrade AOServ Client.");
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_31)<0) {
+                                                        throw new IOException(AOSHCommand.ADD_FILE_BACKUP_SETTING+" call not supported for AOServProtocol < "+AOServProtocol.Version.VERSION_1_31+", please upgrade AOServ Client.");
                                                     }
                                                     process.setCommand(
                                                         AOSHCommand.ADD_FILE_BACKUP_SETTING,
@@ -1741,10 +1676,10 @@ public abstract class MasterServer {
                                                 break;
                                             case LINUX_ACC_ADDRESSES :
                                                 {
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_31)<0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_31)<0) {
                                                         in.readCompressedInt(); // address
                                                         in.readUTF().trim(); // username
-                                                        throw new IOException(AOSHCommand.ADD_LINUX_ACC_ADDRESS+" call not supported for AOServProtocol < "+AOServProtocol.VERSION_1_31+", please upgrade AOServ Client.");
+                                                        throw new IOException(AOSHCommand.ADD_LINUX_ACC_ADDRESS+" call not supported for AOServProtocol < "+AOServProtocol.Version.VERSION_1_31+", please upgrade AOServ Client.");
                                                     }
                                                     int address=in.readCompressedInt();
                                                     int lsa = in.readCompressedInt();
@@ -1980,7 +1915,7 @@ public abstract class MasterServer {
                                                     boolean canAlter=in.readBoolean();
                                                     boolean canCreateTempTable;
                                                     boolean canLockTables;
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_111)>=0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_111)>=0) {
                                                         canCreateTempTable=in.readBoolean();
                                                         canLockTables=in.readBoolean();
                                                     } else {
@@ -1992,7 +1927,7 @@ public abstract class MasterServer {
                                                     boolean canCreateRoutine;
                                                     boolean canAlterRoutine;
                                                     boolean canExecute;
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_4)>=0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4)>=0) {
                                                         canCreateView=in.readBoolean();
                                                         canShowView=in.readBoolean();
                                                         canCreateRoutine=in.readBoolean();
@@ -2102,7 +2037,7 @@ public abstract class MasterServer {
                                                     String appProtocol=in.readUTF().trim();
                                                     boolean openFirewall=in.readBoolean();
                                                     boolean monitoringEnabled;
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_103)<=0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_103)<=0) {
                                                         monitoringEnabled=in.readCompressedInt()!=-1;
                                                         if(in.readBoolean()) in.readUTF();
                                                         if(in.readBoolean()) in.readUTF();
@@ -2173,7 +2108,7 @@ public abstract class MasterServer {
                                                     String packageName=in.readUTF().trim();
                                                     String accounting=in.readUTF().trim();
                                                     int packageDefinition;
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_122)<=0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_122)<=0) {
                                                         // Try to find a package definition owned by the source accounting with matching rates and limits
                                                         String level=in.readUTF().trim();
                                                         int rate=in.readCompressedInt();
@@ -2274,7 +2209,7 @@ public abstract class MasterServer {
                                                     int postgresServer=in.readCompressedInt();
                                                     int datdba=in.readCompressedInt();
                                                     int encoding=in.readCompressedInt();
-                                                    boolean enable_postgis=AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_27)>=0?in.readBoolean():false;
+                                                    boolean enable_postgis=source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_27)>=0?in.readBoolean():false;
                                                     process.setCommand(
                                                         AOSHCommand.ADD_POSTGRES_DATABASE,
                                                         name,
@@ -2369,8 +2304,8 @@ public abstract class MasterServer {
                                                     boolean billing_pay_one_year = in.readBoolean();
                                                     // Encrypted values
                                                     int from;
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_30)<=0) from = 2; // Hard-coded value from AO website key
-                                                    from = in.readCompressedInt();
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) from = 2; // Hard-coded value from AO website key
+                                                    else from = in.readCompressedInt();
                                                     int recipient = in.readCompressedInt();
                                                     String ciphertext = in.readUTF();
                                                     // options
@@ -2490,7 +2425,7 @@ public abstract class MasterServer {
                                             case TICKETS :
                                                 {
                                                     String accounting;
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_126)>=0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_126)>=0) {
                                                         accounting=in.readBoolean()?in.readUTF().trim():null;
                                                     } else {
                                                         String packageName=in.readUTF().trim();
@@ -2507,7 +2442,7 @@ public abstract class MasterServer {
                                                     String assignedTo;
                                                     String contactEmails;
                                                     String contactPhoneNumbers;
-                                                    if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_125)>=0) {
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_125)>=0) {
                                                         assignedTo=in.readBoolean()?in.readUTF().trim():null;
                                                         contactEmails=in.readUTF();
                                                         contactPhoneNumbers=in.readUTF();
@@ -2635,13 +2570,13 @@ public abstract class MasterServer {
                                             String farm=in.readUTF();
                                             int owner=in.readCompressedInt();
                                             String description=in.readUTF();
-                                            if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_107)<=0) in.readUTF();
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_107)<=0) in.readUTF();
                                             int os_version=in.readCompressedInt();
                                             String username=in.readUTF();
                                             String password=in.readUTF();
                                             String contact_phone=in.readUTF();
                                             String contact_email=in.readUTF();
-                                            if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_107)<=0) throw new IOException("addBackupServer call not supported for AOServ Client version <= "+AOServProtocol.VERSION_1_0_A_107+", please upgrade AOServ Client.");
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_107)<=0) throw new IOException("addBackupServer call not supported for AOServ Client version <= "+AOServProtocol.VERSION_1_0_A_107+", please upgrade AOServ Client.");
                                             process.setCommand(
                                                 AOSHCommand.ADD_BACKUP_SERVER,
                                                 hostname,
@@ -4290,6 +4225,23 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case GET_NET_DEVICE_STATISTICS_REPORT :
+                                        {
+                                            int pkey = in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_net_device_statistics_report",
+                                                Integer.valueOf(pkey)
+                                            );
+                                            String report = NetDeviceHandler.getNetDeviceStatisticsReport(
+                                                conn,
+                                                source,
+                                                pkey
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=report;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case GET_AO_SERVER_3WARE_RAID_REPORT :
                                         {
                                             int aoServer = in.readCompressedInt();
@@ -4332,6 +4284,74 @@ public abstract class MasterServer {
                                                 Integer.valueOf(aoServer)
                                             );
                                             String report = AOServerHandler.getDrbdReport(
+                                                conn,
+                                                source,
+                                                aoServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=report;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_AO_SERVER_HDD_TEMP_REPORT :
+                                        {
+                                            int aoServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ao_server_hdd_temp_report",
+                                                Integer.valueOf(aoServer)
+                                            );
+                                            String report = AOServerHandler.getHddTempReport(
+                                                conn,
+                                                source,
+                                                aoServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=report;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_AO_SERVER_FILESYSTEMS_CSV_REPORT :
+                                        {
+                                            int aoServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ao_server_filesystems_csv_report",
+                                                Integer.valueOf(aoServer)
+                                            );
+                                            String report = AOServerHandler.getFilesystemsCsvReport(
+                                                conn,
+                                                source,
+                                                aoServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=report;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_AO_SERVER_LOADAVG_REPORT :
+                                        {
+                                            int aoServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ao_server_loadavg_report",
+                                                Integer.valueOf(aoServer)
+                                            );
+                                            String report = AOServerHandler.getLoadAvgReport(
+                                                conn,
+                                                source,
+                                                aoServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=report;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_AO_SERVER_MEMINFO_REPORT :
+                                        {
+                                            int aoServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ao_server_meminfo_report",
+                                                Integer.valueOf(aoServer)
+                                            );
+                                            String report = AOServerHandler.getMemInfoReport(
                                                 conn,
                                                 source,
                                                 aoServer
@@ -4795,13 +4815,13 @@ public abstract class MasterServer {
                                                 pkey
                                             );
                                             resp1=AOServProtocol.DONE;
-                                            if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_6)>=0) {
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_6)>=0) {
                                                 resp2Int=isManual;
                                                 hasResp2Int=true;
                                             } else {
                                                 if(isManual==AOServProtocol.FALSE) resp2Boolean=false;
                                                 else if(isManual==AOServProtocol.TRUE) resp2Boolean=true;
-                                                else throw new IOException("Unsupported value for AOServClient protocol < "+AOServProtocol.VERSION_1_6);
+                                                else throw new IOException("Unsupported value for AOServClient protocol < "+AOServProtocol.Version.VERSION_1_6);
                                                 hasResp2Boolean=true;
                                             }
                                             sendInvalidateList=false;
@@ -4816,7 +4836,7 @@ public abstract class MasterServer {
                                                 name,
                                                 Integer.valueOf(mysqlServer)
                                             );
-                                            if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_4)<0) throw new IOException(AOSHCommand.IS_MYSQL_DATABASE_NAME_AVAILABLE+" call not supported for AOServProtocol < "+AOServProtocol.VERSION_1_4+", please upgrade AOServ Client.");
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4)<0) throw new IOException(AOSHCommand.IS_MYSQL_DATABASE_NAME_AVAILABLE+" call not supported for AOServProtocol < "+AOServProtocol.Version.VERSION_1_4+", please upgrade AOServ Client.");
                                             boolean isAvailable=MySQLHandler.isMySQLDatabaseNameAvailable(
                                                 conn,
                                                 source,
@@ -5792,7 +5812,7 @@ public abstract class MasterServer {
                                     case RESTART_MYSQL :
                                         {
                                             int mysqlServer=in.readCompressedInt();
-                                            if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_4)<0) throw new IOException("addBackupServer call not supported for AOServ Client version < "+AOServProtocol.VERSION_1_4+", please upgrade AOServ Client.");
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4)<0) throw new IOException("addBackupServer call not supported for AOServ Client version < "+AOServProtocol.Version.VERSION_1_4+", please upgrade AOServ Client.");
                                             process.setCommand(
                                                 AOSHCommand.RESTART_MYSQL,
                                                 Integer.valueOf(mysqlServer)
@@ -6084,11 +6104,11 @@ public abstract class MasterServer {
                                         {
                                             int pkey=in.readCompressedInt();
                                             String path=in.readUTF();
-                                            if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_30)<=0) {
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
                                                 in.readCompressedInt(); // package
                                             }
                                             boolean backupEnabled;
-                                            if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_30)<=0) {
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
                                                 short backupLevel=in.readShort();
                                                 in.readShort(); // backup_retention
                                                 in.readBoolean(); // recurse
@@ -7333,14 +7353,14 @@ public abstract class MasterServer {
                                     case TRANSACTION_APPROVED :
                                         {
                                             int transid=in.readCompressedInt();
-                                            if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_28)<=0) {
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_28)<=0) {
                                                 String paymentType=in.readUTF();
                                                 String paymentInfo=in.readBoolean()?in.readUTF():null;
                                                 String merchant=in.readBoolean()?in.readUTF():null;
                                                 String apr_num;
-                                                if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_0_A_128)<0) apr_num=Integer.toString(in.readCompressedInt());
+                                                if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_128)<0) apr_num=Integer.toString(in.readCompressedInt());
                                                 else apr_num=in.readUTF();
-                                                throw new SQLException("approve_transaction for protocol version "+AOServProtocol.VERSION_1_28+" or older is no longer supported.");
+                                                throw new SQLException("approve_transaction for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
                                             }
                                             int creditCardTransaction = in.readCompressedInt();
                                             process.setCommand(
@@ -7362,11 +7382,11 @@ public abstract class MasterServer {
                                     case TRANSACTION_DECLINED :
                                         {
                                             int transid=in.readCompressedInt();
-                                            if(AOServProtocol.compareVersions(source.getProtocolVersion(), AOServProtocol.VERSION_1_28)<=0) {
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_28)<=0) {
                                                 String paymentType=in.readUTF().trim();
                                                 String paymentInfo=in.readBoolean()?in.readUTF().trim():null;
                                                 String merchant=in.readBoolean()?in.readUTF().trim():null;
-                                                throw new SQLException("decline_transaction for protocol version "+AOServProtocol.VERSION_1_28+" or older is no longer supported.");
+                                                throw new SQLException("decline_transaction for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
                                             }
                                             int creditCardTransaction = in.readCompressedInt();
                                             process.setCommand(
@@ -7938,104 +7958,99 @@ public abstract class MasterServer {
         InvalidateList invalidateList,
         RequestSource invalidateSource
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, MasterServer.class, "invalidateTables(InvalidateList,RequestSource)", null);
-        try {
-            // Invalidate the internally cached data first
-            invalidateList.invalidateMasterCaches();
+        // Invalidate the internally cached data first
+        invalidateList.invalidateMasterCaches();
 
-            // Values used inside the loops
-            long invalidateSourceConnectorID=invalidateSource==null?-1:invalidateSource.getConnectorID();
+        // Values used inside the loops
+        long invalidateSourceConnectorID=invalidateSource==null?-1:invalidateSource.getConnectorID();
 
-            IntList tableList=new IntArrayList();
-            final MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
-            // Grab a copy of cacheListeners to help avoid deadlock
-            List<RequestSource> listenerCopy=new ArrayList<RequestSource>(cacheListeners.size());
-            synchronized(cacheListeners) {
-                listenerCopy.addAll(cacheListeners);
-            }
-            Iterator<RequestSource> I=listenerCopy.iterator();
-            while(I.hasNext()) {
-                try {
-                    RequestSource source=I.next();
-                    if(invalidateSourceConnectorID!=source.getConnectorID()) {
-                        tableList.clear();
-                        // Build the list with a connection, but don't send until the connection is released
+        IntList tableList=new IntArrayList();
+        final MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+        // Grab a copy of cacheListeners to help avoid deadlock
+        List<RequestSource> listenerCopy=new ArrayList<RequestSource>(cacheListeners.size());
+        synchronized(cacheListeners) {
+            listenerCopy.addAll(cacheListeners);
+        }
+        Iterator<RequestSource> I=listenerCopy.iterator();
+        while(I.hasNext()) {
+            try {
+                RequestSource source=I.next();
+                if(invalidateSourceConnectorID!=source.getConnectorID()) {
+                    tableList.clear();
+                    // Build the list with a connection, but don't send until the connection is released
+                    try {
                         try {
-                            try {
-                                for(SchemaTable.TableID tableID : tableIDs) {
-                                    int clientTableID=TableHandler.convertToClientTableID(conn, source, tableID);
-                                    if(clientTableID!=-1) {
-                                        List<String> affectedBusinesses=invalidateList.getAffectedBusinesses(tableID);
-                                        List<Integer> affectedServers=invalidateList.getAffectedServers(tableID);
-                                        if(
-                                            affectedBusinesses!=null
-                                            && affectedServers!=null
-                                        ) {
-                                            boolean businessMatches;
-                                            int size=affectedBusinesses.size();
-                                            if(size==0) businessMatches=true;
-                                            else {
-                                                businessMatches=false;
-                                                for(int c=0;c<size;c++) {
-                                                    if(BusinessHandler.canAccessBusiness(conn, source, affectedBusinesses.get(c))) {
-                                                        businessMatches=true;
-                                                        break;
-                                                    }
+                            for(SchemaTable.TableID tableID : tableIDs) {
+                                int clientTableID=TableHandler.convertToClientTableID(conn, source, tableID);
+                                if(clientTableID!=-1) {
+                                    List<String> affectedBusinesses=invalidateList.getAffectedBusinesses(tableID);
+                                    List<Integer> affectedServers=invalidateList.getAffectedServers(tableID);
+                                    if(
+                                        affectedBusinesses!=null
+                                        && affectedServers!=null
+                                    ) {
+                                        boolean businessMatches;
+                                        int size=affectedBusinesses.size();
+                                        if(size==0) businessMatches=true;
+                                        else {
+                                            businessMatches=false;
+                                            for(int c=0;c<size;c++) {
+                                                if(BusinessHandler.canAccessBusiness(conn, source, affectedBusinesses.get(c))) {
+                                                    businessMatches=true;
+                                                    break;
                                                 }
                                             }
+                                        }
 
-                                            // Filter by server
-                                            boolean serverMatches;
-                                            size=affectedServers.size();
-                                            if(size==0) serverMatches=true;
-                                            else {
-                                                serverMatches=false;
-                                                for(int c=0;c<size;c++) {
-                                                    int server=affectedServers.get(c);
-                                                    if(ServerHandler.canAccessServer(conn, source, server)) {
+                                        // Filter by server
+                                        boolean serverMatches;
+                                        size=affectedServers.size();
+                                        if(size==0) serverMatches=true;
+                                        else {
+                                            serverMatches=false;
+                                            for(int c=0;c<size;c++) {
+                                                int server=affectedServers.get(c);
+                                                if(ServerHandler.canAccessServer(conn, source, server)) {
+                                                    serverMatches=true;
+                                                    break;
+                                                }
+                                                if(
+                                                    tableID==SchemaTable.TableID.AO_SERVERS
+                                                    || tableID==SchemaTable.TableID.IP_ADDRESSES
+                                                    || tableID==SchemaTable.TableID.LINUX_ACCOUNTS
+                                                    || tableID==SchemaTable.TableID.LINUX_SERVER_ACCOUNTS
+                                                    || tableID==SchemaTable.TableID.NET_DEVICES
+                                                    || tableID==SchemaTable.TableID.SERVERS
+                                                    || tableID==SchemaTable.TableID.USERNAMES
+                                                ) {
+                                                    // These tables invalidations are also sent to the servers failover parent
+                                                    int failoverServer=ServerHandler.getFailoverServer(conn, server);
+                                                    if(failoverServer!=-1 && ServerHandler.canAccessServer(conn, source, failoverServer)) {
                                                         serverMatches=true;
                                                         break;
                                                     }
-                                                    if(
-                                                        tableID==SchemaTable.TableID.AO_SERVERS
-                                                        || tableID==SchemaTable.TableID.IP_ADDRESSES
-                                                        || tableID==SchemaTable.TableID.LINUX_ACCOUNTS
-                                                        || tableID==SchemaTable.TableID.LINUX_SERVER_ACCOUNTS
-                                                        || tableID==SchemaTable.TableID.NET_DEVICES
-                                                        || tableID==SchemaTable.TableID.SERVERS
-                                                        || tableID==SchemaTable.TableID.USERNAMES
-                                                    ) {
-                                                        // These tables invalidations are also sent to the servers failover parent
-                                                        int failoverServer=ServerHandler.getFailoverServer(conn, server);
-                                                        if(failoverServer!=-1 && ServerHandler.canAccessServer(conn, source, failoverServer)) {
-                                                            serverMatches=true;
-                                                            break;
-                                                        }
-                                                    }
                                                 }
                                             }
-
-
-                                            // Send the invalidate through
-                                            if(businessMatches && serverMatches) tableList.add(clientTableID);
                                         }
+
+
+                                        // Send the invalidate through
+                                        if(businessMatches && serverMatches) tableList.add(clientTableID);
                                     }
                                 }
-                            } catch(SQLException err) {
-                                conn.rollbackAndClose();
-                                throw err;
                             }
-                        } finally {
-                            conn.releaseConnection();
+                        } catch(SQLException err) {
+                            conn.rollbackAndClose();
+                            throw err;
                         }
-                        source.cachesInvalidated(tableList);
+                    } finally {
+                        conn.releaseConnection();
                     }
-                } catch(IOException err) {
-                    reportError(err, null);
+                    source.cachesInvalidated(tableList);
                 }
+            } catch(IOException err) {
+                reportError(err, null);
             }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
         }
     }
 
@@ -8108,77 +8123,62 @@ public abstract class MasterServer {
     }
     
     private static void removeCacheListener(RequestSource source) {
-        Profiler.startProfile(Profiler.FAST, MasterServer.class, "removeCacheListener(RequestSource)", null);
-        try {
-            synchronized(cacheListeners) {
-                int size=cacheListeners.size();
-                for(int c=0;c<size;c++) {
-                    RequestSource O=cacheListeners.get(c);
-                    if(O==source) {
-                        cacheListeners.remove(c);
-                        break;
-                    }
+        synchronized(cacheListeners) {
+            int size=cacheListeners.size();
+            for(int c=0;c<size;c++) {
+                RequestSource O=cacheListeners.get(c);
+                if(O==source) {
+                    cacheListeners.remove(c);
+                    break;
                 }
             }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
         }
     }
 
     public static void reportError(Throwable T, Object[] extraInfo) {
-        Profiler.startProfile(Profiler.UNKNOWN, MasterServer.class, "reportError(Throwable,Object[])", null);
+        ErrorPrinter.printStackTraces(T, extraInfo);
         try {
-            ErrorPrinter.printStackTraces(T, extraInfo);
-            try {
-                String smtp=MasterConfiguration.getErrorSmtpServer();
-                if(smtp!=null && smtp.length()>0) {
-                    List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getErrorEmailTo());
-                    String from=MasterConfiguration.getErrorEmailFrom();
-                    for(int c=0;c<addys.size();c++) {
-                        ErrorMailer.reportError(
-                            getRandom(),
-                            T,
-                            extraInfo,
-                            smtp,
-                            from,
-                            addys.get(c),
-                            "Master Bug"
-                        );
-                    }
+            String smtp=MasterConfiguration.getErrorSmtpServer();
+            if(smtp!=null && smtp.length()>0) {
+                List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getErrorEmailTo());
+                String from=MasterConfiguration.getErrorEmailFrom();
+                for(int c=0;c<addys.size();c++) {
+                    ErrorMailer.reportError(
+                        getRandom(),
+                        T,
+                        extraInfo,
+                        smtp,
+                        from,
+                        addys.get(c),
+                        "Master Bug"
+                    );
                 }
-            } catch(IOException err) {
-                ErrorPrinter.printStackTraces(err);
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        } catch(IOException err) {
+            ErrorPrinter.printStackTraces(err);
         }
     }
 
     public static void reportError(String message) {
-        Profiler.startProfile(Profiler.UNKNOWN, MasterServer.class, "reportError(String)", null);
+        System.err.println(message);
         try {
-            System.err.println(message);
-            try {
-                String smtp=MasterConfiguration.getErrorSmtpServer();
-                if(smtp!=null && smtp.length()>0) {
-                    List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getErrorEmailTo());
-                    String from=MasterConfiguration.getErrorEmailFrom();
-                    for(int c=0;c<addys.size();c++) {
-                        ErrorMailer.reportError(
-                            getRandom(),
-                            message,
-                            smtp,
-                            from,
-                            addys.get(c),
-                            "Master Bug"
-                        );
-                    }
+            String smtp=MasterConfiguration.getErrorSmtpServer();
+            if(smtp!=null && smtp.length()>0) {
+                List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getErrorEmailTo());
+                String from=MasterConfiguration.getErrorEmailFrom();
+                for(int c=0;c<addys.size();c++) {
+                    ErrorMailer.reportError(
+                        getRandom(),
+                        message,
+                        smtp,
+                        from,
+                        addys.get(c),
+                        "Master Bug"
+                    );
                 }
-            } catch(IOException err) {
-                ErrorPrinter.printStackTraces(err);
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        } catch(IOException err) {
+            ErrorPrinter.printStackTraces(err);
         }
     }
 
@@ -8187,12 +8187,7 @@ public abstract class MasterServer {
      * Also sends email messages to <code>aoserv.master.security.email.to</code>
      */
     public static void reportSecurityMessage(RequestSource source, String message) {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, MasterServer.class, "reportSecurityMessage(RequestSource,String)", null);
-        try {
-            reportSecurityMessage(source, message, true);
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        reportSecurityMessage(source, message, true);
     }
 
     /**
@@ -8200,12 +8195,7 @@ public abstract class MasterServer {
      * Also sends email messages to <code>aoserv.master.security.email.to</code>
      */
     public static void reportSecurityMessage(RequestSource source, String message, boolean sendEmail) {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, MasterServer.class, "reportSecurityMessage(RequestSource,String,boolean)", null);
-        try {
-            reportSecurityMessage(message, sendEmail);
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        reportSecurityMessage(message, sendEmail);
     }
     
     /**
@@ -8213,73 +8203,13 @@ public abstract class MasterServer {
      * Also sends email messages to <code>aoserv.master.security.email.to</code>
      */
     public static void reportSecurityMessage(String message, boolean sendEmail) {
-        Profiler.startProfile(Profiler.UNKNOWN, MasterServer.class, "reportSecurityMessage(String,boolean)", null);
+        System.err.println(message);
         try {
-            System.err.println(message);
-            try {
-                if(sendEmail) {
-                    String smtp=MasterConfiguration.getErrorSmtpServer();
-                    if(smtp!=null && smtp.length()>0) {
-                        List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getSecurityEmailTo());
-                        String from=MasterConfiguration.getSecurityEmailFrom();
-                        for(int c=0;c<addys.size();c++) {
-                            ErrorMailer.reportError(
-                                getRandom(),
-                                message,
-                                smtp,
-                                from,
-                                addys.get(c),
-                                "Master Security"
-                            );
-                        }
-                    }
-                }
-            } catch(IOException err) {
-                ErrorPrinter.printStackTraces(err);
-            }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-    
-    public static void reportWarning(Throwable T, Object[] extraInfo) {
-        Profiler.startProfile(Profiler.UNKNOWN, MasterServer.class, "reportWarning(Throwable,Object[])", null);
-        try {
-            ErrorPrinter.printStackTraces(T, extraInfo);
-            try {
-                String smtp=MasterConfiguration.getWarningSmtpServer();
+            if(sendEmail) {
+                String smtp=MasterConfiguration.getErrorSmtpServer();
                 if(smtp!=null && smtp.length()>0) {
-                    List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getWarningEmailTo());
-                    String from=MasterConfiguration.getWarningEmailFrom();
-                    for(int c=0;c<addys.size();c++) {
-                        ErrorMailer.reportError(
-                            getRandom(),
-                            T,
-                            extraInfo,
-                            smtp,
-                            from,
-                            addys.get(c),
-                            "Master Warning"
-                        );
-                    }
-                }
-            } catch(IOException err) {
-                ErrorPrinter.printStackTraces(err);
-            }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }
-
-    public static void reportWarning(String message) {
-        Profiler.startProfile(Profiler.UNKNOWN, MasterServer.class, "reportWarning(String)", null);
-        try {
-            System.err.println(message);
-            try {
-                String smtp=MasterConfiguration.getWarningSmtpServer();
-                if(smtp!=null && smtp.length()>0) {
-                    List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getWarningEmailTo());
-                    String from=MasterConfiguration.getWarningEmailFrom();
+                    List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getSecurityEmailTo());
+                    String from=MasterConfiguration.getSecurityEmailFrom();
                     for(int c=0;c<addys.size();c++) {
                         ErrorMailer.reportError(
                             getRandom(),
@@ -8287,37 +8217,77 @@ public abstract class MasterServer {
                             smtp,
                             from,
                             addys.get(c),
-                            "Master Warning"
+                            "Master Security"
                         );
                     }
                 }
-            } catch(IOException err) {
-                ErrorPrinter.printStackTraces(err);
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        } catch(IOException err) {
+            ErrorPrinter.printStackTraces(err);
+        }
+    }
+    
+    public static void reportWarning(Throwable T, Object[] extraInfo) {
+        ErrorPrinter.printStackTraces(T, extraInfo);
+        try {
+            String smtp=MasterConfiguration.getWarningSmtpServer();
+            if(smtp!=null && smtp.length()>0) {
+                List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getWarningEmailTo());
+                String from=MasterConfiguration.getWarningEmailFrom();
+                for(int c=0;c<addys.size();c++) {
+                    ErrorMailer.reportError(
+                        getRandom(),
+                        T,
+                        extraInfo,
+                        smtp,
+                        from,
+                        addys.get(c),
+                        "Master Warning"
+                    );
+                }
+            }
+        } catch(IOException err) {
+            ErrorPrinter.printStackTraces(err);
+        }
+    }
+
+    public static void reportWarning(String message) {
+        System.err.println(message);
+        try {
+            String smtp=MasterConfiguration.getWarningSmtpServer();
+            if(smtp!=null && smtp.length()>0) {
+                List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getWarningEmailTo());
+                String from=MasterConfiguration.getWarningEmailFrom();
+                for(int c=0;c<addys.size();c++) {
+                    ErrorMailer.reportError(
+                        getRandom(),
+                        message,
+                        smtp,
+                        from,
+                        addys.get(c),
+                        "Master Warning"
+                    );
+                }
+            }
+        } catch(IOException err) {
+            ErrorPrinter.printStackTraces(err);
         }
     }
 
     private static ErrorHandler errorHandler;
     public synchronized static ErrorHandler getErrorHandler() {
-        Profiler.startProfile(Profiler.FAST, MasterServer.class, "getErrorHandler()", null);
-        try {
-            if(errorHandler==null) {
-                errorHandler=new ErrorHandler() {
-                    public final void reportError(Throwable T, Object[] extraInfo) {
-                        MasterServer.reportError(T, extraInfo);
-                    }
+        if(errorHandler==null) {
+            errorHandler=new ErrorHandler() {
+                public final void reportError(Throwable T, Object[] extraInfo) {
+                    MasterServer.reportError(T, extraInfo);
+                }
 
-                    public final void reportWarning(Throwable T, Object[] extraInfo) {
-                        MasterServer.reportWarning(T, extraInfo);
-                    }
-                };
-            }
-            return errorHandler;
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+                public final void reportWarning(Throwable T, Object[] extraInfo) {
+                    MasterServer.reportWarning(T, extraInfo);
+                }
+            };
         }
+        return errorHandler;
     }
 
     /**
@@ -8330,50 +8300,40 @@ public abstract class MasterServer {
         T obj,
         ResultSet results
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "writeObjects(RequestSource,CompressedDataOutputStream,boolean,<T extends AOServObject>,ResultSet)", null);
-        try {
-            String version=source.getProtocolVersion();
+        AOServProtocol.Version version=source.getProtocolVersion();
 
-            // Make one pass counting the rows if providing progress information
-            if(provideProgress) {
-                int rowCount = 0;
-                while (results.next()) rowCount++;
-                results.beforeFirst();
-                out.writeByte(AOServProtocol.NEXT);
-                out.writeCompressedInt(rowCount);
-            }
-            int writeCount = 0;
-            while(results.next()) {
-                obj.init(results);
-                out.writeByte(AOServProtocol.NEXT);
-                obj.write(out, version);
-                writeCount++;
-            }
-            if(writeCount > TableHandler.RESULT_SET_BATCH_SIZE) reportWarning(new SQLWarning("Warning: provideProgress==true caused non-cursor select with more than "+TableHandler.RESULT_SET_BATCH_SIZE+" rows: "+writeCount), null);
-        } finally {
-            Profiler.endProfile(Profiler.IO);
+        // Make one pass counting the rows if providing progress information
+        if(provideProgress) {
+            int rowCount = 0;
+            while (results.next()) rowCount++;
+            results.beforeFirst();
+            out.writeByte(AOServProtocol.NEXT);
+            out.writeCompressedInt(rowCount);
         }
+        int writeCount = 0;
+        while(results.next()) {
+            obj.init(results);
+            out.writeByte(AOServProtocol.NEXT);
+            obj.write(out, version);
+            writeCount++;
+        }
+        if(writeCount > TableHandler.RESULT_SET_BATCH_SIZE) reportWarning(new SQLWarning("Warning: provideProgress==true caused non-cursor select with more than "+TableHandler.RESULT_SET_BATCH_SIZE+" rows: "+writeCount), null);
     }
 
     /**
      * Writes all rows of a results set.
      */
     public static void writeObjects(RequestSource source, CompressedDataOutputStream out, boolean provideProgress, List<? extends AOServObject> objs) throws IOException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "writeObjects(RequestSource,CompressedDataOutputStream,boolean,List<? extends AOServObject>)", null);
-        try {
-            String version=source.getProtocolVersion();
+        AOServProtocol.Version version=source.getProtocolVersion();
 
-            int size=objs.size();
-            if (provideProgress) {
-                out.writeByte(AOServProtocol.NEXT);
-                out.writeCompressedInt(size);
-            }
-            for(int c=0;c<size;c++) {
-                out.writeByte(AOServProtocol.NEXT);
-                objs.get(c).write(out, version);
-            }
-        } finally {
-            Profiler.endProfile(Profiler.IO);
+        int size=objs.size();
+        if (provideProgress) {
+            out.writeByte(AOServProtocol.NEXT);
+            out.writeCompressedInt(size);
+        }
+        for(int c=0;c<size;c++) {
+            out.writeByte(AOServProtocol.NEXT);
+            objs.get(c).write(out, version);
         }
     }
 
@@ -8381,24 +8341,19 @@ public abstract class MasterServer {
      * Writes all rows of a results set.
      */
     public static void writeObjectsSynced(RequestSource source, CompressedDataOutputStream out, boolean provideProgress, List<? extends AOServObject> objs) throws IOException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "writeObjectsSynched(RequestSource,CompressedDataOutputStream,boolean,List<? extends AOServObject>)", null);
-        try {
-            String version=source.getProtocolVersion();
+        AOServProtocol.Version version=source.getProtocolVersion();
 
-            int size=objs.size();
-            if (provideProgress) {
-                out.writeByte(AOServProtocol.NEXT);
-                out.writeCompressedInt(size);
+        int size=objs.size();
+        if (provideProgress) {
+            out.writeByte(AOServProtocol.NEXT);
+            out.writeCompressedInt(size);
+        }
+        for(int c=0;c<size;c++) {
+            out.writeByte(AOServProtocol.NEXT);
+            AOServObject obj=objs.get(c);
+            synchronized(obj) {
+                obj.write(out, version);
             }
-            for(int c=0;c<size;c++) {
-                out.writeByte(AOServProtocol.NEXT);
-                AOServObject obj=objs.get(c);
-                synchronized(obj) {
-                    obj.write(out, version);
-                }
-            }
-        } finally {
-            Profiler.endProfile(Profiler.IO);
         }
     }
 
@@ -8409,38 +8364,33 @@ public abstract class MasterServer {
         String authenticateAs, 
         String password
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, MasterServer.class, "authenticate(MasterDatabaseConnection,String,String,String,String)", null);
-        try {
-            if(connectAs.length()==0) return "Connection attempted with empty connect username";
-            if(authenticateAs.length()==0) return "Connection attempted with empty authentication username";
+        if(connectAs.length()==0) return "Connection attempted with empty connect username";
+        if(authenticateAs.length()==0) return "Connection attempted with empty authentication username";
 
-            if(!BusinessHandler.isBusinessAdministrator(conn, authenticateAs)) return "Unable to find BusinessAdministrator: "+authenticateAs;
+        if(!BusinessHandler.isBusinessAdministrator(conn, authenticateAs)) return "Unable to find BusinessAdministrator: "+authenticateAs;
 
-            if(BusinessHandler.isBusinessAdministratorDisabled(conn, authenticateAs)) return "BusinessAdministrator disabled: "+authenticateAs;
+        if(BusinessHandler.isBusinessAdministratorDisabled(conn, authenticateAs)) return "BusinessAdministrator disabled: "+authenticateAs;
 
-            if (!isHostAllowed(conn, authenticateAs, remoteHost)) return "Connection from "+remoteHost+" as "+authenticateAs+" not allowed.";
+        if (!isHostAllowed(conn, authenticateAs, remoteHost)) return "Connection from "+remoteHost+" as "+authenticateAs+" not allowed.";
 
-            // Authenticate the client first
-            if(password.length()==0) return "Connection attempted with empty password";
+        // Authenticate the client first
+        if(password.length()==0) return "Connection attempted with empty password";
 
-            String correctCrypted=BusinessHandler.getBusinessAdministrator(conn, authenticateAs).getPassword();
-            if(
-                correctCrypted==null
-                || correctCrypted.length()<=2
-                || !UnixCrypt.crypt(password, correctCrypted.substring(0,2)).equals(correctCrypted)
-            ) return "Connection attempted with invalid password";
+        String correctCrypted=BusinessHandler.getBusinessAdministrator(conn, authenticateAs).getPassword();
+        if(
+            correctCrypted==null
+            || correctCrypted.length()<=2
+            || !UnixCrypt.crypt(password, correctCrypted.substring(0,2)).equals(correctCrypted)
+        ) return "Connection attempted with invalid password";
 
-            // If connectAs is not authenticateAs, must be authenticated with switch user permissions
-            if(!connectAs.equals(authenticateAs)) {
-                // Must have can_switch_users permissions and must be switching to a subaccount user
-                if(!BusinessHandler.canSwitchUser(conn, authenticateAs, connectAs)) return "Not allowed to switch users from "+authenticateAs+" to "+connectAs;
-            }
-
-            // Let them in
-            return null;
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        // If connectAs is not authenticateAs, must be authenticated with switch user permissions
+        if(!connectAs.equals(authenticateAs)) {
+            // Must have can_switch_users permissions and must be switching to a subaccount user
+            if(!BusinessHandler.canSwitchUser(conn, authenticateAs, connectAs)) return "Not allowed to switch users from "+authenticateAs+" to "+connectAs;
         }
+
+        // Let them in
+        return null;
     }
 
     public static String trim(String inStr) {
@@ -8485,33 +8435,28 @@ public abstract class MasterServer {
         MasterUser masterUser,
         com.aoindustries.aoserv.client.MasterServer[] masterServers
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, MasterServer.class, "writeHistory(MasterDatabaseConnection,RequestSource,CompressedDataOutputStream,boolean,MasterUser,MasterServer[])", null);
-        try {
-            // Create the list of objects first
-            List<MasterHistory> objs=new ArrayList<MasterHistory>();
-            synchronized(historyLock) {
-                // Grab a copy of the history
-                MasterHistory[] history=masterHistory;
-                if(history!=null) {
-                    int historyLen=history.length;
-                    //objs.ensureCapacity(historyLen);
-                    int startPos=masterHistoryStart;
-                    for(int c=0;c<historyLen;c++) {
-                        MasterHistory mh=history[(c+startPos)%historyLen];
-                        if(mh!=null) {
-                            if(masterUser!=null && masterServers.length==0) {
-                                objs.add(mh);
-                            } else {
-                                if(UsernameHandler.canAccessUsername(conn, source, mh.getEffectiveUser())) objs.add(mh);
-                            }
+        // Create the list of objects first
+        List<MasterHistory> objs=new ArrayList<MasterHistory>();
+        synchronized(historyLock) {
+            // Grab a copy of the history
+            MasterHistory[] history=masterHistory;
+            if(history!=null) {
+                int historyLen=history.length;
+                //objs.ensureCapacity(historyLen);
+                int startPos=masterHistoryStart;
+                for(int c=0;c<historyLen;c++) {
+                    MasterHistory mh=history[(c+startPos)%historyLen];
+                    if(mh!=null) {
+                        if(masterUser!=null && masterServers.length==0) {
+                            objs.add(mh);
+                        } else {
+                            if(UsernameHandler.canAccessUsername(conn, source, mh.getEffectiveUser())) objs.add(mh);
                         }
                     }
                 }
             }
-            writeObjects(source, out, provideProgress, objs);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
         }
+        writeObjects(source, out, provideProgress, objs);
     }
 
     private static void addStat(
@@ -8520,89 +8465,79 @@ public abstract class MasterServer {
         String value, 
         String description
     ) {
-        Profiler.startProfile(Profiler.FAST, MasterServer.class, "addStat(List<MasterServerStat>,String,String,String)", null);
         name=trim(name);
         value=trim(value);
         description=trim(description);
-        try {
-            objs.add(new MasterServerStat(name, value, description));
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        objs.add(new MasterServerStat(name, value, description));
     }
 
     public static void writeStats(RequestSource source, CompressedDataOutputStream out, boolean provideProgress) throws IOException {
-        Profiler.startProfile(Profiler.UNKNOWN, MasterServer.class, "writeStats(RequestSource,CompressedDataOutputStream,boolean)", null);
         try {
-            try {
-                // Create the list of objects first
-                List<MasterServerStat> objs=new ArrayList<MasterServerStat>();
-                addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getByteBufferCreates()), "Number of byte[] buffers created");
-                addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_USES, Long.toString(BufferManager.getByteBufferUses()), "Total number of byte[] buffers allocated");
+            // Create the list of objects first
+            List<MasterServerStat> objs=new ArrayList<MasterServerStat>();
+            addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getByteBufferCreates()), "Number of byte[] buffers created");
+            addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_USES, Long.toString(BufferManager.getByteBufferUses()), "Total number of byte[] buffers allocated");
 
-                addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getCharBufferCreates()), "Number of char[] buffers created");
-                addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_USES, Long.toString(BufferManager.getCharBufferUses()), "Total number of char[] buffers allocated");
+            addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getCharBufferCreates()), "Number of char[] buffers created");
+            addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_USES, Long.toString(BufferManager.getCharBufferUses()), "Total number of char[] buffers allocated");
 
-                addStat(objs, MasterServerStat.DAEMON_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonConcurrency()), "Number of active daemon connections");
-                addStat(objs, MasterServerStat.DAEMON_CONNECTIONS, Integer.toString(DaemonHandler.getDaemonConnections()), "Current number of daemon connections");
-                addStat(objs, MasterServerStat.DAEMON_CONNECTS, Integer.toString(DaemonHandler.getDaemonConnects()), "Number of times connecting to daemons");
-                addStat(objs, MasterServerStat.DAEMON_COUNT, Integer.toString(DaemonHandler.getDaemonCount()), "Number of daemons that have been accessed");
-                addStat(objs, MasterServerStat.DAEMON_DOWN_COUNT, Integer.toString(DaemonHandler.getDownDaemonCount()), "Number of daemons that are currently unavailable");
-                addStat(objs, MasterServerStat.DAEMON_MAX_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonMaxConcurrency()), "Peak number of active daemon connections");
-                addStat(objs, MasterServerStat.DAEMON_POOL_SIZE, Integer.toString(DaemonHandler.getDaemonPoolSize()), "Maximum number of daemon connections");
-                addStat(objs, MasterServerStat.DAEMON_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(DaemonHandler.getDaemonTotalTime()), "Total time spent accessing daemons");
-                addStat(objs, MasterServerStat.DAEMON_TRANSACTIONS, Long.toString(DaemonHandler.getDaemonTransactions()), "Number of transactions processed by daemons");
+            addStat(objs, MasterServerStat.DAEMON_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonConcurrency()), "Number of active daemon connections");
+            addStat(objs, MasterServerStat.DAEMON_CONNECTIONS, Integer.toString(DaemonHandler.getDaemonConnections()), "Current number of daemon connections");
+            addStat(objs, MasterServerStat.DAEMON_CONNECTS, Integer.toString(DaemonHandler.getDaemonConnects()), "Number of times connecting to daemons");
+            addStat(objs, MasterServerStat.DAEMON_COUNT, Integer.toString(DaemonHandler.getDaemonCount()), "Number of daemons that have been accessed");
+            addStat(objs, MasterServerStat.DAEMON_DOWN_COUNT, Integer.toString(DaemonHandler.getDownDaemonCount()), "Number of daemons that are currently unavailable");
+            addStat(objs, MasterServerStat.DAEMON_MAX_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonMaxConcurrency()), "Peak number of active daemon connections");
+            addStat(objs, MasterServerStat.DAEMON_POOL_SIZE, Integer.toString(DaemonHandler.getDaemonPoolSize()), "Maximum number of daemon connections");
+            addStat(objs, MasterServerStat.DAEMON_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(DaemonHandler.getDaemonTotalTime()), "Total time spent accessing daemons");
+            addStat(objs, MasterServerStat.DAEMON_TRANSACTIONS, Long.toString(DaemonHandler.getDaemonTransactions()), "Number of transactions processed by daemons");
 
-                AOConnectionPool dbPool=MasterDatabase.getDatabase().getConnectionPool();
-                addStat(objs, MasterServerStat.DB_CONCURRENCY, Integer.toString(dbPool.getConcurrency()), "Number of active database connections");
-                addStat(objs, MasterServerStat.DB_CONNECTIONS, Integer.toString(dbPool.getConnectionCount()), "Current number of database connections");
-                addStat(objs, MasterServerStat.DB_CONNECTS, Long.toString(dbPool.getConnects()), "Number of times connecting to the database");
-                addStat(objs, MasterServerStat.DB_MAX_CONCURRENCY, Integer.toString(dbPool.getMaxConcurrency()), "Peak number of active database connections");
-                addStat(objs, MasterServerStat.DB_POOL_SIZE, Integer.toString(dbPool.getPoolSize()), "Maximum number of database connections");
-                addStat(objs, MasterServerStat.DB_QUERIES, Long.toString(MasterDatabase.getDatabase().getQueryCount()), "Number of queries performed by the database");
-                addStat(objs, MasterServerStat.DB_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(dbPool.getTotalTime()), "Total time spent accessing the database");
-                addStat(objs, MasterServerStat.DB_TRANSACTIONS, Long.toString(dbPool.getTransactionCount()), "Number of transactions committed by the database");
-                addStat(objs, MasterServerStat.DB_UPDATES, Long.toString(MasterDatabase.getDatabase().getUpdateCount()), "Number of updates processed by the database");
+            AOConnectionPool dbPool=MasterDatabase.getDatabase().getConnectionPool();
+            addStat(objs, MasterServerStat.DB_CONCURRENCY, Integer.toString(dbPool.getConcurrency()), "Number of active database connections");
+            addStat(objs, MasterServerStat.DB_CONNECTIONS, Integer.toString(dbPool.getConnectionCount()), "Current number of database connections");
+            addStat(objs, MasterServerStat.DB_CONNECTS, Long.toString(dbPool.getConnects()), "Number of times connecting to the database");
+            addStat(objs, MasterServerStat.DB_MAX_CONCURRENCY, Integer.toString(dbPool.getMaxConcurrency()), "Peak number of active database connections");
+            addStat(objs, MasterServerStat.DB_POOL_SIZE, Integer.toString(dbPool.getPoolSize()), "Maximum number of database connections");
+            addStat(objs, MasterServerStat.DB_QUERIES, Long.toString(MasterDatabase.getDatabase().getQueryCount()), "Number of queries performed by the database");
+            addStat(objs, MasterServerStat.DB_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(dbPool.getTotalTime()), "Total time spent accessing the database");
+            addStat(objs, MasterServerStat.DB_TRANSACTIONS, Long.toString(dbPool.getTransactionCount()), "Number of transactions committed by the database");
+            addStat(objs, MasterServerStat.DB_UPDATES, Long.toString(MasterDatabase.getDatabase().getUpdateCount()), "Number of updates processed by the database");
 
-                FifoFile entropyFile=RandomHandler.getFifoFile();
-                addStat(objs, MasterServerStat.ENTROPY_AVAIL, Long.toString(entropyFile.getLength()), "Number of bytes of entropy currently available");
-                addStat(objs, MasterServerStat.ENTROPY_POOLSIZE, Long.toString(entropyFile.getMaximumFifoLength()), "Maximum number of bytes of entropy");
-                FifoFileInputStream entropyIn=entropyFile.getInputStream();
-                addStat(objs, MasterServerStat.ENTROPY_READ_BYTES, Long.toString(entropyIn.getReadBytes()), "Number of bytes read from the entropy pool");
-                addStat(objs, MasterServerStat.ENTROPY_READ_COUNT, Long.toString(entropyIn.getReadCount()), "Number of reads from the entropy pool");
-                FifoFileOutputStream entropyOut=entropyFile.getOutputStream();
-                addStat(objs, MasterServerStat.ENTROPY_WRITE_BYTES, Long.toString(entropyOut.getWriteBytes()), "Number of bytes written to the entropy pool");
-                addStat(objs, MasterServerStat.ENTROPY_WRITE_COUNT, Long.toString(entropyOut.getWriteCount()), "Number of writes to the entropy pool");
+            FifoFile entropyFile=RandomHandler.getFifoFile();
+            addStat(objs, MasterServerStat.ENTROPY_AVAIL, Long.toString(entropyFile.getLength()), "Number of bytes of entropy currently available");
+            addStat(objs, MasterServerStat.ENTROPY_POOLSIZE, Long.toString(entropyFile.getMaximumFifoLength()), "Maximum number of bytes of entropy");
+            FifoFileInputStream entropyIn=entropyFile.getInputStream();
+            addStat(objs, MasterServerStat.ENTROPY_READ_BYTES, Long.toString(entropyIn.getReadBytes()), "Number of bytes read from the entropy pool");
+            addStat(objs, MasterServerStat.ENTROPY_READ_COUNT, Long.toString(entropyIn.getReadCount()), "Number of reads from the entropy pool");
+            FifoFileOutputStream entropyOut=entropyFile.getOutputStream();
+            addStat(objs, MasterServerStat.ENTROPY_WRITE_BYTES, Long.toString(entropyOut.getWriteBytes()), "Number of bytes written to the entropy pool");
+            addStat(objs, MasterServerStat.ENTROPY_WRITE_COUNT, Long.toString(entropyOut.getWriteCount()), "Number of writes to the entropy pool");
 
-                addStat(objs, MasterServerStat.MEMORY_FREE, Long.toString(Runtime.getRuntime().freeMemory()), "Free virtual machine memory in bytes");
-                addStat(objs, MasterServerStat.MEMORY_TOTAL, Long.toString(Runtime.getRuntime().totalMemory()), "Total virtual machine memory in bytes");
+            addStat(objs, MasterServerStat.MEMORY_FREE, Long.toString(Runtime.getRuntime().freeMemory()), "Free virtual machine memory in bytes");
+            addStat(objs, MasterServerStat.MEMORY_TOTAL, Long.toString(Runtime.getRuntime().totalMemory()), "Total virtual machine memory in bytes");
 
-                addStat(objs, MasterServerStat.METHOD_CONCURRENCY, Integer.toString(Profiler.getConcurrency()), "Current number of virtual machine methods in use");
-                addStat(objs, MasterServerStat.METHOD_MAX_CONCURRENCY, Integer.toString(Profiler.getMaxConcurrency()), "Peak number of virtual machine methods in use");
-                addStat(objs, MasterServerStat.METHOD_PROFILE_LEVEL, Integer.toString(Profiler.getProfilerLevel()), "Current method profiling level");
-                addStat(objs, MasterServerStat.METHOD_USES, Long.toString(Profiler.getMethodUses()), "Number of virtual machine methods invoked");
+            addStat(objs, MasterServerStat.METHOD_CONCURRENCY, Integer.toString(Profiler.getConcurrency()), "Current number of virtual machine methods in use");
+            addStat(objs, MasterServerStat.METHOD_MAX_CONCURRENCY, Integer.toString(Profiler.getMaxConcurrency()), "Peak number of virtual machine methods in use");
+            addStat(objs, MasterServerStat.METHOD_PROFILE_LEVEL, Integer.toString(Profiler.getProfilerLevel()), "Current method profiling level");
+            addStat(objs, MasterServerStat.METHOD_USES, Long.toString(Profiler.getMethodUses()), "Number of virtual machine methods invoked");
 
-                addStat(objs, MasterServerStat.PROTOCOL_VERSION, StringUtility.buildList(AOServProtocol.getVersions()), "Supported AOServProtocol version numbers");
+            addStat(objs, MasterServerStat.PROTOCOL_VERSION, StringUtility.buildList(AOServProtocol.Version.values()), "Supported AOServProtocol version numbers");
 
-                addStat(objs, MasterServerStat.REQUEST_CONCURRENCY, Integer.toString(getRequestConcurrency()), "Current number of client requests being processed");
-                addStat(objs, MasterServerStat.REQUEST_CONNECTIONS, Long.toString(getRequestConnections()), "Number of connections received from clients");
-                addStat(objs, MasterServerStat.REQUEST_MAX_CONCURRENCY, Integer.toString(getRequestMaxConcurrency()), "Peak number of client requests being processed");
-                addStat(objs, MasterServerStat.REQUEST_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(getRequestTotalTime()), "Total time spent processing client requests");
-                addStat(objs, MasterServerStat.REQUEST_TRANSACTIONS, Long.toString(getRequestTransactions()), "Number of client requests processed");
+            addStat(objs, MasterServerStat.REQUEST_CONCURRENCY, Integer.toString(getRequestConcurrency()), "Current number of client requests being processed");
+            addStat(objs, MasterServerStat.REQUEST_CONNECTIONS, Long.toString(getRequestConnections()), "Number of connections received from clients");
+            addStat(objs, MasterServerStat.REQUEST_MAX_CONCURRENCY, Integer.toString(getRequestMaxConcurrency()), "Peak number of client requests being processed");
+            addStat(objs, MasterServerStat.REQUEST_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(getRequestTotalTime()), "Total time spent processing client requests");
+            addStat(objs, MasterServerStat.REQUEST_TRANSACTIONS, Long.toString(getRequestTransactions()), "Number of client requests processed");
 
-                addStat(objs, MasterServerStat.THREAD_COUNT, Integer.toString(ThreadUtility.getThreadCount()), "Current number of virtual machine threads");
+            addStat(objs, MasterServerStat.THREAD_COUNT, Integer.toString(ThreadUtility.getThreadCount()), "Current number of virtual machine threads");
 
-                addStat(objs, MasterServerStat.UPTIME, StringUtility.getDecimalTimeLengthString(System.currentTimeMillis()-getStartTime()), "Amount of time the master server has been running");
+            addStat(objs, MasterServerStat.UPTIME, StringUtility.getDecimalTimeLengthString(System.currentTimeMillis()-getStartTime()), "Amount of time the master server has been running");
 
-                writeObjects(source, out, provideProgress, objs);
-            } catch(IOException err) {
-                reportError(err, null);
-                out.writeByte(AOServProtocol.IO_EXCEPTION);
-                String message=err.getMessage();
-                out.writeUTF(message==null?"":message);
-            }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+            writeObjects(source, out, provideProgress, objs);
+        } catch(IOException err) {
+            reportError(err, null);
+            out.writeByte(AOServProtocol.IO_EXCEPTION);
+            String message=err.getMessage();
+            out.writeUTF(message==null?"":message);
         }
     }
 
@@ -8610,12 +8545,7 @@ public abstract class MasterServer {
      * @see  #checkAccessHostname(MasterDatabaseConnection,RequestSource,String,String,String[])
      */
     public static void checkAccessHostname(MasterDatabaseConnection conn, RequestSource source, String action, String hostname) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, MasterServer.class, "checkAccessHostname(MasterDatabaseConnection,RequestSource,String,String)", null);
-        try {
-            checkAccessHostname(conn, source, action, hostname, DNSHandler.getDNSTLDs(conn));
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        checkAccessHostname(conn, source, action, hostname, DNSHandler.getDNSTLDs(conn));
     }
 
     /**
@@ -8626,116 +8556,101 @@ public abstract class MasterServer {
      * access is granted and the previous checks are avoided.
      */
     public static void checkAccessHostname(MasterDatabaseConnection conn, RequestSource source, String action, String hostname, List<String> tlds) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, MasterServer.class, "checkAccessHostname(MasterDatabaseConnection,RequestSource,String,String,List<String>)", null);
         try {
-            try {
-                String zone = DNSZoneTable.getDNSZoneForHostname(hostname, tlds);
+            String zone = DNSZoneTable.getDNSZoneForHostname(hostname, tlds);
 
-                if(conn.executeBooleanQuery(
-                    "select (select zone from dns_forbidden_zones where zone=?) is not null",
-                    zone
-                )) throw new SQLException("Access to this hostname forbidden: Exists in dns_forbidden_zones: "+hostname);
+            if(conn.executeBooleanQuery(
+                "select (select zone from dns_forbidden_zones where zone=?) is not null",
+                zone
+            )) throw new SQLException("Access to this hostname forbidden: Exists in dns_forbidden_zones: "+hostname);
 
-                String username = source.getUsername();
+            String username = source.getUsername();
 
-                String existingZone=conn.executeStringQuery(
-                    Connection.TRANSACTION_READ_COMMITTED,
-                    true,
-                    false,
-                    "select zone from dns_zones where zone=?",
-                    zone
-                );
-                if(existingZone!=null && !DNSHandler.canAccessDNSZone(conn, source, existingZone)) throw new SQLException("Access to this hostname forbidden: Exists in dns_zones: "+hostname);
+            String existingZone=conn.executeStringQuery(
+                Connection.TRANSACTION_READ_COMMITTED,
+                true,
+                false,
+                "select zone from dns_zones where zone=?",
+                zone
+            );
+            if(existingZone!=null && !DNSHandler.canAccessDNSZone(conn, source, existingZone)) throw new SQLException("Access to this hostname forbidden: Exists in dns_zones: "+hostname);
 
-                String domain = zone.substring(0, zone.length()-1);
+            String domain = zone.substring(0, zone.length()-1);
 
-                IntList httpdSites=conn.executeIntListQuery(
-                    "select\n"
-                    + "  hsb.httpd_site\n"
-                    + "from\n"
-                    + "  httpd_site_urls hsu,\n"
-                    + "  httpd_site_binds hsb\n"
-                    + "where\n"
-                    + "  (hsu.hostname=? or hsu.hostname like ?)\n"
-                    + "  and hsu.httpd_site_bind=hsb.pkey",
-                    domain,
-                    "%."+domain
-                );
-                // Must be able to access all of the sites
-                for(int httpdSite : httpdSites) if(!HttpdHandler.canAccessHttpdSite(conn, source, httpdSite)) throw new SQLException("Access to this hostname forbidden: Exists in httpd_site_urls: "+hostname);
+            IntList httpdSites=conn.executeIntListQuery(
+                "select\n"
+                + "  hsb.httpd_site\n"
+                + "from\n"
+                + "  httpd_site_urls hsu,\n"
+                + "  httpd_site_binds hsb\n"
+                + "where\n"
+                + "  (hsu.hostname=? or hsu.hostname like ?)\n"
+                + "  and hsu.httpd_site_bind=hsb.pkey",
+                domain,
+                "%."+domain
+            );
+            // Must be able to access all of the sites
+            for(int httpdSite : httpdSites) if(!HttpdHandler.canAccessHttpdSite(conn, source, httpdSite)) throw new SQLException("Access to this hostname forbidden: Exists in httpd_site_urls: "+hostname);
 
-                IntList emailDomains=conn.executeIntListQuery(
-                    "select pkey from email_domains where (domain=? or domain like ?)",
-                    domain,
-                    "%."+domain
-                );
-                // Must be able to access all of the domains
-                for(int emailDomain : emailDomains) if(!EmailHandler.canAccessEmailDomain(conn, source, emailDomain)) throw new SQLException("Access to this hostname forbidden: Exists in email_domains: "+hostname);
-            } catch(IllegalArgumentException err) {
-                SQLException sqlErr=new SQLException();
-                sqlErr.initCause(err);
-                throw sqlErr;
-            }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+            IntList emailDomains=conn.executeIntListQuery(
+                "select pkey from email_domains where (domain=? or domain like ?)",
+                domain,
+                "%."+domain
+            );
+            // Must be able to access all of the domains
+            for(int emailDomain : emailDomains) if(!EmailHandler.canAccessEmailDomain(conn, source, emailDomain)) throw new SQLException("Access to this hostname forbidden: Exists in email_domains: "+hostname);
+        } catch(IllegalArgumentException err) {
+            SQLException sqlErr=new SQLException();
+            sqlErr.initCause(err);
+            throw sqlErr;
         }
     }
 
     public static com.aoindustries.aoserv.client.MasterServer[] getMasterServers(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, MasterServer.class, "getMasterServers(MasterDatabaseConnection,String)", null);
-        try {
-	    synchronized(MasterServer.class) {
-		if(masterServers==null) masterServers=new HashMap<String,com.aoindustries.aoserv.client.MasterServer[]>();
-		com.aoindustries.aoserv.client.MasterServer[] mss=masterServers.get(username);
-		if(mss!=null) return mss;
-		PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master_users mu, master_servers ms where mu.is_active and mu.username=? and mu.username=ms.username");
-		try {
-		    List<com.aoindustries.aoserv.client.MasterServer> v=new ArrayList<com.aoindustries.aoserv.client.MasterServer>();
-		    pstmt.setString(1, username);
-		    conn.incrementQueryCount();
-		    ResultSet results=pstmt.executeQuery();
-		    while(results.next()) {
-			com.aoindustries.aoserv.client.MasterServer ms=new com.aoindustries.aoserv.client.MasterServer();
-			ms.init(results);
-			v.add(ms);
-		    }
-		    mss=new com.aoindustries.aoserv.client.MasterServer[v.size()];
-		    v.toArray(mss);
-		    masterServers.put(username, mss);
-		    return mss;
-		} finally {
-		    pstmt.close();
-		}
-	    }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        synchronized(MasterServer.class) {
+            if(masterServers==null) masterServers=new HashMap<String,com.aoindustries.aoserv.client.MasterServer[]>();
+            com.aoindustries.aoserv.client.MasterServer[] mss=masterServers.get(username);
+            if(mss!=null) return mss;
+            PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master_users mu, master_servers ms where mu.is_active and mu.username=? and mu.username=ms.username");
+            try {
+                List<com.aoindustries.aoserv.client.MasterServer> v=new ArrayList<com.aoindustries.aoserv.client.MasterServer>();
+                pstmt.setString(1, username);
+                conn.incrementQueryCount();
+                ResultSet results=pstmt.executeQuery();
+                while(results.next()) {
+                    com.aoindustries.aoserv.client.MasterServer ms=new com.aoindustries.aoserv.client.MasterServer();
+                    ms.init(results);
+                    v.add(ms);
+                }
+                mss=new com.aoindustries.aoserv.client.MasterServer[v.size()];
+                v.toArray(mss);
+                masterServers.put(username, mss);
+                return mss;
+            } finally {
+                pstmt.close();
+            }
         }
     }
 
     public static MasterUser getMasterUser(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, MasterServer.class, "getMasterUser(MasterDatabaseConnection,String)", null);
-        try {
-	    synchronized(MasterServer.class) {
-		if(masterUsers==null) {
-		    Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
-		    try {
-			Map<String,MasterUser> table=new HashMap<String,MasterUser>();
-			conn.incrementQueryCount();
-			ResultSet results=stmt.executeQuery("select * from master_users where is_active");
-			while(results.next()) {
-			    MasterUser mu=new MasterUser();
-			    mu.init(results);
-			    table.put(results.getString(1), mu);
-			}
-			masterUsers=table;
-		    } finally {
-			stmt.close();
-		    }
-		}
-		return masterUsers.get(username);
-	    }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        synchronized(MasterServer.class) {
+            if(masterUsers==null) {
+                Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
+                try {
+                    Map<String,MasterUser> table=new HashMap<String,MasterUser>();
+                    conn.incrementQueryCount();
+                    ResultSet results=stmt.executeQuery("select * from master_users where is_active");
+                    while(results.next()) {
+                        MasterUser mu=new MasterUser();
+                        mu.init(results);
+                        table.put(results.getString(1), mu);
+                    }
+                    masterUsers=table;
+                } finally {
+                    stmt.close();
+                }
+            }
+            return masterUsers.get(username);
         }
     }
 
@@ -8743,45 +8658,40 @@ public abstract class MasterServer {
      * Gets the hosts that are allowed for the provided username.
      */
     public static boolean isHostAllowed(MasterDatabaseConnection conn, String username, String host) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, MasterServer.class, "isHostAllowed(MasterDatabaseConnection,String,String)", null);
-        try {
-	    synchronized(MasterServer.class) {
-		if(masterHosts==null) {
-		    Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
-		    try {
-			Map<String,List<String>> table=new HashMap<String,List<String>>();
-			conn.incrementQueryCount();
-			ResultSet results=stmt.executeQuery("select mh.username, mh.host from master_hosts mh, master_users mu where mh.username=mu.username and mu.is_active");
-			while(results.next()) {
-			    String un=results.getString(1);
-			    String ho=results.getString(2);
-			    List<String> sv=table.get(un);
-			    if(sv==null) table.put(un, sv=new SortedArrayList<String>());
-			    sv.add(ho);
-			}
-			masterHosts=table;
-		    } finally {
-			stmt.close();
-		    }
-		}
-		if(getMasterUser(conn, username)!=null) {
-		    List<String> hosts=masterHosts.get(username);
-		    // Allow from anywhere if no hosts are provided
-		    if(hosts==null) return true;
-		    String remoteHost=InetAddress.getByName(host).getHostAddress();
-		    int size = hosts.size();
-		    for (int c = 0; c < size; c++) {
-			String tempAddress = InetAddress.getByName(hosts.get(c)).getHostAddress();
-			if (tempAddress.equals(remoteHost)) return true;
-		    }
-		    return false;
-		} else {
-		    // Normal users can connect from any where
-		    return BusinessHandler.getBusinessAdministrator(conn, username)!=null;
-		}
-	    }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        synchronized(MasterServer.class) {
+            if(masterHosts==null) {
+                Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
+                try {
+                    Map<String,List<String>> table=new HashMap<String,List<String>>();
+                    conn.incrementQueryCount();
+                    ResultSet results=stmt.executeQuery("select mh.username, mh.host from master_hosts mh, master_users mu where mh.username=mu.username and mu.is_active");
+                    while(results.next()) {
+                        String un=results.getString(1);
+                        String ho=results.getString(2);
+                        List<String> sv=table.get(un);
+                        if(sv==null) table.put(un, sv=new SortedArrayList<String>());
+                        sv.add(ho);
+                    }
+                    masterHosts=table;
+                } finally {
+                    stmt.close();
+                }
+            }
+            if(getMasterUser(conn, username)!=null) {
+                List<String> hosts=masterHosts.get(username);
+                // Allow from anywhere if no hosts are provided
+                if(hosts==null) return true;
+                String remoteHost=InetAddress.getByName(host).getHostAddress();
+                int size = hosts.size();
+                for (int c = 0; c < size; c++) {
+                    String tempAddress = InetAddress.getByName(hosts.get(c)).getHostAddress();
+                    if (tempAddress.equals(remoteHost)) return true;
+                }
+                return false;
+            } else {
+                // Normal users can connect from any where
+                return BusinessHandler.getBusinessAdministrator(conn, username)!=null;
+            }
         }
     }
 
@@ -8794,33 +8704,28 @@ public abstract class MasterServer {
         String param2,
         AOServObject obj
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "writeObject(DatabaseConnection,RequestSource,CompressedDataOutputStream,String,int,String,AOServObject)", null);
-        try {
-            String version=source.getProtocolVersion();
+        AOServProtocol.Version version = source.getProtocolVersion();
 
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+        try {
+            pstmt.setInt(1, param1);
+            pstmt.setString(2, param2);
+            conn.incrementQueryCount();
+            ResultSet results=pstmt.executeQuery();
             try {
-                pstmt.setInt(1, param1);
-                pstmt.setString(2, param2);
-                conn.incrementQueryCount();
-                ResultSet results=pstmt.executeQuery();
-                try {
-                    if(results.next()) {
-                        obj.init(results);
-                        out.writeByte(AOServProtocol.NEXT);
-                        obj.write(out, version);
-                    } else out.writeByte(AOServProtocol.DONE);
-                } finally {
-                    results.close();
-                }
-            } catch(SQLException err) {
-                System.err.println("Error from query: "+pstmt.toString());
-                throw err;
+                if(results.next()) {
+                    obj.init(results);
+                    out.writeByte(AOServProtocol.NEXT);
+                    obj.write(out, version);
+                } else out.writeByte(AOServProtocol.DONE);
             } finally {
-                pstmt.close();
+                results.close();
             }
+        } catch(SQLException err) {
+            System.err.println("Error from query: "+pstmt.toString());
+            throw err;
         } finally {
-            Profiler.endProfile(Profiler.IO);
+            pstmt.close();
         }
     }
 
@@ -8832,32 +8737,27 @@ public abstract class MasterServer {
         int param1,
         AOServObject obj
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "writeObject(DatabaseConnection,RequestSource,CompressedDataOutputStream,String,int,AOServObject)", null);
-        try {
-            String version=source.getProtocolVersion();
+        AOServProtocol.Version version=source.getProtocolVersion();
 
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+        try {
+            pstmt.setInt(1, param1);
+            conn.incrementQueryCount();
+            ResultSet results=pstmt.executeQuery();
             try {
-                pstmt.setInt(1, param1);
-                conn.incrementQueryCount();
-                ResultSet results=pstmt.executeQuery();
-                try {
-                    if(results.next()) {
-                        obj.init(results);
-                        out.writeByte(AOServProtocol.NEXT);
-                        obj.write(out, version);
-                    } else out.writeByte(AOServProtocol.DONE);
-                } finally {
-                    results.close();
-                }
-            } catch(SQLException err) {
-                System.err.println("Error from query: "+pstmt.toString());
-                throw err;
+                if(results.next()) {
+                    obj.init(results);
+                    out.writeByte(AOServProtocol.NEXT);
+                    obj.write(out, version);
+                } else out.writeByte(AOServProtocol.DONE);
             } finally {
-                pstmt.close();
+                results.close();
             }
+        } catch(SQLException err) {
+            System.err.println("Error from query: "+pstmt.toString());
+            throw err;
         } finally {
-            Profiler.endProfile(Profiler.IO);
+            pstmt.close();
         }
     }
 
@@ -8870,33 +8770,28 @@ public abstract class MasterServer {
         int param2,
         AOServObject obj
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "writeObject(DatabaseConnection,RequestSource,CompressedDataOutputStream,String,String,int,AOServObject)", null);
-        try {
-            String version=source.getProtocolVersion();
+        AOServProtocol.Version version=source.getProtocolVersion();
 
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+        try {
+            pstmt.setString(1, param1);
+            pstmt.setInt(2, param2);
+            conn.incrementQueryCount();
+            ResultSet results=pstmt.executeQuery();
             try {
-                pstmt.setString(1, param1);
-                pstmt.setInt(2, param2);
-                conn.incrementQueryCount();
-                ResultSet results=pstmt.executeQuery();
-                try {
-                    if(results.next()) {
-                        obj.init(results);
-                        out.writeByte(AOServProtocol.NEXT);
-                        obj.write(out, version);
-                    } else out.writeByte(AOServProtocol.DONE);
-                } finally {
-                    results.close();
-                }
-            } catch(SQLException err) {
-                System.err.println("Error from query: "+pstmt.toString());
-                throw err;
+                if(results.next()) {
+                    obj.init(results);
+                    out.writeByte(AOServProtocol.NEXT);
+                    obj.write(out, version);
+                } else out.writeByte(AOServProtocol.DONE);
             } finally {
-                pstmt.close();
+                results.close();
             }
+        } catch(SQLException err) {
+            System.err.println("Error from query: "+pstmt.toString());
+            throw err;
         } finally {
-            Profiler.endProfile(Profiler.IO);
+            pstmt.close();
         }
     }
 
@@ -8912,36 +8807,31 @@ public abstract class MasterServer {
         String param5,
         AOServObject obj
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "writeObject(DatabaseConnection,RequestSource,CompressedDataOutputStream,String,int,String,String,String,String,AOServObject)", null);
-        try {
-            String version=source.getProtocolVersion();
+        AOServProtocol.Version version=source.getProtocolVersion();
 
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+        try {
+            pstmt.setInt(1, param1);
+            pstmt.setString(2, param2);
+            pstmt.setString(3, param3);
+            pstmt.setString(4, param4);
+            pstmt.setString(5, param5);
+            conn.incrementQueryCount();
+            ResultSet results=pstmt.executeQuery();
             try {
-                pstmt.setInt(1, param1);
-                pstmt.setString(2, param2);
-                pstmt.setString(3, param3);
-                pstmt.setString(4, param4);
-                pstmt.setString(5, param5);
-                conn.incrementQueryCount();
-                ResultSet results=pstmt.executeQuery();
-                try {
-                    if(results.next()) {
-                        obj.init(results);
-                        out.writeByte(AOServProtocol.NEXT);
-                        obj.write(out, version);
-                    } else out.writeByte(AOServProtocol.DONE);
-                } finally {
-                    results.close();
-                }
-            } catch(SQLException err) {
-                System.err.println("Error from query: "+pstmt.toString());
-                throw err;
+                if(results.next()) {
+                    obj.init(results);
+                    out.writeByte(AOServProtocol.NEXT);
+                    obj.write(out, version);
+                } else out.writeByte(AOServProtocol.DONE);
             } finally {
-                pstmt.close();
+                results.close();
             }
+        } catch(SQLException err) {
+            System.err.println("Error from query: "+pstmt.toString());
+            throw err;
         } finally {
-            Profiler.endProfile(Profiler.IO);
+            pstmt.close();
         }
     }
 
@@ -8960,37 +8850,32 @@ public abstract class MasterServer {
         int param8,
         AOServObject obj
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "writeObject(DatabaseConnection,RequestSource,CompressedDataOutputStream,String,String,int,String,int,String,int,String,int,AOServObject)", null);
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
         try {
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+            pstmt.setString(1, param1);
+            pstmt.setInt(2, param2);
+            pstmt.setString(3, param3);
+            pstmt.setInt(4, param4);
+            pstmt.setString(5, param5);
+            pstmt.setInt(6, param6);
+            pstmt.setString(7, param7);
+            pstmt.setInt(8, param8);
+            conn.incrementQueryCount();
+            ResultSet results=pstmt.executeQuery();
             try {
-                pstmt.setString(1, param1);
-                pstmt.setInt(2, param2);
-                pstmt.setString(3, param3);
-                pstmt.setInt(4, param4);
-                pstmt.setString(5, param5);
-                pstmt.setInt(6, param6);
-                pstmt.setString(7, param7);
-                pstmt.setInt(8, param8);
-                conn.incrementQueryCount();
-                ResultSet results=pstmt.executeQuery();
-                try {
-                    if(results.next()) {
-                        obj.init(results);
-                        out.writeByte(AOServProtocol.NEXT);
-                        obj.write(out, source.getProtocolVersion());
-                    } else out.writeByte(AOServProtocol.DONE);
-                } finally {
-                    results.close();
-                }
-            } catch(SQLException err) {
-                System.err.println("Error from query: "+pstmt.toString());
-                throw err;
+                if(results.next()) {
+                    obj.init(results);
+                    out.writeByte(AOServProtocol.NEXT);
+                    obj.write(out, source.getProtocolVersion());
+                } else out.writeByte(AOServProtocol.DONE);
             } finally {
-                pstmt.close();
+                results.close();
             }
+        } catch(SQLException err) {
+            System.err.println("Error from query: "+pstmt.toString());
+            throw err;
         } finally {
-            Profiler.endProfile(Profiler.IO);
+            pstmt.close();
         }
     }
 
@@ -9002,51 +8887,46 @@ public abstract class MasterServer {
         String sql,
         Object ... params
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "fetchObjects(DatabaseConnection,RequestSource,CompressedDataOutputStream,AOServObject,String,...)", null);
+        AOServProtocol.Version version=source.getProtocolVersion();
+
+        Connection dbConn=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false);
+
+        PreparedStatement pstmt=dbConn.prepareStatement("declare fetch_objects cursor for "+sql);
         try {
-            String version=source.getProtocolVersion();
-
-            Connection dbConn=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false);
-
-            PreparedStatement pstmt=dbConn.prepareStatement("declare fetch_objects cursor for "+sql);
-            try {
-                DatabaseConnection.setParams(pstmt, params);
-                conn.incrementUpdateCount();
-                pstmt.executeUpdate();
-            } catch(SQLException err) {
-                System.err.println("Error from select: "+pstmt.toString());
-                throw err;
-            } finally {
-                pstmt.close();
-            }
-
-            String sqlString="fetch "+TableHandler.RESULT_SET_BATCH_SIZE+" from fetch_objects";
-            Statement stmt = dbConn.createStatement();
-            try {
-                while(true) {
-                    int batchSize=0;
-                    ResultSet results=stmt.executeQuery(sqlString);
-                    try {
-                        while(results.next()) {
-                            obj.init(results);
-                            out.writeByte(AOServProtocol.NEXT);
-                            obj.write(out, version);
-                            batchSize++;
-                        }
-                    } finally {
-                        results.close();
-                    }
-                    if(batchSize<TableHandler.RESULT_SET_BATCH_SIZE) break;
-                }
-            } catch(SQLException err) {
-                System.err.println("Error from query: "+sqlString);
-                throw err;
-            } finally {
-                stmt.executeUpdate("close fetch_objects");
-                stmt.close();
-            }
+            DatabaseConnection.setParams(pstmt, params);
+            conn.incrementUpdateCount();
+            pstmt.executeUpdate();
+        } catch(SQLException err) {
+            System.err.println("Error from select: "+pstmt.toString());
+            throw err;
         } finally {
-            Profiler.endProfile(Profiler.IO);
+            pstmt.close();
+        }
+
+        String sqlString="fetch "+TableHandler.RESULT_SET_BATCH_SIZE+" from fetch_objects";
+        Statement stmt = dbConn.createStatement();
+        try {
+            while(true) {
+                int batchSize=0;
+                ResultSet results=stmt.executeQuery(sqlString);
+                try {
+                    while(results.next()) {
+                        obj.init(results);
+                        out.writeByte(AOServProtocol.NEXT);
+                        obj.write(out, version);
+                        batchSize++;
+                    }
+                } finally {
+                    results.close();
+                }
+                if(batchSize<TableHandler.RESULT_SET_BATCH_SIZE) break;
+            }
+        } catch(SQLException err) {
+            System.err.println("Error from query: "+sqlString);
+            throw err;
+        } finally {
+            stmt.executeUpdate("close fetch_objects");
+            stmt.close();
         }
     }
 
@@ -9059,29 +8939,24 @@ public abstract class MasterServer {
         String sql,
         Object ... params
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "writeObjects(DatabaseConnection,RequestSource,CompressedDataOutputStream,boolean,AOServObject,String,...)", null);
-        try {
-            if(!provideProgress) fetchObjects(conn, source, out, obj, sql, params);
-            else {
-                PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+        if(!provideProgress) fetchObjects(conn, source, out, obj, sql, params);
+        else {
+            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+            try {
+                DatabaseConnection.setParams(pstmt, params);
+                conn.incrementQueryCount();
+                ResultSet results = pstmt.executeQuery();
                 try {
-                    DatabaseConnection.setParams(pstmt, params);
-                    conn.incrementQueryCount();
-                    ResultSet results = pstmt.executeQuery();
-                    try {
-                        writeObjects(source, out, provideProgress, obj, results);
-                    } finally {
-                        results.close();
-                    }
-                } catch(SQLException err) {
-                    System.err.println("Error from query: "+pstmt.toString());
-                    throw err;
+                    writeObjects(source, out, provideProgress, obj, results);
                 } finally {
-                    pstmt.close();
+                    results.close();
                 }
+            } catch(SQLException err) {
+                System.err.println("Error from query: "+pstmt.toString());
+                throw err;
+            } finally {
+                pstmt.close();
             }
-        } finally {
-            Profiler.endProfile(Profiler.IO);
         }
     }
 
@@ -9094,30 +8969,25 @@ public abstract class MasterServer {
         String sql,
         String param1
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "writePenniesCheckBusiness(MasterDatabaseConnection,RequestSource,String,String,CompressedDataOutputStream,String,String)", null);
+        BusinessHandler.checkAccessBusiness(conn, source, action, accounting);
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
         try {
-            BusinessHandler.checkAccessBusiness(conn, source, action, accounting);
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+            pstmt.setString(1, param1);
+            conn.incrementQueryCount();
+            ResultSet results=pstmt.executeQuery();
             try {
-                pstmt.setString(1, param1);
-                conn.incrementQueryCount();
-                ResultSet results=pstmt.executeQuery();
-                try {
-                    if(results.next()) {
-                        out.writeByte(AOServProtocol.DONE);
-                        out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
-                    } else throw new SQLException("No row returned.");
-                } finally {
-                    results.close();
-                }
-            } catch(SQLException err) {
-                System.err.println("Error from query: "+pstmt.toString());
-                throw err;
+                if(results.next()) {
+                    out.writeByte(AOServProtocol.DONE);
+                    out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
+                } else throw new SQLException("No row returned.");
             } finally {
-                pstmt.close();
+                results.close();
             }
+        } catch(SQLException err) {
+            System.err.println("Error from query: "+pstmt.toString());
+            throw err;
         } finally {
-            Profiler.endProfile(Profiler.IO);
+            pstmt.close();
         }
     }
 
@@ -9131,64 +9001,49 @@ public abstract class MasterServer {
         String param1,
         Timestamp param2
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.IO, MasterServer.class, "writePenniesCheckBusiness(MasterDatabaseConnection,RequestSource,String,String,CompressedDataOutputStream,String,String,Timestamp)", null);
+        BusinessHandler.checkAccessBusiness(conn, source, action, accounting);
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
         try {
-            BusinessHandler.checkAccessBusiness(conn, source, action, accounting);
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
+            pstmt.setString(1, param1);
+            pstmt.setTimestamp(2, param2);
+            conn.incrementQueryCount();
+            ResultSet results=pstmt.executeQuery();
             try {
-                pstmt.setString(1, param1);
-                pstmt.setTimestamp(2, param2);
-                conn.incrementQueryCount();
-                ResultSet results=pstmt.executeQuery();
-                try {
-                    if(results.next()) {
-                        out.writeByte(AOServProtocol.DONE);
-                        out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
-                    } else throw new SQLException("No row returned.");
-                } finally {
-                    results.close();
-                }
-            } catch(SQLException err) {
-                System.err.println("Error from query: "+pstmt.toString());
-                throw err;
+                if(results.next()) {
+                    out.writeByte(AOServProtocol.DONE);
+                    out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
+                } else throw new SQLException("No row returned.");
             } finally {
-                pstmt.close();
+                results.close();
             }
+        } catch(SQLException err) {
+            System.err.println("Error from query: "+pstmt.toString());
+            throw err;
         } finally {
-            Profiler.endProfile(Profiler.IO);
+            pstmt.close();
         }
     }
 
     public static void invalidateTable(SchemaTable.TableID tableID) {
-        Profiler.startProfile(Profiler.FAST, MasterServer.class, "invalidateTable(SchemaTable.TableID)", null);
-        try {
-            if(tableID==SchemaTable.TableID.MASTER_HOSTS) {
-                synchronized(MasterServer.class) {
-                    masterHosts=null;
-                }
-            } else if(tableID==SchemaTable.TableID.MASTER_SERVERS) {
-                synchronized(MasterServer.class) {
-                    masterHosts=null;
-                    masterServers=null;
-                }
-            } else if(tableID==SchemaTable.TableID.MASTER_USERS) {
-                synchronized(MasterServer.class) {
-                    masterHosts=null;
-                    masterServers=null;
-                    masterUsers=null;
-                }
+        if(tableID==SchemaTable.TableID.MASTER_HOSTS) {
+            synchronized(MasterServer.class) {
+                masterHosts=null;
             }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        } else if(tableID==SchemaTable.TableID.MASTER_SERVERS) {
+            synchronized(MasterServer.class) {
+                masterHosts=null;
+                masterServers=null;
+            }
+        } else if(tableID==SchemaTable.TableID.MASTER_USERS) {
+            synchronized(MasterServer.class) {
+                masterHosts=null;
+                masterServers=null;
+                masterUsers=null;
+            }
         }
     }
 
-    public static void updateAOServProtocolLastUsed(MasterDatabaseConnection conn, String protocolVersion) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, MasterServer.class, "updateAOServProtocolLastUsed(MasterDatabaseConnection,String)", null);
-        try {
-            conn.executeUpdate("update aoserv_protocols set last_used=now()::date where version=? and (last_used is null or last_used<now()::date)", protocolVersion);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+    public static void updateAOServProtocolLastUsed(MasterDatabaseConnection conn, AOServProtocol.Version protocolVersion) throws IOException, SQLException {
+        conn.executeUpdate("update aoserv_protocols set last_used=now()::date where version=? and (last_used is null or last_used<now()::date)", protocolVersion.getVersion());
     }
 }

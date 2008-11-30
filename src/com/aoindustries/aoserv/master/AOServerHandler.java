@@ -301,4 +301,47 @@ final public class AOServerHandler {
             Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
+
+    public static String getHddTempReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, AOServerHandler.class, "getHddTempReport(MasterDatabaseConnection,RequestSource,int)", null);
+        try {
+            ServerHandler.checkAccessServer(conn, source, "getHddTempReport", aoServer);
+
+            return DaemonHandler.getDaemonConnector(conn, aoServer).getHddTempReport();
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static String getFilesystemsCsvReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, AOServerHandler.class, "getFilesystemsCsvReport(MasterDatabaseConnection,RequestSource,int)", null);
+        try {
+            ServerHandler.checkAccessServer(conn, source, "getFilesystemsCsvReport", aoServer);
+
+            return DaemonHandler.getDaemonConnector(conn, aoServer).getFilesystemsCsvReport();
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static String getLoadAvgReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, AOServerHandler.class, "getLoadAvgReport(MasterDatabaseConnection,RequestSource,int)", null);
+        try {
+            ServerHandler.checkAccessServer(conn, source, "getLoadAvgReport", aoServer);
+
+            return DaemonHandler.getDaemonConnector(conn, aoServer).getLoadAvgReport();
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+    public static String getMemInfoReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, AOServerHandler.class, "getMemInfoReport(MasterDatabaseConnection,RequestSource,int)", null);
+        try {
+            ServerHandler.checkAccessServer(conn, source, "getMemInfoReport", aoServer);
+
+            return DaemonHandler.getDaemonConnector(conn, aoServer).getMemInfoReport();
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
 }

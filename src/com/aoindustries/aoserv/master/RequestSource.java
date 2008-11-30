@@ -5,6 +5,7 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.util.*;
 import java.io.*;
 import java.util.*;
@@ -42,5 +43,5 @@ public interface RequestSource {
     /**
      * Gets the protocol version number supported by the client.
      */
-    String getProtocolVersion();
+    AOServProtocol.Version getProtocolVersion();
 }
