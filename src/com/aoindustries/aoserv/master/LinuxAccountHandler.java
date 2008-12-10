@@ -448,7 +448,8 @@ final public class LinuxAccountHandler {
                 + "  "+LinuxServerAccount.DEFAULT_TRASH_EMAIL_RETENTION+",\n"
                 + "  "+LinuxServerAccount.DEFAULT_JUNK_EMAIL_RETENTION+",\n"
                 + "  ?,\n"
-                + "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE+"\n"
+                + "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE+",\n"
+                + "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_DISCARD_SCORE+"\n"
                 + ")",
                 pkey,
                 username,
@@ -1896,6 +1897,46 @@ final public class LinuxAccountHandler {
                 required_score,
                 pkey
             );
+
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+                getBusinessForLinuxServerAccount(conn, pkey),
+                getAOServerForLinuxServerAccount(conn, pkey),
+                false
+            );
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static void setLinuxServerAccountSpamAssassinDiscardScore(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int pkey,
+        int discard_score
+    ) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, LinuxAccountHandler.class, "setLinuxServerAccountSpamAssassinDiscardScore(MasterDatabaseConnection,RequestSource,InvalidateList,int,int)", null);
+        try {
+            // Security checks
+            checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountSpamAssassinDiscardScore", pkey);
+            String username=getUsernameForLinuxServerAccount(conn, pkey);
+            if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the spam assassin discard score for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+
+            // Update the database
+            if(discard_score==-1) {
+                conn.executeUpdate(
+                    "update linux_server_accounts set sa_discard_score=null where pkey=?",
+                    pkey
+                );
+            } else {
+                conn.executeUpdate(
+                    "update linux_server_accounts set sa_discard_score=? where pkey=?",
+                    discard_score,
+                    pkey
+                );
+            }
 
             invalidateList.addTable(
                 conn,

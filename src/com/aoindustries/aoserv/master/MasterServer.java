@@ -6678,6 +6678,26 @@ public abstract class MasterServer {
                                             sendInvalidateList=true;
                                         }
                                         break;
+                                    case SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_DISCARD_SCORE:
+                                        {
+                                            int pkey=in.readCompressedInt();
+                                            int discard_score = in.readCompressedInt();
+                                            process.setCommand(
+                                                "set_linux_server_account_spamassassin_discard_score",
+                                                Integer.valueOf(pkey),
+                                                discard_score==-1 ? "\"\"" : Integer.toString(discard_score)
+                                            );
+                                            LinuxAccountHandler.setLinuxServerAccountSpamAssassinDiscardScore(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                pkey,
+                                                discard_score
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
                                     case SET_LINUX_SERVER_ACCOUNT_TRASH_EMAIL_RETENTION :
                                         {
                                             int pkey=in.readCompressedInt();

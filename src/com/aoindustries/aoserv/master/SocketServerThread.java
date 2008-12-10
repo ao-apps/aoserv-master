@@ -9,7 +9,6 @@ import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.MasterProcess;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
-import com.aoindustries.profiler.Profiler;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.StringUtility;
@@ -71,23 +70,18 @@ final public class SocketServerThread extends Thread implements RequestSource {
      * Creates a new, running <code>AOServServerThread</code>.
      */
     public SocketServerThread(TCPServer server, Socket socket) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.IO, SocketServerThread.class, "<init>(TCPServer,Socket)", null);
-        try {
-            this.server = server;
-            this.socket = socket;
-            this.in=new CompressedDataInputStream(new BufferedInputStream(socket.getInputStream()));
-            this.out=new CompressedDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-            String host=socket.getInetAddress().getHostAddress();
-            process=MasterProcessManager.createProcess(
-                host,
-                server.getProtocol(),
-                server.isSecure()
-            );
-            isClosed=false;
-            start();
-        } finally {
-            Profiler.endProfile(Profiler.IO);
-        }
+        this.server = server;
+        this.socket = socket;
+        this.in=new CompressedDataInputStream(new BufferedInputStream(socket.getInputStream()));
+        this.out=new CompressedDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+        String host=socket.getInetAddress().getHostAddress();
+        process=MasterProcessManager.createProcess(
+            host,
+            server.getProtocol(),
+            server.isSecure()
+        );
+        isClosed=false;
+        start();
     }
 
     private final List<InvalidateCacheEntry> invalidateLists=new ArrayList<InvalidateCacheEntry>();
@@ -97,55 +91,35 @@ final public class SocketServerThread extends Thread implements RequestSource {
      * this invalidate is registered with ServerHandler for invalidation synchronization.
      */
     public void cachesInvalidated(IntList tableList) throws IOException {
-        Profiler.startProfile(Profiler.FAST, SocketServerThread.class, "cachesInvalidated(IntList)", null);
-        try {
-	    synchronized(this) {
-		if(tableList!=null && tableList.size()>0) {
-		    // Register with ServerHandler for invalidation synchronization
-		    int daemonServer=getDaemonServer();
-                    IntList copy=new IntArrayList(tableList);
-		    InvalidateCacheEntry ice=new InvalidateCacheEntry(
-                        copy,
-                        daemonServer,
-                        daemonServer==-1?null:ServerHandler.addInvalidateSyncEntry(daemonServer, this)
-                    );
-		    invalidateLists.add(ice);
-		    notify();
-		}
-	    }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        synchronized(this) {
+            if(tableList!=null && tableList.size()>0) {
+                // Register with ServerHandler for invalidation synchronization
+                int daemonServer=getDaemonServer();
+                IntList copy=new IntArrayList(tableList);
+                InvalidateCacheEntry ice=new InvalidateCacheEntry(
+                    copy,
+                    daemonServer,
+                    daemonServer==-1?null:ServerHandler.addInvalidateSyncEntry(daemonServer, this)
+                );
+                invalidateLists.add(ice);
+                notify();
+            }
         }
     }
 
     public int getDaemonServer() {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, SocketServerThread.class, "getDaemonServer()", null);
-        try {
-            return process.getDaemonServer();
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        return process.getDaemonServer();
     }
 
     public InvalidateCacheEntry getNextInvalidatedTables() {
-        Profiler.startProfile(Profiler.FAST, SocketServerThread.class, "getNextInvalidatedTables()", null);
-        try {
-	    synchronized(this) {
-		if(invalidateLists.size()==0) return null;
-		return invalidateLists.remove(0);
-	    }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        synchronized(this) {
+            if(invalidateLists.size()==0) return null;
+            return invalidateLists.remove(0);
         }
     }
 
     final public long getConnectorID() {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, SocketServerThread.class, "getConnectorID()", null);
-        try {
-            return process.getConnectorID();
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        return process.getConnectorID();
     }
 
     final public AOServProtocol.Version getProtocolVersion() {
@@ -157,158 +131,133 @@ final public class SocketServerThread extends Thread implements RequestSource {
      * Also sends email messages to <code>aoserv.server.
      */
     public String getSecurityMessageHeader() {
-        Profiler.startProfile(Profiler.UNKNOWN, SocketServerThread.class, "getSecurityMessageHeader()", null);
-        try {
-            return "IP="+socket.getInetAddress().getHostAddress()+" EffUsr="+process.getEffectiveUser()+" AuthUsr="+process.getAuthenticatedUser();
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return "IP="+socket.getInetAddress().getHostAddress()+" EffUsr="+process.getEffectiveUser()+" AuthUsr="+process.getAuthenticatedUser();
     }
 
     public String getUsername() {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, SocketServerThread.class, "getUsername()", null);
-        try {
-            return process.getEffectiveUser();
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        return process.getEffectiveUser();
     }
 
     public boolean isSecure() throws UnknownHostException {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, SocketServerThread.class, "isSecure()", null);
-        try {
-            return server.isSecure();
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        return server.isSecure();
     }
 
     @Override
     public void run() {
-        Profiler.startProfile(Profiler.IO, SocketServerThread.class, "run()", null);
         try {
             try {
-                try {
-                    this.protocolVersion=AOServProtocol.Version.getVersion(in.readUTF());
-                    process.setAOServProtocol(protocolVersion.getVersion());
-                    if(in.readBoolean()) {
-                        String daemonServerHostname=in.readUTF();
-                        MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
-                        try {
-                            process.setDeamonServer(ServerHandler.getServerForAOServerHostname(conn, daemonServerHostname));
-                        } catch(IOException err) {
-                            conn.rollbackAndClose();
-                            throw err;
-                        } catch(SQLException err) {
-                            conn.rollbackAndClose();
-                            throw err;
-                        } finally {
-                            conn.releaseConnection();
-                        }
-                    } else process.setDeamonServer(-1);
-                    process.setEffectiveUser(in.readUTF());
-                    process.setAuthenticatedUser(in.readUTF());
-                    String host=socket.getInetAddress().getHostAddress();
-                    setName(
-                        "SocketServerThread"
-                        + "?"
-                        + host
-                        + ":"
-                        + socket.getPort()
-                        + "->"
-                        + socket.getLocalAddress().getHostAddress()
-                        + ":"
-                        + socket.getLocalPort()
-                        + " as "
-                        + process.getEffectiveUser()
-                        + " ("
-                        + process.getAuthenticatedUser()
-                        + ")"
-                    );
-                    String password=in.readUTF();
-                    long existingID=in.readLong();
+                this.protocolVersion=AOServProtocol.Version.getVersion(in.readUTF());
+                process.setAOServProtocol(protocolVersion.getVersion());
+                if(in.readBoolean()) {
+                    String daemonServerHostname=in.readUTF();
+                    MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                    try {
+                        process.setDeamonServer(ServerHandler.getServerForAOServerHostname(conn, daemonServerHostname));
+                    } catch(IOException err) {
+                        conn.rollbackAndClose();
+                        throw err;
+                    } catch(SQLException err) {
+                        conn.rollbackAndClose();
+                        throw err;
+                    } finally {
+                        conn.releaseConnection();
+                    }
+                } else process.setDeamonServer(-1);
+                process.setEffectiveUser(in.readUTF());
+                process.setAuthenticatedUser(in.readUTF());
+                String host=socket.getInetAddress().getHostAddress();
+                setName(
+                    "SocketServerThread"
+                    + "?"
+                    + host
+                    + ":"
+                    + socket.getPort()
+                    + "->"
+                    + socket.getLocalAddress().getHostAddress()
+                    + ":"
+                    + socket.getLocalPort()
+                    + " as "
+                    + process.getEffectiveUser()
+                    + " ("
+                    + process.getAuthenticatedUser()
+                    + ")"
+                );
+                String password=in.readUTF();
+                long existingID=in.readLong();
 
-                    if(
-                        protocolVersion!=AOServProtocol.Version.VERSION_1_38
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_37
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_36
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_35
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_34
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_33
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_32
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_31
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_30
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_29
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_28
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_27
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_26
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_25
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_24
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_23
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_22
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_21
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_20
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_19
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_18
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_17
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_16
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_15
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_14
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_13
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_12
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_11
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_10
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_9
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_8
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_7
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_6
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_5
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_4
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_3
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_2
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_1
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_130
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_129
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_128
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_127
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_126
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_125
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_124
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_123
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_122
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_121
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_120
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_119
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_118
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_117
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_116
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_115
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_114
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_113
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_112
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_111
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_110
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_109
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_108
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_107
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_106
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_105
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_104
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_103
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_102
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_101
-                        && protocolVersion!=AOServProtocol.Version.VERSION_1_0_A_100
-                    ) {
-                        out.writeBoolean(false);
-                        out.writeUTF(
-                        "Client ("+socket.getInetAddress().getHostAddress()+":"+socket.getPort()+") requesting AOServ Protocol version "
-                        +protocolVersion
-                        +", server ("+socket.getLocalAddress().getHostAddress()+":"+socket.getLocalPort()+") supporting versions "
-                        +StringUtility.buildList(AOServProtocol.Version.values())
-                        +".  Please upgrade the client code to match the server."
-                        );
-                        out.flush();
-                    } {
+                switch(protocolVersion) {
+                    case VERSION_1_40 :
+                    case VERSION_1_39 :
+                    case VERSION_1_38 :
+                    case VERSION_1_37 :
+                    case VERSION_1_36 :
+                    case VERSION_1_35 :
+                    case VERSION_1_34 :
+                    case VERSION_1_33 :
+                    case VERSION_1_32 :
+                    case VERSION_1_31 :
+                    case VERSION_1_30 :
+                    case VERSION_1_29 :
+                    case VERSION_1_28 :
+                    case VERSION_1_27 :
+                    case VERSION_1_26 :
+                    case VERSION_1_25 :
+                    case VERSION_1_24 :
+                    case VERSION_1_23 :
+                    case VERSION_1_22 :
+                    case VERSION_1_21 :
+                    case VERSION_1_20 :
+                    case VERSION_1_19 :
+                    case VERSION_1_18 :
+                    case VERSION_1_17 :
+                    case VERSION_1_16 :
+                    case VERSION_1_15 :
+                    case VERSION_1_14 :
+                    case VERSION_1_13 :
+                    case VERSION_1_12 :
+                    case VERSION_1_11 :
+                    case VERSION_1_10 :
+                    case VERSION_1_9 :
+                    case VERSION_1_8 :
+                    case VERSION_1_7 :
+                    case VERSION_1_6 :
+                    case VERSION_1_5 :
+                    case VERSION_1_4 :
+                    case VERSION_1_3 :
+                    case VERSION_1_2 :
+                    case VERSION_1_1 :
+                    case VERSION_1_0_A_130 :
+                    case VERSION_1_0_A_129 :
+                    case VERSION_1_0_A_128 :
+                    case VERSION_1_0_A_127 :
+                    case VERSION_1_0_A_126 :
+                    case VERSION_1_0_A_125 :
+                    case VERSION_1_0_A_124 :
+                    case VERSION_1_0_A_123 :
+                    case VERSION_1_0_A_122 :
+                    case VERSION_1_0_A_121 :
+                    case VERSION_1_0_A_120 :
+                    case VERSION_1_0_A_119 :
+                    case VERSION_1_0_A_118 :
+                    case VERSION_1_0_A_117 :
+                    case VERSION_1_0_A_116 :
+                    case VERSION_1_0_A_115 :
+                    case VERSION_1_0_A_114 :
+                    case VERSION_1_0_A_113 :
+                    case VERSION_1_0_A_112 :
+                    case VERSION_1_0_A_111 :
+                    case VERSION_1_0_A_110 :
+                    case VERSION_1_0_A_109 :
+                    case VERSION_1_0_A_108 :
+                    case VERSION_1_0_A_107 :
+                    case VERSION_1_0_A_106 :
+                    case VERSION_1_0_A_105 :
+                    case VERSION_1_0_A_104 :
+                    case VERSION_1_0_A_103 :
+                    case VERSION_1_0_A_102 :
+                    case VERSION_1_0_A_101 :
+                    case VERSION_1_0_A_100 :
+                    {
                         String message;
                         MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
                         try {
@@ -391,51 +340,57 @@ final public class SocketServerThread extends Thread implements RequestSource {
                         } finally {
                             conn.releaseConnection();
                         }
+                        break;
                     }
-                } catch(EOFException err) {
-                    // Normal when disconnecting
-                } catch(SocketException err) {
-                    // Connection reset common for abnormal client disconnects
-                    String message=err.getMessage();
-                    if(
-                        !"Broken pipe".equalsIgnoreCase(message)
-                        && !"Connection reset".equalsIgnoreCase(message)
-                    ) MasterServer.reportError(err, null);
-                } catch(IOException err) {
-                    // Broken pipe common for abnormal client disconnects
-                    String message=err.getMessage();
-                    if(
-                        !"Broken pipe".equalsIgnoreCase(message)
-                    ) MasterServer.reportError(err, null);
-                } catch(SQLException err) {
-                    MasterServer.reportError(err, null);
-                } catch(ThreadDeath TD) {
-                    throw TD;
-                } catch (Throwable T) {
-                    MasterServer.reportError(T, null);
-                } finally {
-                    // Close the socket
-                    try {
-                        isClosed=true;
-                        socket.close();
-                    } catch (IOException err) {
-                        MasterServer.reportError(err, null);
+                    default :
+                    {
+                        out.writeBoolean(false);
+                        out.writeUTF(
+                            "Client ("+socket.getInetAddress().getHostAddress()+":"+socket.getPort()+") requesting AOServ Protocol version "
+                            +protocolVersion
+                            +", server ("+socket.getLocalAddress().getHostAddress()+":"+socket.getLocalPort()+") supporting versions "
+                            +StringUtility.buildList(AOServProtocol.Version.values())
+                            +".  Please upgrade the client code to match the server."
+                        );
+                        out.flush();
                     }
                 }
+            } catch(EOFException err) {
+                // Normal when disconnecting
+            } catch(SocketException err) {
+                // Connection reset common for abnormal client disconnects
+                String message=err.getMessage();
+                if(
+                    !"Broken pipe".equalsIgnoreCase(message)
+                    && !"Connection reset".equalsIgnoreCase(message)
+                ) MasterServer.reportError(err, null);
+            } catch(IOException err) {
+                // Broken pipe common for abnormal client disconnects
+                String message=err.getMessage();
+                if(
+                    !"Broken pipe".equalsIgnoreCase(message)
+                ) MasterServer.reportError(err, null);
+            } catch(SQLException err) {
+                MasterServer.reportError(err, null);
+            } catch(ThreadDeath TD) {
+                throw TD;
+            } catch (Throwable T) {
+                MasterServer.reportError(T, null);
             } finally {
-                MasterProcessManager.removeProcess(process);
+                // Close the socket
+                try {
+                    isClosed=true;
+                    socket.close();
+                } catch (IOException err) {
+                    MasterServer.reportError(err, null);
+                }
             }
         } finally {
-            Profiler.endProfile(Profiler.IO);
+            MasterProcessManager.removeProcess(process);
         }
     }
     
     public boolean isClosed() {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, SocketServerThread.class, "isClosed()", null);
-        try {
-            return isClosed;
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        return isClosed;
     }
 }
