@@ -6,6 +6,7 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.BackupReport;
+import com.aoindustries.aoserv.client.Business;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
@@ -34,6 +35,11 @@ final public class AccountCleaner implements CronJob {
      * The interval in which the administrators will be reminded.
      */
     private static final long TIMER_REMINDER_INTERVAL=6L*60*60*1000;
+
+    /**
+     * The number of days to keep canceled account resources.
+     */
+    private static final int CANCELED_KEEP_DAYS = 30;
 
     private static boolean started=false;
 
@@ -103,7 +109,7 @@ final public class AccountCleaner implements CronJob {
     }
     
     private static void cleanNow(InvalidateList invalidateList) throws IOException, SQLException {
-        MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+        final MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
         try {
             boolean connRolledBack=false;
             try {
@@ -128,7 +134,7 @@ final public class AccountCleaner implements CronJob {
                                 + "      br.package=pk.pkey\n"
                                 + "      and pk.accounting=bu.accounting\n"
                                 + "      and bu.canceled is not null\n"
-                                + "      and (?::date-bu.canceled::date)>30\n"
+                                + "      and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
                                 + "    limit 1\n"
                                 + "  ) is not null",
                                 now
@@ -149,7 +155,7 @@ final public class AccountCleaner implements CronJob {
                                 + "      br.package=pk.pkey\n"
                                 + "      and pk.accounting=bu.accounting\n"
                                 + "      and bu.canceled is not null\n"
-                                + "      and (?::date-bu.canceled::date)>30\n"
+                                + "      and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
                                 + "  )",
                                 now
                             );
@@ -243,7 +249,7 @@ final public class AccountCleaner implements CronJob {
                         + "where\n"
                         + "  cc.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<ccs.size();c++) {
@@ -251,7 +257,7 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // business_administrators over 30 days
+                // business_administrators over CANCELED_KEEP_DAYS days
                 // remove if balance is zero and has not been used in actions or transactions
                 {
                     List<String> bas=conn.executeStringListQuery(
@@ -274,7 +280,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<bas.size();c++) {
@@ -306,7 +312,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<crs.size();c++) {
@@ -329,7 +335,7 @@ final public class AccountCleaner implements CronJob {
                         + "  dz.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<dzs.size();c++) {
@@ -356,7 +362,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and lg.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<els.size();c++) {
@@ -379,7 +385,7 @@ final public class AccountCleaner implements CronJob {
                         + "  ed.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<eds.size();c++) {
@@ -402,7 +408,7 @@ final public class AccountCleaner implements CronJob {
                         + "  ep.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<eps.size();c++) {
@@ -425,7 +431,7 @@ final public class AccountCleaner implements CronJob {
                         + "  esr.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<esrs.size();c++) {
@@ -447,7 +453,7 @@ final public class AccountCleaner implements CronJob {
                         + "  file_backup_settings fbs\n"
                         + "where\n"
                         + "  bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30\n"
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
                         + "  and bu.accounting=pk.accounting\n"
                         + "  and pk.pkey=fbs.package",
                         now
@@ -473,7 +479,7 @@ final public class AccountCleaner implements CronJob {
                         + "  hs.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<hss.size();c++) {
@@ -500,7 +506,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and lg.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<hsts.size();c++) {
@@ -525,7 +531,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and nb.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<pfss.size();c++) {
@@ -548,7 +554,7 @@ final public class AccountCleaner implements CronJob {
                         + "  nb.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<nbs.size();c++) {
@@ -572,13 +578,37 @@ final public class AccountCleaner implements CronJob {
                         + "  ia.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<ias.size();c++) {
                         int ia=ias.getInt(c);
                         IPAddressHandler.setIPAddressPackage(conn, invalidateList, ia, BusinessHandler.getRootBusiness());
                         IPAddressHandler.releaseIPAddress(conn, invalidateList, ia);
+                    }
+                }
+
+                // httpd_servers
+                {
+                    IntList hss=conn.executeIntListQuery(
+                        Connection.TRANSACTION_READ_COMMITTED,
+                        true,
+                        "select\n"
+                        + "  hs.pkey\n"
+                        + "from\n"
+                        + "  httpd_servers hs,\n"
+                        + "  packages pk,\n"
+                        + "  businesses bu\n"
+                        + "where\n"
+                        + "  hs.package=pk.pkey\n"
+                        + "  and pk.accounting=bu.accounting\n"
+                        + "  and bu.canceled is not null\n"
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
+                        now
+                    );
+                    for(int c=0;c<hss.size();c++) {
+                        int hs=hss.getInt(c);
+                        HttpdHandler.removeHttpdServer(conn, invalidateList, hs);
                     }
                 }
 
@@ -599,7 +629,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<las.size();c++) {
@@ -627,7 +657,7 @@ final public class AccountCleaner implements CronJob {
                         + "  lg.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<lgs.size();c++) {
@@ -655,7 +685,7 @@ final public class AccountCleaner implements CronJob {
                         + "  md.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<mds.size();c++) {
@@ -680,7 +710,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<mus.size();c++) {
@@ -707,7 +737,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<pds.size();c++) {
@@ -732,7 +762,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<pus.size();c++) {
@@ -756,7 +786,7 @@ final public class AccountCleaner implements CronJob {
                         + "  un.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30\n"
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
                         + "  and (select ba.username from business_administrators ba where ba.username=un.username) is null",
                         now
                     );
@@ -778,7 +808,7 @@ final public class AccountCleaner implements CronJob {
                         + "where\n"
                         + "  dl.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30\n"
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
                         + "  and (select ba.username from business_administrators ba where ba.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select bu2.accounting from businesses bu2 where bu2.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select cr.pkey from cvs_repositories cr where cr.disable_log=dl.pkey limit 1) is null\n"
@@ -804,40 +834,52 @@ final public class AccountCleaner implements CronJob {
                 // business_servers
                 // delete all business_servers for canceled businesses
                 {
-                    // non-default
-                    IntList bss=conn.executeIntListQuery(
-                        Connection.TRANSACTION_READ_COMMITTED,
-                        true,
-                        "select\n"
-                        + "  bs.pkey\n"
-                        + "from\n"
-                        + "  business_servers bs,\n"
-                        + "  businesses bu\n"
-                        + "where\n"
-                        + "  not bs.is_default\n"
-                        + "  and bs.accounting=bu.accounting\n"
-                        + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
-                        now
-                    );
-                    for(int c=0;c<bss.size();c++) BusinessHandler.removeBusinessServer(conn, invalidateList, bss.getInt(c));
+                    for(int depth = Business.MAXIMUM_BUSINESS_TREE_DEPTH; depth>=1; depth--) {
+                        // non-default
+                        IntList bss=conn.executeIntListQuery(
+                            Connection.TRANSACTION_READ_COMMITTED,
+                            true,
+                            "select\n"
+                            + "  bs.pkey\n"
+                            + "from\n"
+                            + "  business_servers bs,\n"
+                            + "  businesses bu\n"
+                            + "where\n"
+                            + "  not bs.is_default\n"
+                            + "  and bs.accounting=bu.accounting\n"
+                            + "  and bu.canceled is not null\n"
+                            + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
+                            now
+                        );
+                        for(int c=0;c<bss.size();c++) {
+                            int bs = bss.getInt(c);
+                            String accounting = conn.executeStringQuery("select accounting from business_servers where pkey=?", bs);
+                            int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
+                            if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
+                        }
 
-                    // default
-                    bss=conn.executeIntListQuery(
-                        Connection.TRANSACTION_READ_COMMITTED,
-                        true,
-                        "select\n"
-                        + "  bs.pkey\n"
-                        + "from\n"
-                        + "  business_servers bs,\n"
-                        + "  businesses bu\n"
-                        + "where\n"
-                        + "  bs.accounting=bu.accounting\n"
-                        + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>30",
-                        now
-                    );
-                    for(int c=0;c<bss.size();c++) BusinessHandler.removeBusinessServer(conn, invalidateList, bss.getInt(c));
+                        // default
+                        bss=conn.executeIntListQuery(
+                            Connection.TRANSACTION_READ_COMMITTED,
+                            true,
+                            "select\n"
+                            + "  bs.pkey\n"
+                            + "from\n"
+                            + "  business_servers bs,\n"
+                            + "  businesses bu\n"
+                            + "where\n"
+                            + "  bs.accounting=bu.accounting\n"
+                            + "  and bu.canceled is not null\n"
+                            + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
+                            now
+                        );
+                        for(int c=0;c<bss.size();c++) {
+                            int bs = bss.getInt(c);
+                            String accounting = conn.executeStringQuery("select accounting from business_servers where pkey=?", bs);
+                            int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
+                            if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
+                        }
+                    }
                 }
                 if(message.length()>0) MasterServer.reportWarning(message.toString());
             } catch(IOException err) {
