@@ -426,7 +426,7 @@ final public class IPAddressHandler {
             );
 
             conn.executeUpdate(
-                "update ip_addresses set available=true, price='0.00' where pkey=?",
+                "update ip_addresses set available=true where pkey=?",
                 ipAddress
             );
             invalidateList.addTable(

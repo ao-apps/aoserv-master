@@ -18,6 +18,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Automatically cleans out old account resources.  The resources are left in tact for one month before cleaning.
@@ -909,10 +910,10 @@ final public class AccountCleaner implements CronJob {
             for(SchemaTable.TableID tableId : SchemaTable.TableID.values()) {
                 List<Integer> affectedServers = invalidateList.getAffectedServers(tableId);
                 if(affectedServers==InvalidateList.allServers) {
-                    System.out.println("invalidate "+tableId.name().toString());
+                    System.out.println("invalidate "+tableId.name().toLowerCase(Locale.ENGLISH));
                 } else {
                     for(int pkey : affectedServers) {
-                        System.out.println("invalidate "+tableId.name().toString()+" "+pkey);
+                        System.out.println("invalidate "+tableId.name().toLowerCase(Locale.ENGLISH)+" "+pkey);
                     }
                 }
             }

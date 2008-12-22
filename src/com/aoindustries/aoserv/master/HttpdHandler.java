@@ -2026,6 +2026,28 @@ final public class HttpdHandler {
         }
     }
 
+    public static String getBusinessForHttpdServer(
+        MasterDatabaseConnection conn,
+        int pkey
+    ) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, HttpdHandler.class, "getBusinessForHttpdServer(MasterDatabaseConnection,int)", null);
+        try {
+            return conn.executeStringQuery(
+                "select\n"
+                + "  pk.accounting\n"
+                + "from\n"
+                + "  httpd_servers hs,\n"
+                + "  packages pk\n"
+                + "where\n"
+                + "  hs.pkey=?\n"
+                + "  and hs.package=pk.pkey",
+                pkey
+            );
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
     public static int getHttpdSiteForHttpdSiteBind(
         MasterDatabaseConnection conn,
         int pkey
@@ -2127,6 +2149,15 @@ final public class HttpdHandler {
         }
     }
 
+    public static int getAOServerForHttpdServer(MasterDatabaseConnection conn, int httpdServer) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, HttpdHandler.class, "getAOServerForHttpdServer(MasterDatabaseConnection,int)", null);
+        try {
+            return conn.executeIntQuery("select ao_server from httpd_servers where pkey=?", httpdServer);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
     public static String getSiteNameForHttpdSite(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, HttpdHandler.class, "getSiteNameForHttpdSite(MasterDatabaseConnection,int)", null);
         try {
@@ -2189,7 +2220,7 @@ final public class HttpdHandler {
 		Integer I=Integer.valueOf(pkey);
 		Boolean O=disabledHttpdSharedTomcats.get(I);
 		if(O!=null) return O.booleanValue();
-		boolean isDisabled=getDisableLogForHttpdSharedTomcat(conn, pkey)!=-1;;
+		boolean isDisabled=getDisableLogForHttpdSharedTomcat(conn, pkey)!=-1;
 		disabledHttpdSharedTomcats.put(I, isDisabled);
 		return isDisabled;
 	    }
@@ -2840,6 +2871,24 @@ final public class HttpdHandler {
             // httpd_sites
             conn.executeUpdate("delete from httpd_sites where pkey=?", httpdSitePKey);
             invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITES, accounting, aoServer, false);
+        } finally {
+            Profiler.endProfile(Profiler.UNKNOWN);
+        }
+    }
+
+    public static void removeHttpdServer(
+        MasterDatabaseConnection conn,
+        InvalidateList invalidateList,
+        int pkey
+    ) throws IOException, SQLException {
+        Profiler.startProfile(Profiler.UNKNOWN, HttpdHandler.class, "removeHttpdServer(MasterDatabaseConnection,InvalidateList,int)", null);
+        try {
+            String accounting = getBusinessForHttpdServer(conn, pkey);
+            int aoServer = getAOServerForHttpdServer(conn, pkey);
+
+            // httpd_sites
+            conn.executeUpdate("delete from httpd_servers where pkey=?", pkey);
+            invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SERVERS, accounting, aoServer, false);
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);
         }

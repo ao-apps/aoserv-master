@@ -939,6 +939,11 @@ final public class BusinessHandler {
         }
     }
 
+    /**
+     * Gets the depth of the business in the business tree.  root_accounting is at depth 1.
+     * 
+     * @return  the depth between 1 and Business.MAXIMUM_BUSINESS_TREE_DEPTH, inclusive.
+     */
     public static int getDepthInBusinessTree(MasterDatabaseConnection conn, String accounting) throws IOException, SQLException {
         Profiler.startProfile(Profiler.UNKNOWN, BusinessHandler.class, "getDepthInBusinessTree(MasterDatabaseConnection,String)", null);
         try {
@@ -948,6 +953,7 @@ final public class BusinessHandler {
                 depth++;
                 accounting=parent;
             }
+            if(depth<1 || depth>Business.MAXIMUM_BUSINESS_TREE_DEPTH) throw new SQLException("Unexpected depth: "+depth);
             return depth;
         } finally {
             Profiler.endProfile(Profiler.UNKNOWN);

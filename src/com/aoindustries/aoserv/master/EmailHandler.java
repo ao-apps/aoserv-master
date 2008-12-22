@@ -1758,7 +1758,7 @@ final public class EmailHandler {
             boolean addressesModified=size>0;
             for(int c=0;c<size;c++) {
                 int address=addresses.getInt(c);
-                conn.executeUpdate("delete from email_list_addresses where email_address=?", address);
+                conn.executeUpdate("delete from email_list_addresses where email_address=? and email_list=?", address, pkey);
                 if(!isEmailAddressUsed(conn, address)) {
                     conn.executeUpdate("delete from email_addresses where pkey=?", address);
                 }
@@ -1840,7 +1840,7 @@ final public class EmailHandler {
             boolean addressesModified=size>0;
             for(int c=0;c<size;c++) {
                 int address=addresses.getInt(c);
-                conn.executeUpdate("delete from email_pipe_addresses where email_address=?", address);
+                conn.executeUpdate("delete from email_pipe_addresses where email_address=? and email_pipe=?", address, pkey);
                 if(!isEmailAddressUsed(conn, address)) {
                     conn.executeUpdate("delete from email_addresses where pkey=?", address);
                 }

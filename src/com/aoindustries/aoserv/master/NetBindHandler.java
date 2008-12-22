@@ -435,6 +435,18 @@ final public class NetBindHandler {
         try {
             String business=getBusinessForNetBind(conn, pkey);
             int server=getServerForNetBind(conn, pkey);
+
+            if(conn.executeBooleanQuery("select (select net_bind from httpd_binds where net_bind=?) is not null", pkey)) {
+                conn.executeUpdate("delete from httpd_binds where net_bind=?", pkey);
+                invalidateList.addTable(
+                    conn,
+                    SchemaTable.TableID.HTTPD_BINDS,
+                    business,
+                    server,
+                    false
+                );
+            }
+
             if(conn.executeBooleanQuery("select (select net_bind from net_tcp_redirects where net_bind=?) is not null", pkey)) {
                 conn.executeUpdate("delete from net_tcp_redirects where net_bind=?", pkey);
                 invalidateList.addTable(
