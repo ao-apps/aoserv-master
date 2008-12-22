@@ -909,11 +909,13 @@ final public class AccountCleaner implements CronJob {
             cleanNow(invalidateList);
             for(SchemaTable.TableID tableId : SchemaTable.TableID.values()) {
                 List<Integer> affectedServers = invalidateList.getAffectedServers(tableId);
-                if(affectedServers==InvalidateList.allServers) {
-                    System.out.println("invalidate "+tableId.name().toLowerCase(Locale.ENGLISH));
-                } else {
-                    for(int pkey : affectedServers) {
-                        System.out.println("invalidate "+tableId.name().toLowerCase(Locale.ENGLISH)+" "+pkey);
+                if(affectedServers!=null) {
+                    if(affectedServers==InvalidateList.allServers) {
+                        System.out.println("invalidate "+tableId.name().toLowerCase(Locale.ENGLISH));
+                    } else {
+                        for(int pkey : affectedServers) {
+                            System.out.println("invalidate "+tableId.name().toLowerCase(Locale.ENGLISH)+" "+pkey);
+                        }
                     }
                 }
             }
