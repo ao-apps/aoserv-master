@@ -402,7 +402,6 @@ final public class DNSHandler implements CronJob {
                 pstmt.setString(6, destination);
                 if(ttl==-1) pstmt.setNull(7, Types.INTEGER);
                 else pstmt.setInt(7, ttl);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } catch(SQLException err) {
                 System.err.println("Error from query: "+pstmt.toString());
@@ -458,7 +457,6 @@ final public class DNSHandler implements CronJob {
                 pstmt.setString(4, DNSZone.DEFAULT_HOSTMASTER);
                 pstmt.setLong(5, DNSZone.getCurrentSerial());
                 pstmt.setInt(6, ttl);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } finally {
                 pstmt.close();
@@ -472,7 +470,6 @@ final public class DNSHandler implements CronJob {
                 pstmt.setString(3, "MX");
                 pstmt.setInt(4, 10);
                 pstmt.setString(5, "mail");
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } finally {
                 pstmt.close();
@@ -485,7 +482,6 @@ final public class DNSHandler implements CronJob {
                 pstmt.setString(2, "@");
                 pstmt.setString(3, "NS");
                 pstmt.setString(4, "ns1.aoindustries.com.");
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
 
                 // Add the ns2.aoindustries.com name server
@@ -493,7 +489,6 @@ final public class DNSHandler implements CronJob {
                 pstmt.setString(2, "@");
                 pstmt.setString(3, "NS");
                 pstmt.setString(4, "ns2.aoindustries.com.");
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
 
                 // Add the ns3.aoindustries.com name server
@@ -501,7 +496,6 @@ final public class DNSHandler implements CronJob {
                 pstmt.setString(2, "@");
                 pstmt.setString(3, "NS");
                 pstmt.setString(4, "ns3.aoindustries.com.");
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
 
                 // Add the ns4.aoindustries.com name server
@@ -509,7 +503,6 @@ final public class DNSHandler implements CronJob {
                 pstmt.setString(2, "@");
                 pstmt.setString(3, "NS");
                 pstmt.setString(4, "ns4.aoindustries.com.");
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
 
                 // Add the domain IP
@@ -517,7 +510,6 @@ final public class DNSHandler implements CronJob {
                 pstmt.setString(2, "@");
                 pstmt.setString(3, "A");
                 pstmt.setString(4, ip);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
 
                 // Add the ftp IP
@@ -525,7 +517,6 @@ final public class DNSHandler implements CronJob {
                 pstmt.setString(2, "ftp");
                 pstmt.setString(3, "A");
                 pstmt.setString(4, ip);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
 
                 // Add the mail IP
@@ -533,7 +524,6 @@ final public class DNSHandler implements CronJob {
                 pstmt.setString(2, "mail");
                 pstmt.setString(3, "A");
                 pstmt.setString(4, ip);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
 
                 // Add the www IP
@@ -541,7 +531,6 @@ final public class DNSHandler implements CronJob {
                 pstmt.setString(2, "www");
                 pstmt.setString(3, "A");
                 pstmt.setString(4, ip);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } finally {
                 pstmt.close();
@@ -576,7 +565,6 @@ final public class DNSHandler implements CronJob {
             PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_records where pkey=?");
             try {
                 pstmt.setInt(1, pkey);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } finally {
                 pstmt.close();
@@ -624,7 +612,6 @@ final public class DNSHandler implements CronJob {
             PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_records where zone=?");
             try {
                 pstmt.setString(1, zone);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } finally {
                 pstmt.close();
@@ -634,7 +621,6 @@ final public class DNSHandler implements CronJob {
             pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_zones where zone=?");
             try {
                 pstmt.setString(1, zone);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } finally {
                 pstmt.close();

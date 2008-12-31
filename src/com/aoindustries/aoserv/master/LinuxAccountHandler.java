@@ -1528,7 +1528,6 @@ final public class LinuxAccountHandler {
                 pstmt.setString(3, path);
                 pstmt.setBoolean(4, enabled);
                 pstmt.setInt(5, pkey);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } catch(SQLException err) {
                 System.err.println("Error from update: "+pstmt.toString());

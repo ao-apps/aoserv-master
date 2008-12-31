@@ -4361,6 +4361,24 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case GET_AO_SERVER_SYSTEM_TIME_MILLIS :
+                                        {
+                                            int aoServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ao_server_system_time_millis",
+                                                Integer.valueOf(aoServer)
+                                            );
+                                            long systemTime = AOServerHandler.getSystemTimeMillis(
+                                                conn,
+                                                source,
+                                                aoServer
+                                            );
+                                            resp1 = AOServProtocol.DONE;
+                                            resp2Long = systemTime;
+                                            hasResp2Long = true;
+                                            sendInvalidateList = false;
+                                        }
+                                        break;
                                     case GET_OBJECT :
                                         {
                                             int clientTableID=in.readCompressedInt();
@@ -8517,10 +8535,8 @@ public abstract class MasterServer {
             addStat(objs, MasterServerStat.DB_CONNECTS, Long.toString(dbPool.getConnects()), "Number of times connecting to the database");
             addStat(objs, MasterServerStat.DB_MAX_CONCURRENCY, Integer.toString(dbPool.getMaxConcurrency()), "Peak number of active database connections");
             addStat(objs, MasterServerStat.DB_POOL_SIZE, Integer.toString(dbPool.getPoolSize()), "Maximum number of database connections");
-            addStat(objs, MasterServerStat.DB_QUERIES, Long.toString(MasterDatabase.getDatabase().getQueryCount()), "Number of queries performed by the database");
             addStat(objs, MasterServerStat.DB_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(dbPool.getTotalTime()), "Total time spent accessing the database");
             addStat(objs, MasterServerStat.DB_TRANSACTIONS, Long.toString(dbPool.getTransactionCount()), "Number of transactions committed by the database");
-            addStat(objs, MasterServerStat.DB_UPDATES, Long.toString(MasterDatabase.getDatabase().getUpdateCount()), "Number of updates processed by the database");
 
             FifoFile entropyFile=RandomHandler.getFifoFile();
             addStat(objs, MasterServerStat.ENTROPY_AVAIL, Long.toString(entropyFile.getLength()), "Number of bytes of entropy currently available");
@@ -8635,7 +8651,6 @@ public abstract class MasterServer {
             try {
                 List<com.aoindustries.aoserv.client.MasterServer> v=new ArrayList<com.aoindustries.aoserv.client.MasterServer>();
                 pstmt.setString(1, username);
-                conn.incrementQueryCount();
                 ResultSet results=pstmt.executeQuery();
                 while(results.next()) {
                     com.aoindustries.aoserv.client.MasterServer ms=new com.aoindustries.aoserv.client.MasterServer();
@@ -8658,7 +8673,6 @@ public abstract class MasterServer {
                 Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
                 try {
                     Map<String,MasterUser> table=new HashMap<String,MasterUser>();
-                    conn.incrementQueryCount();
                     ResultSet results=stmt.executeQuery("select * from master_users where is_active");
                     while(results.next()) {
                         MasterUser mu=new MasterUser();
@@ -8683,7 +8697,6 @@ public abstract class MasterServer {
                 Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
                 try {
                     Map<String,List<String>> table=new HashMap<String,List<String>>();
-                    conn.incrementQueryCount();
                     ResultSet results=stmt.executeQuery("select mh.username, mh.host from master_hosts mh, master_users mu where mh.username=mu.username and mu.is_active");
                     while(results.next()) {
                         String un=results.getString(1);
@@ -8730,7 +8743,6 @@ public abstract class MasterServer {
         try {
             pstmt.setInt(1, param1);
             pstmt.setString(2, param2);
-            conn.incrementQueryCount();
             ResultSet results=pstmt.executeQuery();
             try {
                 if(results.next()) {
@@ -8762,7 +8774,6 @@ public abstract class MasterServer {
         PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
         try {
             pstmt.setInt(1, param1);
-            conn.incrementQueryCount();
             ResultSet results=pstmt.executeQuery();
             try {
                 if(results.next()) {
@@ -8796,7 +8807,6 @@ public abstract class MasterServer {
         try {
             pstmt.setString(1, param1);
             pstmt.setInt(2, param2);
-            conn.incrementQueryCount();
             ResultSet results=pstmt.executeQuery();
             try {
                 if(results.next()) {
@@ -8836,7 +8846,6 @@ public abstract class MasterServer {
             pstmt.setString(3, param3);
             pstmt.setString(4, param4);
             pstmt.setString(5, param5);
-            conn.incrementQueryCount();
             ResultSet results=pstmt.executeQuery();
             try {
                 if(results.next()) {
@@ -8880,7 +8889,6 @@ public abstract class MasterServer {
             pstmt.setInt(6, param6);
             pstmt.setString(7, param7);
             pstmt.setInt(8, param8);
-            conn.incrementQueryCount();
             ResultSet results=pstmt.executeQuery();
             try {
                 if(results.next()) {
@@ -8914,7 +8922,6 @@ public abstract class MasterServer {
         PreparedStatement pstmt=dbConn.prepareStatement("declare fetch_objects cursor for "+sql);
         try {
             DatabaseConnection.setParams(pstmt, params);
-            conn.incrementUpdateCount();
             pstmt.executeUpdate();
         } catch(SQLException err) {
             System.err.println("Error from select: "+pstmt.toString());
@@ -8964,7 +8971,6 @@ public abstract class MasterServer {
             PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
             try {
                 DatabaseConnection.setParams(pstmt, params);
-                conn.incrementQueryCount();
                 ResultSet results = pstmt.executeQuery();
                 try {
                     writeObjects(source, out, provideProgress, obj, results);
@@ -8993,7 +8999,6 @@ public abstract class MasterServer {
         PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
         try {
             pstmt.setString(1, param1);
-            conn.incrementQueryCount();
             ResultSet results=pstmt.executeQuery();
             try {
                 if(results.next()) {
@@ -9026,7 +9031,6 @@ public abstract class MasterServer {
         try {
             pstmt.setString(1, param1);
             pstmt.setTimestamp(2, param2);
-            conn.incrementQueryCount();
             ResultSet results=pstmt.executeQuery();
             try {
                 if(results.next()) {

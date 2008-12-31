@@ -113,7 +113,6 @@ final public class SignupHandler {
             pstmt.setInt(33, from);
             pstmt.setInt(34, recipient);
 
-            conn.incrementUpdateCount();
             pstmt.executeUpdate();
         } catch(SQLException err) {
             System.err.println("Error from query: "+pstmt.toString());
@@ -131,7 +130,6 @@ final public class SignupHandler {
                 pstmt.setString(2, name);
                 pstmt.setString(3, value);
 
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             }
         } catch(SQLException err) {

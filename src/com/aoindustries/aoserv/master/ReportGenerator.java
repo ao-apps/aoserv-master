@@ -279,7 +279,6 @@ final public class ReportGenerator implements CronJob {
                                             pstmt.addBatch();
                                         }
                                     }
-                                    conn.incrementUpdateCount();
                                     pstmt.executeBatch();
                                 } catch(SQLException err) {
                                     System.err.println("Error from update: "+pstmt.toString());

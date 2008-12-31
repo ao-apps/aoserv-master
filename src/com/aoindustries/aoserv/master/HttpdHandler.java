@@ -365,7 +365,6 @@ final public class HttpdHandler {
                 pstmt.setInt(13, debug);
                 pstmt.setString(14, workDir);
 
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } catch(SQLException err) {
                 System.err.println("Error from update: "+pstmt.toString());
@@ -440,7 +439,6 @@ final public class HttpdHandler {
                 pstmt.setInt(10, maxWait);
                 pstmt.setString(11, validationQuery);
 
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } catch(SQLException err) {
                 System.err.println("Error from update: "+pstmt.toString());
@@ -500,7 +498,6 @@ final public class HttpdHandler {
                 pstmt.setBoolean(5, override);
                 pstmt.setString(6, description);
 
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } catch(SQLException err) {
                 System.err.println("Error from update: "+pstmt.toString());
@@ -862,7 +859,6 @@ final public class HttpdHandler {
                 pstmt.setString(6, group);
                 pstmt.setString(7, serverAdmin);
                 pstmt.setString(8, contentSrc);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } catch(SQLException err) {
                 System.err.println("Error from query: "+pstmt.toString());
@@ -998,7 +994,6 @@ final public class HttpdHandler {
                     pstmt.setInt(5, rmiBind);
                     pstmt.setInt(6, hypersonicBind);
                     pstmt.setInt(7, jmxBind);
-                    conn.incrementUpdateCount();
                     pstmt.executeUpdate();
                 } catch(SQLException err) {
                     System.err.println("Error from query: "+pstmt.toString());
@@ -2376,7 +2371,6 @@ final public class HttpdHandler {
                 pstmt.setInt(1, aoServer);
                 pstmt.setInt(2, ipAddress);
                 pstmt.setInt(3, httpPort);
-                conn.incrementQueryCount();
                 ResultSet results=pstmt.executeQuery();
                 try {
                     if(results.next()) {
@@ -2418,7 +2412,6 @@ final public class HttpdHandler {
                     pstmt.setInt(4, ipAddress);
                     pstmt.setInt(5, httpPort);
                     pstmt.setString(6, protocol);
-                    conn.incrementUpdateCount();
                     pstmt.executeUpdate();
                 } finally {
                     pstmt.close();
@@ -2496,7 +2489,6 @@ final public class HttpdHandler {
                     pstmt.setBoolean(1, isTomcat4);
                     pstmt.setInt(2, aoServer);
                     pstmt.setString(3, packageName);
-                    conn.incrementQueryCount();
                     ResultSet results=pstmt.executeQuery();
                     try {
                         while(results.next()) {
@@ -3489,7 +3481,6 @@ final public class HttpdHandler {
                 pstmt.setString(12, workDir);
                 pstmt.setInt(13, pkey);
 
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } catch(SQLException err) {
                 System.err.println("Error from update: "+pstmt.toString());

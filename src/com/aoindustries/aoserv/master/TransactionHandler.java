@@ -507,7 +507,6 @@ final public class TransactionHandler {
                     :"W"
                 );
 
-                conn.incrementQueryCount();
                 ResultSet results=pstmt.executeQuery();
                 try {
                     MasterServer.writeObjects(source, out, provideProgress, new Transaction(), results);

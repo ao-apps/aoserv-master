@@ -193,7 +193,6 @@ final public class PackageHandler {
                 pstmt.setString(3, accounting);
                 pstmt.setInt(4, packageDefinition);
                 pstmt.setString(5, source.getUsername());
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } catch(SQLException err) {
                 throw new WrappedSQLException(err, pstmt);
@@ -265,7 +264,6 @@ final public class PackageHandler {
                 pstmt.setString(9, setupFeeTransactionType);
                 pstmt.setBigDecimal(10, new BigDecimal(SQLUtility.getDecimal(monthlyRate)));
                 pstmt.setString(11, monthlyRateTransactionType);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } finally {
                 pstmt.close();
@@ -450,7 +448,6 @@ final public class PackageHandler {
                 pstmt.setBigDecimal(9, new BigDecimal(SQLUtility.getDecimal(monthlyRate)));
                 pstmt.setString(10, monthlyRateTransactionType);
                 pstmt.setInt(11, pkey);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } catch(SQLException err) {
                 throw new WrappedSQLException(err, pstmt);

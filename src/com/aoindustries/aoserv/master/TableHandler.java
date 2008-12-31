@@ -5923,7 +5923,6 @@ final public class TableHandler {
                     try {
                         pstmt.setString(1, source.getProtocolVersion().getVersion());
 
-                        conn.incrementQueryCount();
                         ResultSet results=pstmt.executeQuery();
                         try {
                             int clientColumnIndex=0;
@@ -6012,7 +6011,6 @@ final public class TableHandler {
                     try {
                         pstmt.setString(1, source.getProtocolVersion().getVersion());
 
-                        conn.incrementQueryCount();
                         ResultSet results=pstmt.executeQuery();
                         try {
                             int clientTableID=0;

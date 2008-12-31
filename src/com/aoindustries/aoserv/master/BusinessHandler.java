@@ -241,7 +241,6 @@ final public class BusinessHandler {
 		    Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
 		    try {
 			Map<String,Set<String>> newCache = new HashMap<String,Set<String>>();
-			conn.incrementQueryCount();
 			ResultSet results=stmt.executeQuery("select username, permission from business_administrator_permissions");
 			while(results.next()) {
                             String username = results.getString(1);
@@ -489,7 +488,6 @@ final public class BusinessHandler {
                 pstmt.setString(15, state);
                 pstmt.setString(16, country);
                 pstmt.setString(17, zip);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } catch(SQLException err) {
                 System.err.println("Error from query: "+pstmt.toString());
@@ -593,7 +591,6 @@ final public class BusinessHandler {
                 pstmt.setString(17, billingEmail);
                 pstmt.setString(18, technicalContact);
                 pstmt.setString(19, technicalEmail);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } finally {
                 pstmt.close();
@@ -771,7 +768,6 @@ final public class BusinessHandler {
                 pstmt.setString(5, type);
                 if(transid==NoticeLog.NO_TRANSACTION) pstmt.setNull(6, Types.INTEGER);
                 else pstmt.setInt(6, transid);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } finally {
                 pstmt.close();
@@ -1487,7 +1483,6 @@ final public class BusinessHandler {
             PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from business_servers where pkey=?");
             try {
                 pstmt.setInt(1, pkey);
-                conn.incrementUpdateCount();
                 pstmt.executeUpdate();
             } finally {
                 pstmt.close();
@@ -1699,7 +1694,6 @@ final public class BusinessHandler {
 		    Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
 		    try {
 			Map<String,BusinessAdministrator> table=new HashMap<String,BusinessAdministrator>();
-			conn.incrementQueryCount();
 			ResultSet results=stmt.executeQuery("select * from business_administrators");
 			while(results.next()) {
 			    BusinessAdministrator ba=new BusinessAdministrator();
