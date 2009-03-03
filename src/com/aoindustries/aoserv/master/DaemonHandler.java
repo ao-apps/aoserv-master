@@ -25,7 +25,7 @@ final public class DaemonHandler {
      * The amount of time before a daemon will be accessed again once
      * flagged as unavailable.
      */
-    public static final int DAEMON_RETRY_DELAY=60*1000;
+    public static final int DAEMON_RETRY_DELAY=5*1000; // Used to be 60*1000
 
     private static final Map<Integer,AOServDaemonConnector> connectors=new HashMap<Integer,AOServDaemonConnector>();
 
