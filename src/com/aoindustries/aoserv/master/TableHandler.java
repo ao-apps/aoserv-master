@@ -39,7 +39,6 @@ import com.aoindustries.aoserv.client.DNSType;
 import com.aoindustries.aoserv.client.DNSZone;
 import com.aoindustries.aoserv.client.DaemonProfile;
 import com.aoindustries.aoserv.client.DisableLog;
-import com.aoindustries.aoserv.client.DiskType;
 import com.aoindustries.aoserv.client.DistroFile;
 import com.aoindustries.aoserv.client.DistroFileType;
 import com.aoindustries.aoserv.client.EmailAddress;
@@ -130,7 +129,6 @@ import com.aoindustries.aoserv.client.PrivateFTPServer;
 import com.aoindustries.aoserv.client.ProcessorType;
 import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.aoserv.client.Rack;
-import com.aoindustries.aoserv.client.RaidType;
 import com.aoindustries.aoserv.client.Resource;
 import com.aoindustries.aoserv.client.SchemaColumn;
 import com.aoindustries.aoserv.client.SchemaForeignKey;
@@ -1677,16 +1675,6 @@ final public class TableHandler {
                     + "  )\n"
                     + "  and bu1.accounting=dl.accounting",
                     username
-                );
-                break;
-            case DISK_TYPES :
-                MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new DiskType(),
-                    "select * from disk_types"
                 );
                 break;
             case DISTRO_FILE_TYPES :
@@ -5877,16 +5865,6 @@ final public class TableHandler {
                     //+ "    or bp.ao_server=ps.server\n"
                     + "  ) and ps.rack=ra.pkey",
                     username
-                );
-                break;
-            case RAID_TYPES :
-                MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new RaidType(),
-                    "select * from raid_types"
                 );
                 break;
             case RESOURCES :

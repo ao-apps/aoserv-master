@@ -165,7 +165,7 @@ final public class PackageHandler {
             String packageDefinitionBusiness=getBusinessForPackageDefinition(conn, packageDefinition);
             if(!packageDefinitionBusiness.equals(parent)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition #"+packageDefinition+" not owned by parent Business");
             if(!isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not approved: "+packageDefinition);
-            if(!isPackageDefinitionActive(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not active: "+packageDefinition);
+            //if(!isPackageDefinitionActive(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not active: "+packageDefinition);
 
             int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('packages_pkey_seq')");
             PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(

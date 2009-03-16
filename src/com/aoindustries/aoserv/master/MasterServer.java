@@ -368,6 +368,7 @@ public abstract class MasterServer {
                         boolean hasResp2LongArray=false;
 
                         String resp3String=null;
+                        String resp4String=null;
 
                         final boolean sendInvalidateList;
                         final MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
@@ -4293,6 +4294,25 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case GET_AO_SERVER_LVM_REPORT :
+                                        {
+                                            int aoServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ao_server_lvm_report",
+                                                Integer.valueOf(aoServer)
+                                            );
+                                            String[] report = AOServerHandler.getLvmReport(
+                                                conn,
+                                                source,
+                                                aoServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=report[0];
+                                            resp3String=report[1];
+                                            resp4String=report[2];
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case GET_AO_SERVER_HDD_TEMP_REPORT :
                                         {
                                             int aoServer = in.readCompressedInt();
@@ -7946,6 +7966,7 @@ public abstract class MasterServer {
                             for(int c=0;c<resp2LongArray.length;c++) out.writeLong(resp2LongArray[c]);
                         }
                         if(resp3String!=null) out.writeUTF(resp3String);
+                        if(resp4String!=null) out.writeUTF(resp4String);
 
                         // Write the invalidate list
                         if(sendInvalidateList) {

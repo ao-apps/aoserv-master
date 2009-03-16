@@ -224,6 +224,12 @@ final public class AOServerHandler {
         return DaemonHandler.getDaemonConnector(conn, aoServer).getDrbdReport();
     }
 
+    public static String[] getLvmReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        ServerHandler.checkAccessServer(conn, source, "getLvmReport", aoServer);
+
+        return DaemonHandler.getDaemonConnector(conn, aoServer).getLvmReport();
+    }
+
     public static String getHddTempReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getHddTempReport", aoServer);
 
