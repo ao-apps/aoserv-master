@@ -236,6 +236,12 @@ final public class AOServerHandler {
         return DaemonHandler.getDaemonConnector(conn, aoServer).getHddTempReport();
     }
 
+    public static String getHddModelReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        ServerHandler.checkAccessServer(conn, source, "getHddModelReport", aoServer);
+
+        return DaemonHandler.getDaemonConnector(conn, aoServer).getHddModelReport();
+    }
+
     public static String getFilesystemsCsvReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getFilesystemsCsvReport", aoServer);
 

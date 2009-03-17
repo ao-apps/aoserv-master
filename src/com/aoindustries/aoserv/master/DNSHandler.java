@@ -20,7 +20,6 @@ import com.aoindustries.profiler.Profiler;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
-import com.aoindustries.util.WrappedException;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;

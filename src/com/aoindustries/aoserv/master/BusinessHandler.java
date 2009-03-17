@@ -22,7 +22,6 @@ import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
-import com.aoindustries.util.UnixCrypt;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -1571,8 +1570,12 @@ final public class BusinessHandler {
                 if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
             }
 
-            String encrypted=plaintext==null || plaintext.length()==0?BusinessAdministrator.NO_PASSWORD:UnixCrypt.crypt(plaintext);
-            
+            String encrypted =
+                plaintext==null || plaintext.length()==0
+                ? BusinessAdministrator.NO_PASSWORD
+                : BusinessAdministrator.hash(plaintext)
+            ;
+
             String accounting=UsernameHandler.getBusinessForUsername(conn, username);
             conn.executeUpdate("update business_administrators set password=? where username=?", encrypted, username);
             

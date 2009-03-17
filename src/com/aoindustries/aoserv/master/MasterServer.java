@@ -40,10 +40,8 @@ import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
 import com.aoindustries.util.ThreadUtility;
 import com.aoindustries.util.UnixCrypt;
-import com.aoindustries.util.WrappedException;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.sql.Connection;
@@ -174,17 +172,9 @@ public abstract class MasterServer {
 
     abstract public String getProtocol();
 
-    private static Random random;
+    private static final Random random = new SecureRandom();
     public static Random getRandom() {
-        synchronized(MasterServer.class) {
-            String algorithm="SHA1PRNG";
-            try {
-                if(random==null) random=SecureRandom.getInstance(algorithm);
-                return random;
-            } catch(NoSuchAlgorithmException err) {
-                throw new WrappedException(err, new Object[] {"algorithm="+algorithm});
-            }
-        }
+        return random;
     }
 
     public static int getRequestConcurrency() {
@@ -4321,6 +4311,23 @@ public abstract class MasterServer {
                                                 Integer.valueOf(aoServer)
                                             );
                                             String report = AOServerHandler.getHddTempReport(
+                                                conn,
+                                                source,
+                                                aoServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=report;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_AO_SERVER_HDD_MODEL_REPORT :
+                                        {
+                                            int aoServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ao_server_hdd_model_report",
+                                                Integer.valueOf(aoServer)
+                                            );
+                                            String report = AOServerHandler.getHddModelReport(
                                                 conn,
                                                 source,
                                                 aoServer
