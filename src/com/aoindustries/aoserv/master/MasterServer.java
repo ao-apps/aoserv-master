@@ -39,7 +39,6 @@ import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
 import com.aoindustries.util.ThreadUtility;
-import com.aoindustries.util.UnixCrypt;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.security.SecureRandom;
@@ -8446,7 +8445,7 @@ public abstract class MasterServer {
         if(
             correctCrypted==null
             || correctCrypted.length()<=2
-            || !UnixCrypt.crypt(password, correctCrypted.substring(0,2)).equals(correctCrypted)
+            || !BusinessAdministrator.passwordMatches(password, correctCrypted)
         ) return "Connection attempted with invalid password";
 
         // If connectAs is not authenticateAs, must be authenticated with switch user permissions
