@@ -15,10 +15,7 @@ import com.aoindustries.creditcards.CreditCardProcessor;
 import com.aoindustries.creditcards.MerchantServicesProviderFactory;
 import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
-import com.aoindustries.cron.CronDaemon;
-import com.aoindustries.cron.CronJob;
 import com.aoindustries.email.ProcessTimer;
-import com.aoindustries.profiler.Profiler;
 import com.aoindustries.sql.WrappedSQLException;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -57,76 +54,52 @@ final public class CreditCardHandler /*implements CronJob*/ {
 
     public static void start() {
         /*
-        Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "start()", null);
-        try {
-            synchronized(System.out) {
-                if(!started) {
-                    System.out.print("Starting CreditCardHandler: ");
-                    CronDaemon.addCronJob(new CreditCardHandler(), MasterServer.getErrorHandler());
-                    started=true;
-                    System.out.println("Done");
-                }
+        synchronized(System.out) {
+            if(!started) {
+                System.out.print("Starting CreditCardHandler: ");
+                CronDaemon.addCronJob(new CreditCardHandler(), MasterServer.getErrorHandler());
+                started=true;
+                System.out.println("Done");
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }*/
+        }
+        */
     }
 
     public static void checkAccessCreditCard(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, CreditCardHandler.class, "checkAccessCreditCard(MasterDatabaseConnection,RequestSource,String,int)", null);
-        try {
-            BusinessHandler.checkPermission(conn, source, action, AOServPermission.Permission.get_credit_cards);
-            BusinessHandler.checkAccessBusiness(
-                conn,
-                source,
-                action,
-                getBusinessForCreditCard(conn, pkey)
-            );
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        BusinessHandler.checkPermission(conn, source, action, AOServPermission.Permission.get_credit_cards);
+        BusinessHandler.checkAccessBusiness(
+            conn,
+            source,
+            action,
+            getBusinessForCreditCard(conn, pkey)
+        );
     }
 
     public static void checkAccessCreditCardProcessor(MasterDatabaseConnection conn, RequestSource source, String action, String processor) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, CreditCardHandler.class, "checkAccessCreditCardProcessor(MasterDatabaseConnection,RequestSource,String,String)", null);
-        try {
-            BusinessHandler.checkAccessBusiness(
-                conn,
-                source,
-                action,
-                getBusinessForCreditCardProcessor(conn, processor)
-            );
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        BusinessHandler.checkAccessBusiness(
+            conn,
+            source,
+            action,
+            getBusinessForCreditCardProcessor(conn, processor)
+        );
     }
 
     public static void checkAccessCreditCardTransaction(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, CreditCardHandler.class, "checkAccessCreditCardTransaction(MasterDatabaseConnection,RequestSource,String,int)", null);
-        try {
-            checkAccessCreditCardProcessor(
-                conn,
-                source,
-                action,
-                getCreditCardProcessorForCreditCardTransaction(conn, pkey)
-            );
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        checkAccessCreditCardProcessor(
+            conn,
+            source,
+            action,
+            getCreditCardProcessorForCreditCardTransaction(conn, pkey)
+        );
     }
 
     public static void checkAccessEncryptionKey(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, CreditCardHandler.class, "checkAccessEncryptionKey(MasterDatabaseConnection,RequestSource,String,int)", null);
-        try {
-            BusinessHandler.checkAccessBusiness(
-                conn,
-                source,
-                action,
-                getBusinessForEncryptionKey(conn, pkey)
-            );
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        BusinessHandler.checkAccessBusiness(
+            conn,
+            source,
+            action,
+            getBusinessForEncryptionKey(conn, pkey)
+        );
     }
 
     /**
@@ -240,64 +213,39 @@ final public class CreditCardHandler /*implements CronJob*/ {
         int pkey,
         String reason
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "creditCardDeclined(MasterDatabaseConnection,RequestSource,InvalidateList,int,String)", null);
-        try {
-            BankAccountHandler.checkAccounting(conn, source, "creditCardDeclined");
-            checkAccessCreditCard(conn, source, "creditCardDeclined", pkey);
+        BankAccountHandler.checkAccounting(conn, source, "creditCardDeclined");
+        checkAccessCreditCard(conn, source, "creditCardDeclined", pkey);
 
-            conn.executeUpdate(
-                "update credit_cards set active=false, deactivated_on=now(), deactivate_reason=? where credit_cards.pkey=?",
-                reason,
-                pkey
-            );
+        conn.executeUpdate(
+            "update credit_cards set active=false, deactivated_on=now(), deactivate_reason=? where credit_cards.pkey=?",
+            reason,
+            pkey
+        );
 
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.CREDIT_CARDS,
-                CreditCardHandler.getBusinessForCreditCard(conn, pkey),
-                InvalidateList.allServers,
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        // Notify all clients of the update
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.CREDIT_CARDS,
+            CreditCardHandler.getBusinessForCreditCard(conn, pkey),
+            InvalidateList.allServers,
+            false
+        );
     }
 
     public static String getBusinessForCreditCard(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "getBusinessForCreditCard(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeStringQuery("select accounting from credit_cards where pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select accounting from credit_cards where pkey=?", pkey);
     }
 
     public static String getBusinessForCreditCardProcessor(MasterDatabaseConnection conn, String processor) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "getBusinessForCreditCardProcessor(MasterDatabaseConnection,String)", null);
-        try {
-            return conn.executeStringQuery("select accounting from credit_card_processors where provider_id=?", processor);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select accounting from credit_card_processors where provider_id=?", processor);
     }
 
     public static String getCreditCardProcessorForCreditCardTransaction(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "getCreditCardProcessorForCreditCardTransaction(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeStringQuery("select processor_id from credit_card_transactions where pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select processor_id from credit_card_transactions where pkey=?", pkey);
     }
 
     public static String getBusinessForEncryptionKey(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "getBusinessForEncryptionKey(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeStringQuery("select accounting from encryption_keys where pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select accounting from encryption_keys where pkey=?", pkey);
     }
 
     public static void removeCreditCard(
@@ -306,15 +254,10 @@ final public class CreditCardHandler /*implements CronJob*/ {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, CreditCardHandler.class, "removeCreditCard(MasterDatabaseConnection,RequestSource,InvalidateList,int)", null);
-        try {
-            BusinessHandler.checkPermission(conn, source, "removeCreditCard", AOServPermission.Permission.delete_credit_card);
-            checkAccessCreditCard(conn, source, "removeCreditCard", pkey);
+        BusinessHandler.checkPermission(conn, source, "removeCreditCard", AOServPermission.Permission.delete_credit_card);
+        checkAccessCreditCard(conn, source, "removeCreditCard", pkey);
 
-            removeCreditCard(conn, invalidateList, pkey);
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        removeCreditCard(conn, invalidateList, pkey);
     }
 
     public static void removeCreditCard(
@@ -322,24 +265,19 @@ final public class CreditCardHandler /*implements CronJob*/ {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, CreditCardHandler.class, "removeCreditCard(MasterDatabaseConnection,InvalidateList,int)", null);
-        try {
-            // Grab values for later use
-            String business=getBusinessForCreditCard(conn, pkey);
+        // Grab values for later use
+        String business=getBusinessForCreditCard(conn, pkey);
 
-            // Update the database
-            conn.executeUpdate("delete from credit_cards where pkey=?", pkey);
+        // Update the database
+        conn.executeUpdate("delete from credit_cards where pkey=?", pkey);
 
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.CREDIT_CARDS,
-                business,
-                BusinessHandler.getServersForBusiness(conn, business),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.CREDIT_CARDS,
+            business,
+            BusinessHandler.getServersForBusiness(conn, business),
+            false
+        );
     }
     
     public static void updateCreditCard(
@@ -1262,388 +1200,383 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     private static void processAutomaticPayments(int month, int year) {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "processAutomaticPayments(int,int)", null);
+        System.err.println("DEBUG: month="+year+"-"+month);
         try {
-            System.err.println("DEBUG: month="+year+"-"+month);
+            ProcessTimer timer=new ProcessTimer(
+                MasterServer.getRandom(),
+                MasterConfiguration.getWarningSmtpServer(),
+                MasterConfiguration.getWarningEmailFrom(),
+                MasterConfiguration.getWarningEmailTo(),
+                "CreditCardHandler - Process Automatic Payments",
+                "Processes the automatic payments for the month",
+                TIMER_MAX_TIME,
+                TIMER_REMINDER_INTERVAL
+            );
             try {
-                ProcessTimer timer=new ProcessTimer(
-                    MasterServer.getRandom(),
-                    MasterConfiguration.getWarningSmtpServer(),
-                    MasterConfiguration.getWarningEmailFrom(),
-                    MasterConfiguration.getWarningEmailTo(),
-                    "CreditCardHandler - Process Automatic Payments",
-                    "Processes the automatic payments for the month",
-                    TIMER_MAX_TIME,
-                    TIMER_REMINDER_INTERVAL
-                );
+                timer.start();
+
+                // Find the beginning of the next month (for transaction search)
+                Calendar beginningOfNextMonth = Calendar.getInstance();
+                beginningOfNextMonth.set(Calendar.YEAR, year);
+                beginningOfNextMonth.set(Calendar.MONTH, month-1);
+                beginningOfNextMonth.set(Calendar.DAY_OF_MONTH, 1);
+                beginningOfNextMonth.set(Calendar.HOUR_OF_DAY, 0);
+                beginningOfNextMonth.set(Calendar.MINUTE, 0);
+                beginningOfNextMonth.set(Calendar.SECOND, 0);
+                beginningOfNextMonth.set(Calendar.MILLISECOND, 0);
+                beginningOfNextMonth.add(Calendar.MONTH, 1);
+
+                // Find the last minute of the current month
+                Calendar lastMinuteOfTheMonth = (Calendar)beginningOfNextMonth.clone();
+                lastMinuteOfTheMonth.add(Calendar.MINUTE, -1);
+
+                // Start the transaction
+                InvalidateList invalidateList=new InvalidateList();
+                MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
                 try {
-                    timer.start();
-
-                    // Find the beginning of the next month (for transaction search)
-                    Calendar beginningOfNextMonth = Calendar.getInstance();
-                    beginningOfNextMonth.set(Calendar.YEAR, year);
-                    beginningOfNextMonth.set(Calendar.MONTH, month-1);
-                    beginningOfNextMonth.set(Calendar.DAY_OF_MONTH, 1);
-                    beginningOfNextMonth.set(Calendar.HOUR_OF_DAY, 0);
-                    beginningOfNextMonth.set(Calendar.MINUTE, 0);
-                    beginningOfNextMonth.set(Calendar.SECOND, 0);
-                    beginningOfNextMonth.set(Calendar.MILLISECOND, 0);
-                    beginningOfNextMonth.add(Calendar.MONTH, 1);
-
-                    // Find the last minute of the current month
-                    Calendar lastMinuteOfTheMonth = (Calendar)beginningOfNextMonth.clone();
-                    lastMinuteOfTheMonth.add(Calendar.MINUTE, -1);
-
-                    // Start the transaction
-                    InvalidateList invalidateList=new InvalidateList();
-                    MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                    boolean connRolledBack=false;
                     try {
-                        boolean connRolledBack=false;
+                        // Find the accounting code, credit_card pkey, and account balances of all businesses that have a credit card set for automatic payments (and is active)
+                        List<AutomaticPayment> automaticPayments = new ArrayList<AutomaticPayment>();
+                        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
+                            "select\n"
+                            + "  bu.accounting,\n"
+                            + "  endofmonth.balance as endofmonth,\n"
+                            + "  current.balance as current,\n"
+                            + "  cc.pkey,\n"
+                            + "  cc.card_info,\n"
+                            + "  cc.principal_name,\n"
+                            + "  cc.group_name,\n"
+                            + "  cc.provider_unique_id,\n"
+                            + "  cc.first_name,\n"
+                            + "  cc.last_name,\n"
+                            + "  cc.company_name,\n"
+                            + "  cc.email,\n"
+                            + "  cc.phone,\n"
+                            + "  cc.fax,\n"
+                            + "  cc.customer_tax_id,\n"
+                            + "  cc.street_address1,\n"
+                            + "  cc.street_address2,\n"
+                            + "  cc.city,\n"
+                            + "  cc.state,\n"
+                            + "  cc.postal_code,\n"
+                            + "  cc.country_code,\n"
+                            + "  cc.description,\n"
+                            + "  ccp.provider_id,\n"
+                            + "  ccp.class_name,\n"
+                            + "  ccp.param1,\n"
+                            + "  ccp.param2,\n"
+                            + "  ccp.param3,\n"
+                            + "  ccp.param4\n"
+                            + "from\n"
+                            + "  businesses bu,\n"
+                            + "  (\n"
+                            + "    select\n"
+                            + "      bu.accounting,\n"
+                            + "      coalesce(sum(cast((tr.rate*tr.quantity) as decimal(9,2))), 0) as balance\n"
+                            + "    from\n"
+                            + "      businesses bu\n"
+                            + "      left outer join transactions tr on bu.accounting=tr.accounting\n"
+                            + "    where\n"
+                            + "      tr.payment_confirmed!='N'"
+                            + "      and tr.time<?\n"
+                            + "    group by\n"
+                            + "      bu.accounting\n"
+                            + "  ) as endofmonth,\n"
+                            + "  (\n"
+                            + "    select\n"
+                            + "      bu.accounting,\n"
+                            + "      coalesce(sum(cast((tr.rate*tr.quantity) as decimal(9,2))), 0) as balance\n"
+                            + "    from\n"
+                            + "      businesses bu\n"
+                            + "      left outer join transactions tr on bu.accounting=tr.accounting\n"
+                            + "    where\n"
+                            + "      tr.payment_confirmed!='N'"
+                            + "    group by\n"
+                            + "      bu.accounting\n"
+                            + "  ) as current,\n"
+                            + "  credit_cards cc,\n"
+                            + "  credit_card_processors ccp\n"
+                            + "where\n"
+                            + "  bu.accounting=cc.accounting"
+                            + "  and bu.accounting=endofmonth.accounting\n"
+                            + "  and bu.accounting=current.accounting\n"
+                            + "  and cc.use_monthly\n"
+                            + "  and cc.active\n"
+                            + "  and cc.processor_id=ccp.provider_id\n"
+                            + "  and ccp.enabled\n"
+                            + "order by\n"
+                            + "  bu.accounting\n"
+                        );
                         try {
-                            // Find the accounting code, credit_card pkey, and account balances of all businesses that have a credit card set for automatic payments (and is active)
-                            List<AutomaticPayment> automaticPayments = new ArrayList<AutomaticPayment>();
-                            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
-                                "select\n"
-                                + "  bu.accounting,\n"
-                                + "  endofmonth.balance as endofmonth,\n"
-                                + "  current.balance as current,\n"
-                                + "  cc.pkey,\n"
-                                + "  cc.card_info,\n"
-                                + "  cc.principal_name,\n"
-                                + "  cc.group_name,\n"
-                                + "  cc.provider_unique_id,\n"
-                                + "  cc.first_name,\n"
-                                + "  cc.last_name,\n"
-                                + "  cc.company_name,\n"
-                                + "  cc.email,\n"
-                                + "  cc.phone,\n"
-                                + "  cc.fax,\n"
-                                + "  cc.customer_tax_id,\n"
-                                + "  cc.street_address1,\n"
-                                + "  cc.street_address2,\n"
-                                + "  cc.city,\n"
-                                + "  cc.state,\n"
-                                + "  cc.postal_code,\n"
-                                + "  cc.country_code,\n"
-                                + "  cc.description,\n"
-                                + "  ccp.provider_id,\n"
-                                + "  ccp.class_name,\n"
-                                + "  ccp.param1,\n"
-                                + "  ccp.param2,\n"
-                                + "  ccp.param3,\n"
-                                + "  ccp.param4\n"
-                                + "from\n"
-                                + "  businesses bu,\n"
-                                + "  (\n"
-                                + "    select\n"
-                                + "      bu.accounting,\n"
-                                + "      coalesce(sum(cast((tr.rate*tr.quantity) as decimal(9,2))), 0) as balance\n"
-                                + "    from\n"
-                                + "      businesses bu\n"
-                                + "      left outer join transactions tr on bu.accounting=tr.accounting\n"
-                                + "    where\n"
-                                + "      tr.payment_confirmed!='N'"
-                                + "      and tr.time<?\n"
-                                + "    group by\n"
-                                + "      bu.accounting\n"
-                                + "  ) as endofmonth,\n"
-                                + "  (\n"
-                                + "    select\n"
-                                + "      bu.accounting,\n"
-                                + "      coalesce(sum(cast((tr.rate*tr.quantity) as decimal(9,2))), 0) as balance\n"
-                                + "    from\n"
-                                + "      businesses bu\n"
-                                + "      left outer join transactions tr on bu.accounting=tr.accounting\n"
-                                + "    where\n"
-                                + "      tr.payment_confirmed!='N'"
-                                + "    group by\n"
-                                + "      bu.accounting\n"
-                                + "  ) as current,\n"
-                                + "  credit_cards cc,\n"
-                                + "  credit_card_processors ccp\n"
-                                + "where\n"
-                                + "  bu.accounting=cc.accounting"
-                                + "  and bu.accounting=endofmonth.accounting\n"
-                                + "  and bu.accounting=current.accounting\n"
-                                + "  and cc.use_monthly\n"
-                                + "  and cc.active\n"
-                                + "  and cc.processor_id=ccp.provider_id\n"
-                                + "  and ccp.enabled\n"
-                                + "order by\n"
-                                + "  bu.accounting\n"
-                            );
+                            pstmt.setTimestamp(1, new Timestamp(beginningOfNextMonth.getTimeInMillis()));
+                            ResultSet results = pstmt.executeQuery();
+                            BigDecimal total = BigDecimal.ZERO;
                             try {
-                                pstmt.setTimestamp(1, new Timestamp(beginningOfNextMonth.getTimeInMillis()));
-                                ResultSet results = pstmt.executeQuery();
-                                BigDecimal total = BigDecimal.ZERO;
-                                try {
-                                    // Look for duplicate accounting codes and report a warning
-                                    String lastAccounting = null;
-                                    while(results.next()) {
-                                        String accounting = results.getString(1);
-                                        if(accounting.equals(lastAccounting)) {
-                                            MasterServer.reportWarning("More than one credit card marked as automatic for accounting="+accounting+", using the first one found");
-                                        } else {
-                                            lastAccounting = accounting;
-                                            BigDecimal endofmonth = results.getBigDecimal(2);
-                                            BigDecimal current = results.getBigDecimal(3);
-                                            if(
-                                                endofmonth.compareTo(BigDecimal.ZERO)>0
-                                                && current.compareTo(BigDecimal.ZERO)>0
-                                            ) {
-                                                BigDecimal amount = endofmonth.compareTo(current)<=0 ? endofmonth : current;
-                                                total = total.add(amount);
-                                                automaticPayments.add(
-                                                    new AutomaticPayment(
-                                                        accounting,
-                                                        amount,
-                                                        results.getInt(4),
-                                                        results.getString(5),
-                                                        results.getString(6),
-                                                        results.getString(7),
-                                                        results.getString(8),
-                                                        results.getString(9),
-                                                        results.getString(10),
-                                                        results.getString(11),
-                                                        results.getString(12),
-                                                        results.getString(13),
-                                                        results.getString(14),
-                                                        results.getString(15),
-                                                        results.getString(16),
-                                                        results.getString(17),
-                                                        results.getString(18),
-                                                        results.getString(19),
-                                                        results.getString(20),
-                                                        results.getString(21),
-                                                        results.getString(22),
-                                                        results.getString(23),
-                                                        results.getString(24),
-                                                        results.getString(25),
-                                                        results.getString(26),
-                                                        results.getString(27),
-                                                        results.getString(28)
-                                                    )
-                                                );
-                                            }
+                                // Look for duplicate accounting codes and report a warning
+                                String lastAccounting = null;
+                                while(results.next()) {
+                                    String accounting = results.getString(1);
+                                    if(accounting.equals(lastAccounting)) {
+                                        MasterServer.reportWarning("More than one credit card marked as automatic for accounting="+accounting+", using the first one found");
+                                    } else {
+                                        lastAccounting = accounting;
+                                        BigDecimal endofmonth = results.getBigDecimal(2);
+                                        BigDecimal current = results.getBigDecimal(3);
+                                        if(
+                                            endofmonth.compareTo(BigDecimal.ZERO)>0
+                                            && current.compareTo(BigDecimal.ZERO)>0
+                                        ) {
+                                            BigDecimal amount = endofmonth.compareTo(current)<=0 ? endofmonth : current;
+                                            total = total.add(amount);
+                                            automaticPayments.add(
+                                                new AutomaticPayment(
+                                                    accounting,
+                                                    amount,
+                                                    results.getInt(4),
+                                                    results.getString(5),
+                                                    results.getString(6),
+                                                    results.getString(7),
+                                                    results.getString(8),
+                                                    results.getString(9),
+                                                    results.getString(10),
+                                                    results.getString(11),
+                                                    results.getString(12),
+                                                    results.getString(13),
+                                                    results.getString(14),
+                                                    results.getString(15),
+                                                    results.getString(16),
+                                                    results.getString(17),
+                                                    results.getString(18),
+                                                    results.getString(19),
+                                                    results.getString(20),
+                                                    results.getString(21),
+                                                    results.getString(22),
+                                                    results.getString(23),
+                                                    results.getString(24),
+                                                    results.getString(25),
+                                                    results.getString(26),
+                                                    results.getString(27),
+                                                    results.getString(28)
+                                                )
+                                            );
                                         }
                                     }
-                                } finally {
-                                    results.close();
                                 }
-                                System.out.println("Processing a total of $"+total);
-                            } catch(SQLException err) {
-                                throw new WrappedSQLException(err, pstmt);
                             } finally {
-                                pstmt.close();
+                                results.close();
                             }
-                            // Only need to create the persistence once per DB transaction
-                            MasterPersistenceMechanism masterPersistenceMechanism = new MasterPersistenceMechanism(conn, invalidateList);
-                            for(AutomaticPayment automaticPayment : automaticPayments) {
-                                System.out.println("accounting="+automaticPayment.accounting);
-                                System.out.println("    amount="+automaticPayment.amount);
-                                // Find the processor
-                                CreditCardProcessor processor = new CreditCardProcessor(
-                                    MerchantServicesProviderFactory.getMerchantServicesProvider(
-                                        automaticPayment.ccpProviderId,
-                                        automaticPayment.ccpClassName,
-                                        automaticPayment.ccpParam1,
-                                        automaticPayment.ccpParam2,
-                                        automaticPayment.ccpParam3,
-                                        automaticPayment.ccpParam4
-                                    ),
-                                    masterPersistenceMechanism
-                                );
-                                System.out.println("    processor="+processor.getProviderId());
-
-                                // Add as pending transaction
-                                String paymentTypeName;
-                                String cardInfo = automaticPayment.ccCardInfo;
-                                if(cardInfo.startsWith("34") || cardInfo.startsWith("37")) {
-                                    paymentTypeName = PaymentType.AMEX;
-                                } else if(cardInfo.startsWith("60")) {
-                                    paymentTypeName = PaymentType.DISCOVER;
-                                } else if(cardInfo.startsWith("51") || cardInfo.startsWith("52") || cardInfo.startsWith("53") || cardInfo.startsWith("54") || cardInfo.startsWith("55")) {
-                                    paymentTypeName = PaymentType.MASTERCARD;
-                                } else if(cardInfo.startsWith("4")) {
-                                    paymentTypeName = PaymentType.VISA;
-                                } else {
-                                    paymentTypeName = null;
-                                }
-                                int transID = TransactionHandler.addTransaction(
-                                    conn,
-                                    invalidateList,
-                                    new Timestamp(lastMinuteOfTheMonth.getTimeInMillis()),
-                                    automaticPayment.accounting,
-                                    automaticPayment.accounting,
-                                    "aoserv",
-                                    TransactionType.PAYMENT,
-                                    "Monthly automatic billing",
-                                    new BigDecimal("1.000"),
-                                    automaticPayment.amount.negate(),
-                                    paymentTypeName,
-                                    cardInfo,
-                                    automaticPayment.ccpProviderId,
-                                    com.aoindustries.aoserv.client.Transaction.WAITING_CONFIRMATION
-                                );
-                                conn.commit();
-
-                                // Process payment
-                                Transaction transaction = processor.sale(
-                                    null,
-                                    null,
-                                    new TransactionRequest(
-                                        Locale.getDefault(),
-                                        false,
-                                        InetAddress.getLocalHost().getHostAddress(),
-                                        120,
-                                        Integer.toString(transID),
-                                        TransactionRequest.CurrencyCode.USD,
-                                        automaticPayment.amount,
-                                        null,
-                                        false,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        false,
-                                        null,
-                                        null,
-                                        null,
-                                        "Monthly automatic billing"
-                                    ),
-                                    new CreditCard(
-                                        Locale.getDefault(),
-                                        Integer.toString(automaticPayment.ccPkey),
-                                        automaticPayment.ccPrincipalName,
-                                        automaticPayment.ccGroupName,
-                                        automaticPayment.ccpProviderId,
-                                        automaticPayment.ccProviderUniqueId,
-                                        null,
-                                        automaticPayment.ccCardInfo,
-                                        (byte)-1,
-                                        (short)-1,
-                                        null,
-                                        automaticPayment.ccFirstName,
-                                        automaticPayment.ccLastName,
-                                        automaticPayment.ccCompanyName,
-                                        automaticPayment.ccEmail,
-                                        automaticPayment.ccPhone,
-                                        automaticPayment.ccFax,
-                                        null,
-                                        automaticPayment.ccCustomerTaxId,
-                                        automaticPayment.ccStreetAddress1,
-                                        automaticPayment.ccStreetAddress2,
-                                        automaticPayment.ccCity,
-                                        automaticPayment.ccState,
-                                        automaticPayment.ccPostalCode,
-                                        automaticPayment.ccCountryCode,
-                                        automaticPayment.ccComments
-                                    ),
-                                    Locale.getDefault()
-                                );
-
-                                AuthorizationResult authorizationResult = transaction.getAuthorizationResult();
-                                switch(authorizationResult.getCommunicationResult()) {
-                                    case LOCAL_ERROR :
-                                    case IO_ERROR :
-                                    case GATEWAY_ERROR :
-                                    {
-                                        // Update transaction as failed
-                                        //     TODO: Deactivate the card if this is the 3rd consecutive failure
-                                        //     TODO: Notify customer
-                                        TransactionHandler.transactionDeclined(
-                                            conn,
-                                            invalidateList,
-                                            transID,
-                                            Integer.parseInt(transaction.getPersistenceUniqueId())
-                                        );
-                                        conn.commit();
-                                        System.out.println("    Result: Error");
-                                        break;
-                                    }
-                                    case SUCCESS :
-                                        // Check approval result
-                                        switch(authorizationResult.getApprovalResult()) {
-                                            case HOLD :
-                                                // Update transaction
-                                                TransactionHandler.transactionHeld(
-                                                    conn,
-                                                    invalidateList,
-                                                    transID,
-                                                    Integer.parseInt(transaction.getPersistenceUniqueId())
-                                                );
-                                                conn.commit();
-                                                System.out.println("    Result: Hold");
-                                                System.out.println("    Review Reason: "+authorizationResult.getReviewReason());
-                                                break;
-                                            case DECLINED :
-                                                // Update transaction as declined
-                                                //     TODO: Deactivate the card if this is the 3rd consecutive failure
-                                                //     TODO: Notify customer
-                                                TransactionHandler.transactionDeclined(
-                                                    conn,
-                                                    invalidateList,
-                                                    transID,
-                                                    Integer.parseInt(transaction.getPersistenceUniqueId())
-                                                );
-                                                conn.commit();
-                                                System.out.println("    Result: Declined");
-                                                System.out.println("    Decline Reason: "+authorizationResult.getDeclineReason());
-                                                break;
-                                            case APPROVED :
-                                                // Update transaction as successful
-                                                TransactionHandler.transactionApproved(
-                                                    conn,
-                                                    invalidateList,
-                                                    transID,
-                                                    Integer.parseInt(transaction.getPersistenceUniqueId())
-                                                );
-                                                System.out.println("    Result: Approved");
-                                                break;
-                                            default:
-                                                throw new RuntimeException("Unexpected value for authorization approval result: "+authorizationResult.getApprovalResult());
-                                        }
-                                        break;
-                                    default:
-                                        throw new RuntimeException("Unexpected value for authorization communication result: "+authorizationResult.getCommunicationResult());
-                                }
-                            }
-                        } catch(IOException err) {
-                            if(conn.rollbackAndClose()) {
-                                connRolledBack=true;
-                                // invalidateList=null; Not cleared because some commits happen during processing
-                            }
-                            throw err;
+                            System.out.println("Processing a total of $"+total);
                         } catch(SQLException err) {
-                            if(conn.rollbackAndClose()) {
-                                connRolledBack=true;
-                                // invalidateList=null; Not cleared because some commits happen during processing
-                            }
-                            throw err;
+                            throw new WrappedSQLException(err, pstmt);
                         } finally {
-                            if(!connRolledBack && !conn.isClosed()) conn.commit();
+                            pstmt.close();
                         }
+                        // Only need to create the persistence once per DB transaction
+                        MasterPersistenceMechanism masterPersistenceMechanism = new MasterPersistenceMechanism(conn, invalidateList);
+                        for(AutomaticPayment automaticPayment : automaticPayments) {
+                            System.out.println("accounting="+automaticPayment.accounting);
+                            System.out.println("    amount="+automaticPayment.amount);
+                            // Find the processor
+                            CreditCardProcessor processor = new CreditCardProcessor(
+                                MerchantServicesProviderFactory.getMerchantServicesProvider(
+                                    automaticPayment.ccpProviderId,
+                                    automaticPayment.ccpClassName,
+                                    automaticPayment.ccpParam1,
+                                    automaticPayment.ccpParam2,
+                                    automaticPayment.ccpParam3,
+                                    automaticPayment.ccpParam4
+                                ),
+                                masterPersistenceMechanism
+                            );
+                            System.out.println("    processor="+processor.getProviderId());
+
+                            // Add as pending transaction
+                            String paymentTypeName;
+                            String cardInfo = automaticPayment.ccCardInfo;
+                            if(cardInfo.startsWith("34") || cardInfo.startsWith("37")) {
+                                paymentTypeName = PaymentType.AMEX;
+                            } else if(cardInfo.startsWith("60")) {
+                                paymentTypeName = PaymentType.DISCOVER;
+                            } else if(cardInfo.startsWith("51") || cardInfo.startsWith("52") || cardInfo.startsWith("53") || cardInfo.startsWith("54") || cardInfo.startsWith("55")) {
+                                paymentTypeName = PaymentType.MASTERCARD;
+                            } else if(cardInfo.startsWith("4")) {
+                                paymentTypeName = PaymentType.VISA;
+                            } else {
+                                paymentTypeName = null;
+                            }
+                            int transID = TransactionHandler.addTransaction(
+                                conn,
+                                invalidateList,
+                                new Timestamp(lastMinuteOfTheMonth.getTimeInMillis()),
+                                automaticPayment.accounting,
+                                automaticPayment.accounting,
+                                "aoserv",
+                                TransactionType.PAYMENT,
+                                "Monthly automatic billing",
+                                new BigDecimal("1.000"),
+                                automaticPayment.amount.negate(),
+                                paymentTypeName,
+                                cardInfo,
+                                automaticPayment.ccpProviderId,
+                                com.aoindustries.aoserv.client.Transaction.WAITING_CONFIRMATION
+                            );
+                            conn.commit();
+
+                            // Process payment
+                            Transaction transaction = processor.sale(
+                                null,
+                                null,
+                                new TransactionRequest(
+                                    Locale.getDefault(),
+                                    false,
+                                    InetAddress.getLocalHost().getHostAddress(),
+                                    120,
+                                    Integer.toString(transID),
+                                    TransactionRequest.CurrencyCode.USD,
+                                    automaticPayment.amount,
+                                    null,
+                                    false,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    false,
+                                    null,
+                                    null,
+                                    null,
+                                    "Monthly automatic billing"
+                                ),
+                                new CreditCard(
+                                    Locale.getDefault(),
+                                    Integer.toString(automaticPayment.ccPkey),
+                                    automaticPayment.ccPrincipalName,
+                                    automaticPayment.ccGroupName,
+                                    automaticPayment.ccpProviderId,
+                                    automaticPayment.ccProviderUniqueId,
+                                    null,
+                                    automaticPayment.ccCardInfo,
+                                    (byte)-1,
+                                    (short)-1,
+                                    null,
+                                    automaticPayment.ccFirstName,
+                                    automaticPayment.ccLastName,
+                                    automaticPayment.ccCompanyName,
+                                    automaticPayment.ccEmail,
+                                    automaticPayment.ccPhone,
+                                    automaticPayment.ccFax,
+                                    null,
+                                    automaticPayment.ccCustomerTaxId,
+                                    automaticPayment.ccStreetAddress1,
+                                    automaticPayment.ccStreetAddress2,
+                                    automaticPayment.ccCity,
+                                    automaticPayment.ccState,
+                                    automaticPayment.ccPostalCode,
+                                    automaticPayment.ccCountryCode,
+                                    automaticPayment.ccComments
+                                ),
+                                Locale.getDefault()
+                            );
+
+                            AuthorizationResult authorizationResult = transaction.getAuthorizationResult();
+                            switch(authorizationResult.getCommunicationResult()) {
+                                case LOCAL_ERROR :
+                                case IO_ERROR :
+                                case GATEWAY_ERROR :
+                                {
+                                    // Update transaction as failed
+                                    //     TODO: Deactivate the card if this is the 3rd consecutive failure
+                                    //     TODO: Notify customer
+                                    TransactionHandler.transactionDeclined(
+                                        conn,
+                                        invalidateList,
+                                        transID,
+                                        Integer.parseInt(transaction.getPersistenceUniqueId())
+                                    );
+                                    conn.commit();
+                                    System.out.println("    Result: Error");
+                                    break;
+                                }
+                                case SUCCESS :
+                                    // Check approval result
+                                    switch(authorizationResult.getApprovalResult()) {
+                                        case HOLD :
+                                            // Update transaction
+                                            TransactionHandler.transactionHeld(
+                                                conn,
+                                                invalidateList,
+                                                transID,
+                                                Integer.parseInt(transaction.getPersistenceUniqueId())
+                                            );
+                                            conn.commit();
+                                            System.out.println("    Result: Hold");
+                                            System.out.println("    Review Reason: "+authorizationResult.getReviewReason());
+                                            break;
+                                        case DECLINED :
+                                            // Update transaction as declined
+                                            //     TODO: Deactivate the card if this is the 3rd consecutive failure
+                                            //     TODO: Notify customer
+                                            TransactionHandler.transactionDeclined(
+                                                conn,
+                                                invalidateList,
+                                                transID,
+                                                Integer.parseInt(transaction.getPersistenceUniqueId())
+                                            );
+                                            conn.commit();
+                                            System.out.println("    Result: Declined");
+                                            System.out.println("    Decline Reason: "+authorizationResult.getDeclineReason());
+                                            break;
+                                        case APPROVED :
+                                            // Update transaction as successful
+                                            TransactionHandler.transactionApproved(
+                                                conn,
+                                                invalidateList,
+                                                transID,
+                                                Integer.parseInt(transaction.getPersistenceUniqueId())
+                                            );
+                                            System.out.println("    Result: Approved");
+                                            break;
+                                        default:
+                                            throw new RuntimeException("Unexpected value for authorization approval result: "+authorizationResult.getApprovalResult());
+                                    }
+                                    break;
+                                default:
+                                    throw new RuntimeException("Unexpected value for authorization communication result: "+authorizationResult.getCommunicationResult());
+                            }
+                        }
+                    } catch(IOException err) {
+                        if(conn.rollbackAndClose()) {
+                            connRolledBack=true;
+                            // invalidateList=null; Not cleared because some commits happen during processing
+                        }
+                        throw err;
+                    } catch(SQLException err) {
+                        if(conn.rollbackAndClose()) {
+                            connRolledBack=true;
+                            // invalidateList=null; Not cleared because some commits happen during processing
+                        }
+                        throw err;
                     } finally {
-                        conn.releaseConnection();
+                        if(!connRolledBack && !conn.isClosed()) conn.commit();
                     }
-                    /*if(invalidateList!=null)*/ MasterServer.invalidateTables(invalidateList, null);
                 } finally {
-                    timer.stop();
+                    conn.releaseConnection();
                 }
-            } catch(ThreadDeath TD) {
-                throw TD;
-            } catch(Throwable T) {
-                MasterServer.reportError(T, null);
+                /*if(invalidateList!=null)*/ MasterServer.invalidateTables(invalidateList, null);
+            } finally {
+                timer.stop();
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        } catch(ThreadDeath TD) {
+            throw TD;
+        } catch(Throwable T) {
+            MasterServer.reportError(T, null);
         }
     }
 
@@ -1705,22 +1638,18 @@ final public class CreditCardHandler /*implements CronJob*/ {
 
     /*
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "runCronJob(int,int,int,int,int,int)", null);
-        try {
-            // Find last month
-            Calendar cal = Calendar.getInstance();
-            cal.set(Calendar.YEAR, year);
-            cal.set(Calendar.MONTH, month-1);
-            cal.set(Calendar.DAY_OF_MONTH, 1);
-            cal.set(Calendar.HOUR_OF_DAY, 0);
-            cal.set(Calendar.MINUTE, 0);
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-            cal.add(Calendar.MONTH, -1);
-            // Process for last month
-            processAutomaticPayments(cal.get(Calendar.MONTH)+1, cal.get(Calendar.YEAR));
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
-    }*/
+        // Find last month
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, year);
+        cal.set(Calendar.MONTH, month-1);
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        cal.add(Calendar.MONTH, -1);
+        // Process for last month
+        processAutomaticPayments(cal.get(Calendar.MONTH)+1, cal.get(Calendar.YEAR));
+    }
+    */
 }

@@ -16,7 +16,6 @@ import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.email.ProcessTimer;
-import com.aoindustries.profiler.Profiler;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
@@ -56,24 +55,17 @@ final public class DNSHandler implements CronJob {
     private static boolean started=false;
 
     public static void start() {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "start()", null);
-        try {
-            synchronized(System.out) {
-                if(!started) {
-                    System.out.print("Starting DNSHandler: ");
-                    CronDaemon.addCronJob(new DNSHandler(), MasterServer.getErrorHandler());
-                    started=true;
-                    System.out.println("Done");
-                }
+        synchronized(System.out) {
+            if(!started) {
+                System.out.print("Starting DNSHandler: ");
+                CronDaemon.addCronJob(new DNSHandler(), MasterServer.getErrorHandler());
+                started=true;
+                System.out.println("Done");
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
     
     private DNSHandler() {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, DNSHandler.class, "<init>()", null);
-        Profiler.endProfile(Profiler.INSTANTANEOUS);
     }
     
     /**
@@ -106,131 +98,126 @@ final public class DNSHandler implements CronJob {
     }
 
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "runCronJob(int,int,int,int,int,int)", null);
         try {
+            ProcessTimer timer=new ProcessTimer(
+                MasterServer.getRandom(),
+                MasterConfiguration.getWarningSmtpServer(),
+                MasterConfiguration.getWarningEmailFrom(),
+                MasterConfiguration.getWarningEmailTo(),
+                "DNSHandler - Whois History",
+                "Looking up whois and cleaning old records",
+                TIMER_MAX_TIME,
+                TIMER_REMINDER_INTERVAL
+            );
             try {
-                ProcessTimer timer=new ProcessTimer(
-                    MasterServer.getRandom(),
-                    MasterConfiguration.getWarningSmtpServer(),
-                    MasterConfiguration.getWarningEmailFrom(),
-                    MasterConfiguration.getWarningEmailTo(),
-                    "DNSHandler - Whois History",
-                    "Looking up whois and cleaning old records",
-                    TIMER_MAX_TIME,
-                    TIMER_REMINDER_INTERVAL
-                );
+                timer.start();
+
+                // Start the transaction
+                InvalidateList invalidateList=new InvalidateList();
+                MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
                 try {
-                    timer.start();
-
-                    // Start the transaction
-                    InvalidateList invalidateList=new InvalidateList();
-                    MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                    boolean connRolledBack=false;
                     try {
-                        boolean connRolledBack=false;
-                        try {
-                            /*
-                             * Remove old records first
-                             */
-                            //  Open account that have balance <= $0.00 and entry is older than one year
-                            int updated = conn.executeUpdate(
-                                "delete from whois_history where pkey in (\n"
-                                + "  select\n"
-                                + "    wh.pkey\n"
-                                + "  from\n"
-                                + "    whois_history wh\n"
-                                + "    inner join businesses bu on wh.accounting=bu.accounting\n"
-                                + "    left outer join account_balances ab on bu.accounting=ab.accounting"
-                                + "  where\n"
-                                // entry is older than one year
-                                + "    (now()-wh.time)>'1 year'::interval\n"
-                                // open account
-                                + "    and bu.canceled is null\n"
-                                // balance is <= $0.00
-                                + "    and (ab.accounting is null or ab.balance<='0.00'::decimal(9,2))"
-                                + ")"
-                            );
-                            if(updated>0) invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                        /*
+                         * Remove old records first
+                         */
+                        //  Open account that have balance <= $0.00 and entry is older than one year
+                        int updated = conn.executeUpdate(
+                            "delete from whois_history where pkey in (\n"
+                            + "  select\n"
+                            + "    wh.pkey\n"
+                            + "  from\n"
+                            + "    whois_history wh\n"
+                            + "    inner join businesses bu on wh.accounting=bu.accounting\n"
+                            + "    left outer join account_balances ab on bu.accounting=ab.accounting"
+                            + "  where\n"
+                            // entry is older than one year
+                            + "    (now()-wh.time)>'1 year'::interval\n"
+                            // open account
+                            + "    and bu.canceled is null\n"
+                            // balance is <= $0.00
+                            + "    and (ab.accounting is null or ab.balance<='0.00'::decimal(9,2))"
+                            + ")"
+                        );
+                        if(updated>0) invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
-                            // Closed account that have a balance of $0.00, has not had any accounting transactions for one year, and entry is older than one year
-                            updated = conn.executeUpdate(
-                                "delete from whois_history where pkey in (\n"
-                                + "  select\n"
-                                + "    wh.pkey\n"
-                                + "  from\n"
-                                + "    whois_history wh\n"
-                                + "    inner join businesses bu on wh.accounting=bu.accounting\n"
-                                + "    left outer join account_balances ab on bu.accounting=ab.accounting"
-                                + "  where\n"
-                                // entry is older than one year
-                                + "    (now()-wh.time)>'1 year'::interval\n"
-                                // closed account
-                                + "    and bu.canceled is not null\n"
-                                // has not had any accounting transactions for one year
-                                + "    and (select tr.transid from transactions tr where bu.accounting=tr.accounting and tr.time>=(now()-'1 year'::interval) limit 1) is null\n"
-                                // balance is $0.00
-                                + "    and (ab.accounting is null or ab.balance='0.00'::decimal(9,2))"
-                                + ")"
-                            );
-                            if(updated>0) invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                        // Closed account that have a balance of $0.00, has not had any accounting transactions for one year, and entry is older than one year
+                        updated = conn.executeUpdate(
+                            "delete from whois_history where pkey in (\n"
+                            + "  select\n"
+                            + "    wh.pkey\n"
+                            + "  from\n"
+                            + "    whois_history wh\n"
+                            + "    inner join businesses bu on wh.accounting=bu.accounting\n"
+                            + "    left outer join account_balances ab on bu.accounting=ab.accounting"
+                            + "  where\n"
+                            // entry is older than one year
+                            + "    (now()-wh.time)>'1 year'::interval\n"
+                            // closed account
+                            + "    and bu.canceled is not null\n"
+                            // has not had any accounting transactions for one year
+                            + "    and (select tr.transid from transactions tr where bu.accounting=tr.accounting and tr.time>=(now()-'1 year'::interval) limit 1) is null\n"
+                            // balance is $0.00
+                            + "    and (ab.accounting is null or ab.balance='0.00'::decimal(9,2))"
+                            + ")"
+                        );
+                        if(updated>0) invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
-                            /*
-                             * The add new records
-                             */
-                            // Get the set of unique accounting, zone combinations in the system
-                            Set<AccountingAndZone> topLevelZones = getBusinessesAndTopLevelZones(conn);
+                        /*
+                         * The add new records
+                         */
+                        // Get the set of unique accounting, zone combinations in the system
+                        Set<AccountingAndZone> topLevelZones = getBusinessesAndTopLevelZones(conn);
 
-                            // Perform the whois lookups once per unique zone
-                            Map<String,String> whoisOutputs = new HashMap<String,String>(topLevelZones.size()*4/3+1);
-                            for(AccountingAndZone aaz : topLevelZones) {
-                                String zone = aaz.getZone();
-                                if(!whoisOutputs.containsKey(zone)) {
-                                    String whoisOutput;
-                                    try {
-                                        whoisOutput = getWhoisOutput(zone);
-                                    } catch(IOException err) {
-                                        whoisOutput = err.toString();
-                                    }
-                                    whoisOutputs.put(zone, whoisOutput);
+                        // Perform the whois lookups once per unique zone
+                        Map<String,String> whoisOutputs = new HashMap<String,String>(topLevelZones.size()*4/3+1);
+                        for(AccountingAndZone aaz : topLevelZones) {
+                            String zone = aaz.getZone();
+                            if(!whoisOutputs.containsKey(zone)) {
+                                String whoisOutput;
+                                try {
+                                    whoisOutput = getWhoisOutput(zone);
+                                } catch(IOException err) {
+                                    whoisOutput = err.toString();
                                 }
+                                whoisOutputs.put(zone, whoisOutput);
                             }
-
-                            // update database
-                            for(AccountingAndZone aaz : topLevelZones) {
-                                String accounting = aaz.getAccounting();
-                                String zone = aaz.getZone();
-                                String whoisOutput = whoisOutputs.get(zone);
-                                conn.executeUpdate("insert into whois_history (accounting, zone, whois_output) values(?,?,?)", accounting, zone, whoisOutput);
-                                invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-                            }
-                        } catch(IOException err) {
-                            if(conn.rollbackAndClose()) {
-                                connRolledBack=true;
-                                invalidateList=null;
-                            }
-                            throw err;
-                        } catch(SQLException err) {
-                            if(conn.rollbackAndClose()) {
-                                connRolledBack=true;
-                                invalidateList=null;
-                            }
-                            throw err;
-                        } finally {
-                            if(!connRolledBack && !conn.isClosed()) conn.commit();
                         }
+
+                        // update database
+                        for(AccountingAndZone aaz : topLevelZones) {
+                            String accounting = aaz.getAccounting();
+                            String zone = aaz.getZone();
+                            String whoisOutput = whoisOutputs.get(zone);
+                            conn.executeUpdate("insert into whois_history (accounting, zone, whois_output) values(?,?,?)", accounting, zone, whoisOutput);
+                            invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                        }
+                    } catch(IOException err) {
+                        if(conn.rollbackAndClose()) {
+                            connRolledBack=true;
+                            invalidateList=null;
+                        }
+                        throw err;
+                    } catch(SQLException err) {
+                        if(conn.rollbackAndClose()) {
+                            connRolledBack=true;
+                            invalidateList=null;
+                        }
+                        throw err;
                     } finally {
-                        conn.releaseConnection();
+                        if(!connRolledBack && !conn.isClosed()) conn.commit();
                     }
-                    if(invalidateList!=null) MasterServer.invalidateTables(invalidateList, null);
                 } finally {
-                    timer.stop();
+                    conn.releaseConnection();
                 }
-            } catch(ThreadDeath TD) {
-                throw TD;
-            } catch(Throwable T) {
-                MasterServer.reportError(T, null);
+                if(invalidateList!=null) MasterServer.invalidateTables(invalidateList, null);
+            } finally {
+                timer.stop();
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        } catch(ThreadDeath TD) {
+            throw TD;
+        } catch(Throwable T) {
+            MasterServer.reportError(T, null);
         }
     }
 
@@ -336,14 +323,9 @@ final public class DNSHandler implements CronJob {
      * Gets the whois output for the specific whois_history record.
      */
     public static String getWhoisHistoryOutput(MasterDatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getWhoisHistoryOutput(MasterDatabaseConnection,RequestSource,int)", null);
-        try {
-            String accounting = getBusinessForWhoisHistory(conn, pkey);
-            BusinessHandler.checkAccessBusiness(conn, source, "getWhoisHistoryOutput", accounting);
-            return conn.executeStringQuery("select whois_output from whois_history where pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        String accounting = getBusinessForWhoisHistory(conn, pkey);
+        BusinessHandler.checkAccessBusiness(conn, source, "getWhoisHistoryOutput", accounting);
+        return conn.executeStringQuery("select whois_output from whois_history where pkey=?", pkey);
     }
 
     /**
@@ -360,64 +342,59 @@ final public class DNSHandler implements CronJob {
         String destination,
         int ttl
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "addDNSRecord(MasterDatabaseConnection,RequestSource,InvalidateList,String,String,String,int,String,int)", null);
-        try {
-            // Must be allowed to access this zone
-            checkAccessDNSZone(conn, source, "addDNSRecord", zone);
+        // Must be allowed to access this zone
+        checkAccessDNSZone(conn, source, "addDNSRecord", zone);
 
-            // Must have appropriate MX priority
-            boolean isMX=conn.executeBooleanQuery("select is_mx from dns_types where type=?", type);
-            if(isMX) {
-                if(mx_priority==DNSRecord.NO_MX_PRIORITY) throw new IllegalArgumentException("mx_priority required for type="+type);
-                else if(mx_priority<=0) throw new SQLException("Invalid mx_priority: "+mx_priority);
-            } else {
-                if(mx_priority!=DNSRecord.NO_MX_PRIORITY) throw new SQLException("No mx_priority allowed for type="+type);
-            }
-
-            // Must have a valid destination type unless is a TXT entry
-            if(!DNSType.TXT.equals(type)) {
-                try {
-                    DNSType.checkDestination(
-                        destination,
-                        conn.executeBooleanQuery("select param_ip from dns_types where type=?", type)
-                    );
-                } catch(IllegalArgumentException err) {
-                    throw new SQLException("Invalid destination: "+err.getMessage());
-                }
-            }
-
-            // Make all database changes in one big transaction
-            int pkey=conn.executeIntQuery("select nextval('dns_records_pkey_seq')");
-
-            // Add the entry
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records values(?,?,?,?,?,?,null,?)");
-            try {
-                pstmt.setInt(1, pkey);
-                pstmt.setString(2, zone);
-                pstmt.setString(3, domain);
-                pstmt.setString(4, type);
-                if(mx_priority==DNSRecord.NO_MX_PRIORITY) pstmt.setNull(5, Types.INTEGER);
-                else pstmt.setInt(5, mx_priority);
-                pstmt.setString(6, destination);
-                if(ttl==-1) pstmt.setNull(7, Types.INTEGER);
-                else pstmt.setInt(7, ttl);
-                pstmt.executeUpdate();
-            } catch(SQLException err) {
-                System.err.println("Error from query: "+pstmt.toString());
-                throw err;
-            } finally {
-                pstmt.close();
-            }
-            invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-
-            // Update the serial of the zone
-            updateDNSZoneSerial(conn, invalidateList, zone);
-
-            // Notify all clients of the update
-            return pkey;
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        // Must have appropriate MX priority
+        boolean isMX=conn.executeBooleanQuery("select is_mx from dns_types where type=?", type);
+        if(isMX) {
+            if(mx_priority==DNSRecord.NO_MX_PRIORITY) throw new IllegalArgumentException("mx_priority required for type="+type);
+            else if(mx_priority<=0) throw new SQLException("Invalid mx_priority: "+mx_priority);
+        } else {
+            if(mx_priority!=DNSRecord.NO_MX_PRIORITY) throw new SQLException("No mx_priority allowed for type="+type);
         }
+
+        // Must have a valid destination type unless is a TXT entry
+        if(!DNSType.TXT.equals(type)) {
+            try {
+                DNSType.checkDestination(
+                    destination,
+                    conn.executeBooleanQuery("select param_ip from dns_types where type=?", type)
+                );
+            } catch(IllegalArgumentException err) {
+                throw new SQLException("Invalid destination: "+err.getMessage());
+            }
+        }
+
+        // Make all database changes in one big transaction
+        int pkey=conn.executeIntQuery("select nextval('dns_records_pkey_seq')");
+
+        // Add the entry
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records values(?,?,?,?,?,?,null,?)");
+        try {
+            pstmt.setInt(1, pkey);
+            pstmt.setString(2, zone);
+            pstmt.setString(3, domain);
+            pstmt.setString(4, type);
+            if(mx_priority==DNSRecord.NO_MX_PRIORITY) pstmt.setNull(5, Types.INTEGER);
+            else pstmt.setInt(5, mx_priority);
+            pstmt.setString(6, destination);
+            if(ttl==-1) pstmt.setNull(7, Types.INTEGER);
+            else pstmt.setInt(7, ttl);
+            pstmt.executeUpdate();
+        } catch(SQLException err) {
+            System.err.println("Error from query: "+pstmt.toString());
+            throw err;
+        } finally {
+            pstmt.close();
+        }
+        invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+
+        // Update the serial of the zone
+        updateDNSZoneSerial(conn, invalidateList, zone);
+
+        // Notify all clients of the update
+        return pkey;
     }
 
     /**
@@ -432,115 +409,110 @@ final public class DNSHandler implements CronJob {
         String ip,
         int ttl
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "addDNSZone(MasterDatabaseConnection,RequestSource,InvalidateList,String,String,String,int)", null);
+        // Must be allowed to access this package
+        PackageHandler.checkAccessPackage(conn, source, "addDNSZone", packageName);
+        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Not allowed to add DNSZone to disabled Package: "+packageName);
+        MasterServer.checkAccessHostname(conn, source, "addDNSZone", zone);
+        // Check the zone format
+        List<String> tlds=getDNSTLDs(conn);
+        if(!DNSZoneTable.checkDNSZone(zone, tlds)) throw new SQLException("Invalid zone: "+zone);
+        // Check the ip address format
+        if(!IPAddress.isValidIPAddress(ip)) throw new SQLException("Invalid IP address: "+ip);
+
+        // Must not be allocated in any way to another account
+        MasterServer.checkAccessHostname(conn, source, "addDNSZone", zone);
+
+        // Add the dns_zone entry
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_zones values(?,?,?,?,?,?)");
         try {
-            // Must be allowed to access this package
-            PackageHandler.checkAccessPackage(conn, source, "addDNSZone", packageName);
-            if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Not allowed to add DNSZone to disabled Package: "+packageName);
-            MasterServer.checkAccessHostname(conn, source, "addDNSZone", zone);
-            // Check the zone format
-            List<String> tlds=getDNSTLDs(conn);
-            if(!DNSZoneTable.checkDNSZone(zone, tlds)) throw new SQLException("Invalid zone: "+zone);
-            // Check the ip address format
-            if(!IPAddress.isValidIPAddress(ip)) throw new SQLException("Invalid IP address: "+ip);
-
-            // Must not be allocated in any way to another account
-            MasterServer.checkAccessHostname(conn, source, "addDNSZone", zone);
-
-            // Add the dns_zone entry
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_zones values(?,?,?,?,?,?)");
-            try {
-                pstmt.setString(1, zone);
-                pstmt.setString(2, zone);
-                pstmt.setString(3, packageName);
-                pstmt.setString(4, DNSZone.DEFAULT_HOSTMASTER);
-                pstmt.setLong(5, DNSZone.getCurrentSerial());
-                pstmt.setInt(6, ttl);
-                pstmt.executeUpdate();
-            } finally {
-                pstmt.close();
-            }
-
-            // Add the MX entry
-            pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, mx_priority, destination) values(?,?,?,?,?)");
-            try {
-                pstmt.setString(1, zone);
-                pstmt.setString(2, "@");
-                pstmt.setString(3, "MX");
-                pstmt.setInt(4, 10);
-                pstmt.setString(5, "mail");
-                pstmt.executeUpdate();
-            } finally {
-                pstmt.close();
-            }
-
-            pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, destination) values(?,?,?,?)");
-            try {
-                // Add the ns1.aoindustries.com name server
-                pstmt.setString(1, zone);
-                pstmt.setString(2, "@");
-                pstmt.setString(3, "NS");
-                pstmt.setString(4, "ns1.aoindustries.com.");
-                pstmt.executeUpdate();
-
-                // Add the ns2.aoindustries.com name server
-                pstmt.setString(1, zone);
-                pstmt.setString(2, "@");
-                pstmt.setString(3, "NS");
-                pstmt.setString(4, "ns2.aoindustries.com.");
-                pstmt.executeUpdate();
-
-                // Add the ns3.aoindustries.com name server
-                pstmt.setString(1, zone);
-                pstmt.setString(2, "@");
-                pstmt.setString(3, "NS");
-                pstmt.setString(4, "ns3.aoindustries.com.");
-                pstmt.executeUpdate();
-
-                // Add the ns4.aoindustries.com name server
-                pstmt.setString(1, zone);
-                pstmt.setString(2, "@");
-                pstmt.setString(3, "NS");
-                pstmt.setString(4, "ns4.aoindustries.com.");
-                pstmt.executeUpdate();
-
-                // Add the domain IP
-                pstmt.setString(1, zone);
-                pstmt.setString(2, "@");
-                pstmt.setString(3, "A");
-                pstmt.setString(4, ip);
-                pstmt.executeUpdate();
-
-                // Add the ftp IP
-                pstmt.setString(1, zone);
-                pstmt.setString(2, "ftp");
-                pstmt.setString(3, "A");
-                pstmt.setString(4, ip);
-                pstmt.executeUpdate();
-
-                // Add the mail IP
-                pstmt.setString(1, zone);
-                pstmt.setString(2, "mail");
-                pstmt.setString(3, "A");
-                pstmt.setString(4, ip);
-                pstmt.executeUpdate();
-
-                // Add the www IP
-                pstmt.setString(1, zone);
-                pstmt.setString(2, "www");
-                pstmt.setString(3, "A");
-                pstmt.setString(4, ip);
-                pstmt.executeUpdate();
-            } finally {
-                pstmt.close();
-            }
-
-            // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+            pstmt.setString(1, zone);
+            pstmt.setString(2, zone);
+            pstmt.setString(3, packageName);
+            pstmt.setString(4, DNSZone.DEFAULT_HOSTMASTER);
+            pstmt.setLong(5, DNSZone.getCurrentSerial());
+            pstmt.setInt(6, ttl);
+            pstmt.executeUpdate();
         } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+            pstmt.close();
         }
+
+        // Add the MX entry
+        pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, mx_priority, destination) values(?,?,?,?,?)");
+        try {
+            pstmt.setString(1, zone);
+            pstmt.setString(2, "@");
+            pstmt.setString(3, "MX");
+            pstmt.setInt(4, 10);
+            pstmt.setString(5, "mail");
+            pstmt.executeUpdate();
+        } finally {
+            pstmt.close();
+        }
+
+        pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, destination) values(?,?,?,?)");
+        try {
+            // Add the ns1.aoindustries.com name server
+            pstmt.setString(1, zone);
+            pstmt.setString(2, "@");
+            pstmt.setString(3, "NS");
+            pstmt.setString(4, "ns1.aoindustries.com.");
+            pstmt.executeUpdate();
+
+            // Add the ns2.aoindustries.com name server
+            pstmt.setString(1, zone);
+            pstmt.setString(2, "@");
+            pstmt.setString(3, "NS");
+            pstmt.setString(4, "ns2.aoindustries.com.");
+            pstmt.executeUpdate();
+
+            // Add the ns3.aoindustries.com name server
+            pstmt.setString(1, zone);
+            pstmt.setString(2, "@");
+            pstmt.setString(3, "NS");
+            pstmt.setString(4, "ns3.aoindustries.com.");
+            pstmt.executeUpdate();
+
+            // Add the ns4.aoindustries.com name server
+            pstmt.setString(1, zone);
+            pstmt.setString(2, "@");
+            pstmt.setString(3, "NS");
+            pstmt.setString(4, "ns4.aoindustries.com.");
+            pstmt.executeUpdate();
+
+            // Add the domain IP
+            pstmt.setString(1, zone);
+            pstmt.setString(2, "@");
+            pstmt.setString(3, "A");
+            pstmt.setString(4, ip);
+            pstmt.executeUpdate();
+
+            // Add the ftp IP
+            pstmt.setString(1, zone);
+            pstmt.setString(2, "ftp");
+            pstmt.setString(3, "A");
+            pstmt.setString(4, ip);
+            pstmt.executeUpdate();
+
+            // Add the mail IP
+            pstmt.setString(1, zone);
+            pstmt.setString(2, "mail");
+            pstmt.setString(3, "A");
+            pstmt.setString(4, ip);
+            pstmt.executeUpdate();
+
+            // Add the www IP
+            pstmt.setString(1, zone);
+            pstmt.setString(2, "www");
+            pstmt.setString(3, "A");
+            pstmt.setString(4, ip);
+            pstmt.executeUpdate();
+        } finally {
+            pstmt.close();
+        }
+
+        // Notify all clients of the update
+        invalidateList.addTable(conn, SchemaTable.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
     }
 
     /**
@@ -552,29 +524,24 @@ final public class DNSHandler implements CronJob {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "removeDNSRecord(MasterDatabaseConnection,RequestSource,InvalidateList,int)", null);
+        // Must be allowed to access this zone record
+        checkAccessDNSRecord(conn, source, "removeDNSRecord", pkey);
+
+        // Get the zone associated with the pkey
+        String zone=getDNSZoneForDNSRecord(conn, pkey);
+
+        // Remove the dns_records entry
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_records where pkey=?");
         try {
-            // Must be allowed to access this zone record
-            checkAccessDNSRecord(conn, source, "removeDNSRecord", pkey);
-
-            // Get the zone associated with the pkey
-            String zone=getDNSZoneForDNSRecord(conn, pkey);
-
-            // Remove the dns_records entry
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_records where pkey=?");
-            try {
-                pstmt.setInt(1, pkey);
-                pstmt.executeUpdate();
-            } finally {
-                pstmt.close();
-            }
-            invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-
-            // Update the serial of the zone
-            updateDNSZoneSerial(conn, invalidateList, zone);
+            pstmt.setInt(1, pkey);
+            pstmt.executeUpdate();
         } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+            pstmt.close();
         }
+        invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+
+        // Update the serial of the zone
+        updateDNSZoneSerial(conn, invalidateList, zone);
     }
 
     /**
@@ -586,15 +553,10 @@ final public class DNSHandler implements CronJob {
         InvalidateList invalidateList,
         String zone
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, DNSHandler.class, "removeDNSZone(MasterDatabaseConnection,RequestSource,InvalidateList,String)", null);
-        try {
-            // Must be allowed to access this zone
-            checkAccessDNSZone(conn, source, "removeDNSZone", zone);
+        // Must be allowed to access this zone
+        checkAccessDNSZone(conn, source, "removeDNSZone", zone);
 
-            removeDNSZone(conn, invalidateList, zone);
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        removeDNSZone(conn, invalidateList, zone);
     }
 
     /**
@@ -605,32 +567,27 @@ final public class DNSHandler implements CronJob {
         InvalidateList invalidateList,
         String zone
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "removeDNSZone(MasterDatabaseConnection,InvalidateList,String)", null);
+        // Remove the dns_records entries
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_records where zone=?");
         try {
-            // Remove the dns_records entries
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_records where zone=?");
-            try {
-                pstmt.setString(1, zone);
-                pstmt.executeUpdate();
-            } finally {
-                pstmt.close();
-            }
-
-            // Remove the dns_zones entry
-            pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_zones where zone=?");
-            try {
-                pstmt.setString(1, zone);
-                pstmt.executeUpdate();
-            } finally {
-                pstmt.close();
-            }
-
-            // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-            invalidateList.addTable(conn, SchemaTable.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+            pstmt.setString(1, zone);
+            pstmt.executeUpdate();
         } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+            pstmt.close();
         }
+
+        // Remove the dns_zones entry
+        pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_zones where zone=?");
+        try {
+            pstmt.setString(1, zone);
+            pstmt.executeUpdate();
+        } finally {
+            pstmt.close();
+        }
+
+        // Notify all clients of the update
+        invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, SchemaTable.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
     }
 
     public static boolean addDNSRecord(
@@ -640,97 +597,77 @@ final public class DNSHandler implements CronJob {
         String ipAddress,
         List<String> tlds
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "addDNSRecord(MasterDatabaseConnection,InvalidateList,String,String,List<String>)", null);
-        try {
-            String tldPlus1 = DNSZoneTable.getHostTLD(hostname, tlds);
-            boolean exists = conn.executeBooleanQuery(
-                "select (select zone from dns_zones where zone=?) is not null",
-                tldPlus1
+        String tldPlus1 = DNSZoneTable.getHostTLD(hostname, tlds);
+        boolean exists = conn.executeBooleanQuery(
+            "select (select zone from dns_zones where zone=?) is not null",
+            tldPlus1
+        );
+        if (exists) {
+            String preTldPlus1 = hostname.substring(0, hostname.length()-tldPlus1.length());
+            exists = conn.executeBooleanQuery(
+                "select (select pkey from dns_records where zone=? and type='A' and domain=?) is not null",
+                tldPlus1,
+                preTldPlus1
             );
-            if (exists) {
-                String preTldPlus1 = hostname.substring(0, hostname.length()-tldPlus1.length());
-                exists = conn.executeBooleanQuery(
-                    "select (select pkey from dns_records where zone=? and type='A' and domain=?) is not null",
+            if (!exists) {
+                conn.executeUpdate(
+                    "insert into dns_records (zone, domain, type, destination) values (?, ?, 'A', ?)",
                     tldPlus1,
-                    preTldPlus1
+                    preTldPlus1,
+                    ipAddress
                 );
-                if (!exists) {
-                    conn.executeUpdate(
-                        "insert into dns_records (zone, domain, type, destination) values (?, ?, 'A', ?)",
-                        tldPlus1,
-                        preTldPlus1,
-                        ipAddress
-                    );
-                    invalidateList.addTable(
-                        conn,
-                        SchemaTable.TableID.DNS_RECORDS,
-                        getBusinessForDNSZone(conn, tldPlus1),
-                        getDNSAOServers(conn),
-                        false
-                    );
-                    updateDNSZoneSerial(conn, invalidateList, tldPlus1);
-                    return true;
-                }
+                invalidateList.addTable(
+                    conn,
+                    SchemaTable.TableID.DNS_RECORDS,
+                    getBusinessForDNSZone(conn, tldPlus1),
+                    getDNSAOServers(conn),
+                    false
+                );
+                updateDNSZoneSerial(conn, invalidateList, tldPlus1);
+                return true;
             }
-            return false;
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
         }
+        return false;
     }
 
     public static void checkAccessDNSRecord(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, DNSHandler.class, "checkAccessDNSRecord(MasterDatabaseConnection,RequestSource,String,int)", null);
-        try {
-            if(
-                !isDNSAdmin(conn, source)
-                && !PackageHandler.canAccessPackage(conn, source, getPackageForDNSRecord(conn, pkey))
-            ) {
-                String message=
-                    "business_administrator.username="
-                    +source.getUsername()
-                    +" is not allowed to access dns_record: action='"
-                    +action
-                    +", pkey="
-                    +pkey
-                ;
-                MasterServer.reportSecurityMessage(source, message);
-                throw new SQLException(message);
-            }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        if(
+            !isDNSAdmin(conn, source)
+            && !PackageHandler.canAccessPackage(conn, source, getPackageForDNSRecord(conn, pkey))
+        ) {
+            String message=
+                "business_administrator.username="
+                +source.getUsername()
+                +" is not allowed to access dns_record: action='"
+                +action
+                +", pkey="
+                +pkey
+            ;
+            MasterServer.reportSecurityMessage(source, message);
+            throw new SQLException(message);
         }
     }
 
     public static boolean canAccessDNSZone(MasterDatabaseConnection conn, RequestSource source, String zone) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, DNSHandler.class, "canAccessDNSZone(MasterDatabaseConnection,RequestSource,String)", null);
-        try {
-            return
-                isDNSAdmin(conn, source)
-                || PackageHandler.canAccessPackage(conn, source, getPackageForDNSZone(conn, zone))
-            ;
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        return
+            isDNSAdmin(conn, source)
+            || PackageHandler.canAccessPackage(conn, source, getPackageForDNSZone(conn, zone))
+        ;
     }
 
     public static void checkAccessDNSZone(MasterDatabaseConnection conn, RequestSource source, String action, String zone) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, DNSHandler.class, "checkAccessDNSZone(MasterDatabaseConnection,RequestSource,String,String)", null);
-        try {
-            if(!canAccessDNSZone(conn, source, zone)) {
-                String message=
-                    "business_administrator.username="
-                    +source.getUsername()
-                    +" is not allowed to access dns_zone: action='"
-                    +action
-                    +", zone='"
-                    +zone
-                    +'\''
-                ;
-                MasterServer.reportSecurityMessage(source, message);
-                throw new SQLException(message);
-            }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        if(!canAccessDNSZone(conn, source, zone)) {
+            String message=
+                "business_administrator.username="
+                +source.getUsername()
+                +" is not allowed to access dns_zone: action='"
+                +action
+                +", zone='"
+                +zone
+                +'\''
+            ;
+            MasterServer.reportSecurityMessage(source, message);
+            throw new SQLException(message);
         }
     }
 
@@ -742,115 +679,60 @@ final public class DNSHandler implements CronJob {
         MasterDatabaseConnection conn,
         RequestSource source
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, DNSHandler.class, "isDNSAdmin(MasterDatabaseConnection,RequestSource)", null);
-        try {
-            MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
-            return mu!=null && mu.isDNSAdmin();
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+        return mu!=null && mu.isDNSAdmin();
     }
 
     public static String getBusinessForDNSRecord(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getBusinessForDNSRecord(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeStringQuery("select pk.accounting from dns_records nr, dns_zones nz, packages pk where nr.zone=nz.zone and nz.package=pk.name and nr.pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select pk.accounting from dns_records nr, dns_zones nz, packages pk where nr.zone=nz.zone and nz.package=pk.name and nr.pkey=?", pkey);
     }
 
     public static String getBusinessForDNSZone(MasterDatabaseConnection conn, String zone) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getBusinessForDNSZone(MasterDatabaseConnection,String)", null);
-        try {
-            return conn.executeStringQuery("select pk.accounting from dns_zones nz, packages pk where nz.package=pk.name and nz.zone=?", zone);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select pk.accounting from dns_zones nz, packages pk where nz.package=pk.name and nz.zone=?", zone);
     }
 
     public static String getBusinessForWhoisHistory(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getBusinessForWhoisHistory(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeStringQuery("select accounting from whois_history where pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select accounting from whois_history where pkey=?", pkey);
     }
 
     public static IntList getDNSAOServers(MasterDatabaseConnection conn) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getDNSAOServers(MasterDatabaseConnection)", null);
-        try {
-            return conn.executeIntListQuery("select distinct server from net_binds where app_protocol=? and server in (select server from ao_servers)", Protocol.DNS);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntListQuery("select distinct server from net_binds where app_protocol=? and server in (select server from ao_servers)", Protocol.DNS);
     }
 
     private static final Object dnstldLock=new Object();
     private static List<String> dnstldCache;
     public static List<String> getDNSTLDs(MasterDatabaseConnection conn) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, DNSHandler.class, "getDNSTLDs(MasterDatabaseConnection)", null);
-        try {
-            synchronized(dnstldLock) {
-                if(dnstldCache==null) {
-                    dnstldCache=conn.executeStringListQuery("select domain from dns_tlds");
-                }
-                return dnstldCache;
+        synchronized(dnstldLock) {
+            if(dnstldCache==null) {
+                dnstldCache=conn.executeStringListQuery("select domain from dns_tlds");
             }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+            return dnstldCache;
         }
     }
     
     public static String getDNSZoneForDNSRecord(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getDNSZoneForDNSRecord(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeStringQuery("select zone from dns_records where pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select zone from dns_records where pkey=?", pkey);
     }
 
     public static boolean isDNSZoneAvailable(MasterDatabaseConnection conn, String zone) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "isDNSZoneAvailable(MasterDatabaseConnection,String)", null);
-        try {
-            return conn.executeBooleanQuery("select (select zone from dns_zones where zone=?) is null", zone);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeBooleanQuery("select (select zone from dns_zones where zone=?) is null", zone);
     }
 
     public static String getPackageForDNSRecord(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getPackageForDNSRecord(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeStringQuery("select nz.package from dns_records nr, dns_zones nz where nr.pkey=? and nr.zone=nz.zone", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select nz.package from dns_records nr, dns_zones nz where nr.pkey=? and nr.zone=nz.zone", pkey);
     }
 
     public static String getPackageForDNSZone(MasterDatabaseConnection conn, String zone) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "getPackageForDNSZone(MasterDatabaseConnection,String)", null);
-        try {
-            return conn.executeStringQuery("select package from dns_zones where zone=?", zone);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select package from dns_zones where zone=?", zone);
     }
 
     public static void invalidateTable(SchemaTable.TableID tableID) {
-        Profiler.startProfile(Profiler.FAST, DNSHandler.class, "invalidateTable(SchemaTable.TableID)", null);
-        try {
-            switch(tableID) {
-                case DNS_TLDS :
-                    synchronized(dnstldLock) {
-                        dnstldCache=null;
-                    }
-                    break;
-            }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        switch(tableID) {
+            case DNS_TLDS :
+                synchronized(dnstldLock) {
+                    dnstldCache=null;
+                }
+                break;
         }
     }
 
@@ -860,48 +742,43 @@ final public class DNSHandler implements CronJob {
         String hostname,
         List<String> tlds
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "removeUnusedDNSRecord(MasterDatabaseConnection,InvalidateList,String,List<String>)", null);
-        try {
-            if(
-                conn.executeBooleanQuery("select (select pkey from httpd_site_urls where hostname=? limit 1) is null", hostname)
-            ) {
-                String tldPlus1 = DNSZoneTable.getHostTLD(hostname, tlds);
-                if(conn.executeBooleanQuery("select (select zone from dns_zones where zone=?) is not null", tldPlus1)) {
-                    String preTldPlus1 = hostname.length()<=tldPlus1.length()?"@":hostname.substring(0, hostname.length()-tldPlus1.length());
-                    int pkey=conn.executeIntQuery(
-                        "select\n"
-                        + "  coalesce(\n"
-                        + "    (\n"
-                        + "      select\n"
-                        + "        pkey\n"
-                        + "      from\n"
-                        + "        dns_records\n"
-                        + "      where\n"
-                        + "        zone=?\n"
-                        + "        and type='A'\n"
-                        + "        and domain=?\n"
-                        + "      limit 1\n"
-                        + "    ),\n"
-                        + "    -1\n"
-                        + "  )",
-                        tldPlus1,
-                        preTldPlus1
+        if(
+            conn.executeBooleanQuery("select (select pkey from httpd_site_urls where hostname=? limit 1) is null", hostname)
+        ) {
+            String tldPlus1 = DNSZoneTable.getHostTLD(hostname, tlds);
+            if(conn.executeBooleanQuery("select (select zone from dns_zones where zone=?) is not null", tldPlus1)) {
+                String preTldPlus1 = hostname.length()<=tldPlus1.length()?"@":hostname.substring(0, hostname.length()-tldPlus1.length());
+                int pkey=conn.executeIntQuery(
+                    "select\n"
+                    + "  coalesce(\n"
+                    + "    (\n"
+                    + "      select\n"
+                    + "        pkey\n"
+                    + "      from\n"
+                    + "        dns_records\n"
+                    + "      where\n"
+                    + "        zone=?\n"
+                    + "        and type='A'\n"
+                    + "        and domain=?\n"
+                    + "      limit 1\n"
+                    + "    ),\n"
+                    + "    -1\n"
+                    + "  )",
+                    tldPlus1,
+                    preTldPlus1
+                );
+                if(pkey!=-1) {
+                    conn.executeUpdate("delete from dns_records where pkey=?", pkey);
+                    invalidateList.addTable(
+                        conn,
+                        SchemaTable.TableID.DNS_RECORDS,
+                        getBusinessForDNSZone(conn, tldPlus1),
+                        getDNSAOServers(conn),
+                        false
                     );
-                    if(pkey!=-1) {
-                        conn.executeUpdate("delete from dns_records where pkey=?", pkey);
-                        invalidateList.addTable(
-                            conn,
-                            SchemaTable.TableID.DNS_RECORDS,
-                            getBusinessForDNSZone(conn, tldPlus1),
-                            getDNSAOServers(conn),
-                            false
-                        );
-                        updateDNSZoneSerial(conn, invalidateList, tldPlus1);
-                    }
+                    updateDNSZoneSerial(conn, invalidateList, tldPlus1);
                 }
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
 
@@ -915,25 +792,20 @@ final public class DNSHandler implements CronJob {
         String zone,
         int ttl
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "setDNSZoneTTL(MasterDatabaseConnection,InvalidateList,String,int)", null);
-        try {
-            // Must be allowed to access this zone
-            checkAccessDNSZone(conn, source, "setDNSZoneTTL", zone);
-            if (ttl <= 0 || ttl > 24*60*60) {
-                throw new SQLException("Illegal TTL value: "+ttl);
-            }
-            conn.executeUpdate("update dns_zones set ttl=? where zone=?", ttl, zone);
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.DNS_ZONES,
-                getBusinessForDNSZone(conn, zone),
-                getDNSAOServers(conn),
-                false
-            );
-            updateDNSZoneSerial(conn, invalidateList, zone);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        // Must be allowed to access this zone
+        checkAccessDNSZone(conn, source, "setDNSZoneTTL", zone);
+        if (ttl <= 0 || ttl > 24*60*60) {
+            throw new SQLException("Illegal TTL value: "+ttl);
         }
+        conn.executeUpdate("update dns_zones set ttl=? where zone=?", ttl, zone);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.DNS_ZONES,
+            getBusinessForDNSZone(conn, zone),
+            getDNSAOServers(conn),
+            false
+        );
+        updateDNSZoneSerial(conn, invalidateList, zone);
     }
 
     public static void updateDhcpDnsRecords(
@@ -942,40 +814,35 @@ final public class DNSHandler implements CronJob {
         int ipAddress,
         String dhcpAddress
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "updateDhcpDnsRecords(MasterDatabaseConnection,InvalidateList,int,String)", null);
-        try {
-            // Find the pkeys of the entries that should be changed
-            IntList pkeys=conn.executeIntListQuery("select pkey from dns_records where dhcp_address=?", ipAddress);
-            
-            // Build a list of affected zones
-            List<String> zones=new SortedArrayList<String>();
-            
-            for(int c=0;c<pkeys.size();c++) {
-                int pkey=pkeys.getInt(c);
-                String zone=getDNSZoneForDNSRecord(conn, pkey);
-                if(!zones.contains(zone)) zones.add(zone);
-                conn.executeUpdate("update dns_records set destination=? where pkey=?", dhcpAddress, pkey);
-            }
-            
-            // Invalidate the records
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.DNS_RECORDS,
-                InvalidateList.allBusinesses,
-                InvalidateList.allServers,
-                false
-            );
+        // Find the pkeys of the entries that should be changed
+        IntList pkeys=conn.executeIntListQuery("select pkey from dns_records where dhcp_address=?", ipAddress);
 
-            // Update the zone serials
-            for(int c=0;c<zones.size();c++) {
-                updateDNSZoneSerial(
-                    conn,
-                    invalidateList,
-                    zones.get(c)
-                );
-            }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        // Build a list of affected zones
+        List<String> zones=new SortedArrayList<String>();
+
+        for(int c=0;c<pkeys.size();c++) {
+            int pkey=pkeys.getInt(c);
+            String zone=getDNSZoneForDNSRecord(conn, pkey);
+            if(!zones.contains(zone)) zones.add(zone);
+            conn.executeUpdate("update dns_records set destination=? where pkey=?", dhcpAddress, pkey);
+        }
+
+        // Invalidate the records
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.DNS_RECORDS,
+            InvalidateList.allBusinesses,
+            InvalidateList.allServers,
+            false
+        );
+
+        // Update the zone serials
+        for(int c=0;c<zones.size();c++) {
+            updateDNSZoneSerial(
+                conn,
+                invalidateList,
+                zones.get(c)
+            );
         }
     }
 
@@ -984,33 +851,28 @@ final public class DNSHandler implements CronJob {
         InvalidateList invalidateList,
         String zone
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "updateDNSZoneSerial(MasterDatabaseConnection,InvalidateList,String)", null);
-        try {
-            // Get the old serial
-            long serial=conn.executeLongQuery("select serial from dns_zones where zone=?", zone);
+        // Get the old serial
+        long serial=conn.executeLongQuery("select serial from dns_zones where zone=?", zone);
 
-            // Check if already today or higher
-            long todaySerial=DNSZone.getCurrentSerial();
-            if(serial>=todaySerial) {
-                // If so, just increment by one
-                serial++;
-            } else {
-                // Otherwise, set it to today with daily of 01
-                serial=todaySerial;
-            }
-
-            // Place the serial back in the database
-            conn.executeUpdate("update dns_zones set serial=? where zone=?", serial, zone);
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.DNS_ZONES,
-                InvalidateList.allBusinesses,
-                InvalidateList.allServers,
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        // Check if already today or higher
+        long todaySerial=DNSZone.getCurrentSerial();
+        if(serial>=todaySerial) {
+            // If so, just increment by one
+            serial++;
+        } else {
+            // Otherwise, set it to today with daily of 01
+            serial=todaySerial;
         }
+
+        // Place the serial back in the database
+        conn.executeUpdate("update dns_zones set serial=? where zone=?", serial, zone);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.DNS_ZONES,
+            InvalidateList.allBusinesses,
+            InvalidateList.allServers,
+            false
+        );
     }
     
     public static void updateReverseDnsIfExists(
@@ -1019,37 +881,32 @@ final public class DNSHandler implements CronJob {
         String ip,
         String hostname
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, DNSHandler.class, "updateReverseDnsIfExists(MasterDatabaseConnection,InvalidateList,String,String)", null);
-        try {
-            String arpaZone=DNSZone.getArpaZoneForIPAddress(ip);
+        String arpaZone=DNSZone.getArpaZoneForIPAddress(ip);
+        if(
+            conn.executeBooleanQuery(
+                "select (select zone from dns_zones where zone=?) is not null",
+                arpaZone
+            )
+        ) {
+            int pos=ip.lastIndexOf('.');
+            String oct4=ip.substring(pos+1);
             if(
                 conn.executeBooleanQuery(
-                    "select (select zone from dns_zones where zone=?) is not null",
-                    arpaZone
+                    "select (select pkey from dns_records where zone=? and domain=? and type='"+DNSType.PTR+"' limit 1) is not null",
+                    arpaZone,
+                    oct4
                 )
             ) {
-                int pos=ip.lastIndexOf('.');
-                String oct4=ip.substring(pos+1);
-                if(
-                    conn.executeBooleanQuery(
-                        "select (select pkey from dns_records where zone=? and domain=? and type='"+DNSType.PTR+"' limit 1) is not null",
-                        arpaZone,
-                        oct4
-                    )
-                ) {
-                    updateDNSZoneSerial(conn, invalidateList, arpaZone);
+                updateDNSZoneSerial(conn, invalidateList, arpaZone);
 
-                    conn.executeUpdate(
-                        "update dns_records set destination=? where zone=? and domain=? and type='"+DNSType.PTR+'\'',
-                        hostname+'.',
-                        arpaZone,
-                        oct4
-                    );
-                    invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-                }
+                conn.executeUpdate(
+                    "update dns_records set destination=? where zone=? and domain=? and type='"+DNSType.PTR+'\'',
+                    hostname+'.',
+                    arpaZone,
+                    oct4
+                );
+                invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
         }
     }
     
@@ -1070,11 +927,13 @@ final public class DNSHandler implements CronJob {
         public String getZone() {
             return zone;
         }
-        
+
+        @Override
         public int hashCode() {
             return accounting.hashCode() ^ zone.hashCode();
         }
         
+        @Override
         public boolean equals(Object O) {
             if(O==null) return false;
             if(!(O instanceof AccountingAndZone)) return false;
@@ -1082,6 +941,7 @@ final public class DNSHandler implements CronJob {
             return accounting.equals(other.accounting) && zone.equals(other.zone);
         }
         
+        @Override
         public String toString() {
             return accounting+'|'+zone;
         }

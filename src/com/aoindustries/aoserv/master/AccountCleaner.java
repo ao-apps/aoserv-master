@@ -259,7 +259,7 @@ final public class AccountCleaner implements CronJob {
                 }
 
                 // business_administrators over CANCELED_KEEP_DAYS days
-                // remove if balance is zero and has not been used in actions or transactions
+                // remove if balance is zero and has not been used in ticket_actions or transactions
                 {
                     List<String> bas=conn.executeStringListQuery(
                         Connection.TRANSACTION_READ_COMMITTED,
@@ -272,7 +272,7 @@ final public class AccountCleaner implements CronJob {
                         + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  (select ac.pkey from actions ac where ac.administrator=ba.username limit 1) is null\n"
+                        + "  (select ac.pkey from ticket_actions ac where ac.administrator=ba.username limit 1) is null\n"
                         + "  and (select dl.pkey from disable_log dl where dl.disabled_by=ba.username limit 1) is null\n"
                         + "  and (select pk2.name from packages pk2 where pk2.created_by=ba.username limit 1) is null\n"
                         + "  and (select ti.pkey from tickets ti where ti.created_by=ba.username or ti.assigned_to=ba.username or ti.closed_by=ba.username limit 1) is null\n"

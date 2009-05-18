@@ -7,7 +7,6 @@ package com.aoindustries.aoserv.master;
  */
 import com.aoindustries.aoserv.client.*;
 import com.aoindustries.io.*;
-import com.aoindustries.profiler.*;
 import java.io.*;
 import java.sql.*;
 import java.util.Collections;
@@ -25,12 +24,7 @@ final public class BankAccountHandler {
         RequestSource source,
         String action
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, BankAccountHandler.class, "checkAccounting(MasterDatabaseConnection,RequestSource,String)", null);
-        try {
-            if(!isAccounting(conn, source)) throw new SQLException("Accounting not allowed, '"+action+"'");
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        if(!isAccounting(conn, source)) throw new SQLException("Accounting not allowed, '"+action+"'");
     }
 
     /**
@@ -43,53 +37,33 @@ final public class BankAccountHandler {
         boolean provideProgress,
         String account
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, BankAccountHandler.class, "getBankTransactionsAccount(MasterDatabaseConnection,RequestSource,CompressedDataOutputStream,boolean,String)", null);
-        try {
-            if(isBankAccounting(conn, source)) {
-                MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new BankTransaction(),
-                    "select * from bank_transactions where bank_account=?",
-                    account
-                );
-            } else {
-                List<BankTransaction> emptyList = Collections.emptyList();
-                MasterServer.writeObjects(source, out, provideProgress, emptyList);
-            }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        if(isBankAccounting(conn, source)) {
+            MasterServer.writeObjects(
+                conn,
+                source,
+                out,
+                provideProgress,
+                new BankTransaction(),
+                "select * from bank_transactions where bank_account=?",
+                account
+            );
+        } else {
+            List<BankTransaction> emptyList = Collections.emptyList();
+            MasterServer.writeObjects(source, out, provideProgress, emptyList);
         }
     }
 
     public static void checkBankAccounting(MasterDatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, BankAccountHandler.class, "checkBankAccounting(MasterDatabaseConnection,RequestSource,String)", null);
-        try {
-            if(!isBankAccounting(conn, source)) throw new SQLException("Bank accounting not allowed, '"+action+"'");
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        if(!isBankAccounting(conn, source)) throw new SQLException("Bank accounting not allowed, '"+action+"'");
     }
 
     public static boolean isAccounting(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, BankAccountHandler.class, "isAccounting(MasterDatabaseConnection,RequestSource)", null);
-        try {
-            MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
-            return mu!=null && mu.canAccessAccounting();
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+        return mu!=null && mu.canAccessAccounting();
     }
 
     public static boolean isBankAccounting(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.FAST, BankAccountHandler.class, "isBankAccounting(MasterDatabaseConnection,RequestSource)", null);
-        try {
-            MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
-            return mu!=null && mu.canAccessBankAccount();
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+        return mu!=null && mu.canAccessBankAccount();
     }
 }

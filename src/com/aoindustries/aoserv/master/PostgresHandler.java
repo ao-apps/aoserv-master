@@ -6,11 +6,7 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
-import com.aoindustries.aoserv.daemon.client.*;
 import com.aoindustries.io.*;
-import com.aoindustries.md5.*;
-import com.aoindustries.profiler.*;
-import com.aoindustries.sql.*;
 import com.aoindustries.util.*;
 import java.io.*;
 import java.sql.*;
@@ -27,78 +23,58 @@ final public class PostgresHandler {
     private final static Map<String,Boolean> disabledPostgresUsers=new HashMap<String,Boolean>();
 
     public static void checkAccessPostgresDatabase(MasterDatabaseConnection conn, RequestSource source, String action, int postgres_database) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "checkAccessPostgresDatabase(MasterDatabaseConnection,RequestSource,String,int)", null);
-        try {
-            MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
-            if(mu!=null) {
-                if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
-                    ServerHandler.checkAccessServer(conn, source, action, getAOServerForPostgresDatabase(conn, postgres_database));
-                }
-            } else {
-                checkAccessPostgresServerUser(conn, source, action, getDatDbaForPostgresDatabase(conn, postgres_database));
+        MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+        if(mu!=null) {
+            if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+                ServerHandler.checkAccessServer(conn, source, action, getAOServerForPostgresDatabase(conn, postgres_database));
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        } else {
+            checkAccessPostgresServerUser(conn, source, action, getDatDbaForPostgresDatabase(conn, postgres_database));
         }
     }
 
     public static void checkAccessPostgresServer(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "checkAccessPostgresServer(MasterDatabaseConnection,RequestSource,String,int)", null);
-        try {
-            ServerHandler.checkAccessServer(conn, source, action, getAOServerForPostgresServer(conn, pkey));
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        ServerHandler.checkAccessServer(conn, source, action, getAOServerForPostgresServer(conn, pkey));
     }
 
     public static void checkAccessPostgresServerUser(MasterDatabaseConnection conn, RequestSource source, String action, int postgres_server_user) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "checkAccessPostgresServerUser(MasterDatabaseConnection,RequestSource,String,int)", null);
-        try {
-            MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
-            if(mu!=null) {
-                if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
-                    ServerHandler.checkAccessServer(conn, source, action, getAOServerForPostgresServerUser(conn, postgres_server_user));
-                }
-            } else {
-                checkAccessPostgresUser(conn, source, action, getUsernameForPostgresServerUser(conn, postgres_server_user));
+        MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+        if(mu!=null) {
+            if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+                ServerHandler.checkAccessServer(conn, source, action, getAOServerForPostgresServerUser(conn, postgres_server_user));
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        } else {
+            checkAccessPostgresUser(conn, source, action, getUsernameForPostgresServerUser(conn, postgres_server_user));
         }
     }
 
     public static void checkAccessPostgresUser(MasterDatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "checkAccessPostgresUser(MasterDatabaseConnection,RequestSource,String,String)", null);
-        try {
-            MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
-            if(mu!=null) {
-                if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
-                    IntList psus = getPostgresServerUsersForPostgresUser(conn, username);
-                    boolean found = false;
-                    for(int psu : psus) {
-                        if(ServerHandler.canAccessServer(conn, source, getAOServerForPostgresServerUser(conn, psu))) {
-                            found=true;
-                            break;
-                        }
-                    }
-                    if(!found) {
-                        String message=
-                            "business_administrator.username="
-                            +source.getUsername()
-                            +" is not allowed to access postgres_user: action='"
-                            +action
-                            +", username="
-                            +username
-                        ;
-                        MasterServer.reportSecurityMessage(source, message);
-                        throw new SQLException(message);
+        MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+        if(mu!=null) {
+            if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+                IntList psus = getPostgresServerUsersForPostgresUser(conn, username);
+                boolean found = false;
+                for(int psu : psus) {
+                    if(ServerHandler.canAccessServer(conn, source, getAOServerForPostgresServerUser(conn, psu))) {
+                        found=true;
+                        break;
                     }
                 }
-            } else {
-                UsernameHandler.checkAccessUsername(conn, source, action, username);
+                if(!found) {
+                    String message=
+                        "business_administrator.username="
+                        +source.getUsername()
+                        +" is not allowed to access postgres_user: action='"
+                        +action
+                        +", username="
+                        +username
+                    ;
+                    MasterServer.reportSecurityMessage(source, message);
+                    throw new SQLException(message);
+                }
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        } else {
+            UsernameHandler.checkAccessUsername(conn, source, action, username);
         }
     }
 
@@ -115,91 +91,86 @@ final public class PostgresHandler {
         int encoding,
         boolean enable_postgis
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "addPostgresDatabase(MasterDatabaseConnection,RequestSource,InvalidateList,String,int,int,int,boolean)", null);
-        try {
-            List<String> reservedWords=getReservedWords(conn);
-            // Must be a valid name format
-            if(!PostgresDatabaseTable.isValidDatabaseName(
-                name,
-                reservedWords
-            )) throw new SQLException("Invalid PostgreSQL database name: "+name);
-            // If requesting PostGIS, make sure the version of PostgreSQL supports it.
-            if(
-                enable_postgis
-                && conn.executeBooleanQuery("select pv.postgis_version is null from postgres_servers ps inner join postgres_versions pv on ps.version=pv.version where ps.pkey=?", postgresServer)
-            ) throw new SQLException("This version of PostgreSQL doesn't support PostGIS");
+        List<String> reservedWords=getReservedWords(conn);
+        // Must be a valid name format
+        if(!PostgresDatabaseTable.isValidDatabaseName(
+            name,
+            reservedWords
+        )) throw new SQLException("Invalid PostgreSQL database name: "+name);
+        // If requesting PostGIS, make sure the version of PostgreSQL supports it.
+        if(
+            enable_postgis
+            && conn.executeBooleanQuery("select pv.postgis_version is null from postgres_servers ps inner join postgres_versions pv on ps.version=pv.version where ps.pkey=?", postgresServer)
+        ) throw new SQLException("This version of PostgreSQL doesn't support PostGIS");
 
-            // datdba must be on the same server and not be 'mail'
-            int datdbaServer=getPostgresServerForPostgresServerUser(conn, datdba);
-            if(datdbaServer!=postgresServer) throw new SQLException("(datdba.postgres_server="+datdbaServer+")!=(postgres_server="+postgresServer+")");
-            String datdbaUsername=getUsernameForPostgresServerUser(conn, datdba);
-            if(datdbaUsername.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add PostgresDatabase with datdba of '"+LinuxAccount.MAIL+'\'');
-            if(isPostgresServerUserDisabled(conn, datdba)) throw new SQLException("Unable to add PostgresDatabase, PostgresServerUser disabled: "+datdba);
-            // Look up the accounting code
-            String accounting=UsernameHandler.getBusinessForUsername(conn, datdbaUsername);
-            // Encoding must exist for this version of the database
-            if(
-                !conn.executeBooleanQuery(
-                    "select\n"
-                    + "  (\n"
-                    + "    select\n"
-                    + "      pe.pkey\n"
-                    + "    from\n"
-                    + "      postgres_servers ps,\n"
-                    + "      postgres_encodings pe\n"
-                    + "    where\n"
-                    + "      ps.pkey=?\n"
-                    + "      and ps.version=pe.postgres_version\n"
-                    + "      and pe.pkey=?\n"
-                    + "    limit 1\n"
-                    + "  ) is not null",
-                    postgresServer,
-                    encoding
-                )
-            ) throw new SQLException("PostgresServer #"+postgresServer+" does not support PostgresEncoding #"+encoding);
-
-            // Must be allowed to access this server and package
-            int aoServer=getAOServerForPostgresServer(conn, postgresServer);
-            ServerHandler.checkAccessServer(conn, source, "addPostgresDatabase", aoServer);
-            UsernameHandler.checkAccessUsername(conn, source, "addPostgresDatabase", datdbaUsername);
-            // This sub-account must have access to the server
-            BusinessHandler.checkBusinessAccessServer(conn, source, "addPostgresDatabase", accounting, aoServer);
-
-            // Add the entry to the database
-            int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('postgres_databases_pkey_seq')");
-            conn.executeUpdate(
-                "insert into\n"
-                + "  postgres_databases\n"
-                + "values(\n"
-                + "  ?,\n"
-                + "  ?,\n"
-                + "  ?,\n"
-                + "  ?,\n"
-                + "  ?,\n"
-                + "  false,\n"
-                + "  true,\n"
-                + "  ?\n"
-                + ")",
-                pkey,
-                name,
+        // datdba must be on the same server and not be 'mail'
+        int datdbaServer=getPostgresServerForPostgresServerUser(conn, datdba);
+        if(datdbaServer!=postgresServer) throw new SQLException("(datdba.postgres_server="+datdbaServer+")!=(postgres_server="+postgresServer+")");
+        String datdbaUsername=getUsernameForPostgresServerUser(conn, datdba);
+        if(datdbaUsername.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add PostgresDatabase with datdba of '"+LinuxAccount.MAIL+'\'');
+        if(isPostgresServerUserDisabled(conn, datdba)) throw new SQLException("Unable to add PostgresDatabase, PostgresServerUser disabled: "+datdba);
+        // Look up the accounting code
+        String accounting=UsernameHandler.getBusinessForUsername(conn, datdbaUsername);
+        // Encoding must exist for this version of the database
+        if(
+            !conn.executeBooleanQuery(
+                "select\n"
+                + "  (\n"
+                + "    select\n"
+                + "      pe.pkey\n"
+                + "    from\n"
+                + "      postgres_servers ps,\n"
+                + "      postgres_encodings pe\n"
+                + "    where\n"
+                + "      ps.pkey=?\n"
+                + "      and ps.version=pe.postgres_version\n"
+                + "      and pe.pkey=?\n"
+                + "    limit 1\n"
+                + "  ) is not null",
                 postgresServer,
-                datdba,
-                encoding,
-                enable_postgis
-            );
+                encoding
+            )
+        ) throw new SQLException("PostgresServer #"+postgresServer+" does not support PostgresEncoding #"+encoding);
 
-            // Notify all clients of the update, the server will detect this change and automatically add the database
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_DATABASES,
-                accounting,
-                aoServer,
-                false
-            );
-            return pkey;
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        // Must be allowed to access this server and package
+        int aoServer=getAOServerForPostgresServer(conn, postgresServer);
+        ServerHandler.checkAccessServer(conn, source, "addPostgresDatabase", aoServer);
+        UsernameHandler.checkAccessUsername(conn, source, "addPostgresDatabase", datdbaUsername);
+        // This sub-account must have access to the server
+        BusinessHandler.checkBusinessAccessServer(conn, source, "addPostgresDatabase", accounting, aoServer);
+
+        // Add the entry to the database
+        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('postgres_databases_pkey_seq')");
+        conn.executeUpdate(
+            "insert into\n"
+            + "  postgres_databases\n"
+            + "values(\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  false,\n"
+            + "  true,\n"
+            + "  ?\n"
+            + ")",
+            pkey,
+            name,
+            postgresServer,
+            datdba,
+            encoding,
+            enable_postgis
+        );
+
+        // Notify all clients of the update, the server will detect this change and automatically add the database
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.POSTGRES_DATABASES,
+            accounting,
+            aoServer,
+            false
+        );
+        return pkey;
     }
 
     /**
@@ -212,38 +183,33 @@ final public class PostgresHandler {
         String username, 
         int postgresServer
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "addPostgresServerUser(MasterDatabaseConnection,RequestSource,InvalidateList,String,int)", null);
-        try {
-            if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add PostgresServerUser for user '"+LinuxAccount.MAIL+'\'');
+        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add PostgresServerUser for user '"+LinuxAccount.MAIL+'\'');
 
-            checkAccessPostgresUser(conn, source, "addPostgresServerUser", username);
-            if(isPostgresUserDisabled(conn, username)) throw new SQLException("Unable to add PostgresServerUser, PostgresUser disabled: "+username);
-            int aoServer=getAOServerForPostgresServer(conn, postgresServer);
-            ServerHandler.checkAccessServer(conn, source, "addPostgresServerUser", aoServer);
-            // This sub-account must have access to the server
-            UsernameHandler.checkUsernameAccessServer(conn, source, "addPostgresServerUser", username, aoServer);
+        checkAccessPostgresUser(conn, source, "addPostgresServerUser", username);
+        if(isPostgresUserDisabled(conn, username)) throw new SQLException("Unable to add PostgresServerUser, PostgresUser disabled: "+username);
+        int aoServer=getAOServerForPostgresServer(conn, postgresServer);
+        ServerHandler.checkAccessServer(conn, source, "addPostgresServerUser", aoServer);
+        // This sub-account must have access to the server
+        UsernameHandler.checkUsernameAccessServer(conn, source, "addPostgresServerUser", username, aoServer);
 
-            int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('postgres_server_users_pkey_seq')");
+        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('postgres_server_users_pkey_seq')");
 
-            conn.executeUpdate(
-                "insert into postgres_server_users values(?,?,?,null,null)",
-                pkey,
-                username,
-                postgresServer
-            );
+        conn.executeUpdate(
+            "insert into postgres_server_users values(?,?,?,null,null)",
+            pkey,
+            username,
+            postgresServer
+        );
 
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_SERVER_USERS,
-                UsernameHandler.getBusinessForUsername(conn, username),
-                aoServer,
-                true
-            );
-            return pkey;
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        // Notify all clients of the update
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.POSTGRES_SERVER_USERS,
+            UsernameHandler.getBusinessForUsername(conn, username),
+            aoServer,
+            true
+        );
+        return pkey;
     }
 
     /**
@@ -255,29 +221,24 @@ final public class PostgresHandler {
         InvalidateList invalidateList,
         String username
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "addPostgresUser(MasterDatabaseConnection,RequestSource,InvalidateList,String)", null);
-        try {
-            if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add PostgresUser for user '"+LinuxAccount.MAIL+'\'');
-            UsernameHandler.checkAccessUsername(conn, source, "addPostgresUser", username);
-            if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add PostgresUser, Username disabled: "+username);
-            if(!PostgresUser.isValidUsername(username)) throw new SQLException("Invalid PostgresUser username: "+username);
+        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add PostgresUser for user '"+LinuxAccount.MAIL+'\'');
+        UsernameHandler.checkAccessUsername(conn, source, "addPostgresUser", username);
+        if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add PostgresUser, Username disabled: "+username);
+        if(!PostgresUser.isValidUsername(username)) throw new SQLException("Invalid PostgresUser username: "+username);
 
-            conn.executeUpdate(
-                "insert into postgres_users(username) values(?)",
-                username
-            );
+        conn.executeUpdate(
+            "insert into postgres_users(username) values(?)",
+            username
+        );
 
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_USERS,
-                UsernameHandler.getBusinessForUsername(conn, username),
-                InvalidateList.allServers,
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        // Notify all clients of the update
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.POSTGRES_USERS,
+            UsernameHandler.getBusinessForUsername(conn, username),
+            InvalidateList.allServers,
+            false
+        );
     }
 
     public static void disablePostgresServerUser(
@@ -287,29 +248,24 @@ final public class PostgresHandler {
         int disableLog,
         int pkey
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "disablePostgresServerUser(MasterDatabaseConnection,RequestSource,InvalidateList,int,int)", null);
-        try {
-            if(isPostgresServerUserDisabled(conn, pkey)) throw new SQLException("PostgresServerUser is already disabled: "+pkey);
-            BusinessHandler.checkAccessDisableLog(conn, source, "disablePostgresServerUser", disableLog, false);
-            checkAccessPostgresServerUser(conn, source, "disablePostgresServerUser", pkey);
+        if(isPostgresServerUserDisabled(conn, pkey)) throw new SQLException("PostgresServerUser is already disabled: "+pkey);
+        BusinessHandler.checkAccessDisableLog(conn, source, "disablePostgresServerUser", disableLog, false);
+        checkAccessPostgresServerUser(conn, source, "disablePostgresServerUser", pkey);
 
-            conn.executeUpdate(
-                "update postgres_server_users set disable_log=? where pkey=?",
-                disableLog,
-                pkey
-            );
+        conn.executeUpdate(
+            "update postgres_server_users set disable_log=? where pkey=?",
+            disableLog,
+            pkey
+        );
 
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_SERVER_USERS,
-                getBusinessForPostgresServerUser(conn, pkey),
-                getAOServerForPostgresServerUser(conn, pkey),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        // Notify all clients of the update
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.POSTGRES_SERVER_USERS,
+            getBusinessForPostgresServerUser(conn, pkey),
+            getAOServerForPostgresServerUser(conn, pkey),
+            false
+        );
     }
 
     public static void disablePostgresUser(
@@ -319,36 +275,31 @@ final public class PostgresHandler {
         int disableLog,
         String username
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "disablePostgresUser(MasterDatabaseConnection,RequestSource,InvalidateList,int,String)", null);
-        try {
-            if(isPostgresUserDisabled(conn, username)) throw new SQLException("PostgresUser is already disabled: "+username);
-            BusinessHandler.checkAccessDisableLog(conn, source, "disablePostgresUser", disableLog, false);
-            checkAccessPostgresUser(conn, source, "disablePostgresUser", username);
-            IntList psus=getPostgresServerUsersForPostgresUser(conn, username);
-            for(int c=0;c<psus.size();c++) {
-                int psu=psus.getInt(c);
-                if(!isPostgresServerUserDisabled(conn, psu)) {
-                    throw new SQLException("Cannot disable PostgresUser '"+username+"': PostgresServerUser not disabled: "+psu);
-                }
+        if(isPostgresUserDisabled(conn, username)) throw new SQLException("PostgresUser is already disabled: "+username);
+        BusinessHandler.checkAccessDisableLog(conn, source, "disablePostgresUser", disableLog, false);
+        checkAccessPostgresUser(conn, source, "disablePostgresUser", username);
+        IntList psus=getPostgresServerUsersForPostgresUser(conn, username);
+        for(int c=0;c<psus.size();c++) {
+            int psu=psus.getInt(c);
+            if(!isPostgresServerUserDisabled(conn, psu)) {
+                throw new SQLException("Cannot disable PostgresUser '"+username+"': PostgresServerUser not disabled: "+psu);
             }
-
-            conn.executeUpdate(
-                "update postgres_users set disable_log=? where username=?",
-                disableLog,
-                username
-            );
-
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_USERS,
-                UsernameHandler.getBusinessForUsername(conn, username),
-                UsernameHandler.getServersForUsername(conn, username),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
         }
+
+        conn.executeUpdate(
+            "update postgres_users set disable_log=? where username=?",
+            disableLog,
+            username
+        );
+
+        // Notify all clients of the update
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.POSTGRES_USERS,
+            UsernameHandler.getBusinessForUsername(conn, username),
+            UsernameHandler.getServersForUsername(conn, username),
+            false
+        );
     }
 
     /**
@@ -360,15 +311,10 @@ final public class PostgresHandler {
         CompressedDataOutputStream out,
         int dbPKey
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "dumpPostgresDatabase(MasterDatabaseConnection,RequestSource,CompressedDataOutputStream,int)", null);
-        try {
-            checkAccessPostgresDatabase(conn, source, "dumpPostgresDatabase", dbPKey);
+        checkAccessPostgresDatabase(conn, source, "dumpPostgresDatabase", dbPKey);
 
-            int aoServer=getAOServerForPostgresDatabase(conn, dbPKey);
-            DaemonHandler.getDaemonConnector(conn, aoServer).dumpPostgresDatabase(dbPKey, out);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        int aoServer=getAOServerForPostgresDatabase(conn, dbPKey);
+        DaemonHandler.getDaemonConnector(conn, aoServer).dumpPostgresDatabase(dbPKey, out);
     }
 
     public static void enablePostgresServerUser(
@@ -377,31 +323,26 @@ final public class PostgresHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "enablePostgresServerUser(MasterDatabaseConnection,RequestSource,InvalidateList,int)", null);
-        try {
-            int disableLog=getDisableLogForPostgresServerUser(conn, pkey);
-            if(disableLog==-1) throw new SQLException("PostgresServerUser is already enabled: "+pkey);
-            BusinessHandler.checkAccessDisableLog(conn, source, "enablePostgresServerUser", disableLog, true);
-            checkAccessPostgresServerUser(conn, source, "enablePostgresServerUser", pkey);
-            String pu=getUsernameForPostgresServerUser(conn, pkey);
-            if(isPostgresUserDisabled(conn, pu)) throw new SQLException("Unable to enable PostgresServerUser #"+pkey+", PostgresUser not enabled: "+pu);
+        int disableLog=getDisableLogForPostgresServerUser(conn, pkey);
+        if(disableLog==-1) throw new SQLException("PostgresServerUser is already enabled: "+pkey);
+        BusinessHandler.checkAccessDisableLog(conn, source, "enablePostgresServerUser", disableLog, true);
+        checkAccessPostgresServerUser(conn, source, "enablePostgresServerUser", pkey);
+        String pu=getUsernameForPostgresServerUser(conn, pkey);
+        if(isPostgresUserDisabled(conn, pu)) throw new SQLException("Unable to enable PostgresServerUser #"+pkey+", PostgresUser not enabled: "+pu);
 
-            conn.executeUpdate(
-                "update postgres_server_users set disable_log=null where pkey=?",
-                pkey
-            );
+        conn.executeUpdate(
+            "update postgres_server_users set disable_log=null where pkey=?",
+            pkey
+        );
 
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_SERVER_USERS,
-                UsernameHandler.getBusinessForUsername(conn, pu),
-                getAOServerForPostgresServerUser(conn, pkey),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        // Notify all clients of the update
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.POSTGRES_SERVER_USERS,
+            UsernameHandler.getBusinessForUsername(conn, pu),
+            getAOServerForPostgresServerUser(conn, pkey),
+            false
+        );
     }
 
     public static void enablePostgresUser(
@@ -410,30 +351,25 @@ final public class PostgresHandler {
         InvalidateList invalidateList,
         String username
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "enablePostgresUser(MasterDatabaseConnection,RequestSource,InvalidateList,String)", null);
-        try {
-            int disableLog=getDisableLogForPostgresUser(conn, username);
-            if(disableLog==-1) throw new SQLException("PostgresUser is already enabled: "+username);
-            BusinessHandler.checkAccessDisableLog(conn, source, "enablePostgresUser", disableLog, true);
-            UsernameHandler.checkAccessUsername(conn, source, "enablePostgresUser", username);
-            if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable PostgresUser '"+username+"', Username not enabled: "+username);
+        int disableLog=getDisableLogForPostgresUser(conn, username);
+        if(disableLog==-1) throw new SQLException("PostgresUser is already enabled: "+username);
+        BusinessHandler.checkAccessDisableLog(conn, source, "enablePostgresUser", disableLog, true);
+        UsernameHandler.checkAccessUsername(conn, source, "enablePostgresUser", username);
+        if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable PostgresUser '"+username+"', Username not enabled: "+username);
 
-            conn.executeUpdate(
-                "update postgres_users set disable_log=null where username=?",
-                username
-            );
+        conn.executeUpdate(
+            "update postgres_users set disable_log=null where username=?",
+            username
+        );
 
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_USERS,
-                UsernameHandler.getBusinessForUsername(conn, username),
-                UsernameHandler.getServersForUsername(conn, username),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        // Notify all clients of the update
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.POSTGRES_USERS,
+            UsernameHandler.getBusinessForUsername(conn, username),
+            UsernameHandler.getServersForUsername(conn, username),
+            false
+        );
     }
 
     /**
@@ -444,166 +380,116 @@ final public class PostgresHandler {
         String template_base,
         String template_added
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "generatePostgresDatabaseName(MasterDatabaseConnection,String,String)", null);
-        try {
-            // Load the list of reserved words
-            List<String> reservedWords=getReservedWords(conn);
+        // Load the list of reserved words
+        List<String> reservedWords=getReservedWords(conn);
 
-            // Load the entire list of postgres database names
-            List<String> names=conn.executeStringListQuery("select name from postgres_databases group by name");
-            int size=names.size();
+        // Load the entire list of postgres database names
+        List<String> names=conn.executeStringListQuery("select name from postgres_databases group by name");
+        int size=names.size();
 
-            // Sort them
-            List<String> sorted=new SortedArrayList<String>(size);
-            sorted.addAll(names);
+        // Sort them
+        List<String> sorted=new SortedArrayList<String>(size);
+        sorted.addAll(names);
 
-            // Find one that is not used
-            String goodOne=null;
-            for(int c=0;c<Integer.MAX_VALUE;c++) {
-                String name= (c==0) ? template_base : (template_base+template_added+c);
-                if(!PostgresDatabaseTable.isValidDatabaseName(name, reservedWords)) throw new SQLException("Invalid PostgreSQL database name: "+name);
-                if(!sorted.contains(name)) {
-                    goodOne=name;
-                    break;
-                }
+        // Find one that is not used
+        String goodOne=null;
+        for(int c=0;c<Integer.MAX_VALUE;c++) {
+            String name= (c==0) ? template_base : (template_base+template_added+c);
+            if(!PostgresDatabaseTable.isValidDatabaseName(name, reservedWords)) throw new SQLException("Invalid PostgreSQL database name: "+name);
+            if(!sorted.contains(name)) {
+                goodOne=name;
+                break;
             }
-
-            // If could not find one, report and error
-            if(goodOne==null) throw new SQLException("Unable to find available PostgreSQL database name for template_base="+template_base+" and template_added="+template_added);
-            return goodOne;
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
         }
+
+        // If could not find one, report and error
+        if(goodOne==null) throw new SQLException("Unable to find available PostgreSQL database name for template_base="+template_base+" and template_added="+template_added);
+        return goodOne;
     }
 
     public static int getDisableLogForPostgresServerUser(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getDisableLogForPostgresServerUser(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeIntQuery("select coalesce(disable_log, -1) from postgres_server_users where pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntQuery("select coalesce(disable_log, -1) from postgres_server_users where pkey=?", pkey);
     }
 
     public static int getDisableLogForPostgresUser(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getDisableLogForPostgresUser(MasterDatabaseConnection,String)", null);
-        try {
-            return conn.executeIntQuery("select coalesce(disable_log, -1) from postgres_users where username=?", username);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntQuery("select coalesce(disable_log, -1) from postgres_users where username=?", username);
     }
 
     public static IntList getPostgresServerUsersForPostgresUser(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getPostgresServerUsersForPostgresUser(MasterDatabaseConnection,String)", null);
-        try {
-            return conn.executeIntListQuery("select pkey from postgres_server_users where username=?", username);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntListQuery("select pkey from postgres_server_users where username=?", username);
     }
 
     private static final Object reservedWordLock=new Object();
     private static List<String> reservedWordCache;
     public static List<String> getReservedWords(MasterDatabaseConnection conn) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getReservedWords(MasterDatabaseConnection)", null);
-        try {
-            synchronized(reservedWordLock) {
-                if(reservedWordCache==null) {
-                    // Load the list of reserved words
-                    reservedWordCache=conn.executeStringListQuery("select word from postgres_reserved_words");
-                }
-                return reservedWordCache;
+        synchronized(reservedWordLock) {
+            if(reservedWordCache==null) {
+                // Load the list of reserved words
+                reservedWordCache=conn.executeStringListQuery("select word from postgres_reserved_words");
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+            return reservedWordCache;
         }
     }
 
     public static String getUsernameForPostgresServerUser(MasterDatabaseConnection conn, int psu) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getUsernameForPostgresServerUser(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeStringQuery("select username from postgres_server_users where pkey=?", psu);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select username from postgres_server_users where pkey=?", psu);
     }
 
     public static void invalidateTable(SchemaTable.TableID tableID) {
-        Profiler.startProfile(Profiler.FAST, PostgresHandler.class, "invalidateTable(SchemaTable.TableID)", null);
-        try {
-            switch(tableID) {
-                case POSTGRES_RESERVED_WORDS :
-                    synchronized(reservedWordLock) {
-                        reservedWordCache=null;
-                    }
-                    break;
-                case POSTGRES_SERVER_USERS :
-                    synchronized(PostgresHandler.class) {
-                        disabledPostgresServerUsers.clear();
-                    }
-                    break;
-                case POSTGRES_USERS :
-                    synchronized(PostgresHandler.class) {
-                        disabledPostgresUsers.clear();
-                    }
-                    break;
-            }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        switch(tableID) {
+            case POSTGRES_RESERVED_WORDS :
+                synchronized(reservedWordLock) {
+                    reservedWordCache=null;
+                }
+                break;
+            case POSTGRES_SERVER_USERS :
+                synchronized(PostgresHandler.class) {
+                    disabledPostgresServerUsers.clear();
+                }
+                break;
+            case POSTGRES_USERS :
+                synchronized(PostgresHandler.class) {
+                    disabledPostgresUsers.clear();
+                }
+                break;
         }
     }
 
     public static boolean isPostgresServerUserDisabled(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "isPostgresServerUserDisabled(MasterDatabaseConnection,int)", null);
-        try {
 	    synchronized(PostgresHandler.class) {
-		Integer I=Integer.valueOf(pkey);
-		Boolean O=disabledPostgresServerUsers.get(I);
-		if(O!=null) return O.booleanValue();
-		boolean isDisabled=getDisableLogForPostgresServerUser(conn, pkey)!=-1;
-		disabledPostgresServerUsers.put(I, isDisabled);
-		return isDisabled;
+            Integer I=Integer.valueOf(pkey);
+            Boolean O=disabledPostgresServerUsers.get(I);
+            if(O!=null) return O.booleanValue();
+            boolean isDisabled=getDisableLogForPostgresServerUser(conn, pkey)!=-1;
+            disabledPostgresServerUsers.put(I, isDisabled);
+            return isDisabled;
 	    }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
     }
 
     public static boolean isPostgresUser(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "isPostgresUser(MasterDatabaseConnection,String)", null);
-        try {
-            return conn.executeBooleanQuery(
-                "select\n"
-                + "  (\n"
-                + "    select\n"
-                + "      username\n"
-                + "    from\n"
-                + "      postgres_users\n"
-                + "    where\n"
-                + "      username=?\n"
-                + "    limit 1\n"
-                + "  ) is not null",
-                username
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeBooleanQuery(
+            "select\n"
+            + "  (\n"
+            + "    select\n"
+            + "      username\n"
+            + "    from\n"
+            + "      postgres_users\n"
+            + "    where\n"
+            + "      username=?\n"
+            + "    limit 1\n"
+            + "  ) is not null",
+            username
+        );
     }
 
     public static boolean isPostgresUserDisabled(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "isPostgresUserDisabled(Connectino[],String)", null);
-        try {
 	    synchronized(PostgresHandler.class) {
-		Boolean O=disabledPostgresUsers.get(username);
-		if(O!=null) return O.booleanValue();
-		boolean isDisabled=getDisableLogForPostgresUser(conn, username)!=-1;
-		disabledPostgresUsers.put(username, isDisabled);
-		return isDisabled;
+            Boolean O=disabledPostgresUsers.get(username);
+            if(O!=null) return O.booleanValue();
+            boolean isDisabled=getDisableLogForPostgresUser(conn, username)!=-1;
+            disabledPostgresUsers.put(username, isDisabled);
+            return isDisabled;
 	    }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
     }
 
     /**
@@ -615,33 +501,28 @@ final public class PostgresHandler {
         String name,
         int postgresServer
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "isPostgresDatabaseNameAvailable(MasterDatabaseConnection,RequestSource,String,int)", null);
-        try {
-            int aoServer=getAOServerForPostgresServer(conn, postgresServer);
-            ServerHandler.checkAccessServer(
-                conn,
-                source,
-                "isPostgresDatabaseNameAvailable",
-                aoServer
-            );
-            return conn.executeBooleanQuery(
-                "select\n"
-                + "  (\n"
-                + "    select\n"
-                + "      pkey\n"
-                + "    from\n"
-                + "      postgres_databases\n"
-                + "    where\n"
-                + "      name=?\n"
-                + "      and postgres_server=?\n"
-                + "    limit 1\n"
-                + "  ) is null",
-                name,
-                postgresServer
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        int aoServer=getAOServerForPostgresServer(conn, postgresServer);
+        ServerHandler.checkAccessServer(
+            conn,
+            source,
+            "isPostgresDatabaseNameAvailable",
+            aoServer
+        );
+        return conn.executeBooleanQuery(
+            "select\n"
+            + "  (\n"
+            + "    select\n"
+            + "      pkey\n"
+            + "    from\n"
+            + "      postgres_databases\n"
+            + "    where\n"
+            + "      name=?\n"
+            + "      and postgres_server=?\n"
+            + "    limit 1\n"
+            + "  ) is null",
+            name,
+            postgresServer
+        );
     }
 
     /**
@@ -653,13 +534,8 @@ final public class PostgresHandler {
         String name,
         int aoServer
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "isPostgresServerNameAvailable(MasterDatabaseConnection,RequestSource,String,int)", null);
-        try {
-            ServerHandler.checkAccessServer(conn, source, "isPostgresServerNameAvailable", aoServer);
-            return conn.executeBooleanQuery("select (select pkey from postgres_servers where name=? and ao_server=? limit 1) is null", name, aoServer);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        ServerHandler.checkAccessServer(conn, source, "isPostgresServerNameAvailable", aoServer);
+        return conn.executeBooleanQuery("select (select pkey from postgres_servers where name=? and ao_server=? limit 1) is null", name, aoServer);
     }
 
     public static boolean isPostgresServerUserPasswordSet(
@@ -667,18 +543,13 @@ final public class PostgresHandler {
         RequestSource source, 
         int psu
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "isPostgresServerUserPasswordSet(MasterDatabaseConnection,RequestSource,int)", null);
-        try {
-            checkAccessPostgresServerUser(conn, source, "isPostgresServerUserPasswordSet", psu);
-            if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to determine if PostgresServerUser password is set, account disabled: "+psu);
-            String username=getUsernameForPostgresServerUser(conn, psu);
+        checkAccessPostgresServerUser(conn, source, "isPostgresServerUserPasswordSet", psu);
+        if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to determine if PostgresServerUser password is set, account disabled: "+psu);
+        String username=getUsernameForPostgresServerUser(conn, psu);
 
-            int aoServer=getAOServerForPostgresServerUser(conn, psu);
-            String password=DaemonHandler.getDaemonConnector(conn, aoServer).getPostgresUserPassword(psu);
-            return !PostgresUser.NO_PASSWORD_DB_VALUE.equals(password);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        int aoServer=getAOServerForPostgresServerUser(conn, psu);
+        String password=DaemonHandler.getDaemonConnector(conn, aoServer).getPostgresUserPassword(psu);
+        return !PostgresUser.NO_PASSWORD_DB_VALUE.equals(password);
     }
 
     /**
@@ -690,14 +561,9 @@ final public class PostgresHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "removePostgresDatabase(MasterDatabaseConnection,RequestSource,InvalidateList,int)", null);
-        try {
-            checkAccessPostgresDatabase(conn, source, "removePostgresDatabase", pkey);
+        checkAccessPostgresDatabase(conn, source, "removePostgresDatabase", pkey);
 
-            removePostgresDatabase(conn, invalidateList, pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        removePostgresDatabase(conn, invalidateList, pkey);
     }
 
     /**
@@ -708,24 +574,19 @@ final public class PostgresHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "removePostgresDatabase(MasterDatabaseConnection,InvalidateList,int)", null);
-        try {
-            // Remove the database entry
-            String accounting=getBusinessForPostgresDatabase(conn, pkey);
-            int aoServer=getAOServerForPostgresDatabase(conn, pkey);
-            conn.executeUpdate("delete from postgres_databases where pkey=?", pkey);
+        // Remove the database entry
+        String accounting=getBusinessForPostgresDatabase(conn, pkey);
+        int aoServer=getAOServerForPostgresDatabase(conn, pkey);
+        conn.executeUpdate("delete from postgres_databases where pkey=?", pkey);
 
-            // Notify all clients of the update
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_DATABASES,
-                accounting,
-                aoServer,
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        // Notify all clients of the update
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.POSTGRES_DATABASES,
+            accounting,
+            aoServer,
+            false
+        );
     }
 
     /**
@@ -737,35 +598,30 @@ final public class PostgresHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "removePostgresServerUser(MasterDatabaseConnection,RequestSource,InvalidateList,int)", null);
-        try {
-            checkAccessPostgresServerUser(conn, source, "removePostgresServerUser", pkey);
+        checkAccessPostgresServerUser(conn, source, "removePostgresServerUser", pkey);
 
-            String username=getUsernameForPostgresServerUser(conn, pkey);
-            if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("Not allowed to remove PostgresUser for user '"+PostgresUser.POSTGRES+'\'');
+        String username=getUsernameForPostgresServerUser(conn, pkey);
+        if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("Not allowed to remove PostgresUser for user '"+PostgresUser.POSTGRES+'\'');
 
-            // Get the details for later use
-            int aoServer=getAOServerForPostgresServerUser(conn, pkey);
-            String accounting=getBusinessForPostgresServerUser(conn, pkey);
+        // Get the details for later use
+        int aoServer=getAOServerForPostgresServerUser(conn, pkey);
+        String accounting=getBusinessForPostgresServerUser(conn, pkey);
 
-            // Make sure that this is not the DBA for any databases
-            int count=conn.executeIntQuery("select count(*) from postgres_databases where datdba=?", pkey);
-            if(count>0) throw new SQLException("PostgresServerUser #"+pkey+" cannot be removed because it is the datdba for "+count+(count==1?" database":" databases"));
+        // Make sure that this is not the DBA for any databases
+        int count=conn.executeIntQuery("select count(*) from postgres_databases where datdba=?", pkey);
+        if(count>0) throw new SQLException("PostgresServerUser #"+pkey+" cannot be removed because it is the datdba for "+count+(count==1?" database":" databases"));
 
-            // Remove the postgres_server_user
-            conn.executeUpdate("delete from postgres_server_users where pkey=?", pkey);
+        // Remove the postgres_server_user
+        conn.executeUpdate("delete from postgres_server_users where pkey=?", pkey);
 
-            // Notify all clients of the updates
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_SERVER_USERS,
-                accounting,
-                aoServer,
-                true
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        // Notify all clients of the updates
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.POSTGRES_SERVER_USERS,
+            accounting,
+            aoServer,
+            true
+        );
     }
 
     /**
@@ -777,14 +633,9 @@ final public class PostgresHandler {
         InvalidateList invalidateList,
         String username
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "removePostgresUser(MasterDatabaseConnection,RequestSource,InvalidateList,String)", null);
-        try {
-            checkAccessPostgresUser(conn, source, "removePostgresUser", username);
+        checkAccessPostgresUser(conn, source, "removePostgresUser", username);
 
-            removePostgresUser(conn, invalidateList, username);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        removePostgresUser(conn, invalidateList, username);
     }
 
     /**
@@ -795,36 +646,31 @@ final public class PostgresHandler {
         InvalidateList invalidateList,
         String username
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "removePostgresUser(MasterDatabaseConnection,InvalidateList,String)", null);
-        try {
-            if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("Not allowed to remove PostgresUser named '"+PostgresUser.POSTGRES+'\'');
-            String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("Not allowed to remove PostgresUser named '"+PostgresUser.POSTGRES+'\'');
+        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
 
-            // Remove the postgres_server_user
-            IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgres_server_users psu, postgres_servers ps where psu.username=? and psu.postgres_server=ps.pkey", username);
-            if(aoServers.size()>0) {
-                conn.executeUpdate("delete from postgres_server_users where username=?", username);
-                invalidateList.addTable(
-                    conn,
-                    SchemaTable.TableID.POSTGRES_SERVER_USERS,
-                    accounting,
-                    aoServers,
-                    false
-                );
-            }
-
-            // Remove the postgres_user
-            conn.executeUpdate("delete from postgres_users where username=?", username);
+        // Remove the postgres_server_user
+        IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgres_server_users psu, postgres_servers ps where psu.username=? and psu.postgres_server=ps.pkey", username);
+        if(aoServers.size()>0) {
+            conn.executeUpdate("delete from postgres_server_users where username=?", username);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.POSTGRES_USERS,
+                SchemaTable.TableID.POSTGRES_SERVER_USERS,
                 accounting,
-                BusinessHandler.getServersForBusiness(conn, accounting),
+                aoServers,
                 false
             );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
         }
+
+        // Remove the postgres_user
+        conn.executeUpdate("delete from postgres_users where username=?", username);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.POSTGRES_USERS,
+            accounting,
+            BusinessHandler.getServersForBusiness(conn, accounting),
+            false
+        );
     }
 
     /**
@@ -836,30 +682,25 @@ final public class PostgresHandler {
         int postgres_server_user,
         String password
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "setPostgresServerUserPassword(MasterDatabaseConnection,RequestSource,int,String)", null);
-        try {
-            BusinessHandler.checkPermission(conn, source, "setPostgresServerUserPassword", AOServPermission.Permission.set_postgres_server_user_password);
-            checkAccessPostgresServerUser(conn, source, "setPostgresServerUserPassword", postgres_server_user);
-            if(isPostgresServerUserDisabled(conn, postgres_server_user)) throw new SQLException("Unable to set PostgresServerUser password, account disabled: "+postgres_server_user);
+        BusinessHandler.checkPermission(conn, source, "setPostgresServerUserPassword", AOServPermission.Permission.set_postgres_server_user_password);
+        checkAccessPostgresServerUser(conn, source, "setPostgresServerUserPassword", postgres_server_user);
+        if(isPostgresServerUserDisabled(conn, postgres_server_user)) throw new SQLException("Unable to set PostgresServerUser password, account disabled: "+postgres_server_user);
 
-            // Get the server for the user
-            int aoServer=getAOServerForPostgresServerUser(conn, postgres_server_user);
-            String username=getUsernameForPostgresServerUser(conn, postgres_server_user);
+        // Get the server for the user
+        int aoServer=getAOServerForPostgresServerUser(conn, postgres_server_user);
+        String username=getUsernameForPostgresServerUser(conn, postgres_server_user);
 
-            // No setting the super user password
-            if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("The PostgreSQL "+PostgresUser.POSTGRES+" password may not be set.");
+        // No setting the super user password
+        if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("The PostgreSQL "+PostgresUser.POSTGRES+" password may not be set.");
 
-            // Perform the password check here, too.
-            if(password!=PostgresUser.NO_PASSWORD) {
-                PasswordChecker.Result[] results = PostgresUser.checkPassword(Locale.getDefault(), username, password);
-                if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
-            }
-
-            // Contact the daemon for the update
-            DaemonHandler.getDaemonConnector(conn, aoServer).setPostgresUserPassword(postgres_server_user, password);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        // Perform the password check here, too.
+        if(password!=PostgresUser.NO_PASSWORD) {
+            PasswordChecker.Result[] results = PostgresUser.checkPassword(Locale.getDefault(), username, password);
+            if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
         }
+
+        // Contact the daemon for the update
+        DaemonHandler.getDaemonConnector(conn, aoServer).setPostgresUserPassword(postgres_server_user, password);
     }
 
     public static void setPostgresServerUserPredisablePassword(
@@ -869,32 +710,27 @@ final public class PostgresHandler {
         int psu,
         String password
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "setPostgresServerUserPredisablePassword(MasterDatabaseConnection,RequestSource,InvalidateList,int,String)", null);
-        try {
-            checkAccessPostgresServerUser(conn, source, "setPostgresServerUserPredisablePassword", psu);
-            if(password==null) {
-                if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to clear PostgresServerUser predisable password, account disabled: "+psu);
-            } else {
-                if(!isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to set PostgresServerUser predisable password, account not disabled: "+psu);
-            }
-
-            // Update the database
-            conn.executeUpdate(
-                "update postgres_server_users set predisable_password=? where pkey=?",
-                password,
-                psu
-            );
-            
-            invalidateList.addTable(
-                conn,
-                SchemaTable.TableID.POSTGRES_SERVER_USERS,
-                getBusinessForPostgresServerUser(conn, psu),
-                getAOServerForPostgresServerUser(conn, psu),
-                false
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+        checkAccessPostgresServerUser(conn, source, "setPostgresServerUserPredisablePassword", psu);
+        if(password==null) {
+            if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to clear PostgresServerUser predisable password, account disabled: "+psu);
+        } else {
+            if(!isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to set PostgresServerUser predisable password, account not disabled: "+psu);
         }
+
+        // Update the database
+        conn.executeUpdate(
+            "update postgres_server_users set predisable_password=? where pkey=?",
+            password,
+            psu
+        );
+
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.POSTGRES_SERVER_USERS,
+            getBusinessForPostgresServerUser(conn, psu),
+            getAOServerForPostgresServerUser(conn, psu),
+            false
+        );
     }
 
     public static void waitForPostgresDatabaseRebuild(
@@ -902,14 +738,9 @@ final public class PostgresHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "waitForPostgresDatabaseRebuild(MasterDatabaseConnection,RequestSource,int)", Integer.valueOf(aoServer));
-        try {
-            ServerHandler.checkAccessServer(conn, source, "waitForPostgresDatabaseRebuild", aoServer);
-            ServerHandler.waitForInvalidates(aoServer);
-            DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresDatabaseRebuild();
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        ServerHandler.checkAccessServer(conn, source, "waitForPostgresDatabaseRebuild", aoServer);
+        ServerHandler.waitForInvalidates(aoServer);
+        DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresDatabaseRebuild();
     }
 
     public static void waitForPostgresServerRebuild(
@@ -917,14 +748,9 @@ final public class PostgresHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "waitForPostgresServerRebuild(MasterDatabaseConnection,RequestSource,int)", Integer.valueOf(aoServer));
-        try {
-            ServerHandler.checkAccessServer(conn, source, "waitForPostgresServerRebuild", aoServer);
-            ServerHandler.waitForInvalidates(aoServer);
-            DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresServerRebuild();
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        ServerHandler.checkAccessServer(conn, source, "waitForPostgresServerRebuild", aoServer);
+        ServerHandler.waitForInvalidates(aoServer);
+        DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresServerRebuild();
     }
 
     public static void waitForPostgresUserRebuild(
@@ -932,182 +758,122 @@ final public class PostgresHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "waitForPostgresUserRebuild(MasterDatabaseConnection,RequestSource,int)", Integer.valueOf(aoServer));
-        try {
-            ServerHandler.checkAccessServer(conn, source, "waitForPostgresUserRebuild", aoServer);
-            ServerHandler.waitForInvalidates(aoServer);
-            DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresUserRebuild();
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        ServerHandler.checkAccessServer(conn, source, "waitForPostgresUserRebuild", aoServer);
+        ServerHandler.waitForInvalidates(aoServer);
+        DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresUserRebuild();
     }
 
     public static String getBusinessForPostgresDatabase(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getBusinessForPostgresDatabase(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeStringQuery(
-                "select\n"
-                + "  pk.accounting\n"
-                + "from\n"
-                + "  postgres_databases pd,\n"
-                + "  postgres_server_users psu,\n"
-                + "  usernames un,\n"
-                + "  packages pk\n"
-                + "where\n"
-                + "  pd.pkey=?\n"
-                + "  and pd.datdba=psu.pkey\n"
-                + "  and psu.username=un.username\n"
-                + "  and un.package=pk.name",
-                pkey
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery(
+            "select\n"
+            + "  pk.accounting\n"
+            + "from\n"
+            + "  postgres_databases pd,\n"
+            + "  postgres_server_users psu,\n"
+            + "  usernames un,\n"
+            + "  packages pk\n"
+            + "where\n"
+            + "  pd.pkey=?\n"
+            + "  and pd.datdba=psu.pkey\n"
+            + "  and psu.username=un.username\n"
+            + "  and un.package=pk.name",
+            pkey
+        );
     }
 
     public static int getPackageForPostgresDatabase(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getPackageForPostgresDatabase(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeIntQuery(
-                "select\n"
-                + "  pk.pkey\n"
-                + "from\n"
-                + "  postgres_databases pd,\n"
-                + "  postgres_server_users psu,\n"
-                + "  usernames un,\n"
-                + "  packages pk\n"
-                + "where\n"
-                + "  pd.pkey=?\n"
-                + "  and pd.datdba=psu.pkey\n"
-                + "  and psu.username=un.username\n"
-                + "  and un.package=pk.name",
-                pkey
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntQuery(
+            "select\n"
+            + "  pk.pkey\n"
+            + "from\n"
+            + "  postgres_databases pd,\n"
+            + "  postgres_server_users psu,\n"
+            + "  usernames un,\n"
+            + "  packages pk\n"
+            + "where\n"
+            + "  pd.pkey=?\n"
+            + "  and pd.datdba=psu.pkey\n"
+            + "  and psu.username=un.username\n"
+            + "  and un.package=pk.name",
+            pkey
+        );
     }
 
     public static String getBusinessForPostgresServerUser(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getBusinessForPostgresServerUser(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeStringQuery("select pk.accounting from postgres_server_users psu, usernames un, packages pk where psu.username=un.username and un.package=pk.name and psu.pkey=?", pkey);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery("select pk.accounting from postgres_server_users psu, usernames un, packages pk where psu.username=un.username and un.package=pk.name and psu.pkey=?", pkey);
     }
 
     public static int getAOServerForPostgresServer(MasterDatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getAOServerForPostgresServer(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeIntQuery("select ao_server from postgres_servers where pkey=?", postgresServer);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntQuery("select ao_server from postgres_servers where pkey=?", postgresServer);
     }
 
     public static int getPortForPostgresServer(MasterDatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getPortForPostgresServer(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeIntQuery("select nb.port from postgres_servers ps, net_binds nb where ps.pkey=? and ps.net_bind=nb.pkey", postgresServer);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntQuery("select nb.port from postgres_servers ps, net_binds nb where ps.pkey=? and ps.net_bind=nb.pkey", postgresServer);
     }
 
     public static String getMinorVersionForPostgresServer(MasterDatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getMinorVersionForPostgresServer(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeStringQuery(
-                "select\n"
-                + "  pv.minor_version\n"
-                + "from\n"
-                + "  postgres_servers ps,\n"
-                + "  postgres_versions pv\n"
-                + "where\n"
-                + "  ps.pkey=?\n"
-                + "  and ps.version=pv.version",
-                postgresServer
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeStringQuery(
+            "select\n"
+            + "  pv.minor_version\n"
+            + "from\n"
+            + "  postgres_servers ps,\n"
+            + "  postgres_versions pv\n"
+            + "where\n"
+            + "  ps.pkey=?\n"
+            + "  and ps.version=pv.version",
+            postgresServer
+        );
     }
 
     public static int getPostgresServerForPostgresDatabase(MasterDatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getPostgresServerForPostgresDatabase(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeIntQuery(
-                "select postgres_server from postgres_databases where pkey=?",
-                postgresDatabase
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntQuery(
+            "select postgres_server from postgres_databases where pkey=?",
+            postgresDatabase
+        );
     }
 
     public static int getPostgresServerForPostgresServerUser(MasterDatabaseConnection conn, int postgres_server_user) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getPostgresServerForPostgresServerUser(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeIntQuery("select postgres_server from postgres_server_users where pkey=?", postgres_server_user);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntQuery("select postgres_server from postgres_server_users where pkey=?", postgres_server_user);
     }
 
     public static int getAOServerForPostgresDatabase(MasterDatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getAOServerForPostgresDatabase(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeIntQuery(
-                "select\n"
-                + "  ps.ao_server\n"
-                + "from\n"
-                + "  postgres_databases pd,\n"
-                + "  postgres_servers ps\n"
-                + "where\n"
-                + "  pd.pkey=?\n"
-                + "  and pd.postgres_server=ps.pkey",
-                postgresDatabase
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntQuery(
+            "select\n"
+            + "  ps.ao_server\n"
+            + "from\n"
+            + "  postgres_databases pd,\n"
+            + "  postgres_servers ps\n"
+            + "where\n"
+            + "  pd.pkey=?\n"
+            + "  and pd.postgres_server=ps.pkey",
+            postgresDatabase
+        );
     }
 
     public static int getDatDbaForPostgresDatabase(MasterDatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getDatDbaForPostgresDatabase(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeIntQuery(
-                "select\n"
-                + "  datdba\n"
-                + "from\n"
-                + "  postgres_databases\n"
-                + "where\n"
-                + "  pkey=?",
-                postgresDatabase
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntQuery(
+            "select\n"
+            + "  datdba\n"
+            + "from\n"
+            + "  postgres_databases\n"
+            + "where\n"
+            + "  pkey=?",
+            postgresDatabase
+        );
     }
 
     public static int getAOServerForPostgresServerUser(MasterDatabaseConnection conn, int postgres_server_user) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "getAOServerForPostgresServerUser(MasterDatabaseConnection,int)", null);
-        try {
-            return conn.executeIntQuery(
-                "select\n"
-                + "  ps.ao_server\n"
-                + "from\n"
-                + "  postgres_server_users psu,\n"
-                + "  postgres_servers ps\n"
-                + "where\n"
-                + "  psu.pkey=?\n"
-                + "  and psu.postgres_server=ps.pkey",
-                postgres_server_user
-            );
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        return conn.executeIntQuery(
+            "select\n"
+            + "  ps.ao_server\n"
+            + "from\n"
+            + "  postgres_server_users psu,\n"
+            + "  postgres_servers ps\n"
+            + "where\n"
+            + "  psu.pkey=?\n"
+            + "  and psu.postgres_server=ps.pkey",
+            postgres_server_user
+        );
     }
 
     public static void restartPostgreSQL(
@@ -1115,15 +881,10 @@ final public class PostgresHandler {
         RequestSource source,
         int postgresServer
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "restartPostgreSQL(MasterDatabaseConnection,RequestSource,int)", null);
-        try {
-            int aoServer=getAOServerForPostgresServer(conn, postgresServer);
-            boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "postgresql");
-            if(!canControl) throw new SQLException("Not allowed to restart PostgreSQL on "+aoServer);
-            DaemonHandler.getDaemonConnector(conn, aoServer).restartPostgres(postgresServer);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        int aoServer=getAOServerForPostgresServer(conn, postgresServer);
+        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "postgresql");
+        if(!canControl) throw new SQLException("Not allowed to restart PostgreSQL on "+aoServer);
+        DaemonHandler.getDaemonConnector(conn, aoServer).restartPostgres(postgresServer);
     }
 
     public static void startPostgreSQL(
@@ -1131,15 +892,10 @@ final public class PostgresHandler {
         RequestSource source,
         int postgresServer
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "startPostgreSQL(MasterDatabaseConnection,RequestSource,int)", null);
-        try {
-            int aoServer=getAOServerForPostgresServer(conn, postgresServer);
-            boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "postgresql");
-            if(!canControl) throw new SQLException("Not allowed to start PostgreSQL on "+aoServer);
-            DaemonHandler.getDaemonConnector(conn, aoServer).startPostgreSQL(postgresServer);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        int aoServer=getAOServerForPostgresServer(conn, postgresServer);
+        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "postgresql");
+        if(!canControl) throw new SQLException("Not allowed to start PostgreSQL on "+aoServer);
+        DaemonHandler.getDaemonConnector(conn, aoServer).startPostgreSQL(postgresServer);
     }
 
     public static void stopPostgreSQL(
@@ -1147,14 +903,9 @@ final public class PostgresHandler {
         RequestSource source,
         int postgresServer
     ) throws IOException, SQLException {
-        Profiler.startProfile(Profiler.UNKNOWN, PostgresHandler.class, "stopPostgreSQL(MasterDatabaseConnection,RequestSource,int)", null);
-        try {
-            int aoServer=getAOServerForPostgresServer(conn, postgresServer);
-            boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "postgresql");
-            if(!canControl) throw new SQLException("Not allowed to stop PostgreSQL on "+aoServer);
-            DaemonHandler.getDaemonConnector(conn, aoServer).stopPostgreSQL(postgresServer);
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
-        }
+        int aoServer=getAOServerForPostgresServer(conn, postgresServer);
+        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "postgresql");
+        if(!canControl) throw new SQLException("Not allowed to stop PostgreSQL on "+aoServer);
+        DaemonHandler.getDaemonConnector(conn, aoServer).stopPostgreSQL(postgresServer);
     }
 }

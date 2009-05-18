@@ -6,13 +6,7 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.io.AOPool;
-import com.aoindustries.profiler.*;
-import com.aoindustries.sql.*;
-import com.aoindustries.util.*;
-import java.io.*;
 import java.net.*;
-import java.sql.*;
-import java.util.*;
 
 /**
  * The <code>TCPServer</code> accepts connections from an <code>SimpleAOClient</code>.
@@ -40,103 +34,83 @@ public class TCPServer extends MasterServer implements Runnable {
      */
     public TCPServer(String serverBind, int serverPort) {
         super(serverBind, serverPort);
-        Profiler.startProfile(Profiler.FAST, TCPServer.class, "<init>(String,int)", null);
-        try {
-            (thread=new Thread(this, getClass().getName()+"?address="+serverBind+"&port="+serverPort)).start();
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        (thread=new Thread(this, getClass().getName()+"?address="+serverBind+"&port="+serverPort)).start();
     }
     
     public String getProtocol() {
-        Profiler.startProfile(Profiler.INSTANTANEOUS, TCPServer.class, "getProtocol()", null);
-        try {
-            return PROTOCOL;
-        } finally {
-            Profiler.endProfile(Profiler.INSTANTANEOUS);
-        }
+        return PROTOCOL;
     }
 
     /**
      * Determines if communication on this server is secure.
      */
     public boolean isSecure() throws UnknownHostException {
-        Profiler.startProfile(Profiler.FAST, TCPServer.class, "isSecure()", null);
-        try {
-            byte[] address=InetAddress.getByName(getBindAddress()).getAddress();
-            if(
-                address[0]==(byte)127
-                || address[0]==(byte)10
-                || (
-                    address[0]==(byte)192
-                    && address[1]==(byte)168
-                )
-            ) return true;
-            // Allow same class C network
-            byte[] localAddress=InetAddress.getByName(serverBind).getAddress();
-            return
-                address[0]==localAddress[0]
-                && address[1]==localAddress[1]
-                && address[2]==localAddress[2]
-            ;
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        byte[] address=InetAddress.getByName(getBindAddress()).getAddress();
+        if(
+            address[0]==(byte)127
+            || address[0]==(byte)10
+            || (
+                address[0]==(byte)192
+                && address[1]==(byte)168
+            )
+        ) return true;
+        // Allow same class C network
+        byte[] localAddress=InetAddress.getByName(serverBind).getAddress();
+        return
+            address[0]==localAddress[0]
+            && address[1]==localAddress[1]
+            && address[2]==localAddress[2]
+        ;
     }
 
     public void run() {
-        Profiler.startProfile(Profiler.UNKNOWN, TCPServer.class, "run()", null);
-        try {
-            while (true) {
-                try {
-                    InetAddress address=InetAddress.getByName(serverBind);
-                    synchronized(System.out) {
-                        System.out.println("Accepting TCP connections on "+address.getHostAddress()+':'+serverPort);
-                    }
-                    ServerSocket SS = new ServerSocket(serverPort, 50, address);
-                    try {
-                        while (true) {
-                            Socket socket=SS.accept();
-                            incConnectionCount();
-                            try {
-                                socket.setKeepAlive(true);
-                                socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
-                                //socket.setTcpNoDelay(true);
-                                new SocketServerThread(this, socket);
-                            } catch(ThreadDeath TD) {
-                                throw TD;
-                            } catch(Throwable T) {
-                                reportError(
-                                    T,
-                                    new Object[] {
-                                        "serverPort="+serverPort,
-                                        "address="+address
-                                    }
-                                );
-                            }
-                        }
-                    } finally {
-                        SS.close();
-                    }
-                } catch (ThreadDeath TD) {
-                    throw TD;
-                } catch (Throwable T) {
-                    reportError(
-                        T,
-                        new Object[] {
-                            "serverPort="+serverPort,
-                            "serverBind="+serverBind
-                        }
-                    );
+        while (true) {
+            try {
+                InetAddress address=InetAddress.getByName(serverBind);
+                synchronized(System.out) {
+                    System.out.println("Accepting TCP connections on "+address.getHostAddress()+':'+serverPort);
                 }
+                ServerSocket SS = new ServerSocket(serverPort, 50, address);
                 try {
-                    Thread.sleep(15000);
-                } catch (InterruptedException err) {
-                    reportWarning(err, null);
+                    while (true) {
+                        Socket socket=SS.accept();
+                        incConnectionCount();
+                        try {
+                            socket.setKeepAlive(true);
+                            socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
+                            //socket.setTcpNoDelay(true);
+                            new SocketServerThread(this, socket);
+                        } catch(ThreadDeath TD) {
+                            throw TD;
+                        } catch(Throwable T) {
+                            reportError(
+                                T,
+                                new Object[] {
+                                    "serverPort="+serverPort,
+                                    "address="+address
+                                }
+                            );
+                        }
+                    }
+                } finally {
+                    SS.close();
                 }
+            } catch (ThreadDeath TD) {
+                throw TD;
+            } catch (Throwable T) {
+                reportError(
+                    T,
+                    new Object[] {
+                        "serverPort="+serverPort,
+                        "serverBind="+serverBind
+                    }
+                );
             }
-        } finally {
-            Profiler.endProfile(Profiler.UNKNOWN);
+            try {
+                Thread.sleep(15000);
+            } catch (InterruptedException err) {
+                reportWarning(err, null);
+            }
         }
     }
 }

@@ -11,8 +11,8 @@ import com.aoindustries.aoserv.client.AOServPermission;
 import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.AOServerDaemonHost;
-import com.aoindustries.aoserv.client.Action;
-import com.aoindustries.aoserv.client.ActionType;
+import com.aoindustries.aoserv.client.TicketAction;
+import com.aoindustries.aoserv.client.TicketActionType;
 import com.aoindustries.aoserv.client.Architecture;
 import com.aoindustries.aoserv.client.BackupPartition;
 import com.aoindustries.aoserv.client.BackupReport;
@@ -22,6 +22,7 @@ import com.aoindustries.aoserv.client.BankAccount;
 import com.aoindustries.aoserv.client.BankTransaction;
 import com.aoindustries.aoserv.client.BankTransactionType;
 import com.aoindustries.aoserv.client.BlackholeEmailAddress;
+import com.aoindustries.aoserv.client.Brand;
 import com.aoindustries.aoserv.client.Business;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.BusinessAdministratorPermission;
@@ -82,6 +83,7 @@ import com.aoindustries.aoserv.client.HttpdTomcatStdSite;
 import com.aoindustries.aoserv.client.HttpdTomcatVersion;
 import com.aoindustries.aoserv.client.HttpdWorker;
 import com.aoindustries.aoserv.client.IPAddress;
+import com.aoindustries.aoserv.client.Language;
 import com.aoindustries.aoserv.client.LinuxAccAddress;
 import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.LinuxAccountType;
@@ -129,6 +131,7 @@ import com.aoindustries.aoserv.client.PrivateFTPServer;
 import com.aoindustries.aoserv.client.ProcessorType;
 import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.aoserv.client.Rack;
+import com.aoindustries.aoserv.client.Reseller;
 import com.aoindustries.aoserv.client.Resource;
 import com.aoindustries.aoserv.client.SchemaColumn;
 import com.aoindustries.aoserv.client.SchemaForeignKey;
@@ -146,6 +149,9 @@ import com.aoindustries.aoserv.client.TechnologyClass;
 import com.aoindustries.aoserv.client.TechnologyName;
 import com.aoindustries.aoserv.client.TechnologyVersion;
 import com.aoindustries.aoserv.client.Ticket;
+import com.aoindustries.aoserv.client.TicketAssignment;
+import com.aoindustries.aoserv.client.TicketBrandCategory;
+import com.aoindustries.aoserv.client.TicketCategory;
 import com.aoindustries.aoserv.client.TicketPriority;
 import com.aoindustries.aoserv.client.TicketStatus;
 import com.aoindustries.aoserv.client.TicketType;
@@ -286,21 +292,6 @@ final public class TableHandler {
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
         switch(tableID) {
-            case ACTIONS :
-                int actionId=in.readCompressedInt();
-                if(TicketHandler.canAccessAction(conn, source, actionId)) {
-                    MasterServer.writeObject(
-                        conn,
-                        source,
-                        out,
-                        "select * from actions where pkey=?",
-                        actionId,
-                        new Action()
-                    );
-                } else {
-                    out.writeByte(AOServProtocol.DONE);
-                }
-                break;
             case BACKUP_REPORTS :
             {
                 int pkey=in.readCompressedInt();
@@ -398,40 +389,6 @@ final public class TableHandler {
                     ); else throw new SQLException("Only master users may access spam_email_messages.");
                 }
                 break;
-            case TICKETS :
-                int ticketId=in.readCompressedInt();
-                if(TicketHandler.isTicketAdmin(conn, source)) {
-                    MasterServer.writeObject(
-                        conn,
-                        source,
-                        out,
-                          "select "
-                        + "  *\n"
-                        + "from\n"
-                        + "  tickets\n"
-                        + "where\n"
-                        + "  pkey=?",
-                        ticketId,
-                        new Ticket()
-                    );
-                } else if(TicketHandler.canAccessTicket(conn, source, ticketId)) {
-                    MasterServer.writeObject(
-                        conn,
-                        source,
-                        out,
-                        "select\n"
-                        + "  *\n"
-                        + "from\n"
-                        + "  tickets\n"
-                        + "where\n"
-                        + "  pkey=?",
-                        ticketId,
-                        new Ticket()
-                    );
-                } else {
-                    out.writeByte(AOServProtocol.DONE);
-                }
-                break;
             case TRANSACTIONS :
                 int transid=in.readCompressedInt();
                 if(TransactionHandler.canAccessTransaction(conn, source, transid)) {
@@ -515,36 +472,6 @@ final public class TableHandler {
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
         switch(tableID) {
-            case ACTIONS :
-                if(masterUser!=null) {
-                    if(masterServers.length==0) return conn.executeIntQuery(
-                        Connection.TRANSACTION_READ_COMMITTED,
-                        true,
-                        true,
-                        "select count(*) from actions"
-                    ); else return 0;
-                } else return conn.executeIntQuery(
-                    Connection.TRANSACTION_READ_COMMITTED,
-                    true,
-                    true,
-                    "select\n"
-                    + "  count(*)\n"
-                    + "from\n"
-                    + "  usernames un,\n"
-                    + "  packages pk1,\n"
-                    + BU1_PARENTS_JOIN
-                    + "  tickets ti,\n"
-                    + "  actions ac\n"
-                    + "where\n"
-                    + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
-                    + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
-                    + "  )\n"
-                    + "  and bu1.accounting=ti.accounting\n"
-                    + "  and ti.pkey=ac.ticket_id",
-                    username
-                );
             case DISTRO_FILES :
                 if(masterUser!=null) {
                     if(masterServers.length==0) {
@@ -573,33 +500,8 @@ final public class TableHandler {
                     }
                 } else return 0;
             case TICKETS :
-                if(masterUser!=null) {
-                    if(masterServers.length==0 || masterUser.isTicketAdmin()) return conn.executeIntQuery(
-                        Connection.TRANSACTION_READ_COMMITTED,
-                        true,
-                        true,
-                        "select count(*) from tickets"
-                    ); else return 0;
-                } else return conn.executeIntQuery(
-                    Connection.TRANSACTION_READ_COMMITTED,
-                    true,
-                    true,
-                    "select\n"
-                    + "  count(*)\n"
-                    + "from\n"
-                    + "  usernames un,\n"
-                    + "  packages pk1,\n"
-                    + BU1_PARENTS_JOIN
-                    + "  tickets ti\n"
-                    + "where\n"
-                    + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
-                    + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
-                    + "  )\n"
-                    + "  and bu1.accounting=ti.accounting",
-                    username
-                );
+                if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) return 0; // For backwards-compatibility only
+                throw new IOException("Unknown table ID: "+tableID); // No longer used as of version 1.44
             default :
                 throw new IOException("Unknown table ID: "+tableID);
         }
@@ -621,54 +523,6 @@ final public class TableHandler {
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
 
         switch(tableID) {
-            case ACTIONS :
-                if(masterUser!=null) {
-                    if(masterServers.length==0) MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new Action(),
-                        "select * from actions"
-                    ); else {
-                        List<Action> emptyList = Collections.emptyList();
-                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                    }
-                } else MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new Action(),
-                    "select\n"
-                    + "  ac.*\n"
-                    + "from\n"
-                    + "  usernames un,\n"
-                    + "  packages pk1,\n"
-                    + BU1_PARENTS_JOIN
-                    + "  tickets ti,\n"
-                    + "  actions ac\n"
-                    + "where\n"
-                    + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
-                    + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
-                    + "  )\n"
-                    + "  and bu1.accounting=ti.accounting\n"
-                    + "  and ti.pkey=ac.ticket_id",
-                    username
-                );
-                break;
-            case ACTION_TYPES :
-                MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new ActionType(),
-                    "select * from action_types"
-                );
-                break;
             case AO_SERVER_DAEMON_HOSTS :
                 if(masterUser!=null) {
                     if(masterServers.length==0) MasterServer.writeObjects(
@@ -1091,6 +945,41 @@ final public class TableHandler {
                     username
                 );
                 break;
+            case BRANDS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new Brand(),
+                        "select * from brands"
+                    ); else {
+                        List<Brand> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                } else MasterServer.writeObjects(
+                    conn,
+                    source,
+                    out,
+                    provideProgress,
+                    new Brand(),
+                    "select\n"
+                    + "  br.*\n"
+                    + "from\n"
+                    + "  usernames un,\n"
+                    + "  packages pk,\n"
+                    + BU1_PARENTS_JOIN
+                    + "  brands br\n"
+                    + "where\n"
+                    + "  un.username=?\n"
+                    + "  and un.package=pk.name\n"
+                    + "  and (\n"
+                    + PK_BU1_PARENTS_WHERE
+                    + "  ) and bu1.accounting=br.accounting",
+                    username
+                );
+                break;
             case BUSINESS_ADMINISTRATORS :
                 if(masterUser!=null) {
                     if(masterServers.length==0) MasterServer.writeObjects(
@@ -1127,7 +1016,8 @@ final public class TableHandler {
                         + "  ba.country,\n"
                         + "  ba.zip,\n"
                         + "  ba.disable_log,\n"
-                        + "  ba.can_switch_users\n"
+                        + "  ba.can_switch_users,\n"
+                        + "  null\n"
                         + "from\n"
                         + "  master_servers ms,\n"
                         + "  business_servers bs,\n"
@@ -1169,7 +1059,8 @@ final public class TableHandler {
                     + "  ba.country,\n"
                     + "  ba.zip,\n"
                     + "  ba.disable_log,\n"
-                    + "  ba.can_switch_users\n"
+                    + "  ba.can_switch_users,\n"
+                    + "  ba.support_code\n"
                     + "from\n"
                     + "  usernames un1,\n"
                     + "  packages pk1,\n"
@@ -3680,6 +3571,16 @@ final public class TableHandler {
                     );
                 }
                 break;
+            case LANGUAGES :
+                MasterServer.writeObjects(
+                    conn,
+                    source,
+                    out,
+                    provideProgress,
+                    new Language(),
+                    "select * from languages"
+                );
+                break;
             case LINUX_ACC_ADDRESSES :
                 if(masterUser!=null) {
                     if(masterServers.length==0) MasterServer.writeObjects(
@@ -5231,7 +5132,7 @@ final public class TableHandler {
                             + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
                             + "    pk2.package_definition=pd.pkey\n"
-                            + "    or bu1.accounting=pd.accounting\n"
+                            + "    or bu1.accounting=pd.brand\n"
                             + "  ) and pd.pkey=pdl.package_definition",
                             username
                         );
@@ -5266,7 +5167,7 @@ final public class TableHandler {
                             + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
                             + "    pk2.package_definition=pd.pkey\n"
-                            + "    or bu1.accounting=pd.accounting\n"
+                            + "    or bu1.accounting=pd.brand\n"
                             + "  ) and pd.pkey=pdl.package_definition",
                             username
                         );
@@ -5327,7 +5228,7 @@ final public class TableHandler {
                             + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
                             + "    pk2.package_definition=pd.pkey\n"
-                            + "    or bu1.accounting=pd.accounting\n"
+                            + "    or bu1.accounting=pd.brand\n"
                             + "  )",
                             username
                         );
@@ -5340,7 +5241,7 @@ final public class TableHandler {
                             new PackageDefinition(),
                             "select distinct\n"
                             + "  pd.pkey,\n"
-                            + "  pd.accounting,\n"
+                            + "  pd.brand,\n"
                             + "  pd.category,\n"
                             + "  pd.name,\n"
                             + "  pd.version,\n"
@@ -5366,7 +5267,7 @@ final public class TableHandler {
                             + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
                             + "    pk2.package_definition=pd.pkey\n"
-                            + "    or bu1.accounting=pd.accounting\n"
+                            + "    or bu1.accounting=pd.brand\n"
                             + "  )",
                             username
                         );
@@ -5867,6 +5768,41 @@ final public class TableHandler {
                     username
                 );
                 break;
+            case RESELLERS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new Reseller(),
+                        "select * from resellers"
+                    ); else {
+                        List<Brand> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                } else MasterServer.writeObjects(
+                    conn,
+                    source,
+                    out,
+                    provideProgress,
+                    new Reseller(),
+                    "select\n"
+                    + "  re.*\n"
+                    + "from\n"
+                    + "  usernames un,\n"
+                    + "  packages pk,\n"
+                    + BU1_PARENTS_JOIN
+                    + "  resellers re\n"
+                    + "where\n"
+                    + "  un.username=?\n"
+                    + "  and un.package=pk.name\n"
+                    + "  and (\n"
+                    + PK_BU1_PARENTS_WHERE
+                    + "  ) and bu1.accounting=re.accounting",
+                    username
+                );
+                break;
             case RESOURCES :
                 MasterServer.writeObjects(
                     conn,
@@ -6326,7 +6262,7 @@ final public class TableHandler {
                         + "  and (\n"
                         + PK1_BU1_PARENTS_WHERE
                         + "  )\n"
-                        + "  and bu1.accounting=sr.accounting\n"
+                        + "  and bu1.accounting=sr.brand\n"
                         + "  and sr.pkey=sro.request",
                         username
                     );
@@ -6367,7 +6303,7 @@ final public class TableHandler {
                         + "  and (\n"
                         + PK1_BU1_PARENTS_WHERE
                         + "  )\n"
-                        + "  and bu1.accounting=sr.accounting",
+                        + "  and bu1.accounting=sr.brand",
                         username
                     );
                 }
@@ -6483,37 +6419,184 @@ final public class TableHandler {
                     + "  technology_versions"
                 );
                 break;
-            case TICKETS :
+            case TICKET_ACTION_TYPES :
+                MasterServer.writeObjects(
+                    conn,
+                    source,
+                    out,
+                    provideProgress,
+                    new TicketActionType(),
+                    "select * from ticket_action_types"
+                );
+                break;
+            case TICKET_ACTIONS :
                 if(masterUser!=null) {
-                    if(masterServers.length==0 || masterUser.isTicketAdmin()) MasterServer.writeObjects(
+                    if(masterServers.length==0) MasterServer.writeObjects(
                         conn,
                         source,
                         out,
                         provideProgress,
-                        new Ticket(),
-                        "select * from tickets"
-                    ); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());
+                        new TicketAction(),
+                        "select * from ticket_actions"
+                    ); else {
+                        List<TicketAction> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                } else {
+                    if(TicketHandler.isTicketAdmin(conn, source)) {
+                        // If a ticket admin, can see all ticket_actions
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new TicketAction(),
+                            "select\n"
+                            + "  ta.*\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk1,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  tickets ti,\n"
+                            + "  ticket_actions ta\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk1.name\n"
+                            + "  and (\n"
+                            + PK1_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and (\n"
+                            + "    bu1.accounting=ti.accounting\n" // Has access to ticket accounting
+                            + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
+                            + "  )\n"
+                            + "  and ti.pkey=ta.ticket)",
+                            username
+                        );
+                    } else {
+                        // Can only see non-admin types
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new TicketAction(),
+                            "select\n"
+                            + "  ta.*\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk1,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  tickets ti,\n"
+                            + "  ticket_actions ta,\n"
+                            + "  ticket_action_types tat\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk1.name\n"
+                            + "  and (\n"
+                            + PK1_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and bu1.accounting=ti.accounting\n"
+                            + "  and ti.pkey=ta.ticket\n"
+                            + "  and ta.action_type=tat.type\n"
+                            + "  and not tat.visible_admin_only",
+                            username
+                        );
+                    }
+                }
+                break;
+            case TICKET_ASSIGNMENTS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new TicketAssignment(),
+                        "select * from ticket_assignments"
+                    ); else {
+                        List<TicketAssignment> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                } else {
+                    if(TicketHandler.isTicketAdmin(conn, source)) {
+                        // Only ticket admin can see assignments
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new TicketAction(),
+                            "select\n"
+                            + "  ta.*\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk1,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  tickets ti,\n"
+                            + "  ticket_assignments ta\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk1.name\n"
+                            + "  and (\n"
+                            + PK1_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and (\n"
+                            + "    bu1.accounting=ti.accounting\n" // Has access to ticket accounting
+                            + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
+                            + "  )\n"
+                            + "  and ti.pkey=ta.ticket",
+                            username
+                        );
+                    } else {
+                        // Non-admins don't get any assignment details
+                        List<TicketAssignment> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                }
+                break;
+            case TICKET_BRAND_CATEGORIES :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new TicketBrandCategory(),
+                        "select * from ticket_brand_categories"
+                    ); else {
+                        List<TicketBrandCategory> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
                 } else MasterServer.writeObjects(
                     conn,
                     source,
                     out,
                     provideProgress,
-                    new Ticket(),
+                    new TicketBrandCategory(),
                     "select\n"
-                    + "  ti.*\n"
+                    + "  tbc.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
+                    + "  packages pk,\n"
                     + BU1_PARENTS_JOIN
-                    + "  tickets ti\n"
+                    + "  ticket_brand_categories tbc\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
+                    + "  and un.package=pk.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
-                    + "  )\n"
-                    + "  and bu1.accounting=ti.accounting",
+                    + PK_BU1_PARENTS_WHERE
+                    + "  ) and bu1.accounting=tbc.brand",
                     username
+                );
+                break;
+            case TICKET_CATEGORIES :
+                MasterServer.writeObjects(
+                    conn,
+                    source,
+                    out,
+                    provideProgress,
+                    new TicketCategory(),
+                    "select * from ticket_categories"
                 );
                 break;
             case TICKET_PRIORITIES :
@@ -6545,6 +6628,121 @@ final public class TableHandler {
                     new TicketType(),
                     "select * from ticket_types"
                 );
+                break;
+            case TICKETS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) {
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new Ticket(),
+                            "select\n"
+                            + "  pkey,\n"
+                            + "  reseller,\n"
+                            + "  accounting,\n"
+                            + "  language,\n"
+                            + "  created_by,\n"
+                            + "  category,\n"
+                            + "  ticket_type,\n"
+                            + "  from_address,\n"
+                            + "  summary,\n"
+                            + "  open_date,\n"
+                            + "  client_priority,\n"
+                            + "  admin_priority,\n"
+                            + "  status,\n"
+                            + "  status_timeout,\n"
+                            + "  contact_emails,\n"
+                            + "  contact_phone_numbers\n"
+                            + "from\n"
+                            + "  tickets"
+                        );
+                    } else {
+                        MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());
+                    }
+                } else {
+                    if(TicketHandler.isTicketAdmin(conn, source)) {
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new Ticket(),
+                            "select\n"
+                            + "  ti.pkey,\n"
+                            + "  ti.reseller,\n"
+                            + "  ti.accounting,\n"
+                            + "  ti.language,\n"
+                            + "  ti.created_by,\n"
+                            + "  ti.category,\n"
+                            + "  ti.ticket_type,\n"
+                            + "  ti.from_address,\n"
+                            + "  ti.summary,\n"
+                            + "  ti.open_date,\n"
+                            + "  ti.client_priority,\n"
+                            + "  ti.admin_priority,\n"
+                            + "  ti.status,\n"
+                            + "  ti.status_timeout,\n"
+                            + "  ti.contact_emails,\n"
+                            + "  ti.contact_phone_numbers\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk1,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  tickets ti\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk1.name\n"
+                            + "  and (\n"
+                            + PK1_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and (\n"
+                            + "    bu1.accounting=ti.accounting\n" // Has access to ticket accounting
+                            + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
+                            + "  )",
+                            username
+                        );
+                    } else {
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new Ticket(),
+                            "select\n"
+                            + "  ti.pkey,\n"
+                            + "  '"+AOServProtocol.FILTERED+"'::text,\n" // reseller
+                            + "  ti.accounting,\n"
+                            + "  ti.language,\n"
+                            + "  ti.created_by,\n"
+                            + "  ti.category,\n"
+                            + "  ti.ticket_type,\n"
+                            + "  ti.from_address,\n"
+                            + "  ti.summary,\n"
+                            + "  ti.open_date,\n"
+                            + "  ti.client_priority,\n"
+                            + "  null,\n" // admin_priority
+                            + "  ti.status,\n"
+                            + "  ti.status_timeout,\n"
+                            + "  ti.contact_emails,\n"
+                            + "  ti.contact_phone_numbers\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk1,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  tickets ti\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk1.name\n"
+                            + "  and (\n"
+                            + PK1_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and bu1.accounting=ti.accounting",
+                            username
+                        );
+                    }
+                }
                 break;
             case TIME_ZONES :
                 MasterServer.writeObjects(
@@ -6845,7 +7043,7 @@ final public class TableHandler {
         return mu!=null && mu.canInvalidateTables();
     }
 
-    private static Map<SchemaTable.TableID,String> tableNames=new EnumMap<SchemaTable.TableID,String>(SchemaTable.TableID.class);
+    final private static Map<SchemaTable.TableID,String> tableNames=new EnumMap<SchemaTable.TableID,String>(SchemaTable.TableID.class);
 
     public static String getTableName(MasterDatabaseConnection conn, SchemaTable.TableID tableID) throws IOException, SQLException {
         synchronized(tableNames) {
@@ -6859,7 +7057,7 @@ final public class TableHandler {
         }
     }
 
-    private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> fromClientTableIDs=new EnumMap<AOServProtocol.Version,Map<Integer,Integer>>(AOServProtocol.Version.class);
+    final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> fromClientTableIDs=new EnumMap<AOServProtocol.Version,Map<Integer,Integer>>(AOServProtocol.Version.class);
 
     /**
      * Converts a specific AOServProtocol version table ID to the number used in the database storage.
@@ -6900,7 +7098,7 @@ final public class TableHandler {
         return I==null?-1:I.intValue();
     }
 
-    private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> toClientTableIDs=new EnumMap<AOServProtocol.Version,Map<Integer,Integer>>(AOServProtocol.Version.class);
+    final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> toClientTableIDs=new EnumMap<AOServProtocol.Version,Map<Integer,Integer>>(AOServProtocol.Version.class);
 
     public static int convertDBTableIDToClientTableID(
         MasterDatabaseConnection conn,
@@ -6969,7 +7167,7 @@ final public class TableHandler {
         return convertDBTableIDToClientTableID(conn, source.getProtocolVersion(), dbTableID);
     }
 
-    private static EnumMap<AOServProtocol.Version,Map<SchemaTable.TableID,Map<String,Integer>>> clientColumnIndexes=new EnumMap<AOServProtocol.Version,Map<SchemaTable.TableID,Map<String,Integer>>>(AOServProtocol.Version.class);
+    final private static EnumMap<AOServProtocol.Version,Map<SchemaTable.TableID,Map<String,Integer>>> clientColumnIndexes=new EnumMap<AOServProtocol.Version,Map<SchemaTable.TableID,Map<String,Integer>>>(AOServProtocol.Version.class);
 
     public static int getClientColumnIndex(
         MasterDatabaseConnection conn,

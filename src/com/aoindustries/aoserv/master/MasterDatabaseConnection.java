@@ -5,8 +5,7 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.profiler.*;
-import com.aoindustries.sql.*;
+import com.aoindustries.sql.DatabaseConnection;
 
 /**
  * @author  AO Industries, Inc.
@@ -15,7 +14,5 @@ public final class MasterDatabaseConnection extends DatabaseConnection {
 
     MasterDatabaseConnection(MasterDatabase database) {
         super(database);
-        Profiler.startProfile(Profiler.FAST, MasterDatabaseConnection.class, "<init>(MasterDatabase)", null);
-        Profiler.endProfile(Profiler.FAST);
     }
 }

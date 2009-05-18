@@ -5,7 +5,6 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.profiler.*;
 import com.aoindustries.sql.*;
 import java.io.*;
 
@@ -32,28 +31,17 @@ public final class MasterDatabase extends Database {
             MasterConfiguration.getDBMaxConnectionAge(),
             MasterServer.getErrorHandler()
         );
-        Profiler.startProfile(Profiler.FAST, MasterDatabase.class, "<init>()", null);
-        Profiler.endProfile(Profiler.FAST);
     }
     
     public static MasterDatabase getDatabase() throws IOException {
-        Profiler.startProfile(Profiler.FAST, MasterDatabase.class, "getDatabase()", null);
-        try {
-            synchronized(MasterDatabase.class) {
-                if(masterDatabase==null) masterDatabase=new MasterDatabase();
-                return masterDatabase;
-            }
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
+        synchronized(MasterDatabase.class) {
+            if(masterDatabase==null) masterDatabase=new MasterDatabase();
+            return masterDatabase;
         }
     }
 
+    @Override
     public DatabaseConnection createDatabaseConnection() {
-        Profiler.startProfile(Profiler.FAST, MasterDatabase.class, "createDatabaseConnection()", null);
-        try {
-            return new MasterDatabaseConnection(this);
-        } finally {
-            Profiler.endProfile(Profiler.FAST);
-        }
+        return new MasterDatabaseConnection(this);
     }
 }
