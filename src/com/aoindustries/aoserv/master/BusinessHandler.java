@@ -804,7 +804,7 @@ final public class BusinessHandler {
                 SB.append((char)('a'+random.nextInt('z'+1-'a')));
                 SB.append(random.nextInt(range));
                 String supportCode = SB.toString();
-                if(!conn.executeBooleanQuery("select (select support_code from business_administrators where support_code=?) is null", supportCode)) return supportCode;
+                if(conn.executeBooleanQuery("select (select support_code from business_administrators where support_code=?) is null", supportCode)) return supportCode;
             }
         }
         throw new SQLException("Failed to generate support code after thousands of attempts");

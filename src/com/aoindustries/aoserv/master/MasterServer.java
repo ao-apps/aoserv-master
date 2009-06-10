@@ -4514,6 +4514,24 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case GET_TICKET_RAW_EMAIL :
+                                        {
+                                            int pkey=in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ticket_raw_email",
+                                                Integer.valueOf(pkey)
+                                            );
+                                            String rawEmail=TicketHandler.getTicketRawEmail(
+                                                conn,
+                                                source,
+                                                pkey
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2NullLongString = rawEmail;
+                                            hasResp2NullLongString = true;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case GET_TICKET_ACTION_OLD_VALUE :
                                         {
                                             int pkey=in.readCompressedInt();
@@ -4564,6 +4582,24 @@ public abstract class MasterServer {
                                             );
                                             resp1=AOServProtocol.DONE;
                                             resp2NullLongString = details;
+                                            hasResp2NullLongString = true;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_TICKET_ACTION_RAW_EMAIL :
+                                        {
+                                            int pkey=in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ticket_action_raw_email",
+                                                Integer.valueOf(pkey)
+                                            );
+                                            String rawEmail=TicketHandler.getTicketActionRawEmail(
+                                                conn,
+                                                source,
+                                                pkey
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2NullLongString = rawEmail;
                                             hasResp2NullLongString = true;
                                             sendInvalidateList=false;
                                         }
