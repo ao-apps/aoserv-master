@@ -350,7 +350,7 @@ final public class PackageHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
-        String accounting,
+        String brand,
         String category,
         String name,
         String version,
@@ -363,14 +363,14 @@ final public class PackageHandler {
     ) throws IOException, SQLException {
         // Security checks
         checkAccessPackageDefinition(conn, source, "updatePackageDefinition", pkey);
-        BusinessHandler.checkAccessBusiness(conn, source, "updatePackageDefinition", accounting);
+        BusinessHandler.checkAccessBusiness(conn, source, "updatePackageDefinition", brand);
         if(isPackageDefinitionApproved(conn, pkey)) throw new SQLException("Not allowed to update an approved PackageDefinition: "+pkey);
 
         PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
             "update\n"
             + "  package_definitions\n"
             + "set\n"
-            + "  accounting=?,\n"
+            + "  brand=?,\n"
             + "  category=?,\n"
             + "  name=?,\n"
             + "  version=?,\n"
@@ -384,7 +384,7 @@ final public class PackageHandler {
             + "  pkey=?"
         );
         try {
-            pstmt.setString(1, accounting);
+            pstmt.setString(1, brand);
             pstmt.setString(2, category);
             pstmt.setString(3, name);
             pstmt.setString(4, version);
@@ -406,8 +406,8 @@ final public class PackageHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.PACKAGE_DEFINITIONS,
-            accounting,
-            BusinessHandler.getServersForBusiness(conn, accounting),
+            brand,
+            BusinessHandler.getServersForBusiness(conn, brand),
             false
         );
     }

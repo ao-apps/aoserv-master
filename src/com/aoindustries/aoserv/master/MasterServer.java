@@ -234,6 +234,9 @@ public abstract class MasterServer {
         // Time is not added for the cache invalidation connection
         boolean addTime=true;
 
+        // The return value
+        boolean keepOpen = true;
+
         process.commandCompleted();
         int taskCodeOrdinal = in.readCompressedInt();
         process.commandRunning();
@@ -347,6 +350,9 @@ public abstract class MasterServer {
 
                         String resp2String=null;
 
+                        String resp2NullLongString = null;
+                        boolean hasResp2NullLongString = false;
+
                         boolean resp2Boolean=false;
                         boolean hasResp2Boolean=false;
 
@@ -375,7 +381,7 @@ public abstract class MasterServer {
                                             if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                             int server;
                                             if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
-                                                String hostname=in.readBoolean()?in.readUTF().trim():null;
+                                                String hostname=in.readBoolean()?in.readUTF():null;
                                                 server = hostname==null ? -1 : ServerHandler.getServerForAOServerHostname(conn, hostname);
                                             } else {
                                                 server = in.readCompressedInt();
@@ -474,7 +480,7 @@ public abstract class MasterServer {
                                                 break;
                                             case BUSINESS_PROFILES :
                                                 {
-                                                    String accounting=in.readUTF().trim();
+                                                    String accounting=in.readUTF();
                                                     String name=in.readUTF().trim();
                                                     boolean isPrivate=in.readBoolean();
                                                     String phone=in.readUTF().trim();
@@ -483,7 +489,7 @@ public abstract class MasterServer {
                                                     String address2=in.readBoolean()?in.readUTF().trim():null;
                                                     String city=in.readUTF().trim();
                                                     String state=in.readBoolean()?in.readUTF().trim():null;
-                                                    String country=in.readUTF().trim();
+                                                    String country=in.readUTF();
                                                     String zip=in.readBoolean()?in.readUTF().trim():null;
                                                     boolean sendInvoice=in.readBoolean();
                                                     String billingContact=in.readUTF().trim();
@@ -537,7 +543,7 @@ public abstract class MasterServer {
                                                 break;
                                             case BUSINESS_SERVERS :
                                                 {
-                                                    String accounting=in.readUTF().trim();
+                                                    String accounting=in.readUTF();
                                                     int server=in.readCompressedInt();
                                                     if(
                                                         source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_102)>=0
@@ -570,12 +576,12 @@ public abstract class MasterServer {
                                                     String hostname;
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
                                                         defaultServer = -1;
-                                                        hostname = in.readUTF().trim();
+                                                        hostname = in.readUTF();
                                                     } else {
                                                         defaultServer = in.readCompressedInt();
                                                         hostname = null;
                                                     }
-                                                    String parent=in.readUTF().trim();
+                                                    String parent=in.readUTF();
                                                     boolean can_add_backup_servers=
                                                         source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_102)>=0
                                                         ?in.readBoolean()
@@ -623,7 +629,7 @@ public abstract class MasterServer {
                                                 {
                                                     // If before version 1.29, do not support add call but read the old values anyway
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_28)<=0) {
-                                                        String accounting=in.readUTF().trim();
+                                                        String accounting=in.readUTF();
                                                         byte[] cardNumber=new byte[in.readCompressedInt()]; in.readFully(cardNumber);
                                                         String cardInfo=in.readUTF().trim();
                                                         byte[] expirationMonth=new byte[in.readCompressedInt()]; in.readFully(expirationMonth);
@@ -638,7 +644,7 @@ public abstract class MasterServer {
                                                         throw new SQLException("add_credit_card for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
                                                     }
                                                     String processorName = in.readUTF();
-                                                    String accounting = in.readUTF().trim();
+                                                    String accounting = in.readUTF();
                                                     String groupName = in.readNullUTF();
                                                     String cardInfo = in.readUTF().trim();
                                                     String providerUniqueId = in.readUTF();
@@ -897,7 +903,7 @@ public abstract class MasterServer {
                                             case CVS_REPOSITORIES :
                                                 {
                                                     int aoServer=in.readCompressedInt();
-                                                    String path=in.readUTF().trim();
+                                                    String path=in.readUTF();
                                                     int lsa=in.readCompressedInt();
                                                     int lsg=in.readCompressedInt();
                                                     long mode=in.readLong();
@@ -926,7 +932,7 @@ public abstract class MasterServer {
                                                 break;
                                             case DISABLE_LOG :
                                                 {
-                                                    String accounting=in.readUTF().trim();
+                                                    String accounting=in.readUTF();
                                                     String disableReason=in.readBoolean()?in.readUTF().trim():null;
                                                     process.setCommand(
                                                         "add_disable_log",
@@ -947,9 +953,9 @@ public abstract class MasterServer {
                                                 break;
                                             case DNS_RECORDS :
                                                 {
-                                                    String zone=in.readUTF().trim();
+                                                    String zone=in.readUTF();
                                                     String domain=in.readUTF().trim();
-                                                    String type=in.readUTF().trim();
+                                                    String type=in.readUTF();
                                                     int mx_priority=in.readCompressedInt();
                                                     String destination=in.readUTF().trim();
                                                     int ttl=in.readCompressedInt();
@@ -980,7 +986,7 @@ public abstract class MasterServer {
                                                 break;
                                             case DNS_ZONES :
                                                 {
-                                                    String packageName=in.readUTF().trim();
+                                                    String packageName=in.readUTF();
                                                     String zone=in.readUTF().trim();
                                                     String ip=in.readUTF().trim();
                                                     int ttl=in.readCompressedInt();
@@ -1028,7 +1034,7 @@ public abstract class MasterServer {
                                                 {
                                                     String domain=in.readUTF().trim();
                                                     int aoServer=in.readCompressedInt();
-                                                    String packageName=in.readUTF().trim();
+                                                    String packageName=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_EMAIL_DOMAIN,
                                                         domain,
@@ -1092,7 +1098,7 @@ public abstract class MasterServer {
                                                 break;
                                             case EMAIL_LISTS :
                                                 {
-                                                    String path=in.readUTF().trim();
+                                                    String path=in.readUTF();
                                                     int linuxServerAccount=in.readCompressedInt();
                                                     int linuxServerGroup=in.readCompressedInt();
                                                     process.setCommand(
@@ -1138,8 +1144,8 @@ public abstract class MasterServer {
                                             case EMAIL_PIPES :
                                                 {
                                                     int ao_server=in.readCompressedInt();
-                                                    String path=in.readUTF().trim();
-                                                    String packageName=in.readUTF().trim();
+                                                    String path=in.readUTF();
+                                                    String packageName=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_EMAIL_PIPE,
                                                         Integer.valueOf(ao_server),
@@ -1164,10 +1170,10 @@ public abstract class MasterServer {
                                                     process.setPriority(Thread.NORM_PRIORITY+1);
                                                     currentThread.setPriority(Thread.NORM_PRIORITY+1);
 
-                                                    String packageName=in.readUTF().trim();
+                                                    String packageName=in.readUTF();
                                                     int aoServer=in.readCompressedInt();
                                                     String host=in.readUTF().trim();
-                                                    String type=in.readUTF().trim();
+                                                    String type=in.readUTF();
                                                     long duration=in.readLong();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_EMAIL_SMTP_RELAY,
@@ -1268,7 +1274,7 @@ public abstract class MasterServer {
                                                 break;
                                             case FTP_GUEST_USERS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_FTP_GUEST_USER,
                                                         username
@@ -1287,8 +1293,8 @@ public abstract class MasterServer {
                                                     String name=in.readUTF().trim();
                                                     int aoServer=in.readCompressedInt();
                                                     int version=in.readCompressedInt();
-                                                    String linuxServerAccount=in.readUTF().trim();
-                                                    String linuxServerGroup=in.readUTF().trim();
+                                                    String linuxServerAccount=in.readUTF();
+                                                    String linuxServerGroup=in.readUTF();
                                                     boolean isSecure=in.readBoolean();
                                                     boolean isOverflow=in.readBoolean();
                                                     process.setCommand(
@@ -1323,9 +1329,9 @@ public abstract class MasterServer {
                                                 {
                                                     int aoServer=in.readCompressedInt();
                                                     String siteName=in.readUTF().trim();
-                                                    String packageName=in.readUTF().trim();
-                                                    String username=in.readUTF().trim();
-                                                    String group=in.readUTF().trim();
+                                                    String packageName=in.readUTF();
+                                                    String username=in.readUTF();
+                                                    String group=in.readUTF();
                                                     String serverAdmin=in.readUTF().trim();
                                                     boolean useApache=in.readBoolean();
                                                     int ipAddress=in.readCompressedInt();
@@ -1334,7 +1340,7 @@ public abstract class MasterServer {
                                                     String[] altHttpHostnames=new String[len];
                                                     for(int c=0;c<len;c++) altHttpHostnames[c]=in.readUTF().trim();
                                                     int jBossVersion=in.readCompressedInt();
-                                                    String contentSrc=in.readBoolean()?in.readUTF().trim():null;
+                                                    String contentSrc=in.readBoolean()?in.readUTF():null;
                                                     process.setCommand(
                                                         AOSHCommand.ADD_HTTPD_JBOSS_SITE,
                                                         Integer.valueOf(aoServer),
@@ -2449,7 +2455,7 @@ public abstract class MasterServer {
                                                         contactPhoneNumbers="";
                                                     }
                                                     process.setCommand(
-                                                        AOSHCommand.ADD_TICKET,
+                                                        "add_ticket",
                                                         accounting,
                                                         language,
                                                         category,
@@ -2672,32 +2678,73 @@ public abstract class MasterServer {
                                             sendInvalidateList=true;
                                         }
                                         break;*/
-                                    /*case CHANGE_TICKET_CLIENT_PRIORITY :
+                                    case CHANGE_TICKET_CLIENT_PRIORITY :
                                         {
                                             int ticketID=in.readCompressedInt();
-                                            String priority=in.readUTF().trim();
-                                            String username=in.readUTF().trim();
-                                            String comments=in.readUTF().trim();
+                                            String clientPriority = in.readUTF();
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) {
+                                                String username = in.readUTF();
+                                                String comments = in.readUTF();
+                                            }
                                             process.setCommand(
-                                                AOSHCommand.CHANGE_TICKET_CLIENT_PRIORITY,
+                                                "change_ticket_client_priority",
                                                 Integer.valueOf(ticketID),
-                                                priority,
-                                                username,
-                                                comments
+                                                clientPriority
                                             );
                                             TicketHandler.changeTicketClientPriority(
                                                 conn,
                                                 source,
                                                 invalidateList,
                                                 ticketID,
-                                                priority,
-                                                username,
-                                                comments
+                                                clientPriority
                                             );
                                             resp1=AOServProtocol.DONE;
                                             sendInvalidateList=true;
                                         }
-                                        break;*/
+                                        break;
+                                    case SET_TICKET_SUMMARY :
+                                        {
+                                            int ticketID = in.readCompressedInt();
+                                            String summary = in.readUTF();
+                                            process.setCommand(
+                                                "set_ticket_summary",
+                                                Integer.valueOf(ticketID),
+                                                summary
+                                            );
+                                            TicketHandler.setTicketSummary(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                ticketID,
+                                                summary
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
+                                    case ADD_TICKET_ANNOTATION :
+                                        {
+                                            int ticketID = in.readCompressedInt();
+                                            String summary = in.readUTF();
+                                            String details = in.readNullLongUTF();
+                                            process.setCommand(
+                                                "add_ticket_annotation",
+                                                Integer.valueOf(ticketID),
+                                                summary,
+                                                details
+                                            );
+                                            TicketHandler.addTicketAnnotation(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                ticketID,
+                                                summary,
+                                                details
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
                                     /*case CHANGE_TICKET_TYPE :
                                         {
                                             int ticketID=in.readCompressedInt();
@@ -4446,6 +4493,78 @@ public abstract class MasterServer {
                                                 );
                                             }
                                             resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_TICKET_DETAILS :
+                                        {
+                                            int pkey=in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ticket_details",
+                                                Integer.valueOf(pkey)
+                                            );
+                                            String details=TicketHandler.getTicketDetails(
+                                                conn,
+                                                source,
+                                                pkey
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2NullLongString = details;
+                                            hasResp2NullLongString = true;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_TICKET_ACTION_OLD_VALUE :
+                                        {
+                                            int pkey=in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ticket_action_old_value",
+                                                Integer.valueOf(pkey)
+                                            );
+                                            String oldValue=TicketHandler.getTicketActionOldValue(
+                                                conn,
+                                                source,
+                                                pkey
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2NullLongString = oldValue;
+                                            hasResp2NullLongString = true;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_TICKET_ACTION_NEW_VALUE :
+                                        {
+                                            int pkey=in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ticket_action_new_value",
+                                                Integer.valueOf(pkey)
+                                            );
+                                            String newValue=TicketHandler.getTicketActionNewValue(
+                                                conn,
+                                                source,
+                                                pkey
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2NullLongString = newValue;
+                                            hasResp2NullLongString = true;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_TICKET_ACTION_DETAILS :
+                                        {
+                                            int pkey=in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ticket_action_details",
+                                                Integer.valueOf(pkey)
+                                            );
+                                            String details=TicketHandler.getTicketActionDetails(
+                                                conn,
+                                                source,
+                                                pkey
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2NullLongString = details;
+                                            hasResp2NullLongString = true;
                                             sendInvalidateList=false;
                                         }
                                         break;
@@ -6891,85 +7010,79 @@ public abstract class MasterServer {
                                             sendInvalidateList=true;
                                         }
                                         break;*/
-                                    /*case SET_TICKET_CONTACT_EMAILS :
+                                    case SET_TICKET_CONTACT_EMAILS :
                                         {
-                                            int ticketID=in.readCompressedInt(); 
-                                            String contactEmails=in.readUTF().trim();
-                                            String username=in.readUTF().trim();
-                                            String comments=in.readUTF().trim();
+                                            int ticketID = in.readCompressedInt();
+                                            String contactEmails = in.readUTF();
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) {
+                                                String username=in.readUTF();
+                                                String comments=in.readUTF();
+                                            }
                                             process.setCommand(
                                                 "set_ticket_contact_emails",
                                                 Integer.valueOf(ticketID),
-                                                contactEmails,
-                                                username,
-                                                comments
+                                                contactEmails
                                             );
                                             TicketHandler.setTicketContactEmails(
                                                 conn,
                                                 source,
                                                 invalidateList,
                                                 ticketID,
-                                                contactEmails,
-                                                username,
-                                                comments
+                                                contactEmails
                                             );
                                             resp1=AOServProtocol.DONE;
                                             sendInvalidateList=true;
                                         }
-                                        break;*/
-                                    /*case SET_TICKET_CONTACT_PHONE_NUMBERS :
+                                        break;
+                                    case SET_TICKET_CONTACT_PHONE_NUMBERS :
                                         {
                                             int ticketID=in.readCompressedInt(); 
-                                            String contactPhoneNumbers=in.readUTF().trim();
-                                            String username=in.readUTF().trim();
-                                            String comments=in.readUTF().trim();
+                                            String contactPhoneNumbers=in.readUTF();
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) {
+                                                String username=in.readUTF();
+                                                String comments=in.readUTF();
+                                            }
                                             process.setCommand(
                                                 "set_ticket_contact_phone_numbers",
                                                 Integer.valueOf(ticketID),
-                                                contactPhoneNumbers,
-                                                username,
-                                                comments
+                                                contactPhoneNumbers
                                             );
                                             TicketHandler.setTicketContactPhoneNumbers(
                                                 conn,
                                                 source,
                                                 invalidateList,
                                                 ticketID,
-                                                contactPhoneNumbers,
-                                                username,
-                                                comments
+                                                contactPhoneNumbers
                                             );
                                             resp1=AOServProtocol.DONE;
                                             sendInvalidateList=true;
                                         }
-                                        break;*/
-                                    /*case SET_TICKET_BUSINESS :
+                                        break;
+                                    case SET_TICKET_BUSINESS :
                                         {
-                                            int ticketID=in.readCompressedInt(); 
-                                            String accounting=in.readUTF().trim();
-                                            if(accounting.length()==0) accounting=null;
-                                            String username=in.readUTF().trim();
-                                            String comments=in.readUTF().trim();
+                                            int ticketID = in.readCompressedInt();
+                                            String accounting = in.readUTF();
+                                            if(accounting.length()==0) accounting = null;
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) {
+                                                String username = in.readUTF();
+                                                String comments = in.readUTF();
+                                            }
                                             process.setCommand(
                                                 "set_ticket_business",
                                                 Integer.valueOf(ticketID),
-                                                accounting,
-                                                username,
-                                                comments
+                                                accounting
                                             );
                                             TicketHandler.setTicketBusiness(
                                                 conn,
                                                 source,
                                                 invalidateList,
                                                 ticketID,
-                                                accounting,
-                                                username,
-                                                comments
+                                                accounting
                                             );
                                             resp1=AOServProtocol.DONE;
                                             sendInvalidateList=true;
                                         }
-                                        break;*/
+                                        break;
                                     case START_APACHE :
                                         {
                                             int aoServer=in.readCompressedInt();
@@ -7611,8 +7724,8 @@ public abstract class MasterServer {
                                     case UPDATE_PACKAGE_DEFINITION :
                                         {
                                             int pkey=in.readCompressedInt();
-                                            String accounting=in.readUTF().trim();
-                                            String category=in.readUTF().trim();
+                                            String brand=in.readUTF();
+                                            String category=in.readUTF();
                                             String name=in.readUTF().trim();
                                             String version=in.readUTF().trim();
                                             String display=in.readUTF().trim();
@@ -7624,7 +7737,7 @@ public abstract class MasterServer {
                                             process.setCommand(
                                                 "update_package_definition",
                                                 Integer.valueOf(pkey),
-                                                accounting,
+                                                brand,
                                                 category,
                                                 name,
                                                 version,
@@ -7640,7 +7753,7 @@ public abstract class MasterServer {
                                                 source,
                                                 invalidateList,
                                                 pkey,
-                                                accounting,
+                                                brand,
                                                 category,
                                                 name,
                                                 version,
@@ -7758,6 +7871,7 @@ public abstract class MasterServer {
                                             break;
                                         }
                                     default :
+                                        keepOpen = false;
                                         throw new IOException("Unknown task code: " + taskCode);
                                 }
 
@@ -7795,6 +7909,7 @@ public abstract class MasterServer {
                         else if(hasResp2Long) out.writeLong(resp2Long);
                         else if(hasResp2Short) out.writeShort(resp2Short);
                         else if(resp2String!=null) out.writeUTF(resp2String);
+                        else if(hasResp2NullLongString) out.writeNullLongUTF(resp2NullLongString);
                         else if(hasResp2Boolean) out.writeBoolean(resp2Boolean);
                         else if(hasResp2InboxAttributes) {
                             out.writeBoolean(resp2InboxAttributes!=null);
@@ -7814,6 +7929,9 @@ public abstract class MasterServer {
                             }
                             out.writeCompressedInt(-1);
                         }
+                    } catch(RuntimeException err) {
+                        keepOpen = false;
+                        throw err;
                     } catch(SQLException err) {
                         reportError(err, null);
                         String message=err.getMessage();
@@ -7843,7 +7961,7 @@ public abstract class MasterServer {
                 }
             }
         }
-        return true;
+        return keepOpen;
     }
 
     /**

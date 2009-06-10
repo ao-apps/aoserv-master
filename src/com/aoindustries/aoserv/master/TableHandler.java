@@ -6437,7 +6437,26 @@ final public class TableHandler {
                         out,
                         provideProgress,
                         new TicketAction(),
-                        "select * from ticket_actions"
+                        "select\n"
+                        + "  pkey,\n"
+                        + "  ticket,\n"
+                        + "  administrator,\n"
+                        + "  time,\n"
+                        + "  action_type,\n"
+                        + "  old_accounting,\n"
+                        + "  new_accounting,\n"
+                        + "  old_priority,\n"
+                        + "  new_priority,\n"
+                        + "  old_status,\n"
+                        + "  new_status,\n"
+                        + "  old_assigned_to,\n"
+                        + "  new_assigned_to,\n"
+                        + "  old_category,\n"
+                        + "  new_category,\n"
+                        + "  from_address,\n"
+                        + "  summary\n"
+                        + "from\n"
+                        + "  ticket_actions"
                     ); else {
                         List<TicketAction> emptyList = Collections.emptyList();
                         MasterServer.writeObjects(source, out, provideProgress, emptyList);
@@ -6452,7 +6471,23 @@ final public class TableHandler {
                             provideProgress,
                             new TicketAction(),
                             "select\n"
-                            + "  ta.*\n"
+                            + "  ta.pkey,\n"
+                            + "  ta.ticket,\n"
+                            + "  ta.administrator,\n"
+                            + "  ta.time,\n"
+                            + "  ta.action_type,\n"
+                            + "  ta.old_accounting,\n"
+                            + "  ta.new_accounting,\n"
+                            + "  ta.old_priority,\n"
+                            + "  ta.new_priority,\n"
+                            + "  ta.old_status,\n"
+                            + "  ta.new_status,\n"
+                            + "  ta.old_assigned_to,\n"
+                            + "  ta.new_assigned_to,\n"
+                            + "  ta.old_category,\n"
+                            + "  ta.new_category,\n"
+                            + "  ta.from_address,\n"
+                            + "  ta.summary\n"
                             + "from\n"
                             + "  usernames un,\n"
                             + "  packages pk1,\n"
@@ -6473,7 +6508,7 @@ final public class TableHandler {
                             username
                         );
                     } else {
-                        // Can only see non-admin types
+                        // Can only see non-admin types and statuses
                         MasterServer.writeObjects(
                             conn,
                             source,
@@ -6481,7 +6516,23 @@ final public class TableHandler {
                             provideProgress,
                             new TicketAction(),
                             "select\n"
-                            + "  ta.*\n"
+                            + "  ta.pkey,\n"
+                            + "  ta.ticket,\n"
+                            + "  ta.administrator,\n"
+                            + "  ta.time,\n"
+                            + "  ta.action_type,\n"
+                            + "  ta.old_accounting,\n"
+                            + "  ta.new_accounting,\n"
+                            + "  ta.old_priority,\n"
+                            + "  ta.new_priority,\n"
+                            + "  ta.old_status,\n"
+                            + "  ta.new_status,\n"
+                            + "  ta.old_assigned_to,\n"
+                            + "  ta.new_assigned_to,\n"
+                            + "  ta.old_category,\n"
+                            + "  ta.new_category,\n"
+                            + "  ta.from_address,\n"
+                            + "  ta.summary\n"
                             + "from\n"
                             + "  usernames un,\n"
                             + "  packages pk1,\n"
@@ -6496,6 +6547,7 @@ final public class TableHandler {
                             + PK1_BU1_PARENTS_WHERE
                             + "  )\n"
                             + "  and bu1.accounting=ti.accounting\n"
+                            + "  and ti.status not in ('junk', 'deleted')\n"
                             + "  and ti.pkey=ta.ticket\n"
                             + "  and ta.action_type=tat.type\n"
                             + "  and not tat.visible_admin_only",
@@ -6738,7 +6790,8 @@ final public class TableHandler {
                             + "  and (\n"
                             + PK1_BU1_PARENTS_WHERE
                             + "  )\n"
-                            + "  and bu1.accounting=ti.accounting",
+                            + "  and bu1.accounting=ti.accounting\n"
+                            + "  and ti.status not in ('junk', 'deleted')",
                             username
                         );
                     }

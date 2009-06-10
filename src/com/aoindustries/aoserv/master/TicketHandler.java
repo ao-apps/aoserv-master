@@ -5,8 +5,10 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.aoserv.client.AOServPermission;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.TicketActionType;
 import com.aoindustries.aoserv.client.TicketStatus;
 import com.aoindustries.sql.DatabaseAccess;
 import java.io.IOException;
@@ -111,7 +113,7 @@ final public class TicketHandler /*implements Runnable*/ {
         for(int range=1000000; range<1000000000; range *= 10) {
             for(int attempt=0; attempt<1000; attempt++) {
                 int id = random.nextInt(range);
-                if(!conn.executeBooleanQuery("select (select pkey from tickets where pkey=?) is null", id)) return id;
+                if(conn.executeBooleanQuery("select (select pkey from tickets where pkey=?) is null", id)) return id;
             }
         }
         throw new SQLException("Failed to generate ticket ID after thousands of attempts");
@@ -134,6 +136,7 @@ final public class TicketHandler /*implements Runnable*/ {
         String contactEmails,
         String contactPhoneNumbers
     ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "addTicket", AOServPermission.Permission.add_ticket);
         boolean isAdmin=isTicketAdmin(conn, source);
         if(accounting==null) {
             if(!isAdmin) throw new SQLException("Only ticket administrators may create a ticket without a business.");
@@ -235,10 +238,65 @@ final public class TicketHandler /*implements Runnable*/ {
         }*/
 
         // Notify all clients of the updates
-        invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, accounting, InvalidateList.allServers, false);
+        if(accounting!=null) invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, accounting, InvalidateList.allServers, false);
         invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, reseller, InvalidateList.allServers, false);
         //invalidateList.addTable(conn, SchemaTable.TableID.ACTIONS, accounting, null);
         return pkey;
+    }
+    // </editor-fold>
+    // <editor-fold desc="Delayed Data Access">
+    public static String getTicketDetails(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        int pkey
+    ) throws IOException, SQLException {
+        checkAccessTicket(conn, source, "getTicketDetails", pkey);
+        return conn.executeStringQuery("select details from tickets where pkey=?", pkey);
+    }
+
+    public static String getTicketRawEmail(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        int pkey
+    ) throws IOException, SQLException {
+        checkAccessTicket(conn, source, "getTicketRawEmail", pkey);
+        return conn.executeStringQuery("select raw_email from tickets where pkey=?", pkey);
+    }
+
+    public static String getTicketActionOldValue(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        int pkey
+    ) throws IOException, SQLException {
+        checkAccessTicketAction(conn, source, "getTicketActionOldValue", pkey);
+        return conn.executeStringQuery("select old_value from ticket_actions where pkey=?", pkey);
+    }
+
+    public static String getTicketActionNewValue(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        int pkey
+    ) throws IOException, SQLException {
+        checkAccessTicketAction(conn, source, "getTicketActionNewValue", pkey);
+        return conn.executeStringQuery("select new_value from ticket_actions where pkey=?", pkey);
+    }
+
+    public static String getTicketActionDetails(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        int pkey
+    ) throws IOException, SQLException {
+        checkAccessTicketAction(conn, source, "getTicketActionDetails", pkey);
+        return conn.executeStringQuery("select details from ticket_actions where pkey=?", pkey);
+    }
+
+    public static String getTicketActionRawEmail(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        int pkey
+    ) throws IOException, SQLException {
+        checkAccessTicketAction(conn, source, "getTicketActionRawEmail", pkey);
+        return conn.executeStringQuery("select raw_email from ticket_actions where pkey=?", pkey);
     }
     // </editor-fold>
     // <editor-fold desc="Ticket Actions">
@@ -390,63 +448,60 @@ final public class TicketHandler /*implements Runnable*/ {
             false
         );
     }
-
+*/
     public static void setTicketBusiness(
         MasterDatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int ticketID, 
-        String accounting, 
-        String username,
-        String comments
+        int ticketID,
+        String newAccounting
     ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "setTicketBusiness", AOServPermission.Permission.edit_ticket);
         checkAccessTicket(conn, source, "setTicketBusiness", ticketID);
-        if(!isActive(conn, ticketID)) throw new SQLException("Ticket no longer active: "+ticketID);
-        UsernameHandler.checkAccessUsername(conn, source, "setTicketBusiness", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to assign a Ticket as user '"+LinuxAccount.MAIL+'\'');
 
-        if(accounting!=null) BusinessHandler.checkAccessBusiness(conn, source, "setTicketBusiness", accounting);
+        if(newAccounting!=null) BusinessHandler.checkAccessBusiness(conn, source, "setTicketBusiness", newAccounting);
 
-        String oldValue=conn.executeStringQuery("select accounting from tickets where pkey=?", ticketID);
+        String oldAccounting = conn.executeStringQuery("select accounting from tickets where pkey=?", ticketID);
 
-        conn.executeUpdate("update tickets set accounting=? where pkey=?", accounting, ticketID);
+        conn.executeUpdate("update tickets set accounting=? where pkey=?", newAccounting, ticketID);
 
         conn.executeUpdate(
-            "insert into actions(ticket_id, administrator, action_type, old_value, comments) values(?,?,?,?,?)",
+            "insert into ticket_actions(ticket, administrator, action_type, old_accounting, new_accounting) values(?,?,?,?,?)",
             ticketID,
-            username,
+            source.getUsername(),
             TicketActionType.SET_BUSINESS,
-            oldValue,
-            comments
+            oldAccounting,
+            newAccounting
         );
 
         // Notify all clients of the update
-        String oldAccounting=getBusinessForTicket(conn, ticketID);
+        if(oldAccounting!=null) {
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKETS,
+                oldAccounting,
+                InvalidateList.allServers,
+                false
+            );
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKET_ACTIONS,
+                oldAccounting,
+                InvalidateList.allServers,
+                false
+            );
+        }
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKETS,
-            oldAccounting,
+            newAccounting,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
-            oldAccounting,
-            InvalidateList.allServers,
-            false
-        );
-        invalidateList.addTable(
-            conn,
-            SchemaTable.TableID.TICKETS,
-            accounting,
-            InvalidateList.allServers,
-            false
-        );
-        invalidateList.addTable(
-            conn,
-            SchemaTable.TableID.ACTIONS,
-            accounting,
+            SchemaTable.TableID.TICKET_ACTIONS,
+            newAccounting,
             InvalidateList.allServers,
             false
         );
@@ -456,27 +511,23 @@ final public class TicketHandler /*implements Runnable*/ {
         MasterDatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int ticketID, 
-        String contactEmails, 
-        String username,
-        String comments
+        int ticketID,
+        String contactEmails
     ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "setTicketContactEmails", AOServPermission.Permission.edit_ticket);
         checkAccessTicket(conn, source, "setTicketContactEmails", ticketID);
-        if(!isActive(conn, ticketID)) throw new SQLException("Ticket no longer active: "+ticketID);
-        UsernameHandler.checkAccessUsername(conn, source, "setTicketContactEmails", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set a Ticket's contact emails as user '"+LinuxAccount.MAIL+'\'');
 
-        String oldValue=conn.executeStringQuery("select contact_emails from tickets where pkey=?", ticketID);
+        String oldValue = conn.executeStringQuery("select contact_emails from tickets where pkey=?", ticketID);
 
         conn.executeUpdate("update tickets set contact_emails=? where pkey=?", contactEmails, ticketID);
 
         conn.executeUpdate(
-            "insert into actions(ticket_id, administrator, action_type, old_value, comments) values(?,?,?,?,?)",
+            "insert into ticket_actions(ticket, administrator, action_type, old_value, new_value) values(?,?,?,?,?)",
             ticketID,
-            username,
+            source.getUsername(),
             TicketActionType.SET_CONTACT_EMAILS,
             oldValue,
-            comments
+            contactEmails
         );
 
         // Notify all clients of the update
@@ -490,7 +541,7 @@ final public class TicketHandler /*implements Runnable*/ {
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
+            SchemaTable.TableID.TICKET_ACTIONS,
             accounting,
             InvalidateList.allServers,
             false
@@ -501,27 +552,23 @@ final public class TicketHandler /*implements Runnable*/ {
         MasterDatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int ticketID, 
-        String contactPhoneNumbers, 
-        String username,
-        String comments
+        int ticketID,
+        String contactPhoneNumbers
     ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "setTicketContactPhoneNumbers", AOServPermission.Permission.edit_ticket);
         checkAccessTicket(conn, source, "setTicketContactPhoneNumbers", ticketID);
-        if(!isActive(conn, ticketID)) throw new SQLException("Ticket no longer active: "+ticketID);
-        UsernameHandler.checkAccessUsername(conn, source, "setTicketContactPhoneNumbers", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to change a Ticket's contact phone numbers as user '"+LinuxAccount.MAIL+'\'');
 
-        String oldValue=conn.executeStringQuery("select contact_phone_numbers from tickets where pkey=?", ticketID);
+        String oldValue = conn.executeStringQuery("select contact_phone_numbers from tickets where pkey=?", ticketID);
 
         conn.executeUpdate("update tickets set contact_phone_numbers=? where pkey=?", contactPhoneNumbers, ticketID);
 
         conn.executeUpdate(
-            "insert into actions(ticket_id, administrator, action_type, old_value, comments) values(?,?,?,?,?)",
+            "insert into ticket_actions(ticket, administrator, action_type, old_value, new_value) values(?,?,?,?,?)",
             ticketID,
-            username,
-            TicketActionType.SET_CONTACT_PHONES,
+            source.getUsername(),
+            TicketActionType.SET_CONTACT_PHONE_NUMBERS,
             oldValue,
-            comments
+            contactPhoneNumbers
         );
 
         // Notify all clients of the update
@@ -535,7 +582,7 @@ final public class TicketHandler /*implements Runnable*/ {
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
+            SchemaTable.TableID.TICKET_ACTIONS,
             accounting,
             InvalidateList.allServers,
             false
@@ -547,26 +594,22 @@ final public class TicketHandler /*implements Runnable*/ {
         RequestSource source, 
         InvalidateList invalidateList,
         int ticketID, 
-        String priority, 
-        String username, 
-        String comments
+        String newClientPriority
     ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "changeTicketClientPriority", AOServPermission.Permission.edit_ticket);
         checkAccessTicket(conn, source, "changeTicketClientPriority", ticketID);
-        if(!isActive(conn, ticketID)) throw new SQLException("Ticket no longer active: "+ticketID);
-        UsernameHandler.checkAccessUsername(conn, source, "changeTicketClientPriority", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to change Ticket client priority as user  '"+LinuxAccount.MAIL+'\'');
 
-        String oldValue=conn.executeStringQuery("select client_priority from tickets where pkey=?", ticketID);
+        String oldClientPriority = conn.executeStringQuery("select client_priority from tickets where pkey=?", ticketID);
 
-        conn.executeUpdate("update tickets set client_priority=? where pkey=?", priority, ticketID);
+        conn.executeUpdate("update tickets set client_priority=? where pkey=?", newClientPriority, ticketID);
 
         conn.executeUpdate(
-            "insert into actions(ticket_id, administrator, action_type, old_value, comments) values(?,?,?,?,?)",
+            "insert into ticket_actions(ticket, administrator, action_type, old_priority, new_priority) values(?,?,?,?,?)",
             ticketID,
-            username,
-            TicketActionType.CLIENT_PRIORITY_CHANGE,
-            oldValue,
-            comments
+            source.getUsername(),
+            TicketActionType.SET_CLIENT_PRIORITY,
+            oldClientPriority,
+            newClientPriority
         );
 
         // Notify all clients of the update
@@ -580,24 +623,107 @@ final public class TicketHandler /*implements Runnable*/ {
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
+            SchemaTable.TableID.TICKET_ACTIONS,
+            accounting,
+            InvalidateList.allServers,
+            false
+        );
+    }
+
+    public static void setTicketSummary(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int ticketID,
+        String summary
+    ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "setTicketSummary", AOServPermission.Permission.edit_ticket);
+        checkAccessTicket(conn, source, "setTicketSummary", ticketID);
+
+        String oldValue = conn.executeStringQuery("select summary from tickets where pkey=?", ticketID);
+
+        conn.executeUpdate("update tickets set summary=? where pkey=?", summary, ticketID);
+
+        conn.executeUpdate(
+            "insert into ticket_actions(ticket, administrator, action_type, old_value, new_value) values(?,?,?,?,?)",
+            ticketID,
+            source.getUsername(),
+            TicketActionType.SET_SUMMARY,
+            oldValue,
+            summary
+        );
+
+        // Notify all clients of the update
+        String accounting=getBusinessForTicket(conn, ticketID);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKETS,
+            accounting,
+            InvalidateList.allServers,
+            false
+        );
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKET_ACTIONS,
+            accounting,
+            InvalidateList.allServers,
+            false
+        );
+    }
+        
+    public static void addTicketAnnotation(
+        MasterDatabaseConnection conn,
+        RequestSource source,
+        InvalidateList invalidateList,
+        int ticketID,
+        String summary,
+        String details
+    ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "addTicketAnnotation", AOServPermission.Permission.edit_ticket);
+        checkAccessTicket(conn, source, "addTicketAnnotation", ticketID);
+
+        conn.executeUpdate(
+            "insert into ticket_actions(ticket, administrator, action_type, summary, details) values(?,?,?,?,?)",
+            ticketID,
+            source.getUsername(),
+            TicketActionType.ADD_ANNOTATION,
+            summary,
+            details
+        );
+        String accounting=getBusinessForTicket(conn, ticketID);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKET_ACTIONS,
             accounting,
             InvalidateList.allServers,
             false
         );
 
+        // Reopen if needed
+        String status = conn.executeStringQuery("select status from tickets where pkey=?", ticketID);
         if(
-            priority.equals(TicketPriority.URGENT)
-            && accounting!=null && !accounting.equals(BusinessHandler.getRootBusiness())
+            status.equals(TicketStatus.BOUNCED)
+            || status.equals(TicketStatus.CLOSED)
         ) {
-            String details = conn.executeStringQuery("select details from tickets where pkey=?", ticketID);
-            String message = details+"\n\n"+
-                MasterConfiguration.getTicketURL()+ticketID+"\n\n"
-            ;
-            sendEmail("support@aoindustries.com", "URGENT ticket notification", message, "ID: "+ticketID+" "+details);
+            conn.executeUpdate("update tickets set status=?, status_timeout=null where pkey=?", TicketStatus.OPEN, ticketID);
+            conn.executeUpdate(
+                "insert into ticket_actions(ticket, administrator, action_type, old_status, new_status) values(?,?,?,?,?)",
+                ticketID,
+                source.getUsername(),
+                TicketActionType.SET_STATUS,
+                status,
+                TicketStatus.OPEN
+            );
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKETS,
+                accounting,
+                InvalidateList.allServers,
+                false
+            );
         }
     }
-
+/*
     public static void changeTicketType(
         MasterDatabaseConnection conn,
         RequestSource source, 
@@ -922,7 +1048,7 @@ final public class TicketHandler /*implements Runnable*/ {
         }
     }*/
     // </editor-fold>
-    // <editor-fold desc="Data Access">
+    // <editor-fold desc="Internal Master Data Access">
     /**
      * A ticket administrator is part of a business that is also a reseller.
      */
@@ -939,7 +1065,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static String getBusinessForAction(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select ti.accounting from actions ac, tickets ti where ac.pkey=? and ac.ticket_id=ti.pkey", pkey);
+        return conn.executeStringQuery("select ti.accounting from ticket_actions ac, tickets ti where ac.pkey=? and ac.ticket=ti.pkey", pkey);
     }
 
     public static String getResellerForAction(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -1226,7 +1352,7 @@ final public class TicketHandler /*implements Runnable*/ {
         }
     }
 */
-    private static final String[] MATCH_HEADERS=new String[]{"Subject","Date","From","Cc"};
+    // private static final String[] MATCH_HEADERS=new String[]{"Subject","Date","From","Cc"};
     
     /**
      * Gets the String form of the message body.
