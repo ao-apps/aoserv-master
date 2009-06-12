@@ -126,6 +126,7 @@ final public class TicketHandler /*implements Runnable*/ {
         MasterDatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
+        String brand,
         String accounting,
         String language,
         int category,
@@ -151,6 +152,7 @@ final public class TicketHandler /*implements Runnable*/ {
         return addTicket(
             conn,
             invalidateList,
+            brand,
             reseller,
             accounting,
             language,
@@ -177,6 +179,7 @@ final public class TicketHandler /*implements Runnable*/ {
     public static int addTicket(
         MasterDatabaseConnection conn,
         InvalidateList invalidateList,
+        String brand,
         String reseller,
         String accounting,
         String language,
@@ -198,8 +201,9 @@ final public class TicketHandler /*implements Runnable*/ {
         int pkey = generateTicketId(conn);
 
         conn.executeUpdate(
-            "insert into tickets values(?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?,?,?,?)",
+            "insert into tickets values(?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?,?,?,?)",
             pkey,
+            brand,
             reseller,
             accounting,
             language,
@@ -239,6 +243,7 @@ final public class TicketHandler /*implements Runnable*/ {
 
         // Notify all clients of the updates
         if(accounting!=null) invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, accounting, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, brand, InvalidateList.allServers, false);
         invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, reseller, InvalidateList.allServers, false);
         //invalidateList.addTable(conn, SchemaTable.TableID.ACTIONS, accounting, null);
         return pkey;
@@ -475,6 +480,7 @@ final public class TicketHandler /*implements Runnable*/ {
         );
 
         // Notify all clients of the update
+        // By oldAccounting
         if(oldAccounting!=null) {
             invalidateList.addTable(
                 conn,
@@ -491,17 +497,52 @@ final public class TicketHandler /*implements Runnable*/ {
                 false
             );
         }
+        // By newAccounting
+        if(newAccounting!=null) {
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKETS,
+                newAccounting,
+                InvalidateList.allServers,
+                false
+            );
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKET_ACTIONS,
+                newAccounting,
+                InvalidateList.allServers,
+                false
+            );
+        }
+        // By brand
+        String brand = conn.executeStringQuery("select brand from tickets where pkey=?", ticketID);
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKETS,
-            newAccounting,
+            brand,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKET_ACTIONS,
-            newAccounting,
+            brand,
+            InvalidateList.allServers,
+            false
+        );
+        // By reseller
+        String reseller = conn.executeStringQuery("select reseller from tickets where pkey=?", ticketID);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKETS,
+            reseller,
+            InvalidateList.allServers,
+            false
+        );
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKET_ACTIONS,
+            reseller,
             InvalidateList.allServers,
             false
         );
@@ -531,18 +572,53 @@ final public class TicketHandler /*implements Runnable*/ {
         );
 
         // Notify all clients of the update
+        // By accounting
         String accounting=getBusinessForTicket(conn, ticketID);
+        if(accounting!=null) {
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKETS,
+                accounting,
+                InvalidateList.allServers,
+                false
+            );
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKET_ACTIONS,
+                accounting,
+                InvalidateList.allServers,
+                false
+            );
+        }
+        // By brand
+        String brand = conn.executeStringQuery("select brand from tickets where pkey=?", ticketID);
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKETS,
-            accounting,
+            brand,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKET_ACTIONS,
-            accounting,
+            brand,
+            InvalidateList.allServers,
+            false
+        );
+        // By reseller
+        String reseller = conn.executeStringQuery("select reseller from tickets where pkey=?", ticketID);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKETS,
+            reseller,
+            InvalidateList.allServers,
+            false
+        );
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKET_ACTIONS,
+            reseller,
             InvalidateList.allServers,
             false
         );
@@ -572,18 +648,53 @@ final public class TicketHandler /*implements Runnable*/ {
         );
 
         // Notify all clients of the update
+        // By accounting
         String accounting=getBusinessForTicket(conn, ticketID);
+        if(accounting!=null) {
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKETS,
+                accounting,
+                InvalidateList.allServers,
+                false
+            );
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKET_ACTIONS,
+                accounting,
+                InvalidateList.allServers,
+                false
+            );
+        }
+        // By brand
+        String brand = conn.executeStringQuery("select brand from tickets where pkey=?", ticketID);
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKETS,
-            accounting,
+            brand,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKET_ACTIONS,
-            accounting,
+            brand,
+            InvalidateList.allServers,
+            false
+        );
+        // By reseller
+        String reseller = conn.executeStringQuery("select reseller from tickets where pkey=?", ticketID);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKETS,
+            reseller,
+            InvalidateList.allServers,
+            false
+        );
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKET_ACTIONS,
+            reseller,
             InvalidateList.allServers,
             false
         );
@@ -613,18 +724,53 @@ final public class TicketHandler /*implements Runnable*/ {
         );
 
         // Notify all clients of the update
+        // By accounting
         String accounting=getBusinessForTicket(conn, ticketID);
+        if(accounting!=null) {
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKETS,
+                accounting,
+                InvalidateList.allServers,
+                false
+            );
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKET_ACTIONS,
+                accounting,
+                InvalidateList.allServers,
+                false
+            );
+        }
+        // By brand
+        String brand = conn.executeStringQuery("select brand from tickets where pkey=?", ticketID);
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKETS,
-            accounting,
+            brand,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKET_ACTIONS,
-            accounting,
+            brand,
+            InvalidateList.allServers,
+            false
+        );
+        // By reseller
+        String reseller = conn.executeStringQuery("select reseller from tickets where pkey=?", ticketID);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKETS,
+            reseller,
+            InvalidateList.allServers,
+            false
+        );
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKET_ACTIONS,
+            reseller,
             InvalidateList.allServers,
             false
         );
@@ -654,23 +800,58 @@ final public class TicketHandler /*implements Runnable*/ {
         );
 
         // Notify all clients of the update
+        // By accounting
         String accounting=getBusinessForTicket(conn, ticketID);
+        if(accounting!=null) {
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKETS,
+                accounting,
+                InvalidateList.allServers,
+                false
+            );
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKET_ACTIONS,
+                accounting,
+                InvalidateList.allServers,
+                false
+            );
+        }
+        // By brand
+        String brand = conn.executeStringQuery("select brand from tickets where pkey=?", ticketID);
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKETS,
-            accounting,
+            brand,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKET_ACTIONS,
-            accounting,
+            brand,
+            InvalidateList.allServers,
+            false
+        );
+        // By reseller
+        String reseller = conn.executeStringQuery("select reseller from tickets where pkey=?", ticketID);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKETS,
+            reseller,
+            InvalidateList.allServers,
+            false
+        );
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKET_ACTIONS,
+            reseller,
             InvalidateList.allServers,
             false
         );
     }
-        
+
     public static void addTicketAnnotation(
         MasterDatabaseConnection conn,
         RequestSource source,
@@ -690,11 +871,32 @@ final public class TicketHandler /*implements Runnable*/ {
             summary,
             details
         );
+        // By accounting
         String accounting=getBusinessForTicket(conn, ticketID);
+        if(accounting!=null) {
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKET_ACTIONS,
+                accounting,
+                InvalidateList.allServers,
+                false
+            );
+        }
+        // By brand
+        String brand = conn.executeStringQuery("select brand from tickets where pkey=?", ticketID);
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.TICKET_ACTIONS,
-            accounting,
+            brand,
+            InvalidateList.allServers,
+            false
+        );
+        // By reseller
+        String reseller = conn.executeStringQuery("select reseller from tickets where pkey=?", ticketID);
+        invalidateList.addTable(
+            conn,
+            SchemaTable.TableID.TICKET_ACTIONS,
+            reseller,
             InvalidateList.allServers,
             false
         );
@@ -714,10 +916,29 @@ final public class TicketHandler /*implements Runnable*/ {
                 status,
                 TicketStatus.OPEN
             );
+            // By accounting
+            if(accounting!=null) {
+                invalidateList.addTable(
+                    conn,
+                    SchemaTable.TableID.TICKETS,
+                    accounting,
+                    InvalidateList.allServers,
+                    false
+                );
+            }
+            // By brand
             invalidateList.addTable(
                 conn,
                 SchemaTable.TableID.TICKETS,
-                accounting,
+                brand,
+                InvalidateList.allServers,
+                false
+            );
+            // By reseller
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.TICKETS,
+                reseller,
                 InvalidateList.allServers,
                 false
             );

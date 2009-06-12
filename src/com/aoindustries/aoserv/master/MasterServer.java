@@ -2427,6 +2427,12 @@ public abstract class MasterServer {
                                                 break;
                                             case TICKETS :
                                                 {
+                                                    String brand;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_46)>=0) {
+                                                        brand = in.readUTF();
+                                                    } else {
+                                                        brand = BusinessHandler.getRootBusiness();
+                                                    }
                                                     String accounting;
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_126)>=0) {
                                                         accounting=in.readBoolean()?in.readUTF().trim():null;
@@ -2456,6 +2462,7 @@ public abstract class MasterServer {
                                                     }
                                                     process.setCommand(
                                                         "add_ticket",
+                                                        brand,
                                                         accounting,
                                                         language,
                                                         category,
@@ -2470,6 +2477,7 @@ public abstract class MasterServer {
                                                         conn,
                                                         source,
                                                         invalidateList,
+                                                        brand,
                                                         accounting,
                                                         language,
                                                         category,
