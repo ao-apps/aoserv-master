@@ -7760,7 +7760,7 @@ public abstract class MasterServer {
                                     case UPDATE_PACKAGE_DEFINITION :
                                         {
                                             int pkey=in.readCompressedInt();
-                                            String brand=in.readUTF();
+                                            String accounting=in.readUTF();
                                             String category=in.readUTF();
                                             String name=in.readUTF().trim();
                                             String version=in.readUTF().trim();
@@ -7773,7 +7773,7 @@ public abstract class MasterServer {
                                             process.setCommand(
                                                 "update_package_definition",
                                                 Integer.valueOf(pkey),
-                                                brand,
+                                                accounting,
                                                 category,
                                                 name,
                                                 version,
@@ -7789,7 +7789,7 @@ public abstract class MasterServer {
                                                 source,
                                                 invalidateList,
                                                 pkey,
-                                                brand,
+                                                accounting,
                                                 category,
                                                 name,
                                                 version,
