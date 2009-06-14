@@ -20,8 +20,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
 
 /**
  * The <code>AOServServerThread</code> handles a connection once it is accepted.
@@ -84,15 +83,18 @@ final public class SocketServerThread extends Thread implements RequestSource {
         start();
     }
 
-    private final List<InvalidateCacheEntry> invalidateLists=new ArrayList<InvalidateCacheEntry>();
+    private final LinkedList<InvalidateCacheEntry> invalidateLists=new LinkedList<InvalidateCacheEntry>();
 
     /**
      * Invalidates the listed tables.  Also, if this connector represents a daemon,
      * this invalidate is registered with ServerHandler for invalidation synchronization.
+     *
+     * IDEA: Could reduce signals under high load by combining entries that are not synchronous.
+     *       Could even combine synchronous ones as long as all sync entries were acknowledged in the proper order.
      */
     public void cachesInvalidated(IntList tableList) throws IOException {
-        synchronized(this) {
-            if(tableList!=null && tableList.size()>0) {
+        if(tableList!=null && tableList.size()>0) {
+            synchronized(this) { // Must use "this" lock because wait is performed on this object externally
                 // Register with ServerHandler for invalidation synchronization
                 int daemonServer=getDaemonServer();
                 IntList copy=new IntArrayList(tableList);
@@ -101,7 +103,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                     daemonServer,
                     daemonServer==-1?null:ServerHandler.addInvalidateSyncEntry(daemonServer, this)
                 );
-                invalidateLists.add(ice);
+                invalidateLists.addLast(ice);
                 notify();
             }
         }
@@ -113,8 +115,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
 
     public InvalidateCacheEntry getNextInvalidatedTables() {
         synchronized(this) {
-            if(invalidateLists.size()==0) return null;
-            return invalidateLists.remove(0);
+            if(invalidateLists.isEmpty()) return null;
+            return invalidateLists.removeFirst();
         }
     }
 
@@ -186,6 +188,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 long existingID=in.readLong();
 
                 switch(protocolVersion) {
+                    case VERSION_1_47 :
                     case VERSION_1_46 :
                     case VERSION_1_45 :
                     case VERSION_1_44 :

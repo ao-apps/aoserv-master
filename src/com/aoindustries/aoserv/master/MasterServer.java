@@ -270,6 +270,7 @@ public abstract class MasterServer {
                             addCacheListener(source);
                             final MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
                             try {
+                                AOServProtocol.Version protocolVersion = source.getProtocolVersion();
                                 while(!BusinessHandler.isBusinessAdministratorDisabled(conn, source.getUsername())) {
                                     conn.releaseConnection();
                                     process.commandSleeping();
@@ -290,18 +291,28 @@ public abstract class MasterServer {
                                         process.commandRunning();
                                         IntList clientTableIDs=ice.getInvalidateList();
                                         int size=clientTableIDs.size();
+                                        if(protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_47)>=0) out.writeBoolean(ice.getCacheSyncID()!=null);
                                         out.writeCompressedInt(size);
                                         for(int c=0;c<size;c++) out.writeCompressedInt(clientTableIDs.getInt(c));
-                                    } else out.writeCompressedInt(-1);
+                                    } else {
+                                        if(protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_47)>=0) out.writeBoolean(true);
+                                        out.writeCompressedInt(-1);
+                                    }
                                     out.flush();
 
-                                    if(in.readBoolean()) {
-                                        if(ice!=null) {
-                                            int server=ice.getServer();
-                                            Long id=ice.getCacheSyncID();
-                                            if(server!=-1 && id!=null) ServerHandler.removeInvalidateSyncEntry(server, id);
+                                    if(ice!=null) {
+                                        int server=ice.getServer();
+                                        Long id=ice.getCacheSyncID();
+                                        if(
+                                            id!=null
+                                            || protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_47)<0
+                                        ) {
+                                            if(!in.readBoolean()) throw new IOException("Unexpected invalidate sync response.");
                                         }
-                                    } else throw new IOException("Unexpected invalidate sync response.");
+                                        if(server!=-1 && id!=null) ServerHandler.removeInvalidateSyncEntry(server, id);
+                                    } else {
+                                        if(!in.readBoolean()) throw new IOException("Unexpected invalidate sync response.");
+                                    }
                                 }
                             } finally {
                                 conn.releaseConnection();
