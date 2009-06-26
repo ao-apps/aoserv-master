@@ -1688,15 +1688,15 @@ final public class BusinessHandler {
     /**
      * Gets the best estimate of a business for a list of email addresses or <code>null</code> if can't determine.
      * The algorithm takes these steps.
-     * <OL>
-     *   <LI>Look for exact matches in billing and technical contacts, with a weight of 10.</LI>
-     *   <LI>Look for matches in email_domains, with a weight of 5</LI>
-     *   <LI>Look for matches in httpd_site_urls with a weight of 1</LI>
-     *   <LI>Look for matches in dns_zones with a weight of 1</LI>
-     *   <LI>Add up the weights per business</LI>
-     *   <LI>Find the highest weight</LI>
-     *   <LI>Follow the bill_parents up to top billing level</LI>
-     * </OL>
+     * <ol>
+     *   <li>Look for exact matches in billing and technical contacts, with a weight of 10.</li>
+     *   <li>Look for matches in email_domains, with a weight of 5</li>
+     *   <li>Look for matches in httpd_site_urls with a weight of 1</li>
+     *   <li>Look for matches in dns_zones with a weight of 1</li>
+     *   <li>Add up the weights per business</li>
+     *   <li>Find the highest weight</li>
+     *   <li>Follow the bill_parents up to top billing level</li>
+     * </ol>
      */
     public static String getBusinessFromEmailAddresses(MasterDatabaseConnection conn, List<String> addresses) throws IOException, SQLException {
         // Load the list of businesses and their contacts

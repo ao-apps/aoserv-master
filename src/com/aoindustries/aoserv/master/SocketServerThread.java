@@ -188,6 +188,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 long existingID=in.readLong();
 
                 switch(protocolVersion) {
+                    case VERSION_1_49 :
+                    case VERSION_1_48 :
                     case VERSION_1_47 :
                     case VERSION_1_46 :
                     case VERSION_1_45 :

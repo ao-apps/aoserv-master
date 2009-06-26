@@ -364,6 +364,8 @@ public abstract class MasterServer {
                         String resp2NullLongString = null;
                         boolean hasResp2NullLongString = false;
 
+                        String resp2LongString = null;
+
                         boolean resp2Boolean=false;
                         boolean hasResp2Boolean=false;
 
@@ -850,7 +852,7 @@ public abstract class MasterServer {
                                                         creditCardPostalCode,
                                                         creditCardCountryCode,
                                                         creditCardComments,
-                                                        authorizationTime,
+                                                        new java.util.Date(authorizationTime),
                                                         authorizationPrincipalName
                                                     );
                                                     int pkey=CreditCardHandler.addCreditCardTransaction(
@@ -2455,6 +2457,9 @@ public abstract class MasterServer {
                                                     int category = source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_44)>=0 ? in.readCompressedInt() : -1;
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) in.readUTF(); // username
                                                     String type = in.readUTF();
+                                                    String fromAddress;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_48)>=0) fromAddress = in.readNullUTF();
+                                                    else fromAddress = null;
                                                     String summary = source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_44)>=0 ? in.readUTF() : "(No summary)";
                                                     String details = source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_44)>=0 ? in.readNullLongUTF() : in.readUTF();
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) in.readLong(); // deadline
@@ -2478,6 +2483,7 @@ public abstract class MasterServer {
                                                         language,
                                                         category,
                                                         type,
+                                                        fromAddress,
                                                         summary,
                                                         details,
                                                         clientPriority,
@@ -2493,6 +2499,7 @@ public abstract class MasterServer {
                                                         language,
                                                         category,
                                                         type,
+                                                        fromAddress,
                                                         summary,
                                                         details,
                                                         clientPriority,
@@ -2764,32 +2771,42 @@ public abstract class MasterServer {
                                             sendInvalidateList=true;
                                         }
                                         break;
-                                    /*case CHANGE_TICKET_TYPE :
+                                    case CHANGE_TICKET_TYPE :
                                         {
-                                            int ticketID=in.readCompressedInt();
-                                            String type=in.readUTF().trim();
-                                            String username=in.readUTF().trim();
-                                            String comments=in.readUTF().trim();
+                                            int ticketID = in.readCompressedInt();
+                                            String oldType;
+                                            String newType;
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_48)>=0) {
+                                                oldType = in.readUTF();
+                                                newType = in.readUTF();
+                                            } else {
+                                                oldType = null;
+                                                newType = in.readUTF();
+                                                String username = in.readUTF(); // Unused
+                                                String comments = in.readUTF(); // Unused
+                                            }
                                             process.setCommand(
-                                                AOSHCommand.CHANGE_TICKET_TYPE,
+                                                "change_ticket_type",
                                                 Integer.valueOf(ticketID),
-                                                type,
-                                                username,
-                                                comments
+                                                oldType,
+                                                newType
                                             );
-                                            TicketHandler.changeTicketType(
+                                            boolean updated = TicketHandler.setTicketType(
                                                 conn,
                                                 source,
                                                 invalidateList,
                                                 ticketID,
-                                                type,
-                                                username,
-                                                comments
+                                                oldType,
+                                                newType
                                             );
                                             resp1=AOServProtocol.DONE;
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_48)>=0) {
+                                                resp2Boolean = updated;
+                                                hasResp2Boolean = true;
+                                            }
                                             sendInvalidateList=true;
                                             break;
-                                        }*/
+                                        }
                                     /*case COMPLETE_TICKET :
                                         {
                                             int ticketID=in.readCompressedInt();
@@ -2960,7 +2977,7 @@ public abstract class MasterServer {
                                                 providerAvsResult,
                                                 avsResult,
                                                 approvalCode,
-                                                captureTime==0 ? null : Long.valueOf(captureTime),
+                                                captureTime==0 ? null : new java.util.Date(captureTime),
                                                 capturePrincipalName,
                                                 captureCommunicationResult,
                                                 captureProviderErrorCode,
@@ -4548,7 +4565,25 @@ public abstract class MasterServer {
                                             resp1=AOServProtocol.DONE;
                                             resp2NullLongString = rawEmail;
                                             hasResp2NullLongString = true;
-                                            sendInvalidateList=false;
+                                            sendInvalidateList = false;
+                                        }
+                                        break;
+                                    case GET_TICKET_INTERNAL_NOTES :
+                                        {
+                                            int pkey=in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ticket_internal_notes",
+                                                Integer.valueOf(pkey)
+                                            );
+                                            String internalNotes=TicketHandler.getTicketInternalNotes(
+                                                conn,
+                                                source,
+                                                pkey
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2LongString = internalNotes;
+                                            //hasResp2LongString = true;
+                                            sendInvalidateList = false;
                                         }
                                         break;
                                     case GET_TICKET_ACTION_OLD_VALUE :
@@ -7116,8 +7151,16 @@ public abstract class MasterServer {
                                     case SET_TICKET_BUSINESS :
                                         {
                                             int ticketID = in.readCompressedInt();
-                                            String accounting = in.readUTF();
-                                            if(accounting.length()==0) accounting = null;
+                                            String oldAccounting;
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_48)>=0) {
+                                                // Added old accounting to behave like atomic variable
+                                                oldAccounting = in.readUTF();
+                                                if(oldAccounting.length()==0) oldAccounting = null;
+                                            } else {
+                                                oldAccounting = null;
+                                            }
+                                            String newAccounting = in.readUTF();
+                                            if(newAccounting.length()==0) newAccounting = null;
                                             if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) {
                                                 String username = in.readUTF();
                                                 String comments = in.readUTF();
@@ -7125,16 +7168,76 @@ public abstract class MasterServer {
                                             process.setCommand(
                                                 "set_ticket_business",
                                                 Integer.valueOf(ticketID),
-                                                accounting
+                                                oldAccounting,
+                                                newAccounting
                                             );
-                                            TicketHandler.setTicketBusiness(
+                                            boolean updated = TicketHandler.setTicketBusiness(
                                                 conn,
                                                 source,
                                                 invalidateList,
                                                 ticketID,
-                                                accounting
+                                                oldAccounting,
+                                                newAccounting
                                             );
                                             resp1=AOServProtocol.DONE;
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_48)>=0) {
+                                                // Added boolean updated response
+                                                resp2Boolean = updated;
+                                                hasResp2Boolean = true;
+                                            }
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
+                                    case SET_TICKET_STATUS :
+                                        {
+                                            int ticketID = in.readCompressedInt();
+                                            String oldStatus = in.readUTF();
+                                            String newStatus = in.readUTF();
+                                            long statusTimeout = in.readLong();
+                                            process.setCommand(
+                                                "set_ticket_status",
+                                                Integer.valueOf(ticketID),
+                                                oldStatus,
+                                                newStatus,
+                                                new java.util.Date(statusTimeout)
+                                            );
+                                            boolean updated = TicketHandler.setTicketStatus(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                ticketID,
+                                                oldStatus,
+                                                newStatus,
+                                                statusTimeout
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2Boolean = updated;
+                                            hasResp2Boolean = true;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
+                                    case SET_TICKET_INTERNAL_NOTES :
+                                        {
+                                            int ticketID = in.readCompressedInt();
+                                            String oldInternalNotes = in.readLongUTF();
+                                            String newInternalNotes = in.readLongUTF();
+                                            process.setCommand(
+                                                "set_ticket_internal_notes",
+                                                Integer.valueOf(ticketID),
+                                                oldInternalNotes.length(),
+                                                newInternalNotes.length()
+                                            );
+                                            boolean updated = TicketHandler.setTicketInternalNotes(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                ticketID,
+                                                oldInternalNotes,
+                                                newInternalNotes
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2Boolean = updated;
+                                            hasResp2Boolean = true;
                                             sendInvalidateList=true;
                                         }
                                         break;
@@ -7965,6 +8068,7 @@ public abstract class MasterServer {
                         else if(hasResp2Short) out.writeShort(resp2Short);
                         else if(resp2String!=null) out.writeUTF(resp2String);
                         else if(hasResp2NullLongString) out.writeNullLongUTF(resp2NullLongString);
+                        else if(resp2LongString!=null) out.writeLongUTF(resp2LongString);
                         else if(hasResp2Boolean) out.writeBoolean(resp2Boolean);
                         else if(hasResp2InboxAttributes) {
                             out.writeBoolean(resp2InboxAttributes!=null);
