@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.email.ProcessTimer;
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,6 +19,8 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Automatically generates various reports on a regular basis.  These reports are then
@@ -30,6 +33,8 @@ import java.util.Map;
  * @author  AO Industries, Inc.
  */
 final public class ReportGenerator implements CronJob {
+
+    private static final Logger logger = LogFactory.getLogger(ReportGenerator.class);
 
     /**
      * The maximum time for a backup reporting.
@@ -54,7 +59,7 @@ final public class ReportGenerator implements CronJob {
         synchronized(System.out) {
             if(!started) {
                 System.out.print("Starting ReportGenerator: ");
-                CronDaemon.addCronJob(new ReportGenerator(), MasterServer.getErrorHandler());
+                CronDaemon.addCronJob(new ReportGenerator(), logger);
                 started=true;
                 System.out.println("Done");
             }
@@ -103,7 +108,7 @@ final public class ReportGenerator implements CronJob {
 
                 // Start the transaction
                 InvalidateList invalidateList=new InvalidateList();
-                MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
                 try {
                     boolean connRolledBack=false;
                     try {
@@ -303,7 +308,7 @@ final public class ReportGenerator implements CronJob {
         } catch(ThreadDeath TD) {
             throw TD;
         } catch(Throwable T) {
-            MasterServer.reportError(T, null);
+            logger.log(Level.SEVERE, null, T);
         }
     }
 }

@@ -16,6 +16,7 @@ import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.email.ProcessTimer;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
@@ -34,6 +35,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>DNSHandler</code> handles all the accesses to the DNS tables.
@@ -41,6 +44,8 @@ import java.util.Set;
  * @author  AO Industries, Inc.
  */
 final public class DNSHandler implements CronJob {
+
+    private static final Logger logger = LogFactory.getLogger(DNSHandler.class);
 
     /**
      * The maximum time for a processing pass.
@@ -58,7 +63,7 @@ final public class DNSHandler implements CronJob {
         synchronized(System.out) {
             if(!started) {
                 System.out.print("Starting DNSHandler: ");
-                CronDaemon.addCronJob(new DNSHandler(), MasterServer.getErrorHandler());
+                CronDaemon.addCronJob(new DNSHandler(), logger);
                 started=true;
                 System.out.println("Done");
             }
@@ -114,7 +119,7 @@ final public class DNSHandler implements CronJob {
 
                 // Start the transaction
                 InvalidateList invalidateList=new InvalidateList();
-                MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
                 try {
                     boolean connRolledBack=false;
                     try {
@@ -217,7 +222,7 @@ final public class DNSHandler implements CronJob {
         } catch(ThreadDeath TD) {
             throw TD;
         } catch(Throwable T) {
-            MasterServer.reportError(T, null);
+            logger.log(Level.SEVERE, null, T);
         }
     }
 
@@ -253,7 +258,7 @@ final public class DNSHandler implements CronJob {
      *
      * @see  DNSZoneTable#getHostTLD
      */
-    public static Set<AccountingAndZone> getBusinessesAndTopLevelZones(MasterDatabaseConnection conn) throws IOException, SQLException {
+    public static Set<AccountingAndZone> getBusinessesAndTopLevelZones(DatabaseConnection conn) throws IOException, SQLException {
         List<String> tlds = getDNSTLDs(conn);
 
         Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
@@ -297,7 +302,7 @@ final public class DNSHandler implements CronJob {
                             try {
                                 tld = DNSZoneTable.getHostTLD(zone, tlds);
                             } catch(IllegalArgumentException err) {
-                                MasterServer.getErrorHandler().reportWarning(err, null);
+                                logger.log(Level.WARNING, null, err);
                                 tld = zone;
                             }
                             AccountingAndZone aaz = new AccountingAndZone(accounting, tld);
@@ -322,7 +327,7 @@ final public class DNSHandler implements CronJob {
     /**
      * Gets the whois output for the specific whois_history record.
      */
-    public static String getWhoisHistoryOutput(MasterDatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
+    public static String getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
         String accounting = getBusinessForWhoisHistory(conn, pkey);
         BusinessHandler.checkAccessBusiness(conn, source, "getWhoisHistoryOutput", accounting);
         return conn.executeStringQuery("select whois_output from whois_history where pkey=?", pkey);
@@ -332,7 +337,7 @@ final public class DNSHandler implements CronJob {
      * Creates a new <code>DNSRecord</code>.
      */
     public static int addDNSRecord(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String zone,
@@ -401,7 +406,7 @@ final public class DNSHandler implements CronJob {
      * Creates a new <code>DNSZone</code>.
      */
     public static void addDNSZone(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String packageName,
@@ -519,7 +524,7 @@ final public class DNSHandler implements CronJob {
      * Removes a <code>DNSRecord</code>.
      */
     public static void removeDNSRecord(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -548,7 +553,7 @@ final public class DNSHandler implements CronJob {
      * Removes a <code>DNSZone</code>.
      */
     public static void removeDNSZone(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String zone
@@ -563,7 +568,7 @@ final public class DNSHandler implements CronJob {
      * Removes a <code>DNSZone</code>.
      */
     public static void removeDNSZone(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String zone
     ) throws IOException, SQLException {
@@ -591,7 +596,7 @@ final public class DNSHandler implements CronJob {
     }
 
     public static boolean addDNSRecord(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String hostname,
         String ipAddress,
@@ -630,7 +635,7 @@ final public class DNSHandler implements CronJob {
         return false;
     }
 
-    public static void checkAccessDNSRecord(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessDNSRecord(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         if(
             !isDNSAdmin(conn, source)
             && !PackageHandler.canAccessPackage(conn, source, getPackageForDNSRecord(conn, pkey))
@@ -643,19 +648,18 @@ final public class DNSHandler implements CronJob {
                 +", pkey="
                 +pkey
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
-    public static boolean canAccessDNSZone(MasterDatabaseConnection conn, RequestSource source, String zone) throws IOException, SQLException {
+    public static boolean canAccessDNSZone(DatabaseConnection conn, RequestSource source, String zone) throws IOException, SQLException {
         return
             isDNSAdmin(conn, source)
             || PackageHandler.canAccessPackage(conn, source, getPackageForDNSZone(conn, zone))
         ;
     }
 
-    public static void checkAccessDNSZone(MasterDatabaseConnection conn, RequestSource source, String action, String zone) throws IOException, SQLException {
+    public static void checkAccessDNSZone(DatabaseConnection conn, RequestSource source, String action, String zone) throws IOException, SQLException {
         if(!canAccessDNSZone(conn, source, zone)) {
             String message=
                 "business_administrator.username="
@@ -666,7 +670,6 @@ final public class DNSHandler implements CronJob {
                 +zone
                 +'\''
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
@@ -676,32 +679,32 @@ final public class DNSHandler implements CronJob {
      * granted servers is a named machine.
      */
     public static boolean isDNSAdmin(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source
     ) throws IOException, SQLException {
         MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
         return mu!=null && mu.isDNSAdmin();
     }
 
-    public static String getBusinessForDNSRecord(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from dns_records nr, dns_zones nz, packages pk where nr.zone=nz.zone and nz.package=pk.name and nr.pkey=?", pkey);
     }
 
-    public static String getBusinessForDNSZone(MasterDatabaseConnection conn, String zone) throws IOException, SQLException {
+    public static String getBusinessForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from dns_zones nz, packages pk where nz.package=pk.name and nz.zone=?", zone);
     }
 
-    public static String getBusinessForWhoisHistory(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForWhoisHistory(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select accounting from whois_history where pkey=?", pkey);
     }
 
-    public static IntList getDNSAOServers(MasterDatabaseConnection conn) throws IOException, SQLException {
+    public static IntList getDNSAOServers(DatabaseConnection conn) throws IOException, SQLException {
         return conn.executeIntListQuery("select distinct server from net_binds where app_protocol=? and server in (select server from ao_servers)", Protocol.DNS);
     }
 
     private static final Object dnstldLock=new Object();
     private static List<String> dnstldCache;
-    public static List<String> getDNSTLDs(MasterDatabaseConnection conn) throws IOException, SQLException {
+    public static List<String> getDNSTLDs(DatabaseConnection conn) throws IOException, SQLException {
         synchronized(dnstldLock) {
             if(dnstldCache==null) {
                 dnstldCache=conn.executeStringListQuery("select domain from dns_tlds");
@@ -710,19 +713,19 @@ final public class DNSHandler implements CronJob {
         }
     }
     
-    public static String getDNSZoneForDNSRecord(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getDNSZoneForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select zone from dns_records where pkey=?", pkey);
     }
 
-    public static boolean isDNSZoneAvailable(MasterDatabaseConnection conn, String zone) throws IOException, SQLException {
+    public static boolean isDNSZoneAvailable(DatabaseConnection conn, String zone) throws IOException, SQLException {
         return conn.executeBooleanQuery("select (select zone from dns_zones where zone=?) is null", zone);
     }
 
-    public static String getPackageForDNSRecord(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getPackageForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select nz.package from dns_records nr, dns_zones nz where nr.pkey=? and nr.zone=nz.zone", pkey);
     }
 
-    public static String getPackageForDNSZone(MasterDatabaseConnection conn, String zone) throws IOException, SQLException {
+    public static String getPackageForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
         return conn.executeStringQuery("select package from dns_zones where zone=?", zone);
     }
 
@@ -737,7 +740,7 @@ final public class DNSHandler implements CronJob {
     }
 
     public static void removeUnusedDNSRecord(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String hostname,
         List<String> tlds
@@ -786,7 +789,7 @@ final public class DNSHandler implements CronJob {
      * Sets the default TTL for a <code>DNSZone</code>.
      */
     public static void setDNSZoneTTL(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String zone,
@@ -809,7 +812,7 @@ final public class DNSHandler implements CronJob {
     }
 
     public static void updateDhcpDnsRecords(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int ipAddress,
         String dhcpAddress
@@ -847,7 +850,7 @@ final public class DNSHandler implements CronJob {
     }
 
     public static void updateDNSZoneSerial(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String zone
     ) throws IOException, SQLException {
@@ -876,7 +879,7 @@ final public class DNSHandler implements CronJob {
     }
     
     public static void updateReverseDnsIfExists(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String ip,
         String hostname

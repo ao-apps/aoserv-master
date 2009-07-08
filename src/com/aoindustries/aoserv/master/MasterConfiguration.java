@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
  */
 import com.aoindustries.io.AOPool;
 import com.aoindustries.profiler.Profiler;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.StringUtility;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -29,18 +30,16 @@ public final class MasterConfiguration {
     }
     
     private static String getProperty(String name) throws IOException {
-        if (props == null) {
-            synchronized (MasterConfiguration.class) {
-                if (props == null) {
-                    Properties newProps = new Properties();
-                    InputStream in = new BufferedInputStream(MasterConfiguration.class.getResourceAsStream("aoserv-master.properties"));
-                    try {
-                        newProps.load(in);
-                    } finally {
-                        in.close();
-                    }
-                    props = newProps;
+        synchronized (MasterConfiguration.class) {
+            if (props == null) {
+                Properties newProps = new Properties();
+                InputStream in = new BufferedInputStream(MasterConfiguration.class.getResourceAsStream("aoserv-master.properties"));
+                try {
+                    newProps.load(in);
+                } finally {
+                    in.close();
                 }
+                props = newProps;
             }
         }
         return props.getProperty(name);
@@ -177,7 +176,7 @@ public final class MasterConfiguration {
         return S==null || S.length()==0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(S);
     }
 
-    public static String getDaemonKey(MasterDatabaseConnection conn, int aoServer) throws IOException, SQLException {
+    public static String getDaemonKey(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
         return getProperty("aoserv.daemon.client.key."+ServerHandler.getHostnameForAOServer(conn, aoServer));
     }
 

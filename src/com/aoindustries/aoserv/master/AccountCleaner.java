@@ -11,6 +11,7 @@ import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.email.ProcessTimer;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
@@ -19,6 +20,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Automatically cleans out old account resources.  The resources are left in tact for one month before cleaning.
@@ -26,6 +29,8 @@ import java.util.Locale;
  * @author  AO Industries, Inc.
  */
 final public class AccountCleaner implements CronJob {
+
+    private static final Logger logger = LogFactory.getLogger(AccountCleaner.class);
 
     /**
      * The maximum time for a cleaning.
@@ -48,7 +53,7 @@ final public class AccountCleaner implements CronJob {
         synchronized(System.out) {
             if(!started) {
                 System.out.print("Starting AccountCleaner: ");
-                CronDaemon.addCronJob(new AccountCleaner(), MasterServer.getErrorHandler());
+                CronDaemon.addCronJob(new AccountCleaner(), logger);
                 started=true;
                 System.out.println("Done");
             }
@@ -96,21 +101,21 @@ final public class AccountCleaner implements CronJob {
                 timer.start();
 
                 // Start the transaction
-                InvalidateList invalidateList=new InvalidateList();
+                final InvalidateList invalidateList=new InvalidateList();
                 cleanNow(invalidateList);
-                if(invalidateList!=null) MasterServer.invalidateTables(invalidateList, null);
+                MasterServer.invalidateTables(invalidateList, null);
             } finally {
                 timer.stop();
             }
         } catch(ThreadDeath TD) {
             throw TD;
         } catch(Throwable T) {
-            MasterServer.reportError(T, null);
+            logger.log(Level.SEVERE, null, T);
         }
     }
     
     private static void cleanNow(InvalidateList invalidateList) throws IOException, SQLException {
-        final MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+        final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
         try {
             boolean connRolledBack=false;
             try {
@@ -340,7 +345,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<dzs.size();c++) {
-                        DNSHandler.removeDNSZone(conn, invalidateList, (String)dzs.get(c));
+                        DNSHandler.removeDNSZone(conn, invalidateList, dzs.get(c));
                     }
                 }
 
@@ -882,7 +887,9 @@ final public class AccountCleaner implements CronJob {
                         }
                     }
                 }
-                if(message.length()>0) MasterServer.reportWarning(message.toString());
+                if(message.length()>0) {
+                    logger.log(Level.WARNING, message.toString());
+                }
             } catch(IOException err) {
                 if(conn.rollbackAndClose()) {
                     connRolledBack=true;

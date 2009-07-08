@@ -167,6 +167,7 @@ import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.profiler.MethodProfile;
 import com.aoindustries.profiler.Profiler;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
 import java.net.SocketException;
@@ -180,6 +181,8 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>TableHandler</code> handles all the accesses to the AOServ tables.
@@ -187,6 +190,8 @@ import java.util.Map;
  * @author  AO Industries, Inc.
  */
 final public class TableHandler {
+
+    private static final Logger logger = LogFactory.getLogger(TableHandler.class);
 
     /**
      * The number of rows that will be loaded into each ResultSet for large tables.
@@ -282,7 +287,7 @@ final public class TableHandler {
      * Gets one object from a table.
      */
     public static void getObject(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         CompressedDataInputStream in,
         CompressedDataOutputStream out,
@@ -422,7 +427,7 @@ final public class TableHandler {
     private static final int _numTables = _tableIDs.length;
 
     public static int getCachedRowCount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         SchemaTable.TableID tableID
     ) throws IOException, SQLException {
@@ -464,7 +469,7 @@ final public class TableHandler {
      * Gets the number of accessible rows in a table.
      */
     public static int getRowCount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         SchemaTable.TableID tableID
     ) throws IOException, SQLException {
@@ -511,7 +516,7 @@ final public class TableHandler {
      * Gets an entire table.
      */
     public static void getTable(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         CompressedDataInputStream in,
         CompressedDataOutputStream out,
@@ -1498,14 +1503,14 @@ final public class TableHandler {
                                     // Connection reset happens when the daemon is not available
                                     String message=err.getMessage();
                                     if(!"Connection reset".equalsIgnoreCase(message)) {
-                                        MasterServer.reportError(err, null);
+                                        logger.log(Level.SEVERE, null, err);
                                     }
                                 } catch(IOException err) {
                                     DaemonHandler.flagDaemonAsDown(aoServer);
-                                    MasterServer.reportError(err, null);
+                                    logger.log(Level.SEVERE, null, err);
                                 } catch(SQLException err) {
                                     DaemonHandler.flagDaemonAsDown(aoServer);
-                                    MasterServer.reportError(err, null);
+                                    logger.log(Level.SEVERE, null, err);
                                 }
                             }
                         }
@@ -7083,7 +7088,7 @@ final public class TableHandler {
     }
 
     public static void invalidate(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         SchemaTable.TableID tableID,
@@ -7099,18 +7104,18 @@ final public class TableHandler {
         );
     }
 
-    public static void checkInvalidator(MasterDatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
+    public static void checkInvalidator(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
         if(!isInvalidator(conn, source)) throw new SQLException("Table invalidation not allowed, '"+action+"'");
     }
 
-    public static boolean isInvalidator(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+    public static boolean isInvalidator(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
         MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
         return mu!=null && mu.canInvalidateTables();
     }
 
     final private static Map<SchemaTable.TableID,String> tableNames=new EnumMap<SchemaTable.TableID,String>(SchemaTable.TableID.class);
 
-    public static String getTableName(MasterDatabaseConnection conn, SchemaTable.TableID tableID) throws IOException, SQLException {
+    public static String getTableName(DatabaseConnection conn, SchemaTable.TableID tableID) throws IOException, SQLException {
         synchronized(tableNames) {
             String name=tableNames.get(tableID);
             if(name==null) {
@@ -7128,7 +7133,7 @@ final public class TableHandler {
      * Converts a specific AOServProtocol version table ID to the number used in the database storage.
      */
     public static int convertClientTableIDToDBTableID(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         AOServProtocol.Version version,
         int clientTableID
     ) throws IOException, SQLException {
@@ -7166,7 +7171,7 @@ final public class TableHandler {
     final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> toClientTableIDs=new EnumMap<AOServProtocol.Version,Map<Integer,Integer>>(AOServProtocol.Version.class);
 
     public static int convertDBTableIDToClientTableID(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         AOServProtocol.Version version,
         int tableID
     ) throws IOException, SQLException {
@@ -7208,7 +7213,7 @@ final public class TableHandler {
      * @return  The <code>SchemaTable.TableID</code> or <code>null</code> if no match.
      */
     public static SchemaTable.TableID convertFromClientTableID(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int clientTableID
     ) throws IOException, SQLException {
@@ -7223,7 +7228,7 @@ final public class TableHandler {
      * Converts a local (Master AOServProtocol) table ID to a client-version matched table ID.
      */
     public static int convertToClientTableID(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         SchemaTable.TableID tableID
     ) throws IOException, SQLException {
@@ -7235,7 +7240,7 @@ final public class TableHandler {
     final private static EnumMap<AOServProtocol.Version,Map<SchemaTable.TableID,Map<String,Integer>>> clientColumnIndexes=new EnumMap<AOServProtocol.Version,Map<SchemaTable.TableID,Map<String,Integer>>>(AOServProtocol.Version.class);
 
     public static int getClientColumnIndex(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         SchemaTable.TableID tableID,
         String columnName
@@ -7300,7 +7305,7 @@ final public class TableHandler {
         }
     }
     
-    public static IntList getOperatingSystemVersions(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+    public static IntList getOperatingSystemVersions(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
         return conn.executeIntListQuery(
             Connection.TRANSACTION_READ_COMMITTED,
             true,

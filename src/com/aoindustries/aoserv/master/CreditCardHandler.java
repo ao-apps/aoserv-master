@@ -16,6 +16,7 @@ import com.aoindustries.creditcards.MerchantServicesProviderFactory;
 import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.email.ProcessTimer;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.WrappedSQLException;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -29,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>CreditCardHandler</code> handles all the accesses to the <code>credit_cards</code> table.
@@ -39,6 +42,11 @@ import java.util.Locale;
  * @author  AO Industries, Inc.
  */
 final public class CreditCardHandler /*implements CronJob*/ {
+
+    private static final Logger logger = LogFactory.getLogger(ServerHandler.class);
+
+    private CreditCardHandler() {
+    }
 
     /**
      * The maximum time for a processing pass.
@@ -57,7 +65,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         synchronized(System.out) {
             if(!started) {
                 System.out.print("Starting CreditCardHandler: ");
-                CronDaemon.addCronJob(new CreditCardHandler(), MasterServer.getErrorHandler());
+                CronDaemon.addCronJob(new CreditCardHandler(), logger);
                 started=true;
                 System.out.println("Done");
             }
@@ -65,7 +73,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         */
     }
 
-    public static void checkAccessCreditCard(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessCreditCard(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         BusinessHandler.checkPermission(conn, source, action, AOServPermission.Permission.get_credit_cards);
         BusinessHandler.checkAccessBusiness(
             conn,
@@ -75,7 +83,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         );
     }
 
-    public static void checkAccessCreditCardProcessor(MasterDatabaseConnection conn, RequestSource source, String action, String processor) throws IOException, SQLException {
+    public static void checkAccessCreditCardProcessor(DatabaseConnection conn, RequestSource source, String action, String processor) throws IOException, SQLException {
         BusinessHandler.checkAccessBusiness(
             conn,
             source,
@@ -84,7 +92,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         );
     }
 
-    public static void checkAccessCreditCardTransaction(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessCreditCardTransaction(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         checkAccessCreditCardProcessor(
             conn,
             source,
@@ -93,7 +101,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         );
     }
 
-    public static void checkAccessEncryptionKey(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessEncryptionKey(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         BusinessHandler.checkAccessBusiness(
             conn,
             source,
@@ -106,7 +114,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
      * Creates a new <code>CreditCard</code>.
      */
     public static int addCreditCard(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String processorName,
@@ -207,7 +215,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static void creditCardDeclined(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -232,24 +240,24 @@ final public class CreditCardHandler /*implements CronJob*/ {
         );
     }
 
-    public static String getBusinessForCreditCard(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForCreditCard(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select accounting from credit_cards where pkey=?", pkey);
     }
 
-    public static String getBusinessForCreditCardProcessor(MasterDatabaseConnection conn, String processor) throws IOException, SQLException {
+    public static String getBusinessForCreditCardProcessor(DatabaseConnection conn, String processor) throws IOException, SQLException {
         return conn.executeStringQuery("select accounting from credit_card_processors where provider_id=?", processor);
     }
 
-    public static String getCreditCardProcessorForCreditCardTransaction(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getCreditCardProcessorForCreditCardTransaction(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select processor_id from credit_card_transactions where pkey=?", pkey);
     }
 
-    public static String getBusinessForEncryptionKey(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForEncryptionKey(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select accounting from encryption_keys where pkey=?", pkey);
     }
 
     public static void removeCreditCard(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -261,7 +269,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static void removeCreditCard(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -281,7 +289,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
     
     public static void updateCreditCard(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -353,7 +361,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static void updateCreditCardNumberAndExpiration(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -425,7 +433,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static void updateCreditCardExpiration(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -467,7 +475,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static void reactivateCreditCard(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -500,7 +508,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static void setCreditCardUseMonthly(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,
@@ -535,7 +543,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
      * Creates a new <code>CreditCardTransaction</code>.
      */
     public static int addCreditCardTransaction(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String processor,
@@ -652,7 +660,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
      * Creates a new <code>CreditCardTransaction</code>.
      */
     public static int addCreditCardTransaction(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String processor,
         String accounting,
@@ -818,7 +826,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static void creditCardTransactionSaleCompleted(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -887,7 +895,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static void creditCardTransactionSaleCompleted(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey,
         String authorizationCommunicationResult,
@@ -985,7 +993,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static void creditCardTransactionAuthorizeCompleted(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -1038,7 +1046,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static void creditCardTransactionAuthorizeCompleted(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey,
         String authorizationCommunicationResult,
@@ -1232,7 +1240,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 
                 // Start the transaction
                 InvalidateList invalidateList=new InvalidateList();
-                MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
                 try {
                     boolean connRolledBack=false;
                     try {
@@ -1318,7 +1326,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                                 while(results.next()) {
                                     String accounting = results.getString(1);
                                     if(accounting.equals(lastAccounting)) {
-                                        MasterServer.reportWarning("More than one credit card marked as automatic for accounting="+accounting+", using the first one found");
+                                        logger.warning("More than one credit card marked as automatic for accounting="+accounting+", using the first one found");
                                     } else {
                                         lastAccounting = accounting;
                                         BigDecimal endofmonth = results.getBigDecimal(2);
@@ -1576,7 +1584,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         } catch(ThreadDeath TD) {
             throw TD;
         } catch(Throwable T) {
-            MasterServer.reportError(T, null);
+            logger.log(Level.SEVERE, null, T);
         }
     }
 

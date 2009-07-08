@@ -20,7 +20,6 @@ import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.Transaction;
 import com.aoindustries.aoserv.client.TransactionSearchCriteria;
-import com.aoindustries.email.ErrorMailer;
 import com.aoindustries.io.BitRateProvider;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
@@ -32,7 +31,6 @@ import com.aoindustries.sql.AOConnectionPool;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.util.BufferManager;
-import com.aoindustries.util.ErrorHandler;
 import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
@@ -56,6 +54,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>AOServServer</code> accepts connections from an <code>SimpleAOClient</code>.
@@ -67,6 +67,8 @@ import java.util.Random;
  * @author  AO Industries, Inc.
  */
 public abstract class MasterServer {
+
+    private static final Logger logger = LogFactory.getLogger(MasterServer.class);
 
     /**
      * The database values are read the first time this data is needed.
@@ -268,7 +270,7 @@ public abstract class MasterServer {
                         // This method normally never leaves for this command
                         try {
                             addCacheListener(source);
-                            final MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                            final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
                             try {
                                 AOServProtocol.Version protocolVersion = source.getProtocolVersion();
                                 while(!BusinessHandler.isBusinessAdministratorDisabled(conn, source.getUsername())) {
@@ -283,7 +285,7 @@ public abstract class MasterServer {
                                             try {
                                                 source.wait(delay);
                                             } catch(InterruptedException err) {
-                                                reportWarning(err, null);
+                                                logger.log(Level.WARNING, null, err);
                                             }
                                         }
                                     }
@@ -379,7 +381,7 @@ public abstract class MasterServer {
                         String resp4String=null;
 
                         final boolean sendInvalidateList;
-                        final MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                        final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
                         try {
                             boolean connRolledBack=false;
                             try {
@@ -4453,7 +4455,7 @@ public abstract class MasterServer {
                                             SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
                                             int count;
                                             if(tableID==null) {
-                                                reportWarning("Client table not supported: #"+clientTableID+", returning 0 from get_row_count");
+                                                logger.warning("Client table not supported: #"+clientTableID+", returning 0 from get_row_count");
                                                 count = 0;
                                             } else {
                                                 process.setCommand(
@@ -8092,12 +8094,12 @@ public abstract class MasterServer {
                         keepOpen = false;
                         throw err;
                     } catch(SQLException err) {
-                        reportError(err, null);
+                        logger.log(Level.SEVERE, null, err);
                         String message=err.getMessage();
                         out.writeByte(AOServProtocol.SQL_EXCEPTION);
                         out.writeUTF(message==null?"":message);
                     } catch(IOException err) {
-                        reportError(err, null);
+                        logger.log(Level.SEVERE, null, err);
                         String message=err.getMessage();
                         out.writeByte(AOServProtocol.IO_EXCEPTION);
                         out.writeUTF(message==null?"":message);
@@ -8138,7 +8140,7 @@ public abstract class MasterServer {
         long invalidateSourceConnectorID=invalidateSource==null?-1:invalidateSource.getConnectorID();
 
         IntList tableList=new IntArrayList();
-        final MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+        final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
         // Grab a copy of cacheListeners to help avoid deadlock
         List<RequestSource> listenerCopy=new ArrayList<RequestSource>(cacheListeners.size());
         synchronized(cacheListeners) {
@@ -8222,7 +8224,7 @@ public abstract class MasterServer {
                     source.cachesInvalidated(tableList);
                 }
             } catch(IOException err) {
-                reportError(err, null);
+                logger.log(Level.SEVERE, null, err);
             }
         }
     }
@@ -8308,161 +8310,6 @@ public abstract class MasterServer {
         }
     }
 
-    public static void reportError(Throwable T, Object[] extraInfo) {
-        ErrorPrinter.printStackTraces(T, extraInfo);
-        try {
-            String smtp=MasterConfiguration.getErrorSmtpServer();
-            if(smtp!=null && smtp.length()>0) {
-                List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getErrorEmailTo());
-                String from=MasterConfiguration.getErrorEmailFrom();
-                for(int c=0;c<addys.size();c++) {
-                    ErrorMailer.reportError(
-                        getRandom(),
-                        T,
-                        extraInfo,
-                        smtp,
-                        from,
-                        addys.get(c),
-                        "Master Bug"
-                    );
-                }
-            }
-        } catch(IOException err) {
-            ErrorPrinter.printStackTraces(err);
-        }
-    }
-
-    public static void reportError(String message) {
-        System.err.println(message);
-        try {
-            String smtp=MasterConfiguration.getErrorSmtpServer();
-            if(smtp!=null && smtp.length()>0) {
-                List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getErrorEmailTo());
-                String from=MasterConfiguration.getErrorEmailFrom();
-                for(int c=0;c<addys.size();c++) {
-                    ErrorMailer.reportError(
-                        getRandom(),
-                        message,
-                        smtp,
-                        from,
-                        addys.get(c),
-                        "Master Bug"
-                    );
-                }
-            }
-        } catch(IOException err) {
-            ErrorPrinter.printStackTraces(err);
-        }
-    }
-
-    /**
-     * Logs a security message to <code>System.err</code>.
-     * Also sends email messages to <code>aoserv.master.security.email.to</code>
-     */
-    public static void reportSecurityMessage(RequestSource source, String message) {
-        reportSecurityMessage(source, message, true);
-    }
-
-    /**
-     * Logs a security message to <code>System.err</code>.
-     * Also sends email messages to <code>aoserv.master.security.email.to</code>
-     */
-    public static void reportSecurityMessage(RequestSource source, String message, boolean sendEmail) {
-        reportSecurityMessage(message, sendEmail);
-    }
-    
-    /**
-     * Logs a security message to <code>System.err</code>
-     * Also sends email messages to <code>aoserv.master.security.email.to</code>
-     */
-    public static void reportSecurityMessage(String message, boolean sendEmail) {
-        System.err.println(message);
-        try {
-            if(sendEmail) {
-                String smtp=MasterConfiguration.getErrorSmtpServer();
-                if(smtp!=null && smtp.length()>0) {
-                    List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getSecurityEmailTo());
-                    String from=MasterConfiguration.getSecurityEmailFrom();
-                    for(int c=0;c<addys.size();c++) {
-                        ErrorMailer.reportError(
-                            getRandom(),
-                            message,
-                            smtp,
-                            from,
-                            addys.get(c),
-                            "Master Security"
-                        );
-                    }
-                }
-            }
-        } catch(IOException err) {
-            ErrorPrinter.printStackTraces(err);
-        }
-    }
-    
-    public static void reportWarning(Throwable T, Object[] extraInfo) {
-        ErrorPrinter.printStackTraces(T, extraInfo);
-        try {
-            String smtp=MasterConfiguration.getWarningSmtpServer();
-            if(smtp!=null && smtp.length()>0) {
-                List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getWarningEmailTo());
-                String from=MasterConfiguration.getWarningEmailFrom();
-                for(int c=0;c<addys.size();c++) {
-                    ErrorMailer.reportError(
-                        getRandom(),
-                        T,
-                        extraInfo,
-                        smtp,
-                        from,
-                        addys.get(c),
-                        "Master Warning"
-                    );
-                }
-            }
-        } catch(IOException err) {
-            ErrorPrinter.printStackTraces(err);
-        }
-    }
-
-    public static void reportWarning(String message) {
-        System.err.println(message);
-        try {
-            String smtp=MasterConfiguration.getWarningSmtpServer();
-            if(smtp!=null && smtp.length()>0) {
-                List<String> addys=StringUtility.splitStringCommaSpace(MasterConfiguration.getWarningEmailTo());
-                String from=MasterConfiguration.getWarningEmailFrom();
-                for(int c=0;c<addys.size();c++) {
-                    ErrorMailer.reportError(
-                        getRandom(),
-                        message,
-                        smtp,
-                        from,
-                        addys.get(c),
-                        "Master Warning"
-                    );
-                }
-            }
-        } catch(IOException err) {
-            ErrorPrinter.printStackTraces(err);
-        }
-    }
-
-    private static ErrorHandler errorHandler;
-    public synchronized static ErrorHandler getErrorHandler() {
-        if(errorHandler==null) {
-            errorHandler=new ErrorHandler() {
-                public final void reportError(Throwable T, Object[] extraInfo) {
-                    MasterServer.reportError(T, extraInfo);
-                }
-
-                public final void reportWarning(Throwable T, Object[] extraInfo) {
-                    MasterServer.reportWarning(T, extraInfo);
-                }
-            };
-        }
-        return errorHandler;
-    }
-
     /**
      * Writes all rows of a results set.
      */
@@ -8490,7 +8337,9 @@ public abstract class MasterServer {
             obj.write(out, version);
             writeCount++;
         }
-        if(writeCount > TableHandler.RESULT_SET_BATCH_SIZE) reportWarning(new SQLWarning("Warning: provideProgress==true caused non-cursor select with more than "+TableHandler.RESULT_SET_BATCH_SIZE+" rows: "+writeCount), null);
+        if(writeCount > TableHandler.RESULT_SET_BATCH_SIZE) {
+            logger.log(Level.WARNING, null, new SQLWarning("Warning: provideProgress==true caused non-cursor select with more than "+TableHandler.RESULT_SET_BATCH_SIZE+" rows: "+writeCount));
+        }
     }
 
     /**
@@ -8531,7 +8380,7 @@ public abstract class MasterServer {
     }
 
     public static String authenticate(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String remoteHost, 
         String connectAs, 
         String authenticateAs, 
@@ -8601,7 +8450,7 @@ public abstract class MasterServer {
     }
 
     public static void writeHistory(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out,
         boolean provideProgress,
@@ -8705,7 +8554,7 @@ public abstract class MasterServer {
 
             writeObjects(source, out, provideProgress, objs);
         } catch(IOException err) {
-            reportError(err, null);
+            logger.log(Level.SEVERE, null, err);
             out.writeByte(AOServProtocol.IO_EXCEPTION);
             String message=err.getMessage();
             out.writeUTF(message==null?"":message);
@@ -8715,7 +8564,7 @@ public abstract class MasterServer {
     /**
      * @see  #checkAccessHostname(MasterDatabaseConnection,RequestSource,String,String,String[])
      */
-    public static void checkAccessHostname(MasterDatabaseConnection conn, RequestSource source, String action, String hostname) throws IOException, SQLException {
+    public static void checkAccessHostname(DatabaseConnection conn, RequestSource source, String action, String hostname) throws IOException, SQLException {
         checkAccessHostname(conn, source, action, hostname, DNSHandler.getDNSTLDs(conn));
     }
 
@@ -8726,7 +8575,7 @@ public abstract class MasterServer {
      * granted.  If the source is not restricted by either server or business, then
      * access is granted and the previous checks are avoided.
      */
-    public static void checkAccessHostname(MasterDatabaseConnection conn, RequestSource source, String action, String hostname, List<String> tlds) throws IOException, SQLException {
+    public static void checkAccessHostname(DatabaseConnection conn, RequestSource source, String action, String hostname, List<String> tlds) throws IOException, SQLException {
         try {
             String zone = DNSZoneTable.getDNSZoneForHostname(hostname, tlds);
 
@@ -8777,7 +8626,7 @@ public abstract class MasterServer {
         }
     }
 
-    public static com.aoindustries.aoserv.client.MasterServer[] getMasterServers(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static com.aoindustries.aoserv.client.MasterServer[] getMasterServers(DatabaseConnection conn, String username) throws IOException, SQLException {
         synchronized(MasterServer.class) {
             if(masterServers==null) masterServers=new HashMap<String,com.aoindustries.aoserv.client.MasterServer[]>();
             com.aoindustries.aoserv.client.MasterServer[] mss=masterServers.get(username);
@@ -8802,7 +8651,7 @@ public abstract class MasterServer {
         }
     }
 
-    public static MasterUser getMasterUser(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static MasterUser getMasterUser(DatabaseConnection conn, String username) throws IOException, SQLException {
         synchronized(MasterServer.class) {
             if(masterUsers==null) {
                 Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
@@ -8826,7 +8675,7 @@ public abstract class MasterServer {
     /**
      * Gets the hosts that are allowed for the provided username.
      */
-    public static boolean isHostAllowed(MasterDatabaseConnection conn, String username, String host) throws IOException, SQLException {
+    public static boolean isHostAllowed(DatabaseConnection conn, String username, String host) throws IOException, SQLException {
         synchronized(MasterServer.class) {
             if(masterHosts==null) {
                 Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
@@ -9122,7 +8971,7 @@ public abstract class MasterServer {
     }
 
     public static void writePenniesCheckBusiness(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         String action,
         String accounting,
@@ -9152,7 +9001,7 @@ public abstract class MasterServer {
     }
 
     public static void writePenniesCheckBusiness(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         String action,
         String accounting,
@@ -9202,7 +9051,7 @@ public abstract class MasterServer {
         }
     }
 
-    public static void updateAOServProtocolLastUsed(MasterDatabaseConnection conn, AOServProtocol.Version protocolVersion) throws IOException, SQLException {
+    public static void updateAOServProtocolLastUsed(DatabaseConnection conn, AOServProtocol.Version protocolVersion) throws IOException, SQLException {
         conn.executeUpdate("update aoserv_protocols set last_used=now()::date where version=? and (last_used is null or last_used<now()::date)", protocolVersion.getVersion());
     }
 }
