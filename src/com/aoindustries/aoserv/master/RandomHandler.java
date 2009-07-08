@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.io.FifoFile;
 import com.aoindustries.io.FifoFileInputStream;
 import com.aoindustries.io.FifoFileOutputStream;
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.EOFException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -31,7 +32,7 @@ public final class RandomHandler {
         }
     }
     
-    private static void checkAccessEntropy(MasterDatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
+    private static void checkAccessEntropy(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
         boolean isAllowed=false;
 
         String mustring=source.getUsername();
@@ -55,13 +56,12 @@ public final class RandomHandler {
                 +" is not allowed to access the master entropy pool: action='"
                 +action
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
     public static void addMasterEntropy(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         byte[] entropy
     ) throws IOException, SQLException {
@@ -78,7 +78,7 @@ public final class RandomHandler {
     }
 
     public static byte[] getMasterEntropy(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int numBytes
     ) throws IOException, SQLException {
@@ -101,7 +101,7 @@ public final class RandomHandler {
     }
 
     public static long getMasterEntropyNeeded(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source
     ) throws IOException, SQLException {
         checkAccessEntropy(conn, source, "getMasterEntropyNeeded");

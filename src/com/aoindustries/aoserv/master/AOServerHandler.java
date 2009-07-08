@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
 import java.sql.Connection;
@@ -15,6 +16,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>AOServerHandler</code> handles all the accesses to the ao_servers table.
@@ -23,14 +26,19 @@ import java.util.Map;
  */
 final public class AOServerHandler {
 
-    public static IntList getAOServers(MasterDatabaseConnection conn) throws IOException, SQLException {
+    private static final Logger logger = LogFactory.getLogger(AOServerHandler.class);
+
+    private AOServerHandler() {
+    }
+
+    public static IntList getAOServers(DatabaseConnection conn) throws IOException, SQLException {
         return conn.executeIntListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select server from ao_servers");
     }
 
     private static final Map<Integer,Object> mrtgLocks = new HashMap<Integer,Object>();
 
     public static void getMrtgFile(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer,
         String filename,
@@ -51,7 +59,7 @@ final public class AOServerHandler {
                         try {
                             mrtgLocks.wait(startTime + 15000 - currentTime);
                         } catch(InterruptedException err) {
-                            MasterServer.reportWarning(err, null);
+                            logger.log(Level.WARNING, null, err);
                         }
                     }
                 }
@@ -79,7 +87,7 @@ final public class AOServerHandler {
     }
 
     public static void setLastDistroTime(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int aoServer,
@@ -104,7 +112,7 @@ final public class AOServerHandler {
     }
 
     public static void startDistro(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer,
         boolean includeUser
@@ -117,7 +125,7 @@ final public class AOServerHandler {
     }
 
     public static void restartCron(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -127,7 +135,7 @@ final public class AOServerHandler {
     }
 
     public static void startCron(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -137,7 +145,7 @@ final public class AOServerHandler {
     }
 
     public static void stopCron(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -147,7 +155,7 @@ final public class AOServerHandler {
     }
 
     public static void restartXfs(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -157,7 +165,7 @@ final public class AOServerHandler {
     }
 
     public static void startXfs(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -167,7 +175,7 @@ final public class AOServerHandler {
     }
 
     public static void stopXfs(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -177,7 +185,7 @@ final public class AOServerHandler {
     }
 
     public static void restartXvfb(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -187,7 +195,7 @@ final public class AOServerHandler {
     }
 
     public static void startXvfb(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -197,7 +205,7 @@ final public class AOServerHandler {
     }
 
     public static void stopXvfb(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -206,61 +214,61 @@ final public class AOServerHandler {
         DaemonHandler.getDaemonConnector(conn, aoServer).stopXvfb();
     }
 
-    public static String get3wareRaidReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+    public static String get3wareRaidReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "get3wareRaidReport", aoServer);
 
         return DaemonHandler.getDaemonConnector(conn, aoServer).get3wareRaidReport();
     }
 
-    public static String getMdRaidReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+    public static String getMdRaidReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getMdRaidReport", aoServer);
 
         return DaemonHandler.getDaemonConnector(conn, aoServer).getMdRaidReport();
     }
 
-    public static String getDrbdReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+    public static String getDrbdReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getDrbdReport", aoServer);
 
         return DaemonHandler.getDaemonConnector(conn, aoServer).getDrbdReport();
     }
 
-    public static String[] getLvmReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+    public static String[] getLvmReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getLvmReport", aoServer);
 
         return DaemonHandler.getDaemonConnector(conn, aoServer).getLvmReport();
     }
 
-    public static String getHddTempReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+    public static String getHddTempReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getHddTempReport", aoServer);
 
         return DaemonHandler.getDaemonConnector(conn, aoServer).getHddTempReport();
     }
 
-    public static String getHddModelReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+    public static String getHddModelReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getHddModelReport", aoServer);
 
         return DaemonHandler.getDaemonConnector(conn, aoServer).getHddModelReport();
     }
 
-    public static String getFilesystemsCsvReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+    public static String getFilesystemsCsvReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getFilesystemsCsvReport", aoServer);
 
         return DaemonHandler.getDaemonConnector(conn, aoServer).getFilesystemsCsvReport();
     }
 
-    public static String getLoadAvgReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+    public static String getLoadAvgReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getLoadAvgReport", aoServer);
 
         return DaemonHandler.getDaemonConnector(conn, aoServer).getLoadAvgReport();
     }
 
-    public static String getMemInfoReport(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+    public static String getMemInfoReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getMemInfoReport", aoServer);
 
         return DaemonHandler.getDaemonConnector(conn, aoServer).getMemInfoReport();
     }
 
-    public static long getSystemTimeMillis(MasterDatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+    public static long getSystemTimeMillis(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getSystemTimeMillis", aoServer);
 
         return DaemonHandler.getDaemonConnector(conn, aoServer).getSystemTimeMillis();

@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.Username;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
 import java.sql.Connection;
@@ -24,14 +25,17 @@ import java.util.Map;
  */
 final public class UsernameHandler {
 
+    private UsernameHandler() {
+    }
+
     private final static Map<String,Boolean> disabledUsernames=new HashMap<String,Boolean>();
     private final static Map<String,String> usernameBusinesses=new HashMap<String,String>();
 
-    public static boolean canAccessUsername(MasterDatabaseConnection conn, RequestSource source, String username) throws IOException, SQLException {
+    public static boolean canAccessUsername(DatabaseConnection conn, RequestSource source, String username) throws IOException, SQLException {
         return PackageHandler.canAccessPackage(conn, source, getPackageForUsername(conn, username));
     }
 
-    public static void checkAccessUsername(MasterDatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
+    public static void checkAccessUsername(DatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
         if(!canAccessUsername(conn, source, username)) {
             String message=
                 "business_administrator.username="
@@ -41,13 +45,12 @@ final public class UsernameHandler {
                 +"', username="
                 +username
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
     public static void addUsername(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         String packageName, 
@@ -83,7 +86,7 @@ final public class UsernameHandler {
     }
 
     public static void disableUsername(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -122,7 +125,7 @@ final public class UsernameHandler {
     }
 
     public static void enableUsername(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username
@@ -149,7 +152,7 @@ final public class UsernameHandler {
         );
     }
 
-    public static int getDisableLogForUsername(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static int getDisableLogForUsername(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from usernames where username=?", username);
     }
 
@@ -164,11 +167,11 @@ final public class UsernameHandler {
         }
     }
 
-    public static boolean isUsernameAvailable(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isUsernameAvailable(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeBooleanQuery("select (select username from usernames where username=?) is null", username);
     }
 
-    public static boolean isUsernameDisabled(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isUsernameDisabled(DatabaseConnection conn, String username) throws IOException, SQLException {
 	    synchronized(disabledUsernames) {
             Boolean O=disabledUsernames.get(username);
             if(O!=null) return O.booleanValue();
@@ -179,7 +182,7 @@ final public class UsernameHandler {
     }
 
     public static void removeUsername(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username
@@ -191,7 +194,7 @@ final public class UsernameHandler {
     }
 
     public static void removeUsername(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String username
     ) throws IOException, SQLException {
@@ -205,7 +208,7 @@ final public class UsernameHandler {
         invalidateList.addTable(conn, SchemaTable.TableID.USERNAMES, accounting, InvalidateList.allServers, false);
     }
 
-    public static String getBusinessForUsername(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static String getBusinessForUsername(DatabaseConnection conn, String username) throws IOException, SQLException {
 	    synchronized(usernameBusinesses) {
             String O=usernameBusinesses.get(username);
             if(O!=null) return O;
@@ -215,11 +218,11 @@ final public class UsernameHandler {
 	    }
     }
 
-    public static String getPackageForUsername(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static String getPackageForUsername(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeStringQuery("select package from usernames where username=?", username);
     }
 
-    public static IntList getServersForUsername(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static IntList getServersForUsername(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeIntListQuery(
             Connection.TRANSACTION_READ_COMMITTED,
             true,
@@ -237,11 +240,11 @@ final public class UsernameHandler {
         );
     }
 
-    public static List<String> getUsernamesForPackage(MasterDatabaseConnection conn, String name) throws IOException, SQLException {
+    public static List<String> getUsernamesForPackage(DatabaseConnection conn, String name) throws IOException, SQLException {
         return conn.executeStringListQuery("select username from usernames where package=?", name);
     }
 
-    public static boolean canUsernameAccessServer(MasterDatabaseConnection conn, String username, int server) throws IOException, SQLException {
+    public static boolean canUsernameAccessServer(DatabaseConnection conn, String username, int server) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             Connection.TRANSACTION_READ_COMMITTED,
             true,
@@ -267,7 +270,7 @@ final public class UsernameHandler {
         );
     }
     
-    public static void checkUsernameAccessServer(MasterDatabaseConnection conn, RequestSource source, String action, String username, int server) throws IOException, SQLException {
+    public static void checkUsernameAccessServer(DatabaseConnection conn, RequestSource source, String action, String username, int server) throws IOException, SQLException {
         if(!canUsernameAccessServer(conn, username, server)) {
             String message=
             "username="
@@ -278,7 +281,6 @@ final public class UsernameHandler {
             +action
             +"'"
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }

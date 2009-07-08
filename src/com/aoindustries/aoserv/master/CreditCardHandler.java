@@ -1211,17 +1211,15 @@ final public class CreditCardHandler /*implements CronJob*/ {
         System.err.println("DEBUG: month="+year+"-"+month);
         try {
             ProcessTimer timer=new ProcessTimer(
+                logger,
                 MasterServer.getRandom(),
-                MasterConfiguration.getWarningSmtpServer(),
-                MasterConfiguration.getWarningEmailFrom(),
-                MasterConfiguration.getWarningEmailTo(),
                 "CreditCardHandler - Process Automatic Payments",
                 "Processes the automatic payments for the month",
                 TIMER_MAX_TIME,
                 TIMER_REMINDER_INTERVAL
             );
             try {
-                timer.start();
+                MasterServer.executorService.submit(timer);
 
                 // Find the beginning of the next month (for transaction search)
                 Calendar beginningOfNextMonth = Calendar.getInstance();
@@ -1579,7 +1577,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                 }
                 /*if(invalidateList!=null)*/ MasterServer.invalidateTables(invalidateList, null);
             } finally {
-                timer.stop();
+                timer.finished();
             }
         } catch(ThreadDeath TD) {
             throw TD;

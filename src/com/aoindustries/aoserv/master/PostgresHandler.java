@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
  */
 import com.aoindustries.aoserv.client.*;
 import com.aoindustries.io.*;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.*;
 import java.io.*;
 import java.sql.*;
@@ -22,7 +23,7 @@ final public class PostgresHandler {
     private final static Map<Integer,Boolean> disabledPostgresServerUsers=new HashMap<Integer,Boolean>();
     private final static Map<String,Boolean> disabledPostgresUsers=new HashMap<String,Boolean>();
 
-    public static void checkAccessPostgresDatabase(MasterDatabaseConnection conn, RequestSource source, String action, int postgres_database) throws IOException, SQLException {
+    public static void checkAccessPostgresDatabase(DatabaseConnection conn, RequestSource source, String action, int postgres_database) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -33,11 +34,11 @@ final public class PostgresHandler {
         }
     }
 
-    public static void checkAccessPostgresServer(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessPostgresServer(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, action, getAOServerForPostgresServer(conn, pkey));
     }
 
-    public static void checkAccessPostgresServerUser(MasterDatabaseConnection conn, RequestSource source, String action, int postgres_server_user) throws IOException, SQLException {
+    public static void checkAccessPostgresServerUser(DatabaseConnection conn, RequestSource source, String action, int postgres_server_user) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -48,7 +49,7 @@ final public class PostgresHandler {
         }
     }
 
-    public static void checkAccessPostgresUser(MasterDatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
+    public static void checkAccessPostgresUser(DatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -69,7 +70,6 @@ final public class PostgresHandler {
                         +", username="
                         +username
                     ;
-                    MasterServer.reportSecurityMessage(source, message);
                     throw new SQLException(message);
                 }
             }
@@ -82,7 +82,7 @@ final public class PostgresHandler {
      * Adds a PostgreSQL database to the system.
      */
     public static int addPostgresDatabase(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String name,
@@ -177,7 +177,7 @@ final public class PostgresHandler {
      * Adds a PostgreSQL server user.
      */
     public static int addPostgresServerUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         String username, 
@@ -216,7 +216,7 @@ final public class PostgresHandler {
      * Adds a PostgreSQL user.
      */
     public static void addPostgresUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         String username
@@ -242,7 +242,7 @@ final public class PostgresHandler {
     }
 
     public static void disablePostgresServerUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -269,7 +269,7 @@ final public class PostgresHandler {
     }
 
     public static void disablePostgresUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -306,7 +306,7 @@ final public class PostgresHandler {
      * Dumps a PostgreSQL database
      */
     public static void dumpPostgresDatabase(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out,
         int dbPKey
@@ -318,7 +318,7 @@ final public class PostgresHandler {
     }
 
     public static void enablePostgresServerUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -346,7 +346,7 @@ final public class PostgresHandler {
     }
 
     public static void enablePostgresUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username
@@ -376,7 +376,7 @@ final public class PostgresHandler {
      * Generates a unique PostgreSQL database name.
      */
     public static String generatePostgresDatabaseName(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String template_base,
         String template_added
     ) throws IOException, SQLException {
@@ -407,21 +407,21 @@ final public class PostgresHandler {
         return goodOne;
     }
 
-    public static int getDisableLogForPostgresServerUser(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getDisableLogForPostgresServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from postgres_server_users where pkey=?", pkey);
     }
 
-    public static int getDisableLogForPostgresUser(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static int getDisableLogForPostgresUser(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from postgres_users where username=?", username);
     }
 
-    public static IntList getPostgresServerUsersForPostgresUser(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static IntList getPostgresServerUsersForPostgresUser(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeIntListQuery("select pkey from postgres_server_users where username=?", username);
     }
 
     private static final Object reservedWordLock=new Object();
     private static List<String> reservedWordCache;
-    public static List<String> getReservedWords(MasterDatabaseConnection conn) throws IOException, SQLException {
+    public static List<String> getReservedWords(DatabaseConnection conn) throws IOException, SQLException {
         synchronized(reservedWordLock) {
             if(reservedWordCache==null) {
                 // Load the list of reserved words
@@ -431,7 +431,7 @@ final public class PostgresHandler {
         }
     }
 
-    public static String getUsernameForPostgresServerUser(MasterDatabaseConnection conn, int psu) throws IOException, SQLException {
+    public static String getUsernameForPostgresServerUser(DatabaseConnection conn, int psu) throws IOException, SQLException {
         return conn.executeStringQuery("select username from postgres_server_users where pkey=?", psu);
     }
 
@@ -455,7 +455,7 @@ final public class PostgresHandler {
         }
     }
 
-    public static boolean isPostgresServerUserDisabled(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isPostgresServerUserDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(PostgresHandler.class) {
             Integer I=Integer.valueOf(pkey);
             Boolean O=disabledPostgresServerUsers.get(I);
@@ -466,7 +466,7 @@ final public class PostgresHandler {
 	    }
     }
 
-    public static boolean isPostgresUser(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isPostgresUser(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             "select\n"
             + "  (\n"
@@ -482,7 +482,7 @@ final public class PostgresHandler {
         );
     }
 
-    public static boolean isPostgresUserDisabled(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isPostgresUserDisabled(DatabaseConnection conn, String username) throws IOException, SQLException {
 	    synchronized(PostgresHandler.class) {
             Boolean O=disabledPostgresUsers.get(username);
             if(O!=null) return O.booleanValue();
@@ -496,7 +496,7 @@ final public class PostgresHandler {
      * Determines if a PostgreSQL database name is available.
      */
     public static boolean isPostgresDatabaseNameAvailable(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         String name,
         int postgresServer
@@ -529,7 +529,7 @@ final public class PostgresHandler {
      * Determines if a PostgreSQL server name is available.
      */
     public static boolean isPostgresServerNameAvailable(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         String name,
         int aoServer
@@ -539,7 +539,7 @@ final public class PostgresHandler {
     }
 
     public static boolean isPostgresServerUserPasswordSet(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         int psu
     ) throws IOException, SQLException {
@@ -556,7 +556,7 @@ final public class PostgresHandler {
      * Removes a PostgresDatabase from the system.
      */
     public static void removePostgresDatabase(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -570,7 +570,7 @@ final public class PostgresHandler {
      * Removes a PostgresDatabase from the system.
      */
     public static void removePostgresDatabase(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -593,7 +593,7 @@ final public class PostgresHandler {
      * Removes a PostgresServerUser from the system.
      */
     public static void removePostgresServerUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int pkey
@@ -628,7 +628,7 @@ final public class PostgresHandler {
      * Removes a PostgresUser from the system.
      */
     public static void removePostgresUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username
@@ -642,7 +642,7 @@ final public class PostgresHandler {
      * Removes a PostgresUser from the system.
      */
     public static void removePostgresUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String username
     ) throws IOException, SQLException {
@@ -677,7 +677,7 @@ final public class PostgresHandler {
      * Sets a PostgreSQL password.
      */
     public static void setPostgresServerUserPassword(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int postgres_server_user,
         String password
@@ -704,7 +704,7 @@ final public class PostgresHandler {
     }
 
     public static void setPostgresServerUserPredisablePassword(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int psu,
@@ -734,7 +734,7 @@ final public class PostgresHandler {
     }
 
     public static void waitForPostgresDatabaseRebuild(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -744,7 +744,7 @@ final public class PostgresHandler {
     }
 
     public static void waitForPostgresServerRebuild(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -754,7 +754,7 @@ final public class PostgresHandler {
     }
 
     public static void waitForPostgresUserRebuild(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -763,7 +763,7 @@ final public class PostgresHandler {
         DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresUserRebuild();
     }
 
-    public static String getBusinessForPostgresDatabase(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForPostgresDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  pk.accounting\n"
@@ -781,7 +781,7 @@ final public class PostgresHandler {
         );
     }
 
-    public static int getPackageForPostgresDatabase(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getPackageForPostgresDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  pk.pkey\n"
@@ -799,19 +799,19 @@ final public class PostgresHandler {
         );
     }
 
-    public static String getBusinessForPostgresServerUser(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForPostgresServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from postgres_server_users psu, usernames un, packages pk where psu.username=un.username and un.package=pk.name and psu.pkey=?", pkey);
     }
 
-    public static int getAOServerForPostgresServer(MasterDatabaseConnection conn, int postgresServer) throws IOException, SQLException {
+    public static int getAOServerForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
         return conn.executeIntQuery("select ao_server from postgres_servers where pkey=?", postgresServer);
     }
 
-    public static int getPortForPostgresServer(MasterDatabaseConnection conn, int postgresServer) throws IOException, SQLException {
+    public static int getPortForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
         return conn.executeIntQuery("select nb.port from postgres_servers ps, net_binds nb where ps.pkey=? and ps.net_bind=nb.pkey", postgresServer);
     }
 
-    public static String getMinorVersionForPostgresServer(MasterDatabaseConnection conn, int postgresServer) throws IOException, SQLException {
+    public static String getMinorVersionForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  pv.minor_version\n"
@@ -825,18 +825,18 @@ final public class PostgresHandler {
         );
     }
 
-    public static int getPostgresServerForPostgresDatabase(MasterDatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
+    public static int getPostgresServerForPostgresDatabase(DatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select postgres_server from postgres_databases where pkey=?",
             postgresDatabase
         );
     }
 
-    public static int getPostgresServerForPostgresServerUser(MasterDatabaseConnection conn, int postgres_server_user) throws IOException, SQLException {
+    public static int getPostgresServerForPostgresServerUser(DatabaseConnection conn, int postgres_server_user) throws IOException, SQLException {
         return conn.executeIntQuery("select postgres_server from postgres_server_users where pkey=?", postgres_server_user);
     }
 
-    public static int getAOServerForPostgresDatabase(MasterDatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
+    public static int getAOServerForPostgresDatabase(DatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  ps.ao_server\n"
@@ -850,7 +850,7 @@ final public class PostgresHandler {
         );
     }
 
-    public static int getDatDbaForPostgresDatabase(MasterDatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
+    public static int getDatDbaForPostgresDatabase(DatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  datdba\n"
@@ -862,7 +862,7 @@ final public class PostgresHandler {
         );
     }
 
-    public static int getAOServerForPostgresServerUser(MasterDatabaseConnection conn, int postgres_server_user) throws IOException, SQLException {
+    public static int getAOServerForPostgresServerUser(DatabaseConnection conn, int postgres_server_user) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  ps.ao_server\n"
@@ -877,7 +877,7 @@ final public class PostgresHandler {
     }
 
     public static void restartPostgreSQL(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int postgresServer
     ) throws IOException, SQLException {
@@ -888,7 +888,7 @@ final public class PostgresHandler {
     }
 
     public static void startPostgreSQL(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int postgresServer
     ) throws IOException, SQLException {
@@ -899,7 +899,7 @@ final public class PostgresHandler {
     }
 
     public static void stopPostgreSQL(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int postgresServer
     ) throws IOException, SQLException {

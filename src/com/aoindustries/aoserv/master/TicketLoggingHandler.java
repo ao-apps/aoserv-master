@@ -113,21 +113,14 @@ final public class TicketLoggingHandler extends QueuedHandler {
                         category
                     );
                     if(existingTicket!=-1) {
-                        // Generate the annotation summary as localized message + thrown
-                        tempSB.setLength(0);
-                        String message = formatter.formatMessage(record);
-                        if(message!=null && (message=message.trim()).length()>0) tempSB.append(message);
-                        Throwable thrown = record.getThrown();
-                        if(thrown!=null) {
-                            if(tempSB.length()>0) tempSB.append(" - ");
-                            String thrownMessage = thrown.getMessage();
-                            if(thrownMessage!=null) {
-                                tempSB.append(thrownMessage);
-                            } else {
-                                tempSB.append(thrown.toString());
-                            }
-                        }
-                        TicketHandler.addTicketAnnotation(conn, invalidateList, existingTicket, null, tempSB.toString(), fullReport);
+                        TicketHandler.addTicketAnnotation(
+                            conn,
+                            invalidateList,
+                            existingTicket,
+                            null,
+                            com.aoindustries.aoserv.client.TicketLoggingHandler.generateActionSummary(formatter, record),
+                            fullReport
+                        );
                     } else {
                         // The priority depends on the log level
                         String priorityName;

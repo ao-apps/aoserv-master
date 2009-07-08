@@ -6,7 +6,12 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.io.AOPool;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>TCPServer</code> accepts connections from an <code>SimpleAOClient</code>.
@@ -18,6 +23,8 @@ import java.net.*;
  * @author  AO Industries, Inc.
  */
 public class TCPServer extends MasterServer implements Runnable {
+
+    private static final Logger logger = LogFactory.getLogger(TCPServer.class);
 
     /**
      * The protocol of this server.
@@ -83,13 +90,7 @@ public class TCPServer extends MasterServer implements Runnable {
                         } catch(ThreadDeath TD) {
                             throw TD;
                         } catch(Throwable T) {
-                            reportError(
-                                T,
-                                new Object[] {
-                                    "serverPort="+serverPort,
-                                    "address="+address
-                                }
-                            );
+                            logger.log(Level.SEVERE, "serverPort="+serverPort+". address="+address, T);
                         }
                     }
                 } finally {
@@ -98,18 +99,12 @@ public class TCPServer extends MasterServer implements Runnable {
             } catch (ThreadDeath TD) {
                 throw TD;
             } catch (Throwable T) {
-                reportError(
-                    T,
-                    new Object[] {
-                        "serverPort="+serverPort,
-                        "serverBind="+serverBind
-                    }
-                );
+                logger.log(Level.SEVERE, "serverPort="+serverPort+", serverBind="+serverBind, T);
             }
             try {
                 Thread.sleep(15000);
             } catch (InterruptedException err) {
-                reportWarning(err, null);
+                logger.log(Level.WARNING, null, err);
             }
         }
     }

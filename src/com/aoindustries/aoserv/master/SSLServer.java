@@ -9,6 +9,8 @@ import com.aoindustries.io.AOPool;
 import java.io.*;
 import java.net.*;
 import java.security.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.net.ssl.*;
 
 /**
@@ -21,6 +23,8 @@ import javax.net.ssl.*;
  * @author  AO Industries, Inc.
  */
 public class SSLServer extends TCPServer {
+
+    private static final Logger logger = LogFactory.getLogger(ServerHandler.class);
 
     /**
      * Flags that the SSL factory has already been loaded.
@@ -69,7 +73,7 @@ public class SSLServer extends TCPServer {
                     sslProviderLoaded[0]=true;
                 }
             } catch(IOException err) {
-                reportError(err, null);
+                logger.log(Level.SEVERE, null, err);
                 return;
             }
         }
@@ -95,13 +99,7 @@ public class SSLServer extends TCPServer {
                         } catch(ThreadDeath TD) {
                             throw TD;
                         } catch(Throwable T) {
-                            reportError(
-                                T,
-                                new Object[] {
-                                    "serverPort="+serverPort,
-                                    "address="+address
-                                }
-                            );
+                            logger.log(Level.SEVERE, "serverPort="+serverPort+", address="+address, T);
                         }
                     }
                 } finally {
@@ -110,12 +108,12 @@ public class SSLServer extends TCPServer {
             } catch (ThreadDeath TD) {
                 throw TD;
             } catch (Throwable T) {
-                reportError(T, null);
+                logger.log(Level.SEVERE, null, T);
             }
             try {
                 Thread.sleep(15000);
             } catch (InterruptedException err) {
-                reportWarning(err, null);
+                logger.log(Level.WARNING, null, err);
             }
         }
     }

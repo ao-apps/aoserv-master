@@ -19,6 +19,7 @@ import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.io.unix.UnixFile;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
 import java.sql.Connection;
@@ -37,10 +38,13 @@ import java.util.Map;
  */
 final public class LinuxAccountHandler {
 
+    private LinuxAccountHandler() {
+    }
+
     private final static Map<String,Boolean> disabledLinuxAccounts=new HashMap<String,Boolean>();
     private final static Map<Integer,Boolean> disabledLinuxServerAccounts=new HashMap<Integer,Boolean>();
 
-    public static void checkAccessLinuxAccount(MasterDatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
+    public static void checkAccessLinuxAccount(DatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -61,7 +65,6 @@ final public class LinuxAccountHandler {
                         +", username="
                         +username
                     ;
-                    MasterServer.reportSecurityMessage(source, message);
                     throw new SQLException(message);
                 }
             }
@@ -70,7 +73,7 @@ final public class LinuxAccountHandler {
         }
     }
 
-    public static void checkAccessLinuxGroup(MasterDatabaseConnection conn, RequestSource source, String action, String name) throws IOException, SQLException {
+    public static void checkAccessLinuxGroup(DatabaseConnection conn, RequestSource source, String action, String name) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -91,7 +94,6 @@ final public class LinuxAccountHandler {
                         +", name="
                         +name
                     ;
-                    MasterServer.reportSecurityMessage(source, message);
                     throw new SQLException(message);
                 }
             }
@@ -100,12 +102,12 @@ final public class LinuxAccountHandler {
         }
     }
 
-    public static void checkAccessLinuxGroupAccount(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessLinuxGroupAccount(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         checkAccessLinuxAccount(conn, source, action, getLinuxAccountForLinuxGroupAccount(conn, pkey));
         checkAccessLinuxGroup(conn, source, action, getLinuxGroupForLinuxGroupAccount(conn, pkey));
     }
 
-    public static boolean canAccessLinuxServerAccount(MasterDatabaseConnection conn, RequestSource source, int account) throws IOException, SQLException {
+    public static boolean canAccessLinuxServerAccount(DatabaseConnection conn, RequestSource source, int account) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -116,7 +118,7 @@ final public class LinuxAccountHandler {
         }
     }
 
-    public static void checkAccessLinuxServerAccount(MasterDatabaseConnection conn, RequestSource source, String action, int account) throws IOException, SQLException {
+    public static void checkAccessLinuxServerAccount(DatabaseConnection conn, RequestSource source, String action, int account) throws IOException, SQLException {
         if(!canAccessLinuxServerAccount(conn, source, account)) {
             String message=
                 "business_administrator.username="
@@ -126,19 +128,18 @@ final public class LinuxAccountHandler {
                 +", pkey="
                 +account
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
-    public static boolean canAccessLinuxServerGroup(MasterDatabaseConnection conn, RequestSource source, int group) throws IOException, SQLException {
+    public static boolean canAccessLinuxServerGroup(DatabaseConnection conn, RequestSource source, int group) throws IOException, SQLException {
         return
             PackageHandler.canAccessPackage(conn, source, getPackageForLinuxServerGroup(conn, group))
             && ServerHandler.canAccessServer(conn, source, getAOServerForLinuxServerGroup(conn, group))
         ;
     }
 
-    public static void checkAccessLinuxServerGroup(MasterDatabaseConnection conn, RequestSource source, String action, int group) throws IOException, SQLException {
+    public static void checkAccessLinuxServerGroup(DatabaseConnection conn, RequestSource source, String action, int group) throws IOException, SQLException {
         if(!canAccessLinuxServerGroup(conn, source, group)) {
             String message=
                 "business_administrator.username="
@@ -148,7 +149,6 @@ final public class LinuxAccountHandler {
                 +", pkey="
                 +group
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
@@ -157,7 +157,7 @@ final public class LinuxAccountHandler {
      * Adds a linux account.
      */
     public static void addLinuxAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username,
@@ -217,7 +217,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void addLinuxGroup(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         String groupName, 
@@ -249,7 +249,7 @@ final public class LinuxAccountHandler {
     }
 
     public static int addLinuxGroupAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         String groupName, 
@@ -307,7 +307,7 @@ final public class LinuxAccountHandler {
     }
 
     public static int addLinuxServerAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username,
@@ -441,7 +441,7 @@ final public class LinuxAccountHandler {
     }
 
     public static int addLinuxServerGroup(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String groupName,
@@ -526,7 +526,7 @@ final public class LinuxAccountHandler {
      * Copies the contents of a home directory from one server to another.
      */
     public static long copyHomeDirectory(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int from_lsa,
         int to_server
@@ -556,7 +556,7 @@ final public class LinuxAccountHandler {
      * Copies a password from one linux account to another
      */
     public static void copyLinuxServerAccountPassword(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int from_lsa,
@@ -598,7 +598,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void disableLinuxAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -632,7 +632,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void disableLinuxServerAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -692,7 +692,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void enableLinuxAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username
@@ -719,7 +719,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void enableLinuxServerAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -749,7 +749,7 @@ final public class LinuxAccountHandler {
     /**
      * Gets the contents of an autoresponder.
      */
-    public static String getAutoresponderContent(MasterDatabaseConnection conn, RequestSource source, int lsa) throws IOException, SQLException {
+    public static String getAutoresponderContent(DatabaseConnection conn, RequestSource source, int lsa) throws IOException, SQLException {
         checkAccessLinuxServerAccount(conn, source, "getAutoresponderContent", lsa);
         String username=getUsernameForLinuxServerAccount(conn, lsa);
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to get the autoresponder content for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
@@ -766,7 +766,7 @@ final public class LinuxAccountHandler {
     /**
      * Gets the contents of a user cron table.
      */
-    public static String getCronTable(MasterDatabaseConnection conn, RequestSource source, int lsa) throws IOException, SQLException {
+    public static String getCronTable(DatabaseConnection conn, RequestSource source, int lsa) throws IOException, SQLException {
         checkAccessLinuxServerAccount(conn, source, "getCronTable", lsa);
         String username=getUsernameForLinuxServerAccount(conn, lsa);
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to get the cron table for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
@@ -779,11 +779,11 @@ final public class LinuxAccountHandler {
         return DaemonHandler.getDaemonConnector(conn, aoServer).getCronTable(username);
     }
 
-    public static int getDisableLogForLinuxAccount(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static int getDisableLogForLinuxAccount(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from linux_accounts where username=?", username);
     }
 
-    public static int getDisableLogForLinuxServerAccount(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getDisableLogForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from linux_server_accounts where pkey=?", pkey);
     }
 
@@ -799,7 +799,7 @@ final public class LinuxAccountHandler {
         }
     }
 
-    public static boolean isLinuxAccount(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isLinuxAccount(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             "select\n"
             + "  (\n"
@@ -815,7 +815,7 @@ final public class LinuxAccountHandler {
         );
     }
 
-    public static boolean isLinuxAccountDisabled(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isLinuxAccountDisabled(DatabaseConnection conn, String username) throws IOException, SQLException {
 	    synchronized(LinuxAccountHandler.class) {
             Boolean O=disabledLinuxAccounts.get(username);
             if(O!=null) return O.booleanValue();
@@ -825,7 +825,7 @@ final public class LinuxAccountHandler {
 	    }
     }
 
-    public static boolean isLinuxAccountEmailType(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isLinuxAccountEmailType(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             "select\n"
             + "  lat.is_email\n"
@@ -839,7 +839,7 @@ final public class LinuxAccountHandler {
         );
     }
 
-    public static boolean isLinuxServerAccountDisabled(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isLinuxServerAccountDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(LinuxAccountHandler.class) {
             Integer I=Integer.valueOf(pkey);
             Boolean O=disabledLinuxServerAccounts.get(I);
@@ -850,22 +850,22 @@ final public class LinuxAccountHandler {
 	    }
     }
 
-    public static boolean isLinuxGroupNameAvailable(MasterDatabaseConnection conn, String groupname) throws IOException, SQLException {
+    public static boolean isLinuxGroupNameAvailable(DatabaseConnection conn, String groupname) throws IOException, SQLException {
         return conn.executeBooleanQuery("select (select name from linux_groups where name=?) is null", groupname);
     }
 
-    public static int getLinuxServerGroup(MasterDatabaseConnection conn, String group, int aoServer) throws IOException, SQLException {
+    public static int getLinuxServerGroup(DatabaseConnection conn, String group, int aoServer) throws IOException, SQLException {
         int pkey=conn.executeIntQuery("select coalesce((select pkey from linux_server_groups where name=? and ao_server=?), -1)", group, aoServer);
         if(pkey==-1) throw new SQLException("Unable to find LinuxServerGroup "+group+" on "+aoServer);
         return pkey;
     }
 
-    public static String getPrimaryLinuxGroup(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static String getPrimaryLinuxGroup(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeStringQuery("select group_name from linux_group_accounts where username=? and is_primary", username);
     }
 
     public static boolean isLinuxServerAccountPasswordSet(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         int account
     ) throws IOException, SQLException {
@@ -879,7 +879,7 @@ final public class LinuxAccountHandler {
     }
 
     public static int isLinuxServerAccountProcmailManual(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         int account
     ) throws IOException, SQLException {
@@ -899,7 +899,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void removeLinuxAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username
@@ -910,7 +910,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void removeLinuxAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String username
     ) throws IOException, SQLException {
@@ -946,7 +946,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void removeLinuxGroup(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String name
@@ -957,7 +957,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void removeLinuxGroup(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String name
     ) throws IOException, SQLException {
@@ -990,7 +990,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void removeLinuxGroupAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -1045,7 +1045,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void removeUnusedAlternateLinuxGroupAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String group,
         String username
@@ -1112,7 +1112,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void removeLinuxServerAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int account
@@ -1123,7 +1123,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void removeLinuxServerAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int account
     ) throws IOException, SQLException {
@@ -1183,7 +1183,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void removeLinuxServerGroup(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int group
@@ -1194,7 +1194,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void removeLinuxServerGroup(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int group
     ) throws IOException, SQLException {
@@ -1235,7 +1235,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setAutoresponder(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -1342,7 +1342,7 @@ final public class LinuxAccountHandler {
      * Gets the contents of a user cron table.
      */
     public static void setCronTable(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int lsa,
         String cronTable
@@ -1361,7 +1361,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxAccountHomePhone(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username,
@@ -1383,7 +1383,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxAccountName(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username,
@@ -1406,7 +1406,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxAccountOfficeLocation(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username,
@@ -1428,7 +1428,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxAccountOfficePhone(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username,
@@ -1450,7 +1450,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxAccountShell(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username,
@@ -1472,7 +1472,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxServerAccountPassword(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -1518,7 +1518,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxServerAccountPredisablePassword(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int lsa,
@@ -1548,7 +1548,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxServerAccountJunkEmailRetention(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -1583,7 +1583,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxServerAccountSpamAssassinIntegrationMode(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -1611,7 +1611,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxServerAccountSpamAssassinRequiredScore(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -1639,7 +1639,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxServerAccountSpamAssassinDiscardScore(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -1674,7 +1674,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxServerAccountTrashEmailRetention(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -1709,7 +1709,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setLinuxServerAccountUseInbox(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -1740,7 +1740,7 @@ final public class LinuxAccountHandler {
      * Waits for any pending or processing account rebuild to complete.
      */
     public static void waitForLinuxAccountRebuild(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -1749,7 +1749,7 @@ final public class LinuxAccountHandler {
         DaemonHandler.getDaemonConnector(conn, aoServer).waitForLinuxAccountRebuild();
     }
 
-    static boolean canLinuxGroupAccessServer(MasterDatabaseConnection conn, RequestSource source, String groupName, int aoServer) throws IOException, SQLException {
+    static boolean canLinuxGroupAccessServer(DatabaseConnection conn, RequestSource source, String groupName, int aoServer) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             "select\n"
             + "  (\n"
@@ -1772,7 +1772,7 @@ final public class LinuxAccountHandler {
         );
     }
 
-    static void checkLinuxGroupAccessServer(MasterDatabaseConnection conn, RequestSource source, String action, String groupName, int server) throws IOException, SQLException {
+    static void checkLinuxGroupAccessServer(DatabaseConnection conn, RequestSource source, String action, String groupName, int server) throws IOException, SQLException {
         if(!canLinuxGroupAccessServer(conn, source, groupName, server)) {
             String message=
                 "groupName="
@@ -1783,16 +1783,15 @@ final public class LinuxAccountHandler {
                 +action
                 +"'"
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
-    public static String getBusinessForLinuxGroup(MasterDatabaseConnection conn, String name) throws IOException, SQLException {
+    public static String getBusinessForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from linux_groups lg, packages pk where lg.package=pk.name and lg.name=?", name);
     }
 
-    public static List<String> getBusinessesForLinuxGroupAccount(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static List<String> getBusinessesForLinuxGroupAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringListQuery(
            "select\n"
             + "  pk1.accounting\n"
@@ -1819,7 +1818,7 @@ final public class LinuxAccountHandler {
         );
     }
 
-    public static String getBusinessForLinuxServerAccount(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  pk.accounting\n"
@@ -1835,7 +1834,7 @@ final public class LinuxAccountHandler {
         );
     }
 
-    public static String getBusinessForLinuxServerGroup(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForLinuxServerGroup(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  pk.accounting\n"
@@ -1851,27 +1850,27 @@ final public class LinuxAccountHandler {
         );
     }
 
-    public static String getGroupNameForLinuxServerGroup(MasterDatabaseConnection conn, int lsgPKey) throws IOException, SQLException {
+    public static String getGroupNameForLinuxServerGroup(DatabaseConnection conn, int lsgPKey) throws IOException, SQLException {
         return conn.executeStringQuery("select name from linux_server_groups where pkey=?", lsgPKey);
     }
 
-    public static int getAOServerForLinuxServerAccount(MasterDatabaseConnection conn, int account) throws IOException, SQLException {
+    public static int getAOServerForLinuxServerAccount(DatabaseConnection conn, int account) throws IOException, SQLException {
         return conn.executeIntQuery("select ao_server from linux_server_accounts where pkey=?", account);
     }
 
-    public static int getAOServerForLinuxServerGroup(MasterDatabaseConnection conn, int group) throws IOException, SQLException {
+    public static int getAOServerForLinuxServerGroup(DatabaseConnection conn, int group) throws IOException, SQLException {
         return conn.executeIntQuery("select ao_server from linux_server_groups where pkey=?", group);
     }
 
-    public static IntList getAOServersForLinuxAccount(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static IntList getAOServersForLinuxAccount(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeIntListQuery("select ao_server from linux_server_accounts where username=?", username);
     }
 
-    public static IntList getAOServersForLinuxGroup(MasterDatabaseConnection conn, String name) throws IOException, SQLException {
+    public static IntList getAOServersForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
         return conn.executeIntListQuery("select ao_server from linux_server_groups where name=?", name);
     }
 
-    public static IntList getAOServersForLinuxGroupAccount(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static IntList getAOServersForLinuxGroupAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntListQuery(
             "select\n"
             + "  lsg.ao_server\n"
@@ -1888,11 +1887,11 @@ final public class LinuxAccountHandler {
         );
     }
 
-    public static String getTypeForLinuxAccount(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static String getTypeForLinuxAccount(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeStringQuery("select type from linux_accounts where username=?", username);
     }
 
-    public static String getTypeForLinuxServerAccount(MasterDatabaseConnection conn, int account) throws IOException, SQLException {
+    public static String getTypeForLinuxServerAccount(DatabaseConnection conn, int account) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  la.type\n"
@@ -1906,7 +1905,7 @@ final public class LinuxAccountHandler {
         );
    }
 
-    public static String getTypeForLinuxServerGroup(MasterDatabaseConnection conn, int lsg) throws IOException, SQLException {
+    public static String getTypeForLinuxServerGroup(DatabaseConnection conn, int lsg) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  lg.type\n"
@@ -1920,7 +1919,7 @@ final public class LinuxAccountHandler {
         );
     }
 
-    public static int getLinuxServerAccount(MasterDatabaseConnection conn, String username, int aoServer) throws IOException, SQLException {
+    public static int getLinuxServerAccount(DatabaseConnection conn, String username, int aoServer) throws IOException, SQLException {
         int pkey=conn.executeIntQuery(
             "select coalesce(\n"
             + "  (\n"
@@ -1940,15 +1939,15 @@ final public class LinuxAccountHandler {
         return pkey;
     }
 
-    public static IntList getLinuxServerAccountsForLinuxAccount(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static IntList getLinuxServerAccountsForLinuxAccount(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeIntListQuery("select pkey from linux_server_accounts where username=?", username);
     }
 
-    public static IntList getLinuxServerGroupsForLinuxGroup(MasterDatabaseConnection conn, String name) throws IOException, SQLException {
+    public static IntList getLinuxServerGroupsForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
         return conn.executeIntListQuery("select pkey from linux_server_groups where name=?", name);
     }
 
-    public static String getPackageForLinuxGroup(MasterDatabaseConnection conn, String name) throws IOException, SQLException {
+    public static String getPackageForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  package\n"
@@ -1960,7 +1959,7 @@ final public class LinuxAccountHandler {
         );
     }
 
-    public static String getPackageForLinuxServerGroup(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getPackageForLinuxServerGroup(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  lg.package\n"
@@ -1974,28 +1973,28 @@ final public class LinuxAccountHandler {
         );
     }
 
-    public static int getGIDForLinuxServerGroup(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getGIDForLinuxServerGroup(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select gid from linux_server_groups where pkey=?", pkey);
     }
 
-    public static int getUIDForLinuxServerAccount(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getUIDForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select uid from linux_server_accounts where pkey=?", pkey);
     }
 
-    public static String getLinuxAccountForLinuxGroupAccount(MasterDatabaseConnection conn, int lga) throws IOException, SQLException {
+    public static String getLinuxAccountForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
         return conn.executeStringQuery("select username from linux_group_accounts where pkey=?", lga);
     }
 
-    public static String getLinuxGroupForLinuxGroupAccount(MasterDatabaseConnection conn, int lga) throws IOException, SQLException {
+    public static String getLinuxGroupForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
         return conn.executeStringQuery("select group_name from linux_group_accounts where pkey=?", lga);
     }
 
-    public static String getUsernameForLinuxServerAccount(MasterDatabaseConnection conn, int account) throws IOException, SQLException {
+    public static String getUsernameForLinuxServerAccount(DatabaseConnection conn, int account) throws IOException, SQLException {
         return conn.executeStringQuery("select username from linux_server_accounts where pkey=?", account);
     }
 
     public static boolean comparePassword(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         int pkey, 
         String password
@@ -2018,7 +2017,7 @@ final public class LinuxAccountHandler {
     }
 
     public static void setPrimaryLinuxGroupAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey

@@ -21,11 +21,11 @@ import java.util.*;
  */
 final public class TransactionHandler {
 
-    public static boolean canAccessTransaction(MasterDatabaseConnection conn, RequestSource source, int transid) throws IOException, SQLException {
+    public static boolean canAccessTransaction(DatabaseConnection conn, RequestSource source, int transid) throws IOException, SQLException {
         return BusinessHandler.canAccessBusiness(conn, source, getBusinessForTransaction(conn, transid));
     }
 
-    public static void checkAccessTransaction(MasterDatabaseConnection conn, RequestSource source, String action, int transid) throws IOException, SQLException {
+    public static void checkAccessTransaction(DatabaseConnection conn, RequestSource source, String action, int transid) throws IOException, SQLException {
         BusinessHandler.checkAccessBusiness(conn, source, action, getBusinessForTransaction(conn, transid));
     }
 
@@ -33,7 +33,7 @@ final public class TransactionHandler {
      * Adds a transaction.
      */
     public static int addTransaction(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,
@@ -76,7 +76,7 @@ final public class TransactionHandler {
      * Adds a transaction.
      */
     public static int addTransaction(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         Timestamp time,
         String accounting,
@@ -121,7 +121,7 @@ final public class TransactionHandler {
      * Gets the balance for one account.
      */
     public static void getAccountBalance(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         CompressedDataOutputStream out,
         String accounting
@@ -141,7 +141,7 @@ final public class TransactionHandler {
      * Gets the balance for one account.
      */
     public static void getAccountBalanceBefore(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         CompressedDataOutputStream out, 
         String accounting, 
@@ -163,7 +163,7 @@ final public class TransactionHandler {
      * Gets the confirmed balance for one account.
      */
     public static void getConfirmedAccountBalance(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out,
         String accounting
@@ -183,7 +183,7 @@ final public class TransactionHandler {
      * Gets the confirmed balance for one account.
      */
     public static int getConfirmedAccountBalance(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String accounting
     ) throws IOException, SQLException {
         return SQLUtility.getPennies(
@@ -198,7 +198,7 @@ final public class TransactionHandler {
      * Gets the confirmed balance for one account.
      */
     public static void getConfirmedAccountBalanceBefore(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out,
         String accounting, 
@@ -220,7 +220,7 @@ final public class TransactionHandler {
      * Gets all pending payments.
      */
     public static void getPendingPayments(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out, 
         boolean provideProgress
@@ -244,7 +244,7 @@ final public class TransactionHandler {
      * Gets all transactions for one business.
      */
     public static void getTransactionsBusiness(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         CompressedDataOutputStream out,
         boolean provideProgress,
@@ -293,7 +293,7 @@ final public class TransactionHandler {
      * Gets all transactions for one business administrator.
      */
     public static void getTransactionsBusinessAdministrator(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         CompressedDataOutputStream out,
         boolean provideProgress,
@@ -313,7 +313,7 @@ final public class TransactionHandler {
     }
 
     public static void getTransactionsSearch(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out,
         boolean provideProgress,
@@ -463,7 +463,7 @@ final public class TransactionHandler {
     }
 
     public static void transactionApproved(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int transid,
@@ -477,7 +477,7 @@ final public class TransactionHandler {
     }
 
     public static void transactionApproved(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int transid,
         int creditCardTransaction
@@ -495,7 +495,7 @@ final public class TransactionHandler {
     }
 
     public static void transactionDeclined(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int transid,
@@ -509,7 +509,7 @@ final public class TransactionHandler {
     }
 
     public static void transactionDeclined(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int transid,
         int creditCardTransaction
@@ -524,7 +524,7 @@ final public class TransactionHandler {
     }
 
     public static void transactionHeld(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int transid,
@@ -538,7 +538,7 @@ final public class TransactionHandler {
     }
 
     public static void transactionHeld(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int transid,
         int creditCardTransaction
@@ -552,7 +552,7 @@ final public class TransactionHandler {
         invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
     }
 
-    public static String getBusinessForTransaction(MasterDatabaseConnection conn, int transid) throws IOException, SQLException {
+    public static String getBusinessForTransaction(DatabaseConnection conn, int transid) throws IOException, SQLException {
         return conn.executeStringQuery("select accounting from transactions where transid=?", transid);
     }
 }

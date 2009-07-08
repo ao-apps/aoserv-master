@@ -6,6 +6,7 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -26,7 +27,7 @@ final public class SignupHandler {
      * Creates a new <code>SignupRequest</code>.
      */
     public static int addSignupRequest(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,

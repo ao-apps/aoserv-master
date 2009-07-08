@@ -7,7 +7,7 @@ package com.aoindustries.aoserv.master;
  */
 import com.aoindustries.aoserv.client.*;
 import com.aoindustries.io.*;
-import com.aoindustries.util.*;
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.*;
 import java.sql.*;
 import java.util.*;
@@ -55,7 +55,7 @@ final public class MasterProcessManager {
     }
     
     public static void writeProcesses(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         CompressedDataOutputStream out,
         boolean provideProgress,
         RequestSource source,

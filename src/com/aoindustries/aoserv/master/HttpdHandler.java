@@ -30,7 +30,7 @@ final public class HttpdHandler {
     private final static Map<Integer,Boolean> disabledHttpdSites=new HashMap<Integer,Boolean>();
 
     public static int addHttpdWorker(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int netBindPKey,
         int httpdSitePKey
@@ -122,7 +122,7 @@ final public class HttpdHandler {
     }
 
     public static int addHttpdSiteURL(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int hsb_pkey,
@@ -160,7 +160,7 @@ final public class HttpdHandler {
         return pkey;
     }
 
-    public static void checkAccessHttpdSharedTomcat(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessHttpdSharedTomcat(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         if(
             !LinuxAccountHandler.canAccessLinuxServerGroup(
                 conn,
@@ -176,12 +176,11 @@ final public class HttpdHandler {
                 +"', pkey="
                 +pkey
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
-    public static boolean canAccessHttpdSite(MasterDatabaseConnection conn, RequestSource source, int httpdSite) throws IOException, SQLException {
+    public static boolean canAccessHttpdSite(DatabaseConnection conn, RequestSource source, int httpdSite) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -194,7 +193,7 @@ final public class HttpdHandler {
         }
     }
 
-    public static void checkAccessHttpdSite(MasterDatabaseConnection conn, RequestSource source, String action, int httpdSite) throws IOException, SQLException {
+    public static void checkAccessHttpdSite(DatabaseConnection conn, RequestSource source, String action, int httpdSite) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -206,7 +205,7 @@ final public class HttpdHandler {
     }
 
     public static int addHttpdSiteAuthenticatedLocation(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int httpd_site,
@@ -262,7 +261,7 @@ final public class HttpdHandler {
     }
 
     public static int addHttpdTomcatContext(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int tomcat_site,
@@ -352,7 +351,7 @@ final public class HttpdHandler {
     }
 
     public static int addHttpdTomcatDataSource(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int tomcat_context,
@@ -421,7 +420,7 @@ final public class HttpdHandler {
     }
 
     public static int addHttpdTomcatParameter(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int tomcat_context,
@@ -499,7 +498,7 @@ final public class HttpdHandler {
     }
 
     public static void checkHttpdTomcatContext(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int tomcat_site,
         String className,
@@ -594,7 +593,7 @@ final public class HttpdHandler {
      * Creates a new Tomcat site with the standard configuration.
      */
     public static int addHttpdJBossSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int aoServer,
@@ -633,7 +632,7 @@ final public class HttpdHandler {
     }
 
     private static int addHttpdJVMSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int aoServer,
@@ -1026,7 +1025,7 @@ final public class HttpdHandler {
     }
 
     public static int addHttpdSharedTomcat(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String name,
@@ -1170,7 +1169,7 @@ final public class HttpdHandler {
      * Creates a new Tomcat site with the standard configuration.
      */
     public static int addHttpdTomcatSharedSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int aoServer,
@@ -1435,7 +1434,7 @@ final public class HttpdHandler {
      * Creates a new Tomcat site with the standard configuration.
      */
     public static int addHttpdTomcatStdSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int aoServer,
@@ -1474,7 +1473,7 @@ final public class HttpdHandler {
     }
 
     public static void disableHttpdSharedTomcat(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -1501,7 +1500,7 @@ final public class HttpdHandler {
     }
 
     public static void disableHttpdSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -1535,7 +1534,7 @@ final public class HttpdHandler {
     }
 
     public static void disableHttpdSiteBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -1563,7 +1562,7 @@ final public class HttpdHandler {
     }
 
     public static void enableHttpdSharedTomcat(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -1593,7 +1592,7 @@ final public class HttpdHandler {
     }
 
     public static void enableHttpdSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -1623,7 +1622,7 @@ final public class HttpdHandler {
     }
 
     public static void enableHttpdSiteBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -1650,7 +1649,7 @@ final public class HttpdHandler {
         );
     }
 
-    public static String generateSharedTomcatName(MasterDatabaseConnection conn, String template) throws SQLException, IOException {
+    public static String generateSharedTomcatName(DatabaseConnection conn, String template) throws SQLException, IOException {
         // Load the entire list of site names
         List<String> names=conn.executeStringListQuery("select name from httpd_shared_tomcats group by name");
         int size=names.size();
@@ -1685,7 +1684,7 @@ final public class HttpdHandler {
     }
 
     public static String generateSiteName(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String template
     ) throws IOException, SQLException {
         // Load the entire list of site names
@@ -1720,27 +1719,27 @@ final public class HttpdHandler {
         return goodOne;
     }
 
-    public static int getDisableLogForHttpdSharedTomcat(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getDisableLogForHttpdSharedTomcat(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from httpd_shared_tomcats where pkey=?", pkey);
     }
 
-    public static int getDisableLogForHttpdSite(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getDisableLogForHttpdSite(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from httpd_sites where pkey=?", pkey);
     }
 
-    public static int getDisableLogForHttpdSiteBind(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getDisableLogForHttpdSiteBind(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from httpd_site_binds where pkey=?", pkey);
     }
 
     public static IntList getHttpdSiteBindsForHttpdSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeIntListQuery("select pkey from httpd_site_binds where httpd_site=?", pkey);
     }
 
     public static int getHttpdSiteForHttpdSiteURL(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeIntQuery(
@@ -1757,14 +1756,14 @@ final public class HttpdHandler {
     }
 
     public static IntList getHttpdSharedTomcatsForLinuxServerAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeIntListQuery("select pkey from httpd_shared_tomcats where linux_server_account=?", pkey);
     }
 
     public static IntList getHttpdSharedTomcatsForPackage(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String name
     ) throws IOException, SQLException {
         return conn.executeIntListQuery(
@@ -1783,14 +1782,14 @@ final public class HttpdHandler {
     }
 
     public static IntList getHttpdSitesForPackage(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String name
     ) throws IOException, SQLException {
         return conn.executeIntListQuery("select pkey from httpd_sites where package=?", name);
     }
 
     public static IntList getHttpdSitesForLinuxServerAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeIntListQuery(
@@ -1808,7 +1807,7 @@ final public class HttpdHandler {
     }
 
     public static String getBusinessForHttpdSharedTomcat(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeStringQuery(
@@ -1829,7 +1828,7 @@ final public class HttpdHandler {
     }
 
     public static String getBusinessForHttpdSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeStringQuery(
@@ -1846,7 +1845,7 @@ final public class HttpdHandler {
     }
 
     public static String getBusinessForHttpdServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeStringQuery(
@@ -1863,21 +1862,21 @@ final public class HttpdHandler {
     }
 
     public static int getHttpdSiteForHttpdSiteBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeIntQuery("select httpd_site from httpd_site_binds where pkey=?", pkey);
     }
 
     public static int getLinuxServerAccountForHttpdSharedTomcat(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeIntQuery("select linux_server_account from httpd_shared_tomcats where pkey=?", pkey);
     }
 
     public static int getLinuxServerAccountForHttpdSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeIntQuery(
@@ -1895,7 +1894,7 @@ final public class HttpdHandler {
     }
 
     public static String getPackageForHttpdSharedTomcat(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeStringQuery(
@@ -1914,25 +1913,25 @@ final public class HttpdHandler {
     }
 
     public static String getPackageForHttpdSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeStringQuery("select package from httpd_sites where pkey=?", pkey);
     }
 
-    public static int getAOServerForHttpdSharedTomcat(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getAOServerForHttpdSharedTomcat(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select ao_server from httpd_shared_tomcats where pkey=?", pkey);
     }
 
-    public static int getAOServerForHttpdSite(MasterDatabaseConnection conn, int httpdSite) throws IOException, SQLException {
+    public static int getAOServerForHttpdSite(DatabaseConnection conn, int httpdSite) throws IOException, SQLException {
         return conn.executeIntQuery("select ao_server from httpd_sites where pkey=?", httpdSite);
     }
 
-    public static int getAOServerForHttpdServer(MasterDatabaseConnection conn, int httpdServer) throws IOException, SQLException {
+    public static int getAOServerForHttpdServer(DatabaseConnection conn, int httpdServer) throws IOException, SQLException {
         return conn.executeIntQuery("select ao_server from httpd_servers where pkey=?", httpdServer);
     }
 
-    public static String getSiteNameForHttpdSite(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getSiteNameForHttpdSite(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select site_name from httpd_sites where pkey=?", pkey);
     }
 
@@ -1941,7 +1940,7 @@ final public class HttpdHandler {
      */
     /*
     public static void initializeHttpdSitePasswdFile(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int sitePKey,
         String username,
@@ -1972,7 +1971,7 @@ final public class HttpdHandler {
         }
     }
 
-    public static boolean isHttpdSharedTomcatDisabled(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isHttpdSharedTomcatDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(HttpdHandler.class) {
             Integer I=Integer.valueOf(pkey);
             Boolean O=disabledHttpdSharedTomcats.get(I);
@@ -1983,7 +1982,7 @@ final public class HttpdHandler {
 	    }
     }
 
-    public static boolean isHttpdSiteBindDisabled(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isHttpdSiteBindDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(HttpdHandler.class) {
             Integer I=Integer.valueOf(pkey);
             Boolean O=disabledHttpdSiteBinds.get(I);
@@ -1994,7 +1993,7 @@ final public class HttpdHandler {
 	    }
     }
 
-    public static boolean isHttpdSiteDisabled(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isHttpdSiteDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(HttpdHandler.class) {
             Integer I=Integer.valueOf(pkey);
             Boolean O=disabledHttpdSites.get(I);
@@ -2005,11 +2004,11 @@ final public class HttpdHandler {
 	    }
     }
 
-    public static boolean isSharedTomcatNameAvailable(MasterDatabaseConnection conn, String name) throws IOException, SQLException {
+    public static boolean isSharedTomcatNameAvailable(DatabaseConnection conn, String name) throws IOException, SQLException {
         return conn.executeBooleanQuery("select (select pkey from httpd_shared_tomcats where name=? limit 1) is null", name);
     }
 
-    public static boolean isSiteNameAvailable(MasterDatabaseConnection conn, String siteName) throws IOException, SQLException {
+    public static boolean isSiteNameAvailable(DatabaseConnection conn, String siteName) throws IOException, SQLException {
         return conn.executeBooleanQuery("select (select pkey from httpd_sites where site_name=? limit 1) is null", siteName);
     }
 
@@ -2017,7 +2016,7 @@ final public class HttpdHandler {
      * Starts up a Java VM
      */
     public static String startJVM(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int tomcat_site
     ) throws IOException, SQLException {
@@ -2035,7 +2034,7 @@ final public class HttpdHandler {
      * Stops up a Java VM
      */
     public static String stopJVM(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         int tomcat_site
     ) throws IOException, SQLException {
@@ -2067,7 +2066,7 @@ final public class HttpdHandler {
      * Waits for pending or processing updates to complete.
      */
     public static void waitForHttpdSiteRebuild(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -2077,7 +2076,7 @@ final public class HttpdHandler {
     }
 
     public static int getHttpdBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String packageName,
         int aoServer,
@@ -2284,7 +2283,7 @@ final public class HttpdHandler {
     }
 
     public static void removeHttpdSharedTomcat(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -2295,7 +2294,7 @@ final public class HttpdHandler {
     }
 
     public static void removeHttpdSharedTomcat(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -2330,7 +2329,7 @@ final public class HttpdHandler {
     }
 
     public static void removeHttpdSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int httpdSitePKey
@@ -2362,7 +2361,7 @@ final public class HttpdHandler {
          *           + httpd_static_sites
          */
     public static void removeHttpdSite(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int httpdSitePKey
     ) throws IOException, SQLException {
@@ -2568,7 +2567,7 @@ final public class HttpdHandler {
     }
 
     public static void removeHttpdServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -2581,7 +2580,7 @@ final public class HttpdHandler {
     }
 
     public static void removeHttpdSiteAuthenticatedLocation(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -2603,7 +2602,7 @@ final public class HttpdHandler {
     }
 
     public static void removeHttpdSiteURL(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -2635,7 +2634,7 @@ final public class HttpdHandler {
     }
 
     public static void removeHttpdTomcatContext(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -2679,7 +2678,7 @@ final public class HttpdHandler {
     }
 
     public static void removeHttpdTomcatDataSource(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -2702,7 +2701,7 @@ final public class HttpdHandler {
     }
 
     public static void removeHttpdTomcatParameter(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -2725,7 +2724,7 @@ final public class HttpdHandler {
     }
 
     public static void updateHttpdTomcatDataSource(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -2769,7 +2768,7 @@ final public class HttpdHandler {
     }
 
     public static void updateHttpdTomcatParameter(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -2803,7 +2802,7 @@ final public class HttpdHandler {
     }
 
     public static void restartApache(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -2813,7 +2812,7 @@ final public class HttpdHandler {
     }
 
     public static void setHttpdSharedTomcatIsManual(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -2839,7 +2838,7 @@ final public class HttpdHandler {
     }
 
     public static void setHttpdSiteAuthenticatedLocationAttributes(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -2890,7 +2889,7 @@ final public class HttpdHandler {
     }
 
     public static void setHttpdSiteBindIsManual(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -2917,7 +2916,7 @@ final public class HttpdHandler {
     }
 
     public static void setHttpdSiteBindRedirectToPrimaryHostname(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -2944,7 +2943,7 @@ final public class HttpdHandler {
     }
 
     public static void setHttpdSiteBindPredisableConfig(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int hsb,
@@ -2975,7 +2974,7 @@ final public class HttpdHandler {
     }
 
     public static void setHttpdSiteIsManual(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -3001,7 +3000,7 @@ final public class HttpdHandler {
     }
 
     public static void setHttpdSiteServerAdmin(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -3028,7 +3027,7 @@ final public class HttpdHandler {
     }
 
     public static int setHttpdTomcatContextAttributes(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -3118,7 +3117,7 @@ final public class HttpdHandler {
     }
 
     public static void setPrimaryHttpdSiteURL(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -3138,7 +3137,7 @@ final public class HttpdHandler {
     }
 
     public static void startApache(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -3148,7 +3147,7 @@ final public class HttpdHandler {
     }
 
     public static void stopApache(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -3158,7 +3157,7 @@ final public class HttpdHandler {
     }
     
     public static void getAWStatsFile(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey,
         String path,

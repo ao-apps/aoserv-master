@@ -5,6 +5,7 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -15,7 +16,7 @@ import java.sql.SQLException;
  */
 final public class NetDeviceHandler {
 
-    public static String getNetDeviceBondingReport(MasterDatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
+    public static String getNetDeviceBondingReport(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
         int server = getServerForNetDevice(conn, pkey);
         if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
         ServerHandler.checkAccessServer(conn, source, "getNetDeviceBondingReport", server);
@@ -23,7 +24,7 @@ final public class NetDeviceHandler {
         return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceBondingReport(pkey);
     }
 
-    public static String getNetDeviceStatisticsReport(MasterDatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
+    public static String getNetDeviceStatisticsReport(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
         int server = getServerForNetDevice(conn, pkey);
         if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
         ServerHandler.checkAccessServer(conn, source, "getNetDeviceStatisticsReport", server);
@@ -31,7 +32,7 @@ final public class NetDeviceHandler {
         return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceStatisticsReport(pkey);
     }
 
-    public static int getServerForNetDevice(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getServerForNetDevice(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select server from net_devices where pkey=?", pkey);
     }
 }

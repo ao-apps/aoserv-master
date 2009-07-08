@@ -18,6 +18,7 @@ import com.aoindustries.aoserv.client.MySQLUser;
 import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import java.io.IOException;
@@ -38,7 +39,7 @@ final public class MySQLHandler {
     private final static Map<Integer,Boolean> disabledMySQLServerUsers=new HashMap<Integer,Boolean>();
     private final static Map<String,Boolean> disabledMySQLUsers=new HashMap<String,Boolean>();
 
-    public static void checkAccessMySQLDatabase(MasterDatabaseConnection conn, RequestSource source, String action, int mysql_database) throws IOException, SQLException {
+    public static void checkAccessMySQLDatabase(DatabaseConnection conn, RequestSource source, String action, int mysql_database) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -51,12 +52,12 @@ final public class MySQLHandler {
         }
     }
 
-    public static void checkAccessMySQLDBUser(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessMySQLDBUser(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         checkAccessMySQLDatabase(conn, source, action, getMySQLDatabaseForMySQLDBUser(conn, pkey));
         checkAccessMySQLServerUser(conn, source, action, getMySQLServerUserForMySQLDBUser(conn, pkey));
     }
 
-    public static void checkAccessMySQLServerUser(MasterDatabaseConnection conn, RequestSource source, String action, int mysql_server_user) throws IOException, SQLException {
+    public static void checkAccessMySQLServerUser(DatabaseConnection conn, RequestSource source, String action, int mysql_server_user) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -69,7 +70,7 @@ final public class MySQLHandler {
         }
     }
 
-    public static void checkAccessMySQLServer(MasterDatabaseConnection conn, RequestSource source, String action, int mysql_server) throws IOException, SQLException {
+    public static void checkAccessMySQLServer(DatabaseConnection conn, RequestSource source, String action, int mysql_server) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -84,7 +85,7 @@ final public class MySQLHandler {
         }
     }
 
-    public static void checkAccessMySQLUser(MasterDatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
+    public static void checkAccessMySQLUser(DatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -107,7 +108,6 @@ final public class MySQLHandler {
                         +", username="
                         +username
                     ;
-                    MasterServer.reportSecurityMessage(source, message);
                     throw new SQLException(message);
                 }
             }
@@ -120,7 +120,7 @@ final public class MySQLHandler {
      * Adds a MySQL database to the system.
      */
     public static int addMySQLDatabase(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String name,
@@ -177,7 +177,7 @@ final public class MySQLHandler {
      * Grants a MySQLServerUser access to a MySQLMasterDatabase.getDatabase().
      */
     public static int addMySQLDBUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int mysql_database,
@@ -247,7 +247,7 @@ final public class MySQLHandler {
      * Adds a MySQL server user.
      */
     public static int addMySQLServerUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username,
@@ -291,7 +291,7 @@ final public class MySQLHandler {
      * Adds a MySQL user.
      */
     public static void addMySQLUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         String username
@@ -317,7 +317,7 @@ final public class MySQLHandler {
     }
 
     public static void disableMySQLServerUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -344,7 +344,7 @@ final public class MySQLHandler {
     }
 
     public static void disableMySQLUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -381,7 +381,7 @@ final public class MySQLHandler {
      * Dumps a MySQL database
      */
     public static void dumpMySQLDatabase(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out,
         int dbPKey
@@ -394,7 +394,7 @@ final public class MySQLHandler {
     }
 
     public static void enableMySQLServerUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -422,7 +422,7 @@ final public class MySQLHandler {
     }
 
     public static void enableMySQLUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username
@@ -452,7 +452,7 @@ final public class MySQLHandler {
      * Generates a unique MySQL database name.
      */
     public static String generateMySQLDatabaseName(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String template_base,
         String template_added
     ) throws IOException, SQLException {
@@ -484,7 +484,7 @@ final public class MySQLHandler {
 
     private static final Object reservedWordLock=new Object();
     private static List<String> reservedWordCache;
-    public static List<String> getReservedWords(MasterDatabaseConnection conn) throws IOException, SQLException {
+    public static List<String> getReservedWords(DatabaseConnection conn) throws IOException, SQLException {
         synchronized(reservedWordLock) {
             if(reservedWordCache==null) {
                 // Load the list of reserved words
@@ -494,19 +494,19 @@ final public class MySQLHandler {
         }
     }
 
-    public static int getDisableLogForMySQLServerUser(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getDisableLogForMySQLServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql_server_users where pkey=?", pkey);
     }
 
-    public static int getDisableLogForMySQLUser(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static int getDisableLogForMySQLUser(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql_users where username=?", username);
     }
 
-    public static String getUsernameForMySQLServerUser(MasterDatabaseConnection conn, int msu) throws IOException, SQLException {
+    public static String getUsernameForMySQLServerUser(DatabaseConnection conn, int msu) throws IOException, SQLException {
         return conn.executeStringQuery("select username from mysql_server_users where pkey=?", msu);
     }
 
-    public static String getMySQLDatabaseName(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getMySQLDatabaseName(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select name from mysql_databases where pkey=?", pkey);
     }
 
@@ -530,7 +530,7 @@ final public class MySQLHandler {
         }
     }
 
-    public static boolean isMySQLServerUserDisabled(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isMySQLServerUserDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(MySQLHandler.class) {
             Integer I=Integer.valueOf(pkey);
             Boolean O=disabledMySQLServerUsers.get(I);
@@ -541,7 +541,7 @@ final public class MySQLHandler {
 	    }
     }
 
-    public static boolean isMySQLUser(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isMySQLUser(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             "select\n"
             + "  (\n"
@@ -557,7 +557,7 @@ final public class MySQLHandler {
         );
     }
 
-    public static boolean isMySQLUserDisabled(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isMySQLUserDisabled(DatabaseConnection conn, String username) throws IOException, SQLException {
 	    synchronized(MySQLHandler.class) {
             Boolean O=disabledMySQLUsers.get(username);
             if(O!=null) return O.booleanValue();
@@ -571,7 +571,7 @@ final public class MySQLHandler {
      * Determines if a MySQL database name is available.
      */
     public static boolean isMySQLDatabaseNameAvailable(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         String name,
         int mysqlServer
@@ -582,7 +582,7 @@ final public class MySQLHandler {
     }
 
     public static boolean isMySQLServerUserPasswordSet(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int msu
     ) throws IOException, SQLException {
@@ -599,7 +599,7 @@ final public class MySQLHandler {
      * Removes a MySQLDatabase from the system.
      */
     public static void removeMySQLDatabase(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -613,7 +613,7 @@ final public class MySQLHandler {
      * Removes a MySQLDatabase from the system.
      */
     public static void removeMySQLDatabase(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -668,7 +668,7 @@ final public class MySQLHandler {
      * Removes a MySQLDBUser from the system.
      */
     public static void removeMySQLDBUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -694,7 +694,7 @@ final public class MySQLHandler {
      * Removes a MySQLServerUser from the system.
      */
     public static void removeMySQLServerUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -735,7 +735,7 @@ final public class MySQLHandler {
      * Removes a MySQLUser from the system.
      */
     public static void removeMySQLUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         String username
@@ -749,7 +749,7 @@ final public class MySQLHandler {
      * Removes a MySQLUser from the system.
      */
     public static void removeMySQLUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String username
     ) throws IOException, SQLException {
@@ -831,7 +831,7 @@ final public class MySQLHandler {
      * Sets a MySQL password.
      */
     public static void setMySQLServerUserPassword(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int mysql_server_user,
         String password
@@ -863,7 +863,7 @@ final public class MySQLHandler {
     }
 
     public static void setMySQLServerUserPredisablePassword(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int msu,
@@ -898,7 +898,7 @@ final public class MySQLHandler {
      * Waits for any pending or processing MySQL database config rebuild to complete.
      */
     public static void waitForMySQLDatabaseRebuild(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -911,7 +911,7 @@ final public class MySQLHandler {
      * Waits for any pending or processing MySQL database config rebuild to complete.
      */
     public static void waitForMySQLDBUserRebuild(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -924,7 +924,7 @@ final public class MySQLHandler {
      * Waits for any pending or processing MySQL database config rebuild to complete.
      */
     public static void waitForMySQLUserRebuild(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -933,11 +933,11 @@ final public class MySQLHandler {
         DaemonHandler.getDaemonConnector(conn, aoServer).waitForMySQLUserRebuild();
     }
 
-    public static String getBusinessForMySQLDatabase(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForMySQLDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from mysql_databases md, packages pk where md.package=pk.name and md.pkey=?", pkey);
     }
 
-    public static String getBusinessForMySQLDBUser(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  pk.accounting\n"
@@ -955,7 +955,7 @@ final public class MySQLHandler {
         );
     }
 
-    public static String getBusinessForMySQLServerUser(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForMySQLServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  pk.accounting\n"
@@ -971,52 +971,52 @@ final public class MySQLHandler {
         );
     }
 
-    public static int getPackageForMySQLDatabase(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getPackageForMySQLDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select pk.pkey from mysql_databases md, packages pk where md.pkey=? and md.package=pk.name", pkey);
     }
 
-    public static IntList getMySQLServerUsersForMySQLUser(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static IntList getMySQLServerUsersForMySQLUser(DatabaseConnection conn, String username) throws IOException, SQLException {
         return conn.executeIntListQuery("select pkey from mysql_server_users where username=?", username);
     }
 
-    public static int getMySQLServerForMySQLDatabase(MasterDatabaseConnection conn, int mysql_database) throws IOException, SQLException {
+    public static int getMySQLServerForMySQLDatabase(DatabaseConnection conn, int mysql_database) throws IOException, SQLException {
         return conn.executeIntQuery("select mysql_server from mysql_databases where pkey=?", mysql_database);
     }
 
-    public static int getAOServerForMySQLServer(MasterDatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
+    public static int getAOServerForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
         return conn.executeIntQuery("select ao_server from mysql_servers where pkey=?", mysqlServer);
     }
 
-    public static String getPackageForMySQLServer(MasterDatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
+    public static String getPackageForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
         return conn.executeStringQuery("select package from mysql_servers where pkey=?", mysqlServer);
     }
 
-    public static int getPortForMySQLServer(MasterDatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
+    public static int getPortForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
         return conn.executeIntQuery("select nb.port from mysql_servers ms inner join net_binds nb on ms.net_bind=nb.pkey where ms.pkey=?", mysqlServer);
     }
 
-    public static int getMySQLServerForFailoverMySQLReplication(MasterDatabaseConnection conn, int failoverMySQLReplication) throws IOException, SQLException {
+    public static int getMySQLServerForFailoverMySQLReplication(DatabaseConnection conn, int failoverMySQLReplication) throws IOException, SQLException {
         return conn.executeIntQuery("select mysql_server from failover_mysql_replications where pkey=?", failoverMySQLReplication);
     }
 
-    public static int getMySQLServerForMySQLDBUser(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getMySQLServerForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select msu.mysql_server from mysql_db_users mdu, mysql_server_users msu where mdu.pkey=? and mdu.mysql_server_user=msu.pkey", pkey);
     }
 
-    public static int getMySQLDatabaseForMySQLDBUser(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getMySQLDatabaseForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select mysql_database from mysql_db_users where pkey=?", pkey);
     }
 
-    public static int getMySQLServerUserForMySQLDBUser(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getMySQLServerUserForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select mysql_user from mysql_db_users where pkey=?", pkey);
     }
 
-    public static int getMySQLServerForMySQLServerUser(MasterDatabaseConnection conn, int mysql_server_user) throws IOException, SQLException {
+    public static int getMySQLServerForMySQLServerUser(DatabaseConnection conn, int mysql_server_user) throws IOException, SQLException {
         return conn.executeIntQuery("select mysql_server from mysql_server_users where pkey=?", mysql_server_user);
     }
 
     public static void restartMySQL(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int mysqlServer
     ) throws IOException, SQLException {
@@ -1027,7 +1027,7 @@ final public class MySQLHandler {
     }
 
     public static void startMySQL(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -1037,7 +1037,7 @@ final public class MySQLHandler {
     }
 
     public static void stopMySQL(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
@@ -1047,7 +1047,7 @@ final public class MySQLHandler {
     }
     
     public static void getMasterStatus(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int mysqlServer,
         CompressedDataOutputStream out
@@ -1077,7 +1077,7 @@ final public class MySQLHandler {
     }
 
     public static void getSlaveStatus(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int failoverMySQLReplication,
         CompressedDataOutputStream out

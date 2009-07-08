@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
  */
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.LongArrayList;
 import com.aoindustries.util.LongList;
@@ -18,6 +19,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>ServerHandler</code> handles all the accesses to the Server tables.
@@ -26,11 +29,16 @@ import java.util.Map;
  */
 final public class ServerHandler {
 
+    private static final Logger logger = LogFactory.getLogger(ServerHandler.class);
+
+    private ServerHandler() {
+    }
+
     private static Map<String,List<Integer>> usernameServers;
 
     /*
     public static int addBackupServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String hostname,
@@ -144,7 +152,7 @@ final public class ServerHandler {
         return serverPKey;
     }*/
 
-    /*public static void checkAccessServer(MasterDatabaseConnection conn, RequestSource source, String action, String server) throws IOException, SQLException {
+    /*public static void checkAccessServer(DatabaseConnection conn, RequestSource source, String action, String server) throws IOException, SQLException {
         if(!canAccessServer(conn, source, server)) {
             String message=
                 "business_administrator.username="
@@ -159,7 +167,7 @@ final public class ServerHandler {
         }
     }*/
 
-    public static void checkAccessServer(MasterDatabaseConnection conn, RequestSource source, String action, int server) throws IOException, SQLException {
+    public static void checkAccessServer(DatabaseConnection conn, RequestSource source, String action, int server) throws IOException, SQLException {
         if(!canAccessServer(conn, source, server)) {
             String message=
                 "business_administrator.username="
@@ -169,17 +177,16 @@ final public class ServerHandler {
                 +", server.pkey="
                 +server
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
     /*
-    public static boolean canAccessServer(MasterDatabaseConnection conn, RequestSource source, String server) throws IOException, SQLException {
+    public static boolean canAccessServer(DatabaseConnection conn, RequestSource source, String server) throws IOException, SQLException {
         return getAllowedServers(conn, source).contains(server);
     }*/
 
-    public static boolean canAccessServer(MasterDatabaseConnection conn, RequestSource source, int server) throws IOException, SQLException {
+    public static boolean canAccessServer(DatabaseConnection conn, RequestSource source, int server) throws IOException, SQLException {
         return getAllowedServers(conn, source).contains(server);
     }
 
@@ -187,7 +194,7 @@ final public class ServerHandler {
      * Creates a new <code>CreditCard</code>.
      */
     public static int addServerReport(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         String server,
         long time,
@@ -200,7 +207,7 @@ final public class ServerHandler {
     /**
      * Gets the servers that are allowed for the provided username.
      */
-    static List<Integer> getAllowedServers(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+    static List<Integer> getAllowedServers(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
 	    synchronized(ServerHandler.class) {
             String username=source.getUsername();
             if(usernameServers==null) usernameServers=new HashMap<String,List<Integer>>();
@@ -240,12 +247,12 @@ final public class ServerHandler {
 	    }
     }
 
-    public static List<String> getBusinessesForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
+    public static List<String> getBusinessesForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
         return conn.executeStringListQuery("select accounting from business_servers where server=?", server);
     }
 
     final private static Map<Integer,Integer> failoverServers=new HashMap<Integer,Integer>();
-    public static int getFailoverServer(MasterDatabaseConnection conn, int aoServer) throws IOException, SQLException {
+    public static int getFailoverServer(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
         synchronized(failoverServers) {
             if(failoverServers.containsKey(aoServer)) return failoverServers.get(aoServer).intValue();
             int failoverServer=conn.executeIntQuery(
@@ -268,7 +275,7 @@ final public class ServerHandler {
     }
 
     final private static Map<Integer,String> farmsForServers=new HashMap<Integer,String>();
-    public static String getFarmForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
+    public static String getFarmForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
         Integer I=Integer.valueOf(server);
         synchronized(farmsForServers) {
             String farm=farmsForServers.get(I);
@@ -281,7 +288,7 @@ final public class ServerHandler {
     }
 
     final private static Map<Integer,String> hostnamesForAOServers=new HashMap<Integer,String>();
-    public static String getHostnameForAOServer(MasterDatabaseConnection conn, int aoServer) throws IOException, SQLException {
+    public static String getHostnameForAOServer(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
         Integer I=Integer.valueOf(aoServer);
         synchronized(hostnamesForAOServers) {
             String hostname=hostnamesForAOServers.get(I);
@@ -296,12 +303,12 @@ final public class ServerHandler {
     /**
      * Gets the operating system version for a server or <code>-1</code> if not available.
      */
-    public static int getOperatingSystemVersionForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
+    public static int getOperatingSystemVersionForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce((select operating_system_version from servers where pkey=?), -1)", server);
     }
 
     final private static Map<String,Integer> serversForAOServers=new HashMap<String,Integer>();
-    public static int getServerForAOServerHostname(MasterDatabaseConnection conn, String aoServerHostname) throws IOException, SQLException {
+    public static int getServerForAOServerHostname(DatabaseConnection conn, String aoServerHostname) throws IOException, SQLException {
         synchronized(serversForAOServers) {
             Integer I=serversForAOServers.get(aoServerHostname);
             int server;
@@ -313,12 +320,12 @@ final public class ServerHandler {
         }
     }
 
-    public static IntList getServers(MasterDatabaseConnection conn) throws IOException, SQLException {
+    public static IntList getServers(DatabaseConnection conn) throws IOException, SQLException {
         return conn.executeIntListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select pkey from servers");
     }
 
     final private static Map<Integer,Boolean> aoServers=new HashMap<Integer,Boolean>();
-    public static boolean isAOServer(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isAOServer(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         Integer I=Integer.valueOf(pkey);
         synchronized(aoServers) {
             if(aoServers.containsKey(I)) return aoServers.get(I).booleanValue();
@@ -420,7 +427,7 @@ final public class ServerHandler {
                             boolean foundOlder=false;
                             while(I.hasNext()) {
                                 Long idLong=I.next();
-                                RequestSource source=(RequestSource)ids.get(idLong);
+                                RequestSource source=ids.get(idLong);
                                 if(source.isClosed()) {
                                     if(closedIDs==null) closedIDs=new LongArrayList();
                                     closedIDs.add(idLong);
@@ -440,7 +447,7 @@ final public class ServerHandler {
                                 try {
                                     invalidateSyncLock.wait(maxWait);
                                 } catch(InterruptedException err) {
-                                    MasterServer.reportWarning(err, null);
+                                    logger.log(Level.WARNING, null, err);
                                 }
                             } else {
                                 invalidateSyncLock.notify();
@@ -461,14 +468,14 @@ final public class ServerHandler {
     /**
      * Gets the package that owns the server.
      */
-    public static int getPackageForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
+    public static int getPackageForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
         return conn.executeIntQuery("select package from servers where pkey=?", server);
     }
    
     /**
      * Gets the per-package unique name of the server.
      */
-    public static String getNameForServer(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
+    public static String getNameForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
         return conn.executeStringQuery("select name from servers where pkey=?", server);
     }
 }

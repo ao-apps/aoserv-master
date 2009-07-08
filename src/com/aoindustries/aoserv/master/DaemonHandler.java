@@ -5,12 +5,19 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.aoserv.daemon.client.*;
-import com.aoindustries.io.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.aoserv.client.IPAddress;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
+import com.aoindustries.io.AOPool;
+import com.aoindustries.sql.DatabaseConnection;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Random;
+import java.util.logging.Logger;
 
 /**
  * The <code>AOServDaemonHandler</code> handles all the accesses to the daemons.
@@ -18,6 +25,11 @@ import java.util.*;
  * @author  AO Industries, Inc.
  */
 final public class DaemonHandler {
+
+    private static final Logger logger = LogFactory.getLogger(DaemonHandler.class);
+
+    private DaemonHandler() {
+    }
 
     /**
      * The amount of time before a daemon will be accessed again once
@@ -47,10 +59,10 @@ final public class DaemonHandler {
         return total;
     }
 
-    public static String getDaemonConnectorIP(MasterDatabaseConnection dbConn, int aoServer) throws IOException, SQLException {
-        String address=dbConn.executeStringQuery("select daemon_connect_address from ao_servers where server=?", aoServer);
+    public static String getDaemonConnectorIP(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
+        String address=conn.executeStringQuery("select daemon_connect_address from ao_servers where server=?", aoServer);
         if(address!=null) return address;
-        String ip=dbConn.executeStringQuery(
+        String ip=conn.executeStringQuery(
             "select\n"
             + "  ia.ip_address\n"
             + "from\n"
@@ -65,7 +77,7 @@ final public class DaemonHandler {
         );
         if(ip==null) throw new SQLException("Unable to find daemon IP address for AOServer: "+aoServer);
         if(ip.equals(IPAddress.WILDCARD_IP)) {
-            ip=dbConn.executeStringQuery(
+            ip=conn.executeStringQuery(
                 "select\n"
                 + "  ia.ip_address\n"
                 + "from\n"
@@ -90,7 +102,7 @@ final public class DaemonHandler {
         return ip;
     }
 
-    public static int getDaemonConnectorPort(MasterDatabaseConnection conn, int aoServer) throws IOException, SQLException {
+    public static int getDaemonConnectorPort(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  nb.port\n"
@@ -104,7 +116,7 @@ final public class DaemonHandler {
         );
     }
 
-    public static String getDaemonConnectorProtocol(MasterDatabaseConnection conn, int aoServer) throws IOException, SQLException {
+    public static String getDaemonConnectorProtocol(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  nb.app_protocol\n"
@@ -118,7 +130,7 @@ final public class DaemonHandler {
         );
     }
 
-    public static int getDaemonConnectorPoolSize(MasterDatabaseConnection conn, int aoServer) throws IOException, SQLException {
+    public static int getDaemonConnectorPoolSize(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  pool_size\n"
@@ -130,7 +142,7 @@ final public class DaemonHandler {
         );
     }
 
-    public static AOServDaemonConnector getDaemonConnector(MasterDatabaseConnection dbConn, int aoServer) throws IOException, SQLException {
+    public static AOServDaemonConnector getDaemonConnector(DatabaseConnection dbConn, int aoServer) throws IOException, SQLException {
         Integer I=Integer.valueOf(aoServer);
         synchronized(DaemonHandler.class) {
         AOServDaemonConnector O=connectors.get(I);
@@ -150,7 +162,7 @@ final public class DaemonHandler {
                 SSLServer.sslProviderLoaded,
                 MasterConfiguration.getSSLTruststorePath(),
                 MasterConfiguration.getSSLTruststorePassword(),
-                MasterServer.getErrorHandler()
+                logger
             );
             connectors.put(I, conn);
             return conn;
@@ -263,7 +275,7 @@ final public class DaemonHandler {
     private static long lastKeyCleanTime=-1;
 
     public static long requestDaemonAccess(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int aoServer,
         int daemonCommandCode,
@@ -326,7 +338,7 @@ final public class DaemonHandler {
     }
     
     public static long grantDaemonAccess(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int aoServer,
         int daemonCommandCode,
         String param1,

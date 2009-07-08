@@ -11,12 +11,15 @@ import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.io.BitRateProvider;
 import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>FailoverHandler</code> handles all the accesses to the failover tables.
@@ -25,8 +28,10 @@ import java.util.List;
  */
 final public class FailoverHandler implements CronJob {
 
+    private static final Logger logger = LogFactory.getLogger(FailoverHandler.class);
+
     public static int addFailoverFileLog(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int replication,
@@ -84,7 +89,7 @@ final public class FailoverHandler implements CronJob {
     }
     
     public static void setFailoverFileReplicationBitRate(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -115,7 +120,7 @@ final public class FailoverHandler implements CronJob {
     }
 
     public static void setFailoverFileSchedules(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int replication,
@@ -174,7 +179,7 @@ final public class FailoverHandler implements CronJob {
     }
 
     public static void setFileBackupSettingsAllAtOnce(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int replication,
@@ -241,16 +246,16 @@ final public class FailoverHandler implements CronJob {
         }
     }
 
-    public static int getFromServerForFailoverFileReplication(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getFromServerForFailoverFileReplication(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select server from failover_file_replications where pkey=?", pkey);
     }
 
-    public static int getBackupPartitionForFailoverFileReplication(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getBackupPartitionForFailoverFileReplication(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select backup_partition from failover_file_replications where pkey=?", pkey);
     }
 
     public static void getFailoverFileLogs(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out,
         int replication,
@@ -291,7 +296,7 @@ final public class FailoverHandler implements CronJob {
         synchronized(System.out) {
             if(!started) {
                 System.out.print("Starting FailoverHandler: ");
-                CronDaemon.addCronJob(new FailoverHandler(), MasterServer.getErrorHandler());
+                CronDaemon.addCronJob(new FailoverHandler(), logger);
                 started=true;
                 System.out.println("Done");
             }
@@ -307,7 +312,7 @@ final public class FailoverHandler implements CronJob {
         } catch(ThreadDeath TD) {
             throw TD;
         } catch(Throwable T) {
-            MasterServer.reportError(T, null);
+            logger.log(Level.SEVERE, null, T);
         }
     }
 }

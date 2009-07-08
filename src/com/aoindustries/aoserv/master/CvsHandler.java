@@ -6,6 +6,7 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.*;
 import java.io.*;
 import java.sql.*;
@@ -21,7 +22,7 @@ final public class CvsHandler {
     private final static Map<Integer,Boolean> disabledCvsRepositories=new HashMap<Integer,Boolean>();
 
     public static int addCvsRepository(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int aoServer,
@@ -157,7 +158,7 @@ final public class CvsHandler {
      * Disables a CVS repository.
      */
     public static void disableCvsRepository(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -185,7 +186,7 @@ final public class CvsHandler {
     }
 
     public static void enableCvsRepository(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -212,11 +213,11 @@ final public class CvsHandler {
         );
     }
 
-    public static IntList getCvsRepositoriesForLinuxServerAccount(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static IntList getCvsRepositoriesForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select pkey from cvs_repositories where linux_server_account=?", pkey);
     }
 
-    public static int getLinuxServerAccountForCvsRepository(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getLinuxServerAccountForCvsRepository(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select linux_server_account from cvs_repositories where pkey=?", pkey);
     }
 
@@ -228,11 +229,11 @@ final public class CvsHandler {
         }
     }
 
-    public static int getDisableLogForCvsRepository(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getDisableLogForCvsRepository(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from cvs_repositories where pkey=?", pkey);
     }
 
-    public static boolean isCvsRepositoryDisabled(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isCvsRepositoryDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(CvsHandler.class) {
             Integer I=Integer.valueOf(pkey);
             Boolean O=disabledCvsRepositories.get(I);
@@ -244,7 +245,7 @@ final public class CvsHandler {
     }
 
     public static void removeCvsRepository(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -257,7 +258,7 @@ final public class CvsHandler {
     }
 
     public static void removeCvsRepository(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -278,7 +279,7 @@ final public class CvsHandler {
     }
 
     public static void setMode(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,

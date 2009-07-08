@@ -6,6 +6,7 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.*;
 import java.sql.*;
 
@@ -16,7 +17,7 @@ import java.sql.*;
  */
 final public class IPAddressHandler {
 
-    public static void checkAccessIPAddress(MasterDatabaseConnection conn, RequestSource source, String action, int ipAddress) throws IOException, SQLException {
+    public static void checkAccessIPAddress(DatabaseConnection conn, RequestSource source, String action, int ipAddress) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -27,7 +28,7 @@ final public class IPAddressHandler {
         }
     }
 
-    public static boolean isDHCPAddress(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isDHCPAddress(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             "select is_dhcp from ip_addresses where pkey=?",
             pkey
@@ -35,7 +36,7 @@ final public class IPAddressHandler {
     }
 
     public static String getUnassignedHostname(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int ipAddress
     ) throws IOException, SQLException {
         String ip=getIPStringForIPAddress(conn, ipAddress);
@@ -49,7 +50,7 @@ final public class IPAddressHandler {
     }
 
     public static void moveIPAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ipAddress,
@@ -94,7 +95,7 @@ final public class IPAddressHandler {
      * Sets the IP address for a DHCP-enabled IP address.
      */
     public static void setIPAddressDHCPAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ipAddress,
@@ -127,7 +128,7 @@ final public class IPAddressHandler {
      * Sets the hostname for an IP address.
      */
     public static void setIPAddressHostname(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ipAddress,
@@ -143,7 +144,7 @@ final public class IPAddressHandler {
      * Sets the hostname for an IP address.
      */
     public static void setIPAddressHostname(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int ipAddress,
         String hostname
@@ -183,7 +184,7 @@ final public class IPAddressHandler {
      * Sets the Package owner of an IPAddress.
      */
     public static void setIPAddressPackage(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ipAddress,
@@ -199,7 +200,7 @@ final public class IPAddressHandler {
      * Sets the Package owner of an IPAddress.
      */
     public static void setIPAddressPackage(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int ipAddress,
         String newPackage
@@ -234,7 +235,7 @@ final public class IPAddressHandler {
         );
     }
 
-    public static int getSharedHttpdIP(MasterDatabaseConnection conn, int aoServer, boolean supportsModJK) throws IOException, SQLException {
+    public static int getSharedHttpdIP(DatabaseConnection conn, int aoServer, boolean supportsModJK) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  coalesce(\n"
@@ -293,27 +294,27 @@ final public class IPAddressHandler {
         );
     }
 
-    public static String getPackageForIPAddress(MasterDatabaseConnection conn, int ipAddress) throws IOException, SQLException {
+    public static String getPackageForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
         return conn.executeStringQuery("select package from ip_addresses where pkey=?", ipAddress);
     }
 
-    public static String getBusinessForIPAddress(MasterDatabaseConnection conn, int ipAddress) throws IOException, SQLException {
+    public static String getBusinessForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from ip_addresses ia, packages pk where ia.pkey=? and ia.package=pk.name", ipAddress);
     }
 
-    public static int getServerForIPAddress(MasterDatabaseConnection conn, int ipAddress) throws IOException, SQLException {
+    public static int getServerForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
         return conn.executeIntQuery("select nd.server from ip_addresses ia, net_devices nd where ia.pkey=? and ia.net_device=nd.pkey", ipAddress);
     }
 
-    public static String getIPStringForIPAddress(MasterDatabaseConnection conn, int ipAddress) throws IOException, SQLException {
+    public static String getIPStringForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
         return conn.executeStringQuery("select ip_address from ip_addresses where pkey=?", ipAddress);
     }
 
-    public static int getWildcardIPAddress(MasterDatabaseConnection conn) throws IOException, SQLException {
+    public static int getWildcardIPAddress(DatabaseConnection conn) throws IOException, SQLException {
         return conn.executeIntQuery("select pkey from ip_addresses where ip_address=? limit 1", IPAddress.WILDCARD_IP);
     }
 
-    public static int getLoopbackIPAddress(MasterDatabaseConnection conn, int server) throws IOException, SQLException {
+    public static int getLoopbackIPAddress(DatabaseConnection conn, int server) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  ia.pkey\n"
@@ -331,7 +332,7 @@ final public class IPAddressHandler {
     }
 
     public static void releaseIPAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int ipAddress
     ) throws IOException, SQLException {

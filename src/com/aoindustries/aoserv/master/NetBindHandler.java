@@ -6,6 +6,7 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.*;
 import java.sql.*;
 
@@ -22,7 +23,7 @@ final public class NetBindHandler {
     private static final Object netBindLock=new Object();
 
     public static int addNetBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int server,
@@ -193,7 +194,7 @@ final public class NetBindHandler {
      * Now allocating unique to entire system for server portability between farms
      */
     public static int allocateNetBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int server,
         int ipAddress,
@@ -328,14 +329,14 @@ final public class NetBindHandler {
     }
 
     public static String getBusinessForNetBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from net_binds nb, packages pk where nb.pkey=? and nb.package=pk.name", pkey);
     }
 
     public static int getNetBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int server,
         int ipAddress,
         int port,
@@ -364,21 +365,21 @@ final public class NetBindHandler {
     }
 
     public static int getServerForNetBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeIntQuery("select server from net_binds where pkey=?", pkey);
     }
 
     public static String getPackageForNetBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeStringQuery("select package from net_binds where pkey=?", pkey);
     }
 
     public static void removeNetBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -391,7 +392,7 @@ final public class NetBindHandler {
     }
 
     public static void removeNetBind(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -442,7 +443,7 @@ final public class NetBindHandler {
     }
 
     public static void setNetBindMonitoringEnabled(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -462,7 +463,7 @@ final public class NetBindHandler {
     }
 
     public static void setNetBindOpenFirewall(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,

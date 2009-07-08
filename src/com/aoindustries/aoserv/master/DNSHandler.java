@@ -105,17 +105,15 @@ final public class DNSHandler implements CronJob {
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         try {
             ProcessTimer timer=new ProcessTimer(
+                logger,
                 MasterServer.getRandom(),
-                MasterConfiguration.getWarningSmtpServer(),
-                MasterConfiguration.getWarningEmailFrom(),
-                MasterConfiguration.getWarningEmailTo(),
                 "DNSHandler - Whois History",
                 "Looking up whois and cleaning old records",
                 TIMER_MAX_TIME,
                 TIMER_REMINDER_INTERVAL
             );
             try {
-                timer.start();
+                MasterServer.executorService.submit(timer);
 
                 // Start the transaction
                 InvalidateList invalidateList=new InvalidateList();
@@ -217,7 +215,7 @@ final public class DNSHandler implements CronJob {
                 }
                 if(invalidateList!=null) MasterServer.invalidateTables(invalidateList, null);
             } finally {
-                timer.stop();
+                timer.finished();
             }
         } catch(ThreadDeath TD) {
             throw TD;

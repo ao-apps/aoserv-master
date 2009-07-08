@@ -6,6 +6,7 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.*;
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.*;
 import java.sql.*;
 
@@ -17,7 +18,7 @@ import java.sql.*;
 final public class FTPHandler {
 
     public static void addFTPGuestUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         String username
@@ -47,7 +48,7 @@ final public class FTPHandler {
     }
 
     public static void removeFTPGuestUser(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username
@@ -68,7 +69,7 @@ final public class FTPHandler {
     }
 
     public static void removePrivateFTPServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int net_bind
     ) throws IOException, SQLException {

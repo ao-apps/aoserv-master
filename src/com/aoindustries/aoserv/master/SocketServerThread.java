@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.MasterProcess;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.StringUtility;
@@ -21,6 +22,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>AOServServerThread</code> handles a connection once it is accepted.
@@ -28,6 +31,8 @@ import java.util.LinkedList;
  * @author  AO Industries, Inc.
  */
 final public class SocketServerThread extends Thread implements RequestSource {
+
+    private static final Logger logger = LogFactory.getLogger(SocketServerThread.class);
 
     /**
      * The <code>TCPServer</code> that created this <code>SocketServerThread</code>.
@@ -152,7 +157,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 process.setAOServProtocol(protocolVersion.getVersion());
                 if(in.readBoolean()) {
                     String daemonServerHostname=in.readUTF();
-                    MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                    DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
                     try {
                         process.setDeamonServer(ServerHandler.getServerForAOServerHostname(conn, daemonServerHostname));
                     } catch(IOException err) {
@@ -270,7 +275,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                     case VERSION_1_0_A_100 :
                     {
                         String message;
-                        MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                        DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
                         try {
                             try {
                                 message=MasterServer.authenticate(conn, socket.getInetAddress().getHostAddress(), process.getEffectiveUser(), process.getAuthenticatedUser(), password);
@@ -374,26 +379,26 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 if(
                     !"Broken pipe".equalsIgnoreCase(message)
                     && !"Connection reset".equalsIgnoreCase(message)
-                ) MasterServer.reportError(err, null);
+                ) logger.log(Level.SEVERE, null, err);
             } catch(IOException err) {
                 // Broken pipe common for abnormal client disconnects
                 String message=err.getMessage();
                 if(
                     !"Broken pipe".equalsIgnoreCase(message)
-                ) MasterServer.reportError(err, null);
+                ) logger.log(Level.SEVERE, null, err);
             } catch(SQLException err) {
-                MasterServer.reportError(err, null);
+                logger.log(Level.SEVERE, null, err);
             } catch(ThreadDeath TD) {
                 throw TD;
             } catch (Throwable T) {
-                MasterServer.reportError(T, null);
+                logger.log(Level.SEVERE, null, T);
             } finally {
                 // Close the socket
                 try {
                     isClosed=true;
                     socket.close();
                 } catch (IOException err) {
-                    MasterServer.reportError(err, null);
+                    logger.log(Level.SEVERE, null, err);
                 }
             }
         } finally {

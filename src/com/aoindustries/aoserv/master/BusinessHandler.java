@@ -16,6 +16,7 @@ import com.aoindustries.aoserv.client.NoticeLog;
 import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.Username;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
@@ -47,6 +48,9 @@ import java.util.Set;
  */
 final public class BusinessHandler {
 
+    private BusinessHandler() {
+    }
+
     private static final Object businessAdministratorsLock=new Object();
     private static Map<String,BusinessAdministrator> businessAdministrators;
 
@@ -55,7 +59,7 @@ final public class BusinessHandler {
     private final static Map<String,Boolean> disabledBusinessAdministrators=new HashMap<String,Boolean>();
     private final static Map<String,Boolean> disabledBusinesses=new HashMap<String,Boolean>();
 
-    public static boolean canAccessBusiness(MasterDatabaseConnection conn, RequestSource source, String accounting) throws IOException, SQLException {
+    public static boolean canAccessBusiness(DatabaseConnection conn, RequestSource source, String accounting) throws IOException, SQLException {
         //String username=source.getUsername();
         return
             getAllowedBusinesses(conn, source)
@@ -65,7 +69,7 @@ final public class BusinessHandler {
         ;
     }
     
-    public static boolean canAccessDisableLog(MasterDatabaseConnection conn, RequestSource source, int pkey, boolean enabling) throws IOException, SQLException {
+    public static boolean canAccessDisableLog(DatabaseConnection conn, RequestSource source, int pkey, boolean enabling) throws IOException, SQLException {
         String username=source.getUsername();
         String disabledBy=getDisableLogDisabledBy(conn, pkey);
         if(enabling) {
@@ -78,7 +82,7 @@ final public class BusinessHandler {
     }
 
     public static void cancelBusiness(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,
@@ -110,7 +114,7 @@ final public class BusinessHandler {
     }
 
     public static boolean canControl(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int server,
         String process
@@ -135,7 +139,7 @@ final public class BusinessHandler {
         );
     }
 
-    public static void checkAccessBusiness(MasterDatabaseConnection conn, RequestSource source, String action, String accounting) throws IOException, SQLException {
+    public static void checkAccessBusiness(DatabaseConnection conn, RequestSource source, String action, String accounting) throws IOException, SQLException {
         if(!canAccessBusiness(conn, source, accounting)) {
             String message=
             "business_administrator.username="
@@ -145,12 +149,11 @@ final public class BusinessHandler {
             +"', accounting="
             +accounting
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
     
-    public static void checkAccessDisableLog(MasterDatabaseConnection conn, RequestSource source, String action, int pkey, boolean enabling) throws IOException, SQLException {
+    public static void checkAccessDisableLog(DatabaseConnection conn, RequestSource source, String action, int pkey, boolean enabling) throws IOException, SQLException {
         if(!canAccessDisableLog(conn, source, pkey, enabling)) {
             String message=
                 "business_administrator.username="
@@ -160,12 +163,11 @@ final public class BusinessHandler {
                 +"', pkey="
                 +pkey
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
-    public static void checkAddBusiness(MasterDatabaseConnection conn, RequestSource source, String action, String parent, int server) throws IOException, SQLException {
+    public static void checkAddBusiness(DatabaseConnection conn, RequestSource source, String action, String parent, int server) throws IOException, SQLException {
         boolean canAdd = conn.executeBooleanQuery("select can_add_businesses from businesses where accounting=?", UsernameHandler.getBusinessForUsername(conn, source.getUsername()));
         if(canAdd) {
             MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
@@ -189,7 +191,6 @@ final public class BusinessHandler {
             +", server="
             +server
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
@@ -197,7 +198,7 @@ final public class BusinessHandler {
     private static Map<String,Set<String>> cachedPermissions;
     private static final Object cachedPermissionsLock = new Object();
 
-    public static boolean hasPermission(MasterDatabaseConnection conn, RequestSource source, AOServPermission.Permission permission) throws IOException, SQLException {
+    public static boolean hasPermission(DatabaseConnection conn, RequestSource source, AOServPermission.Permission permission) throws IOException, SQLException {
         synchronized(cachedPermissionsLock) {
             if(cachedPermissions==null) {
         Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
@@ -220,7 +221,7 @@ final public class BusinessHandler {
         }
     }
 
-    public static void checkPermission(MasterDatabaseConnection conn, RequestSource source, String action, AOServPermission.Permission permission) throws IOException, SQLException {
+    public static void checkPermission(DatabaseConnection conn, RequestSource source, String action, AOServPermission.Permission permission) throws IOException, SQLException {
         if(!hasPermission(conn, source, permission)) {
             String message=
                 "business_administrator.username="
@@ -228,12 +229,11 @@ final public class BusinessHandler {
                 +" does not have the \""+permission.name()+"\" permission.  Not allowed to make the following call: "
                 +action
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
-    public static List<String> getAllowedBusinesses(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+    public static List<String> getAllowedBusinesses(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
 	    synchronized(usernameBusinessesLock) {
             String username=source.getUsername();
             if(usernameBusinesses==null) usernameBusinesses=new HashMap<String,List<String>>();
@@ -286,7 +286,7 @@ final public class BusinessHandler {
 	    }
     }
     
-    public static String getBusinessForDisableLog(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForDisableLog(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select accounting from disable_log where pkey=?", pkey);
     }
 
@@ -294,7 +294,7 @@ final public class BusinessHandler {
      * Creates a new <code>Business</code>.
      */
     public static void addBusiness(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,
@@ -379,7 +379,7 @@ final public class BusinessHandler {
      * Creates a new <code>BusinessAdministrator</code>.
      */
     public static void addBusinessAdministrator(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username,
@@ -452,7 +452,7 @@ final public class BusinessHandler {
         invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATOR_PERMISSIONS, accounting, InvalidateList.allServers, false);
     }
     
-    public static String convertUSState(MasterDatabaseConnection conn, String state) throws IOException, SQLException {
+    public static String convertUSState(DatabaseConnection conn, String state) throws IOException, SQLException {
         String newState = conn.executeStringQuery(
             Connection.TRANSACTION_READ_COMMITTED,
             true,
@@ -475,7 +475,7 @@ final public class BusinessHandler {
      * Creates a new <code>BusinessProfile</code>.
      */
     public static int addBusinessProfile(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,
@@ -536,7 +536,7 @@ final public class BusinessHandler {
      * Creates a new <code>BusinessServer</code>.
      */
     public static int addBusinessServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,
@@ -553,7 +553,7 @@ final public class BusinessHandler {
      * Creates a new <code>BusinessServer</code>.
      */
     public static int addBusinessServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String accounting,
         int server
@@ -607,7 +607,7 @@ final public class BusinessHandler {
      * Creates a new <code>DistroLog</code>.
      */
     public static int addDisableLog(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,
@@ -640,7 +640,7 @@ final public class BusinessHandler {
      * Adds a notice log.
      */
     public static void addNoticeLog(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,
@@ -690,7 +690,7 @@ final public class BusinessHandler {
     }
     
     public static void disableBusiness(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -702,7 +702,7 @@ final public class BusinessHandler {
         checkAccessBusiness(conn, source, "disableBusiness", accounting);
         List<String> packages=getPackagesForBusiness(conn, accounting);
         for(int c=0;c<packages.size();c++) {
-            String packageName=(String)packages.get(c);
+            String packageName=packages.get(c);
             if(!PackageHandler.isPackageDisabled(conn, packageName)) {
                 throw new SQLException("Cannot disable Business '"+accounting+"': Package not disabled: "+packageName);
             }
@@ -719,7 +719,7 @@ final public class BusinessHandler {
     }
 
     public static void disableBusinessAdministrator(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -741,7 +741,7 @@ final public class BusinessHandler {
     }
 
     public static void enableBusiness(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String accounting
@@ -764,7 +764,7 @@ final public class BusinessHandler {
     }
 
     public static void enableBusinessAdministrator(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username
@@ -793,7 +793,7 @@ final public class BusinessHandler {
      * Generates a random, unused support code.
      */
     public static String generateSupportCode(
-        MasterDatabaseConnection conn
+        DatabaseConnection conn
     ) throws IOException, SQLException {
         Random random = MasterServer.getRandom();
         StringBuilder SB = new StringBuilder(11);
@@ -811,7 +811,7 @@ final public class BusinessHandler {
     }
 
     public static String generateAccountingCode(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String template
     ) throws IOException, SQLException {
         // Load the entire list of accounting codes
@@ -845,7 +845,7 @@ final public class BusinessHandler {
      * 
      * @return  the depth between 1 and Business.MAXIMUM_BUSINESS_TREE_DEPTH, inclusive.
      */
-    public static int getDepthInBusinessTree(MasterDatabaseConnection conn, String accounting) throws IOException, SQLException {
+    public static int getDepthInBusinessTree(DatabaseConnection conn, String accounting) throws IOException, SQLException {
         int depth=0;
         while(accounting!=null) {
             String parent=conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select parent from businesses where accounting=?", accounting);
@@ -856,16 +856,16 @@ final public class BusinessHandler {
         return depth;
     }
 
-    public static String getDisableLogDisabledBy(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getDisableLogDisabledBy(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select disabled_by from disable_log where pkey=?", pkey);
     }
 
-    public static int getDisableLogForBusiness(MasterDatabaseConnection conn, String accounting) throws IOException, SQLException {
+    public static int getDisableLogForBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
         return conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select coalesce(disable_log, -1) from businesses where accounting=?", accounting);
     }
 
     final private static Map<String,Integer> businessAdministratorDisableLogs=new HashMap<String,Integer>();
-    public static int getDisableLogForBusinessAdministrator(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static int getDisableLogForBusinessAdministrator(DatabaseConnection conn, String username) throws IOException, SQLException {
         synchronized(businessAdministratorDisableLogs) {
             if(businessAdministratorDisableLogs.containsKey(username)) return businessAdministratorDisableLogs.get(username).intValue();
             int disableLog=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select coalesce(disable_log, -1) from business_administrators where username=?", username);
@@ -874,11 +874,11 @@ final public class BusinessHandler {
         }
     }
 
-    public static List<String> getPackagesForBusiness(MasterDatabaseConnection conn, String accounting) throws IOException, SQLException {
+    public static List<String> getPackagesForBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
         return conn.executeStringListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select name from packages where accounting=?", accounting);
     }
 
-    public static IntList getServersForBusiness(MasterDatabaseConnection conn, String accounting) throws IOException, SQLException {
+    public static IntList getServersForBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
         return conn.executeIntListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select server from business_servers where accounting=?", accounting);
     }
 
@@ -887,14 +887,14 @@ final public class BusinessHandler {
     }
 
     public static boolean isAccountingAvailable(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String accounting
     ) throws IOException, SQLException {
         return conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select count(*) from businesses where accounting=?", accounting)==0;
     }
 
     public static boolean isBusinessAdministratorPasswordSet(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         String username
     ) throws IOException, SQLException {
@@ -907,7 +907,7 @@ final public class BusinessHandler {
     }
 
     public static void removeBusinessAdministrator(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username
@@ -919,7 +919,7 @@ final public class BusinessHandler {
     }
 
     public static void removeBusinessAdministrator(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String username
     ) throws IOException, SQLException {
@@ -938,7 +938,7 @@ final public class BusinessHandler {
      * Removes a <code>BusinessServer</code>.
      */
     public static void removeBusinessServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -968,7 +968,7 @@ final public class BusinessHandler {
      * Removes a <code>BusinessServer</code>.
      */
     public static void removeBusinessServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -1338,7 +1338,7 @@ final public class BusinessHandler {
     }
 
     public static void removeDisableLog(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -1351,7 +1351,7 @@ final public class BusinessHandler {
     }
 
     public static void setBusinessAccounting(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String oldAccounting,
@@ -1379,7 +1379,7 @@ final public class BusinessHandler {
     }
 
     public static void setBusinessAdministratorPassword(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username,
@@ -1416,7 +1416,7 @@ final public class BusinessHandler {
      * Sets a business_administrators profile.
      */
     public static void setBusinessAdministratorProfile(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username,
@@ -1472,7 +1472,7 @@ final public class BusinessHandler {
      * Sets the default Server for a Business
      */
     public static void setDefaultBusinessServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -1504,7 +1504,7 @@ final public class BusinessHandler {
         );
     }
     
-    public static BusinessAdministrator getBusinessAdministrator(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static BusinessAdministrator getBusinessAdministrator(DatabaseConnection conn, String username) throws IOException, SQLException {
 	    synchronized(businessAdministratorsLock) {
             if(businessAdministrators==null) {
                 Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
@@ -1521,7 +1521,7 @@ final public class BusinessHandler {
                     stmt.close();
                 }
             }
-            return (BusinessAdministrator)businessAdministrators.get(username);
+            return businessAdministrators.get(username);
 	    }
     }
     
@@ -1550,7 +1550,7 @@ final public class BusinessHandler {
         }
     }
 
-    public static String getParentBusiness(MasterDatabaseConnection conn, String accounting) throws IOException, SQLException {
+    public static String getParentBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
         return conn.executeStringQuery(
             Connection.TRANSACTION_READ_COMMITTED,
             true,
@@ -1560,7 +1560,7 @@ final public class BusinessHandler {
         );
     }
 
-    public static String getTechnicalEmail(MasterDatabaseConnection conn, String accountingCode) throws IOException, SQLException {
+    public static String getTechnicalEmail(DatabaseConnection conn, String accountingCode) throws IOException, SQLException {
         return conn.executeStringQuery(
             Connection.TRANSACTION_READ_COMMITTED,
             true,
@@ -1570,11 +1570,11 @@ final public class BusinessHandler {
         );
     }
  
-    public static boolean isBusinessAdministrator(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isBusinessAdministrator(DatabaseConnection conn, String username) throws IOException, SQLException {
         return getBusinessAdministrator(conn, username)!=null;
     }
 
-    public static boolean isBusinessAdministratorDisabled(MasterDatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isBusinessAdministratorDisabled(DatabaseConnection conn, String username) throws IOException, SQLException {
         Boolean O;
         synchronized(disabledBusinessAdministrators) {
             O=disabledBusinessAdministrators.get(username);
@@ -1587,7 +1587,7 @@ final public class BusinessHandler {
         return isDisabled;
     }
 
-    public static boolean isBusinessDisabled(MasterDatabaseConnection conn, String accounting) throws IOException, SQLException {
+    public static boolean isBusinessDisabled(DatabaseConnection conn, String accounting) throws IOException, SQLException {
 	    synchronized(disabledBusinesses) {
             Boolean O=disabledBusinesses.get(accounting);
             if(O!=null) return O.booleanValue();
@@ -1597,27 +1597,27 @@ final public class BusinessHandler {
 	    }
     }
 
-    public static boolean isBusinessCanceled(MasterDatabaseConnection conn, String accounting) throws IOException, SQLException {
+    public static boolean isBusinessCanceled(DatabaseConnection conn, String accounting) throws IOException, SQLException {
         return conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select canceled is not null from businesses where accounting=?", accounting);
     }
 
-    public static boolean isBusinessBillParent(MasterDatabaseConnection conn, String accounting) throws IOException, SQLException {
+    public static boolean isBusinessBillParent(DatabaseConnection conn, String accounting) throws IOException, SQLException {
         return conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select bill_parent from businesses where accounting=?", accounting);
     }
 
-    public static boolean canSeePrices(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+    public static boolean canSeePrices(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
         return canSeePrices(conn, UsernameHandler.getBusinessForUsername(conn, source.getUsername()));
     }
 
-    public static boolean canSeePrices(MasterDatabaseConnection conn, String accounting) throws IOException, SQLException {
+    public static boolean canSeePrices(DatabaseConnection conn, String accounting) throws IOException, SQLException {
         return conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select can_see_prices from businesses where accounting=?", accounting);
     }
 
-    public static boolean isBusinessOrParent(MasterDatabaseConnection conn, String parentAccounting, String accounting) throws IOException, SQLException {
+    public static boolean isBusinessOrParent(DatabaseConnection conn, String parentAccounting, String accounting) throws IOException, SQLException {
         return conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select is_business_or_parent(?,?)", parentAccounting, accounting);
     }
 
-    public static boolean canSwitchUser(MasterDatabaseConnection conn, String authenticatedAs, String connectAs) throws IOException, SQLException {
+    public static boolean canSwitchUser(DatabaseConnection conn, String authenticatedAs, String connectAs) throws IOException, SQLException {
         String authAccounting=UsernameHandler.getBusinessForUsername(conn, authenticatedAs);
         String connectAccounting=UsernameHandler.getBusinessForUsername(conn, connectAs);
         // Cannot switch within same business
@@ -1640,7 +1640,7 @@ final public class BusinessHandler {
      *
      * @return  a <code>HashMap</code> of <code>ArrayList</code>
      */
-    public static Map<String,List<String>> getBusinessContacts(MasterDatabaseConnection conn) throws IOException, SQLException {
+    public static Map<String,List<String>> getBusinessContacts(DatabaseConnection conn) throws IOException, SQLException {
         // Load the list of businesses and their contacts
         Map<String,List<String>> businessContacts=new HashMap<String,List<String>>();
         List<String> foundAddresses=new SortedArrayList<String>();
@@ -1698,7 +1698,7 @@ final public class BusinessHandler {
      *   <li>Follow the bill_parents up to top billing level</li>
      * </ol>
      */
-    public static String getBusinessFromEmailAddresses(MasterDatabaseConnection conn, List<String> addresses) throws IOException, SQLException {
+    public static String getBusinessFromEmailAddresses(DatabaseConnection conn, List<String> addresses) throws IOException, SQLException {
         // Load the list of businesses and their contacts
         Map<String,List<String>> businessContacts=getBusinessContacts(conn);
 
@@ -1714,7 +1714,7 @@ final public class BusinessHandler {
                 String accounting=I.next();
                 List<String> list=businessContacts.get(accounting);
                 for(int d=0;d<list.size();d++) {
-                    String contact=(String)list.get(d);
+                    String contact=list.get(d);
                     if(address.equals(contact)) addWeight(businessWeights, accounting, 10);
                 }
             }
@@ -1823,7 +1823,7 @@ final public class BusinessHandler {
         businessWeights.put(accounting, Integer.valueOf(previous + weight));
     }
 
-    public static boolean canBusinessAccessServer(MasterDatabaseConnection conn, String accounting, int server) throws IOException, SQLException {
+    public static boolean canBusinessAccessServer(DatabaseConnection conn, String accounting, int server) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             Connection.TRANSACTION_READ_COMMITTED,
             true,
@@ -1845,7 +1845,7 @@ final public class BusinessHandler {
         );
     }
     
-    public static void checkBusinessAccessServer(MasterDatabaseConnection conn, RequestSource source, String action, String accounting, int server) throws IOException, SQLException {
+    public static void checkBusinessAccessServer(DatabaseConnection conn, RequestSource source, String action, String accounting, int server) throws IOException, SQLException {
         if(!canBusinessAccessServer(conn, accounting, server)) {
             String message=
             "accounting="
@@ -1856,7 +1856,6 @@ final public class BusinessHandler {
             +action
             +"'"
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }

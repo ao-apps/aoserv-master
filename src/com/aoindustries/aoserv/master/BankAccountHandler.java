@@ -5,10 +5,12 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.io.*;
-import java.io.*;
-import java.sql.*;
+import com.aoindustries.aoserv.client.BankTransaction;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.sql.DatabaseConnection;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,8 +21,11 @@ import java.util.List;
  */
 final public class BankAccountHandler {
 
+    private BankAccountHandler() {
+    }
+
     public static void checkAccounting(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         String action
     ) throws IOException, SQLException {
@@ -31,7 +36,7 @@ final public class BankAccountHandler {
      * Gets all transactions for one account.
      */
     public static void getBankTransactionsAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out,
         boolean provideProgress,
@@ -53,16 +58,16 @@ final public class BankAccountHandler {
         }
     }
 
-    public static void checkBankAccounting(MasterDatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
+    public static void checkBankAccounting(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
         if(!isBankAccounting(conn, source)) throw new SQLException("Bank accounting not allowed, '"+action+"'");
     }
 
-    public static boolean isAccounting(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+    public static boolean isAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
         MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
         return mu!=null && mu.canAccessAccounting();
     }
 
-    public static boolean isBankAccounting(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+    public static boolean isBankAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
         MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
         return mu!=null && mu.canAccessBankAccount();
     }

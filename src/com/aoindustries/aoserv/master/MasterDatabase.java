@@ -5,13 +5,20 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.sql.*;
-import java.io.*;
+import com.aoindustries.sql.Database;
+import java.io.IOException;
+import java.util.logging.Logger;
 
 /**
  * @author  AO Industries, Inc.
  */
 public final class MasterDatabase extends Database {
+
+    /**
+     * This logger doesn't use ticket logger because it might create a loop
+     * by logging database errors to the database.
+     */
+    private static final Logger logger = Logger.getLogger(MasterDatabase.class.getName());
 
     /**
      * Only one database accessor is made.
@@ -29,7 +36,7 @@ public final class MasterDatabase extends Database {
             MasterConfiguration.getDBPassword(),
             MasterConfiguration.getDBConnectionPoolSize(),
             MasterConfiguration.getDBMaxConnectionAge(),
-            MasterServer.getErrorHandler()
+            logger
         );
     }
     
@@ -38,10 +45,5 @@ public final class MasterDatabase extends Database {
             if(masterDatabase==null) masterDatabase=new MasterDatabase();
             return masterDatabase;
         }
-    }
-
-    @Override
-    public DatabaseConnection createDatabaseConnection() {
-        return new MasterDatabaseConnection(this);
     }
 }

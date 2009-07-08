@@ -54,6 +54,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -69,6 +71,11 @@ import java.util.logging.Logger;
 public abstract class MasterServer {
 
     private static final Logger logger = LogFactory.getLogger(MasterServer.class);
+
+    /**
+     * An unbounded executor for master-wide tasks.
+     */
+    public final static ExecutorService executorService = Executors.newCachedThreadPool();
 
     /**
      * The database values are read the first time this data is needed.

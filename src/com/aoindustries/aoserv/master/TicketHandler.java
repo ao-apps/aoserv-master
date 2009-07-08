@@ -11,6 +11,7 @@ import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.TicketActionType;
 import com.aoindustries.aoserv.client.TicketStatus;
 import com.aoindustries.sql.DatabaseAccess;
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -23,6 +24,9 @@ import java.util.Random;
  */
 final public class TicketHandler /*implements Runnable*/ {
 
+    private TicketHandler() {
+    }
+
     // <editor-fold desc="Security">
     /**
      * To be able to access a ticket action, must both have access to its 
@@ -33,7 +37,7 @@ final public class TicketHandler /*implements Runnable*/ {
      * @throws java.io.IOException
      * @throws java.sql.SQLException
      */
-    public static boolean canAccessTicketAction(MasterDatabaseConnection conn, RequestSource source, int actionId) throws IOException, SQLException {
+    public static boolean canAccessTicketAction(DatabaseConnection conn, RequestSource source, int actionId) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length==0) return true; // Master users
@@ -53,7 +57,7 @@ final public class TicketHandler /*implements Runnable*/ {
         }
     }
 
-    public static void checkAccessTicketAction(MasterDatabaseConnection conn, RequestSource source, String action, int actionId) throws IOException, SQLException {
+    public static void checkAccessTicketAction(DatabaseConnection conn, RequestSource source, String action, int actionId) throws IOException, SQLException {
         if(!canAccessTicketAction(conn, source, actionId)) {
             String message=
                 "business_administrator.username="
@@ -63,12 +67,11 @@ final public class TicketHandler /*implements Runnable*/ {
                 +", pkey="
                 +actionId
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
-    public static boolean canAccessTicket(MasterDatabaseConnection conn, RequestSource source, int ticketId) throws IOException, SQLException {
+    public static boolean canAccessTicket(DatabaseConnection conn, RequestSource source, int ticketId) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length==0) return true; // Master users
@@ -87,7 +90,7 @@ final public class TicketHandler /*implements Runnable*/ {
         }
     }
 
-    public static void checkAccessTicket(MasterDatabaseConnection conn, RequestSource source, String action, int ticketID) throws IOException, SQLException {
+    public static void checkAccessTicket(DatabaseConnection conn, RequestSource source, String action, int ticketID) throws IOException, SQLException {
         if(!canAccessTicket(conn, source, ticketID)) {
             String message=
                 "business_administrator.username="
@@ -97,7 +100,6 @@ final public class TicketHandler /*implements Runnable*/ {
                 +", pkey="
                 +ticketID
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
@@ -107,7 +109,7 @@ final public class TicketHandler /*implements Runnable*/ {
      * Generates a random, unused ticket ID.
      */
     public static int generateTicketId(
-        MasterDatabaseConnection conn
+        DatabaseConnection conn
     ) throws IOException, SQLException {
         Random random = MasterServer.getRandom();
         for(int range=1000000; range<1000000000; range *= 10) {
@@ -123,7 +125,7 @@ final public class TicketHandler /*implements Runnable*/ {
      * Adds a ticket with security checks.
      */
     public static int addTicket(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String brand,
@@ -178,7 +180,7 @@ final public class TicketHandler /*implements Runnable*/ {
      * Adds a ticket directly, without any security checks.
      */
     public static int addTicket(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String brand,
         String reseller,
@@ -252,7 +254,7 @@ final public class TicketHandler /*implements Runnable*/ {
     // </editor-fold>
     // <editor-fold desc="Delayed Data Access">
     public static String getTicketDetails(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -261,7 +263,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static String getTicketRawEmail(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -270,7 +272,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static String getTicketInternalNotes(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -280,7 +282,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static String getTicketActionOldValue(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -289,7 +291,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static String getTicketActionNewValue(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -298,7 +300,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static String getTicketActionDetails(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -307,7 +309,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static String getTicketActionRawEmail(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -319,7 +321,7 @@ final public class TicketHandler /*implements Runnable*/ {
     /*
 
     public static void bounceTicket(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID,
@@ -374,7 +376,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static void changeTicketAdminPriority(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID, 
@@ -420,7 +422,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static void setTicketAssignedTo(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID, 
@@ -466,7 +468,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 */
     public static boolean setTicketBusiness(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID,
@@ -568,7 +570,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static boolean setTicketType(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID,
@@ -654,7 +656,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static boolean setTicketStatus(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID,
@@ -742,7 +744,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static boolean setTicketInternalNotes(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID,
@@ -828,7 +830,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static void setTicketContactEmails(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID,
@@ -904,7 +906,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static void setTicketContactPhoneNumbers(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID,
@@ -980,7 +982,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static void changeTicketClientPriority(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int ticketID, 
@@ -1056,7 +1058,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static void setTicketSummary(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID,
@@ -1131,8 +1133,11 @@ final public class TicketHandler /*implements Runnable*/ {
         );
     }
 
+    /**
+     * Adds an annotation with security checks.
+     */
     public static void addTicketAnnotation(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID,
@@ -1142,10 +1147,24 @@ final public class TicketHandler /*implements Runnable*/ {
         BusinessHandler.checkPermission(conn, source, "addTicketAnnotation", AOServPermission.Permission.edit_ticket);
         checkAccessTicket(conn, source, "addTicketAnnotation", ticketID);
 
+        addTicketAnnotation(conn, invalidateList, ticketID, source.getUsername(), summary, details);
+    }
+
+    /**
+     * Adds an annotation <b>without</b> security checks.
+     */
+    public static void addTicketAnnotation(
+        DatabaseConnection conn,
+        InvalidateList invalidateList,
+        int ticketID,
+        String administrator,
+        String summary,
+        String details
+    ) throws IOException, SQLException {
         conn.executeUpdate(
             "insert into ticket_actions(ticket, administrator, action_type, summary, details) values(?,?,?,?,?)",
             ticketID,
-            source.getUsername(),
+            administrator,
             TicketActionType.ADD_ANNOTATION,
             summary,
             details
@@ -1190,7 +1209,7 @@ final public class TicketHandler /*implements Runnable*/ {
             conn.executeUpdate(
                 "insert into ticket_actions(ticket, administrator, action_type, old_status, new_status) values(?,?,?,?,?)",
                 ticketID,
-                source.getUsername(),
+                administrator,
                 TicketActionType.SET_STATUS,
                 status,
                 TicketStatus.OPEN
@@ -1225,7 +1244,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 /*
     public static void completeTicket(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int ticketID,
@@ -1284,7 +1303,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static void holdTicket(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID,
@@ -1331,7 +1350,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static void killTicket(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID, 
@@ -1397,7 +1416,7 @@ final public class TicketHandler /*implements Runnable*/ {
 
     /*
     public static void reactivateTicket(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID,
@@ -1451,7 +1470,7 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static void ticketWork(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ticketID, 
@@ -1508,32 +1527,32 @@ final public class TicketHandler /*implements Runnable*/ {
     /**
      * A ticket administrator is part of a business that is also a reseller.
      */
-    public static boolean isTicketAdmin(MasterDatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+    public static boolean isTicketAdmin(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
         return conn.executeBooleanQuery("select (select accounting from resellers where accounting=?) is not null", UsernameHandler.getBusinessForUsername(conn, source.getUsername()));
     }
 
-    public static String getBusinessForTicket(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForTicket(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select accounting from tickets where pkey=?", pkey);
     }
 
-    public static String getResellerForTicket(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getResellerForTicket(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select reseller from tickets where pkey=?", pkey);
     }
 
-    public static String getBusinessForAction(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForAction(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select ti.accounting from ticket_actions ac, tickets ti where ac.pkey=? and ac.ticket=ti.pkey", pkey);
     }
 
-    public static String getResellerForAction(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getResellerForAction(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select ti.reseller from ticket_actions ac, tickets ti where ac.pkey=? and ac.ticket=ti.pkey", pkey);
     }
 
-    public static boolean getVisibleAdminOnlyForAction(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean getVisibleAdminOnlyForAction(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeBooleanQuery("select tat.visible_admin_only from ticket_actions ac inner join ticket_action_types tat on ac.action_type=tat.type where ac.pkey=?", pkey);
     }
 
     /*
-    public static boolean isActive(MasterDatabaseConnection conn, int ticketId) throws IOException, SQLException {
+    public static boolean isActive(DatabaseConnection conn, int ticketId) throws IOException, SQLException {
         String status=conn.executeStringQuery("select status from tickets where pkey=?", ticketId);
         return
             !TicketStatus.ADMIN_KILL.equals(status)
@@ -1581,7 +1600,7 @@ final public class TicketHandler /*implements Runnable*/ {
         }
     }
 
-    public static String getContactEmails(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getContactEmails(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         String contactEmails=conn.executeStringQuery(
             "select contact_emails from tickets where pkey=?",
             pkey
@@ -1628,7 +1647,7 @@ final public class TicketHandler /*implements Runnable*/ {
                     try {
                         Thread.sleep(SLEEP_INTERVAL);
                     } catch(InterruptedException err) {
-                        MasterServer.reportWarning(err, null);
+                        logger.log(Level.WARNING, null, err);
                     }
                     ProcessTimer timer=new ProcessTimer(
                         MasterServer.getRandom(),
@@ -1644,7 +1663,7 @@ final public class TicketHandler /*implements Runnable*/ {
                         timer.start();
                         // Start the transaction
                         InvalidateList invalidateList=new InvalidateList();
-                        MasterDatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
+                        DatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
                         try {
                             boolean connRolledBack=false;
                             try {
@@ -1803,7 +1822,7 @@ final public class TicketHandler /*implements Runnable*/ {
             } catch(ThreadDeath TD) {
                 throw TD;
             } catch(Throwable T) {
-                MasterServer.reportError(T, null);
+                logger.log(Level.SEVERE, null, T);
             }
         }
     }
@@ -1829,7 +1848,7 @@ final public class TicketHandler /*implements Runnable*/ {
             getMessageBody0(message.getContent(), SB);
             return SB.toString();
         } catch(UnsupportedEncodingException err) {
-            MasterServer.reportWarning(err, null);
+            logger.log(Level.WARNING, null, err);
             return message.getContent().toString();
         }
     }

@@ -12,6 +12,7 @@ import com.aoindustries.creditcards.PersistenceMechanism;
 import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.creditcards.TransactionResult;
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -27,10 +28,10 @@ import java.util.Locale;
  */
 public class MasterPersistenceMechanism implements PersistenceMechanism {
 
-    final private MasterDatabaseConnection conn;
+    final private DatabaseConnection conn;
     final private InvalidateList invalidateList;
 
-    public MasterPersistenceMechanism(MasterDatabaseConnection conn, InvalidateList invalidateList) {
+    public MasterPersistenceMechanism(DatabaseConnection conn, InvalidateList invalidateList) {
         this.conn = conn;
         this.invalidateList = invalidateList;
     }

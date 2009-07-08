@@ -21,9 +21,12 @@ import java.util.*;
  */
 final public class PackageHandler {
 
+    private PackageHandler() {
+    }
+
     private final static Map<String,Boolean> disabledPackages=new HashMap<String,Boolean>();
 
-    public static boolean canPackageAccessServer(MasterDatabaseConnection conn, RequestSource source, String packageName, int server) throws IOException, SQLException {
+    public static boolean canPackageAccessServer(DatabaseConnection conn, RequestSource source, String packageName, int server) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             Connection.TRANSACTION_READ_COMMITTED,
             true,
@@ -47,19 +50,19 @@ final public class PackageHandler {
         );
     }
 
-    public static boolean canAccessPackage(MasterDatabaseConnection conn, RequestSource source, String packageName) throws IOException, SQLException {
+    public static boolean canAccessPackage(DatabaseConnection conn, RequestSource source, String packageName) throws IOException, SQLException {
         return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackage(conn, packageName));
     }
 
-    public static boolean canAccessPackage(MasterDatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
+    public static boolean canAccessPackage(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
         return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackage(conn, pkey));
     }
 
-    public static boolean canAccessPackageDefinition(MasterDatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
+    public static boolean canAccessPackageDefinition(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
         return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackageDefinition(conn, pkey));
     }
 
-    public static void checkAccessPackage(MasterDatabaseConnection conn, RequestSource source, String action, String packageName) throws IOException, SQLException {
+    public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, String packageName) throws IOException, SQLException {
         if(!canAccessPackage(conn, source, packageName)) {
             String message=
                 "business_administrator.username="
@@ -69,12 +72,11 @@ final public class PackageHandler {
                 +", name="
                 +packageName
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
-    public static void checkAccessPackage(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         if(!canAccessPackage(conn, source, pkey)) {
             String message=
                 "business_administrator.username="
@@ -84,12 +86,11 @@ final public class PackageHandler {
                 +", pkey="
                 +pkey
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
-    public static void checkAccessPackageDefinition(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessPackageDefinition(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         if(!canAccessPackageDefinition(conn, source, pkey)) {
             String message=
                 "business_administrator.username="
@@ -99,7 +100,6 @@ final public class PackageHandler {
                 +", pkey="
                 +pkey
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
@@ -108,7 +108,7 @@ final public class PackageHandler {
      * Creates a new <code>Package</code>.
      */
     public static int addPackage(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String packageName,
@@ -172,7 +172,7 @@ final public class PackageHandler {
      * Creates a new <code>PackageDefinition</code>.
      */
     public static int addPackageDefinition(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String accounting,
@@ -242,7 +242,7 @@ final public class PackageHandler {
      * Copies a <code>PackageDefinition</code>.
      */
     public static int copyPackageDefinition(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -346,7 +346,7 @@ final public class PackageHandler {
     }
 
     public static void updatePackageDefinition(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -413,7 +413,7 @@ final public class PackageHandler {
     }
 
     public static void disablePackage(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -483,7 +483,7 @@ final public class PackageHandler {
     }
 
     public static void enablePackage(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String name
@@ -511,7 +511,7 @@ final public class PackageHandler {
     }
 
     public static String generatePackageName(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String template
     ) throws IOException, SQLException {
         // Load the entire list of package names
@@ -538,12 +538,12 @@ final public class PackageHandler {
         return goodOne;
     }
 
-    public static int getDisableLogForPackage(MasterDatabaseConnection conn, String name) throws IOException, SQLException {
+    public static int getDisableLogForPackage(DatabaseConnection conn, String name) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from packages where name=?", name);
     }
 
     public static List<String> getPackages(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source
     ) throws IOException, SQLException {
         String username=source.getUsername();
@@ -586,7 +586,7 @@ final public class PackageHandler {
     }
 
     public static IntList getIntPackages(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source
     ) throws IOException, SQLException {
         String username=source.getUsername();
@@ -647,7 +647,7 @@ final public class PackageHandler {
         }
     }
 
-    public static boolean isPackageDisabled(MasterDatabaseConnection conn, String name) throws IOException, SQLException {
+    public static boolean isPackageDisabled(DatabaseConnection conn, String name) throws IOException, SQLException {
 	    synchronized(PackageHandler.class) {
             Boolean O=disabledPackages.get(name);
             if(O!=null) return O.booleanValue();
@@ -657,11 +657,11 @@ final public class PackageHandler {
 	    }
     }
 
-    public static boolean isPackageNameAvailable(MasterDatabaseConnection conn, String packageName) throws IOException, SQLException {
+    public static boolean isPackageNameAvailable(DatabaseConnection conn, String packageName) throws IOException, SQLException {
         return conn.executeBooleanQuery("select (select pkey from packages where name=? limit 1) is null", packageName);
     }
 
-    public static int findActivePackageDefinition(MasterDatabaseConnection conn, String accounting, int rate, int userLimit, int popLimit) throws IOException, SQLException {
+    public static int findActivePackageDefinition(DatabaseConnection conn, String accounting, int rate, int userLimit, int popLimit) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  coalesce(\n"
@@ -689,15 +689,15 @@ final public class PackageHandler {
         );
     }
 
-    public static boolean isPackageDefinitionApproved(MasterDatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
+    public static boolean isPackageDefinitionApproved(DatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
         return conn.executeBooleanQuery("select approved from package_definitions where pkey=?", packageDefinition);
     }
 
-    public static boolean isPackageDefinitionActive(MasterDatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
+    public static boolean isPackageDefinitionActive(DatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
         return conn.executeBooleanQuery("select active from package_definitions where pkey=?", packageDefinition);
     }
 
-    public static void checkPackageAccessServer(MasterDatabaseConnection conn, RequestSource source, String action, String packageName, int server) throws IOException, SQLException {
+    public static void checkPackageAccessServer(DatabaseConnection conn, RequestSource source, String action, String packageName, int server) throws IOException, SQLException {
         if(!canPackageAccessServer(conn, source, packageName, server)) {
             String message=
                 "package.name="
@@ -708,17 +708,16 @@ final public class PackageHandler {
                 +action
                 +"'"
             ;
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
-    public static String getBusinessForPackage(MasterDatabaseConnection conn, String packageName) throws IOException, SQLException {
+    public static String getBusinessForPackage(DatabaseConnection conn, String packageName) throws IOException, SQLException {
         return getBusinessForPackage(conn, getPKeyForPackage(conn, packageName));
     }
 
     private static final Map<Integer,String> packageBusinesses=new HashMap<Integer,String>();
-    public static String getBusinessForPackage(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForPackage(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         Integer I=Integer.valueOf(pkey);
         synchronized(packageBusinesses) {
             String O=packageBusinesses.get(I);
@@ -730,7 +729,7 @@ final public class PackageHandler {
     }
 
     private static final Map<Integer,String> packageNames=new HashMap<Integer,String>();
-    public static String getNameForPackage(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getNameForPackage(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         Integer I=Integer.valueOf(pkey);
         synchronized(packageNames) {
             String O=packageNames.get(I);
@@ -742,7 +741,7 @@ final public class PackageHandler {
     }
 
     private static final Map<String,Integer> packagePKeys=new HashMap<String,Integer>();
-    public static int getPKeyForPackage(MasterDatabaseConnection conn, String name) throws IOException, SQLException {
+    public static int getPKeyForPackage(DatabaseConnection conn, String name) throws IOException, SQLException {
         synchronized(packagePKeys) {
             Integer O=packagePKeys.get(name);
             if(O!=null) return O.intValue();
@@ -752,11 +751,11 @@ final public class PackageHandler {
         }
     }
 
-    public static String getBusinessForPackageDefinition(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForPackageDefinition(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select accounting from package_definitions where pkey=?", pkey);
     }
 
-    public static List<String> getBusinessesForPackageDefinition(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static List<String> getBusinessesForPackageDefinition(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringListQuery(
             "select distinct\n"
             + "  bu.accounting\n"
@@ -771,7 +770,7 @@ final public class PackageHandler {
     }
 
     public static void setPackageDefinitionActive(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -805,7 +804,7 @@ final public class PackageHandler {
     }
 
     public static void setPackageDefinitionLimits(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -867,7 +866,7 @@ final public class PackageHandler {
     }
 
     public static void removePackageDefinition(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -880,7 +879,7 @@ final public class PackageHandler {
     }
 
     public static void removePackageDefinition(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {

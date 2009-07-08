@@ -6,6 +6,7 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntCollection;
 import com.aoindustries.util.SortedArrayList;
@@ -18,6 +19,8 @@ import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * In the request lifecycle, table invalidations occur after the database connection has been committed
@@ -28,6 +31,12 @@ import java.util.Map;
  * @author  AO Industries, Inc.
  */
 final public class InvalidateList {
+
+    /**
+     * The invalidate list is used as part of the error logging, so it is not
+     * logged to the ticket system.
+     */
+    private static final Logger logger = Logger.getLogger(InvalidateList.class.getName());
 
     /** Copy once to avoid repeated copies. */
     final private static SchemaTable.TableID[] tableIDs = SchemaTable.TableID.values();
@@ -55,7 +64,7 @@ final public class InvalidateList {
     }
 
     public void addTable(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         SchemaTable.TableID tableID,
         String business,
         int server,
@@ -71,7 +80,7 @@ final public class InvalidateList {
     }
 
     public void addTable(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         SchemaTable.TableID tableID,
         Collection<String> businesses,
         int server,
@@ -87,7 +96,7 @@ final public class InvalidateList {
     }
 
     public void addTable(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         SchemaTable.TableID tableID,
         String business,
         IntCollection servers,
@@ -103,7 +112,7 @@ final public class InvalidateList {
     }
 
     public void addTable(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         SchemaTable.TableID tableID,
         Collection<String> businesses,
         IntCollection servers,
@@ -124,7 +133,7 @@ final public class InvalidateList {
                     SV.add(ALL_BUSINESSES);
                 } else {
                     for(String accounting : businesses) {
-                        if(accounting==null) MasterServer.reportWarning(new RuntimeException("Warning: accounting is null"), null);
+                        if(accounting==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: accounting is null"));
                         else if(!SV.contains(accounting)) SV.add(accounting);
                     }
                 }
@@ -144,7 +153,7 @@ final public class InvalidateList {
                     SV.add(ALL_SERVERS);
                 } else {
                     for(Integer pkey : servers) {
-                        if(pkey==null) MasterServer.reportWarning(new RuntimeException("Warning: pkey is null"), null);
+                        if(pkey==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: pkey is null"));
                         else if(!SV.contains(pkey)) SV.add(pkey);
                     }
                 }

@@ -6,9 +6,12 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>BackupHandler</code> manages the backup data.
@@ -17,8 +20,13 @@ import java.sql.SQLException;
  */
 public final class BackupHandler {
 
+    private static final Logger logger = LogFactory.getLogger(BackupHandler.class);
+
+    private BackupHandler() {
+    }
+
     public static int addFileBackupSetting(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int replication,
@@ -56,7 +64,7 @@ public final class BackupHandler {
     }
 
     public static void removeFileBackupSetting(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int pkey
@@ -69,7 +77,7 @@ public final class BackupHandler {
     }
 
     public static void removeFileBackupSetting(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -89,7 +97,7 @@ public final class BackupHandler {
     }
 
     public static void setFileBackupSettings(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -130,18 +138,18 @@ public final class BackupHandler {
     }
 
     public static int getAOServerForBackupPartition(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeIntQuery("select ao_server from backup_partitions where pkey=?", pkey);
     }
 
-    public static String getPathForBackupPartition(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getPathForBackupPartition(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select path from backup_partitions where pkey=?", pkey);
     }
 
     public static long getBackupPartitionTotalSize(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -153,32 +161,18 @@ public final class BackupHandler {
                 return DaemonHandler.getDaemonConnector(conn, aoServer).getDiskDeviceTotalSize(path);
             } catch(IOException err) {
                 DaemonHandler.flagDaemonAsDown(aoServer);
-                MasterServer.reportError(
-                    err,
-                    new Object[] {
-                        "pkey="+pkey,
-                        "path="+path,
-                        "aoServer="+aoServer
-                    }
-                );
+                logger.log(Level.SEVERE, "pkey="+pkey+", path="+path+", aoServer="+aoServer, err);
                 return -1;
             } catch(SQLException err) {
                 DaemonHandler.flagDaemonAsDown(aoServer);
-                MasterServer.reportError(
-                    err,
-                    new Object[] {
-                        "pkey="+pkey,
-                        "path="+path,
-                        "aoServer="+aoServer
-                    }
-                );
+                logger.log(Level.SEVERE, "pkey="+pkey+", path="+path+", aoServer="+aoServer, err);
                 return -1;
             }
         } else return -1;
     }
 
     public static long getBackupPartitionUsedSize(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -190,25 +184,11 @@ public final class BackupHandler {
                 return DaemonHandler.getDaemonConnector(conn, aoServer).getDiskDeviceUsedSize(path);
             } catch(IOException err) {
                 DaemonHandler.flagDaemonAsDown(aoServer);
-                MasterServer.reportError(
-                    err,
-                    new Object[] {
-                        "pkey="+pkey,
-                        "path="+path,
-                        "aoServer="+aoServer
-                    }
-                );
+                logger.log(Level.SEVERE, "pkey="+pkey+", path="+path+", aoServer="+aoServer, err);
                 return -1;
             } catch(SQLException err) {
                 DaemonHandler.flagDaemonAsDown(aoServer);
-                MasterServer.reportError(
-                    err,
-                    new Object[] {
-                        "pkey="+pkey,
-                        "path="+path,
-                        "aoServer="+aoServer
-                    }
-                );
+                logger.log(Level.SEVERE, "pkey="+pkey+", path="+path+", aoServer="+aoServer, err);
                 return -1;
             }
         } else return -1;

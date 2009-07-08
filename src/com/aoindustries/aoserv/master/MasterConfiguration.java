@@ -45,38 +45,6 @@ public final class MasterConfiguration {
         return props.getProperty(name);
     }
     
-    public static String getErrorSmtpServer() throws IOException {
-        return getProperty("aoserv.master.error.smtp.server");
-    }
-
-    public static String getWarningSmtpServer() throws IOException {
-        return getProperty("aoserv.master.warning.smtp.server");
-    }
-
-    public static String getErrorEmailFrom() throws IOException {
-        return getProperty("aoserv.master.error.email.from");
-    }
-
-    public static String getWarningEmailFrom() throws IOException {
-        return getProperty("aoserv.master.warning.email.from");
-    }
-
-    public static String getErrorEmailTo() throws IOException {
-        return getProperty("aoserv.master.error.email.to");
-    }
-    
-    public static String getWarningEmailTo() throws IOException {
-        return getProperty("aoserv.master.warning.email.to");
-    }
-
-    public static String getSecurityEmailFrom() throws IOException {
-        return getProperty("aoserv.master.security.email.from");
-    }
-
-    public static String getSecurityEmailTo() throws IOException {
-        return getProperty("aoserv.master.security.email.to");
-    }
-
     public static String getSSLKeystorePassword() throws IOException {
         return getProperty("aoserv.master.ssl.keystore.password");
     }

@@ -5,6 +5,7 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -20,7 +21,7 @@ final public class ResellerHandler {
      * Will skip past resellers that are flagged as auto-escalate.
      */
     public static String getResellerForBusinessAutoEscalate(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String originalAccounting
     ) throws IOException, SQLException {
         String accounting = originalAccounting;

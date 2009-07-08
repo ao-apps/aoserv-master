@@ -88,24 +88,22 @@ final public class AccountCleaner implements CronJob {
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         try {
             ProcessTimer timer=new ProcessTimer(
+                logger,
                 MasterServer.getRandom(),
-                MasterConfiguration.getWarningSmtpServer(),
-                MasterConfiguration.getWarningEmailFrom(),
-                MasterConfiguration.getWarningEmailTo(),
                 "Account Cleaner",
                 "Cleaning old account resources",
                 TIMER_MAX_TIME,
                 TIMER_REMINDER_INTERVAL
             );
             try {
-                timer.start();
+                MasterServer.executorService.submit(timer);
 
                 // Start the transaction
                 final InvalidateList invalidateList=new InvalidateList();
                 cleanNow(invalidateList);
                 MasterServer.invalidateTables(invalidateList, null);
             } finally {
-                timer.stop();
+                timer.finished();
             }
         } catch(ThreadDeath TD) {
             throw TD;

@@ -5,13 +5,32 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.aoserv.daemon.client.*;
-import com.aoindustries.io.*;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.aoserv.client.EmailAddress;
+import com.aoindustries.aoserv.client.EmailList;
+import com.aoindustries.aoserv.client.EmailSmtpRelay;
+import com.aoindustries.aoserv.client.InboxAttributes;
+import com.aoindustries.aoserv.client.LinuxAccount;
+import com.aoindustries.aoserv.client.LinuxAccountType;
+import com.aoindustries.aoserv.client.LinuxGroup;
+import com.aoindustries.aoserv.client.LinuxGroupType;
+import com.aoindustries.aoserv.client.MajordomoList;
+import com.aoindustries.aoserv.client.MajordomoServer;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.SpamEmailMessage;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.util.IntList;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>EmailHandler</code> handles all the accesses to the email tables.
@@ -20,11 +39,16 @@ import java.util.*;
  */
 final public class EmailHandler {
 
+    private static final Logger logger = LogFactory.getLogger(EmailHandler.class);
+
+    private EmailHandler() {
+    }
+
     private final static Map<Integer,Boolean> disabledEmailLists=new HashMap<Integer,Boolean>();
     private final static Map<Integer,Boolean> disabledEmailPipes=new HashMap<Integer,Boolean>();
     private final static Map<Integer,Boolean> disabledEmailSmtpRelays=new HashMap<Integer,Boolean>();
 
-    public static boolean canAccessEmailDomain(MasterDatabaseConnection conn, RequestSource source, int domain) throws IOException, SQLException {
+    public static boolean canAccessEmailDomain(DatabaseConnection conn, RequestSource source, int domain) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -37,7 +61,7 @@ final public class EmailHandler {
         }
     }
 
-    public static void checkAccessEmailDomain(MasterDatabaseConnection conn, RequestSource source, String action, int domain) throws IOException, SQLException {
+    public static void checkAccessEmailDomain(DatabaseConnection conn, RequestSource source, String action, int domain) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -48,7 +72,7 @@ final public class EmailHandler {
         }
     }
 
-    public static void checkAccessEmailSmtpRelay(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessEmailSmtpRelay(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -59,15 +83,15 @@ final public class EmailHandler {
         }
     }
 
-    public static void checkAccessEmailAddress(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessEmailAddress(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         checkAccessEmailDomain(conn, source, action, getEmailDomainForEmailAddress(conn, pkey));
     }
 
-    public static void checkAccessEmailList(MasterDatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+    public static void checkAccessEmailList(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         LinuxAccountHandler.checkAccessLinuxServerGroup(conn, source, action, getLinuxServerGroupForEmailList(conn, pkey));
     }
 
-    public static void checkAccessEmailListPath(MasterDatabaseConnection conn, RequestSource source, String action, int aoServer, String path) throws IOException, SQLException {
+    public static void checkAccessEmailListPath(DatabaseConnection conn, RequestSource source, String action, int aoServer, String path) throws IOException, SQLException {
         if(!EmailList.isValidRegularPath(path)) {
             // Can also be a path in a majordomo server that they may access
             if(path.startsWith(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY+'/')) {
@@ -86,12 +110,11 @@ final public class EmailHandler {
                 }
             }
             String message="email_lists.path="+path+" not allowed, '"+action+"'";
-            MasterServer.reportSecurityMessage(source, message);
             throw new SQLException(message);
         }
     }
 
-    public static void checkAccessEmailPipe(MasterDatabaseConnection conn, RequestSource source, String action, int pipe) throws IOException, SQLException {
+    public static void checkAccessEmailPipe(DatabaseConnection conn, RequestSource source, String action, int pipe) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -103,7 +126,7 @@ final public class EmailHandler {
     }
 
     public static void checkAccessEmailPipePath(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         String action,
         String path
@@ -111,12 +134,12 @@ final public class EmailHandler {
         throw new SQLException("Method not implemented.");
     }
 
-    public static void checkAccessMajordomoServer(MasterDatabaseConnection conn, RequestSource source, String action, int majordomoServer) throws IOException, SQLException {
+    public static void checkAccessMajordomoServer(DatabaseConnection conn, RequestSource source, String action, int majordomoServer) throws IOException, SQLException {
         checkAccessEmailDomain(conn, source, action, majordomoServer);
     }
 
     public static int addEmailAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         String address, 
@@ -128,7 +151,7 @@ final public class EmailHandler {
     }
 
     private static int addEmailAddress0(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String address, 
         int domain
@@ -151,7 +174,7 @@ final public class EmailHandler {
     }
 
     public static int addEmailForwarding(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int address, 
@@ -194,7 +217,7 @@ final public class EmailHandler {
     }
 
     public static int addEmailList(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         String path,
@@ -218,7 +241,7 @@ final public class EmailHandler {
         );
     }
     private static int addEmailList0(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         String path,
         int linuxServerAccount,
@@ -292,7 +315,7 @@ final public class EmailHandler {
     }
 
     public static int addEmailListAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int address, 
@@ -310,7 +333,7 @@ final public class EmailHandler {
     }
 
     private static int addEmailListAddress0(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int address, 
         int email_list
@@ -339,7 +362,7 @@ final public class EmailHandler {
      * Adds an email pipe.
      */
     public static int addEmailPipe(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int aoServer,
@@ -361,7 +384,7 @@ final public class EmailHandler {
     }
 
     private static int addEmailPipe0(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int aoServer,
         String path,
@@ -385,7 +408,7 @@ final public class EmailHandler {
     }
 
     public static int addEmailPipeAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int address, 
@@ -403,7 +426,7 @@ final public class EmailHandler {
     }
 
     private static int addEmailPipeAddress0(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int address, 
         int pipe
@@ -424,7 +447,7 @@ final public class EmailHandler {
     }
 
     public static int addLinuxAccAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int address, 
@@ -451,7 +474,7 @@ final public class EmailHandler {
     }
 
     public static int addEmailDomain(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String domain,
@@ -481,7 +504,7 @@ final public class EmailHandler {
      * Adds a email SMTP relay.
      */
     public static int addEmailSmtpRelay(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String packageName,
@@ -547,7 +570,7 @@ final public class EmailHandler {
     private static final Map<String,Long> smtpStatLastReports=new HashMap<String,Long>();
 
     public static int addSpamEmailMessage(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int esr,
@@ -579,7 +602,7 @@ final public class EmailHandler {
     }
 
     public static int addMajordomoList(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int majordomoServer,
@@ -686,7 +709,7 @@ final public class EmailHandler {
     }
 
     public static void addMajordomoServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int domain,
@@ -773,7 +796,7 @@ final public class EmailHandler {
     }
 
     public static void disableEmailList(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -800,7 +823,7 @@ final public class EmailHandler {
     }
 
     public static void disableEmailPipe(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -827,7 +850,7 @@ final public class EmailHandler {
     }
 
     public static void disableEmailSmtpRelay(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
@@ -854,7 +877,7 @@ final public class EmailHandler {
     }
 
     public static void enableEmailList(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -882,7 +905,7 @@ final public class EmailHandler {
     }
 
     public static void enableEmailPipe(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -910,7 +933,7 @@ final public class EmailHandler {
     }
 
     public static void enableEmailSmtpRelay(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -937,20 +960,20 @@ final public class EmailHandler {
         );
     }
 
-    public static int getDisableLogForEmailList(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getDisableLogForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from email_lists where pkey=?", pkey);
     }
 
-    public static int getDisableLogForEmailPipe(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getDisableLogForEmailPipe(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from email_pipes where pkey=?", pkey);
     }
 
-    public static int getDisableLogForEmailSmtpRelay(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getDisableLogForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from email_smtp_relays where pkey=?", pkey);
     }
 
     public static String getEmailListAddressList(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -964,14 +987,14 @@ final public class EmailHandler {
     }
 
     public static IntList getEmailListsForLinuxServerAccount(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
         return conn.executeIntListQuery("select pkey from email_lists where linux_server_account=?", pkey);
     }
 
     public static IntList getEmailListsForPackage(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String name
     ) throws IOException, SQLException {
         return conn.executeIntListQuery(
@@ -992,14 +1015,14 @@ final public class EmailHandler {
     }
 
     public static IntList getEmailPipesForPackage(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String name
     ) throws IOException, SQLException {
         return conn.executeIntListQuery("select pkey from email_pipes where package=?", name);
     }
 
     public static long[] getImapFolderSizes(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int linux_server_account,
         String[] folderNames
@@ -1011,15 +1034,7 @@ final public class EmailHandler {
             try {
                 return DaemonHandler.getDaemonConnector(conn, aoServer).getImapFolderSizes(username, folderNames);
             } catch(IOException err) {
-                MasterServer.reportError(
-                    err,
-                    new Object[] {
-                        "linux_server_account="+linux_server_account,
-                        "aoServer="+aoServer,
-                        "username="+username,
-                        "folderNames="+folderNames
-                    }
-                );
+                logger.log(Level.SEVERE, "linux_server_account="+linux_server_account+", aoServer="+aoServer+", username="+username+", folderNames="+folderNames, err);
                 DaemonHandler.flagDaemonAsDown(aoServer);
             }
         }
@@ -1029,7 +1044,7 @@ final public class EmailHandler {
     }
 
     public static void setImapFolderSubscribed(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int linux_server_account,
         String folderName,
@@ -1042,7 +1057,7 @@ final public class EmailHandler {
     }
 
     public static InboxAttributes getInboxAttributes(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int linux_server_account
     ) throws IOException, SQLException {
@@ -1053,14 +1068,7 @@ final public class EmailHandler {
             try {
                 return DaemonHandler.getDaemonConnector(conn, aoServer).getInboxAttributes(username);
             } catch(IOException err) {
-                MasterServer.reportError(
-                    err,
-                    new Object[] {
-                        "linux_server_account="+linux_server_account,
-                        "aoServer="+aoServer,
-                        "username="+username
-                    }
-                );
+                logger.log(Level.SEVERE, "linux_server_account="+linux_server_account+", aoServer="+aoServer+", username="+username, err);
                 DaemonHandler.flagDaemonAsDown(aoServer);
             }
         }
@@ -1068,14 +1076,14 @@ final public class EmailHandler {
     }
 
     public static IntList getEmailSmtpRelaysForPackage(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         String name
     ) throws IOException, SQLException {
         return conn.executeIntListQuery("select pkey from email_smtp_relays where package=?", name);
     }
 
     public static int getEmailDomain(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int aoServer,
         String path
     ) throws IOException, SQLException {
@@ -1095,14 +1103,14 @@ final public class EmailHandler {
     }
 
     public static int getEmailDomainForEmailAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int emailAddress
     ) throws IOException, SQLException {
         return conn.executeIntQuery("select domain from email_addresses where pkey=?", emailAddress);
     }
 
     public static String getMajordomoInfoFile(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -1117,7 +1125,7 @@ final public class EmailHandler {
     }
 
     public static String getMajordomoIntroFile(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey
     ) throws IOException, SQLException {
@@ -1132,7 +1140,7 @@ final public class EmailHandler {
     }
 
     public static int getMajordomoServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         int emailDomain
     ) throws IOException, SQLException {
         return conn.executeIntQuery(
@@ -1147,7 +1155,7 @@ final public class EmailHandler {
     }
 
     public static void getSpamEmailMessagesForEmailSmtpRelay(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         CompressedDataOutputStream out,
         boolean provideProgress,
@@ -1183,7 +1191,7 @@ final public class EmailHandler {
         }
     }
 
-    public static boolean isEmailListDisabled(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isEmailListDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(EmailHandler.class) {
             Integer I=Integer.valueOf(pkey);
             Boolean O=disabledEmailLists.get(I);
@@ -1194,7 +1202,7 @@ final public class EmailHandler {
 	    }
     }
 
-    public static boolean isEmailPipeDisabled(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isEmailPipeDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(EmailHandler.class) {
             Integer I=Integer.valueOf(pkey);
             Boolean O=disabledEmailPipes.get(I);
@@ -1205,7 +1213,7 @@ final public class EmailHandler {
 	    }
     }
 
-    public static boolean isEmailSmtpRelayDisabled(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isEmailSmtpRelayDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(EmailHandler.class) {
             Integer I=Integer.valueOf(pkey);
             Boolean O=disabledEmailSmtpRelays.get(I);
@@ -1220,7 +1228,7 @@ final public class EmailHandler {
      * Refreshes a email SMTP relay.
      */
     public static void refreshEmailSmtpRelay(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
@@ -1256,7 +1264,7 @@ final public class EmailHandler {
     }
 
     public static void removeBlackholeEmailAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int bea
@@ -1281,7 +1289,7 @@ final public class EmailHandler {
     }
 
     public static void removeEmailAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int address
@@ -1326,7 +1334,7 @@ final public class EmailHandler {
     }
 
     public static void removeEmailForwarding(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int ef
@@ -1346,7 +1354,7 @@ final public class EmailHandler {
     }
 
     public static void removeEmailListAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int ela
@@ -1366,7 +1374,7 @@ final public class EmailHandler {
     }
 
     public static void removeEmailList(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -1377,7 +1385,7 @@ final public class EmailHandler {
     }
 
     public static void removeEmailList(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -1480,7 +1488,7 @@ final public class EmailHandler {
     }
 
     public static void removeLinuxAccAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int laa
@@ -1501,7 +1509,7 @@ final public class EmailHandler {
     }
 
     public static void removeEmailPipe(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -1512,7 +1520,7 @@ final public class EmailHandler {
     }
 
     public static void removeEmailPipe(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -1544,7 +1552,7 @@ final public class EmailHandler {
     }
 
     public static void removeEmailPipeAddress(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         int epa
@@ -1564,7 +1572,7 @@ final public class EmailHandler {
     }
 
     public static void removeEmailDomain(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -1575,7 +1583,7 @@ final public class EmailHandler {
     }
 
     public static void removeEmailDomain(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -1674,7 +1682,7 @@ final public class EmailHandler {
      * Removes a email SMTP relay.
      */
     public static void removeEmailSmtpRelay(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
@@ -1688,7 +1696,7 @@ final public class EmailHandler {
      * Removes a email SMTP relay.
      */
     public static void removeEmailSmtpRelay(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
@@ -1705,7 +1713,7 @@ final public class EmailHandler {
     }
 
     public static void removeMajordomoServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int domain
@@ -1716,7 +1724,7 @@ final public class EmailHandler {
     }
 
     public static void removeMajordomoServer(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         InvalidateList invalidateList,
         int domain
     ) throws IOException, SQLException {
@@ -1766,7 +1774,7 @@ final public class EmailHandler {
     }
 
     public static void setEmailListAddressList(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey,
         String addresses
@@ -1784,31 +1792,31 @@ final public class EmailHandler {
         );
     }
 
-    public static String getBusinessForEmailAddress(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForEmailAddress(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from email_addresses ea, email_domains sd, packages pk where ea.domain=sd.pkey and sd.package=pk.name and ea.pkey=?", pkey);
     }
 
-    public static String getBusinessForEmailList(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from email_lists el, linux_server_groups lsg, linux_groups lg, packages pk where el.linux_server_group=lsg.pkey and lsg.name=lg.name and lg.package=pk.name and el.pkey=?", pkey);
     }
 
-    public static String getBusinessForEmailPipe(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForEmailPipe(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from email_pipes ep, packages pk where ep.package=pk.name and ep.pkey=?", pkey);
     }
 
-    public static String getBusinessForEmailDomain(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from email_domains sd, packages pk where sd.package=pk.name and sd.pkey=?", pkey);
     }
 
-    public static String getDomainForEmailDomain(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getDomainForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select domain from email_domains where pkey=?", pkey);
     }
 
-    public static String getBusinessForEmailSmtpRelay(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select pk.accounting from email_smtp_relays esr, packages pk where esr.package=pk.name and esr.pkey=?", pkey);
     }
 
-    public static int getEmailAddress(MasterDatabaseConnection conn, String address, int domain) throws IOException, SQLException {
+    public static int getEmailAddress(DatabaseConnection conn, String address, int domain) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select coalesce((select pkey from email_addresses where address=? and domain=?), -1)",
             address,
@@ -1816,25 +1824,25 @@ final public class EmailHandler {
         );
     }
 
-    public static int getOrAddEmailAddress(MasterDatabaseConnection conn, InvalidateList invalidateList, String address, int domain) throws IOException, SQLException {
+    public static int getOrAddEmailAddress(DatabaseConnection conn, InvalidateList invalidateList, String address, int domain) throws IOException, SQLException {
         int pkey=getEmailAddress(conn, address, domain);
         if(pkey==-1) pkey=addEmailAddress0(conn, invalidateList, address, domain);
         return pkey;
     }
 
-    public static int getLinuxServerAccountForMajordomoServer(MasterDatabaseConnection conn, int domain) throws IOException, SQLException {
+    public static int getLinuxServerAccountForMajordomoServer(DatabaseConnection conn, int domain) throws IOException, SQLException {
         return conn.executeIntQuery("select linux_server_account from majordomo_servers where domain=?", domain);
     }
 
-    public static int getLinuxServerGroupForMajordomoServer(MasterDatabaseConnection conn, int domain) throws IOException, SQLException {
+    public static int getLinuxServerGroupForMajordomoServer(DatabaseConnection conn, int domain) throws IOException, SQLException {
         return conn.executeIntQuery("select linux_server_group from majordomo_servers where domain=?", domain);
     }
 
-    public static String getPackageForEmailDomain(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getPackageForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select package from email_domains where pkey=?", pkey);
     }
 
-    public static String getPackageForEmailList(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getPackageForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  lg.package\n"
@@ -1850,23 +1858,23 @@ final public class EmailHandler {
         );
     }
 
-    public static String getPackageForEmailPipe(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getPackageForEmailPipe(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select package from email_pipes where pkey=?", pkey);
     }
 
-    public static String getPackageForEmailSmtpRelay(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getPackageForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select package from email_smtp_relays where pkey=?", pkey);
     }
 
-    public static String getPathForEmailList(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getPathForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select path from email_lists where pkey=?", pkey);
     }
 
-    public static int getAOServerForEmailAddress(MasterDatabaseConnection conn, int address) throws IOException, SQLException {
+    public static int getAOServerForEmailAddress(DatabaseConnection conn, int address) throws IOException, SQLException {
         return conn.executeIntQuery("select ed.ao_server from email_addresses ea, email_domains ed where ea.domain=ed.pkey and ea.pkey=?", address);
     }
 
-    public static int getAOServerForEmailList(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getAOServerForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  lsg.ao_server\n"
@@ -1880,15 +1888,15 @@ final public class EmailHandler {
         );
     }
 
-    public static int getLinuxServerAccountForEmailList(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getLinuxServerAccountForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select linux_server_account from email_lists where pkey=?", pkey);
     }
 
-    public static int getLinuxServerGroupForEmailList(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getLinuxServerGroupForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select linux_server_group from email_lists where pkey=?", pkey);
     }
 
-    public static boolean isEmailAddressUsed(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isEmailAddressUsed(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return
             conn.executeBooleanQuery("select (select email_address from blackhole_email_addresses where email_address=? limit 1) is not null", pkey)
             || conn.executeBooleanQuery("select (select pkey from email_forwarding where email_address=? limit 1) is not null", pkey)
@@ -1949,19 +1957,19 @@ final public class EmailHandler {
         ;
     }
 
-    public static int getAOServerForEmailPipe(MasterDatabaseConnection conn, int pipe) throws IOException, SQLException {
+    public static int getAOServerForEmailPipe(DatabaseConnection conn, int pipe) throws IOException, SQLException {
         return conn.executeIntQuery("select ao_server from email_pipes where pkey=?", pipe);
     }
 
-    public static int getAOServerForEmailDomain(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getAOServerForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select ao_server from email_domains where pkey=?", pkey);
     }
 
-    public static int getAOServerForEmailSmtpRelay(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getAOServerForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select ao_server from email_smtp_relays where pkey=?", pkey);
     }
 
-    public static boolean isEmailDomainAvailable(MasterDatabaseConnection conn, RequestSource source, int ao_server, String domain) throws IOException, SQLException {
+    public static boolean isEmailDomainAvailable(DatabaseConnection conn, RequestSource source, int ao_server, String domain) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "isEmailDomainAvailable", ao_server);
 
         return conn.executeBooleanQuery(
@@ -1971,12 +1979,12 @@ final public class EmailHandler {
         );
     }
     
-    public static boolean isMajordomoList(MasterDatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static boolean isMajordomoList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeBooleanQuery("select (select email_list from majordomo_lists where email_list=?) is not null", pkey);
     }
 
     public static void setMajordomoInfoFile(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey,
         String file
@@ -1995,7 +2003,7 @@ final public class EmailHandler {
     }
 
     public static void setMajordomoIntroFile(
-        MasterDatabaseConnection conn,
+        DatabaseConnection conn,
         RequestSource source,
         int pkey,
         String file
@@ -2011,8 +2019,5 @@ final public class EmailHandler {
             LinuxAccountHandler.getGIDForLinuxServerGroup(conn, getLinuxServerGroupForEmailList(conn, pkey)),
             0664
         );
-    }
-
-    private EmailHandler() {
     }
 }
