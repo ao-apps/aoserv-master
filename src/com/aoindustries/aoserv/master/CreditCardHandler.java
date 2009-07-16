@@ -15,7 +15,7 @@ import com.aoindustries.creditcards.CreditCardProcessor;
 import com.aoindustries.creditcards.MerchantServicesProviderFactory;
 import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
-import com.aoindustries.email.ProcessTimer;
+import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.WrappedSQLException;
 import java.io.IOException;
@@ -58,7 +58,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
      */
     private static final long TIMER_REMINDER_INTERVAL=2L*60*60*1000;
 
-    private static boolean started=false;
+    //private static boolean started=false;
 
     public static void start() {
         /*
@@ -1213,6 +1213,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
             ProcessTimer timer=new ProcessTimer(
                 logger,
                 MasterServer.getRandom(),
+                CreditCardHandler.class.getName(),
+                "processAutomaticPayments",
                 "CreditCardHandler - Process Automatic Payments",
                 "Processes the automatic payments for the month",
                 TIMER_MAX_TIME,

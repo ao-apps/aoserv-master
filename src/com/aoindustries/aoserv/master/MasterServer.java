@@ -30,8 +30,8 @@ import com.aoindustries.profiler.Profiler;
 import com.aoindustries.sql.AOConnectionPool;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.SQLUtility;
+import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.BufferManager;
-import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
@@ -130,6 +130,7 @@ public abstract class MasterServer {
         }
     }
 
+    /*
     private static void appendParam(String S, StringBuilder SB) {
         if(S==null) SB.append("null");
         else {
@@ -151,7 +152,7 @@ public abstract class MasterServer {
             }
             if(useQuotes) SB.append('\'');
         }
-    }
+    }*/
 
     /**
      * Gets the interface address this server is listening on.
@@ -229,7 +230,9 @@ public abstract class MasterServer {
     private static final SchemaTable.TableID[] tableIDs = SchemaTable.TableID.values();
 
     /**
-     * Handles a single request and then returns.
+     * Handles a single request and then returns.  Exceptions during command processing
+     * are caught, logged, and possibly sends a message to the client.  Other exceptions
+     * before or after the command will be thrown from here.
      *
      * @return  <code>true</code> if another request could be made on this stream, or
      *          <code>false</code> if this connection should be closed.
@@ -8049,6 +8052,12 @@ public abstract class MasterServer {
                                         if(invalidateList.isInvalid(tableID)) clientInvalidateList.add(TableHandler.convertToClientTableID(conn, source, tableID));
                                     }
                                 }
+                            } catch (RuntimeException err) {
+                                if(conn.rollbackAndClose()) {
+                                    connRolledBack=true;
+                                    invalidateList=null;
+                                }
+                                throw err;
                             } catch (SQLException err) {
                                 if(conn.rollbackAndClose()) {
                                     connRolledBack=true;
@@ -8098,8 +8107,8 @@ public abstract class MasterServer {
                             out.writeCompressedInt(-1);
                         }
                     } catch(RuntimeException err) {
+                        logger.log(Level.SEVERE, null, err);
                         keepOpen = false;
-                        throw err;
                     } catch(SQLException err) {
                         logger.log(Level.SEVERE, null, err);
                         String message=err.getMessage();
@@ -8110,6 +8119,7 @@ public abstract class MasterServer {
                         String message=err.getMessage();
                         out.writeByte(AOServProtocol.IO_EXCEPTION);
                         out.writeUTF(message==null?"":message);
+                        keepOpen = false; // Close on IOException
                     } finally {
                         if(currentThread.getPriority()!=Thread.NORM_PRIORITY) {
                             currentThread.setPriority(Thread.NORM_PRIORITY);
@@ -8299,8 +8309,8 @@ public abstract class MasterServer {
             DNSHandler.start();
             FailoverHandler.start();
             //TicketHandler.start();
-        } catch (IOException err) {
-            ErrorPrinter.printStackTraces(err);
+        } catch (Exception err) {
+            logger.log(Level.SEVERE, null, err);
         }
     }
     
@@ -8745,8 +8755,7 @@ public abstract class MasterServer {
                 results.close();
             }
         } catch(SQLException err) {
-            System.err.println("Error from query: "+pstmt.toString());
-            throw err;
+            throw new WrappedSQLException(err, pstmt);
         } finally {
             pstmt.close();
         }
@@ -8776,8 +8785,7 @@ public abstract class MasterServer {
                 results.close();
             }
         } catch(SQLException err) {
-            System.err.println("Error from query: "+pstmt.toString());
-            throw err;
+            throw new WrappedSQLException(err, pstmt);
         } finally {
             pstmt.close();
         }
@@ -8809,8 +8817,7 @@ public abstract class MasterServer {
                 results.close();
             }
         } catch(SQLException err) {
-            System.err.println("Error from query: "+pstmt.toString());
-            throw err;
+            throw new WrappedSQLException(err, pstmt);
         } finally {
             pstmt.close();
         }
@@ -8848,8 +8855,7 @@ public abstract class MasterServer {
                 results.close();
             }
         } catch(SQLException err) {
-            System.err.println("Error from query: "+pstmt.toString());
-            throw err;
+            throw new WrappedSQLException(err, pstmt);
         } finally {
             pstmt.close();
         }
@@ -8891,8 +8897,7 @@ public abstract class MasterServer {
                 results.close();
             }
         } catch(SQLException err) {
-            System.err.println("Error from query: "+pstmt.toString());
-            throw err;
+            throw new WrappedSQLException(err, pstmt);
         } finally {
             pstmt.close();
         }
@@ -8915,8 +8920,7 @@ public abstract class MasterServer {
             DatabaseConnection.setParams(pstmt, params);
             pstmt.executeUpdate();
         } catch(SQLException err) {
-            System.err.println("Error from select: "+pstmt.toString());
-            throw err;
+            throw new WrappedSQLException(err, pstmt);
         } finally {
             pstmt.close();
         }
@@ -8940,8 +8944,7 @@ public abstract class MasterServer {
                 if(batchSize<TableHandler.RESULT_SET_BATCH_SIZE) break;
             }
         } catch(SQLException err) {
-            System.err.println("Error from query: "+sqlString);
-            throw err;
+            throw new WrappedSQLException(err, sqlString);
         } finally {
             stmt.executeUpdate("close fetch_objects");
             stmt.close();
@@ -8969,8 +8972,7 @@ public abstract class MasterServer {
                     results.close();
                 }
             } catch(SQLException err) {
-                System.err.println("Error from query: "+pstmt.toString());
-                throw err;
+                throw new WrappedSQLException(err, pstmt);
             } finally {
                 pstmt.close();
             }
@@ -9000,8 +9002,7 @@ public abstract class MasterServer {
                 results.close();
             }
         } catch(SQLException err) {
-            System.err.println("Error from query: "+pstmt.toString());
-            throw err;
+            throw new WrappedSQLException(err, pstmt);
         } finally {
             pstmt.close();
         }
@@ -9032,8 +9033,7 @@ public abstract class MasterServer {
                 results.close();
             }
         } catch(SQLException err) {
-            System.err.println("Error from query: "+pstmt.toString());
-            throw err;
+            throw new WrappedSQLException(err, pstmt);
         } finally {
             pstmt.close();
         }

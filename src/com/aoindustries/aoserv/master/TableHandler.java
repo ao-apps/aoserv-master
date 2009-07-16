@@ -191,6 +191,9 @@ import java.util.logging.Logger;
  */
 final public class TableHandler {
 
+    private TableHandler() {
+    }
+
     private static final Logger logger = LogFactory.getLogger(TableHandler.class);
 
     /**
@@ -1093,54 +1096,56 @@ final public class TableHandler {
                         + "  and un.username=ba.username",
                         username
                     );
-                } else MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new BusinessAdministrator(),
-                    "select\n"
-                    + "  ba.username,\n"
-                    + "  '"+BusinessAdministrator.NO_PASSWORD+"'::text,\n"
-                    + "  ba.name,\n"
-                    + "  ba.title,\n"
-                    + "  ba.birthday,\n"
-                    + "  ba.is_preferred,\n"
-                    + "  ba.private,\n"
-                    + "  ba.created,\n"
-                    + "  ba.work_phone,\n"
-                    + "  ba.home_phone,\n"
-                    + "  ba.cell_phone,\n"
-                    + "  ba.fax,\n"
-                    + "  ba.email,\n"
-                    + "  ba.address1,\n"
-                    + "  ba.address2,\n"
-                    + "  ba.city,\n"
-                    + "  ba.state,\n"
-                    + "  ba.country,\n"
-                    + "  ba.zip,\n"
-                    + "  ba.disable_log,\n"
-                    + "  ba.can_switch_users,\n"
-                    + "  ba.support_code\n"
-                    + "from\n"
-                    + "  usernames un1,\n"
-                    + "  packages pk1,\n"
-                    + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
-                    + "  usernames un2,\n"
-                    + "  business_administrators ba\n"
-                    + "where\n"
-                    + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
-                    + "  and (\n"
-                    + "    un2.username=un1.username\n"
-                    + PK1_BU1_PARENTS_OR_WHERE
-                    + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
-                    + "  and un2.username=ba.username",
-                    username
-                );
+                } else {
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new BusinessAdministrator(),
+                        "select\n"
+                        + "  ba.username,\n"
+                        + "  '"+BusinessAdministrator.NO_PASSWORD+"'::text,\n"
+                        + "  ba.name,\n"
+                        + "  ba.title,\n"
+                        + "  ba.birthday,\n"
+                        + "  ba.is_preferred,\n"
+                        + "  ba.private,\n"
+                        + "  ba.created,\n"
+                        + "  ba.work_phone,\n"
+                        + "  ba.home_phone,\n"
+                        + "  ba.cell_phone,\n"
+                        + "  ba.fax,\n"
+                        + "  ba.email,\n"
+                        + "  ba.address1,\n"
+                        + "  ba.address2,\n"
+                        + "  ba.city,\n"
+                        + "  ba.state,\n"
+                        + "  ba.country,\n"
+                        + "  ba.zip,\n"
+                        + "  ba.disable_log,\n"
+                        + "  ba.can_switch_users,\n"
+                        + "  ba.support_code\n"
+                        + "from\n"
+                        + "  usernames un1,\n"
+                        + "  packages pk1,\n"
+                        + BU1_PARENTS_JOIN
+                        + "  packages pk2,\n"
+                        + "  usernames un2,\n"
+                        + "  business_administrators ba\n"
+                        + "where\n"
+                        + "  un1.username=?\n"
+                        + "  and un1.package=pk1.name\n"
+                        + "  and (\n"
+                        + "    un2.username=un1.username\n"
+                        + PK1_BU1_PARENTS_OR_WHERE
+                        + "  )\n"
+                        + "  and bu1.accounting=pk2.accounting\n"
+                        + "  and pk2.name=un2.package\n"
+                        + "  and un2.username=ba.username",
+                        username
+                    );
+                }
                 break;
             case BUSINESS_ADMINISTRATOR_PERMISSIONS :
                 if(masterUser!=null) {
@@ -5193,7 +5198,7 @@ final public class TableHandler {
                             + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
                             + "    pk2.package_definition=pd.pkey\n"
-                            + "    or bu1.accounting=pd.brand\n"
+                            + "    or bu1.accounting=pd.accounting\n"
                             + "  ) and pd.pkey=pdl.package_definition",
                             username
                         );
@@ -5228,7 +5233,7 @@ final public class TableHandler {
                             + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
                             + "    pk2.package_definition=pd.pkey\n"
-                            + "    or bu1.accounting=pd.brand\n"
+                            + "    or bu1.accounting=pd.accounting\n"
                             + "  ) and pd.pkey=pdl.package_definition",
                             username
                         );
@@ -5289,7 +5294,7 @@ final public class TableHandler {
                             + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
                             + "    pk2.package_definition=pd.pkey\n"
-                            + "    or bu1.accounting=pd.brand\n"
+                            + "    or bu1.accounting=pd.accounting\n"
                             + "  )",
                             username
                         );
@@ -5302,7 +5307,7 @@ final public class TableHandler {
                             new PackageDefinition(),
                             "select distinct\n"
                             + "  pd.pkey,\n"
-                            + "  pd.brand,\n"
+                            + "  pd.accounting,\n"
                             + "  pd.category,\n"
                             + "  pd.name,\n"
                             + "  pd.version,\n"
@@ -5328,7 +5333,7 @@ final public class TableHandler {
                             + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
                             + "    pk2.package_definition=pd.pkey\n"
-                            + "    or bu1.accounting=pd.brand\n"
+                            + "    or bu1.accounting=pd.accounting\n"
                             + "  )",
                             username
                         );
@@ -6570,7 +6575,7 @@ final public class TableHandler {
                             + "    or bu1.accounting=ti.brand\n" // Has access to brand
                             + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
                             + "  )\n"
-                            + "  and ti.pkey=ta.ticket)",
+                            + "  and ti.pkey=ta.ticket",
                             username
                         );
                     } else {
@@ -6781,7 +6786,48 @@ final public class TableHandler {
                             + "  tickets"
                         );
                     } else {
-                        MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());
+                        // AOServDaemon only needs access to its own open logs tickets
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new Ticket(),
+                            "select\n"
+                            + "  ti.pkey,\n"
+                            + "  ti.brand,\n"
+                            + "  ti.reseller,\n"
+                            + "  ti.accounting,\n"
+                            + "  ti.language,\n"
+                            + "  ti.created_by,\n"
+                            + "  ti.category,\n"
+                            + "  ti.ticket_type,\n"
+                            + "  ti.from_address,\n"
+                            + "  ti.summary,\n"
+                            + "  ti.open_date,\n"
+                            + "  ti.client_priority,\n"
+                            + "  ti.admin_priority,\n"
+                            + "  ti.status,\n"
+                            + "  ti.status_timeout,\n"
+                            + "  ti.contact_emails,\n"
+                            + "  ti.contact_phone_numbers\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  packages pk,\n"
+                            + "  tickets ti\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.package=pk.name\n"
+                            + "  and pk.accounting=ti.brand\n"
+                            + "  and pk.accounting=ti.accounting\n"
+                            + "  and ti.status in (?,?,?)\n"
+                            + "  and ti.ticket_type=?",
+                            username,
+                            TicketStatus.OPEN,
+                            TicketStatus.HOLD,
+                            TicketStatus.BOUNCED,
+                            TicketType.LOGS
+                        );
                     }
                 } else {
                     if(TicketHandler.isTicketAdmin(conn, source)) {
@@ -6791,7 +6837,7 @@ final public class TableHandler {
                             out,
                             provideProgress,
                             new Ticket(),
-                            "select\n"
+                            "select distinct\n"
                             + "  ti.pkey,\n"
                             + "  ti.brand,\n"
                             + "  ti.reseller,\n"

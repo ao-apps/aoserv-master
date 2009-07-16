@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.TicketActionType;
 import com.aoindustries.aoserv.client.TicketStatus;
+import com.aoindustries.aoserv.client.TicketType;
 import com.aoindustries.sql.DatabaseAccess;
 import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
@@ -74,8 +75,26 @@ final public class TicketHandler /*implements Runnable*/ {
     public static boolean canAccessTicket(DatabaseConnection conn, RequestSource source, int ticketId) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
-            if(MasterServer.getMasterServers(conn, source.getUsername()).length==0) return true; // Master users
-            else return false; // daemons
+            if(MasterServer.getMasterServers(conn, source.getUsername()).length==0) {
+                // Master users
+                return true;
+            } else {
+                // daemons
+
+                // Can only access their own logs tickets
+                String baAccounting = UsernameHandler.getBusinessForUsername(conn, source.getUsername());
+                String status = getStatusForTicket(conn, ticketId);
+                return
+                    baAccounting.equals(getBrandForTicket(conn, ticketId))
+                    && baAccounting.equals(getBusinessForTicket(conn, ticketId))
+                    && (
+                        TicketStatus.OPEN.equals(status)
+                        || TicketStatus.HOLD.equals(status)
+                        || TicketStatus.BOUNCED.equals(status)
+                    )
+                    && TicketType.LOGS.equals(getTicketTypeForTicket(conn, ticketId))
+                ;
+            }
         } else {
             String accounting = getBusinessForTicket(conn, ticketId);
             if(isTicketAdmin(conn, source)) {
@@ -1144,7 +1163,7 @@ final public class TicketHandler /*implements Runnable*/ {
         String summary,
         String details
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "addTicketAnnotation", AOServPermission.Permission.edit_ticket);
+        BusinessHandler.checkPermission(conn, source, "addTicketAnnotation", AOServPermission.Permission.add_ticket);
         checkAccessTicket(conn, source, "addTicketAnnotation", ticketID);
 
         addTicketAnnotation(conn, invalidateList, ticketID, source.getUsername(), summary, details);
@@ -1533,6 +1552,18 @@ final public class TicketHandler /*implements Runnable*/ {
 
     public static String getBusinessForTicket(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select accounting from tickets where pkey=?", pkey);
+    }
+
+    public static String getBrandForTicket(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeStringQuery("select brand from tickets where pkey=?", pkey);
+    }
+
+    public static String getStatusForTicket(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeStringQuery("select status from tickets where pkey=?", pkey);
+    }
+
+    public static String getTicketTypeForTicket(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeStringQuery("select ticket_type from tickets where pkey=?", pkey);
     }
 
     public static String getResellerForTicket(DatabaseConnection conn, int pkey) throws IOException, SQLException {

@@ -9,7 +9,7 @@ import com.aoindustries.aoserv.client.BackupReport;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
-import com.aoindustries.email.ProcessTimer;
+import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.Connection;
@@ -96,6 +96,8 @@ final public class ReportGenerator implements CronJob {
             ProcessTimer timer=new ProcessTimer(
                 logger,
                 MasterServer.getRandom(),
+                ReportGenerator.class.getName(),
+                "runCronJob",
                 "Backup Report Generator",
                 "Generating contents for backup_reports",
                 BACKUP_REPORT_MAX_TIME,

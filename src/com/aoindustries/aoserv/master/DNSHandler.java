@@ -15,7 +15,7 @@ import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
-import com.aoindustries.email.ProcessTimer;
+import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
@@ -107,6 +107,8 @@ final public class DNSHandler implements CronJob {
             ProcessTimer timer=new ProcessTimer(
                 logger,
                 MasterServer.getRandom(),
+                DNSHandler.class.getName(),
+                "runCronJob",
                 "DNSHandler - Whois History",
                 "Looking up whois and cleaning old records",
                 TIMER_MAX_TIME,
