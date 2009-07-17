@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLHandshakeException;
 
 /**
  * The <code>AOServServerThread</code> handles a connection once it is accepted.
@@ -373,6 +374,11 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 }
             } catch(EOFException err) {
                 // Normal when disconnecting
+            } catch(SSLHandshakeException err) {
+                String message = err.getMessage();
+                if(
+                    !"Remote host closed connection during handshake".equalsIgnoreCase(message)
+                ) logger.log(Level.SEVERE, null, err);
             } catch(SocketException err) {
                 // Connection reset common for abnormal client disconnects
                 String message=err.getMessage();
