@@ -5,11 +5,12 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.IPAddress;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
-import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
 import com.aoindustries.io.AOPool;
+import com.aoindustries.sql.DatabaseAccess;
 import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -59,10 +60,10 @@ final public class DaemonHandler {
         return total;
     }
 
-    public static String getDaemonConnectorIP(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
-        String address=conn.executeStringQuery("select daemon_connect_address from ao_servers where server=?", aoServer);
+    public static String getDaemonConnectorIP(DatabaseAccess database, int aoServer) throws IOException, SQLException {
+        String address=database.executeStringQuery("select daemon_connect_address from ao_servers where server=?", aoServer);
         if(address!=null) return address;
-        String ip=conn.executeStringQuery(
+        String ip=database.executeStringQuery(
             "select\n"
             + "  ia.ip_address\n"
             + "from\n"
@@ -77,7 +78,7 @@ final public class DaemonHandler {
         );
         if(ip==null) throw new SQLException("Unable to find daemon IP address for AOServer: "+aoServer);
         if(ip.equals(IPAddress.WILDCARD_IP)) {
-            ip=conn.executeStringQuery(
+            ip=database.executeStringQuery(
                 "select\n"
                 + "  ia.ip_address\n"
                 + "from\n"
@@ -102,8 +103,8 @@ final public class DaemonHandler {
         return ip;
     }
 
-    public static int getDaemonConnectorPort(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
-        return conn.executeIntQuery(
+    public static int getDaemonConnectorPort(DatabaseAccess database, int aoServer) throws IOException, SQLException {
+        return database.executeIntQuery(
             "select\n"
             + "  nb.port\n"
             + "from\n"
@@ -116,8 +117,8 @@ final public class DaemonHandler {
         );
     }
 
-    public static String getDaemonConnectorProtocol(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
-        return conn.executeStringQuery(
+    public static String getDaemonConnectorProtocol(DatabaseAccess database, int aoServer) throws IOException, SQLException {
+        return database.executeStringQuery(
             "select\n"
             + "  nb.app_protocol\n"
             + "from\n"
@@ -130,8 +131,8 @@ final public class DaemonHandler {
         );
     }
 
-    public static int getDaemonConnectorPoolSize(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
-        return conn.executeIntQuery(
+    public static int getDaemonConnectorPoolSize(DatabaseAccess database, int aoServer) throws IOException, SQLException {
+        return database.executeIntQuery(
             "select\n"
             + "  pool_size\n"
             + "from\n"
@@ -142,21 +143,18 @@ final public class DaemonHandler {
         );
     }
 
-    public static AOServDaemonConnector getDaemonConnector(DatabaseConnection dbConn, int aoServer) throws IOException, SQLException {
+    public static AOServDaemonConnector getDaemonConnector(DatabaseAccess database, int aoServer) throws IOException, SQLException {
         Integer I=Integer.valueOf(aoServer);
         synchronized(DaemonHandler.class) {
-        AOServDaemonConnector O=connectors.get(I);
-        if(O!=null) return O;
-            String ip=getDaemonConnectorIP(dbConn, aoServer);
-
+            AOServDaemonConnector O=connectors.get(I);
+            if(O!=null) return O;
             AOServDaemonConnector conn=AOServDaemonConnector.getConnector(
-                aoServer,
-                ip,
+                getDaemonConnectorIP(database, aoServer),
                 MasterConfiguration.getLocalIp(),
-                getDaemonConnectorPort(dbConn, aoServer),
-                getDaemonConnectorProtocol(dbConn, aoServer),
-                MasterConfiguration.getDaemonKey(dbConn, aoServer),
-                getDaemonConnectorPoolSize(dbConn, aoServer),
+                getDaemonConnectorPort(database, aoServer),
+                getDaemonConnectorProtocol(database, aoServer),
+                MasterConfiguration.getDaemonKey(database, aoServer),
+                getDaemonConnectorPoolSize(database, aoServer),
                 AOPool.DEFAULT_MAX_CONNECTION_AGE,
                 SSLServer.class,
                 SSLServer.sslProviderLoaded,
@@ -274,72 +272,22 @@ final public class DaemonHandler {
     private final static Map<Long,Long> recentKeys=new HashMap<Long,Long>();
     private static long lastKeyCleanTime=-1;
 
-    public static long requestDaemonAccess(
-        DatabaseConnection conn,
-        RequestSource source,
-        int aoServer,
-        int daemonCommandCode,
-        int param1
-    ) throws IOException, SQLException {
-        // Security checks
-        //String username=source.getUsername();
-        //MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-        //if(masterUser==null) throw new SQLException("Only master users allowed to request daemon access.");
-        // Sometime later we might restrict certain command codes to certain users
-
-        if(daemonCommandCode==AOServDaemonProtocol.FAILOVER_FILE_REPLICATION) {
-            // Current user must have the same exact package as the from server
-            String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
-            int fromServer=FailoverHandler.getFromServerForFailoverFileReplication(conn, param1);
-            String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer));
-            if(!userPackage.equals(serverPackage)) throw new SQLException("business_administrators.username.package!=servers.package.name: Not allowed to request daemon access for FAILOVER_FILE_REPLICATION");
-            //ServerHandler.checkAccessServer(conn, source, "requestDaemonAccess", fromServer);
-
-            // The to server must match server
-            int backupPartition = FailoverHandler.getBackupPartitionForFailoverFileReplication(conn, param1);
-            int toServer = BackupHandler.getAOServerForBackupPartition(conn, backupPartition);
-            if(toServer!=aoServer) throw new SQLException("(ao_servers.server="+aoServer+")!=((failover_file_replication.pkey="+param1+").backup_partition.ao_server="+toServer+")");
-
-            // The toPath includes the server name
-            String serverName;
-            if(ServerHandler.isAOServer(conn, fromServer)) {
-                serverName = ServerHandler.getHostnameForAOServer(conn, fromServer);
-            } else {
-                serverName =
-                    PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer))
-                    +'/'
-                    + ServerHandler.getNameForServer(conn, fromServer)
-                ;
-            }
-            String toPath =
-                conn.executeStringQuery("select bp.path from failover_file_replications ffr inner join backup_partitions bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", param1)
-                +'/'
-                +serverName
-            ;
-            int quota_gid = conn.executeIntQuery("select coalesce(quota_gid, -1) from failover_file_replications where pkey=?", param1);
-
-            // Verify that the backup_partition is the correct type
-            boolean isQuotaEnabled = conn.executeBooleanQuery("select bp.quota_enabled from failover_file_replications ffr inner join backup_partitions bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", param1);
-            if(quota_gid==-1) {
-                if(isQuotaEnabled) throw new SQLException("quota_gid is null when quota_enabled=true: failover_file_replications.pkey="+param1);
-            } else {
-                if(!isQuotaEnabled) throw new SQLException("quota_gid is not null when quota_enabled=false: failover_file_replications.pkey="+param1);
-            }
-
-            return grantDaemonAccess(
-                conn,
-                aoServer,
-                AOServDaemonProtocol.FAILOVER_FILE_REPLICATION,
-                serverName,
-                toPath,
-                quota_gid==-1 ? null : Integer.toString(quota_gid)
-            );
-        } else throw new SQLException("Unknown daemon command code: "+daemonCommandCode);
-    }
-    
-    public static long grantDaemonAccess(
+    /**
+     * @param conn
+     * @param aoServer
+     * @param connectAddress Overridden connect address or <code>null</code> to use the default
+     * @param daemonCommandCode
+     * @param param1
+     * @param param2
+     * @param param3
+     * @return
+     * @throws java.io.IOException
+     * @throws java.sql.SQLException
+     */
+    public static AOServer.DaemonAccess grantDaemonAccess(
         DatabaseConnection conn,
         int aoServer,
+        String connectAddress,
         int daemonCommandCode,
         String param1,
         String param2,
@@ -381,6 +329,11 @@ final public class DaemonHandler {
         // Send the key to the daemon
         getDaemonConnector(conn, aoServer).grantDaemonAccess(key, daemonCommandCode, param1, param2, param3);
 
-        return key;
+        return new AOServer.DaemonAccess(
+            getDaemonConnectorProtocol(conn, aoServer),
+            connectAddress!=null ? connectAddress : getDaemonConnectorIP(conn, aoServer),
+            getDaemonConnectorPort(conn, aoServer),
+            key
+        );
     }
 }

@@ -5,8 +5,10 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.FailoverFileLog;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.io.BitRateProvider;
@@ -314,5 +316,65 @@ final public class FailoverHandler implements CronJob {
         } catch(Throwable T) {
             logger.log(Level.SEVERE, null, T);
         }
+    }
+
+    public static AOServer.DaemonAccess requestReplicationDaemonAccess(
+        DatabaseConnection conn,
+        RequestSource source,
+        int pkey
+    ) throws IOException, SQLException {
+        // Security checks
+        //String username=source.getUsername();
+        //MasterUser masterUser=MasterServer.getMasterUser(conn, username);
+        //if(masterUser==null) throw new SQLException("Only master users allowed to request daemon access.");
+        // Sometime later we might restrict certain command codes to certain users
+
+        // Current user must have the same exact package as the from server
+        String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
+        int fromServer=FailoverHandler.getFromServerForFailoverFileReplication(conn, pkey);
+        String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer));
+        if(!userPackage.equals(serverPackage)) throw new SQLException("business_administrators.username.package!=servers.package.name: Not allowed to request daemon access for FAILOVER_FILE_REPLICATION");
+        //ServerHandler.checkAccessServer(conn, source, "requestDaemonAccess", fromServer);
+
+        // The to server must match server
+        int backupPartition = FailoverHandler.getBackupPartitionForFailoverFileReplication(conn, pkey);
+        int toServer = BackupHandler.getAOServerForBackupPartition(conn, backupPartition);
+
+        // The toPath includes the server name
+        String serverName;
+        if(ServerHandler.isAOServer(conn, fromServer)) {
+            serverName = ServerHandler.getHostnameForAOServer(conn, fromServer);
+        } else {
+            serverName =
+                PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer))
+                +'/'
+                + ServerHandler.getNameForServer(conn, fromServer)
+            ;
+        }
+        String toPath =
+            conn.executeStringQuery("select bp.path from failover_file_replications ffr inner join backup_partitions bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey)
+            +'/'
+            +serverName
+        ;
+        int quota_gid = conn.executeIntQuery("select coalesce(quota_gid, -1) from failover_file_replications where pkey=?", pkey);
+
+        // Verify that the backup_partition is the correct type
+        boolean isQuotaEnabled = conn.executeBooleanQuery("select bp.quota_enabled from failover_file_replications ffr inner join backup_partitions bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey);
+        if(quota_gid==-1) {
+            if(isQuotaEnabled) throw new SQLException("quota_gid is null when quota_enabled=true: failover_file_replications.pkey="+pkey);
+        } else {
+            if(!isQuotaEnabled) throw new SQLException("quota_gid is not null when quota_enabled=false: failover_file_replications.pkey="+pkey);
+        }
+
+        String connectAddress = conn.executeStringQuery("select connect_address from failover_file_replications where pkey=?", pkey);
+        return DaemonHandler.grantDaemonAccess(
+            conn,
+            toServer,
+            connectAddress,
+            AOServDaemonProtocol.FAILOVER_FILE_REPLICATION,
+            serverName,
+            toPath,
+            quota_gid==-1 ? null : Integer.toString(quota_gid)
+        );
     }
 }

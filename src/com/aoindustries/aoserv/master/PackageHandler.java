@@ -5,14 +5,24 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.Package;
-import com.aoindustries.sql.*;
-import com.aoindustries.util.*;
-import java.io.*;
+import com.aoindustries.aoserv.client.Resource;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.sql.DatabaseAccess;
+import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.sql.SQLUtility;
+import com.aoindustries.sql.WrappedSQLException;
+import com.aoindustries.util.IntList;
+import com.aoindustries.util.SortedArrayList;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The <code>PackageHandler</code> handles all the accesses to the <code>packages</code> table.
@@ -712,17 +722,17 @@ final public class PackageHandler {
         }
     }
 
-    public static String getBusinessForPackage(DatabaseConnection conn, String packageName) throws IOException, SQLException {
-        return getBusinessForPackage(conn, getPKeyForPackage(conn, packageName));
+    public static String getBusinessForPackage(DatabaseAccess database, String packageName) throws IOException, SQLException {
+        return getBusinessForPackage(database, getPKeyForPackage(database, packageName));
     }
 
     private static final Map<Integer,String> packageBusinesses=new HashMap<Integer,String>();
-    public static String getBusinessForPackage(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForPackage(DatabaseAccess database, int pkey) throws IOException, SQLException {
         Integer I=Integer.valueOf(pkey);
         synchronized(packageBusinesses) {
             String O=packageBusinesses.get(I);
             if(O!=null) return O;
-            String business=conn.executeStringQuery("select accounting from packages where pkey=?", pkey);
+            String business=database.executeStringQuery("select accounting from packages where pkey=?", pkey);
             packageBusinesses.put(I, business);
             return business;
         }
@@ -741,11 +751,11 @@ final public class PackageHandler {
     }
 
     private static final Map<String,Integer> packagePKeys=new HashMap<String,Integer>();
-    public static int getPKeyForPackage(DatabaseConnection conn, String name) throws IOException, SQLException {
+    public static int getPKeyForPackage(DatabaseAccess database, String name) throws IOException, SQLException {
         synchronized(packagePKeys) {
             Integer O=packagePKeys.get(name);
             if(O!=null) return O.intValue();
-            int pkey=conn.executeIntQuery("select pkey from packages where name=?", name);
+            int pkey=database.executeIntQuery("select pkey from packages where name=?", name);
             packagePKeys.put(name, Integer.valueOf(pkey));
             return pkey;
         }

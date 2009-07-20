@@ -1021,7 +1021,7 @@ final public class MySQLHandler {
         int mysqlServer
     ) throws IOException, SQLException {
         int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "mysql");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_mysql");
         if(!canControl) throw new SQLException("Not allowed to restart MySQL on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).restartMySQL(mysqlServer);
     }
@@ -1031,7 +1031,7 @@ final public class MySQLHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "mysql");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_mysql");
         if(!canControl) throw new SQLException("Not allowed to start MySQL on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).startMySQL();
     }
@@ -1041,7 +1041,7 @@ final public class MySQLHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "mysql");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_mysql");
         if(!canControl) throw new SQLException("Not allowed to stop MySQL on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).stopMySQL();
     }

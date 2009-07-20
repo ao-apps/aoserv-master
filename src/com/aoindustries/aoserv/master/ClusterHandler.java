@@ -10,6 +10,7 @@ import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.util.IntList;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -90,7 +91,7 @@ final public class ClusterHandler implements CronJob {
         updateMappings();
     }
 
-    public static class ClusterException extends Exception {
+    public static class ClusterException extends IOException {
 
         private static final long serialVersionUID = 1L;
 

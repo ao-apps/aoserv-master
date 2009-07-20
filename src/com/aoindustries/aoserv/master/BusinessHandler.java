@@ -113,18 +113,18 @@ final public class BusinessHandler {
         invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
     }
 
-    public static boolean canControl(
+    public static boolean canBusinessServer(
         DatabaseConnection conn,
         RequestSource source,
         int server,
-        String process
+        String column
     ) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             Connection.TRANSACTION_READ_COMMITTED,
             true,
             true,
             "select\n"
-            + "  bs.can_control_"+process+"\n"
+            + "  bs."+column+"\n"
             + "from\n"
             + "  usernames un,\n"
             + "  packages pk,\n"
@@ -354,11 +354,13 @@ final public class BusinessHandler {
             + "  can_control_mysql,\n"
             + "  can_control_postgresql,\n"
             + "  can_control_xfs,\n"
-            + "  can_control_xvfb\n"
+            + "  can_control_xvfb,\n"
+            + "  can_vnc_console\n"
             + ") values(\n"
             + "  ?,\n"
             + "  ?,\n"
             + "  true,\n"
+            + "  false,\n"
             + "  false,\n"
             + "  false,\n"
             + "  false,\n"
@@ -589,7 +591,7 @@ final public class BusinessHandler {
         boolean hasDefault=conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select (select pkey from business_servers where accounting=? and is_default limit 1) is not null", accounting);
 
         conn.executeUpdate(
-            "insert into business_servers values(?,?,?,?,false,false,false,false,false,false)",
+            "insert into business_servers values(?,?,?,?,false,false,false,false,false,false,false)",
             pkey,
             accounting,
             server,

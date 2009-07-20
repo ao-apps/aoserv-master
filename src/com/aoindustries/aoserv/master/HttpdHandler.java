@@ -5,13 +5,35 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.EmailAddress;
+import com.aoindustries.aoserv.client.HttpdJKProtocol;
+import com.aoindustries.aoserv.client.HttpdSharedTomcat;
+import com.aoindustries.aoserv.client.HttpdSite;
+import com.aoindustries.aoserv.client.HttpdSiteAuthenticatedLocation;
+import com.aoindustries.aoserv.client.HttpdTomcatContext;
+import com.aoindustries.aoserv.client.HttpdTomcatVersion;
+import com.aoindustries.aoserv.client.LinuxAccount;
+import com.aoindustries.aoserv.client.LinuxAccountTable;
+import com.aoindustries.aoserv.client.LinuxGroup;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.NetProtocol;
+import com.aoindustries.aoserv.client.Protocol;
+import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.io.CompressedDataOutputStream;
-import com.aoindustries.sql.*;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.sql.SQLUtility;
+import com.aoindustries.util.IntList;
+import com.aoindustries.util.SortedArrayList;
+import com.aoindustries.util.SortedIntArrayList;
+import com.aoindustries.util.StringUtility;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The <code>HttpdHandler</code> handles all the accesses to the HTTPD tables.
@@ -2806,7 +2828,7 @@ final public class HttpdHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "apache");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_apache");
         if(!canControl) throw new SQLException("Not allowed to restart Apache on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).restartApache();
     }
@@ -3141,7 +3163,7 @@ final public class HttpdHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "apache");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_apache");
         if(!canControl) throw new SQLException("Not allowed to start Apache on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).startApache();
     }
@@ -3151,7 +3173,7 @@ final public class HttpdHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "apache");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_apache");
         if(!canControl) throw new SQLException("Not allowed to stop Apache on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).stopApache();
     }

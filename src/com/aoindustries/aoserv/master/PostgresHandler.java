@@ -882,7 +882,7 @@ final public class PostgresHandler {
         int postgresServer
     ) throws IOException, SQLException {
         int aoServer=getAOServerForPostgresServer(conn, postgresServer);
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "postgresql");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_postgresql");
         if(!canControl) throw new SQLException("Not allowed to restart PostgreSQL on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).restartPostgres(postgresServer);
     }
@@ -893,7 +893,7 @@ final public class PostgresHandler {
         int postgresServer
     ) throws IOException, SQLException {
         int aoServer=getAOServerForPostgresServer(conn, postgresServer);
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "postgresql");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_postgresql");
         if(!canControl) throw new SQLException("Not allowed to start PostgreSQL on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).startPostgreSQL(postgresServer);
     }
@@ -904,7 +904,7 @@ final public class PostgresHandler {
         int postgresServer
     ) throws IOException, SQLException {
         int aoServer=getAOServerForPostgresServer(conn, postgresServer);
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "postgresql");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_postgresql");
         if(!canControl) throw new SQLException("Not allowed to stop PostgreSQL on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).stopPostgreSQL(postgresServer);
     }

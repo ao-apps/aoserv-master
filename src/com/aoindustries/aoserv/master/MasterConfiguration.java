@@ -7,7 +7,7 @@ package com.aoindustries.aoserv.master;
  */
 import com.aoindustries.io.AOPool;
 import com.aoindustries.profiler.Profiler;
-import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.sql.DatabaseAccess;
 import com.aoindustries.util.StringUtility;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -144,8 +144,8 @@ public final class MasterConfiguration {
         return S==null || S.length()==0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(S);
     }
 
-    public static String getDaemonKey(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
-        return getProperty("aoserv.daemon.client.key."+ServerHandler.getHostnameForAOServer(conn, aoServer));
+    public static String getDaemonKey(DatabaseAccess database, int aoServer) throws IOException, SQLException {
+        return getProperty("aoserv.daemon.client.key."+ServerHandler.getHostnameForAOServer(database, aoServer));
     }
 
     public static int getProfilerLevel() throws IOException {

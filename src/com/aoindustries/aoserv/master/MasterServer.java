@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.AOSHCommand;
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.AOServProtocol;
+import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.DNSRecord;
 import com.aoindustries.aoserv.client.DNSZoneTable;
@@ -388,7 +389,13 @@ public abstract class MasterServer {
                         boolean hasResp2LongArray=false;
 
                         String resp3String=null;
+
                         String resp4String=null;
+                        int resp4Int=-1;
+                        boolean hasResp4Int=false;
+
+                        long resp5Long=-1;
+                        boolean hasResp5Long=false;
 
                         final boolean sendInvalidateList;
                         final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
@@ -5849,27 +5856,47 @@ public abstract class MasterServer {
                                         sendInvalidateList=true;
                                         break;
                                     }
-                                    case REQUEST_DAEMON_ACCESS :
+                                    case REQUEST_REPLICATION_DAEMON_ACCESS :
                                         {
-                                            int aoServer=in.readCompressedInt();
-                                            int daemonCommandCode=in.readCompressedInt();
-                                            int param1=in.readCompressedInt();
+                                            int pkey=in.readCompressedInt();
                                             process.setCommand(
-                                                "request_daemon_access",
-                                                Integer.valueOf(aoServer),
-                                                Integer.valueOf(daemonCommandCode),
-                                                Integer.valueOf(param1)
+                                                "request_replication_daemon_access",
+                                                Integer.valueOf(pkey)
                                             );
-                                            long key=DaemonHandler.requestDaemonAccess(
+                                            AOServer.DaemonAccess daemonAccess = FailoverHandler.requestReplicationDaemonAccess(
                                                 conn,
                                                 source,
-                                                aoServer,
-                                                daemonCommandCode,
-                                                param1
+                                                pkey
                                             );
                                             resp1=AOServProtocol.DONE;
-                                            resp2Long=key;
-                                            hasResp2Long=true;
+                                            resp2String = daemonAccess.getProtocol();
+                                            resp3String = daemonAccess.getHost();
+                                            resp4Int = daemonAccess.getPort();
+                                            hasResp4Int = true;
+                                            resp5Long = daemonAccess.getKey();
+                                            hasResp5Long=true;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case REQUEST_VNC_CONSOLE_DAEMON_ACCESS :
+                                        {
+                                            int virtualServer=in.readCompressedInt();
+                                            process.setCommand(
+                                                "request_vnc_console_daemon_access",
+                                                Integer.valueOf(virtualServer)
+                                            );
+                                            AOServer.DaemonAccess daemonAccess = ServerHandler.requestVncConsoleDaemonAccess(
+                                                conn,
+                                                source,
+                                                virtualServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String = daemonAccess.getProtocol();
+                                            resp3String = daemonAccess.getHost();
+                                            resp4Int = daemonAccess.getPort();
+                                            hasResp4Int = true;
+                                            resp5Long = daemonAccess.getKey();
+                                            hasResp5Long=true;
                                             sendInvalidateList=false;
                                         }
                                         break;
@@ -8080,7 +8107,9 @@ public abstract class MasterServer {
                         if(invalidateList!=null) invalidateTables(invalidateList, source);
 
                         // Write the response codes
+                        // response 1
                         if(resp1!=-1) out.writeByte(resp1);
+                        // response 2
                         if(hasResp2Int) out.writeCompressedInt(resp2Int);
                         else if(hasResp2Long) out.writeLong(resp2Long);
                         else if(hasResp2Short) out.writeShort(resp2Short);
@@ -8094,8 +8123,13 @@ public abstract class MasterServer {
                         } else if(hasResp2LongArray) {
                             for(int c=0;c<resp2LongArray.length;c++) out.writeLong(resp2LongArray[c]);
                         }
+                        // response 3
                         if(resp3String!=null) out.writeUTF(resp3String);
-                        if(resp4String!=null) out.writeUTF(resp4String);
+                        // response 4
+                        if(hasResp4Int) out.writeCompressedInt(resp4Int);
+                        else if(resp4String!=null) out.writeUTF(resp4String);
+                        // response 5
+                        if(hasResp5Long) out.writeLong(resp5Long);
 
                         // Write the invalidate list
                         if(sendInvalidateList) {
@@ -8305,6 +8339,7 @@ public abstract class MasterServer {
             }
 
             AccountCleaner.start();
+            ClusterHandler.start();
             CreditCardHandler.start();
             DNSHandler.start();
             FailoverHandler.start();

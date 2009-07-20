@@ -129,7 +129,7 @@ final public class AOServerHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "cron");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_cron");
         if(!canControl) throw new SQLException("Not allowed to restart Cron on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).restartCron();
     }
@@ -139,7 +139,7 @@ final public class AOServerHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "cron");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_cron");
         if(!canControl) throw new SQLException("Not allowed to start Cron on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).startCron();
     }
@@ -149,7 +149,7 @@ final public class AOServerHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "cron");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_cron");
         if(!canControl) throw new SQLException("Not allowed to stop Cron on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).stopCron();
     }
@@ -159,7 +159,7 @@ final public class AOServerHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "xfs");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xfs");
         if(!canControl) throw new SQLException("Not allowed to restart XFS on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).restartXfs();
     }
@@ -169,7 +169,7 @@ final public class AOServerHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "xfs");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xfs");
         if(!canControl) throw new SQLException("Not allowed to start XFS on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).startXfs();
     }
@@ -179,7 +179,7 @@ final public class AOServerHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "xfs");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xfs");
         if(!canControl) throw new SQLException("Not allowed to stop XFS on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).stopXfs();
     }
@@ -189,7 +189,7 @@ final public class AOServerHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "xvfb");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xvfb");
         if(!canControl) throw new SQLException("Not allowed to restart Xvfb on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).restartXvfb();
     }
@@ -199,7 +199,7 @@ final public class AOServerHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "xvfb");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xvfb");
         if(!canControl) throw new SQLException("Not allowed to start Xvfb on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).startXvfb();
     }
@@ -209,7 +209,7 @@ final public class AOServerHandler {
         RequestSource source,
         int aoServer
     ) throws IOException, SQLException {
-        boolean canControl=BusinessHandler.canControl(conn, source, aoServer, "xvfb");
+        boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xvfb");
         if(!canControl) throw new SQLException("Not allowed to stop Xvfb on "+aoServer);
         DaemonHandler.getDaemonConnector(conn, aoServer).stopXvfb();
     }

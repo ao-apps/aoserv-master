@@ -196,20 +196,6 @@ final public class ServerHandler {
     }
 
     /**
-     * Creates a new <code>CreditCard</code>.
-     */
-    public static int addServerReport(
-        DatabaseConnection conn,
-        RequestSource source,
-        String server,
-        long time,
-        long interval,
-        float[][] values
-    ) throws IOException {
-        throw new IOException("TODO: Not implemented");
-    }
-
-    /**
      * Gets the servers that are allowed for the provided username.
      */
     static List<Integer> getAllowedServers(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
@@ -515,13 +501,12 @@ final public class ServerHandler {
         // Must be a virtual server with VNC enabled
         String vncPassword = conn.executeStringQuery("select vnc_password from virtual_servers where server=?", virtualServer);
         if(vncPassword==null) throw new SQLException("Virtual server VNC is disabled: "+virtualServer);
-        // TODO: Find current location of server
-        // TODO: Grant access to the Xen outer server
-        int physicalServer = 0; // TODO
-
+        // Find current location of server
+        int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
+        // Grant access to the Xen outer server
         return DaemonHandler.grantDaemonAccess(
             conn,
-            physicalServer,
+            primaryPhysicalServer,
             null,
             AOServDaemonProtocol.VNC_CONSOLE,
             getNameForServer(conn, virtualServer),
