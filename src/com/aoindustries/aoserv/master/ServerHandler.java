@@ -5,8 +5,13 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.aoserv.client.AOServPermission;
+import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
+import com.aoindustries.sql.DatabaseAccess;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.LongArrayList;
@@ -288,12 +293,12 @@ final public class ServerHandler {
     }
 
     final private static Map<Integer,String> hostnamesForAOServers=new HashMap<Integer,String>();
-    public static String getHostnameForAOServer(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
+    public static String getHostnameForAOServer(DatabaseAccess database, int aoServer) throws IOException, SQLException {
         Integer I=Integer.valueOf(aoServer);
         synchronized(hostnamesForAOServers) {
             String hostname=hostnamesForAOServers.get(I);
             if(hostname==null) {
-                hostname=conn.executeStringQuery("select hostname from ao_servers where server=?", aoServer);
+                hostname=database.executeStringQuery("select hostname from ao_servers where server=?", aoServer);
                 hostnamesForAOServers.put(I, hostname);
             }
             return hostname;
@@ -320,8 +325,25 @@ final public class ServerHandler {
         }
     }
 
+    public static int getServerForPackageAndName(DatabaseAccess database, int pack, String name) throws IOException, SQLException {
+        return database.executeIntQuery("select pkey from servers where package=? and name=?", pack, name);
+    }
+
     public static IntList getServers(DatabaseConnection conn) throws IOException, SQLException {
         return conn.executeIntListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select pkey from servers");
+    }
+
+    /**
+     * Gets all of the Xen physical servers.
+     */
+    public static IntList getXenPhysicalServers(DatabaseAccess database) throws IOException, SQLException {
+        return database.executeIntListQuery(
+            Connection.TRANSACTION_READ_COMMITTED,
+            true,
+            "select se.pkey from servers se inner join physical_servers ps on se.pkey=ps.server where se.operating_system_version in (?,?)",
+            OperatingSystemVersion.CENTOS_5DOM0_I686,
+            OperatingSystemVersion.CENTOS_5DOM0_X86_64
+        );
     }
 
     final private static Map<Integer,Boolean> aoServers=new HashMap<Integer,Boolean>();
@@ -477,5 +499,34 @@ final public class ServerHandler {
      */
     public static String getNameForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
         return conn.executeStringQuery("select name from servers where pkey=?", server);
+    }
+
+    public static AOServer.DaemonAccess requestVncConsoleDaemonAccess(
+        DatabaseConnection conn,
+        RequestSource source,
+        int virtualServer
+    ) throws IOException, SQLException {
+        // The user must have proper permissions
+        BusinessHandler.checkPermission(conn, source, "requestVncConsoleDaemonAccess", AOServPermission.Permission.vnc_console);
+        // The business must have proper access
+        boolean canVncConsole=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_vnc_console");
+        if(!canVncConsole) throw new SQLException("Not allowed to VNC console to "+canVncConsole);
+        // TODO: Must not be a disabled account
+        // Must be a virtual server with VNC enabled
+        String vncPassword = conn.executeStringQuery("select vnc_password from virtual_servers where server=?", virtualServer);
+        if(vncPassword==null) throw new SQLException("Virtual server VNC is disabled: "+virtualServer);
+        // TODO: Find current location of server
+        // TODO: Grant access to the Xen outer server
+        int physicalServer = 0; // TODO
+
+        return DaemonHandler.grantDaemonAccess(
+            conn,
+            physicalServer,
+            null,
+            AOServDaemonProtocol.VNC_CONSOLE,
+            getNameForServer(conn, virtualServer),
+            null,
+            null
+        );
     }
 }
