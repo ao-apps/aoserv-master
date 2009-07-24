@@ -6,7 +6,7 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.SchemaTable;
-import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.sql.DatabaseAccess;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntCollection;
 import com.aoindustries.util.SortedArrayList;
@@ -64,7 +64,7 @@ final public class InvalidateList {
     }
 
     public void addTable(
-        DatabaseConnection conn,
+        DatabaseAccess conn,
         SchemaTable.TableID tableID,
         String business,
         int server,
@@ -80,7 +80,7 @@ final public class InvalidateList {
     }
 
     public void addTable(
-        DatabaseConnection conn,
+        DatabaseAccess conn,
         SchemaTable.TableID tableID,
         Collection<String> businesses,
         int server,
@@ -96,7 +96,7 @@ final public class InvalidateList {
     }
 
     public void addTable(
-        DatabaseConnection conn,
+        DatabaseAccess conn,
         SchemaTable.TableID tableID,
         String business,
         IntCollection servers,
@@ -112,7 +112,7 @@ final public class InvalidateList {
     }
 
     public void addTable(
-        DatabaseConnection conn,
+        DatabaseAccess conn,
         SchemaTable.TableID tableID,
         Collection<String> businesses,
         IntCollection servers,

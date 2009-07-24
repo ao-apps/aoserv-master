@@ -11,12 +11,15 @@ import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.TicketActionType;
 import com.aoindustries.aoserv.client.TicketStatus;
 import com.aoindustries.aoserv.client.TicketType;
+import com.aoindustries.cron.CronDaemon;
+import com.aoindustries.cron.CronJob;
 import com.aoindustries.sql.DatabaseAccess;
 import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Random;
+import java.util.logging.Level;
 
 /**
  * The <code>TicketHandler</code> handles all the accesses to the ticket tables.
@@ -1641,19 +1644,96 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     private static Thread thread;
-    
+     */
+    private static boolean cronDaemonAdded = false;
+
     public static void start() {
         synchronized(System.out) {
-            if(thread==null) {
+            if(!cronDaemonAdded) {
                 System.out.print("Starting TicketHandler: ");
-                thread=new Thread(new TicketHandler());
-                thread.setPriority(Thread.NORM_PRIORITY-1);
-                thread.start();
+                CronDaemon.addCronJob(
+                    new CronJob() {
+                        public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+                            return minute==25 && hour==7;
+                        }
+
+                        public int getCronJobScheduleMode() {
+                            return CRON_JOB_SCHEDULE_SKIP;
+                        }
+
+                        public String getCronJobName() {
+                            return "Clean log tickets";
+                        }
+
+                        public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+                            try {
+                                InvalidateList invalidateList = new InvalidateList();
+                                MasterDatabase database = MasterDatabase.getDatabase();
+                                if(
+                                    database.executeUpdate(
+                                        "delete from\n"
+                                        + "  ticket_actions\n"
+                                        + "where\n"
+                                        + "  ticket in (\n"
+                                        + "    select\n"
+                                        + "      pkey\n"
+                                        + "    from\n"
+                                        + "      tickets\n"
+                                        + "    where\n"
+                                        + "      ticket_type=?\n"
+                                        + "      and open_date<(now()-'7 days'::interval)\n"
+                                        + "  ) and time<(now()-'7 days'::interval)",
+                                        TicketType.LOGS
+                                    )>0
+                                ) {
+                                    invalidateList.addTable(
+                                        database,
+                                        SchemaTable.TableID.TICKET_ACTIONS,
+                                        InvalidateList.allBusinesses,
+                                        InvalidateList.allServers,
+                                        false
+                                    );
+                                }
+                                if(
+                                    database.executeUpdate(
+                                        "delete from\n"
+                                        + "  tickets\n"
+                                        + "where\n"
+                                        + "  ticket_type=?\n"
+                                        + "  and open_date<(now()-'7 days'::interval)\n"
+                                        + "  and (select pkey from ticket_actions ta where tickets.pkey=ta.ticket limit 1) is null",
+                                        TicketType.LOGS
+                                    )>0
+                                ) {
+                                    invalidateList.addTable(
+                                        database,
+                                        SchemaTable.TableID.TICKETS,
+                                        InvalidateList.allBusinesses,
+                                        InvalidateList.allServers,
+                                        false
+                                    );
+                                }
+                                MasterServer.invalidateTables(invalidateList, null);
+                            } catch(ThreadDeath TD) {
+                                throw TD;
+                            } catch(Throwable T) {
+                                LogFactory.getLogger(getClass()).log(Level.SEVERE, null, T);
+                            }
+                        }
+
+                        public int getCronJobThreadPriority() {
+                            return Thread.NORM_PRIORITY-2;
+                        }
+                    }, LogFactory.getLogger(TicketHandler.class)
+                );
+                cronDaemonAdded = true;
+                //thread=new Thread(new TicketHandler());
+                //thread.setPriority(Thread.NORM_PRIORITY-1);
+                //thread.start();
                 System.out.println("Done");
             }
         }
     }
-     */
 
     /**
      * The amount of time sleeping between IMAP folder scans.

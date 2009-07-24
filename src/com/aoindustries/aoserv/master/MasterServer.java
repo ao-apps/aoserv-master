@@ -8329,7 +8329,7 @@ public abstract class MasterServer {
             CreditCardHandler.start();
             DNSHandler.start();
             FailoverHandler.start();
-            //TicketHandler.start();
+            TicketHandler.start();
         } catch (Exception err) {
             logger.log(Level.SEVERE, null, err);
         }

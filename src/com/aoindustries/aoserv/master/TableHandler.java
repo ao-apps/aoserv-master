@@ -167,6 +167,7 @@ import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.profiler.MethodProfile;
 import com.aoindustries.profiler.Profiler;
+import com.aoindustries.sql.DatabaseAccess;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
@@ -7243,7 +7244,7 @@ final public class TableHandler {
 
     final private static Map<SchemaTable.TableID,String> tableNames=new EnumMap<SchemaTable.TableID,String>(SchemaTable.TableID.class);
 
-    public static String getTableName(DatabaseConnection conn, SchemaTable.TableID tableID) throws IOException, SQLException {
+    public static String getTableName(DatabaseAccess conn, SchemaTable.TableID tableID) throws IOException, SQLException {
         synchronized(tableNames) {
             String name=tableNames.get(tableID);
             if(name==null) {
@@ -7261,7 +7262,7 @@ final public class TableHandler {
      * Converts a specific AOServProtocol version table ID to the number used in the database storage.
      */
     public static int convertClientTableIDToDBTableID(
-        DatabaseConnection conn,
+        DatabaseAccess conn,
         AOServProtocol.Version version,
         int clientTableID
     ) throws IOException, SQLException {
