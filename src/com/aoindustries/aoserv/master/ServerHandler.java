@@ -496,8 +496,8 @@ final public class ServerHandler {
         BusinessHandler.checkPermission(conn, source, "requestVncConsoleDaemonAccess", AOServPermission.Permission.vnc_console);
         // The business must have proper access
         boolean canVncConsole=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_vnc_console");
-        if(!canVncConsole) throw new SQLException("Not allowed to VNC console to "+canVncConsole);
-        // TODO: Must not be a disabled account
+        if(!canVncConsole) throw new SQLException("Not allowed to VNC console to "+virtualServer);
+        // TODO: Must not be a disabled server
         // Must be a virtual server with VNC enabled
         String vncPassword = conn.executeStringQuery("select vnc_password from virtual_servers where server=?", virtualServer);
         if(vncPassword==null) throw new SQLException("Virtual server VNC is disabled: "+virtualServer);

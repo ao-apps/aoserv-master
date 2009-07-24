@@ -8,7 +8,6 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.io.AOPool;
 import java.io.*;
 import java.net.*;
-import java.security.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.*;
@@ -25,11 +24,6 @@ import javax.net.ssl.*;
 public class SSLServer extends TCPServer {
 
     private static final Logger logger = LogFactory.getLogger(ServerHandler.class);
-
-    /**
-     * Flags that the SSL factory has already been loaded.
-     */
-    public static final boolean[] sslProviderLoaded=new boolean[1];
 
     /**
      * The protocol of this server.
@@ -58,24 +52,18 @@ public class SSLServer extends TCPServer {
 
     @Override
     public void run() {
-        synchronized(SSLServer.class) {
-            try {
-                if(!sslProviderLoaded[0]) {
-                    System.setProperty(
-                        "javax.net.ssl.keyStorePassword",
-                        MasterConfiguration.getSSLKeystorePassword()
-                    );
-                    System.setProperty(
-                        "javax.net.ssl.keyStore",
-                        MasterConfiguration.getSSLKeystorePath()
-                    );
-                    Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
-                    sslProviderLoaded[0]=true;
-                }
-            } catch(IOException err) {
-                logger.log(Level.SEVERE, null, err);
-                return;
-            }
+        try {
+            System.setProperty(
+                "javax.net.ssl.keyStorePassword",
+                MasterConfiguration.getSSLKeystorePassword()
+            );
+            System.setProperty(
+                "javax.net.ssl.keyStore",
+                MasterConfiguration.getSSLKeystorePath()
+            );
+        } catch(IOException err) {
+            logger.log(Level.SEVERE, null, err);
+            return;
         }
 
         SSLServerSocketFactory factory = (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();

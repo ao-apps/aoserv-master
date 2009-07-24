@@ -156,8 +156,6 @@ final public class DaemonHandler {
                 MasterConfiguration.getDaemonKey(database, aoServer),
                 getDaemonConnectorPoolSize(database, aoServer),
                 AOPool.DEFAULT_MAX_CONNECTION_AGE,
-                SSLServer.class,
-                SSLServer.sslProviderLoaded,
                 MasterConfiguration.getSSLTruststorePath(),
                 MasterConfiguration.getSSLTruststorePassword(),
                 logger

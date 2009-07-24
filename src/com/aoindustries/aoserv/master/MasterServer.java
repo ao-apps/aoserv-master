@@ -41,7 +41,6 @@ import com.aoindustries.util.ThreadUtility;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8290,34 +8289,21 @@ public abstract class MasterServer {
             Profiler.setProfilerLevel(MasterConfiguration.getProfilerLevel());
 
             // Configure the SSL
-            synchronized(SSLServer.class) {
-                if(!SSLServer.sslProviderLoaded[0]) {
-                    boolean useSSL=false;
-                    String trustStorePath=MasterConfiguration.getSSLTruststorePath();
-                    if(trustStorePath!=null && trustStorePath.length()>0) {
-                        System.setProperty("javax.net.ssl.trustStore", trustStorePath);
-                        useSSL=true;
-                    }
-                    String trustStorePassword=MasterConfiguration.getSSLTruststorePassword();
-                    if(trustStorePassword!=null && trustStorePassword.length()>0) {
-                        System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
-                        useSSL=true;
-                    }
-                    String keyStorePath=MasterConfiguration.getSSLKeystorePath();
-                    if(keyStorePath!=null && keyStorePath.length()>0) {
-                        System.setProperty("javax.net.ssl.keyStore", keyStorePath);
-                        useSSL=true;
-                    }
-                    String keyStorePassword=MasterConfiguration.getSSLKeystorePassword();
-                    if(keyStorePassword!=null && keyStorePassword.length()>0) {
-                        System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
-                        useSSL=true;
-                    }
-                    if(useSSL) {
-                        Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
-                        SSLServer.sslProviderLoaded[0]=true;
-                    }
-                }
+            String trustStorePath=MasterConfiguration.getSSLTruststorePath();
+            if(trustStorePath!=null && trustStorePath.length()>0) {
+                System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+            }
+            String trustStorePassword=MasterConfiguration.getSSLTruststorePassword();
+            if(trustStorePassword!=null && trustStorePassword.length()>0) {
+                System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
+            }
+            String keyStorePath=MasterConfiguration.getSSLKeystorePath();
+            if(keyStorePath!=null && keyStorePath.length()>0) {
+                System.setProperty("javax.net.ssl.keyStore", keyStorePath);
+            }
+            String keyStorePassword=MasterConfiguration.getSSLKeystorePassword();
+            if(keyStorePassword!=null && keyStorePassword.length()>0) {
+                System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
             }
 
             List<String> protocols=MasterConfiguration.getProtocols();

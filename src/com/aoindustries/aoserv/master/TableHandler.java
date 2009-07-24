@@ -1008,7 +1008,10 @@ final public class TableHandler {
                             + "  br.aoweb_struts_google_verify_content,\n"
                             + "  br.aoweb_struts_noindex,\n"
                             + "  br.aoweb_struts_google_analytics_new_tracking_code,\n"
-                            + "  br.aoweb_struts_signup_admin_address\n"
+                            + "  br.aoweb_struts_signup_admin_address,\n"
+                            + "  br.aoweb_struts_vnc_bind,\n"
+                            + "  '"+AOServProtocol.FILTERED+"'::text,\n" // aoweb_struts_keystore_type
+                            + "  '"+AOServProtocol.FILTERED+"'::text\n" // aoweb_struts_keystore_password
                             + "from\n"
                             + "  usernames un,\n"
                             + "  packages pk,\n"

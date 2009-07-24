@@ -163,26 +163,40 @@ final public class ClusterHandler implements CronJob {
                             MasterServer.executorService.submit(
                                 new Callable<Set<Integer>>() {
                                     public Set<Integer> call() throws Exception {
-                                        List<AOServer.DrbdReport> drbdReports = AOServer.parseDrbdReport(Locale.getDefault(), DaemonHandler.getDaemonConnector(database, xenPhysicalServer).getDrbdReport());
-                                        Set<Integer> primaryMapping = new HashSet<Integer>(drbdReports.size()*4/3+1);
-                                        for(AOServer.DrbdReport drbdReport : drbdReports) {
-                                            if(
-                                                drbdReport.getLocalRole()==AOServer.DrbdReport.Role.Primary
-                                                && (
-                                                    drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Secondary
-                                                    || drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Unknown
-                                                )
-                                            ) {
-                                                primaryMapping.add(
-                                                    ServerHandler.getServerForPackageAndName(
-                                                        database,
-                                                        PackageHandler.getPKeyForPackage(database, BusinessHandler.getRootBusiness()),
-                                                        drbdReport.getResourceHostname()
-                                                    )
-                                                );
+                                        // Try up to ten times
+                                        for(int c=0;c<10;c++) {
+                                            try {
+                                                List<AOServer.DrbdReport> drbdReports = AOServer.parseDrbdReport(Locale.getDefault(), DaemonHandler.getDaemonConnector(database, xenPhysicalServer).getDrbdReport());
+                                                Set<Integer> primaryMapping = new HashSet<Integer>(drbdReports.size()*4/3+1);
+                                                for(AOServer.DrbdReport drbdReport : drbdReports) {
+                                                    if(
+                                                        drbdReport.getLocalRole()==AOServer.DrbdReport.Role.Primary
+                                                        && (
+                                                            drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Secondary
+                                                            || drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Unknown
+                                                        )
+                                                    ) {
+                                                        primaryMapping.add(
+                                                            ServerHandler.getServerForPackageAndName(
+                                                                database,
+                                                                PackageHandler.getPKeyForPackage(database, BusinessHandler.getRootBusiness()),
+                                                                drbdReport.getResourceHostname()
+                                                            )
+                                                        );
+                                                    }
+                                                }
+                                                return primaryMapping;
+                                            } catch(Exception exception) {
+                                                if(c==9) throw exception;
+                                                LogFactory.getLogger(ClusterHandler.class).log(Level.SEVERE, null, exception);
+                                                try {
+                                                    Thread.sleep(2000);
+                                                } catch(InterruptedException err) {
+                                                    LogFactory.getLogger(ClusterHandler.class).log(Level.WARNING, null, err);
+                                                }
                                             }
                                         }
-                                        return primaryMapping;
+                                        throw new AssertionError("Exception should have been thrown when c==9");
                                     }
                                 }
                             )
