@@ -1961,18 +1961,29 @@ public abstract class MasterServer {
                                                     boolean canCreateRoutine;
                                                     boolean canAlterRoutine;
                                                     boolean canExecute;
+                                                    boolean canEvent;
+                                                    boolean canTrigger;
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4)>=0) {
                                                         canCreateView=in.readBoolean();
                                                         canShowView=in.readBoolean();
                                                         canCreateRoutine=in.readBoolean();
                                                         canAlterRoutine=in.readBoolean();
                                                         canExecute=in.readBoolean();
+                                                        if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_54)>=0) {
+                                                            canEvent=in.readBoolean();
+                                                            canTrigger=in.readBoolean();
+                                                        } else {
+                                                            canEvent=false;
+                                                            canTrigger=false;
+                                                        }
                                                     } else {
                                                         canCreateView=false;
                                                         canShowView=false;
                                                         canCreateRoutine=false;
                                                         canAlterRoutine=false;
                                                         canExecute=false;
+                                                        canEvent=false;
+                                                        canTrigger=false;
                                                     }
                                                     process.setCommand(
                                                         AOSHCommand.ADD_MYSQL_DB_USER,
@@ -1992,7 +2003,9 @@ public abstract class MasterServer {
                                                         canShowView,
                                                         canCreateRoutine,
                                                         canAlterRoutine,
-                                                        canExecute
+                                                        canExecute,
+                                                        canEvent,
+                                                        canTrigger
                                                     );
                                                     int pkey=MySQLHandler.addMySQLDBUser(
                                                         conn,
@@ -2014,7 +2027,9 @@ public abstract class MasterServer {
                                                         canShowView,
                                                         canCreateRoutine,
                                                         canAlterRoutine,
-                                                        canExecute
+                                                        canExecute,
+                                                        canEvent,
+                                                        canTrigger
                                                     );
                                                     resp1=AOServProtocol.DONE;
                                                     resp2Int=pkey;

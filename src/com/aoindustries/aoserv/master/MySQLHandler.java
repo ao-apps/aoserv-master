@@ -36,6 +36,9 @@ import java.util.Map;
  */
 final public class MySQLHandler {
 
+    private MySQLHandler() {
+    }
+
     private final static Map<Integer,Boolean> disabledMySQLServerUsers=new HashMap<Integer,Boolean>();
     private final static Map<String,Boolean> disabledMySQLUsers=new HashMap<String,Boolean>();
 
@@ -196,7 +199,9 @@ final public class MySQLHandler {
         boolean canShowView,
         boolean canCreateRoutine,
         boolean canAlterRoutine,
-        boolean canExecute
+        boolean canExecute,
+        boolean canEvent,
+        boolean canTrigger
     ) throws IOException, SQLException {
         // Must be allowed to access this database and user
         checkAccessMySQLDatabase(conn, source, "addMySQLDBUser", mysql_database);
@@ -211,7 +216,7 @@ final public class MySQLHandler {
         // Add the entry to the database
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_db_users_pkey_seq')");
         conn.executeUpdate(
-            "insert into mysql_db_users values(?,?,?,?,?,?,?,?,?,false,false,?,?,?,?,?,?,?,?,?)",
+            "insert into mysql_db_users values(?,?,?,?,?,?,?,?,?,false,false,?,?,?,?,?,?,?,?,?,?,?)",
             pkey,
             mysql_database,
             mysql_server_user,
@@ -229,7 +234,9 @@ final public class MySQLHandler {
             canShowView,
             canCreateRoutine,
             canAlterRoutine,
-            canExecute
+            canExecute,
+            canEvent,
+            canTrigger
         );
 
         // Notify all clients of the update, the server will detect this change and automatically update MySQL
