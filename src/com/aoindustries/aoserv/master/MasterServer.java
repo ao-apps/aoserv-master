@@ -4225,6 +4225,22 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case GET_MYSQL_TABLE_STATUS :
+                                        {
+                                            int mysqlDatabase = in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_mysql_table_status",
+                                                Integer.valueOf(mysqlDatabase)
+                                            );
+                                            MySQLHandler.getTableStatus(
+                                                conn,
+                                                source,
+                                                mysqlDatabase,
+                                                out
+                                            );
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case GET_NET_DEVICE_BONDING_REPORT :
                                         {
                                             int pkey = in.readCompressedInt();

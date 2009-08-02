@@ -322,11 +322,11 @@ final public class ServerHandler {
     /**
      * Gets all of the Xen physical servers.
      */
-    public static IntList getXenPhysicalServers(DatabaseAccess database) throws IOException, SQLException {
+    public static IntList getEnabledXenPhysicalServers(DatabaseAccess database) throws IOException, SQLException {
         return database.executeIntListQuery(
             Connection.TRANSACTION_READ_COMMITTED,
             true,
-            "select se.pkey from servers se inner join physical_servers ps on se.pkey=ps.server where se.operating_system_version in (?,?)",
+            "select se.pkey from servers se inner join physical_servers ps on se.pkey=ps.server where se.operating_system_version in (?,?) and se.monitoring_enabled",
             OperatingSystemVersion.CENTOS_5DOM0_I686,
             OperatingSystemVersion.CENTOS_5DOM0_X86_64
         );

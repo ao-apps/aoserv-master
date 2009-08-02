@@ -155,7 +155,7 @@ final public class ClusterHandler implements CronJob {
 
                     // Query the servers in parallel
                     final MasterDatabase database = MasterDatabase.getDatabase();
-                    IntList xenPhysicalServers = ServerHandler.getXenPhysicalServers(database);
+                    IntList xenPhysicalServers = ServerHandler.getEnabledXenPhysicalServers(database);
                     Map<Integer,Future<Set<Integer>>> futures = new HashMap<Integer,Future<Set<Integer>>>(xenPhysicalServers.size()*4/3+1);
                     for(final Integer xenPhysicalServer : xenPhysicalServers) {
                         futures.put(

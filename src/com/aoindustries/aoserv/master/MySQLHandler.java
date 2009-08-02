@@ -1093,7 +1093,7 @@ final public class MySQLHandler {
         // Check access
         int mysqlServer = getMySQLServerForFailoverMySQLReplication(conn, failoverMySQLReplication);
         checkAccessMySQLServer(conn, source, "getSlaveStatus", mysqlServer);
-        int failoverServer = conn.executeIntQuery("select bp.to_server from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey inner join backup_partitions bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", failoverMySQLReplication);
+        int failoverServer = conn.executeIntQuery("select bp.ao_server from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey inner join backup_partitions bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", failoverMySQLReplication);
         if(DaemonHandler.isDaemonAvailable(failoverServer)) {
             try {
                 String toPath = conn.executeStringQuery("select bp.path from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey inner join backup_partitions bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", failoverMySQLReplication);
@@ -1126,6 +1126,54 @@ final public class MySQLHandler {
             } catch(IOException err) {
                 DaemonHandler.flagDaemonAsDown(failoverServer);
                 throw err;
+            }
+        } else {
+            throw new IOException("Server unavailable");
+        }
+    }
+
+    public static void getTableStatus(
+        DatabaseConnection conn,
+        RequestSource source,
+        int mysqlDatabase,
+        CompressedDataOutputStream out
+    ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "getTableStatus", AOServPermission.Permission.get_mysql_table_status);
+        // Check access
+        checkAccessMySQLDatabase(conn, source, "getTableStatus", mysqlDatabase);
+        int mysqlServer = getMySQLServerForMySQLDatabase(conn, mysqlDatabase);
+        int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
+        if(DaemonHandler.isDaemonAvailable(aoServer)) {
+            List<MySQLDatabase.TableStatus> tableStatuses;
+            try {
+                tableStatuses = DaemonHandler.getDaemonConnector(conn, aoServer).getMySQLTableStatus(mysqlDatabase);
+            } catch(IOException err) {
+                DaemonHandler.flagDaemonAsDown(aoServer);
+                throw err;
+            }
+            out.writeByte(AOServProtocol.NEXT);
+            int size = tableStatuses.size();
+            out.writeCompressedInt(size);
+            for(int c=0;c<size;c++) {
+                MySQLDatabase.TableStatus tableStatus = tableStatuses.get(c);
+                out.writeUTF(tableStatus.getName());
+                out.writeNullEnum(tableStatus.getEngine());
+                out.writeNullInteger(tableStatus.getVersion());
+                out.writeNullEnum(tableStatus.getRowFormat());
+                out.writeNullLong(tableStatus.getRows());
+                out.writeNullLong(tableStatus.getAvgRowLength());
+                out.writeNullLong(tableStatus.getDataLength());
+                out.writeNullLong(tableStatus.getMaxDataLength());
+                out.writeNullLong(tableStatus.getIndexLength());
+                out.writeNullLong(tableStatus.getDataFree());
+                out.writeNullLong(tableStatus.getAutoIncrement());
+                out.writeNullUTF(tableStatus.getCreateTime());
+                out.writeNullUTF(tableStatus.getUpdateTime());
+                out.writeNullUTF(tableStatus.getCheckTime());
+                out.writeNullEnum(tableStatus.getCollation());
+                out.writeNullUTF(tableStatus.getChecksum());
+                out.writeNullUTF(tableStatus.getCreateOptions());
+                out.writeNullUTF(tableStatus.getComment());
             }
         } else {
             throw new IOException("Server unavailable");
