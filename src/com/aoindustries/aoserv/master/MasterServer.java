@@ -56,6 +56,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -80,8 +82,11 @@ public abstract class MasterServer {
     /**
      * The database values are read the first time this data is needed.
      */
+    private static final Object masterUsersLock = new Object();
     private static Map<String,MasterUser> masterUsers;
+    private static final Object masterHostsLock = new Object();
     private static Map<String,List<String>> masterHosts;
+    private static final Object masterServersLock = new Object();
     private static Map<String,com.aoindustries.aoserv.client.MasterServer[]> masterServers;
 
     /**
@@ -108,13 +113,16 @@ public abstract class MasterServer {
     /**
      * The last connector ID that was returned.
      */
+    private static final Object lastIDLock = new Object();
     private static long lastID=-1;
 
-    private static int concurrency=0;
-    private static int maxConcurrency=0;
+    private static AtomicInteger concurrency = new AtomicInteger();
 
-    private static long requestCount=0;
-    private static long totalTime=0;
+    private static AtomicInteger maxConcurrency = new AtomicInteger();
+
+    private static AtomicLong requestCount = new AtomicLong();
+
+    private static AtomicLong totalTime = new AtomicLong();
 
     /**
      * Creates a new, running <code>AOServServer</code>.
@@ -162,7 +170,7 @@ public abstract class MasterServer {
     }
 
     public static long getNextConnectorID() {
-        synchronized(MasterServer.class) {
+        synchronized(lastIDLock) {
             long time=System.currentTimeMillis();
             long id;
             if(lastID<time) id=time;
@@ -187,7 +195,7 @@ public abstract class MasterServer {
     }
 
     public static int getRequestConcurrency() {
-        return concurrency;
+        return concurrency.get();
     }
 
     private static final Object connectionsLock=new Object();
@@ -204,19 +212,15 @@ public abstract class MasterServer {
     }
 
     public static int getRequestMaxConcurrency() {
-        return maxConcurrency;
+        return maxConcurrency.get();
     }
 
     public static long getRequestTotalTime() {
-        synchronized(MasterServer.class) {
-            return totalTime;
-        }
+        return totalTime.get();
     }
 
     public static long getRequestTransactions() {
-        synchronized(MasterServer.class) {
-            return requestCount;
-        }
+        return requestCount.get();
     }
 
     public static long getStartTime() {
@@ -252,20 +256,22 @@ public abstract class MasterServer {
         process.commandCompleted();
         int taskCodeOrdinal = in.readCompressedInt();
         process.commandRunning();
-        synchronized(MasterServer.class) {
-            int c=++concurrency;
-            if(c>maxConcurrency) maxConcurrency=c;
-            requestCount++;
+        {
+            int conc=concurrency.incrementAndGet();
+            while(true) {
+                int maxConc = maxConcurrency.get();
+                if(maxConc>=conc) break;
+                if(maxConcurrency.compareAndSet(maxConc, conc)) break;
+            }
         }
+        requestCount.incrementAndGet();
         long requestStartTime=System.currentTimeMillis();
         try {
             if(taskCodeOrdinal==-1) {
                 // EOF
                 process.setCommand("quit");
-                synchronized(MasterServer.class) {
-                    addTime=false;
-                    concurrency--;
-                }
+                addTime=false;
+                concurrency.decrementAndGet();
                 return false;
             } else {
                 final boolean done;
@@ -273,10 +279,8 @@ public abstract class MasterServer {
                 switch(taskCode) {
                     case LISTEN_CACHES :
                         process.setCommand("listen_caches");
-                        synchronized(MasterServer.class) {
-                            addTime=false;
-                            concurrency--;
-                        }
+                        addTime=false;
+                        concurrency.decrementAndGet();
                         // This method normally never leaves for this command
                         try {
                             addCacheListener(source);
@@ -340,10 +344,8 @@ public abstract class MasterServer {
                         break;
                     case QUIT :
                         process.setCommand("quit");
-                        synchronized(MasterServer.class) {
-                            addTime=false;
-                            concurrency--;
-                        }
+                        addTime=false;
+                        concurrency.decrementAndGet();
                         return false;
                     case TEST_CONNECTION :
                         process.setCommand("test_connection");
@@ -8220,10 +8222,8 @@ public abstract class MasterServer {
             process.commandCompleted();
         } finally {
             if(addTime) {
-                synchronized(MasterServer.class) {
-                    concurrency--;
-                    totalTime+=(System.currentTimeMillis()-requestStartTime);
-                }
+                concurrency.decrementAndGet();
+                totalTime.addAndGet(System.currentTimeMillis()-requestStartTime);
             }
         }
         return keepOpen;
@@ -8719,7 +8719,7 @@ public abstract class MasterServer {
     }
 
     public static com.aoindustries.aoserv.client.MasterServer[] getMasterServers(DatabaseConnection conn, String username) throws IOException, SQLException {
-        synchronized(MasterServer.class) {
+        synchronized(masterServersLock) {
             if(masterServers==null) masterServers=new HashMap<String,com.aoindustries.aoserv.client.MasterServer[]>();
             com.aoindustries.aoserv.client.MasterServer[] mss=masterServers.get(username);
             if(mss!=null) return mss;
@@ -8744,7 +8744,7 @@ public abstract class MasterServer {
     }
 
     public static MasterUser getMasterUser(DatabaseConnection conn, String username) throws IOException, SQLException {
-        synchronized(MasterServer.class) {
+        synchronized(masterUsersLock) {
             if(masterUsers==null) {
                 Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
                 try {
@@ -8768,7 +8768,8 @@ public abstract class MasterServer {
      * Gets the hosts that are allowed for the provided username.
      */
     public static boolean isHostAllowed(DatabaseConnection conn, String username, String host) throws IOException, SQLException {
-        synchronized(MasterServer.class) {
+        Map<String,List<String>> myMasterHosts;
+        synchronized(masterHostsLock) {
             if(masterHosts==null) {
                 Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
                 try {
@@ -8781,26 +8782,27 @@ public abstract class MasterServer {
                         if(sv==null) table.put(un, sv=new SortedArrayList<String>());
                         sv.add(ho);
                     }
-                    masterHosts=table;
+                    masterHosts = table;
                 } finally {
                     stmt.close();
                 }
             }
-            if(getMasterUser(conn, username)!=null) {
-                List<String> hosts=masterHosts.get(username);
-                // Allow from anywhere if no hosts are provided
-                if(hosts==null) return true;
-                String remoteHost=InetAddress.getByName(host).getHostAddress();
-                int size = hosts.size();
-                for (int c = 0; c < size; c++) {
-                    String tempAddress = InetAddress.getByName(hosts.get(c)).getHostAddress();
-                    if (tempAddress.equals(remoteHost)) return true;
-                }
-                return false;
-            } else {
-                // Normal users can connect from any where
-                return BusinessHandler.getBusinessAdministrator(conn, username)!=null;
+            myMasterHosts = masterHosts;
+        }
+        if(getMasterUser(conn, username)!=null) {
+            List<String> hosts=myMasterHosts.get(username);
+            // Allow from anywhere if no hosts are provided
+            if(hosts==null) return true;
+            String remoteHost=InetAddress.getByName(host).getHostAddress();
+            int size = hosts.size();
+            for (int c = 0; c < size; c++) {
+                String tempAddress = InetAddress.getByName(hosts.get(c)).getHostAddress();
+                if (tempAddress.equals(remoteHost)) return true;
             }
+            return false;
+        } else {
+            // Normal users can connect from any where
+            return BusinessHandler.getBusinessAdministrator(conn, username)!=null;
         }
     }
 
@@ -9116,18 +9118,24 @@ public abstract class MasterServer {
 
     public static void invalidateTable(SchemaTable.TableID tableID) {
         if(tableID==SchemaTable.TableID.MASTER_HOSTS) {
-            synchronized(MasterServer.class) {
+            synchronized(masterHostsLock) {
                 masterHosts=null;
             }
         } else if(tableID==SchemaTable.TableID.MASTER_SERVERS) {
-            synchronized(MasterServer.class) {
+            synchronized(masterHostsLock) {
                 masterHosts=null;
+            }
+            synchronized(masterServersLock) {
                 masterServers=null;
             }
         } else if(tableID==SchemaTable.TableID.MASTER_USERS) {
-            synchronized(MasterServer.class) {
+            synchronized(masterHostsLock) {
                 masterHosts=null;
+            }
+            synchronized(masterServersLock) {
                 masterServers=null;
+            }
+            synchronized(masterUsersLock) {
                 masterUsers=null;
             }
         }
