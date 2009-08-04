@@ -4241,6 +4241,29 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case CHECK_MYSQL_TABLES :
+                                        {
+                                            int mysqlDatabase = in.readCompressedInt();
+                                            int numTables = in.readCompressedInt();
+                                            List<String> tableNames = new ArrayList<String>(numTables);
+                                            for(int c=0;c<numTables;c++) {
+                                                tableNames.add(in.readUTF());
+                                            }
+                                            process.setCommand(
+                                                "check_mysql_tables",
+                                                Integer.valueOf(mysqlDatabase),
+                                                tableNames
+                                            );
+                                            MySQLHandler.checkTables(
+                                                conn,
+                                                source,
+                                                mysqlDatabase,
+                                                tableNames,
+                                                out
+                                            );
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case GET_NET_DEVICE_BONDING_REPORT :
                                         {
                                             int pkey = in.readCompressedInt();

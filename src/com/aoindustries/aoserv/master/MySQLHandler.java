@@ -1063,23 +1063,14 @@ final public class MySQLHandler {
         // Check access
         checkAccessMySQLServer(conn, source, "getMasterStatus", mysqlServer);
         int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
-        if(DaemonHandler.isDaemonAvailable(aoServer)) {
-            try {
-                MySQLServer.MasterStatus masterStatus = DaemonHandler.getDaemonConnector(conn, aoServer).getMySQLMasterStatus(
-                    mysqlServer
-                );
-                if(masterStatus==null) out.writeByte(AOServProtocol.DONE);
-                else {
-                    out.writeByte(AOServProtocol.NEXT);
-                    out.writeNullUTF(masterStatus.getFile());
-                    out.writeNullUTF(masterStatus.getPosition());
-                }
-            } catch(IOException err) {
-                DaemonHandler.flagDaemonAsDown(aoServer);
-                throw err;
-            }
-        } else {
-            throw new IOException("Server unavailable");
+        MySQLServer.MasterStatus masterStatus = DaemonHandler.getDaemonConnector(conn, aoServer).getMySQLMasterStatus(
+            mysqlServer
+        );
+        if(masterStatus==null) out.writeByte(AOServProtocol.DONE);
+        else {
+            out.writeByte(AOServProtocol.NEXT);
+            out.writeNullUTF(masterStatus.getFile());
+            out.writeNullUTF(masterStatus.getPosition());
         }
     }
 
@@ -1094,41 +1085,32 @@ final public class MySQLHandler {
         int mysqlServer = getMySQLServerForFailoverMySQLReplication(conn, failoverMySQLReplication);
         checkAccessMySQLServer(conn, source, "getSlaveStatus", mysqlServer);
         int failoverServer = conn.executeIntQuery("select bp.ao_server from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey inner join backup_partitions bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", failoverMySQLReplication);
-        if(DaemonHandler.isDaemonAvailable(failoverServer)) {
-            try {
-                String toPath = conn.executeStringQuery("select bp.path from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey inner join backup_partitions bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", failoverMySQLReplication);
-                int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
-                int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
-                if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+aoServer);
-                FailoverMySQLReplication.SlaveStatus slaveStatus = DaemonHandler.getDaemonConnector(conn, failoverServer).getMySQLSlaveStatus(
-                    toPath+"/"+ServerHandler.getHostnameForAOServer(conn, aoServer),
-                    osv,
-                    getPortForMySQLServer(conn, mysqlServer)
-                );
-                if(slaveStatus==null) out.writeByte(AOServProtocol.DONE);
-                else {
-                    out.writeByte(AOServProtocol.NEXT);
-                    out.writeNullUTF(slaveStatus.getSlaveIOState());
-                    out.writeNullUTF(slaveStatus.getMasterLogFile());
-                    out.writeNullUTF(slaveStatus.getReadMasterLogPos());
-                    out.writeNullUTF(slaveStatus.getRelayLogFile());
-                    out.writeNullUTF(slaveStatus.getRelayLogPos());
-                    out.writeNullUTF(slaveStatus.getRelayMasterLogFile());
-                    out.writeNullUTF(slaveStatus.getSlaveIORunning());
-                    out.writeNullUTF(slaveStatus.getSlaveSQLRunning());
-                    out.writeNullUTF(slaveStatus.getLastErrno());
-                    out.writeNullUTF(slaveStatus.getLastError());
-                    out.writeNullUTF(slaveStatus.getSkipCounter());
-                    out.writeNullUTF(slaveStatus.getExecMasterLogPos());
-                    out.writeNullUTF(slaveStatus.getRelayLogSpace());
-                    out.writeNullUTF(slaveStatus.getSecondsBehindMaster());
-                }
-            } catch(IOException err) {
-                DaemonHandler.flagDaemonAsDown(failoverServer);
-                throw err;
-            }
-        } else {
-            throw new IOException("Server unavailable");
+        String toPath = conn.executeStringQuery("select bp.path from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey inner join backup_partitions bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", failoverMySQLReplication);
+        int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
+        int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+        if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+aoServer);
+        FailoverMySQLReplication.SlaveStatus slaveStatus = DaemonHandler.getDaemonConnector(conn, failoverServer).getMySQLSlaveStatus(
+            toPath+"/"+ServerHandler.getHostnameForAOServer(conn, aoServer),
+            osv,
+            getPortForMySQLServer(conn, mysqlServer)
+        );
+        if(slaveStatus==null) out.writeByte(AOServProtocol.DONE);
+        else {
+            out.writeByte(AOServProtocol.NEXT);
+            out.writeNullUTF(slaveStatus.getSlaveIOState());
+            out.writeNullUTF(slaveStatus.getMasterLogFile());
+            out.writeNullUTF(slaveStatus.getReadMasterLogPos());
+            out.writeNullUTF(slaveStatus.getRelayLogFile());
+            out.writeNullUTF(slaveStatus.getRelayLogPos());
+            out.writeNullUTF(slaveStatus.getRelayMasterLogFile());
+            out.writeNullUTF(slaveStatus.getSlaveIORunning());
+            out.writeNullUTF(slaveStatus.getSlaveSQLRunning());
+            out.writeNullUTF(slaveStatus.getLastErrno());
+            out.writeNullUTF(slaveStatus.getLastError());
+            out.writeNullUTF(slaveStatus.getSkipCounter());
+            out.writeNullUTF(slaveStatus.getExecMasterLogPos());
+            out.writeNullUTF(slaveStatus.getRelayLogSpace());
+            out.writeNullUTF(slaveStatus.getSecondsBehindMaster());
         }
     }
 
@@ -1143,40 +1125,55 @@ final public class MySQLHandler {
         checkAccessMySQLDatabase(conn, source, "getTableStatus", mysqlDatabase);
         int mysqlServer = getMySQLServerForMySQLDatabase(conn, mysqlDatabase);
         int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
-        if(DaemonHandler.isDaemonAvailable(aoServer)) {
-            List<MySQLDatabase.TableStatus> tableStatuses;
-            try {
-                tableStatuses = DaemonHandler.getDaemonConnector(conn, aoServer).getMySQLTableStatus(mysqlDatabase);
-            } catch(IOException err) {
-                DaemonHandler.flagDaemonAsDown(aoServer);
-                throw err;
-            }
-            out.writeByte(AOServProtocol.NEXT);
-            int size = tableStatuses.size();
-            out.writeCompressedInt(size);
-            for(int c=0;c<size;c++) {
-                MySQLDatabase.TableStatus tableStatus = tableStatuses.get(c);
-                out.writeUTF(tableStatus.getName());
-                out.writeNullEnum(tableStatus.getEngine());
-                out.writeNullInteger(tableStatus.getVersion());
-                out.writeNullEnum(tableStatus.getRowFormat());
-                out.writeNullLong(tableStatus.getRows());
-                out.writeNullLong(tableStatus.getAvgRowLength());
-                out.writeNullLong(tableStatus.getDataLength());
-                out.writeNullLong(tableStatus.getMaxDataLength());
-                out.writeNullLong(tableStatus.getIndexLength());
-                out.writeNullLong(tableStatus.getDataFree());
-                out.writeNullLong(tableStatus.getAutoIncrement());
-                out.writeNullUTF(tableStatus.getCreateTime());
-                out.writeNullUTF(tableStatus.getUpdateTime());
-                out.writeNullUTF(tableStatus.getCheckTime());
-                out.writeNullEnum(tableStatus.getCollation());
-                out.writeNullUTF(tableStatus.getChecksum());
-                out.writeNullUTF(tableStatus.getCreateOptions());
-                out.writeNullUTF(tableStatus.getComment());
-            }
-        } else {
-            throw new IOException("Server unavailable");
+        List<MySQLDatabase.TableStatus> tableStatuses = DaemonHandler.getDaemonConnector(conn, aoServer).getMySQLTableStatus(mysqlDatabase);
+        out.writeByte(AOServProtocol.NEXT);
+        int size = tableStatuses.size();
+        out.writeCompressedInt(size);
+        for(int c=0;c<size;c++) {
+            MySQLDatabase.TableStatus tableStatus = tableStatuses.get(c);
+            out.writeUTF(tableStatus.getName());
+            out.writeNullEnum(tableStatus.getEngine());
+            out.writeNullInteger(tableStatus.getVersion());
+            out.writeNullEnum(tableStatus.getRowFormat());
+            out.writeNullLong(tableStatus.getRows());
+            out.writeNullLong(tableStatus.getAvgRowLength());
+            out.writeNullLong(tableStatus.getDataLength());
+            out.writeNullLong(tableStatus.getMaxDataLength());
+            out.writeNullLong(tableStatus.getIndexLength());
+            out.writeNullLong(tableStatus.getDataFree());
+            out.writeNullLong(tableStatus.getAutoIncrement());
+            out.writeNullUTF(tableStatus.getCreateTime());
+            out.writeNullUTF(tableStatus.getUpdateTime());
+            out.writeNullUTF(tableStatus.getCheckTime());
+            out.writeNullEnum(tableStatus.getCollation());
+            out.writeNullUTF(tableStatus.getChecksum());
+            out.writeNullUTF(tableStatus.getCreateOptions());
+            out.writeNullUTF(tableStatus.getComment());
+        }
+    }
+
+    public static void checkTables(
+        DatabaseConnection conn,
+        RequestSource source,
+        int mysqlDatabase,
+        List<String> tableNames,
+        CompressedDataOutputStream out
+    ) throws IOException, SQLException {
+        BusinessHandler.checkPermission(conn, source, "checkTables", AOServPermission.Permission.check_mysql_tables);
+        // Check access
+        checkAccessMySQLDatabase(conn, source, "checkTables", mysqlDatabase);
+        int mysqlServer = getMySQLServerForMySQLDatabase(conn, mysqlDatabase);
+        int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
+        List<MySQLDatabase.CheckTableResult> checkTableResults = DaemonHandler.getDaemonConnector(conn, aoServer).checkMySQLTables(mysqlDatabase, tableNames);
+        out.writeByte(AOServProtocol.NEXT);
+        int size = checkTableResults.size();
+        out.writeCompressedInt(size);
+        for(int c=0;c<size;c++) {
+            MySQLDatabase.CheckTableResult checkTableResult = checkTableResults.get(c);
+            out.writeUTF(checkTableResult.getTable());
+            out.writeLong(checkTableResult.getDuration());
+            out.writeNullEnum(checkTableResult.getMsgType());
+            out.writeNullUTF(checkTableResult.getMsgText());
         }
     }
 }
