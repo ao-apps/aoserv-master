@@ -1655,8 +1655,7 @@ final public class TicketHandler /*implements Runnable*/ {
                 CronDaemon.addCronJob(
                     new CronJob() {
                         public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-                            // Will now run once every four hours
-                            return minute==25 && (hour%4)==3; // && hour==7
+                            return minute==25 && hour==7;
                         }
 
                         public int getCronJobScheduleMode() {
