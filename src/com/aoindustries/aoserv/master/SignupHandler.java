@@ -6,12 +6,15 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.cron.CronDaemon;
+import com.aoindustries.cron.CronJob;
 import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.logging.Level;
 
 /**
  * The <code>SignupHandler</code> handles all the accesses to the signup tables.
@@ -145,5 +148,64 @@ final public class SignupHandler {
         invalidateList.addTable(conn, SchemaTable.TableID.SIGNUP_REQUEST_OPTIONS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
         return pkey;
+    }
+
+    private static boolean cronDaemonAdded = false;
+
+    public static void start() {
+        synchronized(System.out) {
+            if(!cronDaemonAdded) {
+                System.out.print("Starting SignupHandler: ");
+                CronDaemon.addCronJob(
+                    new CronJob() {
+                        public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+                            return minute==32 && hour==6;
+                        }
+
+                        public int getCronJobScheduleMode() {
+                            return CRON_JOB_SCHEDULE_SKIP;
+                        }
+
+                        public String getCronJobName() {
+                            return "Remove completed signups";
+                        }
+
+                        public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+                            try {
+                                InvalidateList invalidateList = new InvalidateList();
+                                MasterDatabase database = MasterDatabase.getDatabase();
+                                if(database.executeUpdate("delete from signup_requests where completed_time is not null and (now()::date-completed_time::date)>31")>0) {
+                                    invalidateList.addTable(
+                                        database,
+                                        SchemaTable.TableID.SIGNUP_REQUESTS,
+                                        InvalidateList.allBusinesses,
+                                        InvalidateList.allServers,
+                                        false
+                                    );
+                                    invalidateList.addTable(
+                                        database,
+                                        SchemaTable.TableID.SIGNUP_REQUEST_OPTIONS,
+                                        InvalidateList.allBusinesses,
+                                        InvalidateList.allServers,
+                                        false
+                                    );
+                                    MasterServer.invalidateTables(invalidateList, null);
+                                }
+                            } catch(ThreadDeath TD) {
+                                throw TD;
+                            } catch(Throwable T) {
+                                LogFactory.getLogger(getClass()).log(Level.SEVERE, null, T);
+                            }
+                        }
+
+                        public int getCronJobThreadPriority() {
+                            return Thread.NORM_PRIORITY-2;
+                        }
+                    }, LogFactory.getLogger(SignupHandler.class)
+                );
+                cronDaemonAdded = true;
+                System.out.println("Done");
+            }
+        }
     }
 }

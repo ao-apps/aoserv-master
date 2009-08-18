@@ -321,7 +321,7 @@ public abstract class MasterServer {
                                         Long id=ice.getCacheSyncID();
                                         if(
                                             id!=null
-                                            || protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_47)<0
+                                            || protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_47)<0 // Before version 1.47 was always synchronous
                                         ) {
                                             if(!in.readBoolean()) throw new IOException("Unexpected invalidate sync response.");
                                         }
@@ -8383,6 +8383,7 @@ public abstract class MasterServer {
             CreditCardHandler.start();
             DNSHandler.start();
             FailoverHandler.start();
+            SignupHandler.start();
             TicketHandler.start();
         } catch (Exception err) {
             logger.log(Level.SEVERE, null, err);

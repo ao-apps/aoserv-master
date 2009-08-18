@@ -137,7 +137,8 @@ final public class MySQLHandler {
 
         // Must be a valid name format
         List<String> reservedWords=getReservedWords(conn);
-        if(!MySQLDatabaseTable.isValidDatabaseName(name, reservedWords)) throw new SQLException("Invalid MySQL database name: "+name);
+        String invalidReason = MySQLDatabaseTable.isValidDatabaseName(Locale.getDefault(), name, reservedWords);
+        if(invalidReason!=null) throw new SQLException(invalidReason);
 
         // Must be allowed to access this server and package
         ServerHandler.checkAccessServer(conn, source, "addMySQLDatabase", aoServer);
@@ -477,7 +478,8 @@ final public class MySQLHandler {
         String goodOne=null;
         for(int c=0;c<Integer.MAX_VALUE;c++) {
             String name= (c==0) ? template_base : (template_base+template_added+c);
-            if(!MySQLDatabaseTable.isValidDatabaseName(name, reservedWords)) throw new SQLException("Invalid MySQL database name: "+name);
+            String invalidReason = MySQLDatabaseTable.isValidDatabaseName(Locale.getDefault(), name, reservedWords);
+            if(invalidReason!=null) throw new SQLException(invalidReason);
             if(!sorted.contains(name)) {
                 goodOne=name;
                 break;

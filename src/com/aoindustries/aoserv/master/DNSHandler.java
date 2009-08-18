@@ -884,31 +884,44 @@ final public class DNSHandler implements CronJob {
         String ip,
         String hostname
     ) throws IOException, SQLException {
-        String arpaZone=DNSZone.getArpaZoneForIPAddress(ip);
+        String netmask;
         if(
-            conn.executeBooleanQuery(
-                "select (select zone from dns_zones where zone=?) is not null",
-                arpaZone
-            )
+            ip.startsWith("66.160.183.")
+            || ip.startsWith("64.62.174.")
         ) {
-            int pos=ip.lastIndexOf('.');
-            String oct4=ip.substring(pos+1);
+            netmask = "255.255.255.0";
+        } else if(ip.startsWith("64.71.144.")) {
+            netmask = "255.255.255.128";
+        } else {
+            netmask = null;
+        }
+        if(netmask!=null) {
+            String arpaZone=DNSZone.getArpaZoneForIPAddress(ip, netmask);
             if(
                 conn.executeBooleanQuery(
-                    "select (select pkey from dns_records where zone=? and domain=? and type='"+DNSType.PTR+"' limit 1) is not null",
-                    arpaZone,
-                    oct4
+                    "select (select zone from dns_zones where zone=?) is not null",
+                    arpaZone
                 )
             ) {
-                updateDNSZoneSerial(conn, invalidateList, arpaZone);
+                int pos=ip.lastIndexOf('.');
+                String oct4=ip.substring(pos+1);
+                if(
+                    conn.executeBooleanQuery(
+                        "select (select pkey from dns_records where zone=? and domain=? and type='"+DNSType.PTR+"' limit 1) is not null",
+                        arpaZone,
+                        oct4
+                    )
+                ) {
+                    updateDNSZoneSerial(conn, invalidateList, arpaZone);
 
-                conn.executeUpdate(
-                    "update dns_records set destination=? where zone=? and domain=? and type='"+DNSType.PTR+'\'',
-                    hostname+'.',
-                    arpaZone,
-                    oct4
-                );
-                invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                    conn.executeUpdate(
+                        "update dns_records set destination=? where zone=? and domain=? and type='"+DNSType.PTR+'\'',
+                        hostname+'.',
+                        arpaZone,
+                        oct4
+                    );
+                    invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                }
             }
         }
     }

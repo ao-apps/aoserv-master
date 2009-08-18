@@ -18,6 +18,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.Random;
 import java.util.logging.Level;
 
@@ -1654,7 +1655,8 @@ final public class TicketHandler /*implements Runnable*/ {
                 CronDaemon.addCronJob(
                     new CronJob() {
                         public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-                            return minute==25 && hour==7;
+                            // Will now run once every four hours
+                            return minute==25 && (hour%4)==3; // && hour==7
                         }
 
                         public int getCronJobScheduleMode() {
@@ -1666,26 +1668,27 @@ final public class TicketHandler /*implements Runnable*/ {
                         }
 
                         public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+                            System.err.println("DEBUG: TicketHandler.cronJob.runCronJob: Running @ "+new Date());
                             try {
                                 InvalidateList invalidateList = new InvalidateList();
                                 MasterDatabase database = MasterDatabase.getDatabase();
-                                if(
-                                    database.executeUpdate(
-                                        "delete from\n"
-                                        + "  ticket_actions\n"
-                                        + "where\n"
-                                        + "  ticket in (\n"
-                                        + "    select\n"
-                                        + "      pkey\n"
-                                        + "    from\n"
-                                        + "      tickets\n"
-                                        + "    where\n"
-                                        + "      ticket_type=?\n"
-                                        + "      and open_date<(now()-'7 days'::interval)\n"
-                                        + "  ) and time<(now()-'7 days'::interval)",
-                                        TicketType.LOGS
-                                    )>0
-                                ) {
+                                int updateCount = database.executeUpdate(
+                                    "delete from\n"
+                                    + "  ticket_actions\n"
+                                    + "where\n"
+                                    + "  ticket in (\n"
+                                    + "    select\n"
+                                    + "      pkey\n"
+                                    + "    from\n"
+                                    + "      tickets\n"
+                                    + "    where\n"
+                                    + "      ticket_type=?\n"
+                                    + "      and open_date<(now()-'7 days'::interval)\n"
+                                    + "  ) and time<(now()-'7 days'::interval)",
+                                    TicketType.LOGS
+                                );
+                                System.err.println("DEBUG: TicketHandler.cronJob.runCronJob: Deleted "+updateCount+" rows from ticket_actions @ "+new Date());
+                                if(updateCount>0) {
                                     invalidateList.addTable(
                                         database,
                                         SchemaTable.TableID.TICKET_ACTIONS,
@@ -1694,17 +1697,17 @@ final public class TicketHandler /*implements Runnable*/ {
                                         false
                                     );
                                 }
-                                if(
-                                    database.executeUpdate(
-                                        "delete from\n"
-                                        + "  tickets\n"
-                                        + "where\n"
-                                        + "  ticket_type=?\n"
-                                        + "  and open_date<(now()-'7 days'::interval)\n"
-                                        + "  and (select pkey from ticket_actions ta where tickets.pkey=ta.ticket limit 1) is null",
-                                        TicketType.LOGS
-                                    )>0
-                                ) {
+                                updateCount = database.executeUpdate(
+                                    "delete from\n"
+                                    + "  tickets\n"
+                                    + "where\n"
+                                    + "  ticket_type=?\n"
+                                    + "  and open_date<(now()-'7 days'::interval)\n"
+                                    + "  and (select pkey from ticket_actions ta where tickets.pkey=ta.ticket limit 1) is null",
+                                    TicketType.LOGS
+                                );
+                                System.err.println("DEBUG: TicketHandler.cronJob.runCronJob: Deleted "+updateCount+" rows from tickets @ "+new Date());
+                                if(updateCount>0) {
                                     invalidateList.addTable(
                                         database,
                                         SchemaTable.TableID.TICKETS,

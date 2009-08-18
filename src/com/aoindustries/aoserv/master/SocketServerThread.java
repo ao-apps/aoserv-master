@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
 /**
@@ -194,6 +195,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 long existingID=in.readLong();
 
                 switch(protocolVersion) {
+                    case VERSION_1_56 :
                     case VERSION_1_55 :
                     case VERSION_1_54 :
                     case VERSION_1_53 :
@@ -385,12 +387,18 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 if(
                     !"Remote host closed connection during handshake".equalsIgnoreCase(message)
                 ) logger.log(Level.SEVERE, null, err);
+            } catch(SSLException err) {
+                String message = err.getMessage();
+                if(
+                    !"Connection has been shutdown: javax.net.ssl.SSLException: java.net.SocketException: Connection reset".equalsIgnoreCase(message)
+                ) logger.log(Level.SEVERE, null, err);
             } catch(SocketException err) {
                 // Connection reset common for abnormal client disconnects
                 String message=err.getMessage();
                 if(
                     !"Broken pipe".equalsIgnoreCase(message)
                     && !"Connection reset".equalsIgnoreCase(message)
+                    && !"Connection timed out".equalsIgnoreCase(message)
                 ) logger.log(Level.SEVERE, null, err);
             } catch(IOException err) {
                 // Broken pipe common for abnormal client disconnects
