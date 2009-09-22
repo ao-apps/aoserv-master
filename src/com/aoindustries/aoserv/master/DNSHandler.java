@@ -197,8 +197,14 @@ final public class DNSHandler implements CronJob {
                             conn.executeUpdate("insert into whois_history (accounting, zone, whois_output) values(?,?,?)", accounting, zone, whoisOutput);
                             invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
                         }
+                    } catch(RuntimeException err) {
+                        if(conn.rollback()) {
+                            connRolledBack=true;
+                            invalidateList=null;
+                        }
+                        throw err;
                     } catch(IOException err) {
-                        if(conn.rollbackAndClose()) {
+                        if(conn.rollback()) {
                             connRolledBack=true;
                             invalidateList=null;
                         }

@@ -53,6 +53,8 @@ import com.aoindustries.aoserv.client.EmailPipe;
 import com.aoindustries.aoserv.client.EmailPipeAddress;
 import com.aoindustries.aoserv.client.EmailSmtpRelay;
 import com.aoindustries.aoserv.client.EmailSmtpRelayType;
+import com.aoindustries.aoserv.client.EmailSmtpSmartHost;
+import com.aoindustries.aoserv.client.EmailSmtpSmartHostDomain;
 import com.aoindustries.aoserv.client.EmailSpamAssassinIntegrationMode;
 import com.aoindustries.aoserv.client.EncryptionKey;
 import com.aoindustries.aoserv.client.ExpenseCategory;
@@ -4783,7 +4785,16 @@ final public class TableHandler {
                         provideProgress,
                         new NetBind(),
                         "select\n"
-                        + "  nb.*\n"
+                        + "  nb.pkey,\n"
+                        + "  nb.package,\n"
+                        + "  nb.server,\n"
+                        + "  nb.ip_address,\n"
+                        + "  nb.port,\n"
+                        + "  nb.net_protocol,\n"
+                        + "  nb.app_protocol,\n"
+                        + "  nb.open_firewall,\n"
+                        + "  nb.monitoring_enabled,\n"
+                        + "  case when nb.monitoring_parameters is null then null::text else '"+AOServProtocol.FILTERED+"'::text end as monitoring_parameters\n"
                         + "from\n"
                         + "  master_servers ms,\n"
                         + "  servers se,\n"
@@ -4826,7 +4837,8 @@ final public class TableHandler {
                     + "  nb.net_protocol,\n"
                     + "  nb.app_protocol,\n"
                     + "  nb.open_firewall,\n"
-                    + "  nb.monitoring_enabled\n"
+                    + "  nb.monitoring_enabled,\n"
+                    + "  case when nb.monitoring_parameters is null then null::text else '"+AOServProtocol.FILTERED+"'::text end as monitoring_parameters\n"
                     + "from\n"
                     + "  net_binds nb\n"
                     + "where\n"
@@ -6155,6 +6167,118 @@ final public class TableHandler {
                     + "  )",
                     username
                 );
+                break;
+            case EMAIL_SMTP_SMART_HOST_DOMAINS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new EmailSmtpSmartHostDomain(),
+                        "select * from email_smtp_smart_host_domains"
+                    ); else MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new EmailSmtpSmartHostDomain(),
+                        "select\n"
+                        + "  esshd.*\n"
+                        + "from\n"
+                        + "  master_servers ms,\n"
+                        + "  net_binds nb,\n"
+                        + "  email_smtp_smart_host_domains esshd\n"
+                        + "where\n"
+                        + "  ms.username=?\n"
+                        + "  and ms.server=nb.server\n"
+                        + "  and nb.pkey=esshd.smart_host",
+                        username
+                    );
+                } else {
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new PrivateFTPServer(),
+                        "select\n"
+                        + "  esshd.*\n"
+                        + "from\n"
+                        + "  usernames un,\n"
+                        + "  packages pk1,\n"
+                        + BU1_PARENTS_JOIN
+                        + "  packages pk2,\n"
+                        + "  net_binds nb,\n"
+                        + "  email_smtp_smart_host_domains esshd\n"
+                        + "where\n"
+                        + "  un.username=?\n"
+                        + "  and un.package=pk1.name\n"
+                        + "  and (\n"
+                        + PK1_BU1_PARENTS_WHERE
+                        + "  )\n"
+                        + "  and bu1.accounting=pk2.accounting\n"
+                        + "  and pk2.name=nb.package\n"
+                        + "  and nb.pkey=esshd.smart_host",
+                        username
+                    );
+                }
+                break;
+            case EMAIL_SMTP_SMART_HOSTS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new EmailSmtpSmartHost(),
+                        "select * from email_smtp_smart_hosts"
+                    ); else MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new EmailSmtpSmartHost(),
+                        "select\n"
+                        + "  essh.*\n"
+                        + "from\n"
+                        + "  master_servers ms,\n"
+                        + "  net_binds nb,\n"
+                        + "  email_smtp_smart_hosts essh\n"
+                        + "where\n"
+                        + "  ms.username=?\n"
+                        + "  and ms.server=nb.server\n"
+                        + "  and nb.pkey=essh.net_bind",
+                        username
+                    );
+                } else {
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new PrivateFTPServer(),
+                        "select\n"
+                        + "  essh.*\n"
+                        + "from\n"
+                        + "  usernames un,\n"
+                        + "  packages pk1,\n"
+                        + BU1_PARENTS_JOIN
+                        + "  packages pk2,\n"
+                        + "  net_binds nb,\n"
+                        + "  email_smtp_smart_hosts essh\n"
+                        + "where\n"
+                        + "  un.username=?\n"
+                        + "  and un.package=pk1.name\n"
+                        + "  and (\n"
+                        + PK1_BU1_PARENTS_WHERE
+                        + "  )\n"
+                        + "  and bu1.accounting=pk2.accounting\n"
+                        + "  and pk2.name=nb.package\n"
+                        + "  and nb.pkey=essh.net_bind",
+                        username
+                    );
+                }
                 break;
             case SERVER_FARMS :
                 if(masterUser!=null) {

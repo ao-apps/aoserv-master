@@ -49,6 +49,7 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -4455,6 +4456,38 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case AO_SERVER_CHECK_PORT :
+                                        {
+                                            int aoServer = in.readCompressedInt();
+                                            String ipAddress = in.readUTF();
+                                            int port = in.readCompressedInt();
+                                            String netProtocol = in.readUTF();
+                                            String appProtocol = in.readUTF();
+                                            String monitoringParameters = in.readUTF();
+                                            process.setCommand(
+                                                "ao_server_check_port",
+                                                Integer.valueOf(aoServer),
+                                                ipAddress,
+                                                port,
+                                                netProtocol,
+                                                appProtocol,
+                                                monitoringParameters
+                                            );
+                                            String result = AOServerHandler.checkPort(
+                                                conn,
+                                                source,
+                                                aoServer,
+                                                ipAddress,
+                                                port,
+                                                netProtocol,
+                                                appProtocol,
+                                                monitoringParameters
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=result;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case GET_AO_SERVER_SYSTEM_TIME_MILLIS :
                                         {
                                             int aoServer = in.readCompressedInt();
@@ -8134,19 +8167,19 @@ public abstract class MasterServer {
                                         if(invalidateList.isInvalid(tableID)) clientInvalidateList.add(TableHandler.convertToClientTableID(conn, source, tableID));
                                     }
                                 }
-                            } catch (RuntimeException err) {
-                                if(conn.rollbackAndClose()) {
-                                    connRolledBack=true;
-                                    invalidateList=null;
-                                }
-                                throw err;
-                            } catch (SQLException err) {
-                                if(conn.rollbackAndClose()) {
+                            } catch(RuntimeException err) {
+                                if(conn.rollback()) {
                                     connRolledBack=true;
                                     invalidateList=null;
                                 }
                                 throw err;
                             } catch(IOException err) {
+                                if(conn.rollback()) {
+                                    connRolledBack=true;
+                                    invalidateList=null;
+                                }
+                                throw err;
+                            } catch(SQLException err) {
                                 if(conn.rollbackAndClose()) {
                                     connRolledBack=true;
                                     invalidateList=null;
@@ -8551,13 +8584,13 @@ public abstract class MasterServer {
         com.aoindustries.aoserv.client.MasterServer[] masterServers
     ) throws IOException, SQLException {
         // Create the list of objects first
-        List<MasterHistory> objs=new ArrayList<MasterHistory>();
+        List<MasterHistory> objs;
         synchronized(historyLock) {
             // Grab a copy of the history
             MasterHistory[] history=masterHistory;
             if(history!=null) {
                 int historyLen=history.length;
-                //objs.ensureCapacity(historyLen);
+                objs = new ArrayList<MasterHistory>(historyLen);
                 int startPos=masterHistoryStart;
                 for(int c=0;c<historyLen;c++) {
                     MasterHistory mh=history[(c+startPos)%historyLen];
@@ -8569,6 +8602,8 @@ public abstract class MasterServer {
                         }
                     }
                 }
+            } else {
+                objs = Collections.emptyList();
             }
         }
         writeObjects(source, out, provideProgress, objs);

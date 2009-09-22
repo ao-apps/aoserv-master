@@ -1559,8 +1559,14 @@ final public class CreditCardHandler /*implements CronJob*/ {
                                     throw new RuntimeException("Unexpected value for authorization communication result: "+authorizationResult.getCommunicationResult());
                             }
                         }
+                    } catch(RuntimeException err) {
+                        if(conn.rollback()) {
+                            connRolledBack=true;
+                            // invalidateList=null; Not cleared because some commits happen during processing
+                        }
+                        throw err;
                     } catch(IOException err) {
-                        if(conn.rollbackAndClose()) {
+                        if(conn.rollback()) {
                             connRolledBack=true;
                             // invalidateList=null; Not cleared because some commits happen during processing
                         }

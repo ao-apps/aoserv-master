@@ -162,8 +162,11 @@ final public class SocketServerThread extends Thread implements RequestSource {
                     DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
                     try {
                         process.setDeamonServer(ServerHandler.getServerForAOServerHostname(conn, daemonServerHostname));
+                    } catch(RuntimeException err) {
+                        conn.rollback();
+                        throw err;
                     } catch(IOException err) {
-                        conn.rollbackAndClose();
+                        conn.rollback();
                         throw err;
                     } catch(SQLException err) {
                         conn.rollbackAndClose();
@@ -195,6 +198,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 long existingID=in.readLong();
 
                 switch(protocolVersion) {
+                    case VERSION_1_58 :
+                    case VERSION_1_57 :
                     case VERSION_1_56 :
                     case VERSION_1_55 :
                     case VERSION_1_54 :
@@ -288,6 +293,12 @@ final public class SocketServerThread extends Thread implements RequestSource {
                         try {
                             try {
                                 message=MasterServer.authenticate(conn, socket.getInetAddress().getHostAddress(), process.getEffectiveUser(), process.getAuthenticatedUser(), password);
+                            } catch(RuntimeException err) {
+                                conn.rollback();
+                                throw err;
+                            } catch(IOException err) {
+                                conn.rollback();
+                                throw err;
                             } catch(SQLException err) {
                                 conn.rollbackAndClose();
                                 throw err;
@@ -330,6 +341,12 @@ final public class SocketServerThread extends Thread implements RequestSource {
                                                 }
                                             }
                                         }
+                                    } catch(RuntimeException err) {
+                                        conn.rollback();
+                                        throw err;
+                                    } catch(IOException err) {
+                                        conn.rollback();
+                                        throw err;
                                     } catch(SQLException err) {
                                         conn.rollbackAndClose();
                                         throw err;
@@ -347,6 +364,12 @@ final public class SocketServerThread extends Thread implements RequestSource {
 
                                     try {
                                         MasterServer.updateAOServProtocolLastUsed(conn, protocolVersion);
+                                    } catch(RuntimeException err) {
+                                        conn.rollback();
+                                        throw err;
+                                    } catch(IOException err) {
+                                        conn.rollback();
+                                        throw err;
                                     } catch(SQLException err) {
                                         conn.rollbackAndClose();
                                         throw err;
@@ -359,6 +382,12 @@ final public class SocketServerThread extends Thread implements RequestSource {
                                     }
                                 }
                             }
+                        } catch(RuntimeException err) {
+                            conn.rollback();
+                            throw err;
+                        } catch(IOException err) {
+                            conn.rollback();
+                            throw err;
                         } catch(SQLException err) {
                             conn.rollbackAndClose();
                             throw err;

@@ -890,8 +890,14 @@ final public class AccountCleaner implements CronJob {
                 if(message.length()>0) {
                     logger.log(Level.WARNING, message.toString());
                 }
+            } catch(RuntimeException err) {
+                if(conn.rollback()) {
+                    connRolledBack=true;
+                    invalidateList=null;
+                }
+                throw err;
             } catch(IOException err) {
-                if(conn.rollbackAndClose()) {
+                if(conn.rollback()) {
                     connRolledBack=true;
                     invalidateList=null;
                 }

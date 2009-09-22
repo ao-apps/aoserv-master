@@ -155,13 +155,13 @@ final public class TicketLoggingHandler extends QueuedHandler {
                         );
                     }
                 } catch(RuntimeException err) {
-                    if(conn.rollbackAndClose()) {
+                    if(conn.rollback()) {
                         connRolledBack=true;
                         invalidateList=null;
                     }
                     throw err;
                 } catch(IOException err) {
-                    if(conn.rollbackAndClose()) {
+                    if(conn.rollback()) {
                         connRolledBack=true;
                         invalidateList=null;
                     }

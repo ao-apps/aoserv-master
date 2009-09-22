@@ -283,8 +283,14 @@ final public class ReportGenerator implements CronJob {
                             // Invalidate the table
                             invalidateList.addTable(conn, SchemaTable.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
                         }
+                    } catch(RuntimeException err) {
+                        if(conn.rollback()) {
+                            connRolledBack=true;
+                            invalidateList=null;
+                        }
+                        throw err;
                     } catch(IOException err) {
-                        if(conn.rollbackAndClose()) {
+                        if(conn.rollback()) {
                             connRolledBack=true;
                             invalidateList=null;
                         }

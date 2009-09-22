@@ -268,6 +268,12 @@ final public class AOServerHandler {
         return DaemonHandler.getDaemonConnector(conn, aoServer).getMemInfoReport();
     }
 
+    public static String checkPort(DatabaseConnection conn, RequestSource source, int aoServer, String ipAddress, int port, String netProtocol, String appProtocol, String monitoringParameters) throws IOException, SQLException {
+        ServerHandler.checkAccessServer(conn, source, "checkPort", aoServer);
+
+        return DaemonHandler.getDaemonConnector(conn, aoServer).checkPort(ipAddress, port, netProtocol, appProtocol, monitoringParameters);
+    }
+
     public static long getSystemTimeMillis(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getSystemTimeMillis", aoServer);
 
