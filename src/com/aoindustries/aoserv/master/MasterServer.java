@@ -2521,7 +2521,7 @@ public abstract class MasterServer {
                                                         type,
                                                         fromAddress,
                                                         summary,
-                                                        details,
+                                                        StringUtility.firstLineOnly(details, 60),
                                                         clientPriority,
                                                         contactEmails,
                                                         contactPhoneNumbers
@@ -2793,7 +2793,7 @@ public abstract class MasterServer {
                                                 "add_ticket_annotation",
                                                 Integer.valueOf(ticketID),
                                                 summary,
-                                                details
+                                                StringUtility.firstLineOnly(details, 60)
                                             );
                                             TicketHandler.addTicketAnnotation(
                                                 conn,
