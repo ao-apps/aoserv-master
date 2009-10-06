@@ -287,8 +287,9 @@ public abstract class MasterServer {
                             addCacheListener(source);
                             final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
                             try {
-                                AOServProtocol.Version protocolVersion = source.getProtocolVersion();
-                                while(!BusinessHandler.isBusinessAdministratorDisabled(conn, source.getUsername())) {
+                                final AOServProtocol.Version protocolVersion = source.getProtocolVersion();
+                                final String username = source.getUsername();
+                                while(!BusinessHandler.isBusinessAdministratorDisabled(conn, username)) {
                                     conn.releaseConnection();
                                     process.commandSleeping();
                                     long endTime=System.currentTimeMillis()+60000;
