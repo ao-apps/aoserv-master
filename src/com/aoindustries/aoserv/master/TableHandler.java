@@ -2437,8 +2437,16 @@ final public class TableHandler {
                         + "  failover_mysql_replications fmr\n"
                         + "where\n"
                         + "  ms.username=?\n"
-                        + "  and ms.server=ffr.server\n"
-                        + "  and ffr.pkey=fmr.replication",
+                        + "  and (\n"
+                        + "    (\n"
+                        // ao_server-based
+                        + "      ms.server=fmr.ao_server\n"
+                        + "    ) or (\n"
+                        // replication-based
+                        + "      ms.server=ffr.server\n"
+                        + "      and ffr.pkey=fmr.replication\n"
+                        + "    )\n"
+                        + "  )",
                         username
                     );
                 } else MasterServer.writeObjects(
@@ -2459,8 +2467,16 @@ final public class TableHandler {
                     + "  un.username=?\n"
                     + "  and un.package=pk.name\n"
                     + "  and pk.accounting=bs.accounting\n"
-                    + "  and bs.server=ffr.server\n"
-                    + "  and ffr.pkey=fmr.replication",
+                    + "  and (\n"
+                    + "    (\n"
+                    // ao_server-based
+                    + "      bs.server=fmr.ao_server\n"
+                    + "    ) or (\n"
+                    // replication-based
+                    + "      and bs.server=ffr.server\n"
+                    + "      and ffr.pkey=fmr.replication\n"
+                    + "    )\n"
+                    + "  )",
                     username
                 );
                 break;
