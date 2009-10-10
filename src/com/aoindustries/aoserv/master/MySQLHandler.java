@@ -1133,14 +1133,48 @@ final public class MySQLHandler {
         DatabaseConnection conn,
         RequestSource source,
         int mysqlDatabase,
+        int mysqlSlave,
         CompressedDataOutputStream out
     ) throws IOException, SQLException {
         BusinessHandler.checkPermission(conn, source, "getTableStatus", AOServPermission.Permission.get_mysql_table_status);
         // Check access
         checkAccessMySQLDatabase(conn, source, "getTableStatus", mysqlDatabase);
+        int daemonServer;
+        String chrootPath;
+        int osv;
         int mysqlServer = getMySQLServerForMySQLDatabase(conn, mysqlDatabase);
-        int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
-        List<MySQLDatabase.TableStatus> tableStatuses = DaemonHandler.getDaemonConnector(conn, aoServer).getMySQLTableStatus(mysqlDatabase);
+        if(mysqlSlave==-1) {
+            // Query the master
+            daemonServer = getAOServerForMySQLServer(conn, mysqlServer);
+            chrootPath = "";
+            osv = ServerHandler.getOperatingSystemVersionForServer(conn, daemonServer);
+            if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+daemonServer);
+        } else {
+            // Query the slave
+            int slaveMySQLServer = getMySQLServerForFailoverMySQLReplication(conn, mysqlSlave);
+            if(slaveMySQLServer!=mysqlServer) throw new SQLException("slaveMySQLServer!=mysqlServer");
+            if(conn.executeBooleanQuery("select ao_server is not null from failover_mysql_replications where pkey=?", mysqlSlave)) {
+                // ao_server-based
+                daemonServer = conn.executeIntQuery("select ao_server from failover_mysql_replications where pkey=?", mysqlSlave);
+                chrootPath = "";
+                osv = ServerHandler.getOperatingSystemVersionForServer(conn, daemonServer);
+                if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+daemonServer);
+            } else {
+                // replication-based
+                daemonServer = conn.executeIntQuery("select bp.ao_server from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey inner join backup_partitions bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", mysqlSlave);
+                String toPath = conn.executeStringQuery("select bp.path from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey inner join backup_partitions bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", mysqlSlave);
+                int aoServer = getAOServerForMySQLServer(conn, slaveMySQLServer);
+                osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+                if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+aoServer);
+                chrootPath = toPath+"/"+ServerHandler.getHostnameForAOServer(conn, aoServer);
+            }
+        }
+        List<MySQLDatabase.TableStatus> tableStatuses = DaemonHandler.getDaemonConnector(conn, daemonServer).getMySQLTableStatus(
+            chrootPath,
+            osv,
+            getPortForMySQLServer(conn, mysqlServer),
+            getMySQLDatabaseName(conn, mysqlDatabase)
+        );
         out.writeByte(AOServProtocol.NEXT);
         int size = tableStatuses.size();
         out.writeCompressedInt(size);
@@ -1171,15 +1205,50 @@ final public class MySQLHandler {
         DatabaseConnection conn,
         RequestSource source,
         int mysqlDatabase,
+        int mysqlSlave,
         List<String> tableNames,
         CompressedDataOutputStream out
     ) throws IOException, SQLException {
         BusinessHandler.checkPermission(conn, source, "checkTables", AOServPermission.Permission.check_mysql_tables);
         // Check access
         checkAccessMySQLDatabase(conn, source, "checkTables", mysqlDatabase);
+        int daemonServer;
+        String chrootPath;
+        int osv;
         int mysqlServer = getMySQLServerForMySQLDatabase(conn, mysqlDatabase);
-        int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
-        List<MySQLDatabase.CheckTableResult> checkTableResults = DaemonHandler.getDaemonConnector(conn, aoServer).checkMySQLTables(mysqlDatabase, tableNames);
+        if(mysqlSlave==-1) {
+            // Query the master
+            daemonServer = getAOServerForMySQLServer(conn, mysqlServer);
+            chrootPath = "";
+            osv = ServerHandler.getOperatingSystemVersionForServer(conn, daemonServer);
+            if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+daemonServer);
+        } else {
+            // Query the slave
+            int slaveMySQLServer = getMySQLServerForFailoverMySQLReplication(conn, mysqlSlave);
+            if(slaveMySQLServer!=mysqlServer) throw new SQLException("slaveMySQLServer!=mysqlServer");
+            if(conn.executeBooleanQuery("select ao_server is not null from failover_mysql_replications where pkey=?", mysqlSlave)) {
+                // ao_server-based
+                daemonServer = conn.executeIntQuery("select ao_server from failover_mysql_replications where pkey=?", mysqlSlave);
+                chrootPath = "";
+                osv = ServerHandler.getOperatingSystemVersionForServer(conn, daemonServer);
+                if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+daemonServer);
+            } else {
+                // replication-based
+                daemonServer = conn.executeIntQuery("select bp.ao_server from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey inner join backup_partitions bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", mysqlSlave);
+                String toPath = conn.executeStringQuery("select bp.path from failover_mysql_replications fmr inner join failover_file_replications ffr on fmr.replication=ffr.pkey inner join backup_partitions bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", mysqlSlave);
+                int aoServer = getAOServerForMySQLServer(conn, slaveMySQLServer);
+                osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+                if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+aoServer);
+                chrootPath = toPath+"/"+ServerHandler.getHostnameForAOServer(conn, aoServer);
+            }
+        }
+        List<MySQLDatabase.CheckTableResult> checkTableResults = DaemonHandler.getDaemonConnector(conn, daemonServer).checkMySQLTables(
+            chrootPath,
+            osv,
+            getPortForMySQLServer(conn, mysqlServer),
+            getMySQLDatabaseName(conn, mysqlDatabase),
+            tableNames
+        );
         out.writeByte(AOServProtocol.NEXT);
         int size = checkTableResults.size();
         out.writeCompressedInt(size);

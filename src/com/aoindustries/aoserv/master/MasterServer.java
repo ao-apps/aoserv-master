@@ -4232,14 +4232,22 @@ public abstract class MasterServer {
                                     case GET_MYSQL_TABLE_STATUS :
                                         {
                                             int mysqlDatabase = in.readCompressedInt();
+                                            int mysqlSlave;
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_60)>=0) {
+                                                mysqlSlave = in.readCompressedInt();
+                                            } else {
+                                                mysqlSlave = -1;
+                                            }
                                             process.setCommand(
                                                 "get_mysql_table_status",
-                                                Integer.valueOf(mysqlDatabase)
+                                                Integer.valueOf(mysqlDatabase),
+                                                mysqlSlave==-1 ? null : Integer.valueOf(mysqlSlave)
                                             );
                                             MySQLHandler.getTableStatus(
                                                 conn,
                                                 source,
                                                 mysqlDatabase,
+                                                mysqlSlave,
                                                 out
                                             );
                                             sendInvalidateList=false;
@@ -4248,6 +4256,12 @@ public abstract class MasterServer {
                                     case CHECK_MYSQL_TABLES :
                                         {
                                             int mysqlDatabase = in.readCompressedInt();
+                                            int mysqlSlave;
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_60)>=0) {
+                                                mysqlSlave = in.readCompressedInt();
+                                            } else {
+                                                mysqlSlave = -1;
+                                            }
                                             int numTables = in.readCompressedInt();
                                             List<String> tableNames = new ArrayList<String>(numTables);
                                             for(int c=0;c<numTables;c++) {
@@ -4256,12 +4270,14 @@ public abstract class MasterServer {
                                             process.setCommand(
                                                 "check_mysql_tables",
                                                 Integer.valueOf(mysqlDatabase),
+                                                mysqlSlave==-1 ? null : Integer.valueOf(mysqlSlave),
                                                 tableNames
                                             );
                                             MySQLHandler.checkTables(
                                                 conn,
                                                 source,
                                                 mysqlDatabase,
+                                                mysqlSlave,
                                                 tableNames,
                                                 out
                                             );

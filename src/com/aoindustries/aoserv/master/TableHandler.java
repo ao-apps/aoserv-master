@@ -2455,7 +2455,7 @@ final public class TableHandler {
                     out,
                     provideProgress,
                     new FailoverMySQLReplication(),
-                    "select\n"
+                    "select distinct\n"
                     + "  fmr.*\n"
                     + "from\n"
                     + "  usernames un,\n"
@@ -2473,7 +2473,7 @@ final public class TableHandler {
                     + "      bs.server=fmr.ao_server\n"
                     + "    ) or (\n"
                     // replication-based
-                    + "      and bs.server=ffr.server\n"
+                    + "      bs.server=ffr.server\n"
                     + "      and ffr.pkey=fmr.replication\n"
                     + "    )\n"
                     + "  )",
