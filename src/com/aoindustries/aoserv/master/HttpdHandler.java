@@ -1015,7 +1015,7 @@ final public class HttpdHandler {
         // Create the HTTP HttpdSiteBind
         int httpSiteBindPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_binds_pkey_seq')");
         conn.executeUpdate(
-            "insert into httpd_site_binds values(?,?,?,?,?,null,null,null,null,false,false)",
+            "insert into httpd_site_binds values(?,?,?,?,?,null,null,null,null,false,true)",
             httpSiteBindPKey,
             httpdSitePKey,
             httpNetBind,
