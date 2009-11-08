@@ -274,6 +274,12 @@ final public class AOServerHandler {
         return DaemonHandler.getDaemonConnector(conn, aoServer).checkPort(ipAddress, port, netProtocol, appProtocol, monitoringParameters);
     }
 
+    public static String checkSmtpBlacklist(DatabaseConnection conn, RequestSource source, int aoServer, String sourceIp, String connectIp) throws IOException, SQLException {
+        ServerHandler.checkAccessServer(conn, source, "checkSmtpBlacklist", aoServer);
+
+        return DaemonHandler.getDaemonConnector(conn, aoServer).checkSmtpBlacklist(sourceIp, connectIp);
+    }
+
     public static long getSystemTimeMillis(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getSystemTimeMillis", aoServer);
 

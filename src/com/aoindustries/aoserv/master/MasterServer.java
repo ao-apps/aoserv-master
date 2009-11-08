@@ -4505,6 +4505,29 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case AO_SERVER_CHECK_SMTP_BLACKLIST :
+                                        {
+                                            int aoServer = in.readCompressedInt();
+                                            String sourceIp = in.readUTF();
+                                            String connectIp = in.readUTF();
+                                            process.setCommand(
+                                                "ao_server_check_smtp_blacklist",
+                                                Integer.valueOf(aoServer),
+                                                sourceIp,
+                                                connectIp
+                                            );
+                                            String result = AOServerHandler.checkSmtpBlacklist(
+                                                conn,
+                                                source,
+                                                aoServer,
+                                                sourceIp,
+                                                connectIp
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=result;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case GET_AO_SERVER_SYSTEM_TIME_MILLIS :
                                         {
                                             int aoServer = in.readCompressedInt();
