@@ -5,27 +5,21 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.Package;
 import com.aoindustries.aoserv.client.Resource;
 import com.aoindustries.aoserv.client.SchemaTable;
-import com.aoindustries.sql.DatabaseAccess;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
-import com.aoindustries.util.SortedArrayList;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * The <code>PackageHandler</code> handles all the accesses to the <code>packages</code> table.
+ * The <code>PackageHandler</code> handles all the accesses to the <code>package_definitions</code> table.
  *
  * @author  AO Industries, Inc.
  */
@@ -34,70 +28,8 @@ final public class PackageHandler {
     private PackageHandler() {
     }
 
-    private final static Map<String,Boolean> disabledPackages=new HashMap<String,Boolean>();
-
-    public static boolean canPackageAccessServer(DatabaseConnection conn, RequestSource source, String packageName, int server) throws IOException, SQLException {
-        return conn.executeBooleanQuery(
-            Connection.TRANSACTION_READ_COMMITTED,
-            true,
-            true,
-            "select\n"
-            + "  (\n"
-            + "    select\n"
-            + "      pk.pkey\n"
-            + "    from\n"
-            + "      packages pk,\n"
-            + "      business_servers bs\n"
-            + "    where\n"
-            + "      pk.name=?\n"
-            + "      and pk.accounting=bs.accounting\n"
-            + "      and bs.server=?\n"
-            + "    limit 1\n"
-            + "  )\n"
-            + "  is not null\n",
-            packageName,
-            server
-        );
-    }
-
-    public static boolean canAccessPackage(DatabaseConnection conn, RequestSource source, String packageName) throws IOException, SQLException {
-        return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackage(conn, packageName));
-    }
-
-    public static boolean canAccessPackage(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
-        return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackage(conn, pkey));
-    }
-
     public static boolean canAccessPackageDefinition(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
         return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackageDefinition(conn, pkey));
-    }
-
-    public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, String packageName) throws IOException, SQLException {
-        if(!canAccessPackage(conn, source, packageName)) {
-            String message=
-                "business_administrator.username="
-                +source.getUsername()
-                +" is not allowed to access package: action='"
-                +action
-                +", name="
-                +packageName
-            ;
-            throw new SQLException(message);
-        }
-    }
-
-    public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
-        if(!canAccessPackage(conn, source, pkey)) {
-            String message=
-                "business_administrator.username="
-                +source.getUsername()
-                +" is not allowed to access package: action='"
-                +action
-                +", pkey="
-                +pkey
-            ;
-            throw new SQLException(message);
-        }
     }
 
     public static void checkAccessPackageDefinition(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
@@ -112,70 +44,6 @@ final public class PackageHandler {
             ;
             throw new SQLException(message);
         }
-    }
-
-    /**
-     * Creates a new <code>Package</code>.
-     */
-    public static int addPackage(
-        DatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        String packageName,
-        String accounting,
-        int packageDefinition
-    ) throws IOException, SQLException {
-        if(!Package.isValidPackageName(packageName)) throw new SQLException("Invalid package name: "+packageName);
-
-        BusinessHandler.checkAccessBusiness(conn, source, "addPackage", accounting);
-        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add Package '"+packageName+"', Business disabled: "+accounting);
-
-        // Check the PackageDefinition rules
-        checkAccessPackageDefinition(conn, source, "addPackage", packageDefinition);
-        // Businesses parent must be the package definition owner
-        String parent=BusinessHandler.getParentBusiness(conn, accounting);
-        String packageDefinitionBusiness=getBusinessForPackageDefinition(conn, packageDefinition);
-        if(!packageDefinitionBusiness.equals(parent)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition #"+packageDefinition+" not owned by parent Business");
-        if(!isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not approved: "+packageDefinition);
-        //if(!isPackageDefinitionActive(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not active: "+packageDefinition);
-
-        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('packages_pkey_seq')");
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
-            "insert into\n"
-            + "  packages\n"
-            + "values(\n"
-            + "  ?,\n"
-            + "  ?,\n"
-            + "  ?,\n"
-            + "  ?,\n"
-            + "  now(),\n"
-            + "  ?,\n"
-            + "  null,\n"
-            + "  "+Package.DEFAULT_EMAIL_IN_BURST+"::integer,\n"
-            + "  "+Package.DEFAULT_EMAIL_IN_RATE+"::float4,\n"
-            + "  "+Package.DEFAULT_EMAIL_OUT_BURST+"::integer,\n"
-            + "  "+Package.DEFAULT_EMAIL_OUT_RATE+"::float4,\n"
-            + "  "+Package.DEFAULT_EMAIL_RELAY_BURST+"::integer,\n"
-            + "  "+Package.DEFAULT_EMAIL_RELAY_RATE+"::float4\n"
-            + ")"
-        );
-        try {
-            pstmt.setInt(1, pkey);
-            pstmt.setString(2, packageName);
-            pstmt.setString(3, accounting);
-            pstmt.setInt(4, packageDefinition);
-            pstmt.setString(5, source.getUsername());
-            pstmt.executeUpdate();
-        } catch(SQLException err) {
-            throw new WrappedSQLException(err, pstmt);
-        } finally {
-            pstmt.close();
-        }
-
-        // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.PACKAGES, accounting, InvalidateList.allServers, false);
-
-        return pkey;
     }
 
     /**
@@ -422,256 +290,7 @@ final public class PackageHandler {
         );
     }
 
-    public static void disablePackage(
-        DatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int disableLog,
-        String name
-    ) throws IOException, SQLException {
-        if(isPackageDisabled(conn, name)) throw new SQLException("Package is already disabled: "+name);
-        BusinessHandler.checkAccessDisableLog(conn, source, "disablePackage", disableLog, false);
-        checkAccessPackage(conn, source, "disablePackage", name);
-        IntList hsts=HttpdHandler.getHttpdSharedTomcatsForPackage(conn, name);
-        for(int c=0;c<hsts.size();c++) {
-            int hst=hsts.getInt(c);
-            if(!HttpdHandler.isHttpdSharedTomcatDisabled(conn, hst)) {
-                throw new SQLException("Cannot disable Package '"+name+"': HttpdSharedTomcat not disabled: "+hst);
-            }
-        }
-        IntList eps=EmailHandler.getEmailPipesForPackage(conn, name);
-        for(int c=0;c<eps.size();c++) {
-            int ep=eps.getInt(c);
-            if(!EmailHandler.isEmailPipeDisabled(conn, ep)) {
-                throw new SQLException("Cannot disable Package '"+name+"': EmailPipe not disabled: "+ep);
-            }
-        }
-        List<String> uns=UsernameHandler.getUsernamesForPackage(conn, name);
-        for(int c=0;c<uns.size();c++) {
-            String username=uns.get(c);
-            if(!UsernameHandler.isUsernameDisabled(conn, username)) {
-                throw new SQLException("Cannot disable Package '"+name+"': Username not disabled: "+username);
-            }
-        }
-        IntList hss=HttpdHandler.getHttpdSitesForPackage(conn, name);
-        for(int c=0;c<hss.size();c++) {
-            int hs=hss.getInt(c);
-            if(!HttpdHandler.isHttpdSiteDisabled(conn, hs)) {
-                throw new SQLException("Cannot disable Package '"+name+"': HttpdSite not disabled: "+hs);
-            }
-        }
-        IntList els=EmailHandler.getEmailListsForPackage(conn, name);
-        for(int c=0;c<els.size();c++) {
-            int el=els.getInt(c);
-            if(!EmailHandler.isEmailListDisabled(conn, el)) {
-                throw new SQLException("Cannot disable Package '"+name+"': EmailList not disabled: "+el);
-            }
-        }
-        IntList ssrs=EmailHandler.getEmailSmtpRelaysForPackage(conn, name);
-        for(int c=0;c<ssrs.size();c++) {
-            int ssr=ssrs.getInt(c);
-            if(!EmailHandler.isEmailSmtpRelayDisabled(conn, ssr)) {
-                throw new SQLException("Cannot disable Package '"+name+"': EmailSmtpRelay not disabled: "+ssr);
-            }
-        }
-
-        conn.executeUpdate(
-            "update packages set disable_log=? where name=?",
-            disableLog,
-            name
-        );
-
-        // Notify all clients of the update
-        String accounting=getBusinessForPackage(conn, name);
-        invalidateList.addTable(
-            conn,
-            SchemaTable.TableID.PACKAGES,
-            accounting,
-            BusinessHandler.getServersForBusiness(conn, accounting),
-            false
-        );
-    }
-
-    public static void enablePackage(
-        DatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        String name
-    ) throws IOException, SQLException {
-        int disableLog=getDisableLogForPackage(conn, name);
-        if(disableLog==-1) throw new SQLException("Package is already enabled: "+name);
-        BusinessHandler.checkAccessDisableLog(conn, source, "enablePackage", disableLog, true);
-        checkAccessPackage(conn, source, "enablePackage", name);
-        String accounting=getBusinessForPackage(conn, name);
-        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to enable Package '"+name+"', Business not enabled: "+accounting);
-
-        conn.executeUpdate(
-            "update packages set disable_log=null where name=?",
-            name
-        );
-
-        // Notify all clients of the update
-        invalidateList.addTable(
-            conn,
-            SchemaTable.TableID.PACKAGES,
-            accounting,
-            BusinessHandler.getServersForBusiness(conn, accounting),
-            false
-        );
-    }
-
-    public static String generatePackageName(
-        DatabaseConnection conn,
-        String template
-    ) throws IOException, SQLException {
-        // Load the entire list of package names
-        List<String> names=conn.executeStringListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select name from packages");
-        int size=names.size();
-
-        // Sort them
-        List<String> sorted=new SortedArrayList<String>(size);
-        for(int c=0;c<size;c++) sorted.add(names.get(c));
-
-        // Find one that is not used
-        String goodOne=null;
-        for(int c=1;c<Integer.MAX_VALUE;c++) {
-            String name=template+c;
-            if(!Package.isValidPackageName(name)) throw new SQLException("Invalid package name: "+name);
-            if(!sorted.contains(name)) {
-                goodOne=name;
-                break;
-            }
-        }
-
-        // If could not find one, report and error
-        if(goodOne==null) throw new SQLException("Unable to find available package name for template: "+template);
-        return goodOne;
-    }
-
-    public static int getDisableLogForPackage(DatabaseConnection conn, String name) throws IOException, SQLException {
-        return conn.executeIntQuery("select coalesce(disable_log, -1) from packages where name=?", name);
-    }
-
-    public static List<String> getPackages(
-        DatabaseConnection conn,
-        RequestSource source
-    ) throws IOException, SQLException {
-        String username=source.getUsername();
-        MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-        com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
-        if(masterUser!=null) {
-            if(masterServers.length==0) return conn.executeStringListQuery("select name from packages");
-            else return conn.executeStringListQuery(
-                "select\n"
-                + "  pk.name\n"
-                + "from\n"
-                + "  master_servers ms,\n"
-                + "  business_servers bs,\n"
-                + "  packages pk\n"
-                + "where\n"
-                + "  ms.username=?\n"
-                + "  and ms.server=bs.server\n"
-                + "  and bs.accounting=pk.accounting\n"
-                + "group by\n"
-                + "  pk.name",
-                username
-            );
-        } else return conn.executeStringListQuery(
-            "select\n"
-            + "  pk2.name\n"
-            + "from\n"
-            + "  usernames un,\n"
-            + "  packages pk1,\n"
-            + TableHandler.BU1_PARENTS_JOIN
-            + "  packages pk2\n"
-            + "where\n"
-            + "  un.username=?\n"
-            + "  and un.package=pk1.name\n"
-            + "  and (\n"
-            + TableHandler.PK1_BU1_PARENTS_WHERE
-            + "  )\n"
-            + "  and bu1.accounting=pk2.accounting",
-            username
-        );
-    }
-
-    public static IntList getIntPackages(
-        DatabaseConnection conn,
-        RequestSource source
-    ) throws IOException, SQLException {
-        String username=source.getUsername();
-        MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-        com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
-        if(masterUser!=null) {
-            if(masterServers.length==0) return conn.executeIntListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select pkey from packages");
-            else return conn.executeIntListQuery(
-                "select\n"
-                + "  pk.pkey\n"
-                + "from\n"
-                + "  master_servers ms,\n"
-                + "  business_servers bs,\n"
-                + "  packages pk\n"
-                + "where\n"
-                + "  ms.username=?\n"
-                + "  and ms.server=bs.server\n"
-                + "  and bs.accounting=pk.accounting\n"
-                + "group by\n"
-                + "  pk.pkey",
-                username
-            );
-        } else return conn.executeIntListQuery(
-            Connection.TRANSACTION_READ_COMMITTED,
-            true,
-            "select\n"
-            + "  pk2.pkey\n"
-            + "from\n"
-            + "  usernames un,\n"
-            + "  packages pk1,\n"
-            + TableHandler.BU1_PARENTS_JOIN
-            + "  packages pk2\n"
-            + "where\n"
-            + "  un.username=?\n"
-            + "  and un.package=pk1.name\n"
-            + "  and (\n"
-            + TableHandler.PK1_BU1_PARENTS_WHERE
-            + "  )\n"
-            + "  and bu1.accounting=pk2.accounting",
-            username
-        );
-    }
-
-    public static void invalidateTable(SchemaTable.TableID tableID) {
-        if(tableID==SchemaTable.TableID.PACKAGES) {
-            synchronized(PackageHandler.class) {
-                disabledPackages.clear();
-            }
-            synchronized(packageBusinesses) {
-                packageBusinesses.clear();
-            }
-            synchronized(packageNames) {
-                packageNames.clear();
-            }
-            synchronized(packagePKeys) {
-                packagePKeys.clear();
-            }
-        }
-    }
-
-    public static boolean isPackageDisabled(DatabaseConnection conn, String name) throws IOException, SQLException {
-	    synchronized(PackageHandler.class) {
-            Boolean O=disabledPackages.get(name);
-            if(O!=null) return O.booleanValue();
-            boolean isDisabled=getDisableLogForPackage(conn, name)!=-1;
-            disabledPackages.put(name, isDisabled);
-            return isDisabled;
-	    }
-    }
-
-    public static boolean isPackageNameAvailable(DatabaseConnection conn, String packageName) throws IOException, SQLException {
-        return conn.executeBooleanQuery("select (select pkey from packages where name=? limit 1) is null", packageName);
-    }
-
-    public static int findActivePackageDefinition(DatabaseConnection conn, String accounting, int rate, int userLimit, int popLimit) throws IOException, SQLException {
+    public static int findActivePackageDefinition(DatabaseConnection conn, String accounting, int rate, int userLimit, int emailLimit) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  coalesce(\n"
@@ -681,21 +300,21 @@ final public class PackageHandler {
             + "      from\n"
             + "        package_definitions pd,\n"
             + "        package_definitions_limits user_pdl,\n"
-            + "        package_definitions_limits pop_pdl\n"
+            + "        package_definitions_limits email_pdl\n"
             + "      where\n"
             + "        pd.accounting=?\n"
             + "        and pd.monthly_rate=?\n"
             + "        and pd.pkey=user_pdl.package_definition\n"
             + "        and user_pdl.resource=?\n"
-            + "        and pd.pkey=pop_pdl.package_definition\n"
-            + "        and pop_pdl.resource=?\n"
+            + "        and pd.pkey=email_pdl.package_definition\n"
+            + "        and email_pdl.resource=?\n"
             + "      limit 1\n"
             + "    ), -1\n"
             + "  )",
             accounting,
             SQLUtility.getDecimal(rate),
             Resource.USER,
-            Resource.POP
+            Resource.EMAIL
         );
     }
 
@@ -707,76 +326,12 @@ final public class PackageHandler {
         return conn.executeBooleanQuery("select active from package_definitions where pkey=?", packageDefinition);
     }
 
-    public static void checkPackageAccessServer(DatabaseConnection conn, RequestSource source, String action, String packageName, int server) throws IOException, SQLException {
-        if(!canPackageAccessServer(conn, source, packageName, server)) {
-            String message=
-                "package.name="
-                +packageName
-                +" is not allowed to access server.pkey="
-                +server
-                +": action='"
-                +action
-                +"'"
-            ;
-            throw new SQLException(message);
-        }
-    }
-
-    public static String getBusinessForPackage(DatabaseAccess database, String packageName) throws IOException, SQLException {
-        return getBusinessForPackage(database, getPKeyForPackage(database, packageName));
-    }
-
-    private static final Map<Integer,String> packageBusinesses=new HashMap<Integer,String>();
-    public static String getBusinessForPackage(DatabaseAccess database, int pkey) throws IOException, SQLException {
-        Integer I=Integer.valueOf(pkey);
-        synchronized(packageBusinesses) {
-            String O=packageBusinesses.get(I);
-            if(O!=null) return O;
-            String business=database.executeStringQuery("select accounting from packages where pkey=?", pkey);
-            packageBusinesses.put(I, business);
-            return business;
-        }
-    }
-
-    private static final Map<Integer,String> packageNames=new HashMap<Integer,String>();
-    public static String getNameForPackage(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Integer I=Integer.valueOf(pkey);
-        synchronized(packageNames) {
-            String O=packageNames.get(I);
-            if(O!=null) return O;
-            String name=conn.executeStringQuery("select name from packages where pkey=?", pkey);
-            packageNames.put(I, name);
-            return name;
-        }
-    }
-
-    private static final Map<String,Integer> packagePKeys=new HashMap<String,Integer>();
-    public static int getPKeyForPackage(DatabaseAccess database, String name) throws IOException, SQLException {
-        synchronized(packagePKeys) {
-            Integer O=packagePKeys.get(name);
-            if(O!=null) return O.intValue();
-            int pkey=database.executeIntQuery("select pkey from packages where name=?", name);
-            packagePKeys.put(name, Integer.valueOf(pkey));
-            return pkey;
-        }
-    }
-
     public static String getBusinessForPackageDefinition(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select accounting from package_definitions where pkey=?", pkey);
     }
 
     public static List<String> getBusinessesForPackageDefinition(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringListQuery(
-            "select distinct\n"
-            + "  bu.accounting\n"
-            + "from\n"
-            + "  packages pk,\n"
-            + "  businesses bu\n"
-            + "where\n"
-            + "  pk.package_definition=?\n"
-            + "  and pk.accounting=bu.accounting",
-            pkey
-        );
+        return conn.executeStringListQuery("select accounting from businesses where package_definition=?", pkey);
     }
 
     public static void setPackageDefinitionActive(

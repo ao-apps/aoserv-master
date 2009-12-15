@@ -57,7 +57,7 @@ final public class EmailHandler {
                 return true;
             }
         } else {
-            return PackageHandler.canAccessPackage(conn, source, getPackageForEmailDomain(conn, domain));
+            return BusinessHandler.canAccessBusiness(conn, source, getBusinessForEmailDomain(conn, domain));
         }
     }
 
@@ -68,7 +68,7 @@ final public class EmailHandler {
                 ServerHandler.checkAccessServer(conn, source, action, getAOServerForEmailDomain(conn, domain));
             }
         } else {
-            PackageHandler.checkAccessPackage(conn, source, action, getPackageForEmailDomain(conn, domain));
+            BusinessHandler.checkAccessBusiness(conn, source, action, getBusinessForEmailDomain(conn, domain));
         }
     }
 
@@ -79,7 +79,7 @@ final public class EmailHandler {
                 ServerHandler.checkAccessServer(conn, source, action, getAOServerForEmailSmtpRelay(conn, pkey));
             }
         } else {
-            PackageHandler.checkAccessPackage(conn, source, action, getPackageForEmailSmtpRelay(conn, pkey));
+            BusinessHandler.checkAccessBusiness(conn, source, action, getBusinessForEmailSmtpRelay(conn, pkey));
         }
     }
 
@@ -121,7 +121,7 @@ final public class EmailHandler {
                 ServerHandler.checkAccessServer(conn, source, action, getAOServerForEmailPipe(conn, pipe));
             }
         } else {
-            PackageHandler.checkAccessPackage(conn, source, action, getPackageForEmailPipe(conn, pipe));
+            BusinessHandler.checkAccessBusiness(conn, source, action, getBusinessForEmailPipe(conn, pipe));
         }
     }
 
@@ -195,7 +195,7 @@ final public class EmailHandler {
             + "obtain your email directly from our mail servers over POP3 or IMAP instead of\n"
             + "forwarding to comcast.net.\n"
             + "\n"
-            + "Sorry for any inconvenience, but Comcast's unprecedented blocking policy and\n"
+            + "Sorry for any inconvenience, but Comcast's blocking policy and\n"
             + "our standard installation of SpamAssassin filters are not compatible.\n"
         );
 
@@ -248,8 +248,8 @@ final public class EmailHandler {
         int linuxServerGroup
     ) throws IOException, SQLException {
         if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, linuxServerAccount)) throw new SQLException("Unable to add EmailList, LinuxServerAccount disabled: "+linuxServerAccount);
-        String packageName=LinuxAccountHandler.getPackageForLinuxServerGroup(conn, linuxServerGroup);
-        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add EmailList, Package disabled: "+packageName);
+        String accounting=LinuxAccountHandler.getBusinessForLinuxServerGroup(conn, linuxServerGroup);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add EmailList, Business disabled: "+accounting);
 
         // The server for both account and group must be the same
         int accountAOServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, linuxServerAccount);
@@ -367,19 +367,19 @@ final public class EmailHandler {
         InvalidateList invalidateList,
         int aoServer,
         String path,
-        String packageName
+        String accounting
     ) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "addEmailPipe", aoServer);
         checkAccessEmailPipePath(conn, source, "addEmailPipe", path);
-        PackageHandler.checkAccessPackage(conn, source, "addEmailPipe", packageName);
-        PackageHandler.checkPackageAccessServer(conn, source, "addEmailPipe", packageName, aoServer);
+        BusinessHandler.checkAccessBusiness(conn, source, "addEmailPipe", accounting);
+        BusinessHandler.checkBusinessAccessServer(conn, source, "addEmailPipe", accounting, aoServer);
 
         return addEmailPipe0(
             conn,
             invalidateList,
             aoServer,
             path,
-            packageName
+            accounting
         );
     }
 
@@ -388,19 +388,19 @@ final public class EmailHandler {
         InvalidateList invalidateList,
         int aoServer,
         String path,
-        String packageName
+        String accounting
     ) throws IOException, SQLException {
-        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add EmailPipe, Package disabled: "+packageName);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add EmailPipe, Business disabled: "+accounting);
 
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('email_pipes_pkey_seq')");
 
-        conn.executeUpdate("insert into email_pipes values(?,?,?,?,null)", pkey, aoServer, path, packageName);
+        conn.executeUpdate("insert into email_pipes values(?,?,?,?,null)", pkey, aoServer, path, accounting);
 
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.EMAIL_PIPES,
-            PackageHandler.getBusinessForPackage(conn, packageName),
+            accounting,
             aoServer,
             false
         );
@@ -479,21 +479,21 @@ final public class EmailHandler {
         InvalidateList invalidateList,
         String domain,
         int aoServer,
-        String packageName
+        String accounting
     ) throws IOException, SQLException {
         MasterServer.checkAccessHostname(conn, source, "addEmailDomain", domain);
         ServerHandler.checkAccessServer(conn, source, "addEmailDomain", aoServer);
-        PackageHandler.checkAccessPackage(conn, source, "addEmailDomain", packageName);
-        PackageHandler.checkPackageAccessServer(conn, source, "addEmailDomain", packageName, aoServer);
+        BusinessHandler.checkAccessBusiness(conn, source, "addEmailDomain", accounting);
+        BusinessHandler.checkBusinessAccessServer(conn, source, "addEmailDomain", accounting, aoServer);
 
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('email_domains_pkey_seq')");
-        conn.executeUpdate("insert into email_domains values(?,?,?,?)", pkey, domain, aoServer, packageName);
+        conn.executeUpdate("insert into email_domains values(?,?,?,?)", pkey, domain, aoServer, accounting);
 
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.EMAIL_DOMAINS,
-            PackageHandler.getBusinessForPackage(conn, packageName),
+            accounting,
             aoServer,
             false
         );
@@ -507,7 +507,7 @@ final public class EmailHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String packageName,
+        String accounting,
         int aoServer,
         String host,
         String type,
@@ -517,17 +517,17 @@ final public class EmailHandler {
         MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
         if(mu==null) throw new SQLException("Only master users may add SMTP relays.");
 
-        PackageHandler.checkAccessPackage(conn, source, "addEmailSmtpRelay", packageName);
+        BusinessHandler.checkAccessBusiness(conn, source, "addEmailSmtpRelay", accounting);
         if(aoServer==-1) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) throw new SQLException("Only super-users may add global SMTP relays.");
         } else {
             ServerHandler.checkAccessServer(conn, source, "addEmailSmtpRelay", aoServer);
-            PackageHandler.checkPackageAccessServer(conn, source, "addEmailSmtpRelay", packageName, aoServer);
+            BusinessHandler.checkBusinessAccessServer(conn, source, "addEmailSmtpRelay", accounting, aoServer);
         }
         if(!EmailSmtpRelay.isValidHost(host)) throw new SQLException("Invalid host format: "+host);
         if(duration!=EmailSmtpRelay.NO_EXPIRATION && duration<=0) throw new SQLException("Duration must be positive: "+duration);
 
-        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add EmailSmtpRelay, Package disabled: "+packageName);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add EmailSmtpRelay, business disabled: "+accounting);
 
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('email_smtp_relays_pkey_seq')");
 
@@ -535,7 +535,7 @@ final public class EmailHandler {
             conn.executeUpdate(
                 "insert into email_smtp_relays values(?,?,null,?,?,now(),now(),0,?,null)",
                 pkey,
-                packageName,
+                accounting,
                 host,
                 type,
                 duration==-1?(Timestamp)null:new Timestamp(System.currentTimeMillis()+duration)
@@ -544,7 +544,7 @@ final public class EmailHandler {
             conn.executeUpdate(
                 "insert into email_smtp_relays values(?,?,?,?,?,now(),now(),0,?,null)",
                 pkey,
-                packageName,
+                accounting,
                 aoServer,
                 host,
                 type,
@@ -556,7 +556,7 @@ final public class EmailHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.EMAIL_SMTP_RELAYS,
-            PackageHandler.getBusinessForPackage(conn, packageName),
+            accounting,
             aoServer,
             false
         );
@@ -618,8 +618,8 @@ final public class EmailHandler {
         int aoServer=getAOServerForEmailDomain(conn, majordomoServer);
 
         // Disabled checks
-        String packageName=getPackageForEmailDomain(conn, majordomoServer);
-        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add Majordomo list, Package for Majordomo server #"+majordomoServer+" is disabled: "+packageName);
+        String accounting=getBusinessForEmailDomain(conn, majordomoServer);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add Majordomo list, Business for Majordomo server #"+majordomoServer+" is disabled: "+accounting);
 
         // Find the email addresses
         int ownerListnameAddress=getOrAddEmailAddress(conn, invalidateList, "owner-"+listName, majordomoServer);
@@ -643,7 +643,7 @@ final public class EmailHandler {
             invalidateList,
             aoServer,
             msPath+"/wrapper resend -l "+listName+' '+listName+"-list@"+domainName,
-            packageName
+            accounting
         );
         int listnameAddress=getOrAddEmailAddress(conn, invalidateList, listName, majordomoServer);
         int listnamePipeAddress=addEmailPipeAddress0(conn, invalidateList, listnameAddress, listnamePipe);
@@ -658,7 +658,7 @@ final public class EmailHandler {
             invalidateList,
             aoServer,
             msPath+"/wrapper majordomo -l "+listName,
-            packageName
+            accounting
         );
         int listnameRequestAddress=getOrAddEmailAddress(conn, invalidateList, listName+"-request", majordomoServer);
         int listnameRequestPipeAddress=addEmailPipeAddress0(conn, invalidateList, listnameRequestAddress, listnameRequestPipe);
@@ -681,7 +681,7 @@ final public class EmailHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.MAJORDOMO_LISTS,
-            PackageHandler.getBusinessForPackage(conn, packageName),
+            accounting,
             aoServer,
             false
         );
@@ -748,16 +748,16 @@ final public class EmailHandler {
         if(domainAOServer!=lsgAOServer) throw new SQLException("((email_domains.pkey="+domain+").ao_server='"+domainAOServer+"')!=((linux_server_groups.pkey="+lsg+").ao_server='"+lsgAOServer+"')");
 
         // Disabled checks
-        String packageName=getPackageForEmailDomain(conn, domain);
-        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add Majordomo server: Package for domain #"+domain+" is disabled: "+packageName);
+        String accounting=getBusinessForEmailDomain(conn, domain);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add Majordomo server: Business for domain #"+domain+" is disabled: "+accounting);
         if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to add Majordomo server: LinuxServerAccount disabled: "+lsa);
-        String lgPackageName=LinuxAccountHandler.getPackageForLinuxServerGroup(conn, lsg);
-        if(PackageHandler.isPackageDisabled(conn, lgPackageName)) throw new SQLException("Unable to add Majordomo server: Package for LinuxServerGroup #"+lsg+" is disabled: "+lgPackageName);
+        String lgAccounting=LinuxAccountHandler.getBusinessForLinuxServerGroup(conn, lsg);
+        if(BusinessHandler.isBusinessDisabled(conn, lgAccounting)) throw new SQLException("Unable to add Majordomo server: Business for LinuxServerGroup #"+lsg+" is disabled: "+lgAccounting);
 
         // Create the majordomo email pipe
         String domainName=getDomainForEmailDomain(conn, domain);
         String majordomoServerPath=MajordomoServer.MAJORDOMO_SERVER_DIRECTORY+'/'+domainName;
-        int majordomoPipe=addEmailPipe0(conn, invalidateList, domainAOServer, majordomoServerPath+"/wrapper majordomo", packageName);
+        int majordomoPipe=addEmailPipe0(conn, invalidateList, domainAOServer, majordomoServerPath+"/wrapper majordomo", accounting);
         int majordomoAddress=getOrAddEmailAddress(conn, invalidateList, MajordomoServer.MAJORDOMO_ADDRESS, domain);
         int majordomoPipeAddress=addEmailPipeAddress0(conn, invalidateList, majordomoAddress, majordomoPipe);
 
@@ -789,7 +789,7 @@ final public class EmailHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.MAJORDOMO_SERVERS,
-            PackageHandler.getBusinessForPackage(conn, packageName),
+            accounting,
             domainAOServer,
             false
         );
@@ -886,8 +886,8 @@ final public class EmailHandler {
         if(disableLog==-1) throw new SQLException("EmailList is already enabled: "+pkey);
         BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailList", disableLog, true);
         checkAccessEmailList(conn, source, "enableEmailList", pkey);
-        String pk=getPackageForEmailList(conn, pkey);
-        if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable EmailList #"+pkey+", Package not enabled: "+pk);
+        String accounting=getBusinessForEmailList(conn, pkey);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to enable EmailList #"+pkey+", Business not enabled: "+accounting);
 
         conn.executeUpdate(
             "update email_lists set disable_log=null where pkey=?",
@@ -898,7 +898,7 @@ final public class EmailHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.EMAIL_LISTS,
-            PackageHandler.getBusinessForPackage(conn, pk),
+            accounting,
             getAOServerForEmailList(conn, pkey),
             false
         );
@@ -914,8 +914,8 @@ final public class EmailHandler {
         if(disableLog==-1) throw new SQLException("EmailPipe is already enabled: "+pkey);
         BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailPipe", disableLog, true);
         checkAccessEmailPipe(conn, source, "enableEmailPipe", pkey);
-        String pk=getPackageForEmailPipe(conn, pkey);
-        if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable EmailPipe #"+pkey+", Package not enabled: "+pk);
+        String accounting=getBusinessForEmailPipe(conn, pkey);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to enable EmailPipe #"+pkey+", Business not enabled: "+accounting);
 
         conn.executeUpdate(
             "update email_pipes set disable_log=null where pkey=?",
@@ -926,7 +926,7 @@ final public class EmailHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.EMAIL_PIPES,
-            PackageHandler.getBusinessForPackage(conn, pk),
+            accounting,
             getAOServerForEmailPipe(conn, pkey),
             false
         );
@@ -942,8 +942,8 @@ final public class EmailHandler {
         if(disableLog==-1) throw new SQLException("EmailSmtpRelay is already enabled: "+pkey);
         BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailSmtpRelay", disableLog, true);
         checkAccessEmailSmtpRelay(conn, source, "enableEmailSmtpRelay", pkey);
-        String pk=getPackageForEmailSmtpRelay(conn, pkey);
-        if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable EmailSmtpRelay #"+pkey+", Package not enabled: "+pk);
+        String accounting=getBusinessForEmailSmtpRelay(conn, pkey);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to enable EmailSmtpRelay #"+pkey+", Business not enabled: "+accounting);
 
         conn.executeUpdate(
             "update email_smtp_relays set disable_log=null where pkey=?",
@@ -954,7 +954,7 @@ final public class EmailHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.EMAIL_SMTP_RELAYS,
-            PackageHandler.getBusinessForPackage(conn, pk),
+            accounting,
             getAOServerForEmailSmtpRelay(conn, pkey),
             false
         );
@@ -993,9 +993,9 @@ final public class EmailHandler {
         return conn.executeIntListQuery("select pkey from email_lists where linux_server_account=?", pkey);
     }
 
-    public static IntList getEmailListsForPackage(
+    public static IntList getEmailListsForBusiness(
         DatabaseConnection conn,
-        String name
+        String accounting
     ) throws IOException, SQLException {
         return conn.executeIntListQuery(
             Connection.TRANSACTION_READ_COMMITTED,
@@ -1007,18 +1007,18 @@ final public class EmailHandler {
             + "  linux_server_groups lsg,\n"
             + "  email_lists el\n"
             + "where\n"
-            + "  lg.package=?\n"
+            + "  lg.accounting=?\n"
             + "  and lg.name=lsg.name\n"
             + "  and lsg.pkey=el.linux_server_group",
-            name
+            accounting
         );
     }
 
-    public static IntList getEmailPipesForPackage(
+    public static IntList getEmailPipesForBusiness(
         DatabaseConnection conn,
         String name
     ) throws IOException, SQLException {
-        return conn.executeIntListQuery("select pkey from email_pipes where package=?", name);
+        return conn.executeIntListQuery("select pkey from email_pipes where accounting=?", name);
     }
 
     public static long[] getImapFolderSizes(
@@ -1075,11 +1075,11 @@ final public class EmailHandler {
         return null;
     }
 
-    public static IntList getEmailSmtpRelaysForPackage(
+    public static IntList getEmailSmtpRelaysForBusiness(
         DatabaseConnection conn,
-        String name
+        String accounting
     ) throws IOException, SQLException {
-        return conn.executeIntListQuery("select pkey from email_smtp_relays where package=?", name);
+        return conn.executeIntListQuery("select pkey from email_smtp_relays where accounting=?", accounting);
     }
 
     public static int getEmailDomain(
@@ -1238,8 +1238,7 @@ final public class EmailHandler {
 
         if(isEmailSmtpRelayDisabled(conn, pkey)) throw new SQLException("Unable to refresh EmailSmtpRelay, EmailSmtpRelay disabled: "+pkey);
 
-        String packageName=getPackageForEmailSmtpRelay(conn, pkey);
-        String accounting=PackageHandler.getBusinessForPackage(conn, packageName);
+        String accounting=getBusinessForEmailSmtpRelay(conn, pkey);
         int aoServer=getAOServerForEmailSmtpRelay(conn, pkey);
         Timestamp expiration=conn.executeTimestampQuery("select expiration from email_smtp_relays where pkey=?", pkey);
         long exp=expiration==null?EmailSmtpRelay.NO_EXPIRATION:expiration.getTime();
@@ -1254,8 +1253,8 @@ final public class EmailHandler {
 
         // Delete any old entries
         conn.executeUpdate(
-            "delete from email_smtp_relays where package=? and (ao_server is null or ao_server=?) and expiration is not null and now()::date-expiration::date>"+EmailSmtpRelay.HISTORY_DAYS,
-            packageName,
+            "delete from email_smtp_relays where accounting=? and (ao_server is null or ao_server=?) and expiration is not null and now()::date-expiration::date>"+EmailSmtpRelay.HISTORY_DAYS,
+            accounting,
             aoServer
         );
 
@@ -1793,19 +1792,19 @@ final public class EmailHandler {
     }
 
     public static String getBusinessForEmailAddress(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from email_addresses ea, email_domains sd, packages pk where ea.domain=sd.pkey and sd.package=pk.name and ea.pkey=?", pkey);
+        return conn.executeStringQuery("select sd.accounting from email_addresses ea, email_domains sd where ea.domain=sd.pkey and ea.pkey=?", pkey);
     }
 
     public static String getBusinessForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from email_lists el, linux_server_groups lsg, linux_groups lg, packages pk where el.linux_server_group=lsg.pkey and lsg.name=lg.name and lg.package=pk.name and el.pkey=?", pkey);
+        return conn.executeStringQuery("select lg.accounting from email_lists el, linux_server_groups lsg, linux_groups lg where el.linux_server_group=lsg.pkey and lsg.name=lg.name and el.pkey=?", pkey);
     }
 
     public static String getBusinessForEmailPipe(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from email_pipes ep, packages pk where ep.package=pk.name and ep.pkey=?", pkey);
+        return conn.executeStringQuery("select accounting from email_pipes where pkey=?", pkey);
     }
 
     public static String getBusinessForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from email_domains sd, packages pk where sd.package=pk.name and sd.pkey=?", pkey);
+        return conn.executeStringQuery("select accounting from email_domains where pkey=?", pkey);
     }
 
     public static String getDomainForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -1813,7 +1812,7 @@ final public class EmailHandler {
     }
 
     public static String getBusinessForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from email_smtp_relays esr, packages pk where esr.package=pk.name and esr.pkey=?", pkey);
+        return conn.executeStringQuery("select accounting from email_smtp_relays where pkey=?", pkey);
     }
 
     public static int getEmailAddress(DatabaseConnection conn, String address, int domain) throws IOException, SQLException {
@@ -1836,34 +1835,6 @@ final public class EmailHandler {
 
     public static int getLinuxServerGroupForMajordomoServer(DatabaseConnection conn, int domain) throws IOException, SQLException {
         return conn.executeIntQuery("select linux_server_group from majordomo_servers where domain=?", domain);
-    }
-
-    public static String getPackageForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select package from email_domains where pkey=?", pkey);
-    }
-
-    public static String getPackageForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery(
-            "select\n"
-            + "  lg.package\n"
-            + "from\n"
-            + "  email_lists el,\n"
-            + "  linux_server_groups lsg,\n"
-            + "  linux_groups lg\n"
-            + "where\n"
-            + "  el.pkey=?\n"
-            + "  and el.linux_server_group=lsg.pkey\n"
-            + "  and lsg.name=lg.name",
-            pkey
-        );
-    }
-
-    public static String getPackageForEmailPipe(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select package from email_pipes where pkey=?", pkey);
-    }
-
-    public static String getPackageForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select package from email_smtp_relays where pkey=?", pkey);
     }
 
     public static String getPathForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {

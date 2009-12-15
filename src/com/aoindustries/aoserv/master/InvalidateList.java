@@ -174,6 +174,7 @@ final public class InvalidateList {
                     break;
                 case BUSINESSES :
                     addTable(conn, SchemaTable.TableID.BUSINESS_PROFILES, businesses, servers, true);
+                    addTable(conn, SchemaTable.TableID.PACKAGE_DEFINITIONS, businesses, servers, true);
                     break;
                 case EMAIL_DOMAINS :
                     addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, businesses, servers, true);
@@ -221,9 +222,6 @@ final public class InvalidateList {
                     break;
                 case PACKAGE_DEFINITIONS :
                     addTable(conn, SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS, businesses, servers, true);
-                    break;
-                case PACKAGES :
-                    addTable(conn, SchemaTable.TableID.PACKAGE_DEFINITIONS, businesses, servers, true);
                     break;
                 case POSTGRES_SERVER_USERS :
                     addTable(conn, SchemaTable.TableID.POSTGRES_USERS, businesses, servers, true);
@@ -276,7 +274,6 @@ final public class InvalidateList {
                 LinuxAccountHandler.invalidateTable(tableID);
                 MasterServer.invalidateTable(tableID);
                 MySQLHandler.invalidateTable(tableID);
-                PackageHandler.invalidateTable(tableID);
                 PostgresHandler.invalidateTable(tableID);
                 ServerHandler.invalidateTable(tableID);
                 TableHandler.invalidateTable(tableID);

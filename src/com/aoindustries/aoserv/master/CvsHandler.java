@@ -5,12 +5,18 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.CvsRepository;
+import com.aoindustries.aoserv.client.HttpdSharedTomcat;
+import com.aoindustries.aoserv.client.HttpdSite;
+import com.aoindustries.aoserv.client.LinuxAccountType;
+import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.sql.DatabaseConnection;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.util.IntList;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The <code>CvsHandler</code> handles all the accesses to the <code>cvs_repositories</code> table.
@@ -20,6 +26,9 @@ import java.util.*;
 final public class CvsHandler {
 
     private final static Map<Integer,Boolean> disabledCvsRepositories=new HashMap<Integer,Boolean>();
+
+    private CvsHandler() {
+    }
 
     public static int addCvsRepository(
         DatabaseConnection conn,

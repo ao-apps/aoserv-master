@@ -177,9 +177,9 @@ final public class ClusterHandler implements CronJob {
                                                         )
                                                     ) {
                                                         primaryMapping.add(
-                                                            ServerHandler.getServerForPackageAndName(
+                                                            ServerHandler.getServerForBusinessAndName(
                                                                 database,
-                                                                PackageHandler.getPKeyForPackage(database, BusinessHandler.getRootBusiness()),
+                                                                BusinessHandler.getRootBusiness(),
                                                                 drbdReport.getResourceHostname()
                                                             )
                                                         );

@@ -447,7 +447,7 @@ public abstract class MasterServer {
                                         switch(tableID) {
                                             case BUSINESS_ADMINISTRATORS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     String name=in.readUTF().trim();
                                                     String title=in.readBoolean()?in.readUTF().trim():null;
                                                     long birthday=in.readLong();
@@ -461,7 +461,7 @@ public abstract class MasterServer {
                                                     String address2=in.readBoolean()?in.readUTF().trim():null;
                                                     String city=in.readBoolean()?in.readUTF().trim():null;
                                                     String state=in.readBoolean()?in.readUTF().trim():null;
-                                                    String country=in.readBoolean()?in.readUTF().trim():null;
+                                                    String country=in.readBoolean()?in.readUTF():null;
                                                     String zip=in.readBoolean()?in.readUTF().trim():null;
                                                     boolean enableEmailSupport=
                                                         source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_44)>=0
@@ -605,8 +605,8 @@ public abstract class MasterServer {
                                                 break;
                                             case BUSINESSES :
                                                 {
-                                                    String accounting=in.readUTF().trim();
-                                                    String contractVersion=in.readBoolean()?in.readUTF().trim():null;
+                                                    String accounting=in.readUTF();
+                                                    String contractVersion=in.readBoolean()?in.readUTF():null;
                                                     int defaultServer;
                                                     String hostname;
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
@@ -633,6 +633,9 @@ public abstract class MasterServer {
                                                     if(defaultServer==-1) {
                                                         defaultServer = ServerHandler.getServerForAOServerHostname(conn, hostname);
                                                     }
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) throw new SQLException("add_business for protocol version "+AOServProtocol.Version.VERSION_1_61+" or older is no longer supported.");
+                                                    int packageDefinition=in.readCompressedInt(); // Version 1.62+
+
                                                     process.setCommand(
                                                         AOSHCommand.ADD_BUSINESS,
                                                         accounting,
@@ -642,7 +645,8 @@ public abstract class MasterServer {
                                                         can_add_backup_servers?Boolean.TRUE:Boolean.FALSE,
                                                         can_add_businesses?Boolean.TRUE:Boolean.FALSE,
                                                         can_see_prices?Boolean.TRUE:Boolean.FALSE,
-                                                        billParent?Boolean.TRUE:Boolean.FALSE
+                                                        billParent?Boolean.TRUE:Boolean.FALSE,
+                                                        packageDefinition
                                                     );
                                                     BusinessHandler.addBusiness(
                                                         conn,
@@ -655,7 +659,8 @@ public abstract class MasterServer {
                                                         can_add_backup_servers,
                                                         can_add_businesses,
                                                         can_see_prices,
-                                                        billParent
+                                                        billParent,
+                                                        packageDefinition
                                                     );
                                                     resp1=AOServProtocol.DONE;
                                                 }
@@ -1021,13 +1026,13 @@ public abstract class MasterServer {
                                                 break;
                                             case DNS_ZONES :
                                                 {
-                                                    String packageName=in.readUTF();
-                                                    String zone=in.readUTF().trim();
+                                                    String accounting=in.readUTF();
+                                                    String zone=in.readUTF();
                                                     String ip=in.readUTF().trim();
                                                     int ttl=in.readCompressedInt();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_DNS_ZONE,
-                                                        packageName,
+                                                        accounting,
                                                         zone,
                                                         ip,
                                                         Integer.valueOf(ttl)
@@ -1036,7 +1041,7 @@ public abstract class MasterServer {
                                                         conn,
                                                         source,
                                                         invalidateList,
-                                                        packageName,
+                                                        accounting,
                                                         zone,
                                                         ip,
                                                         ttl
@@ -1067,14 +1072,14 @@ public abstract class MasterServer {
                                                 break;
                                             case EMAIL_DOMAINS :
                                                 {
-                                                    String domain=in.readUTF().trim();
+                                                    String domain=in.readUTF();
                                                     int aoServer=in.readCompressedInt();
-                                                    String packageName=in.readUTF();
+                                                    String accounting=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_EMAIL_DOMAIN,
                                                         domain,
                                                         Integer.valueOf(aoServer),
-                                                        packageName
+                                                        accounting
                                                     );
                                                     int pkey=EmailHandler.addEmailDomain(
                                                         conn,
@@ -1082,7 +1087,7 @@ public abstract class MasterServer {
                                                         invalidateList,
                                                         domain,
                                                         aoServer,
-                                                        packageName
+                                                        accounting
                                                     );
                                                     resp1=AOServProtocol.DONE;
                                                     resp2Int=pkey;
@@ -1180,12 +1185,12 @@ public abstract class MasterServer {
                                                 {
                                                     int ao_server=in.readCompressedInt();
                                                     String path=in.readUTF();
-                                                    String packageName=in.readUTF();
+                                                    String accounting=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_EMAIL_PIPE,
                                                         Integer.valueOf(ao_server),
                                                         path,
-                                                        packageName
+                                                        accounting
                                                     );
                                                     int pkey=EmailHandler.addEmailPipe(
                                                         conn,
@@ -1193,7 +1198,7 @@ public abstract class MasterServer {
                                                         invalidateList,
                                                         ao_server,
                                                         path,
-                                                        packageName
+                                                        accounting
                                                     );
                                                     resp1=AOServProtocol.DONE;
                                                     resp2Int=pkey;
@@ -1205,14 +1210,14 @@ public abstract class MasterServer {
                                                     process.setPriority(Thread.NORM_PRIORITY+1);
                                                     currentThread.setPriority(Thread.NORM_PRIORITY+1);
 
-                                                    String packageName=in.readUTF();
+                                                    String accounting=in.readUTF();
                                                     int aoServer=in.readCompressedInt();
                                                     String host=in.readUTF().trim();
                                                     String type=in.readUTF();
                                                     long duration=in.readLong();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_EMAIL_SMTP_RELAY,
-                                                        packageName,
+                                                        accounting,
                                                         aoServer==-1?null:Integer.valueOf(aoServer),
                                                         host,
                                                         type,
@@ -1222,7 +1227,7 @@ public abstract class MasterServer {
                                                         conn,
                                                         source,
                                                         invalidateList,
-                                                        packageName,
+                                                        accounting,
                                                         aoServer,
                                                         host,
                                                         type,
@@ -1325,7 +1330,7 @@ public abstract class MasterServer {
                                                 break;
                                             case HTTPD_SHARED_TOMCATS :
                                                 {
-                                                    String name=in.readUTF().trim();
+                                                    String name=in.readUTF();
                                                     int aoServer=in.readCompressedInt();
                                                     int version=in.readCompressedInt();
                                                     String linuxServerAccount=in.readUTF();
@@ -1363,8 +1368,8 @@ public abstract class MasterServer {
                                             case HTTPD_JBOSS_SITES :
                                                 {
                                                     int aoServer=in.readCompressedInt();
-                                                    String siteName=in.readUTF().trim();
-                                                    String packageName=in.readUTF();
+                                                    String siteName=in.readUTF();
+                                                    String accounting=in.readUTF();
                                                     String username=in.readUTF();
                                                     String group=in.readUTF();
                                                     String serverAdmin=in.readUTF().trim();
@@ -1375,12 +1380,14 @@ public abstract class MasterServer {
                                                     String[] altHttpHostnames=new String[len];
                                                     for(int c=0;c<len;c++) altHttpHostnames[c]=in.readUTF().trim();
                                                     int jBossVersion=in.readCompressedInt();
-                                                    String contentSrc=in.readBoolean()?in.readUTF():null;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                        String contentSrc = in.readBoolean()?in.readUTF():null;
+                                                    }
                                                     process.setCommand(
                                                         AOSHCommand.ADD_HTTPD_JBOSS_SITE,
                                                         Integer.valueOf(aoServer),
                                                         siteName,
-                                                        packageName,
+                                                        accounting,
                                                         username,
                                                         group,
                                                         serverAdmin,
@@ -1388,8 +1395,7 @@ public abstract class MasterServer {
                                                         ipAddress==-1?null:Integer.valueOf(ipAddress),
                                                         primaryHttpHostname,
                                                         altHttpHostnames,
-                                                        Integer.valueOf(jBossVersion),
-                                                        contentSrc
+                                                        Integer.valueOf(jBossVersion)
                                                     );
 
                                                     int pkey=HttpdHandler.addHttpdJBossSite(
@@ -1398,7 +1404,7 @@ public abstract class MasterServer {
                                                         invalidateList,
                                                         aoServer,
                                                         siteName,
-                                                        packageName,
+                                                        accounting,
                                                         username,
                                                         group,
                                                         serverAdmin,
@@ -1406,8 +1412,7 @@ public abstract class MasterServer {
                                                         ipAddress,
                                                         primaryHttpHostname,
                                                         altHttpHostnames,
-                                                        jBossVersion,
-                                                        contentSrc
+                                                        jBossVersion
                                                     );
                                                     resp1=AOServProtocol.DONE;
                                                     resp2Int=pkey;
@@ -1605,10 +1610,10 @@ public abstract class MasterServer {
                                             case HTTPD_TOMCAT_SHARED_SITES :
                                                 {
                                                     int aoServer=in.readCompressedInt();
-                                                    String siteName=in.readUTF().trim();
-                                                    String packageName=in.readUTF().trim();
-                                                    String username=in.readUTF().trim();
-                                                    String group=in.readUTF().trim();
+                                                    String siteName=in.readUTF();
+                                                    String accounting=in.readUTF();
+                                                    String username=in.readUTF();
+                                                    String group=in.readUTF();
                                                     String serverAdmin=in.readUTF().trim();
                                                     boolean useApache=in.readBoolean();
                                                     int ipAddress=in.readCompressedInt();
@@ -1616,14 +1621,16 @@ public abstract class MasterServer {
                                                     int len=in.readCompressedInt();
                                                     String[] altHttpHostnames=new String[len];
                                                     for(int c=0;c<len;c++) altHttpHostnames[c]=in.readUTF().trim();
-                                                    String sharedTomcatName=in.readBoolean()?in.readUTF().trim():null;
+                                                    String sharedTomcatName=in.readBoolean()?in.readUTF():null;
                                                     int version=in.readCompressedInt();
-                                                    String contentSrc=in.readBoolean()?in.readUTF().trim():null;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                        String contentSrc = in.readBoolean()?in.readUTF():null;
+                                                    }
                                                     process.setCommand(
                                                         AOSHCommand.ADD_HTTPD_TOMCAT_SHARED_SITE,
                                                         Integer.valueOf(aoServer),
                                                         siteName,
-                                                        packageName,
+                                                        accounting,
                                                         username,
                                                         group,
                                                         serverAdmin,
@@ -1632,8 +1639,7 @@ public abstract class MasterServer {
                                                         primaryHttpHostname,
                                                         altHttpHostnames,
                                                         sharedTomcatName,
-                                                        version==-1?null:Integer.valueOf(version),
-                                                        contentSrc
+                                                        version==-1?null:Integer.valueOf(version)
                                                     );
 
                                                     int pkey=HttpdHandler.addHttpdTomcatSharedSite(
@@ -1642,7 +1648,7 @@ public abstract class MasterServer {
                                                         invalidateList,
                                                         aoServer,
                                                         siteName,
-                                                        packageName,
+                                                        accounting,
                                                         username,
                                                         group,
                                                         serverAdmin,
@@ -1651,8 +1657,7 @@ public abstract class MasterServer {
                                                         primaryHttpHostname,
                                                         altHttpHostnames,
                                                         sharedTomcatName,
-                                                        version,
-                                                        contentSrc
+                                                        version
                                                     );
                                                     resp1=AOServProtocol.DONE;
                                                     resp2Int=pkey;
@@ -1662,10 +1667,10 @@ public abstract class MasterServer {
                                             case HTTPD_TOMCAT_STD_SITES :
                                                 {
                                                     int aoServer=in.readCompressedInt();
-                                                    String siteName=in.readUTF().trim();
-                                                    String packageName=in.readUTF().trim();
-                                                    String username=in.readUTF().trim();
-                                                    String group=in.readUTF().trim();
+                                                    String siteName=in.readUTF();
+                                                    String accounting=in.readUTF();
+                                                    String username=in.readUTF();
+                                                    String group=in.readUTF();
                                                     String serverAdmin=in.readUTF().trim();
                                                     boolean useApache=in.readBoolean();
                                                     int ipAddress=in.readCompressedInt();
@@ -1674,12 +1679,14 @@ public abstract class MasterServer {
                                                     String[] altHttpHostnames=new String[len];
                                                     for(int c=0;c<len;c++) altHttpHostnames[c]=in.readUTF().trim();
                                                     int tomcatVersion=in.readCompressedInt();
-                                                    String contentSrc=in.readBoolean()?in.readUTF().trim():null;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                        String contentSrc = in.readBoolean()?in.readUTF():null;
+                                                    }
                                                     process.setCommand(
                                                         AOSHCommand.ADD_HTTPD_TOMCAT_STD_SITE,
                                                         Integer.valueOf(aoServer),
                                                         siteName,
-                                                        packageName,
+                                                        accounting,
                                                         username,
                                                         group,
                                                         serverAdmin,
@@ -1687,8 +1694,7 @@ public abstract class MasterServer {
                                                         ipAddress==-1?null:Integer.valueOf(ipAddress),
                                                         primaryHttpHostname,
                                                         altHttpHostnames,
-                                                        Integer.valueOf(tomcatVersion),
-                                                        contentSrc
+                                                        Integer.valueOf(tomcatVersion)
                                                     );
                                                     int pkey=HttpdHandler.addHttpdTomcatStdSite(
                                                         conn,
@@ -1696,7 +1702,7 @@ public abstract class MasterServer {
                                                         invalidateList,
                                                         aoServer,
                                                         siteName,
-                                                        packageName,
+                                                        accounting,
                                                         username,
                                                         group,
                                                         serverAdmin,
@@ -1704,8 +1710,7 @@ public abstract class MasterServer {
                                                         ipAddress,
                                                         primaryHttpHostname,
                                                         altHttpHostnames,
-                                                        tomcatVersion,
-                                                        contentSrc
+                                                        tomcatVersion
                                                     );
                                                     resp1=AOServProtocol.DONE;
                                                     resp2Int=pkey;
@@ -1716,7 +1721,7 @@ public abstract class MasterServer {
                                                 {
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_31)<0) {
                                                         in.readCompressedInt(); // address
-                                                        in.readUTF().trim(); // username
+                                                        in.readUTF(); // username
                                                         throw new IOException(AOSHCommand.ADD_LINUX_ACC_ADDRESS+" call not supported for AOServProtocol < "+AOServProtocol.Version.VERSION_1_31+", please upgrade AOServ Client.");
                                                     }
                                                     int address=in.readCompressedInt();
@@ -1740,14 +1745,14 @@ public abstract class MasterServer {
                                                 break;
                                             case LINUX_ACCOUNTS :
                                                 {
-                                                    String username=in.readUTF().trim();
-                                                    String primary_group=in.readUTF().trim();
+                                                    String username=in.readUTF();
+                                                    String primary_group=in.readUTF();
                                                     String name=in.readUTF().trim();
                                                     String office_location=in.readBoolean()?in.readUTF().trim():null;
                                                     String office_phone=in.readBoolean()?in.readUTF().trim():null;
                                                     String home_phone=in.readBoolean()?in.readUTF().trim():null;
-                                                    String type=in.readUTF().trim();
-                                                    String shell=in.readUTF().trim();
+                                                    String type=in.readUTF();
+                                                    String shell=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_LINUX_ACCOUNT,
                                                         username,
@@ -1778,8 +1783,8 @@ public abstract class MasterServer {
                                                 break;
                                             case LINUX_GROUP_ACCOUNTS :
                                                 {
-                                                    String groupName=in.readUTF().trim();
-                                                    String username=in.readUTF().trim();
+                                                    String groupName=in.readUTF();
+                                                    String username=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_LINUX_GROUP_ACCOUNT,
                                                         groupName,
@@ -1801,13 +1806,13 @@ public abstract class MasterServer {
                                                 break;
                                             case LINUX_GROUPS :
                                                 {
-                                                    String groupName=in.readUTF().trim();
-                                                    String packageName=in.readUTF().trim();
-                                                    String type=in.readUTF().trim();
+                                                    String groupName=in.readUTF();
+                                                    String accounting=in.readUTF();
+                                                    String type=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_LINUX_GROUP,
                                                         groupName,
-                                                        packageName,
+                                                        accounting,
                                                         type
                                                     );
                                                     LinuxAccountHandler.addLinuxGroup(
@@ -1815,7 +1820,7 @@ public abstract class MasterServer {
                                                         source,
                                                         invalidateList,
                                                         groupName,
-                                                        packageName,
+                                                        accounting,
                                                         type,
                                                         false
                                                     );
@@ -1824,9 +1829,9 @@ public abstract class MasterServer {
                                                 break;
                                             case LINUX_SERVER_ACCOUNTS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     int aoServer=in.readCompressedInt();
-                                                    String home=in.readUTF().trim();
+                                                    String home=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_LINUX_SERVER_ACCOUNT,
                                                         username,
@@ -1849,7 +1854,7 @@ public abstract class MasterServer {
                                                 break;
                                             case LINUX_SERVER_GROUPS :
                                                 {
-                                                    String groupName=in.readUTF().trim();
+                                                    String groupName=in.readUTF();
                                                     int aoServer=in.readCompressedInt();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_LINUX_SERVER_GROUP,
@@ -1872,7 +1877,7 @@ public abstract class MasterServer {
                                             case MAJORDOMO_LISTS :
                                                 {
                                                     int majordomoServer=in.readCompressedInt();
-                                                    String listName=in.readUTF().trim();
+                                                    String listName=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_MAJORDOMO_LIST,
                                                         Integer.valueOf(majordomoServer),
@@ -1895,7 +1900,7 @@ public abstract class MasterServer {
                                                     int emailDomain=in.readCompressedInt();
                                                     int lsa=in.readCompressedInt();
                                                     int lsg=in.readCompressedInt();
-                                                    String version=in.readUTF().trim();
+                                                    String version=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_MAJORDOMO_SERVER,
                                                         Integer.valueOf(emailDomain),
@@ -1917,14 +1922,14 @@ public abstract class MasterServer {
                                                 break;
                                             case MYSQL_DATABASES :
                                                 {
-                                                    String name=in.readUTF().trim();
+                                                    String name=in.readUTF();
                                                     int mysqlServer=in.readCompressedInt();
-                                                    String packageName=in.readUTF().trim();
+                                                    String accounting=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_MYSQL_DATABASE,
                                                         name,
                                                         Integer.valueOf(mysqlServer),
-                                                        packageName
+                                                        accounting
                                                     );
                                                     int pkey=MySQLHandler.addMySQLDatabase(
                                                         conn,
@@ -1932,7 +1937,7 @@ public abstract class MasterServer {
                                                         invalidateList,
                                                         name,
                                                         mysqlServer,
-                                                        packageName
+                                                        accounting
                                                     );
                                                     resp1=AOServProtocol.DONE;
                                                     resp2Int=pkey;
@@ -2042,7 +2047,7 @@ public abstract class MasterServer {
                                                 break;
                                             case MYSQL_SERVER_USERS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     int mysqlServer=in.readCompressedInt();
                                                     String host=in.readBoolean()?in.readUTF().trim():null;
                                                     process.setCommand(
@@ -2066,7 +2071,7 @@ public abstract class MasterServer {
                                                 break;
                                             case MYSQL_USERS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_MYSQL_USER,
                                                         username
@@ -2083,11 +2088,11 @@ public abstract class MasterServer {
                                             case NET_BINDS :
                                                 {
                                                     int server=in.readCompressedInt();
-                                                    String packageName=in.readUTF().trim();
+                                                    String accounting=in.readUTF();
                                                     int ipAddress=in.readCompressedInt();
                                                     int port=in.readCompressedInt();
-                                                    String netProtocol=in.readUTF().trim();
-                                                    String appProtocol=in.readUTF().trim();
+                                                    String netProtocol=in.readUTF();
+                                                    String appProtocol=in.readUTF();
                                                     boolean openFirewall=in.readBoolean();
                                                     boolean monitoringEnabled;
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_103)<=0) {
@@ -2099,7 +2104,7 @@ public abstract class MasterServer {
                                                     process.setCommand(
                                                         AOSHCommand.ADD_NET_BIND,
                                                         Integer.valueOf(server),
-                                                        packageName,
+                                                        accounting,
                                                         Integer.valueOf(ipAddress),
                                                         Integer.valueOf(port),
                                                         netProtocol,
@@ -2112,7 +2117,7 @@ public abstract class MasterServer {
                                                         source,
                                                         invalidateList,
                                                         server,
-                                                        packageName,
+                                                        accounting,
                                                         ipAddress,
                                                         port,
                                                         netProtocol,
@@ -2127,11 +2132,11 @@ public abstract class MasterServer {
                                                 break;
                                             case NOTICE_LOG :
                                                 {
-                                                    String accounting=in.readUTF().trim();
+                                                    String accounting=in.readUTF();
                                                     String billingContact=in.readUTF().trim();
                                                     String emailAddress=in.readUTF().trim();
                                                     int balance=in.readCompressedInt();
-                                                    String type=in.readUTF().trim();
+                                                    String type=in.readUTF();
                                                     int transid=in.readCompressedInt();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_NOTICE_LOG,
@@ -2156,65 +2161,10 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case PACKAGES :
-                                                {
-                                                    String packageName=in.readUTF().trim();
-                                                    String accounting=in.readUTF().trim();
-                                                    int packageDefinition;
-                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_122)<=0) {
-                                                        // Try to find a package definition owned by the source accounting with matching rates and limits
-                                                        String level=in.readUTF().trim();
-                                                        int rate=in.readCompressedInt();
-                                                        int userLimit=in.readCompressedInt();
-                                                        int additionalUserRate=in.readCompressedInt();
-                                                        int popLimit=in.readCompressedInt();
-                                                        int additionalPopRate=in.readCompressedInt();
-                                                        String baAccounting=UsernameHandler.getBusinessForUsername(conn, source.getUsername());
-                                                        packageDefinition=PackageHandler.findActivePackageDefinition(
-                                                            conn,
-                                                            baAccounting,
-                                                            rate,
-                                                            userLimit,
-                                                            popLimit
-                                                        );
-                                                        if(packageDefinition==-1) {
-                                                            throw new SQLException(
-                                                                "Unable to find PackageDefinition: accounting="
-                                                                + baAccounting
-                                                                + ", rate="
-                                                                + SQLUtility.getDecimal(rate)
-                                                                + ", userLimit="
-                                                                + (userLimit==-1?"unlimited":Integer.toString(userLimit))
-                                                                + ", popLimit="
-                                                                + (popLimit==-1?"unlimited":Integer.toString(popLimit))
-                                                            );
-                                                        }
-                                                    } else {
-                                                        packageDefinition=in.readCompressedInt();
-                                                    }
-                                                    process.setCommand(
-                                                        AOSHCommand.ADD_PACKAGE,
-                                                        packageName,
-                                                        accounting,
-                                                        Integer.valueOf(packageDefinition)
-                                                    );
-                                                    int pkey=PackageHandler.addPackage(
-                                                        conn,
-                                                        source,
-                                                        invalidateList,
-                                                        packageName,
-                                                        accounting,
-                                                        packageDefinition
-                                                    );
-                                                    resp1=AOServProtocol.DONE;
-                                                    resp2Int=pkey;
-                                                    hasResp2Int=true;
-                                                }
-                                                break;
                                             case PACKAGE_DEFINITIONS :
                                                 {
-                                                    String accounting=in.readUTF().trim();
-                                                    String category=in.readUTF().trim();
+                                                    String accounting=in.readUTF();
+                                                    String category=in.readUTF();
                                                     String name=in.readUTF().trim();
                                                     String version=in.readUTF().trim();
                                                     String display=in.readUTF().trim();
@@ -2258,7 +2208,7 @@ public abstract class MasterServer {
                                                 break;
                                             case POSTGRES_DATABASES :
                                                 {
-                                                    String name=in.readUTF().trim();
+                                                    String name=in.readUTF();
                                                     int postgresServer=in.readCompressedInt();
                                                     int datdba=in.readCompressedInt();
                                                     int encoding=in.readCompressedInt();
@@ -2288,7 +2238,7 @@ public abstract class MasterServer {
                                                 break;
                                             case POSTGRES_SERVER_USERS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     int postgresServer=in.readCompressedInt();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_POSTGRES_SERVER_USER,
@@ -2309,7 +2259,7 @@ public abstract class MasterServer {
                                                 break;
                                             case POSTGRES_USERS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_POSTGRES_USER,
                                                         username
@@ -2485,10 +2435,9 @@ public abstract class MasterServer {
                                                     }
                                                     String accounting;
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_126)>=0) {
-                                                        accounting=in.readBoolean()?in.readUTF().trim():null;
+                                                        accounting=in.readBoolean()?in.readUTF():null;
                                                     } else {
-                                                        String packageName=in.readUTF().trim();
-                                                        accounting=PackageHandler.getBusinessForPackage(conn, packageName);
+                                                        accounting=in.readUTF();
                                                     }
                                                     String language = source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_44)>=0 ? in.readUTF() : Language.EN;
                                                     int category = source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_44)>=0 ? in.readCompressedInt() : -1;
@@ -2550,10 +2499,10 @@ public abstract class MasterServer {
                                                 break;
                                             case TRANSACTIONS :
                                                 {
-                                                    String accounting=in.readUTF().trim();
-                                                    String sourceAccounting=in.readUTF().trim();
-                                                    String business_administrator=in.readUTF().trim();
-                                                    String type=in.readUTF().trim();
+                                                    String accounting=in.readUTF();
+                                                    String sourceAccounting=in.readUTF();
+                                                    String business_administrator=in.readUTF();
+                                                    String type=in.readUTF();
                                                     String description=in.readUTF().trim();
                                                     int quantity=in.readCompressedInt();
                                                     int rate=in.readCompressedInt();
@@ -2600,18 +2549,18 @@ public abstract class MasterServer {
                                                 break;
                                             case USERNAMES :
                                                 {
-                                                    String packageName=in.readUTF().trim();
-                                                    String username=in.readUTF().trim();
+                                                    String accounting=in.readUTF();
+                                                    String username=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.ADD_USERNAME,
-                                                        packageName,
+                                                        accounting,
                                                         username
                                                     );
                                                     UsernameHandler.addUsername(
                                                         conn,
                                                         source,
                                                         invalidateList,
-                                                        packageName,
+                                                        accounting,
                                                         username,
                                                         false
                                                     );
@@ -2689,7 +2638,7 @@ public abstract class MasterServer {
                                     /*case BOUNCE_TICKET :
                                         {
                                             int ticketID=in.readCompressedInt();
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String comments=in.readUTF().trim();
                                             process.setCommand(AOSHCommand.BOUNCE_TICKET);
                                             TicketHandler.bounceTicket(
@@ -2706,7 +2655,7 @@ public abstract class MasterServer {
                                         break;*/
                                     case CANCEL_BUSINESS :
                                         {
-                                            String accounting=in.readUTF().trim();
+                                            String accounting=in.readUTF();
                                             String cancelReason=in.readBoolean()?in.readUTF().trim():null;
                                             process.setCommand(AOSHCommand.CANCEL_BUSINESS, accounting, cancelReason);
                                             BusinessHandler.cancelBusiness(conn, source, invalidateList, accounting, cancelReason);
@@ -2717,9 +2666,9 @@ public abstract class MasterServer {
                                     /*case CHANGE_TICKET_ADMIN_PRIORITY :
                                         {
                                             int ticketID=in.readCompressedInt(); 
-                                            String priority=in.readUTF().trim();
+                                            String priority=in.readUTF();
                                             if(priority.length()==0) priority=null;
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String comments=in.readUTF().trim();
                                             process.setCommand(
                                                 AOSHCommand.CHANGE_TICKET_ADMIN_PRIORITY,
@@ -2847,7 +2796,7 @@ public abstract class MasterServer {
                                     /*case COMPLETE_TICKET :
                                         {
                                             int ticketID=in.readCompressedInt();
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String comments=in.readUTF().trim();
                                             process.setCommand(
                                                 AOSHCommand.COMPLETE_TICKET,
@@ -3135,7 +3084,7 @@ public abstract class MasterServer {
                                             switch(tableID) {
                                                 case BUSINESSES :
                                                     {
-                                                        String accounting=in.readUTF().trim();
+                                                        String accounting=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.DISABLE_BUSINESS,
                                                             dlObj,
@@ -3152,7 +3101,7 @@ public abstract class MasterServer {
                                                     break;
                                                 case BUSINESS_ADMINISTRATORS :
                                                     {
-                                                        String username=in.readUTF().trim();
+                                                        String username=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.DISABLE_BUSINESS_ADMINISTRATOR,
                                                             dlObj,
@@ -3288,7 +3237,7 @@ public abstract class MasterServer {
                                                     break;
                                                 case LINUX_ACCOUNTS :
                                                     {
-                                                        String username=in.readUTF().trim();
+                                                        String username=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.DISABLE_LINUX_ACCOUNT,
                                                             dlObj,
@@ -3339,7 +3288,7 @@ public abstract class MasterServer {
                                                     break;
                                                 case MYSQL_USERS :
                                                     {
-                                                        String username=in.readUTF().trim();
+                                                        String username=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.DISABLE_MYSQL_USER,
                                                             dlObj,
@@ -3351,23 +3300,6 @@ public abstract class MasterServer {
                                                             invalidateList,
                                                             disableLog,
                                                             username
-                                                        );
-                                                    }
-                                                    break;
-                                                case PACKAGES :
-                                                    {
-                                                        String name=in.readUTF().trim();
-                                                        process.setCommand(
-                                                            AOSHCommand.DISABLE_PACKAGE,
-                                                            dlObj,
-                                                            name
-                                                        );
-                                                        PackageHandler.disablePackage(
-                                                            conn,
-                                                            source,
-                                                            invalidateList,
-                                                            disableLog,
-                                                            name
                                                         );
                                                     }
                                                     break;
@@ -3390,7 +3322,7 @@ public abstract class MasterServer {
                                                     break;
                                                 case POSTGRES_USERS :
                                                     {
-                                                        String username=in.readUTF().trim();
+                                                        String username=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.DISABLE_POSTGRES_USER,
                                                             dlObj,
@@ -3407,7 +3339,7 @@ public abstract class MasterServer {
                                                     break;
                                                 case USERNAMES :
                                                     {
-                                                        String username=in.readUTF().trim();
+                                                        String username=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.DISABLE_USERNAME,
                                                             dlObj,
@@ -3477,7 +3409,7 @@ public abstract class MasterServer {
                                             switch(tableID) {
                                                 case BUSINESSES :
                                                     {
-                                                        String accounting=in.readUTF().trim();
+                                                        String accounting=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.ENABLE_BUSINESS,
                                                             accounting
@@ -3492,7 +3424,7 @@ public abstract class MasterServer {
                                                     break;
                                                 case BUSINESS_ADMINISTRATORS :
                                                     {
-                                                        String username=in.readUTF().trim();
+                                                        String username=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.ENABLE_BUSINESS_ADMINISTRATOR,
                                                             username
@@ -3612,7 +3544,7 @@ public abstract class MasterServer {
                                                     break;
                                                 case LINUX_ACCOUNTS :
                                                     {
-                                                        String username=in.readUTF().trim();
+                                                        String username=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.ENABLE_LINUX_ACCOUNT,
                                                             username
@@ -3657,7 +3589,7 @@ public abstract class MasterServer {
                                                     break;
                                                 case MYSQL_USERS :
                                                     {
-                                                        String username=in.readUTF().trim();
+                                                        String username=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.ENABLE_MYSQL_USER,
                                                             username
@@ -3667,21 +3599,6 @@ public abstract class MasterServer {
                                                             source,
                                                             invalidateList,
                                                             username
-                                                        );
-                                                    }
-                                                    break;
-                                                case PACKAGES :
-                                                    {
-                                                        String name=in.readUTF().trim();
-                                                        process.setCommand(
-                                                            AOSHCommand.ENABLE_PACKAGE,
-                                                            name
-                                                        );
-                                                        PackageHandler.enablePackage(
-                                                            conn,
-                                                            source,
-                                                            invalidateList,
-                                                            name
                                                         );
                                                     }
                                                     break;
@@ -3702,7 +3619,7 @@ public abstract class MasterServer {
                                                     break;
                                                 case POSTGRES_USERS :
                                                     {
-                                                        String username=in.readUTF().trim();
+                                                        String username=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.ENABLE_POSTGRES_USER,
                                                             username
@@ -3717,7 +3634,7 @@ public abstract class MasterServer {
                                                     break;
                                                 case USERNAMES :
                                                     {
-                                                        String username=in.readUTF().trim();
+                                                        String username=in.readUTF();
                                                         process.setCommand(
                                                             AOSHCommand.ENABLE_USERNAME,
                                                             username
@@ -3766,22 +3683,6 @@ public abstract class MasterServer {
                                                 conn,
                                                 template_base,
                                                 template_added
-                                            );
-                                            resp1=AOServProtocol.DONE;
-                                            resp2String=name;
-                                            sendInvalidateList=false;
-                                        }
-                                        break;
-                                    case GENERATE_PACKAGE_NAME :
-                                        {
-                                            String template=in.readUTF().trim();
-                                            process.setCommand(
-                                                AOSHCommand.GENERATE_PACKAGE_NAME,
-                                                template
-                                            );
-                                            String name=PackageHandler.generatePackageName(
-                                                conn,
-                                                template
                                             );
                                             resp1=AOServProtocol.DONE;
                                             resp2String=name;
@@ -3841,7 +3742,7 @@ public abstract class MasterServer {
                                         break;
                                     case GET_ACCOUNT_BALANCE :
                                         {
-                                            String accounting=in.readUTF().trim();
+                                            String accounting=in.readUTF();
                                             process.setCommand(
                                                 "get_account_balance",
                                                 accounting
@@ -3857,7 +3758,7 @@ public abstract class MasterServer {
                                         break;
                                     case GET_ACCOUNT_BALANCE_BEFORE :
                                         {
-                                            String accounting=in.readUTF().trim();
+                                            String accounting=in.readUTF();
                                             long before=in.readLong();
                                             process.setCommand(
                                                 "get_account_balance_before",
@@ -3877,7 +3778,7 @@ public abstract class MasterServer {
                                     case GET_BANK_TRANSACTIONS_ACCOUNT :
                                         {
                                             boolean provideProgress=in.readBoolean();
-                                            String accounting=in.readUTF().trim();
+                                            String accounting=in.readUTF();
                                             process.setCommand(
                                                 "get_bank_transactions_account",
                                                 provideProgress?Boolean.TRUE:Boolean.FALSE,
@@ -3896,7 +3797,7 @@ public abstract class MasterServer {
                                         break;
                                     case GET_CONFIRMED_ACCOUNT_BALANCE :
                                         {
-                                            String accounting=in.readUTF().trim();
+                                            String accounting=in.readUTF();
                                             process.setCommand(
                                                 "get_confirmed_account_balance",
                                                 accounting
@@ -3912,7 +3813,7 @@ public abstract class MasterServer {
                                         break;
                                     case GET_CONFIRMED_ACCOUNT_BALANCE_BEFORE :
                                         {
-                                            String accounting=in.readUTF().trim();
+                                            String accounting=in.readUTF();
                                             long before=in.readLong();
                                             process.setCommand(
                                                 "get_confirmed_account_balance_before",
@@ -4180,7 +4081,7 @@ public abstract class MasterServer {
                                     case GET_MRTG_FILE :
                                         {
                                             int aoServer=in.readCompressedInt();
-                                            String filename=in.readUTF().trim();
+                                            String filename=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.GET_MRTG_FILE,
                                                 Integer.valueOf(aoServer),
@@ -4808,7 +4709,7 @@ public abstract class MasterServer {
                                     case GET_TRANSACTIONS_BUSINESS :
                                         {
                                             boolean provideProgress=in.readBoolean();
-                                            String accounting=in.readUTF().trim();
+                                            String accounting=in.readUTF();
                                             process.setCommand(
                                                 "get_transactions_business",
                                                 provideProgress?Boolean.TRUE:Boolean.FALSE,
@@ -4828,7 +4729,7 @@ public abstract class MasterServer {
                                     case GET_TRANSACTIONS_BUSINESS_ADMINISTRATOR :
                                         {
                                             boolean provideProgress=in.readBoolean();
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             process.setCommand(
                                                 "get_transactions_business_administrator",
                                                 provideProgress?Boolean.TRUE:Boolean.FALSE,
@@ -4906,7 +4807,7 @@ public abstract class MasterServer {
                                     /*case INITIALIZE_HTTPD_SITE_PASSWD_FILE :
                                         {
                                             int sitePKey=in.readCompressedInt();
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String encPassword=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.INITIALIZE_HTTPD_SITE_PASSWD_FILE,
@@ -4927,7 +4828,7 @@ public abstract class MasterServer {
                                         break;*/
                                     case IS_ACCOUNTING_AVAILABLE :
                                         {
-                                            String accounting=in.readUTF().trim();
+                                            String accounting=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.IS_ACCOUNTING_AVAILABLE,
                                                 accounting
@@ -4944,7 +4845,7 @@ public abstract class MasterServer {
                                         break;
                                     case IS_BUSINESS_ADMINISTRATOR_PASSWORD_SET :
                                         {
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.IS_BUSINESS_ADMINISTRATOR_PASSWORD_SET,
                                                 username
@@ -4962,7 +4863,7 @@ public abstract class MasterServer {
                                         break;
                                     case IS_DNS_ZONE_AVAILABLE :
                                         {
-                                            String zone=in.readUTF().trim();
+                                            String zone=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.IS_DNS_ZONE_AVAILABLE,
                                                 zone
@@ -4980,7 +4881,7 @@ public abstract class MasterServer {
                                     case IS_EMAIL_DOMAIN_AVAILABLE :
                                         {
                                             int aoServer=in.readCompressedInt();
-                                            String domain=in.readUTF().trim();
+                                            String domain=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.IS_EMAIL_DOMAIN_AVAILABLE,
                                                 Integer.valueOf(aoServer),
@@ -5000,7 +4901,7 @@ public abstract class MasterServer {
                                         break;
                                     case IS_LINUX_GROUP_NAME_AVAILABLE :
                                         {
-                                            String name=in.readUTF().trim();
+                                            String name=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.IS_LINUX_GROUP_NAME_AVAILABLE,
                                                 name
@@ -5060,7 +4961,7 @@ public abstract class MasterServer {
                                         break;
                                     case IS_MYSQL_DATABASE_NAME_AVAILABLE :
                                         {
-                                            String name=in.readUTF().trim();
+                                            String name=in.readUTF();
                                             int mysqlServer=in.readCompressedInt();
                                             process.setCommand(
                                                 AOSHCommand.IS_MYSQL_DATABASE_NAME_AVAILABLE,
@@ -5098,26 +4999,9 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
-                                    case IS_PACKAGE_NAME_AVAILABLE :
-                                        {
-                                            String name=in.readUTF().trim();
-                                            process.setCommand(
-                                                AOSHCommand.IS_PACKAGE_NAME_AVAILABLE,
-                                                name
-                                            );
-                                            boolean isAvailable=PackageHandler.isPackageNameAvailable(
-                                                conn,
-                                                name
-                                            );
-                                            resp1=AOServProtocol.DONE;
-                                            resp2Boolean=isAvailable;
-                                            hasResp2Boolean=true;
-                                            sendInvalidateList=false;
-                                        }
-                                        break;
                                     case IS_POSTGRES_DATABASE_NAME_AVAILABLE :
                                         {
-                                            String name=in.readUTF().trim();
+                                            String name=in.readUTF();
                                             int postgresServer=in.readCompressedInt();
                                             process.setCommand(
                                                 AOSHCommand.IS_POSTGRES_DATABASE_NAME_AVAILABLE,
@@ -5156,7 +5040,7 @@ public abstract class MasterServer {
                                         break;
                                     case IS_POSTGRES_SERVER_NAME_AVAILABLE :
                                         {
-                                            String name=in.readUTF().trim();
+                                            String name=in.readUTF();
                                             int aoServer=in.readCompressedInt();
                                             process.setCommand(
                                                 AOSHCommand.IS_POSTGRES_SERVER_NAME_AVAILABLE,
@@ -5177,7 +5061,7 @@ public abstract class MasterServer {
                                         break;
                                     case IS_SHARED_TOMCAT_NAME_AVAILABLE :
                                         {
-                                            String name=in.readUTF().trim();
+                                            String name=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.IS_SHARED_TOMCAT_NAME_AVAILABLE,
                                                 name
@@ -5194,7 +5078,7 @@ public abstract class MasterServer {
                                         break;
                                     case IS_USERNAME_AVAILABLE :
                                         {
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.IS_USERNAME_AVAILABLE,
                                                 username
@@ -5211,7 +5095,7 @@ public abstract class MasterServer {
                                         break;
                                     case IS_SITE_NAME_AVAILABLE :
                                         {
-                                            String name=in.readUTF().trim();
+                                            String name=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.IS_SITE_NAME_AVAILABLE,
                                                 name
@@ -5229,7 +5113,7 @@ public abstract class MasterServer {
                                     /*case KILL_TICKET :
                                         {
                                             int ticketID=in.readCompressedInt();
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String comments=in.readUTF().trim();
                                             process.setCommand(
                                                 AOSHCommand.KILL_TICKET,
@@ -5271,7 +5155,7 @@ public abstract class MasterServer {
                                     /*case REACTIVATE_TICKET :
                                         {
                                             int ticketID=in.readCompressedInt();
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String comments=in.readUTF().trim();
                                             process.setCommand(
                                                 AOSHCommand.REACTIVATE_TICKET,
@@ -5337,7 +5221,7 @@ public abstract class MasterServer {
                                                 break;
                                             case BUSINESS_ADMINISTRATORS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.REMOVE_BUSINESS_ADMINISTRATOR,
                                                         username
@@ -5417,7 +5301,7 @@ public abstract class MasterServer {
                                                 break;
                                             case DNS_ZONES :
                                                 {
-                                                    String zone=in.readUTF().trim();
+                                                    String zone=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.REMOVE_DNS_ZONE,
                                                         zone
@@ -5580,7 +5464,7 @@ public abstract class MasterServer {
                                                 break;
                                             case FTP_GUEST_USERS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.REMOVE_FTP_GUEST_USER,
                                                         username
@@ -5724,7 +5608,7 @@ public abstract class MasterServer {
                                                 break;
                                             case LINUX_ACCOUNTS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.REMOVE_LINUX_ACCOUNT,
                                                         username
@@ -5756,7 +5640,7 @@ public abstract class MasterServer {
                                                 break;
                                             case LINUX_GROUPS :
                                                 {
-                                                    String name=in.readUTF().trim();
+                                                    String name=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.REMOVE_LINUX_GROUP,
                                                         name
@@ -5868,7 +5752,7 @@ public abstract class MasterServer {
                                                 break;
                                             case MYSQL_USERS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.REMOVE_MYSQL_USER,
                                                         username
@@ -5948,7 +5832,7 @@ public abstract class MasterServer {
                                                 break;
                                             case POSTGRES_USERS :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.REMOVE_POSTGRES_USER,
                                                         username
@@ -5964,7 +5848,7 @@ public abstract class MasterServer {
                                                 break;
                                             case USERNAMES :
                                                 {
-                                                    String username=in.readUTF().trim();
+                                                    String username=in.readUTF();
                                                     process.setCommand(
                                                         AOSHCommand.REMOVE_USERNAME,
                                                         username
@@ -6063,7 +5947,7 @@ public abstract class MasterServer {
                                     case RESTART_MYSQL :
                                         {
                                             int mysqlServer=in.readCompressedInt();
-                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4)<0) throw new IOException("addBackupServer call not supported for AOServ Client version < "+AOServProtocol.Version.VERSION_1_4+", please upgrade AOServ Client.");
+                                            if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4)<0) throw new IOException("restart_mysql call not supported for AOServ Client version < "+AOServProtocol.Version.VERSION_1_4+", please upgrade AOServ Client.");
                                             process.setCommand(
                                                 AOSHCommand.RESTART_MYSQL,
                                                 Integer.valueOf(mysqlServer)
@@ -6156,8 +6040,8 @@ public abstract class MasterServer {
                                         break;
                                     case SET_BUSINESS_ACCOUNTING :
                                         {
-                                            String oldAccounting=in.readUTF().trim();
-                                            String newAccounting=in.readUTF().trim();
+                                            String oldAccounting=in.readUTF();
+                                            String newAccounting=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.SET_BUSINESS_ACCOUNTING,
                                                 oldAccounting,
@@ -6176,7 +6060,7 @@ public abstract class MasterServer {
                                         break;
                                     case SET_BUSINESS_ADMINISTRATOR_PASSWORD :
                                         {
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String password=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.SET_BUSINESS_ADMINISTRATOR_PASSWORD,
@@ -6196,7 +6080,7 @@ public abstract class MasterServer {
                                         break;
                                     case SET_BUSINESS_ADMINISTRATOR_PROFILE :
                                         {
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String name=in.readUTF().trim();
                                             String title=in.readBoolean()?in.readUTF().trim():null;
                                             long birthday=in.readLong();
@@ -6210,7 +6094,7 @@ public abstract class MasterServer {
                                             String address2=in.readBoolean()?in.readUTF().trim():null;
                                             String city=in.readBoolean()?in.readUTF().trim():null;
                                             String state=in.readBoolean()?in.readUTF().trim():null;
-                                            String country=in.readBoolean()?in.readUTF().trim():null;
+                                            String country=in.readBoolean()?in.readUTF():null;
                                             String zip=in.readBoolean()?in.readUTF().trim():null;
                                             process.setCommand(
                                                 AOSHCommand.SET_BUSINESS_ADMINISTRATOR_PROFILE,
@@ -6436,11 +6320,11 @@ public abstract class MasterServer {
                                     case SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES :
                                         {
                                             int pkey=in.readCompressedInt();
-                                            String path=in.readUTF().trim();
+                                            String path=in.readUTF();
                                             boolean isRegularExpression=in.readBoolean();
                                             String authName=in.readUTF().trim();
-                                            String authGroupFile=in.readUTF().trim();
-                                            String authUserFile=in.readUTF().trim();
+                                            String authGroupFile=in.readUTF();
+                                            String authUserFile=in.readUTF();
                                             String require=in.readUTF().trim();
                                             process.setCommand(
                                                 "set_httpd_site_authenticated_location_attributes",
@@ -6551,7 +6435,7 @@ public abstract class MasterServer {
                                     case SET_HTTPD_SITE_BIND_PREDISABLE_CONFIG :
                                         {
                                             int pkey=in.readCompressedInt();
-                                            String config=in.readBoolean()?in.readUTF().trim():null;
+                                            String config=in.readBoolean()?in.readUTF():null;
                                             process.setCommand(
                                                 "set_httpd_site_bind_predisable_config",
                                                 Integer.valueOf(pkey),
@@ -6574,15 +6458,15 @@ public abstract class MasterServer {
                                             String className=in.readBoolean()?in.readUTF().trim():null;
                                             boolean cookies=in.readBoolean();
                                             boolean crossContext=in.readBoolean();
-                                            String docBase=in.readUTF().trim();
+                                            String docBase=in.readUTF();
                                             boolean override=in.readBoolean();
-                                            String path=in.readUTF().trim();
+                                            String path=in.readUTF();
                                             boolean privileged=in.readBoolean();
                                             boolean reloadable=in.readBoolean();
                                             boolean useNaming=in.readBoolean();
                                             String wrapperClass=in.readBoolean()?in.readUTF().trim():null;
                                             int debug=in.readCompressedInt();
-                                            String workDir=in.readBoolean()?in.readUTF().trim():null;
+                                            String workDir=in.readBoolean()?in.readUTF():null;
                                             process.setCommand(
                                                 AOSHCommand.SET_HTTPD_TOMCAT_CONTEXT_ATTRIBUTES,
                                                 Integer.valueOf(pkey),
@@ -6643,6 +6527,26 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case SET_IP_ADDRESS_BUSINESS :
+                                        {
+                                            int ipAddress=in.readCompressedInt();
+                                            String accounting=in.readUTF();
+                                            process.setCommand(
+                                                AOSHCommand.SET_IP_ADDRESS_BUSINESS,
+                                                Integer.valueOf(ipAddress),
+                                                accounting
+                                            );
+                                            IPAddressHandler.setIPAddressBusiness(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                ipAddress,
+                                                accounting
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
                                     case SET_IP_ADDRESS_DHCP_ADDRESS :
                                         {
                                             int ipAddress=in.readCompressedInt();
@@ -6683,26 +6587,6 @@ public abstract class MasterServer {
                                             sendInvalidateList=true;
                                         }
                                         break;
-                                    case SET_IP_ADDRESS_PACKAGE :
-                                        {
-                                            int ipAddress=in.readCompressedInt();
-                                            String packageName=in.readUTF().trim();
-                                            process.setCommand(
-                                                AOSHCommand.SET_IP_ADDRESS_PACKAGE,
-                                                Integer.valueOf(ipAddress),
-                                                packageName
-                                            );
-                                            IPAddressHandler.setIPAddressPackage(
-                                                conn,
-                                                source,
-                                                invalidateList,
-                                                ipAddress,
-                                                packageName
-                                            );
-                                            resp1=AOServProtocol.DONE;
-                                            sendInvalidateList=true;
-                                        }
-                                        break;
                                     case SET_LAST_DISTRO_TIME :
                                         {
                                             process.setPriority(Thread.MIN_PRIORITY+1);
@@ -6728,7 +6612,7 @@ public abstract class MasterServer {
                                         break;
                                     case SET_LINUX_ACCOUNT_HOME_PHONE :
                                         {
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String phone=in.readUTF().trim();
                                             if(phone.length()==0) phone=null;
                                             process.setCommand(
@@ -6749,7 +6633,7 @@ public abstract class MasterServer {
                                         break;
                                     case SET_LINUX_ACCOUNT_NAME :
                                         {
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String fullName=in.readUTF().trim();
                                             process.setCommand(
                                                 AOSHCommand.SET_LINUX_ACCOUNT_NAME,
@@ -6769,7 +6653,7 @@ public abstract class MasterServer {
                                         break;
                                     case SET_LINUX_ACCOUNT_OFFICE_LOCATION :
                                         {
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String location=in.readUTF().trim();
                                             if(location.length()==0) location=null;
                                             process.setCommand(
@@ -6790,7 +6674,7 @@ public abstract class MasterServer {
                                         break;
                                     case SET_LINUX_ACCOUNT_OFFICE_PHONE :
                                         {
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String phone=in.readUTF().trim();
                                             if(phone.length()==0) phone=null;
                                             process.setCommand(
@@ -6811,8 +6695,8 @@ public abstract class MasterServer {
                                         break;
                                     case SET_LINUX_ACCOUNT_SHELL :
                                         {
-                                            String username=in.readUTF().trim();
-                                            String shell=in.readUTF().trim();
+                                            String username=in.readUTF();
+                                            String shell=in.readUTF();
                                             process.setCommand(
                                                 AOSHCommand.SET_LINUX_ACCOUNT_SHELL,
                                                 username,
@@ -7136,11 +7020,11 @@ public abstract class MasterServer {
                                             int[] additional_rates=new int[count];
                                             String[] additional_transaction_types=new String[count];
                                             for(int c=0;c<count;c++) {
-                                                resources[c]=in.readUTF().trim();
+                                                resources[c]=in.readUTF();
                                                 soft_limits[c]=in.readCompressedInt();
                                                 hard_limits[c]=in.readCompressedInt();
                                                 additional_rates[c]=in.readCompressedInt();
-                                                additional_transaction_types[c]=in.readBoolean()?in.readUTF().trim():null;
+                                                additional_transaction_types[c]=in.readBoolean()?in.readUTF():null;
                                             }
                                             process.setCommand(
                                                 "set_package_definition_limits",
@@ -7243,9 +7127,9 @@ public abstract class MasterServer {
                                     /*case SET_TICKET_ASSIGNED_TO :
                                         {
                                             int ticketID=in.readCompressedInt(); 
-                                            String assignedTo=in.readUTF().trim();
+                                            String assignedTo=in.readUTF();
                                             if(assignedTo.length()==0) assignedTo=null;
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String comments=in.readUTF().trim();
                                             process.setCommand(
                                                 "set_ticket_assigned_to",
@@ -7663,7 +7547,7 @@ public abstract class MasterServer {
                                     /*case TICKET_WORK :
                                         {
                                             int ticketID=in.readCompressedInt();
-                                            String username=in.readUTF().trim();
+                                            String username=in.readUTF();
                                             String comments=in.readUTF().trim();
                                             process.setCommand(
                                                 AOSHCommand.ADD_TICKET_WORK,
@@ -7716,9 +7600,9 @@ public abstract class MasterServer {
                                         {
                                             int transid=in.readCompressedInt();
                                             if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_28)<=0) {
-                                                String paymentType=in.readUTF().trim();
-                                                String paymentInfo=in.readBoolean()?in.readUTF().trim():null;
-                                                String merchant=in.readBoolean()?in.readUTF().trim():null;
+                                                String paymentType=in.readUTF();
+                                                String paymentInfo=in.readBoolean()?in.readUTF():null;
+                                                String merchant=in.readBoolean()?in.readUTF():null;
                                                 throw new SQLException("decline_transaction for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
                                             }
                                             int creditCardTransaction = in.readCompressedInt();
@@ -7868,7 +7752,7 @@ public abstract class MasterServer {
                                             if(state.length()==0) state=null;
                                             String postalCode=in.readUTF().trim();
                                             if(postalCode.length()==0) postalCode=null;
-                                            String countryCode=in.readUTF().trim();
+                                            String countryCode=in.readUTF();
                                             String description=in.readUTF().trim();
                                             if(description.length()==0) description=null;
                                             process.setCommand(
@@ -8751,8 +8635,6 @@ public abstract class MasterServer {
                 "select (select zone from dns_forbidden_zones where zone=?) is not null",
                 zone
             )) throw new SQLException("Access to this hostname forbidden: Exists in dns_forbidden_zones: "+hostname);
-
-            String username = source.getUsername();
 
             String existingZone=conn.executeStringQuery(
                 Connection.TRANSACTION_READ_COMMITTED,

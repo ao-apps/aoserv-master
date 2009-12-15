@@ -1384,7 +1384,7 @@ final public class TicketHandler /*implements Runnable*/ {
         UsernameHandler.checkAccessUsername(conn, source, "holdTicket", username);
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to kill Ticket as user '"+LinuxAccount.MAIL+'\'');
 
-        String accounting1 = conn.executeStringQuery("select pk.accounting from usernames un, packages pk where un.username=? and un.package=pk.name", username);
+        String accounting1 = conn.executeStringQuery("select accounting from usernames where un.username=?", username);
         String accounting2 = conn.executeStringQuery("select accounting from tickets where pkey=?", ticketID);
 
         boolean isClientChange=accounting1.equals(accounting2);

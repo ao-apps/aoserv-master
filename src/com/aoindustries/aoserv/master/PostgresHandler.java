@@ -5,13 +5,24 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.io.*;
+import com.aoindustries.aoserv.client.AOServPermission;
+import com.aoindustries.aoserv.client.LinuxAccount;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.PasswordChecker;
+import com.aoindustries.aoserv.client.PostgresDatabaseTable;
+import com.aoindustries.aoserv.client.PostgresUser;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.sql.DatabaseConnection;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.util.IntList;
+import com.aoindustries.util.SortedArrayList;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * The <code>PostgresHandler</code> handles all the accesses to the PostgreSQL tables.
@@ -19,6 +30,8 @@ import java.util.*;
  * @author  AO Industries, Inc.
  */
 final public class PostgresHandler {
+
+    private PostgresHandler() {}
 
     private final static Map<Integer,Boolean> disabledPostgresServerUsers=new HashMap<Integer,Boolean>();
     private final static Map<String,Boolean> disabledPostgresUsers=new HashMap<String,Boolean>();
@@ -766,41 +779,21 @@ final public class PostgresHandler {
     public static String getBusinessForPostgresDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
-            + "  pk.accounting\n"
+            + "  un.accounting\n"
             + "from\n"
             + "  postgres_databases pd,\n"
             + "  postgres_server_users psu,\n"
-            + "  usernames un,\n"
-            + "  packages pk\n"
+            + "  usernames un\n"
             + "where\n"
             + "  pd.pkey=?\n"
             + "  and pd.datdba=psu.pkey\n"
-            + "  and psu.username=un.username\n"
-            + "  and un.package=pk.name",
-            pkey
-        );
-    }
-
-    public static int getPackageForPostgresDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeIntQuery(
-            "select\n"
-            + "  pk.pkey\n"
-            + "from\n"
-            + "  postgres_databases pd,\n"
-            + "  postgres_server_users psu,\n"
-            + "  usernames un,\n"
-            + "  packages pk\n"
-            + "where\n"
-            + "  pd.pkey=?\n"
-            + "  and pd.datdba=psu.pkey\n"
-            + "  and psu.username=un.username\n"
-            + "  and un.package=pk.name",
+            + "  and psu.username=un.username",
             pkey
         );
     }
 
     public static String getBusinessForPostgresServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from postgres_server_users psu, usernames un, packages pk where psu.username=un.username and un.package=pk.name and psu.pkey=?", pkey);
+        return conn.executeStringQuery("select un.accounting from postgres_server_users psu, usernames un where psu.username=un.username and psu.pkey=?", pkey);
     }
 
     public static int getAOServerForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {

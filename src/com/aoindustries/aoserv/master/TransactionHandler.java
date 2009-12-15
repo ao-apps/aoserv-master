@@ -5,14 +5,25 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
-import com.aoindustries.io.*;
-import com.aoindustries.sql.*;
-import com.aoindustries.util.*;
-import java.io.*;
+import com.aoindustries.aoserv.client.AOServObject;
+import com.aoindustries.aoserv.client.LinuxAccount;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.Transaction;
+import com.aoindustries.aoserv.client.TransactionSearchCriteria;
+import com.aoindustries.aoserv.client.TransactionType;
+import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.sql.SQLUtility;
+import com.aoindustries.util.StringUtility;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 
 /**
  * The <code>TransactionHandler</code> handles all the accesses to the transaction tables.
@@ -20,6 +31,8 @@ import java.util.*;
  * @author  AO Industries, Inc.
  */
 final public class TransactionHandler {
+
+    private TransactionHandler() {}
 
     public static boolean canAccessTransaction(DatabaseConnection conn, RequestSource source, int transid) throws IOException, SQLException {
         return BusinessHandler.canAccessBusiness(conn, source, getBusinessForTransaction(conn, transid));
@@ -273,14 +286,12 @@ final public class TransactionHandler {
             + "  tr.*\n"
             + "from\n"
             + "  usernames un1,\n"
-            + "  packages pk1,\n"
             + TableHandler.BU1_PARENTS_JOIN
             + "  transactions tr\n"
             + "where\n"
             + "  un1.username=?\n"
-            + "  and un1.package=pk1.name\n"
             + "  and (\n"
-            + TableHandler.PK1_BU1_PARENTS_WHERE
+            + TableHandler.UN1_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=tr.accounting\n"
             + "  and tr.accounting=?",
@@ -345,14 +356,12 @@ final public class TransactionHandler {
                 + "  tr.*\n"
                 + "from\n"
                 + "  usernames un1,\n"
-                + "  packages pk1,\n"
                 + TableHandler.BU1_PARENTS_JOIN
                 + "  transactions tr\n"
                 + "where\n"
                 + "  un1.username=?\n"
-                + "  and un1.package=pk1.name\n"
                 + "  and (\n"
-                + TableHandler.PK1_BU1_PARENTS_WHERE
+                + TableHandler.UN1_BU1_PARENTS_WHERE
                 + "  )\n"
                 + "  and bu1.accounting=tr.accounting\n"
             );

@@ -127,12 +127,10 @@ final public class BusinessHandler {
             + "  bs."+column+"\n"
             + "from\n"
             + "  usernames un,\n"
-            + "  packages pk,\n"
             + "  business_servers bs\n"
             + "where\n"
             + "  un.username=?\n"
-            + "  and un.package=pk.name\n"
-            + "  and pk.accounting=bs.accounting\n"
+            + "  and un.accounting=bs.accounting\n"
             + "  and bs.server=?",
             source.getUsername(),
             server
@@ -265,13 +263,11 @@ final public class BusinessHandler {
                                 + "  bu1.accounting\n"
                                 + "from\n"
                                 + "  usernames un,\n"
-                                + "  packages pk,\n"
                                 + TableHandler.BU1_PARENTS_JOIN_NO_COMMA
                                 + "where\n"
                                 + "  un.username=?\n"
-                                + "  and un.package=pk.name\n"
                                 + "  and (\n"
-                                + TableHandler.PK_BU1_PARENTS_WHERE
+                                + TableHandler.UN_BU1_PARENTS_WHERE
                                 + "  )",
                                 username
                             );
@@ -304,13 +300,23 @@ final public class BusinessHandler {
         boolean can_add_backup_servers,
         boolean can_add_businesses,
         boolean can_see_prices,
-        boolean billParent
+        boolean billParent,
+        int packageDefinition
     ) throws IOException, SQLException {
         if(!Business.isValidAccounting(accounting)) throw new SQLException("Invalid accounting code: "+accounting);
 
         checkAddBusiness(conn, source, "addBusiness", parent, defaultServer);
 
         if(isBusinessDisabled(conn, parent)) throw new SQLException("Unable to add Business '"+accounting+"', parent is disabled: "+parent);
+
+        // Check the PackageDefinition rules
+        PackageHandler.checkAccessPackageDefinition(conn, source, "addPackage", packageDefinition);
+
+        // Businesses parent must be the package definition owner
+        String packageDefinitionBusiness=PackageHandler.getBusinessForPackageDefinition(conn, packageDefinition);
+        if(!packageDefinitionBusiness.equals(parent)) throw new SQLException("Unable to add Business '"+accounting+"', PackageDefinition #"+packageDefinition+" not owned by parent Business");
+        if(!PackageHandler.isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("Unable to add Business '"+accounting+"', PackageDefinition not approved: "+packageDefinition);
+        //if(!PackageHandler.isPackageDefinitionActive(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+accounting+"', PackageDefinition not active: "+packageDefinition);
 
         // Must not exceed the maximum business tree depth
         int newDepth=getDepthInBusinessTree(conn, parent)+1;
@@ -325,7 +331,15 @@ final public class BusinessHandler {
             + "  can_add_businesses,\n"
             + "  can_see_prices,\n"
             + "  auto_enable,\n"
-            + "  bill_parent\n"
+            + "  bill_parent,\n"
+            + "  package_definition,\n"
+            + "  created_by,\n"
+            + "  email_in_burst,\n"
+            + "  email_in_rate,\n"
+            + "  email_out_burst,\n"
+            + "  email_out_rate,\n"
+            + "  email_relay_burst,\n"
+            + "  email_relay_rate\n"
             + ") values(\n"
             + "  ?,\n"
             + "  ?,\n"
@@ -334,7 +348,15 @@ final public class BusinessHandler {
             + "  ?,\n"
             + "  ?,\n"
             + "  true,\n"
-            + "  ?\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  "+Business.DEFAULT_EMAIL_IN_BURST+"::integer,\n"
+            + "  "+Business.DEFAULT_EMAIL_IN_RATE+"::float4,\n"
+            + "  "+Business.DEFAULT_EMAIL_OUT_BURST+"::integer,\n"
+            + "  "+Business.DEFAULT_EMAIL_OUT_RATE+"::float4,\n"
+            + "  "+Business.DEFAULT_EMAIL_RELAY_BURST+"::integer,\n"
+            + "  "+Business.DEFAULT_EMAIL_RELAY_RATE+"::float4\n"
             + ")",
             accounting,
             contractVersion,
@@ -342,7 +364,9 @@ final public class BusinessHandler {
             can_add_backup_servers,
             can_add_businesses,
             can_see_prices,
-            billParent
+            billParent,
+            packageDefinition,
+            source.getUsername()
         );
         conn.executeUpdate(
             "insert into business_servers(\n"
@@ -702,11 +726,47 @@ final public class BusinessHandler {
         if(accounting.equals(getRootBusiness())) throw new SQLException("Not allowed to disable the root business: "+accounting);
         checkAccessDisableLog(conn, source, "disableBusiness", disableLog, false);
         checkAccessBusiness(conn, source, "disableBusiness", accounting);
-        List<String> packages=getPackagesForBusiness(conn, accounting);
-        for(int c=0;c<packages.size();c++) {
-            String packageName=packages.get(c);
-            if(!PackageHandler.isPackageDisabled(conn, packageName)) {
-                throw new SQLException("Cannot disable Business '"+accounting+"': Package not disabled: "+packageName);
+
+        IntList hsts=HttpdHandler.getHttpdSharedTomcatsForBusiness(conn, accounting);
+        for(int c=0;c<hsts.size();c++) {
+            int hst=hsts.getInt(c);
+            if(!HttpdHandler.isHttpdSharedTomcatDisabled(conn, hst)) {
+                throw new SQLException("Cannot disable Business '"+accounting+"': HttpdSharedTomcat not disabled: "+hst);
+            }
+        }
+        IntList eps=EmailHandler.getEmailPipesForBusiness(conn, accounting);
+        for(int c=0;c<eps.size();c++) {
+            int ep=eps.getInt(c);
+            if(!EmailHandler.isEmailPipeDisabled(conn, ep)) {
+                throw new SQLException("Cannot disable Business '"+accounting+"': EmailPipe not disabled: "+ep);
+            }
+        }
+        List<String> uns=UsernameHandler.getUsernamesForBusiness(conn, accounting);
+        for(int c=0;c<uns.size();c++) {
+            String username=uns.get(c);
+            if(!UsernameHandler.isUsernameDisabled(conn, username)) {
+                throw new SQLException("Cannot disable Business '"+accounting+"': Username not disabled: "+username);
+            }
+        }
+        IntList hss=HttpdHandler.getHttpdSitesForBusiness(conn, accounting);
+        for(int c=0;c<hss.size();c++) {
+            int hs=hss.getInt(c);
+            if(!HttpdHandler.isHttpdSiteDisabled(conn, hs)) {
+                throw new SQLException("Cannot disable Business '"+accounting+"': HttpdSite not disabled: "+hs);
+            }
+        }
+        IntList els=EmailHandler.getEmailListsForBusiness(conn, accounting);
+        for(int c=0;c<els.size();c++) {
+            int el=els.getInt(c);
+            if(!EmailHandler.isEmailListDisabled(conn, el)) {
+                throw new SQLException("Cannot disable Business '"+accounting+"': EmailList not disabled: "+el);
+            }
+        }
+        IntList ssrs=EmailHandler.getEmailSmtpRelaysForBusiness(conn, accounting);
+        for(int c=0;c<ssrs.size();c++) {
+            int ssr=ssrs.getInt(c);
+            if(!EmailHandler.isEmailSmtpRelayDisabled(conn, ssr)) {
+                throw new SQLException("Cannot disable Business '"+accounting+"': EmailSmtpRelay not disabled: "+ssr);
             }
         }
 
@@ -876,10 +936,6 @@ final public class BusinessHandler {
         }
     }
 
-    public static List<String> getPackagesForBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
-        return conn.executeStringListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select name from packages where accounting=?", accounting);
-    }
-
     public static IntList getServersForBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
         return conn.executeIntListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select server from business_servers where accounting=?", accounting);
     }
@@ -1015,11 +1071,9 @@ final public class BusinessHandler {
                 + "    select\n"
                 + "      ep.pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
                 + "      email_pipes ep\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=ep.package\n"
+                + "      ep.accounting=?\n"
                 + "      and ep.ao_server=?\n"
                 + "    limit 1\n"
                 + "  )\n"
@@ -1040,11 +1094,9 @@ final public class BusinessHandler {
                 + "    select\n"
                 + "      hs.pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
                 + "      httpd_sites hs\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=hs.package\n"
+                + "      hs.accounting=?\n"
                 + "      and hs.ao_server=?\n"
                 + "    limit 1\n"
                 + "  )\n"
@@ -1065,12 +1117,10 @@ final public class BusinessHandler {
                 + "    select\n"
                 + "      ia.pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
                 + "      ip_addresses ia,\n"
                 + "      net_devices nd\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=ia.package\n"
+                + "      ia.accounting=?\n"
                 + "      and ia.net_device=nd.pkey\n"
                 + "      and nd.server=?\n"
                 + "    limit 1\n"
@@ -1092,12 +1142,10 @@ final public class BusinessHandler {
                 + "    select\n"
                 + "      lsa.pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
                 + "      usernames un,\n"
                 + "      linux_server_accounts lsa\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=un.package\n"
+                + "      un.accounting=?\n"
                 + "      and un.username=lsa.username\n"
                 + "      and lsa.ao_server=?\n"
                 + "    limit 1\n"
@@ -1119,12 +1167,10 @@ final public class BusinessHandler {
                 + "    select\n"
                 + "      lsg.pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
                 + "      linux_groups lg,\n"
                 + "      linux_server_groups lsg\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=lg.package\n"
+                + "      lg.accounting=?\n"
                 + "      and lg.name=lsg.name\n"
                 + "      and lsg.ao_server=?\n"
                 + "    limit 1\n"
@@ -1146,12 +1192,10 @@ final public class BusinessHandler {
                 + "    select\n"
                 + "      md.pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
                 + "      mysql_databases md,\n"
                 + "      mysql_servers ms\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=md.package\n"
+                + "      md.accounting=?\n"
                 + "      and md.mysql_server=ms.pkey\n"
                 + "      and ms.ao_server=?\n"
                 + "    limit 1\n"
@@ -1173,13 +1217,11 @@ final public class BusinessHandler {
                 + "    select\n"
                 + "      msu.pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
                 + "      usernames un,\n"
                 + "      mysql_server_users msu,\n"
                 + "      mysql_servers ms\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=un.package\n"
+                + "      un.accounting=?\n"
                 + "      and un.username=msu.username\n"
                 + "      and msu.mysql_server=ms.pkey\n"
                 + "      and ms.ao_server=?\n"
@@ -1202,11 +1244,9 @@ final public class BusinessHandler {
                 + "    select\n"
                 + "      nb.pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
                 + "      net_binds nb\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=nb.package\n"
+                + "      nb.accounting=?\n"
                 + "      and nb.server=?\n"
                 + "    limit 1\n"
                 + "  )\n"
@@ -1227,14 +1267,12 @@ final public class BusinessHandler {
                 + "    select\n"
                 + "      pd.pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
                 + "      usernames un,\n"
                 + "      postgres_servers ps,\n"
                 + "      postgres_server_users psu,\n"
                 + "      postgres_databases pd\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=un.package\n"
+                + "      un.accounting=?\n"
                 + "      and ps.ao_server=?\n"
                 + "      and un.username=psu.username and ps.pkey=psu.postgres_server\n"
                 + "      and pd.datdba=psu.pkey\n"
@@ -1257,13 +1295,11 @@ final public class BusinessHandler {
                 + "    select\n"
                 + "      psu.pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
                 + "      usernames un,\n"
                 + "      postgres_servers ps,\n"
                 + "      postgres_server_users psu\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=un.package\n"
+                + "      un.accounting=?\n"
                 + "      and ps.ao_server=?\n"
                 + "      and un.username=psu.username and ps.pkey=psu.postgres_server\n"
                 + "    limit 1\n"
@@ -1283,14 +1319,12 @@ final public class BusinessHandler {
                 "select\n"
                 + "  (\n"
                 + "    select\n"
-                + "      ed.pkey\n"
+                + "      pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
-                + "      email_domains ed\n"
+                + "      email_domains\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=ed.package\n"
-                + "      and ed.ao_server=?\n"
+                + "      accounting=?\n"
+                + "      and ao_server=?\n"
                 + "    limit 1\n"
                 + "  )\n"
                 + "  is not null\n",
@@ -1310,11 +1344,9 @@ final public class BusinessHandler {
                 + "    select\n"
                 + "      esr.pkey\n"
                 + "    from\n"
-                + "      packages pk,\n"
                 + "      email_smtp_relays esr\n"
                 + "    where\n"
-                + "      pk.accounting=?\n"
-                + "      and pk.name=esr.package\n"
+                + "      esr.accounting=?\n"
                 + "      and esr.ao_server is not null\n"
                 + "      and esr.ao_server=?\n"
                 + "    limit 1\n"
@@ -1374,7 +1406,6 @@ final public class BusinessHandler {
         invalidateList.addTable(conn, SchemaTable.TableID.MONTHLY_CHARGES, accts, InvalidateList.allServers, false);
         invalidateList.addTable(conn, SchemaTable.TableID.NOTICE_LOG, accts, InvalidateList.allServers, false);
         invalidateList.addTable(conn, SchemaTable.TableID.PACKAGE_DEFINITIONS, accts, InvalidateList.allServers, false);
-        invalidateList.addTable(conn, SchemaTable.TableID.PACKAGES, accts, InvalidateList.allServers, false);
         invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accts, InvalidateList.allServers, false);
         invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, accts, InvalidateList.allServers, false);
         invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accts, InvalidateList.allServers, false);
@@ -1731,13 +1762,11 @@ final public class BusinessHandler {
                         Connection.TRANSACTION_READ_COMMITTED,
                         true,
                         "select\n"
-                        + "  pk.accounting\n"
+                        + "  accounting\n"
                         + "from\n"
-                        + "  email_domains ed,\n"
-                        + "  packages pk\n"
+                        + "  email_domains\n"
                         + "where\n"
-                        + "  ed.domain=?\n"
-                        + "  and ed.package=pk.name",
+                        + "  domain=?",
                         domain
                     );
                     for(int d=0;d<domains.size();d++) {
@@ -1749,17 +1778,15 @@ final public class BusinessHandler {
                         Connection.TRANSACTION_READ_COMMITTED,
                         true,
                         "select\n"
-                        + "  pk.accounting\n"
+                        + "  hs.accounting\n"
                         + "from\n"
                         + "  httpd_site_urls hsu,\n"
                         + "  httpd_site_binds hsb,\n"
-                        + "  httpd_sites hs,\n"
-                        + "  packages pk\n"
+                        + "  httpd_sites hs\n"
                         + "where\n"
                         + "  hsu.hostname=?\n"
                         + "  and hsu.httpd_site_bind=hsb.pkey\n"
-                        + "  and hsb.httpd_site=hs.pkey\n"
-                        + "  and hs.package=pk.name",
+                        + "  and hsb.httpd_site=hs.pkey",
                         domain
                     );
                     for(int d=0;d<sites.size();d++) {
@@ -1771,13 +1798,11 @@ final public class BusinessHandler {
                         Connection.TRANSACTION_READ_COMMITTED,
                         true,
                         "select\n"
-                        + "  pk.accounting\n"
+                        + "  accounting\n"
                         + "from\n"
-                        + "  dns_zones dz,\n"
-                        + "  packages pk\n"
+                        + "  dns_zones\n"
                         + "where\n"
-                        + "  dz.zone=?\n"
-                        + "  and dz.package=pk.name",
+                        + "  zone=?",
                         domain
                     );
                     for(int d=0;d<zones.size();d++) {

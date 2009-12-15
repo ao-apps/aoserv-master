@@ -51,7 +51,7 @@ final public class MySQLHandler {
                 ServerHandler.checkAccessServer(conn, source, action, aoServer);
             }
         } else {
-            PackageHandler.checkAccessPackage(conn, source, action, getPackageForMySQLDatabase(conn, mysql_database));
+            BusinessHandler.checkAccessBusiness(conn, source, action, getBusinessForMySQLDatabase(conn, mysql_database));
         }
     }
 
@@ -83,8 +83,7 @@ final public class MySQLHandler {
             }
         } else {
             // Protect by package
-            String packageName = getPackageForMySQLServer(conn, mysql_server);
-            PackageHandler.checkAccessPackage(conn, source, action, packageName);
+            BusinessHandler.checkAccessBusiness(conn, source, action, getBusinessForMySQLServer(conn, mysql_server));
         }
     }
 
@@ -128,26 +127,21 @@ final public class MySQLHandler {
         InvalidateList invalidateList,
         String name,
         int mysqlServer,
-        String packageName
+        String accounting
     ) throws IOException, SQLException {
         int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 
-        PackageHandler.checkPackageAccessServer(conn, source, "addMySQLDatabase", packageName, aoServer);
-        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add MySQLDatabase '"+name+"', Package disabled: "+packageName);
+        BusinessHandler.checkBusinessAccessServer(conn, source, "addMySQLDatabase", accounting, aoServer);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add MySQLDatabase '"+name+"', Business disabled: "+accounting);
 
         // Must be a valid name format
         List<String> reservedWords=getReservedWords(conn);
         String invalidReason = MySQLDatabaseTable.isValidDatabaseName(Locale.getDefault(), name, reservedWords);
         if(invalidReason!=null) throw new SQLException(invalidReason);
 
-        // Must be allowed to access this server and package
+        // Must be allowed to access this server and business
         ServerHandler.checkAccessServer(conn, source, "addMySQLDatabase", aoServer);
-        PackageHandler.checkAccessPackage(conn, source, "addMySQLDatabase", packageName);
-
-        // Find the accouting code
-        String accounting=PackageHandler.getBusinessForPackage(conn, packageName);
-        // This sub-account must have access to the server
-        BusinessHandler.checkBusinessAccessServer(conn, source, "addMySQLDatabase", accounting, aoServer);
+        BusinessHandler.checkAccessBusiness(conn, source, "addMySQLDatabase", accounting);
 
         // Add the entry to the database
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_databases_pkey_seq')");
@@ -163,7 +157,7 @@ final public class MySQLHandler {
             pkey,
             name,
             mysqlServer,
-            packageName
+            accounting
         );
 
         // Notify all clients of the update, the server will detect this change and automatically add the database
@@ -633,19 +627,17 @@ final public class MySQLHandler {
         // Remove the mysql_db_user entries
         List<String> dbUserAccounts=conn.executeStringListQuery(
             "select\n"
-            + "  pk.accounting\n"
+            + "  un.accounting\n"
             + "from\n"
             + "  mysql_db_users mdu,\n"
             + "  mysql_server_users msu,\n"
-            + "  usernames un,\n"
-            + "  packages pk\n"
+            + "  usernames un\n"
             + "where\n"
             + "  mdu.mysql_database=?\n"
             + "  and mdu.mysql_server_user=msu.pkey\n"
             + "  and msu.username=un.username\n"
-            + "  and un.package=pk.name\n"
             + "group by\n"
-            + "  pk.accounting",
+            + "  un.accounting",
             pkey
         );
         if(dbUserAccounts.size()>0) conn.executeUpdate("delete from mysql_db_users where mysql_database=?", pkey);
@@ -943,23 +935,21 @@ final public class MySQLHandler {
     }
 
     public static String getBusinessForMySQLDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from mysql_databases md, packages pk where md.package=pk.name and md.pkey=?", pkey);
+        return conn.executeStringQuery("select accounting from mysql_databases where pkey=?", pkey);
     }
 
     public static String getBusinessForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
-            + "  pk.accounting\n"
+            + "  un.accounting\n"
             + "from\n"
             + "  mysql_db_users mdu,\n"
             + "  mysql_server_users msu,\n"
-            + "  usernames un,\n"
-            + "  packages pk\n"
+            + "  usernames un\n"
             + "where\n"
             + "  mdu.pkey=?\n"
             + "  and mdu.mysql_server_user=msu.pkey\n"
-            + "  and msu.username=un.username\n"
-            + "  and un.package=pk.name",
+            + "  and msu.username=un.username",
             pkey
         );
     }
@@ -967,21 +957,15 @@ final public class MySQLHandler {
     public static String getBusinessForMySQLServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
-            + "  pk.accounting\n"
+            + "  un.accounting\n"
             + "from\n"
             + "  mysql_server_users msu,\n"
-            + "  usernames un,\n"
-            + "  packages pk\n"
+            + "  usernames un\n"
             + "where\n"
             + "  msu.username=un.username\n"
-            + "  and un.package=pk.name\n"
             + "  and msu.pkey=?",
             pkey
         );
-    }
-
-    public static int getPackageForMySQLDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeIntQuery("select pk.pkey from mysql_databases md, packages pk where md.pkey=? and md.package=pk.name", pkey);
     }
 
     public static IntList getMySQLServerUsersForMySQLUser(DatabaseConnection conn, String username) throws IOException, SQLException {
@@ -996,8 +980,8 @@ final public class MySQLHandler {
         return conn.executeIntQuery("select ao_server from mysql_servers where pkey=?", mysqlServer);
     }
 
-    public static String getPackageForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
-        return conn.executeStringQuery("select package from mysql_servers where pkey=?", mysqlServer);
+    public static String getBusinessForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
+        return conn.executeStringQuery("select accounting from mysql_servers where pkey=?", mysqlServer);
     }
 
     public static int getPortForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {

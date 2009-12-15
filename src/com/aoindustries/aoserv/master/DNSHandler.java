@@ -272,27 +272,24 @@ final public class DNSHandler implements CronJob {
             Statement stmt = dbConn.createStatement();
             try {
                 String sql = "select distinct\n"
-                           + "  pk.accounting as accounting,\n"
+                           + "  dz.accounting as accounting,\n"
                            + "  dz.zone as zone\n"
                            + "from\n"
                            + "  dns_zones dz\n"
-                           + "  inner join packages pk on dz.package=pk.name\n"
                            + "where\n"
                            + "  dz.zone not like '%.in-addr.arpa'\n"
                            + "union select distinct\n"
-                           + "  pk.accounting as accounting,\n"
+                           + "  ed.accounting as accounting,\n"
                            + "  ed.domain||'.' as zone\n"
                            + "from\n"
                            + "  email_domains ed\n"
-                           + "  inner join packages pk on ed.package=pk.name\n"
                            + "union select distinct\n"
-                           + "  pk.accounting as accounting,\n"
+                           + "  hs.accounting as accounting,\n"
                            + "  hsu.hostname||'.' as zone\n"
                            + "from\n"
                            + "  httpd_site_urls hsu\n"
                            + "  inner join httpd_site_binds hsb on hsu.httpd_site_bind=hsb.pkey\n"
                            + "  inner join httpd_sites hs on hsb.httpd_site=hs.pkey\n"
-                           + "  inner join packages pk on hs.package=pk.name\n"
                            + "  inner join ao_servers ao on hs.ao_server=ao.server\n"
                            + "where\n"
                            // Is not the test URL
@@ -415,14 +412,14 @@ final public class DNSHandler implements CronJob {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String packageName,
+        String accounting,
         String zone,
         String ip,
         int ttl
     ) throws IOException, SQLException {
         // Must be allowed to access this package
-        PackageHandler.checkAccessPackage(conn, source, "addDNSZone", packageName);
-        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Not allowed to add DNSZone to disabled Package: "+packageName);
+        BusinessHandler.checkAccessBusiness(conn, source, "addDNSZone", accounting);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Not allowed to add DNSZone to disabled Package: "+accounting);
         MasterServer.checkAccessHostname(conn, source, "addDNSZone", zone);
         // Check the zone format
         List<String> tlds=getDNSTLDs(conn);
@@ -438,7 +435,7 @@ final public class DNSHandler implements CronJob {
         try {
             pstmt.setString(1, zone);
             pstmt.setString(2, zone);
-            pstmt.setString(3, packageName);
+            pstmt.setString(3, accounting);
             pstmt.setString(4, DNSZone.DEFAULT_HOSTMASTER);
             pstmt.setLong(5, DNSZone.getCurrentSerial());
             pstmt.setInt(6, ttl);
@@ -644,7 +641,7 @@ final public class DNSHandler implements CronJob {
     public static void checkAccessDNSRecord(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         if(
             !isDNSAdmin(conn, source)
-            && !PackageHandler.canAccessPackage(conn, source, getPackageForDNSRecord(conn, pkey))
+            && !BusinessHandler.canAccessBusiness(conn, source, getBusinessForDNSRecord(conn, pkey))
         ) {
             String message=
                 "business_administrator.username="
@@ -661,7 +658,7 @@ final public class DNSHandler implements CronJob {
     public static boolean canAccessDNSZone(DatabaseConnection conn, RequestSource source, String zone) throws IOException, SQLException {
         return
             isDNSAdmin(conn, source)
-            || PackageHandler.canAccessPackage(conn, source, getPackageForDNSZone(conn, zone))
+            || BusinessHandler.canAccessBusiness(conn, source, getBusinessForDNSZone(conn, zone))
         ;
     }
 
@@ -693,11 +690,11 @@ final public class DNSHandler implements CronJob {
     }
 
     public static String getBusinessForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from dns_records nr, dns_zones nz, packages pk where nr.zone=nz.zone and nz.package=pk.name and nr.pkey=?", pkey);
+        return conn.executeStringQuery("select dz.accounting from dns_records dr, dns_zones dz where dr.pkey=? and dr.zone=dz.zone", pkey);
     }
 
     public static String getBusinessForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from dns_zones nz, packages pk where nz.package=pk.name and nz.zone=?", zone);
+        return conn.executeStringQuery("select accounting from dns_zones where zone=?", zone);
     }
 
     public static String getBusinessForWhoisHistory(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -725,14 +722,6 @@ final public class DNSHandler implements CronJob {
 
     public static boolean isDNSZoneAvailable(DatabaseConnection conn, String zone) throws IOException, SQLException {
         return conn.executeBooleanQuery("select (select zone from dns_zones where zone=?) is null", zone);
-    }
-
-    public static String getPackageForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select nz.package from dns_records nr, dns_zones nz where nr.pkey=? and nr.zone=nz.zone", pkey);
-    }
-
-    public static String getPackageForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
-        return conn.executeStringQuery("select package from dns_zones where zone=?", zone);
     }
 
     public static void invalidateTable(SchemaTable.TableID tableID) {

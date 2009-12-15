@@ -32,7 +32,7 @@ final public class UsernameHandler {
     private final static Map<String,String> usernameBusinesses=new HashMap<String,String>();
 
     public static boolean canAccessUsername(DatabaseConnection conn, RequestSource source, String username) throws IOException, SQLException {
-        return PackageHandler.canAccessPackage(conn, source, getPackageForUsername(conn, username));
+        return BusinessHandler.canAccessBusiness(conn, source, getBusinessForUsername(conn, username));
     }
 
     public static void checkAccessUsername(DatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
@@ -53,7 +53,7 @@ final public class UsernameHandler {
         DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
-        String packageName, 
+        String accounting,
         String username,
         boolean avoidSecurityChecks
     ) throws IOException, SQLException {
@@ -62,8 +62,8 @@ final public class UsernameHandler {
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add Username for user '"+LinuxAccount.MAIL+'\'');
 
         if(!avoidSecurityChecks) {
-            PackageHandler.checkAccessPackage(conn, source, "addUsername", packageName);
-            if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add Username '"+username+"', Package disabled: "+packageName);
+            BusinessHandler.checkAccessBusiness(conn, source, "addUsername", accounting);
+            if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add Username '"+username+"', Business disabled: "+accounting);
 
             // Make sure people don't create @hostname.com usernames for domains they cannot control
             int atPos=username.lastIndexOf('@');
@@ -76,13 +76,11 @@ final public class UsernameHandler {
         conn.executeUpdate(
             "insert into usernames values(?,?,null)",
             username,
-            packageName
+            accounting
         );
 
         // Notify all clients of the update
-        String accounting=PackageHandler.getBusinessForPackage(conn, packageName);
         invalidateList.addTable(conn, SchemaTable.TableID.USERNAMES, accounting, InvalidateList.allServers, false);
-        //invalidateList.addTable(conn, SchemaTable.TableID.PACKAGES, accounting, null);
     }
 
     public static void disableUsername(
@@ -134,8 +132,8 @@ final public class UsernameHandler {
         if(disableLog==-1) throw new SQLException("Username is already enabled: "+username);
         BusinessHandler.checkAccessDisableLog(conn, source, "enableUsername", disableLog, true);
         checkAccessUsername(conn, source, "enableUsername", username);
-        String pk=getPackageForUsername(conn, username);
-        if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable Username '"+username+"', Package not enabled: "+pk);
+        String accounting=getBusinessForUsername(conn, username);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to enable Username '"+username+"', Business not enabled: "+accounting);
 
         conn.executeUpdate(
             "update usernames set disable_log=null where username=?",
@@ -146,7 +144,7 @@ final public class UsernameHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.USERNAMES,
-            getBusinessForUsername(conn, username),
+            accounting,
             getServersForUsername(conn, username),
             false
         );
@@ -212,14 +210,10 @@ final public class UsernameHandler {
 	    synchronized(usernameBusinesses) {
             String O=usernameBusinesses.get(username);
             if(O!=null) return O;
-            String accounting=conn.executeStringQuery("select pk.accounting from usernames un, packages pk where un.username=? and un.package=pk.name", username);
+            String accounting=conn.executeStringQuery("select accounting from usernames where username=?", username);
             usernameBusinesses.put(username, accounting);
             return accounting;
 	    }
-    }
-
-    public static String getPackageForUsername(DatabaseConnection conn, String username) throws IOException, SQLException {
-        return conn.executeStringQuery("select package from usernames where username=?", username);
     }
 
     public static IntList getServersForUsername(DatabaseConnection conn, String username) throws IOException, SQLException {
@@ -230,18 +224,16 @@ final public class UsernameHandler {
             + "  bs.server\n"
             + "from\n"
             + "  usernames un,\n"
-            + "  packages pk,\n"
             + "  business_servers bs\n"
             + "where\n"
             + "  un.username=?\n"
-            + "  and un.package=pk.name\n"
-            + "  and pk.accounting=bs.accounting",
+            + "  and un.accounting=bs.accounting",
             username
         );
     }
 
-    public static List<String> getUsernamesForPackage(DatabaseConnection conn, String name) throws IOException, SQLException {
-        return conn.executeStringListQuery("select username from usernames where package=?", name);
+    public static List<String> getUsernamesForBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
+        return conn.executeStringListQuery("select username from usernames where accounting=?", accounting);
     }
 
     public static boolean canUsernameAccessServer(DatabaseConnection conn, String username, int server) throws IOException, SQLException {
@@ -255,12 +247,10 @@ final public class UsernameHandler {
             + "      un.username\n"
             + "    from\n"
             + "      usernames un,\n"
-            + "      packages pk,\n"
             + "      business_servers bs\n"
             + "    where\n"
             + "      un.username=?\n"
-            + "      and un.package=pk.name\n"
-            + "      and pk.accounting=bs.accounting\n"
+            + "      and un.accounting=bs.accounting\n"
             + "      and bs.server=?\n"
             + "    limit 1\n"
             + "  )\n"

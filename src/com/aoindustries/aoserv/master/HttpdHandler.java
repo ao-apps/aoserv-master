@@ -42,6 +42,9 @@ import java.util.Map;
  */
 final public class HttpdHandler {
 
+    private HttpdHandler() {
+    }
+
     /**
      * The first port number that may be used for automatic port allocations.
      */
@@ -211,7 +214,7 @@ final public class HttpdHandler {
                 return true;
             }
         } else {
-            return PackageHandler.canAccessPackage(conn, source, getPackageForHttpdSite(conn, httpdSite));
+            return BusinessHandler.canAccessBusiness(conn, source, getBusinessForHttpdSite(conn, httpdSite));
         }
     }
 
@@ -222,7 +225,7 @@ final public class HttpdHandler {
                 ServerHandler.checkAccessServer(conn, source, action, getAOServerForHttpdSite(conn, httpdSite));
             }
         } else {
-            PackageHandler.checkAccessPackage(conn, source, action, getPackageForHttpdSite(conn, httpdSite));
+            BusinessHandler.checkAccessBusiness(conn, source, action, getBusinessForHttpdSite(conn, httpdSite));
         }
     }
 
@@ -620,7 +623,7 @@ final public class HttpdHandler {
         InvalidateList invalidateList,
         int aoServer,
         String siteName,
-        String packageName,
+        String accounting,
         String username,
         String group,
         String serverAdmin,
@@ -628,8 +631,7 @@ final public class HttpdHandler {
         int ipAddress,
         String primaryHttpHostname,
         String[] altHttpHostnames,
-        int jBossVersion,
-        String contentSrc
+        int jBossVersion
     ) throws IOException, SQLException {
         return addHttpdJVMSite(
             conn,
@@ -637,7 +639,7 @@ final public class HttpdHandler {
             invalidateList,
             aoServer,
             siteName,
-            packageName,
+            accounting,
             username,
             group,
             serverAdmin,
@@ -648,8 +650,7 @@ final public class HttpdHandler {
             "jboss",
             jBossVersion,
             -1,
-            "",
-            contentSrc
+            ""
         );
     }
 
@@ -659,7 +660,7 @@ final public class HttpdHandler {
         InvalidateList invalidateList,
         int aoServer,
         String siteName,
-        String packageName,
+        String accounting,
         String username,
         String group,
         String serverAdmin,
@@ -670,8 +671,7 @@ final public class HttpdHandler {
         String siteType,
         int jBossVersion,
         int tomcatVersion,
-        String sharedTomcatName,
-        String contentSrc
+        String sharedTomcatName
     ) throws IOException, SQLException {
         String methodName;
         if ("jboss".equals(siteType)) methodName = "addHttdJBossSite";
@@ -679,12 +679,11 @@ final public class HttpdHandler {
         else if ("tomcat_standard".equals(siteType)) methodName = "addTomcatStdSite";
         else throw new RuntimeException("Unknown value for siteType: "+siteType);
 
-        if(contentSrc!=null && contentSrc.length()==0) contentSrc=null;
         // Perform the security checks on the input
         ServerHandler.checkAccessServer(conn, source, methodName, aoServer);
         if(!HttpdSite.isValidSiteName(siteName)) throw new SQLException("Invalid site name: "+siteName);
-        PackageHandler.checkAccessPackage(conn, source, methodName, packageName);
-        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to "+methodName+", Package disabled: "+packageName);
+        BusinessHandler.checkAccessBusiness(conn, source, methodName, accounting);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to "+methodName+", business disabled: "+accounting);
         LinuxAccountHandler.checkAccessLinuxAccount(conn, source, methodName, username);
         int lsa=LinuxAccountHandler.getLinuxServerAccount(conn, username, aoServer);
         if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to "+methodName+", LinuxServerAccount disabled: "+lsa);
@@ -697,7 +696,6 @@ final public class HttpdHandler {
             || group.equals(LinuxGroup.MAIL)
             || group.equals(LinuxGroup.MAILONLY)
         ) throw new SQLException("Not allowed to "+methodName+" for group '"+group+'\'');
-        checkArchivePath(source, methodName, contentSrc);
         if(!EmailAddress.isValidEmailAddress(serverAdmin)) throw new SQLException("Invalid email address format for server_admin: "+serverAdmin);
         int sharedTomcatPkey = 0;
         if ("jboss".equals(siteType)) {
@@ -769,9 +767,7 @@ final public class HttpdHandler {
             if(ipAddress==-1) throw new SQLException("Unable to find shared IP address for AOServer #"+aoServer);
         }
 
-        PackageHandler.checkPackageAccessServer(conn, source, methodName, packageName, aoServer);
-
-        String accounting=PackageHandler.getBusinessForPackage(conn, packageName);
+        BusinessHandler.checkBusinessAccessServer(conn, source, methodName, accounting, aoServer);
 
         int httpPort = 80;
         int httpdSitePKey;
@@ -791,7 +787,7 @@ final public class HttpdHandler {
         for(int c=0;c<altHttpHostnames.length;c++) MasterServer.checkAccessHostname(conn, source, methodName, altHttpHostnames[c], tlds);
 
         // Create and/or get the HttpdBind info
-        int httpNetBind=getHttpdBind(conn, invalidateList, packageName, aoServer, ipAddress, httpPort, Protocol.HTTP, isTomcat4);
+        int httpNetBind=getHttpdBind(conn, invalidateList, accounting, aoServer, ipAddress, httpPort, Protocol.HTTP, isTomcat4);
 
         // Create the HttpdSite
         httpdSitePKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_sites_pkey_seq')");
@@ -807,7 +803,6 @@ final public class HttpdHandler {
             + "  ?,\n"
             + "  ?,\n"
             + "  ?,\n"
-            + "  ?,\n"
             + "  null,\n"
             + "  false,\n"
             + "  null\n"
@@ -816,11 +811,10 @@ final public class HttpdHandler {
             pstmt.setInt(1, httpdSitePKey);
             pstmt.setInt(2, aoServer);
             pstmt.setString(3, siteName);
-            pstmt.setString(4, packageName);
+            pstmt.setString(4, accounting);
             pstmt.setString(5, username);
             pstmt.setString(6, group);
             pstmt.setString(7, serverAdmin);
-            pstmt.setString(8, contentSrc);
             pstmt.executeUpdate();
         } catch(SQLException err) {
             System.err.println("Error from query: "+pstmt.toString());
@@ -904,7 +898,7 @@ final public class HttpdHandler {
                 wildcardIP,
                 NetProtocol.TCP,
                 Protocol.JNP,
-                packageName,
+                accounting,
                 MINIMUM_AUTO_PORT_NUMBER
             );
             int webserverBind = NetBindHandler.allocateNetBind(
@@ -914,7 +908,7 @@ final public class HttpdHandler {
                 wildcardIP,
                 NetProtocol.TCP,
                 Protocol.WEBSERVER,
-                packageName,
+                accounting,
                 MINIMUM_AUTO_PORT_NUMBER
             );
             int rmiBind = NetBindHandler.allocateNetBind(
@@ -924,7 +918,7 @@ final public class HttpdHandler {
                 wildcardIP,
                 NetProtocol.TCP,
                 Protocol.RMI,
-                packageName,
+                accounting,
                 MINIMUM_AUTO_PORT_NUMBER
             );
             int hypersonicBind = NetBindHandler.allocateNetBind(
@@ -934,7 +928,7 @@ final public class HttpdHandler {
                 wildcardIP,
                 NetProtocol.TCP,
                 Protocol.HYPERSONIC,
-                packageName,
+                accounting,
                 MINIMUM_AUTO_PORT_NUMBER
             );
             int jmxBind = NetBindHandler.allocateNetBind(
@@ -944,7 +938,7 @@ final public class HttpdHandler {
                 wildcardIP,
                 NetProtocol.TCP,
                 Protocol.JMX,
-                packageName,
+                accounting,
                 MINIMUM_AUTO_PORT_NUMBER
             );
             pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into httpd_jboss_sites values(?,?,?,?,?,?,?)");
@@ -982,7 +976,7 @@ final public class HttpdHandler {
                     IPAddressHandler.getLoopbackIPAddress(conn, aoServer),
                     NetProtocol.TCP,
                     Protocol.TOMCAT4_SHUTDOWN,
-                    packageName,
+                    accounting,
                     MINIMUM_AUTO_PORT_NUMBER
                 );
                 conn.executeUpdate(
@@ -1004,7 +998,7 @@ final public class HttpdHandler {
                 IPAddressHandler.getLoopbackIPAddress(conn, aoServer),
                 NetProtocol.TCP,
                 isTomcat4?HttpdJKProtocol.AJP13:HttpdJKProtocol.AJP12,
-                packageName,
+                accounting,
                 MINIMUM_AUTO_PORT_NUMBER
             );
             // Create the HttpdWorker
@@ -1089,7 +1083,7 @@ final public class HttpdHandler {
 
         int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_shared_tomcats_pkey_seq')");
         if(isTomcat4) {
-            String packageName=LinuxAccountHandler.getPackageForLinuxGroup(conn, linuxServerGroup);
+            String accounting=LinuxAccountHandler.getBusinessForLinuxGroup(conn, linuxServerGroup);
             int loopbackIP=IPAddressHandler.getLoopbackIPAddress(conn, aoServer);
 
             // Allocate a NetBind for the worker
@@ -1100,7 +1094,7 @@ final public class HttpdHandler {
                 loopbackIP,
                 NetProtocol.TCP,
                 HttpdJKProtocol.AJP13,
-                packageName,
+                accounting,
                 MINIMUM_AUTO_PORT_NUMBER
             );
 
@@ -1120,7 +1114,7 @@ final public class HttpdHandler {
                 loopbackIP,
                 NetProtocol.TCP,
                 Protocol.TOMCAT4_SHUTDOWN,
-                packageName,
+                accounting,
                 MINIMUM_AUTO_PORT_NUMBER
             );
 
@@ -1203,7 +1197,7 @@ final public class HttpdHandler {
         InvalidateList invalidateList,
         int aoServer,
         String siteName,
-        String packageName,
+        String accounting,
         String username,
         String group,
         String serverAdmin,
@@ -1212,8 +1206,7 @@ final public class HttpdHandler {
         String primaryHttpHostname,
         String[] altHttpHostnames,
         String sharedTomcatName,
-        int version,
-        String contentSrc
+        int version
     ) throws IOException, SQLException {
         if(sharedTomcatName==null) {
             throw new SQLException("Fatal: No shared Tomcat specified.");
@@ -1443,7 +1436,7 @@ final public class HttpdHandler {
             invalidateList,
             aoServer,
             siteName,
-            packageName,
+            accounting,
             username,
             group,
             serverAdmin,
@@ -1454,8 +1447,7 @@ final public class HttpdHandler {
             "tomcat_shared",
             -1,
             -1,
-            sharedTomcatName,
-            contentSrc
+            sharedTomcatName
         );
     }
 
@@ -1468,7 +1460,7 @@ final public class HttpdHandler {
         InvalidateList invalidateList,
         int aoServer,
         String siteName,
-        String packageName,
+        String accounting,
         String username,
         String group,
         String serverAdmin,
@@ -1476,8 +1468,7 @@ final public class HttpdHandler {
         int ipAddress,
         String primaryHttpHostname,
         String[] altHttpHostnames,
-        int tomcatVersion,
-        String contentSrc
+        int tomcatVersion
     ) throws IOException, SQLException {
         return addHttpdJVMSite(
             conn,
@@ -1485,7 +1476,7 @@ final public class HttpdHandler {
             invalidateList,
             aoServer,
             siteName,
-            packageName,
+            accounting,
             username,
             group,
             serverAdmin,
@@ -1496,8 +1487,7 @@ final public class HttpdHandler {
             "tomcat_standard",
             -1,
             tomcatVersion,
-            "",
-            contentSrc
+            ""
         );
     }
 
@@ -1600,8 +1590,8 @@ final public class HttpdHandler {
         if(disableLog==-1) throw new SQLException("HttpdSharedTomcat is already enabled: "+pkey);
         BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSharedTomcat", disableLog, true);
         checkAccessHttpdSharedTomcat(conn, source, "enableHttpdSharedTomcat", pkey);
-        String pk=getPackageForHttpdSharedTomcat(conn, pkey);
-        if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable HttpdSharedTomcat #"+pkey+", Package not enabled: "+pk);
+        String accounting=getBusinessForHttpdSharedTomcat(conn, pkey);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to enable HttpdSharedTomcat #"+pkey+", business not enabled: "+accounting);
         int lsa=getLinuxServerAccountForHttpdSharedTomcat(conn, pkey);
         if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable HttpdSharedTomcat #"+pkey+", LinuxServerAccount not enabled: "+lsa);
 
@@ -1614,7 +1604,7 @@ final public class HttpdHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
-            PackageHandler.getBusinessForPackage(conn, pk),
+            accounting,
             getAOServerForHttpdSharedTomcat(conn, pkey),
             false
         );
@@ -1630,8 +1620,8 @@ final public class HttpdHandler {
         if(disableLog==-1) throw new SQLException("HttpdSite is already enabled: "+pkey);
         BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSite", disableLog, true);
         checkAccessHttpdSite(conn, source, "enableHttpdSite", pkey);
-        String pk=getPackageForHttpdSite(conn, pkey);
-        if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable HttpdSite #"+pkey+", Package not enabled: "+pk);
+        String accounting=getBusinessForHttpdSite(conn, pkey);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to enable HttpdSite #"+pkey+", Business not enabled: "+accounting);
         int lsa=getLinuxServerAccountForHttpdSite(conn, pkey);
         if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable HttpdSite #"+pkey+", LinuxServerAccount not enabled: "+lsa);
 
@@ -1644,7 +1634,7 @@ final public class HttpdHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.HTTPD_SITES,
-            PackageHandler.getBusinessForPackage(conn, pk),
+            accounting,
             getAOServerForHttpdSite(conn, pkey),
             false
         );
@@ -1791,9 +1781,9 @@ final public class HttpdHandler {
         return conn.executeIntListQuery("select pkey from httpd_shared_tomcats where linux_server_account=?", pkey);
     }
 
-    public static IntList getHttpdSharedTomcatsForPackage(
+    public static IntList getHttpdSharedTomcatsForBusiness(
         DatabaseConnection conn,
-        String name
+        String accounting
     ) throws IOException, SQLException {
         return conn.executeIntListQuery(
             "select\n"
@@ -1803,18 +1793,15 @@ final public class HttpdHandler {
             + "  linux_server_groups lsg,\n"
             + "  httpd_shared_tomcats hst\n"
             + "where\n"
-            + "  lg.package=?\n"
+            + "  lg.accounting=?\n"
             + "  and lg.name=lsg.name\n"
             + "  and lsg.pkey=hst.linux_server_group",
-            name
+            accounting
         );
     }
 
-    public static IntList getHttpdSitesForPackage(
-        DatabaseConnection conn,
-        String name
-    ) throws IOException, SQLException {
-        return conn.executeIntListQuery("select pkey from httpd_sites where package=?", name);
+    public static IntList getHttpdSitesForBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
+        return conn.executeIntListQuery("select pkey from httpd_sites where accounting=?", accounting);
     }
 
     public static IntList getHttpdSitesForLinuxServerAccount(
@@ -1841,59 +1828,28 @@ final public class HttpdHandler {
     ) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
-            + "  pk.accounting\n"
+            + "  lg.accounting\n"
             + "from\n"
             + "  httpd_shared_tomcats hst,\n"
             + "  linux_server_groups lsg,\n"
-            + "  linux_groups lg,\n"
-            + "  packages pk\n"
+            + "  linux_groups lg\n"
             + "where\n"
             + "  hst.pkey=?\n"
             + "  and hst.linux_server_group=lsg.pkey\n"
-            + "  and lsg.name=lg.name\n"
-            + "  and lg.package=pk.name",
+            + "  and lsg.name=lg.name",
             pkey
         );
     }
 
-    public static String getBusinessForHttpdSite(
-        DatabaseConnection conn,
-        int pkey
-    ) throws IOException, SQLException {
-        return conn.executeStringQuery(
-            "select\n"
-            + "  pk.accounting\n"
-            + "from\n"
-            + "  httpd_sites hs,\n"
-            + "  packages pk\n"
-            + "where\n"
-            + "  hs.pkey=?\n"
-            + "  and hs.package=pk.name",
-            pkey
-        );
+    public static String getBusinessForHttpdSite(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeStringQuery("select accounting from httpd_sites where pkey=?", pkey);
     }
 
-    public static String getBusinessForHttpdServer(
-        DatabaseConnection conn,
-        int pkey
-    ) throws IOException, SQLException {
-        return conn.executeStringQuery(
-            "select\n"
-            + "  pk.accounting\n"
-            + "from\n"
-            + "  httpd_servers hs,\n"
-            + "  packages pk\n"
-            + "where\n"
-            + "  hs.pkey=?\n"
-            + "  and hs.package=pk.pkey",
-            pkey
-        );
+    public static String getBusinessForHttpdServer(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeStringQuery("select accounting from httpd_servers where pkey=?", pkey);
     }
 
-    public static int getHttpdSiteForHttpdSiteBind(
-        DatabaseConnection conn,
-        int pkey
-    ) throws IOException, SQLException {
+    public static int getHttpdSiteForHttpdSiteBind(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select httpd_site from httpd_site_binds where pkey=?", pkey);
     }
 
@@ -1920,32 +1876,6 @@ final public class HttpdHandler {
             + "  and hs.ao_server=lsa.ao_server",
             pkey
         );
-    }
-
-    public static String getPackageForHttpdSharedTomcat(
-        DatabaseConnection conn,
-        int pkey
-    ) throws IOException, SQLException {
-        return conn.executeStringQuery(
-            "select\n"
-            + "  lg.package\n"
-            + "from\n"
-            + "  httpd_shared_tomcats hst,\n"
-            + "  linux_server_groups lsg,\n"
-            + "  linux_groups lg\n"
-            + "where\n"
-            + "  hst.pkey=?\n"
-            + "  and hst.linux_server_group=lsg.pkey\n"
-            + "  and lsg.name=lg.name",
-            pkey
-        );
-    }
-
-    public static String getPackageForHttpdSite(
-        DatabaseConnection conn,
-        int pkey
-    ) throws IOException, SQLException {
-        return conn.executeStringQuery("select package from httpd_sites where pkey=?", pkey);
     }
 
     public static int getAOServerForHttpdSharedTomcat(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -2107,7 +2037,7 @@ final public class HttpdHandler {
     public static int getHttpdBind(
         DatabaseConnection conn,
         InvalidateList invalidateList,
-        String packageName,
+        String accounting,
         int aoServer,
         int ipAddress,
         int httpPort,
@@ -2157,7 +2087,7 @@ final public class HttpdHandler {
             pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into net_binds values(?,?,?,?,?,'"+NetProtocol.TCP+"',?,true,true)");
             try {
                 pstmt.setInt(1, netBind);
-                pstmt.setString(2, packageName);
+                pstmt.setString(2, accounting);
                 pstmt.setInt(3, aoServer);
                 pstmt.setInt(4, ipAddress);
                 pstmt.setInt(5, httpPort);
@@ -2169,7 +2099,7 @@ final public class HttpdHandler {
             invalidateList.addTable(
                 conn,
                 SchemaTable.TableID.NET_BINDS,
-                PackageHandler.getBusinessForPackage(conn, packageName),
+                accounting,
                 aoServer,
                 false
             );
@@ -2219,8 +2149,8 @@ final public class HttpdHandler {
                 + "    hs.is_shared\n"
                 + "    or (\n"
                 + "      is_business_or_parent(\n"
-                + "        (select pk1.accounting from packages pk1 where hs.package=pk1.pkey),\n"
-                + "        (select accounting from packages where name=?)\n"
+                + "        hs.accounting,\n"
+                + "        ?\n"
                 + "      )\n"
                 + "    )\n"
                 + "  )\n"
@@ -2238,7 +2168,7 @@ final public class HttpdHandler {
             try {
                 pstmt.setBoolean(1, isTomcat4);
                 pstmt.setInt(2, aoServer);
-                pstmt.setString(3, packageName);
+                pstmt.setString(3, accounting);
                 ResultSet results=pstmt.executeQuery();
                 try {
                     while(results.next()) {
@@ -2296,14 +2226,14 @@ final public class HttpdHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.HTTPD_BINDS,
-            PackageHandler.getBusinessForPackage(conn, packageName),
+            accounting,
             aoServer,
             false
         );
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.NET_BINDS,
-            PackageHandler.getBusinessForPackage(conn, packageName),
+            accounting,
             aoServer,
             false
         );
@@ -2603,7 +2533,7 @@ final public class HttpdHandler {
         String accounting = getBusinessForHttpdServer(conn, pkey);
         int aoServer = getAOServerForHttpdServer(conn, pkey);
 
-        // httpd_sites
+        // httpd_servers
         conn.executeUpdate("delete from httpd_servers where pkey=?", pkey);
         invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SERVERS, accounting, aoServer, false);
     }

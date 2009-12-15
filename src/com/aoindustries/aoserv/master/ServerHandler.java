@@ -69,13 +69,11 @@ final public class ServerHandler {
             true,
             true,
             "select\n"
-            + "  pk.accounting\n"
+            + "  sf.owner\n"
             + "from\n"
-            + "  server_farms sf,\n"
-            + "  packages pk\n"
+            + "  server_farms sf\n"
             + "where\n"
-            + "  sf.name=?\n"
-            + "  and sf.owner=pk.pkey",
+            + "  sf.name=?",
             farm
         );
         if(!BusinessHandler.isBusinessOrParent(conn, accounting, farm_owner)) throw new SQLException("Not able to access farm: "+farm);
@@ -222,12 +220,10 @@ final public class ServerHandler {
                                 + "  bs.server\n"
                                 + "from\n"
                                 + "  usernames un,\n"
-                                + "  packages pk,\n"
                                 + "  business_servers bs\n"
                                 + "where\n"
                                 + "  un.username=?\n"
-                                + "  and un.package=pk.name\n"
-                                + "  and pk.accounting=bs.accounting",
+                                + "  and un.accounting=bs.accounting",
                                 username
                             )
                         );
@@ -311,8 +307,8 @@ final public class ServerHandler {
         }
     }
 
-    public static int getServerForPackageAndName(DatabaseAccess database, int pack, String name) throws IOException, SQLException {
-        return database.executeIntQuery("select pkey from servers where package=? and name=?", pack, name);
+    public static int getServerForBusinessAndName(DatabaseAccess database, String accounting, String name) throws IOException, SQLException {
+        return database.executeIntQuery("select pkey from servers where accounting=? and name=?", accounting, name);
     }
 
     public static IntList getServers(DatabaseConnection conn) throws IOException, SQLException {
@@ -474,10 +470,10 @@ final public class ServerHandler {
     }
     
     /**
-     * Gets the package that owns the server.
+     * Gets the business that is responsible for paying for resources consumed by the server.
      */
-    public static int getPackageForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-        return conn.executeIntQuery("select package from servers where pkey=?", server);
+    public static String getBusinessForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
+        return conn.executeStringQuery("select accounting from servers where pkey=?", server);
     }
    
     /**

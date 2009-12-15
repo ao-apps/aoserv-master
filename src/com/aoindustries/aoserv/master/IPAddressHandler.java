@@ -5,10 +5,16 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.DNSZone;
+import com.aoindustries.aoserv.client.EmailDomain;
+import com.aoindustries.aoserv.client.IPAddress;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.NetDeviceID;
+import com.aoindustries.aoserv.client.NetProtocol;
+import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.sql.DatabaseConnection;
-import java.io.*;
-import java.sql.*;
+import java.io.IOException;
+import java.sql.SQLException;
 
 /**
  * The <code>IPAddressHandler</code> handles all the accesses to the <code>ip_addresses</code> table.
@@ -17,6 +23,9 @@ import java.sql.*;
  */
 final public class IPAddressHandler {
 
+    private IPAddressHandler() {
+    }
+
     public static void checkAccessIPAddress(DatabaseConnection conn, RequestSource source, String action, int ipAddress) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
@@ -24,7 +33,7 @@ final public class IPAddressHandler {
                 ServerHandler.checkAccessServer(conn, source, action, getServerForIPAddress(conn, ipAddress));
             }
         } else {
-            PackageHandler.checkAccessPackage(conn, source, action, getPackageForIPAddress(conn, ipAddress));
+            BusinessHandler.checkAccessBusiness(conn, source, action, getBusinessForIPAddress(conn, ipAddress));
         }
     }
 
@@ -152,8 +161,8 @@ final public class IPAddressHandler {
         if(!EmailDomain.isValidFormat(hostname)) throw new SQLException("Invalid hostname: "+hostname);
 
         // Can't set the hostname on a disabled package
-        String packageName=getPackageForIPAddress(conn, ipAddress);
-        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to set hostname for an IP address, package disabled: "+packageName);
+        String accounting=getBusinessForIPAddress(conn, ipAddress);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to set hostname for an IP address, business disabled: "+accounting);
 
         String ip=getIPStringForIPAddress(conn, ipAddress);
         if(
@@ -161,7 +170,6 @@ final public class IPAddressHandler {
             || ip.equals(IPAddress.WILDCARD_IP)
         ) throw new SQLException("Not allowed to set the hostname for "+ip);
 
-        String accounting=getBusinessForIPAddress(conn, ipAddress);
         int server=getServerForIPAddress(conn, ipAddress);
 
         // Update the table
@@ -181,32 +189,31 @@ final public class IPAddressHandler {
     }
 
     /**
-     * Sets the Package owner of an IPAddress.
+     * Sets the Business owner of an IPAddress.
      */
-    public static void setIPAddressPackage(
+    public static void setIPAddressBusiness(
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int ipAddress,
-        String newPackage
+        String accounting
     ) throws IOException, SQLException {
-        checkAccessIPAddress(conn, source, "setIPAddressPackage", ipAddress);
-        PackageHandler.checkAccessPackage(conn, source, "setIPAddressPackage", newPackage);
+        checkAccessIPAddress(conn, source, "setIPAddressBusiness", ipAddress);
+        BusinessHandler.checkAccessBusiness(conn, source, "setIPAddressBusiness", accounting);
 
-        setIPAddressPackage(conn, invalidateList, ipAddress, newPackage);
+        setIPAddressBusiness(conn, invalidateList, ipAddress, accounting);
     }
 
     /**
-     * Sets the Package owner of an IPAddress.
+     * Sets the Business owner of an IPAddress.
      */
-    public static void setIPAddressPackage(
+    public static void setIPAddressBusiness(
         DatabaseConnection conn,
         InvalidateList invalidateList,
         int ipAddress,
-        String newPackage
+        String accounting
     ) throws IOException, SQLException {
         String oldAccounting=getBusinessForIPAddress(conn, ipAddress);
-        String newAccounting=PackageHandler.getBusinessForPackage(conn, newPackage);
         int server=getServerForIPAddress(conn, ipAddress);
 
         // Make sure that the IP Address is not in use
@@ -222,14 +229,14 @@ final public class IPAddressHandler {
         if(count!=0) throw new SQLException("Unable to set Package, IPAddress in use by "+count+(count==1?" row":" rows")+" in net_binds: "+ipAddress);
 
         // Update the table
-        conn.executeUpdate("update ip_addresses set package=? where pkey=?", newPackage, ipAddress);
+        conn.executeUpdate("update ip_addresses set accounting=? where pkey=?", accounting, ipAddress);
         conn.executeUpdate("update ip_addresses set available=false where pkey=?", ipAddress);
 
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.IP_ADDRESSES,
-            InvalidateList.getCollection(oldAccounting, newAccounting),
+            InvalidateList.getCollection(oldAccounting, accounting),
             server,
             false
         );
@@ -294,12 +301,8 @@ final public class IPAddressHandler {
         );
     }
 
-    public static String getPackageForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-        return conn.executeStringQuery("select package from ip_addresses where pkey=?", ipAddress);
-    }
-
     public static String getBusinessForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from ip_addresses ia, packages pk where ia.pkey=? and ia.package=pk.name", ipAddress);
+        return conn.executeStringQuery("select accounting from ip_addresses where pkey=?", ipAddress);
     }
 
     public static int getServerForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {

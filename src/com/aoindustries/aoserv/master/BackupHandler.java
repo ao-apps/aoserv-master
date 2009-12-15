@@ -34,8 +34,8 @@ public final class BackupHandler {
         boolean backupEnabled
     ) throws IOException, SQLException {
         int server = conn.executeIntQuery("select server from failover_file_replications where pkey=?", replication);
-        int packageNum = ServerHandler.getPackageForServer(conn, server);
-        PackageHandler.checkAccessPackage(conn, source, "addFileBackupSetting", packageNum);
+        String accounting = ServerHandler.getBusinessForServer(conn, server);
+        BusinessHandler.checkAccessBusiness(conn, source, "addFileBackupSetting", accounting);
 
         path=path.trim();
         if(path.length()==0) throw new SQLException("Path may not be empty: "+path);
@@ -56,7 +56,7 @@ public final class BackupHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.FILE_BACKUP_SETTINGS,
-            PackageHandler.getBusinessForPackage(conn, packageNum),
+            accounting,
             server,
             false
         );
@@ -70,8 +70,8 @@ public final class BackupHandler {
         int pkey
     ) throws IOException, SQLException {
         int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join failover_file_replications ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
-        int packageNum=ServerHandler.getPackageForServer(conn, server);
-        PackageHandler.checkAccessPackage(conn, source, "removeFileBackupSetting", packageNum);
+        String accounting=ServerHandler.getBusinessForServer(conn, server);
+        BusinessHandler.checkAccessBusiness(conn, source, "removeFileBackupSetting", accounting);
 
         removeFileBackupSetting(conn, invalidateList, pkey);
     }
@@ -82,7 +82,7 @@ public final class BackupHandler {
         int pkey
     ) throws IOException, SQLException {
         int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join failover_file_replications ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
-        int packageNum=ServerHandler.getPackageForServer(conn, server);
+        String accounting=ServerHandler.getBusinessForServer(conn, server);
 
         conn.executeUpdate("delete from file_backup_settings where pkey=?", pkey);
 
@@ -90,7 +90,7 @@ public final class BackupHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.FILE_BACKUP_SETTINGS,
-            PackageHandler.getBusinessForPackage(conn, packageNum),
+            accounting,
             server,
             false
         );
@@ -105,8 +105,8 @@ public final class BackupHandler {
         boolean backupEnabled
     ) throws IOException, SQLException {
         int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join failover_file_replications ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
-        int packageNum = ServerHandler.getPackageForServer(conn, server);
-        PackageHandler.checkAccessPackage(conn, source, "setFileBackupSetting", packageNum);
+        String accounting = ServerHandler.getBusinessForServer(conn, server);
+        BusinessHandler.checkAccessBusiness(conn, source, "setFileBackupSetting", accounting);
 
         path=path.trim();
         if(path.length()==0) throw new SQLException("Path may not be empty: "+path);
@@ -131,7 +131,7 @@ public final class BackupHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.FILE_BACKUP_SETTINGS,
-            PackageHandler.getBusinessForPackage(conn, packageNum),
+            accounting,
             server,
             false
         );

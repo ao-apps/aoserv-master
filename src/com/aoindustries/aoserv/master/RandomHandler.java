@@ -23,6 +23,9 @@ import java.sql.SQLException;
  */
 public final class RandomHandler {
 
+    private RandomHandler() {
+    }
+
     private static FifoFile fifoFile;
     
     public static FifoFile getFifoFile() throws IOException {

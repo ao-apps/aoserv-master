@@ -5,10 +5,14 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.HttpdWorker;
+import com.aoindustries.aoserv.client.IPAddress;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.sql.DatabaseConnection;
-import java.io.*;
-import java.sql.*;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * The <code>NetBindHandler</code> handles all the accesses to the <code>net_binds</code> table.
@@ -16,6 +20,9 @@ import java.sql.*;
  * @author  AO Industries, Inc.
  */
 final public class NetBindHandler {
+
+    private NetBindHandler() {
+    }
 
     /**
      * This lock is used to avoid a race condition between check and insert when allocating net_binds.
@@ -27,7 +34,7 @@ final public class NetBindHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int server,
-        String packageName,
+        String accounting,
         int ipAddress,
         int port,
         String netProtocol,
@@ -60,8 +67,8 @@ final public class NetBindHandler {
         }
 
         ServerHandler.checkAccessServer(conn, source, "addNetBind", server);
-        PackageHandler.checkAccessPackage(conn, source, "addNetBind", packageName);
-        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add net bind, package disabled: "+packageName);
+        BusinessHandler.checkAccessBusiness(conn, source, "addNetBind", accounting);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add net bind, business disabled: "+accounting);
         IPAddressHandler.checkAccessIPAddress(conn, source, "addNetBind", ipAddress);
         String ipString=IPAddressHandler.getIPStringForIPAddress(conn, ipAddress);
 
@@ -169,7 +176,7 @@ final public class NetBindHandler {
                 + "  ?\n"
                 + ")",
                 pkey,
-                packageName,
+                accounting,
                 server,
                 ipAddress,
                 port,
@@ -183,7 +190,7 @@ final public class NetBindHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.NET_BINDS,
-            PackageHandler.getBusinessForPackage(conn, packageName),
+            accounting,
             server,
             false
         );
@@ -200,7 +207,7 @@ final public class NetBindHandler {
         int ipAddress,
         String netProtocol,
         String appProtocol,
-        String pack,
+        String accounting,
         int minimumPort
     ) throws IOException, SQLException {
         //String farm=ServerHandler.getFarmForServer(conn, aoServer);
@@ -250,7 +257,7 @@ final public class NetBindHandler {
                     + "  false\n"
                     + ")",
                     pkey,
-                    pack,
+                    accounting,
                     server,
                     ipAddress,
                     minimumPort,
@@ -306,7 +313,7 @@ final public class NetBindHandler {
                     + "  false\n"
                     + ")",
                     pkey,
-                    pack,
+                    accounting,
                     server,
                     ipAddress,
                     minimumPort,
@@ -321,7 +328,7 @@ final public class NetBindHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.NET_BINDS,
-            PackageHandler.getBusinessForPackage(conn, pack),
+            accounting,
             server,
             false
         );
@@ -332,7 +339,7 @@ final public class NetBindHandler {
         DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from net_binds nb, packages pk where nb.pkey=? and nb.package=pk.name", pkey);
+        return conn.executeStringQuery("select accounting from net_binds where pkey=?", pkey);
     }
 
     public static int getNetBind(
@@ -371,13 +378,6 @@ final public class NetBindHandler {
         return conn.executeIntQuery("select server from net_binds where pkey=?", pkey);
     }
 
-    public static String getPackageForNetBind(
-        DatabaseConnection conn,
-        int pkey
-    ) throws IOException, SQLException {
-        return conn.executeStringQuery("select package from net_binds where pkey=?", pkey);
-    }
-
     public static void removeNetBind(
         DatabaseConnection conn,
         RequestSource source,
@@ -385,7 +385,7 @@ final public class NetBindHandler {
         int pkey
     ) throws IOException, SQLException {
         // Security checks
-        PackageHandler.checkAccessPackage(conn, source, "removeNetBind", getPackageForNetBind(conn, pkey));
+        BusinessHandler.checkAccessBusiness(conn, source, "removeNetBind", getBusinessForNetBind(conn, pkey));
 
         // Do the remove
         removeNetBind(conn, invalidateList, pkey);
@@ -449,7 +449,7 @@ final public class NetBindHandler {
         int pkey,
         boolean enabled
     ) throws IOException, SQLException {
-        PackageHandler.checkAccessPackage(conn, source, "setNetBindMonitoringEnabled", getPackageForNetBind(conn, pkey));
+        BusinessHandler.checkAccessBusiness(conn, source, "setNetBindMonitoringEnabled", getBusinessForNetBind(conn, pkey));
 
         conn.executeUpdate("update net_binds set monitoring_enabled=? where pkey=?", enabled, pkey);
 
@@ -469,7 +469,7 @@ final public class NetBindHandler {
         int pkey,
         boolean open_firewall
     ) throws IOException, SQLException {
-        PackageHandler.checkAccessPackage(conn, source, "setNetBindOpenFirewall", getPackageForNetBind(conn, pkey));
+        BusinessHandler.checkAccessBusiness(conn, source, "setNetBindOpenFirewall", getBusinessForNetBind(conn, pkey));
 
         conn.executeUpdate("update net_binds set open_firewall=? where pkey=?", open_firewall, pkey);
 

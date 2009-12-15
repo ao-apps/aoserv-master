@@ -98,7 +98,7 @@ final public class LinuxAccountHandler {
                 }
             }
         } else {
-            PackageHandler.checkAccessPackage(conn, source, action, getPackageForLinuxGroup(conn, name));
+            BusinessHandler.checkAccessBusiness(conn, source, action, getBusinessForLinuxGroup(conn, name));
         }
     }
 
@@ -134,7 +134,7 @@ final public class LinuxAccountHandler {
 
     public static boolean canAccessLinuxServerGroup(DatabaseConnection conn, RequestSource source, int group) throws IOException, SQLException {
         return
-            PackageHandler.canAccessPackage(conn, source, getPackageForLinuxServerGroup(conn, group))
+            BusinessHandler.canAccessBusiness(conn, source, getBusinessForLinuxServerGroup(conn, group))
             && ServerHandler.canAccessServer(conn, source, getAOServerForLinuxServerGroup(conn, group))
         ;
     }
@@ -221,13 +221,13 @@ final public class LinuxAccountHandler {
         RequestSource source, 
         InvalidateList invalidateList,
         String groupName, 
-        String packageName, 
+        String accounting,
         String type,
         boolean skipSecurityChecks
     ) throws IOException, SQLException {
         if(!skipSecurityChecks) {
-            PackageHandler.checkAccessPackage(conn, source, "addLinuxGroup", packageName);
-            if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add LinuxGroup, Package disabled: "+packageName);
+            BusinessHandler.checkAccessBusiness(conn, source, "addLinuxGroup", accounting);
+            if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add LinuxGroup, Business disabled: "+accounting);
         }
         if(!LinuxGroup.isValidGroupname(groupName)) throw new SQLException("Invalid Linux Group name: "+groupName);
         if (
@@ -236,13 +236,13 @@ final public class LinuxAccountHandler {
             || groupName.equals(LinuxGroup.MAILONLY)
         ) throw new SQLException("Not allowed to add LinuxGroup: "+groupName);
 
-        conn.executeUpdate("insert into linux_groups values(?,?,?)", groupName, packageName, type);
+        conn.executeUpdate("insert into linux_groups values(?,?,?)", groupName, accounting, type);
 
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.LINUX_GROUPS,
-            PackageHandler.getBusinessForPackage(conn, packageName),
+            accounting,
             InvalidateList.allServers,
             false
         );
@@ -1757,12 +1757,10 @@ final public class LinuxAccountHandler {
             + "      lg.name\n"
             + "    from\n"
             + "      linux_groups lg,\n"
-            + "      packages pk,\n"
             + "      business_servers bs\n"
             + "    where\n"
             + "      lg.name=?\n"
-            + "      and lg.package=pk.name\n"
-            + "      and pk.accounting=bs.accounting\n"
+            + "      and lg.accounting=bs.accounting\n"
             + "      and bs.server=?\n"
             + "    limit 1\n"
             + "  )\n"
@@ -1788,31 +1786,27 @@ final public class LinuxAccountHandler {
     }
 
     public static String getBusinessForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from linux_groups lg, packages pk where lg.package=pk.name and lg.name=?", name);
+        return conn.executeStringQuery("select accounting from linux_groups where name=?", name);
     }
 
     public static List<String> getBusinessesForLinuxGroupAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringListQuery(
            "select\n"
-            + "  pk1.accounting\n"
+            + "  lg1.accounting\n"
             + "from\n"
             + "  linux_group_accounts lga1,\n"
-            + "  linux_groups lg1,\n"
-            + "  packages pk1\n"
+            + "  linux_groups lg1\n"
             + "where\n"
             + "  lga1.pkey=?\n"
             + "  and lga1.group_name=lg1.name\n"
-            + "  and lg1.package=pk1.name\n"
             + "union select\n"
-            + "  pk2.accounting\n"
+            + "  un2.accounting\n"
             + "from\n"
             + "  linux_group_accounts lga2,\n"
-            + "  usernames un2,\n"
-            + "  packages pk2\n"
+            + "  usernames un2\n"
             + "where\n"
             + "  lga2.pkey=?\n"
-            + "  and lga2.username=un2.username\n"
-            + "  and un2.package=pk2.name",
+            + "  and lga2.username=un2.username",
             pkey,
             pkey
         );
@@ -1821,15 +1815,13 @@ final public class LinuxAccountHandler {
     public static String getBusinessForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
-            + "  pk.accounting\n"
+            + "  un.accounting\n"
             + "from\n"
             + "  linux_server_accounts lsa,\n"
-            + "  usernames un,\n"
-            + "  packages pk\n"
+            + "  usernames un\n"
             + "where\n"
             + "  lsa.pkey=?\n"
-            + "  and lsa.username=un.username\n"
-            + "  and un.package=pk.name",
+            + "  and lsa.username=un.username",
             pkey
         );
     }
@@ -1837,15 +1829,13 @@ final public class LinuxAccountHandler {
     public static String getBusinessForLinuxServerGroup(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
-            + "  pk.accounting\n"
+            + "  lg.accounting\n"
             + "from\n"
             + "  linux_server_groups lsg,\n"
-            + "  linux_groups lg,\n"
-            + "  packages pk\n"
+            + "  linux_groups lg\n"
             + "where\n"
             + "  lsg.pkey=?\n"
-            + "  and lsg.name=lg.name\n"
-            + "  and lg.package=pk.name",
+            + "  and lsg.name=lg.name",
             pkey
         );
     }
@@ -1945,32 +1935,6 @@ final public class LinuxAccountHandler {
 
     public static IntList getLinuxServerGroupsForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
         return conn.executeIntListQuery("select pkey from linux_server_groups where name=?", name);
-    }
-
-    public static String getPackageForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
-        return conn.executeStringQuery(
-            "select\n"
-            + "  package\n"
-            + "from\n"
-            + "  linux_groups\n"
-            + "where\n"
-            + "  name=?",
-            name
-        );
-    }
-
-    public static String getPackageForLinuxServerGroup(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery(
-            "select\n"
-            + "  lg.package\n"
-            + "from\n"
-            + "  linux_server_groups lsg,\n"
-            + "  linux_groups lg\n"
-            + "where\n"
-            + "  lsg.pkey=?\n"
-            + "  and lsg.name=lg.name",
-            pkey
-        );
     }
 
     public static int getGIDForLinuxServerGroup(DatabaseConnection conn, int pkey) throws IOException, SQLException {

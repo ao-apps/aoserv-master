@@ -15,7 +15,6 @@ import com.aoindustries.aoserv.client.TicketAction;
 import com.aoindustries.aoserv.client.TicketActionType;
 import com.aoindustries.aoserv.client.Architecture;
 import com.aoindustries.aoserv.client.BackupPartition;
-import com.aoindustries.aoserv.client.BackupReport;
 import com.aoindustries.aoserv.client.BackupRetention;
 import com.aoindustries.aoserv.client.Bank;
 import com.aoindustries.aoserv.client.BankAccount;
@@ -116,7 +115,6 @@ import com.aoindustries.aoserv.client.NoticeLog;
 import com.aoindustries.aoserv.client.NoticeType;
 import com.aoindustries.aoserv.client.OperatingSystem;
 import com.aoindustries.aoserv.client.OperatingSystemVersion;
-import com.aoindustries.aoserv.client.Package;
 import com.aoindustries.aoserv.client.PackageCategory;
 import com.aoindustries.aoserv.client.PackageDefinition;
 import com.aoindustries.aoserv.client.PackageDefinitionLimit;
@@ -247,46 +245,46 @@ final public class TableHandler {
      * The where clauses that accompany the joins.
      */
     public static final String
-        PK_BU1_PARENTS_WHERE=
-              "    pk.accounting=bu1.accounting\n"
-            + "    or pk.accounting=bu1.parent\n"
-            + "    or pk.accounting=bu2.parent\n"
-            + "    or pk.accounting=bu3.parent\n"
-            + "    or pk.accounting=bu4.parent\n"
-            + "    or pk.accounting=bu5.parent\n"
-            + "    or pk.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
-        PK1_BU1_PARENTS_OR_WHERE=
-              "    or pk1.accounting=bu1.accounting\n"
-            + "    or pk1.accounting=bu1.parent\n"
-            + "    or pk1.accounting=bu2.parent\n"
-            + "    or pk1.accounting=bu3.parent\n"
-            + "    or pk1.accounting=bu4.parent\n"
-            + "    or pk1.accounting=bu5.parent\n"
-            + "    or pk1.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
-        PK1_BU1_PARENTS_WHERE=
-              "    pk1.accounting=bu1.accounting\n"
-            + "    or pk1.accounting=bu1.parent\n"
-            + "    or pk1.accounting=bu2.parent\n"
-            + "    or pk1.accounting=bu3.parent\n"
-            + "    or pk1.accounting=bu4.parent\n"
-            + "    or pk1.accounting=bu5.parent\n"
-            + "    or pk1.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
-        PK3_BU2_PARENTS_OR_WHERE=
-              "        or pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
-            + "        or pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
-            + "        or pk3.accounting=bu8.parent\n"
-            + "        or pk3.accounting=bu9.parent\n"
-            + "        or pk3.accounting=bu10.parent\n"
-            + "        or pk3.accounting=bu11.parent\n"
-            + "        or pk3.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n",
-        PK3_BU2_PARENTS_WHERE=
-              "        pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
-            + "        or pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
-            + "        or pk3.accounting=bu8.parent\n"
-            + "        or pk3.accounting=bu9.parent\n"
-            + "        or pk3.accounting=bu10.parent\n"
-            + "        or pk3.accounting=bu11.parent\n"
-            + "        or pk3.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n"
+        UN_BU1_PARENTS_WHERE=
+              "    un.accounting=bu1.accounting\n"
+            + "    or un.accounting=bu1.parent\n"
+            + "    or un.accounting=bu2.parent\n"
+            + "    or un.accounting=bu3.parent\n"
+            + "    or un.accounting=bu4.parent\n"
+            + "    or un.accounting=bu5.parent\n"
+            + "    or un.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
+        UN1_BU1_PARENTS_OR_WHERE=
+              "    or un1.accounting=bu1.accounting\n"
+            + "    or un1.accounting=bu1.parent\n"
+            + "    or un1.accounting=bu2.parent\n"
+            + "    or un1.accounting=bu3.parent\n"
+            + "    or un1.accounting=bu4.parent\n"
+            + "    or un1.accounting=bu5.parent\n"
+            + "    or un1.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
+        UN1_BU1_PARENTS_WHERE=
+              "    un1.accounting=bu1.accounting\n"
+            + "    or un1.accounting=bu1.parent\n"
+            + "    or un1.accounting=bu2.parent\n"
+            + "    or un1.accounting=bu3.parent\n"
+            + "    or un1.accounting=bu4.parent\n"
+            + "    or un1.accounting=bu5.parent\n"
+            + "    or un1.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
+        UN2_BU2_PARENTS_OR_WHERE=
+              "        or un2.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
+            + "        or un2.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
+            + "        or un2.accounting=bu8.parent\n"
+            + "        or un2.accounting=bu9.parent\n"
+            + "        or un2.accounting=bu10.parent\n"
+            + "        or un2.accounting=bu11.parent\n"
+            + "        or un2.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n",
+        UN3_BU2_PARENTS_WHERE=
+              "        un3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
+            + "        or un3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
+            + "        or un3.accounting=bu8.parent\n"
+            + "        or un3.accounting=bu9.parent\n"
+            + "        or un3.accounting=bu10.parent\n"
+            + "        or un3.accounting=bu11.parent\n"
+            + "        or un3.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n"
     ;
 
     /**
@@ -303,63 +301,6 @@ final public class TableHandler {
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
         switch(tableID) {
-            case BACKUP_REPORTS :
-            {
-                int pkey=in.readCompressedInt();
-                if(masterUser!=null) {
-                    if(masterServers.length==0) MasterServer.writeObject(
-                        conn,
-                        source,
-                        out,
-                        "select * from backup_reports where pkey=?",
-                        pkey,
-                        new BackupReport()
-                    ); else MasterServer.writeObject(
-                        conn,
-                        source,
-                        out,
-                        "select\n"
-                        + "  br.*\n"
-                        + "from\n"
-                        + "  master_servers ms,\n"
-                        + "  backup_reports br\n"
-                        + "where\n"
-                        + "  ms.username=?\n"
-                        + "  and ms.server=br.server\n"
-                        + "  and br.pkey=?",
-                        username,
-                        pkey,
-                        new BackupReport()
-                    );
-                } else {
-                    MasterServer.writeObject(
-                        conn,
-                        source,
-                        out,
-                        "select\n"
-                        + "  br.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
-                        + "  backup_reports br\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.pkey=br.package\n"
-                        + "  and br.pkey=?",
-                        username,
-                        pkey,
-                        new BackupReport()
-                    );
-                }
-                break;
-            }
             case BANK_TRANSACTIONS :
                 if(BankAccountHandler.isBankAccounting(conn, source)) {
                     MasterServer.writeObject(
@@ -634,7 +575,6 @@ final public class TableHandler {
                     + "  ao.monitoring_load_critical\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     // Allow servers it replicates to
                     //+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
@@ -642,8 +582,7 @@ final public class TableHandler {
                     + "  ao_servers ao\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and (\n"
                     + "    bs.server=ao.server\n"
                     // Allow servers it replicates to
@@ -754,13 +693,11 @@ final public class TableHandler {
                     + "  bp.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     + "  backup_partitions bp\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and (\n"
                     + "    bs.server=bp.ao_server\n"
                     //+ "    or (\n"
@@ -775,56 +712,6 @@ final public class TableHandler {
                     //+ "      limit 1\n"
                     //+ "    ) is not null\n"
                     + "  )",
-                    username
-                );
-                break;
-            case BACKUP_REPORTS :
-                if(masterUser!=null) {
-                    if(masterServers.length==0) MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new BackupReport(),
-                        "select * from backup_reports"
-                    ); else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new BackupReport(),
-                        "select\n"
-                        + "  br.*\n"
-                        + "from\n"
-                        + "  master_servers ms,\n"
-                        + "  backup_reports br\n"
-                        + "where\n"
-                        + "  ms.username=?\n"
-                        + "  and ms.server=br.server",
-                        username
-                    );
-                } else MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new BackupReport(),
-                    "select\n"
-                    + "  br.*\n"
-                    + "from\n"
-                    + "  usernames un,\n"
-                    + "  packages pk1,\n"
-                    + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
-                    + "  backup_reports br\n"
-                    + "where\n"
-                    + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
-                    + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
-                    + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.pkey=br.package",
                     username
                 );
                 break;
@@ -937,20 +824,16 @@ final public class TableHandler {
                     + "  bh.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  email_domains ed,\n"
                     + "  email_addresses ea,\n"
                     + "  blackhole_email_addresses bh\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=ed.package\n"
+                    + "  and bu1.accounting=ed.accounting\n"
                     + "  and ed.pkey=ea.domain\n"
                     + "  and ea.pkey=bh.email_address",
                     username
@@ -1017,12 +900,10 @@ final public class TableHandler {
                             + "  '"+AOServProtocol.FILTERED+"'::text\n" // aoweb_struts_keystore_password
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk,\n"
                             + "  brands br\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk.name\n"
-                            + "  and pk.accounting=br.accounting",
+                            + "  and un.accounting=br.accounting",
                             username
                         );
                     }
@@ -1037,14 +918,12 @@ final public class TableHandler {
                         + "  br.*\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + BU1_PARENTS_JOIN
                         + "  brands br\n"
                         + "where\n"
                         + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
                         + "  and (\n"
-                        + PK_BU1_PARENTS_WHERE
+                        + UN_BU1_PARENTS_WHERE
                         + "  ) and bu1.accounting=br.accounting",
                         username
                     );
@@ -1091,14 +970,12 @@ final public class TableHandler {
                         + "from\n"
                         + "  master_servers ms,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
                         + "  usernames un,\n"
                         + "  business_administrators ba\n"
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=bs.server\n"
-                        + "  and bs.accounting=pk.accounting\n"
-                        + "  and pk.name=un.package\n"
+                        + "  and bs.accounting=un.accounting\n"
                         + "  and un.username=ba.username",
                         username
                     );
@@ -1134,20 +1011,16 @@ final public class TableHandler {
                         + "  ba.support_code\n"
                         + "from\n"
                         + "  usernames un1,\n"
-                        + "  packages pk1,\n"
                         + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
                         + "  usernames un2,\n"
                         + "  business_administrators ba\n"
                         + "where\n"
                         + "  un1.username=?\n"
-                        + "  and un1.package=pk1.name\n"
                         + "  and (\n"
                         + "    un2.username=un1.username\n"
-                        + PK1_BU1_PARENTS_OR_WHERE
+                        + UN1_BU1_PARENTS_OR_WHERE
                         + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.name=un2.package\n"
+                        + "  and bu1.accounting=un2.accounting\n"
                         + "  and un2.username=ba.username",
                         username
                     );
@@ -1173,14 +1046,12 @@ final public class TableHandler {
                         + "from\n"
                         + "  master_servers ms,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
                         + "  usernames un,\n"
                         + "  business_administrator_permissions bp\n"
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=bs.server\n"
-                        + "  and bs.accounting=pk.accounting\n"
-                        + "  and pk.name=un.package\n"
+                        + "  and bs.accounting=un.accounting\n"
                         + "  and un.username=bp.username",
                         username
                     );
@@ -1194,20 +1065,16 @@ final public class TableHandler {
                     + "  bp.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  business_administrator_permissions bp\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
                     + "    un2.username=un1.username\n"
-                    + PK1_BU1_PARENTS_OR_WHERE
+                    + UN1_BU1_PARENTS_OR_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=bp.username",
                     username
                 );
@@ -1249,14 +1116,12 @@ final public class TableHandler {
                     + "  bp.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + BU1_PARENTS_JOIN
                     + "  business_profiles bp\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
                     + "  and (\n"
-                    + PK_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
                     + "  and bu1.accounting=bp.accounting",
                     username
@@ -1297,14 +1162,12 @@ final public class TableHandler {
                     + "  bs.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + BU1_PARENTS_JOIN
                     + "  business_servers bs\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
                     + "  and (\n"
-                    + PK_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
                     + "  and bu1.accounting=bs.accounting",
                     username
@@ -1347,13 +1210,11 @@ final public class TableHandler {
                     + "  bu1.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + BU1_PARENTS_JOIN_NO_COMMA
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
                     + "  and (\n"
-                    + PK_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )",
                     username
                 );
@@ -1384,14 +1245,12 @@ final public class TableHandler {
                         + "  ccp.*\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + BU1_PARENTS_JOIN
                         + "  credit_card_processors ccp\n"
                         + "where\n"
                         + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
                         + "  and (\n"
-                        + PK_BU1_PARENTS_WHERE
+                        + UN_BU1_PARENTS_WHERE
                         + "  )\n"
                         + "  and bu1.accounting=ccp.accounting",
                         username
@@ -1426,14 +1285,12 @@ final public class TableHandler {
                         + "  cc.*\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + BU1_PARENTS_JOIN
                         + "  credit_cards cc\n"
                         + "where\n"
                         + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
                         + "  and (\n"
-                        + PK_BU1_PARENTS_WHERE
+                        + UN_BU1_PARENTS_WHERE
                         + "  )\n"
                         + "  and bu1.accounting=cc.accounting",
                         username
@@ -1468,14 +1325,12 @@ final public class TableHandler {
                         + "  cct.*\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + BU1_PARENTS_JOIN
                         + "  credit_card_transactions cct\n"
                         + "where\n"
                         + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
                         + "  and (\n"
-                        + PK_BU1_PARENTS_WHERE
+                        + UN_BU1_PARENTS_WHERE
                         + "  )\n"
                         + "  and bu1.accounting=cct.accounting",
                         username
@@ -1533,20 +1388,16 @@ final public class TableHandler {
                     + "  cr.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  linux_server_accounts lsa,\n"
                     + "  cvs_repositories cr\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN1_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=lsa.username\n"
                     + "  and lsa.pkey=cr.linux_server_account",
                     username
@@ -1627,14 +1478,12 @@ final public class TableHandler {
                     + "  dl.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + BU1_PARENTS_JOIN
                     + "  disable_log dl\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
                     + "  and (\n"
-                    + PK_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
                     + "  and bu1.accounting=dl.accounting",
                     username
@@ -1728,19 +1577,15 @@ final public class TableHandler {
                     + "  dr.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  dns_zones dz,\n"
                     + "  dns_records dr\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=dz.package\n"
+                    + "  and bu1.accounting=dz.accounting\n"
                     + "  and dz.zone=dr.zone",
                     username
                 );
@@ -1788,18 +1633,14 @@ final public class TableHandler {
                     + "  dz.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  dns_zones dz\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=dz.package",
+                    + "  and bu1.accounting=dz.accounting",
                     username
                 );
                 break;
@@ -1840,19 +1681,15 @@ final public class TableHandler {
                     + "  ea.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  email_domains ed,\n"
                     + "  email_addresses ea\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=ed.package\n"
+                    + "  and bu1.accounting=ed.accounting\n"
                     + "  and ed.pkey=ea.domain",
                     username
                 );
@@ -1894,20 +1731,16 @@ final public class TableHandler {
                     + "  eab.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  linux_server_accounts lsa,\n"
                     + "  email_attachment_blocks eab\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN1_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=lsa.username\n"
                     + "  and lsa.pkey=eab.linux_server_account",
                     username
@@ -1962,20 +1795,16 @@ final public class TableHandler {
                     + "  ef.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  email_domains ed,\n"
                     + "  email_addresses ea,\n"
                     + "  email_forwarding ef\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=ed.package\n"
+                    + "  and bu1.accounting=ed.accounting\n"
                     + "  and ed.pkey=ea.domain\n"
                     + "  and ea.pkey=ef.email_address",
                     username
@@ -2020,20 +1849,16 @@ final public class TableHandler {
                     + "  ela.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  email_domains ed,\n"
                     + "  email_addresses ea,\n"
                     + "  email_list_addresses ela\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=ed.package\n"
+                    + "  and bu1.accounting=ed.accounting\n"
                     + "  and ed.pkey=ea.domain\n"
                     + "  and ea.pkey=ela.email_address",
                     username
@@ -2076,20 +1901,16 @@ final public class TableHandler {
                     + "  el.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  linux_groups lg,\n"
                     + "  linux_server_groups lsg,\n"
                     + "  email_lists el\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=lg.package\n"
+                    + "  and bu1.accounting=lg.accounting\n"
                     + "  and lg.name=lsg.name\n"
                     + "  and lsg.pkey=el.linux_server_group",
                     username
@@ -2134,20 +1955,16 @@ final public class TableHandler {
                     + "  epa.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  email_domains ed,\n"
                     + "  email_addresses ea,\n"
                     + "  email_pipe_addresses epa\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=ed.package\n"
+                    + "  and bu1.accounting=ed.accounting\n"
                     + "  and ed.pkey=ea.domain\n"
                     + "  and ea.pkey=epa.email_address",
                     username
@@ -2188,18 +2005,14 @@ final public class TableHandler {
                     + "  ep.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  email_pipes ep\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=ep.package",
+                    + "  and bu1.accounting=ep.accounting",
                     username
                 );
                 break;
@@ -2239,14 +2052,12 @@ final public class TableHandler {
                         + "  ek.*\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk1,\n"
                         + BU1_PARENTS_JOIN
                         + "  encryption_keys ek\n"
                         + "where\n"
                         + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
                         + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
+                        + UN_BU1_PARENTS_WHERE
                         + "  )\n"
                         + "  and bu1.accounting=ek.accounting",
                         username
@@ -2305,14 +2116,12 @@ final public class TableHandler {
                     + "  ffl.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     + "  failover_file_replications ffr,\n"
                     + "  failover_file_log ffl\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and bs.server=ffr.server\n"
                     + "  and ffr.pkey=ffl.replication",
                     username
@@ -2353,13 +2162,11 @@ final public class TableHandler {
                     + "  ffr.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     + "  failover_file_replications ffr\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and bs.server=ffr.server",
                     username
                 );
@@ -2401,14 +2208,12 @@ final public class TableHandler {
                     + "  ffs.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     + "  failover_file_replications ffr,\n"
                     + "  failover_file_schedule ffs\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and bs.server=ffr.server\n"
                     + "  and ffr.pkey=ffs.replication",
                     username
@@ -2459,14 +2264,12 @@ final public class TableHandler {
                     + "  fmr.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     + "  failover_file_replications ffr,\n"
                     + "  failover_mysql_replications fmr\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and (\n"
                     + "    (\n"
                     // ao_server-based
@@ -2517,20 +2320,16 @@ final public class TableHandler {
                     + "  fbs.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  servers se,\n"
                     + "  failover_file_replications ffr,\n"
                     + "  file_backup_settings fbs\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.pkey=se.package\n"
+                    + "  and bu1.accounting=se.accounting\n"
                     + "  and se.pkey=ffr.server\n"
                     + "  and ffr.pkey=fbs.replication",
                     username
@@ -2557,15 +2356,13 @@ final public class TableHandler {
                         + "  master_servers ms,\n"
                         + "  ao_servers ao,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
                         + "  usernames un,\n"
                         + "  ftp_guest_users fgu\n"
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=ao.server\n"
                         + "  and ao.server=bs.server\n"
-                        + "  and bs.accounting=pk.accounting\n"
-                        + "  and pk.name=un.package\n"
+                        + "  and bs.accounting=un.accounting\n"
                         + "  and un.username=fgu.username",
                         username
                     );
@@ -2579,19 +2376,15 @@ final public class TableHandler {
                     + "  fgu.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  ftp_guest_users fgu\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN1_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=fgu.username",
                     username
                 );
@@ -2633,21 +2426,17 @@ final public class TableHandler {
                     + "  hb.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_site_binds hsb,\n"
                     + "  httpd_binds hb,\n"
                     + "  net_binds nb\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=hsb.httpd_site\n"
                     + "  and hsb.httpd_bind=hb.net_bind\n"
                     + "  and hb.net_bind=nb.pkey\n"
@@ -2702,19 +2491,15 @@ final public class TableHandler {
                     + "  hjs.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_jboss_sites hjs\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=hjs.tomcat_site",
                     username
                 );
@@ -2785,13 +2570,11 @@ final public class TableHandler {
                         + "  hs.*\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + "  business_servers bs,\n"
                         + "  httpd_servers hs\n"
                         + "where\n"
                         + "  un.username=?\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bs.accounting\n"
+                        + "  and un.accounting=bs.accounting\n"
                         + "  and bs.server=hs.ao_server",
                         username
                     );
@@ -2832,20 +2615,16 @@ final public class TableHandler {
                     + "  hst.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  linux_groups lg,\n"
                     + "  linux_server_groups lsg,\n"
                     + "  httpd_shared_tomcats hst\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=lg.package\n"
+                    + "  and bu1.accounting=lg.accounting\n"
                     + "  and lg.name=lsg.name\n"
                     + "  and lsg.pkey=hst.linux_server_group",
                     username
@@ -2888,19 +2667,15 @@ final public class TableHandler {
                     + "  hsal.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_site_authenticated_locations hsal\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=hsal.httpd_site",
                     username
                 );
@@ -2942,19 +2717,15 @@ final public class TableHandler {
                     + "  hsb.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_site_binds hsb\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=hsb.httpd_site",
                     username
                 );
@@ -2998,20 +2769,16 @@ final public class TableHandler {
                     + "  hsu.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_site_binds hsb,\n"
                     + "  httpd_site_urls hsu\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=hsb.httpd_site\n"
                     + "  and hsb.pkey=hsu.httpd_site_bind",
                     username
@@ -3052,18 +2819,14 @@ final public class TableHandler {
                     + "  hs.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package",
+                    + "  and bu1.accounting=hs.accounting",
                     username
                 );
                 break;
@@ -3104,19 +2867,15 @@ final public class TableHandler {
                     + "  hss.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_static_sites hss\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=hss.httpd_site",
                     username
                 );
@@ -3158,19 +2917,15 @@ final public class TableHandler {
                     + "  htc.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_tomcat_contexts htc\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=htc.tomcat_site",
                     username
                 );
@@ -3214,20 +2969,16 @@ final public class TableHandler {
                     + "  htds.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_tomcat_contexts htc,\n"
                     + "  httpd_tomcat_data_sources htds\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=htc.tomcat_site\n"
                     + "  and htc.pkey=htds.tomcat_context",
                     username
@@ -3272,20 +3023,16 @@ final public class TableHandler {
                     + "  htp.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_tomcat_contexts htc,\n"
                     + "  httpd_tomcat_parameters htp\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=htc.tomcat_site\n"
                     + "  and htc.pkey=htp.tomcat_context",
                     username
@@ -3328,19 +3075,15 @@ final public class TableHandler {
                     + "  hts.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_tomcat_sites hts\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=hts.httpd_site",
                     username
                 );
@@ -3382,19 +3125,15 @@ final public class TableHandler {
                     + "  htss.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_tomcat_shared_sites htss\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=htss.tomcat_site",
                     username
                 );
@@ -3436,19 +3175,15 @@ final public class TableHandler {
                     + "  htss.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  httpd_sites hs,\n"
                     + "  httpd_tomcat_std_sites htss\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=hs.package\n"
+                    + "  and bu1.accounting=hs.accounting\n"
                     + "  and hs.pkey=htss.tomcat_site",
                     username
                 );
@@ -3500,19 +3235,15 @@ final public class TableHandler {
                     + "  hw.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  net_binds nb,\n"
                     + "  httpd_workers hw\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=nb.package\n"
+                    + "  and bu1.accounting=nb.accounting\n"
                     + "  and nb.pkey=hw.net_bind",
                     username
                 );
@@ -3580,38 +3311,30 @@ final public class TableHandler {
                         + "      ia2.pkey\n"
                         + "    from\n"
                         + "      usernames un1,\n"
-                        + "      packages pk1,\n"
                         + BU1_PARENTS_JOIN
-                        + "      packages pk2,\n"
                         + "      ip_addresses ia2\n"
                         + "    where\n"
                         + "      un1.username=?\n"
-                        + "      and un1.package=pk1.name\n"
                         + "      and (\n"
-                        + PK1_BU1_PARENTS_WHERE
+                        + UN1_BU1_PARENTS_WHERE
                         + "      )\n"
-                        + "      and bu1.accounting=pk2.accounting\n"
-                        + "      and pk2.name=ia2.package\n"
+                        + "      and bu1.accounting=ia2.accounting\n"
                         + "  )\n"
                         + "  or ia.pkey in (\n"
                         + "    select\n"
                         + "      nb.ip_address\n"
                         + "    from\n"
                         + "      usernames un3,\n"
-                        + "      packages pk3,\n"
                         + BU2_PARENTS_JOIN
-                        + "      packages pk4,\n"
                         + "      httpd_sites hs,\n"
                         + "      httpd_site_binds hsb,\n"
                         + "      net_binds nb\n"
                         + "    where\n"
                         + "      un3.username=?\n"
-                        + "      and un3.package=pk3.name\n"
                         + "      and (\n"
-                        + PK3_BU2_PARENTS_WHERE
+                        + UN3_BU2_PARENTS_WHERE
                         + "      )\n"
-                        + "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
-                        + "      and pk4.name=hs.package\n"
+                        + "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=hs.accounting\n"
                         + "      and hs.pkey=hsb.httpd_site\n"
                         + "      and hsb.httpd_bind=nb.pkey\n"
                         + "  ) or ia.pkey in (\n"
@@ -3619,14 +3342,12 @@ final public class TableHandler {
                         + "      ia5.pkey\n"
                         + "    from\n"
                         + "      usernames un5,\n"
-                        + "      packages pk5,\n"
                         + "      business_servers bs5,\n"
                         + "      net_devices nd5,\n"
                         + "      ip_addresses ia5\n"
                         + "    where\n"
                         + "      un5.username=?\n"
-                        + "      and un5.package=pk5.name\n"
-                        + "      and pk5.accounting=bs5.accounting\n"
+                        + "      and un5.accounting=bs5.accounting\n"
                         + "      and bs5.server=nd5.server\n"
                         + "      and nd5.pkey=ia5.net_device\n"
                         + "      and (ia5.ip_address='"+IPAddress.LOOPBACK_IP+"' or ia5.is_overflow)\n"
@@ -3635,7 +3356,6 @@ final public class TableHandler {
                         + "      ia6.pkey\n"
                         + "    from\n"
                         + "      usernames un6,\n"
-                        + "      packages pk6,\n"
                         + "      business_servers bs6,\n"
                         + "      failover_file_replications ffr6,\n"
                         + "      backup_partitions bp6,\n"
@@ -3644,8 +3364,7 @@ final public class TableHandler {
                         + "      ip_addresses ia6\n"
                         + "    where\n"
                         + "      un6.username=?\n"
-                        + "      and un6.package=pk6.name\n"
-                        + "      and pk6.accounting=bs6.accounting\n"
+                        + "      and un6.accounting=bs6.accounting\n"
                         + "      and bs6.server=ffr6.server\n"
                         + "      and ffr6.backup_partition=bp6.pkey\n"
                         + "      and bp6.ao_server=ao6.server\n"
@@ -3708,20 +3427,16 @@ final public class TableHandler {
                     + "  laa.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  email_domains ed,\n"
                     + "  email_addresses ea,\n"
                     + "  linux_acc_addresses laa\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=ed.package\n"
+                    + "  and bu1.accounting=ed.accounting\n"
                     + "  and ed.pkey=ea.domain\n"
                     + "  and ea.pkey=laa.email_address",
                     username
@@ -3749,7 +3464,6 @@ final public class TableHandler {
                         + "  ao_servers ao\n"
                         + "  left join ao_servers ff on ao.server=ff.failover_server,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
                         + "  usernames un,\n"
                         + "  linux_accounts la\n"
                         + "where\n"
@@ -3758,8 +3472,7 @@ final public class TableHandler {
                         + "  and (\n"
                         + "    ao.server=bs.server\n"
                         + "    or ff.server=bs.server\n"
-                        + "  ) and bs.accounting=pk.accounting\n"
-                        + "  and pk.name=un.package\n"
+                        + "  ) and bs.accounting=un.accounting\n"
                         + "  and un.username=la.username",
                         username
                     );
@@ -3773,20 +3486,16 @@ final public class TableHandler {
                     + "  la.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  linux_accounts la\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
                     + "    un2.username='"+LinuxAccount.MAIL+"'\n"
-                    + PK1_BU1_PARENTS_OR_WHERE
+                    + UN1_BU1_PARENTS_OR_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=la.username",
                     username
                 );
@@ -3860,41 +3569,33 @@ final public class TableHandler {
                     + "      lg.name\n"
                     + "    from\n"
                     + "      usernames un1,\n"
-                    + "      packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "      packages pk2,\n"
                     + "      linux_groups lg\n"
                     + "    where\n"
                     + "      un1.username=?\n"
-                    + "      and un1.package=pk1.name\n"
                     + "      and (\n"
                     + "        lg.name='"+LinuxGroup.FTPONLY+"'\n"
                     + "        or lg.name='"+LinuxGroup.MAIL+"'\n"
                     + "        or lg.name='"+LinuxGroup.MAILONLY+"'\n"
-                    + PK1_BU1_PARENTS_OR_WHERE
+                    + UN1_BU1_PARENTS_OR_WHERE
                     + "      )\n"
-                    + "      and bu1.accounting=pk2.accounting\n"
-                    + "      and pk2.name=lg.package\n"
+                    + "      and bu1.accounting=lg.accounting\n"
                     + "  )\n"
                     + "  and username in (\n"
                     + "    select\n"
                     + "      la.username\n"
                     + "    from\n"
                     + "      usernames un2,\n"
-                    + "      packages pk3,\n"
                     + BU2_PARENTS_JOIN
-                    + "      packages pk4,\n"
                     + "      usernames un3,\n"
                     + "      linux_accounts la\n"
                     + "    where\n"
                     + "      un2.username=?\n"
-                    + "      and un2.package=pk3.name\n"
                     + "      and (\n"
                     + "        un3.username='"+LinuxAccount.MAIL+"'\n"
-                    + PK3_BU2_PARENTS_OR_WHERE
+                    + UN2_BU2_PARENTS_OR_WHERE
                     + "      )\n"
-                    + "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
-                    + "      and pk4.name=un3.package\n"
+                    + "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=un3.accounting\n"
                     + "      and un3.username=la.username\n"
                     + "  )",
                     username,
@@ -3922,14 +3623,12 @@ final public class TableHandler {
                         + "  master_servers ms,\n"
                         + "  ao_servers ao,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
                         + "  linux_groups lg\n"
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=ao.server\n"
                         + "  and ao.server=bs.server\n"
-                        + "  and bs.accounting=pk.accounting\n"
-                        + "  and pk.name=lg.package",
+                        + "  and bs.accounting=lg.accounting",
                         username
                     );
                 } else MasterServer.writeObjects(
@@ -3941,22 +3640,18 @@ final public class TableHandler {
                     "select\n"
                     + "  lg.*\n"
                     + "from\n"
-                    + "  usernames un,\n"
-                    + "  packages pk1,\n"
+                    + "  usernames un1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  linux_groups lg\n"
                     + "where\n"
-                    + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
+                    + "  un1.username=?\n"
                     + "  and (\n"
                     + "    lg.name='"+LinuxGroup.FTPONLY+"'\n"
                     + "    or lg.name='"+LinuxGroup.MAIL+"'\n"
                     + "    or lg.name='"+LinuxGroup.MAILONLY+"'\n"
-                    + PK1_BU1_PARENTS_OR_WHERE
+                    + UN1_BU1_PARENTS_OR_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=lg.package",
+                    + "  and bu1.accounting=lg.accounting",
                     username
                 );
                 break;
@@ -4028,22 +3723,18 @@ final public class TableHandler {
                     + "  lsa.sa_discard_score\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  business_servers bs,\n"
                     + "  linux_server_accounts lsa\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
                     + "    un2.username='"+LinuxAccount.MAIL+"'\n"
-                    + PK1_BU1_PARENTS_OR_WHERE
+                    + UN1_BU1_PARENTS_OR_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
-                    + "  and pk1.accounting=bs.accounting\n"
+                    + "  and bu1.accounting=un2.accounting\n"
+                    + "  and un1.accounting=bs.accounting\n"
                     + "  and un2.username=lsa.username\n"
                     + "  and bs.server=lsa.ao_server",
                     username
@@ -4083,25 +3774,21 @@ final public class TableHandler {
                     "select\n"
                     + "  lsg.*\n"
                     + "from\n"
-                    + "  usernames un,\n"
-                    + "  packages pk1,\n"
+                    + "  usernames un1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  linux_groups lg,\n"
                     + "  business_servers bs,\n"
                     + "  linux_server_groups lsg\n"
                     + "where\n"
-                    + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
+                    + "  un1.username=?\n"
                     + "  and (\n"
                     + "    lg.name='"+LinuxGroup.FTPONLY+"'\n"
                     + "    or lg.name='"+LinuxGroup.MAIL+"'\n"
                     + "    or lg.name='"+LinuxGroup.MAILONLY+"'\n"
-                    + PK1_BU1_PARENTS_OR_WHERE
+                    + UN1_BU1_PARENTS_OR_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=lg.package\n"
-                    + "  and pk1.accounting=bs.accounting\n"
+                    + "  and bu1.accounting=lg.accounting\n"
+                    + "  and lg.accounting=bs.accounting\n"
                     + "  and lg.name=lsg.name\n"
                     + "  and bs.server=lsg.ao_server",
                     username
@@ -4144,19 +3831,15 @@ final public class TableHandler {
                     + "  ml.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  email_domains ed,\n"
                     + "  majordomo_lists ml\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=ed.package\n"
+                    + "  and bu1.accounting=ed.accounting\n"
                     + "  and ed.pkey=ml.majordomo_server",
                     username
                 );
@@ -4198,19 +3881,15 @@ final public class TableHandler {
                     + "  ms.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  email_domains ed,\n"
                     + "  majordomo_servers ms\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=ed.package\n"
+                    + "  and bu1.accounting=ed.accounting\n"
                     + "  and ed.pkey=ms.domain",
                     username
                 );
@@ -4255,14 +3934,12 @@ final public class TableHandler {
                         + "from\n"
                         + "  master_servers ms,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
                         + "  usernames un,\n"
                         + "  master_hosts mh\n"
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=bs.server\n"
-                        + "  and bs.accounting=pk.accounting\n"
-                        + "  and pk.name=un.package\n"
+                        + "  and bs.accounting=un.accounting\n"
                         + "  and un.username=mh.username",
                         username
                     );
@@ -4276,20 +3953,16 @@ final public class TableHandler {
                     + "  mh.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  master_hosts mh\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
                     + "    un2.username=un1.username\n"
-                    + PK1_BU1_PARENTS_OR_WHERE
+                    + UN1_BU1_PARENTS_OR_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=mh.username",
                     username
                 );
@@ -4374,20 +4047,16 @@ final public class TableHandler {
                     + "  ms.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  master_servers ms\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
                     + "    un2.username=un1.username\n"
-                    + PK1_BU1_PARENTS_OR_WHERE
+                    + UN1_BU1_PARENTS_OR_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=ms.username",
                     username
                 );
@@ -4412,14 +4081,12 @@ final public class TableHandler {
                         + "from\n"
                         + "  master_servers ms,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
                         + "  usernames un,\n"
                         + "  master_users mu\n"
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=bs.server\n"
-                        + "  and bs.accounting=pk.accounting\n"
-                        + "  and pk.name=un.package\n"
+                        + "  and bs.accounting=un.accounting\n"
                         + "  and un.username=mu.username",
                         username
                     );
@@ -4433,20 +4100,16 @@ final public class TableHandler {
                     + "  mu.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  master_users mu\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
                     + "    un2.username=un1.username\n"
-                    + PK1_BU1_PARENTS_OR_WHERE
+                    + UN1_BU1_PARENTS_OR_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=mu.username",
                     username
                 );
@@ -4478,18 +4141,14 @@ final public class TableHandler {
                             + "  mc.*\n"
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk1,\n"
                             + BU1_PARENTS_JOIN
-                            + "  packages pk2,\n"
                             + "  monthly_charges mc\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk1.name\n"
                             + "  and (\n"
-                            + PK1_BU1_PARENTS_WHERE
+                            + UN_BU1_PARENTS_WHERE
                             + "  )\n"
-                            + "  and bu1.accounting=pk2.accounting\n"
-                            + "  and pk2.name=mc.package",
+                            + "  and bu1.accounting=mc.source_accounting",
                             username
                         );
                     } else {
@@ -4535,18 +4194,14 @@ final public class TableHandler {
                     + "  md.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  mysql_databases md\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=md.package",
+                    + "  and bu1.accounting=md.accounting",
                     username
                 );
                 break;
@@ -4589,19 +4244,15 @@ final public class TableHandler {
                     + "  mdu.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  mysql_databases md,\n"
                     + "  mysql_db_users mdu\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=md.package\n"
+                    + "  and bu1.accounting=md.accounting\n"
                     + "  and md.pkey=mdu.mysql_database",
                     username
                 );
@@ -4662,19 +4313,15 @@ final public class TableHandler {
                     + "  msu.max_user_connections\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  mysql_server_users msu\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN1_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=msu.username",
                     username
                 );
@@ -4711,17 +4358,15 @@ final public class TableHandler {
                     provideProgress,
                     new MySQLServer(),
                     "select\n"
-                    + "  ps.*\n"
+                    + "  ms.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
-                    + "  mysql_servers ps\n"
+                    + "  mysql_servers ms\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
-                    + "  and bs.server=ps.ao_server",
+                    + "  and un.accounting=bs.accounting\n"
+                    + "  and bs.server=ms.ao_server",
                     username
                 );
                 break;
@@ -4746,15 +4391,13 @@ final public class TableHandler {
                         + "  master_servers ms,\n"
                         + "  ao_servers ao,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
                         + "  usernames un,\n"
                         + "  mysql_users mu\n"
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=ao.server\n"
                         + "  and ao.server=bs.server\n"
-                        + "  and bs.accounting=pk.accounting\n"
-                        + "  and pk.name=un.package\n"
+                        + "  and bs.accounting=un.accounting\n"
                         + "  and un.username=mu.username",
                         username
                     );
@@ -4768,19 +4411,15 @@ final public class TableHandler {
                     + "  mu.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  mysql_users mu\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN1_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=mu.username",
                     username
                 );
@@ -4802,7 +4441,7 @@ final public class TableHandler {
                         new NetBind(),
                         "select\n"
                         + "  nb.pkey,\n"
-                        + "  nb.package,\n"
+                        + "  nb.accounting,\n"
                         + "  nb.server,\n"
                         + "  nb.ip_address,\n"
                         + "  nb.port,\n"
@@ -4846,7 +4485,7 @@ final public class TableHandler {
                     new NetBind(),
                     "select\n"
                     + "  nb.pkey,\n"
-                    + "  nb.package,\n"
+                    + "  nb.accounting,\n"
                     + "  nb.server,\n"
                     + "  nb.ip_address,\n"
                     + "  nb.port,\n"
@@ -4863,38 +4502,30 @@ final public class TableHandler {
                     + "      nb2.pkey\n"
                     + "    from\n"
                     + "      usernames un1,\n"
-                    + "      packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "      packages pk2,\n"
                     + "      net_binds nb2\n"
                     + "    where\n"
                     + "      un1.username=?\n"
-                    + "      and un1.package=pk1.name\n"
                     + "      and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN1_BU1_PARENTS_WHERE
                     + "      )\n"
-                    + "      and bu1.accounting=pk2.accounting\n"
-                    + "      and pk2.name=nb2.package\n"
+                    + "      and bu1.accounting=nb2.accounting\n"
                     + "  )\n"
                     + "  or nb.pkey in (\n"
                     + "    select\n"
                     + "      nb3.pkey\n"
                     + "    from\n"
                     + "      usernames un3,\n"
-                    + "      packages pk3,\n"
                     + BU2_PARENTS_JOIN
-                    + "      packages pk4,\n"
                     + "      httpd_sites hs,\n"
                     + "      httpd_site_binds hsb,\n"
                     + "      net_binds nb3\n"
                     + "    where\n"
                     + "      un3.username=?\n"
-                    + "      and un3.package=pk3.name\n"
                     + "      and (\n"
-                    + PK3_BU2_PARENTS_WHERE
+                    + UN3_BU2_PARENTS_WHERE
                     + "      )\n"
-                    + "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
-                    + "      and pk4.name=hs.package\n"
+                    + "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=hs.accounting\n"
                     + "      and hs.pkey=hsb.httpd_site\n"
                     + "      and hsb.httpd_bind=nb3.pkey\n"
                     + "  ) or nb.pkey in (\n"
@@ -4902,26 +4533,22 @@ final public class TableHandler {
                     + "      ms4.net_bind\n"
                     + "    from\n"
                     + "      usernames un4,\n"
-                    + "      packages pk4,\n"
                     + "      business_servers bs4,\n"
                     + "      mysql_servers ms4\n"
                     + "    where\n"
                     + "      un4.username=?\n"
-                    + "      and un4.package=pk4.name\n"
-                    + "      and pk4.accounting=bs4.accounting\n"
+                    + "      and un4.accounting=bs4.accounting\n"
                     + "      and bs4.server=ms4.ao_server\n"
                     + "  ) or nb.pkey in (\n"
                     + "    select\n"
                     + "      ps5.net_bind\n"
                     + "    from\n"
                     + "      usernames un5,\n"
-                    + "      packages pk5,\n"
                     + "      business_servers bs5,\n"
                     + "      postgres_servers ps5\n"
                     + "    where\n"
                     + "      un5.username=?\n"
-                    + "      and un5.package=pk5.name\n"
-                    + "      and pk5.accounting=bs5.accounting\n"
+                    + "      and un5.accounting=bs5.accounting\n"
                     + "      and bs5.server=ps5.ao_server\n"
                     /*+ "  ) or nb.pkey in (\n"
                     // Allow net_binds of receiving failover_file_replications (exact package match - no tree inheritence)
@@ -4929,15 +4556,13 @@ final public class TableHandler {
                     + "      nb6.pkey\n"
                     + "    from\n"
                     + "      usernames un6,\n"
-                    + "      packages pk6,\n"
                     + "      servers se6,\n"
                     + "      failover_file_replications ffr6,\n"
                     + "      backup_partitions bp6,\n"
                     + "      net_binds nb6\n"
                     + "    where\n"
                     + "      un6.username=?\n"
-                    + "      and un6.package=pk6.name\n"
-                    + "      and pk6.pkey=se6.package\n"
+                    + "      and un6.accounting=se6.accounting\n"
                     + "      and se6.pkey=ffr6.server\n"
                     + "      and ffr6.backup_partition=bp6.pkey\n"
                     + "      and bp6.ao_server=nb6.ao_server\n"
@@ -5015,7 +4640,6 @@ final public class TableHandler {
                     + "  nd.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     // Allow failover destinations
                     //+ "  left outer join failover_file_replications ffr on bs.server=ffr.server\n"
@@ -5024,8 +4648,7 @@ final public class TableHandler {
                     + "  net_devices nd\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and (\n"
                     + "    bs.server=nd.server\n"
                     //+ "    or (bp.ao_server=nd.ao_server and nd.device_id=bpao.daemon_device_id)\n"
@@ -5082,19 +4705,15 @@ final public class TableHandler {
                     + "  ntr.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  net_binds nb,\n"
                     + "  net_tcp_redirects ntr\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN1_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=nb.package\n"
+                    + "  and bu1.accounting=nb.accounting\n"
                     + "  and nb.pkey=ntr.net_bind",
                     username
                 );
@@ -5122,14 +4741,12 @@ final public class TableHandler {
                     + "  nl.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + BU1_PARENTS_JOIN
                     + "  notice_log nl\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
                     + "  and (\n"
-                    + PK_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
                     + "  and bu1.accounting=nl.accounting",
                     username
@@ -5195,13 +4812,13 @@ final public class TableHandler {
                         + "from\n"
                         + "  master_servers ms,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
+                        + "  businesses bu,\n"
                         + "  package_definition_limits pdl\n"
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=bs.server\n"
-                        + "  and bs.accounting=pk.accounting\n"
-                        + "  and pk.package_definition=pdl.package_definition",
+                        + "  and bs.accounting=bu.accounting\n"
+                        + "  and bu.package_definition=pdl.package_definition",
                         username
                     );
                 } else {
@@ -5216,20 +4833,16 @@ final public class TableHandler {
                             + "  pdl.*\n"
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk1,\n"
                             + BU1_PARENTS_JOIN
-                            + "  packages pk2,\n"
                             + "  package_definitions pd,\n"
                             + "  package_definition_limits pdl\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk1.name\n"
                             + "  and (\n"
-                            + PK1_BU1_PARENTS_WHERE
+                            + UN_BU1_PARENTS_WHERE
                             + "  )\n"
-                            + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
-                            + "    pk2.package_definition=pd.pkey\n"
+                            + "    bu1.package_definition=pd.pkey\n"
                             + "    or bu1.accounting=pd.accounting\n"
                             + "  ) and pd.pkey=pdl.package_definition",
                             username
@@ -5251,20 +4864,16 @@ final public class TableHandler {
                             + "  null\n"
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk1,\n"
                             + BU1_PARENTS_JOIN
-                            + "  packages pk2,\n"
                             + "  package_definitions pd,\n"
                             + "  package_definition_limits pdl\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk1.name\n"
                             + "  and (\n"
-                            + PK1_BU1_PARENTS_WHERE
+                            + UN_BU1_PARENTS_WHERE
                             + "  )\n"
-                            + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
-                            + "    pk2.package_definition=pd.pkey\n"
+                            + "    bu1.package_definition=pd.pkey\n"
                             + "    or bu1.accounting=pd.accounting\n"
                             + "  ) and pd.pkey=pdl.package_definition",
                             username
@@ -5292,13 +4901,13 @@ final public class TableHandler {
                         + "from\n"
                         + "  master_servers ms,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
+                        + "  businesses bu,\n"
                         + "  package_definitions pd\n"
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=bs.server\n"
-                        + "  and bs.accounting=pk.accounting\n"
-                        + "  and pk.package_definition=pd.pkey",
+                        + "  and bs.accounting=bu.accounting\n"
+                        + "  and bu.package_definition=pd.pkey",
                         username
                     );
                 } else {
@@ -5313,19 +4922,15 @@ final public class TableHandler {
                             + "  pd.*\n"
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk1,\n"
                             + BU1_PARENTS_JOIN
-                            + "  packages pk2,\n"
                             + "  package_definitions pd\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk1.name\n"
                             + "  and (\n"
-                            + PK1_BU1_PARENTS_WHERE
+                            + UN_BU1_PARENTS_WHERE
                             + "  )\n"
-                            + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
-                            + "    pk2.package_definition=pd.pkey\n"
+                            + "    bu1.package_definition=pd.pkey\n"
                             + "    or bu1.accounting=pd.accounting\n"
                             + "  )",
                             username
@@ -5352,76 +4957,20 @@ final public class TableHandler {
                             + "  pd.active\n"
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk1,\n"
                             + BU1_PARENTS_JOIN
-                            + "  packages pk2,\n"
                             + "  package_definitions pd\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk1.name\n"
                             + "  and (\n"
-                            + PK1_BU1_PARENTS_WHERE
+                            + UN_BU1_PARENTS_WHERE
                             + "  )\n"
-                            + "  and bu1.accounting=pk2.accounting\n"
                             + "  and (\n"
-                            + "    pk2.package_definition=pd.pkey\n"
+                            + "    bu1.package_definition=pd.pkey\n"
                             + "    or bu1.accounting=pd.accounting\n"
                             + "  )",
                             username
                         );
                     }
-                }
-                break;
-            case PACKAGES :
-                if(masterUser!=null) {
-                    if(masterServers.length==0) MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new Package(),
-                        "select * from packages"
-                    ); else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new Package(),
-                        "select distinct\n"
-                        + "  pk.*\n"
-                        + "from\n"
-                        + "  master_servers ms,\n"
-                        + "  business_servers bs,\n"
-                        + "  packages pk\n"
-                        + "where\n"
-                        + "  ms.username=?\n"
-                        + "  and ms.server=bs.server\n"
-                        + "  and bs.accounting=pk.accounting",
-                        username
-                    );
-                } else {
-                    MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new Package(),
-                        "select\n"
-                        + "  pk2.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + "  packages pk1,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  packages pk2\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
-                        + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting",
-                        username
-                    );
                 }
                 break;
             case PAYMENT_TYPES :
@@ -5468,7 +5017,6 @@ final public class TableHandler {
                     + "  ps.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     // Allow servers it replicates to
                     //+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
@@ -5476,8 +5024,7 @@ final public class TableHandler {
                     + "  physical_servers ps\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and (\n"
                     + "    bs.server=ps.server\n"
                     // Allow servers it replicates to
@@ -5523,20 +5070,16 @@ final public class TableHandler {
                     + "  pd.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  postgres_server_users psu,\n"
                     + "  postgres_databases pd\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN1_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=psu.username\n"
                     + "  and psu.pkey=pd.datdba",
                     username
@@ -5603,19 +5146,15 @@ final public class TableHandler {
                     + "  case when psu.predisable_password is null then null else '"+AOServProtocol.FILTERED+"' end\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  postgres_server_users psu\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN1_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=bu2.accounting\n"
                     + "  and un2.username=psu.username",
                     username
                 );
@@ -5655,13 +5194,11 @@ final public class TableHandler {
                     + "  ps.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     + "  postgres_servers ps\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and bs.server=ps.ao_server",
                     username
                 );
@@ -5687,15 +5224,13 @@ final public class TableHandler {
                         + "  master_servers ms,\n"
                         + "  ao_servers ao,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
                         + "  usernames un,\n"
                         + "  postgres_users pu\n"
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=ao.server\n"
                         + "  and ao.server=bs.server\n"
-                        + "  and bs.accounting=pk.accounting\n"
-                        + "  and pk.name=un.package\n"
+                        + "  and bs.accounting=un.accounting\n"
                         + "  and un.username=pu.username",
                         username
                     );
@@ -5709,19 +5244,15 @@ final public class TableHandler {
                     + "  pu.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2,\n"
                     + "  postgres_users pu\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN1_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package\n"
+                    + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=pu.username",
                     username
                 );
@@ -5774,19 +5305,15 @@ final public class TableHandler {
                         + "  pfs.*\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk1,\n"
                         + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
                         + "  net_binds nb,\n"
                         + "  private_ftp_servers pfs\n"
                         + "where\n"
                         + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
                         + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
+                        + UN_BU1_PARENTS_WHERE
                         + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.name=nb.package\n"
+                        + "  and bu1.accounting=nb.accounting\n"
                         + "  and nb.pkey=pfs.net_bind",
                         username
                     );
@@ -5847,7 +5374,6 @@ final public class TableHandler {
                     + "  ra.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     // Allow servers it replicates to
                     //+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
@@ -5856,8 +5382,7 @@ final public class TableHandler {
                     + "  racks ra\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and (\n"
                     + "    bs.server=ps.server\n"
                     // Allow servers it replicates to
@@ -5889,14 +5414,12 @@ final public class TableHandler {
                     + "  re.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + BU1_PARENTS_JOIN
                     + "  resellers re\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
                     + "  and (\n"
-                    + PK_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  ) and bu1.accounting=re.accounting",
                     username
                 );
@@ -6103,18 +5626,14 @@ final public class TableHandler {
                     + "  ed.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  email_domains ed\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=ed.package",
+                    + "  and bu1.accounting=ed.accounting",
                     username
                 );
                 break;
@@ -6166,19 +5685,15 @@ final public class TableHandler {
                     + "  esr.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  email_smtp_relays esr\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
                     + "  and (\n"
-                    + "    pk2.name=esr.package\n"
+                    + "    bu1.accounting=esr.accounting\n"
                     + "    or esr.ao_server is null\n"
                     + "  )",
                     username
@@ -6222,19 +5737,15 @@ final public class TableHandler {
                         + "  esshd.*\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk1,\n"
                         + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
                         + "  net_binds nb,\n"
                         + "  email_smtp_smart_host_domains esshd\n"
                         + "where\n"
                         + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
                         + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
+                        + UN_BU1_PARENTS_WHERE
                         + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.name=nb.package\n"
+                        + "  and bu1.accounting=nb.accounting\n"
                         + "  and nb.pkey=esshd.smart_host",
                         username
                     );
@@ -6278,19 +5789,15 @@ final public class TableHandler {
                         + "  essh.*\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk1,\n"
                         + BU1_PARENTS_JOIN
-                        + "  packages pk2,\n"
                         + "  net_binds nb,\n"
                         + "  email_smtp_smart_hosts essh\n"
                         + "where\n"
                         + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
                         + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
+                        + UN_BU1_PARENTS_WHERE
                         + "  )\n"
-                        + "  and bu1.accounting=pk2.accounting\n"
-                        + "  and pk2.name=nb.package\n"
+                        + "  and bu1.accounting=nb.accounting\n"
                         + "  and nb.pkey=essh.net_bind",
                         username
                     );
@@ -6339,19 +5846,17 @@ final public class TableHandler {
                     + "  sf.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     + "  servers se,\n"
                     + "  server_farms sf\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
                     + "  and (\n"
                     + "    (\n"
-                    + "      pk.accounting=bs.accounting\n"
+                    + "      un.accounting=bs.accounting\n"
                     + "      and bs.server=se.pkey\n"
                     + "      and se.farm=sf.name\n"
-                    + "    ) or pk.pkey=sf.owner\n"
+                    + "    ) or un.accounting=sf.owner\n"
                     + "  )",
                     username
                 );
@@ -6408,7 +5913,6 @@ final public class TableHandler {
                     + "  se.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     // Allow servers it replicates to
                     //+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
@@ -6416,8 +5920,7 @@ final public class TableHandler {
                     + "  servers se\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and (\n"
                     + "    bs.server=se.pkey\n"
                     // Allow servers it replicates to
@@ -6462,15 +5965,13 @@ final public class TableHandler {
                         + "  sro.*\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk1,\n"
                         + BU1_PARENTS_JOIN
                         + "  signup_requests sr,\n"
                         + "  signup_request_options sro\n"
                         + "where\n"
                         + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
                         + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
+                        + UN_BU1_PARENTS_WHERE
                         + "  )\n"
                         + "  and bu1.accounting=sr.brand\n"
                         + "  and sr.pkey=sro.request",
@@ -6504,14 +6005,12 @@ final public class TableHandler {
                         + "  sr.*\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk1,\n"
                         + BU1_PARENTS_JOIN
                         + "  signup_requests sr\n"
                         + "where\n"
                         + "  un.username=?\n"
-                        + "  and un.package=pk1.name\n"
                         + "  and (\n"
-                        + PK1_BU1_PARENTS_WHERE
+                        + UN_BU1_PARENTS_WHERE
                         + "  )\n"
                         + "  and bu1.accounting=sr.brand",
                         username
@@ -6563,13 +6062,11 @@ final public class TableHandler {
                     + "  sea.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     + "  system_email_aliases sea\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and bs.server=sea.ao_server",
                     username
                 );
@@ -6704,15 +6201,13 @@ final public class TableHandler {
                             + "  ta.summary\n"
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk1,\n"
                             + BU1_PARENTS_JOIN
                             + "  tickets ti,\n"
                             + "  ticket_actions ta\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk1.name\n"
                             + "  and (\n"
-                            + PK1_BU1_PARENTS_WHERE
+                            + UN_BU1_PARENTS_WHERE
                             + "  )\n"
                             + "  and (\n"
                             + "    bu1.accounting=ti.accounting\n" // Has access to ticket accounting
@@ -6752,16 +6247,14 @@ final public class TableHandler {
                             + "  ta.summary\n"
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk1,\n"
                             + BU1_PARENTS_JOIN
                             + "  tickets ti,\n"
                             + "  ticket_actions ta,\n"
                             + "  ticket_action_types tat\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk1.name\n"
                             + "  and (\n"
-                            + PK1_BU1_PARENTS_WHERE
+                            + UN_BU1_PARENTS_WHERE
                             + "  )\n"
                             + "  and bu1.accounting=ti.accounting\n"
                             + "  and ti.status not in ('junk', 'deleted')\n"
@@ -6799,15 +6292,13 @@ final public class TableHandler {
                             + "  ta.*\n"
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk1,\n"
                             + BU1_PARENTS_JOIN
                             + "  tickets ti,\n"
                             + "  ticket_assignments ta\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk1.name\n"
                             + "  and (\n"
-                            + PK1_BU1_PARENTS_WHERE
+                            + UN_BU1_PARENTS_WHERE
                             + "  )\n"
                             + "  and (\n"
                             + "    bu1.accounting=ti.accounting\n" // Has access to ticket accounting
@@ -6847,14 +6338,12 @@ final public class TableHandler {
                     + "  tbc.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + BU1_PARENTS_JOIN
                     + "  ticket_brand_categories tbc\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
                     + "  and (\n"
-                    + PK_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  ) and bu1.accounting=tbc.brand",
                     username
                 );
@@ -6957,13 +6446,11 @@ final public class TableHandler {
                             + "  ti.contact_phone_numbers\n"
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk,\n"
                             + "  tickets ti\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk.name\n"
-                            + "  and pk.accounting=ti.brand\n"
-                            + "  and pk.accounting=ti.accounting\n"
+                            + "  and un.accounting=ti.brand\n"
+                            + "  and un.accounting=ti.accounting\n"
                             + "  and ti.status in (?,?,?)\n"
                             + "  and ti.ticket_type=?",
                             username,
@@ -7001,14 +6488,12 @@ final public class TableHandler {
                             + "  ti.contact_phone_numbers\n"
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk1,\n"
                             + BU1_PARENTS_JOIN
                             + "  tickets ti\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk1.name\n"
                             + "  and (\n"
-                            + PK1_BU1_PARENTS_WHERE
+                            + UN_BU1_PARENTS_WHERE
                             + "  )\n"
                             + "  and (\n"
                             + "    bu1.accounting=ti.accounting\n" // Has access to ticket accounting
@@ -7044,14 +6529,12 @@ final public class TableHandler {
                             + "  ti.contact_phone_numbers\n"
                             + "from\n"
                             + "  usernames un,\n"
-                            + "  packages pk1,\n"
                             + BU1_PARENTS_JOIN
                             + "  tickets ti\n"
                             + "where\n"
                             + "  un.username=?\n"
-                            + "  and un.package=pk1.name\n"
                             + "  and (\n"
-                            + PK1_BU1_PARENTS_WHERE
+                            + UN_BU1_PARENTS_WHERE
                             + "  )\n"
                             + "  and bu1.accounting=ti.accounting\n"
                             + "  and ti.status not in ('junk', 'deleted')",
@@ -7100,14 +6583,12 @@ final public class TableHandler {
                     + "  tr.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
                     + "  transactions tr\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
-                    + PK1_BU1_PARENTS_WHERE
+                    + UN1_BU1_PARENTS_WHERE
                     + "  )\n"
                     + "  and bu1.accounting=tr.accounting",
                     username
@@ -7134,15 +6615,13 @@ final public class TableHandler {
                         + "  master_servers ms\n"
                         + "  left join ao_servers ff on ms.server=ff.failover_server,\n"
                         + "  business_servers bs,\n"
-                        + "  packages pk,\n"
                         + "  usernames un\n"
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and (\n"
                         + "    ms.server=bs.server\n"
                         + "    or ff.server=bs.server\n"
-                        + "  ) and bs.accounting=pk.accounting\n"
-                        + "  and pk.name=un.package",
+                        + "  ) and bs.accounting=un.accounting",
                         username
                     );
                 } else MasterServer.writeObjects(
@@ -7155,20 +6634,16 @@ final public class TableHandler {
                     + "  un2.*\n"
                     + "from\n"
                     + "  usernames un1,\n"
-                    + "  packages pk1,\n"
                     + BU1_PARENTS_JOIN
-                    + "  packages pk2,\n"
                     + "  usernames un2\n"
                     + "where\n"
                     + "  un1.username=?\n"
-                    + "  and un1.package=pk1.name\n"
                     + "  and (\n"
                     + "    un2.username=un1.username\n"
                     + "    or un2.username='"+LinuxAccount.MAIL+"'\n"
-                    + PK1_BU1_PARENTS_OR_WHERE
+                    + UN1_BU1_PARENTS_OR_WHERE
                     + "  )\n"
-                    + "  and bu1.accounting=pk2.accounting\n"
-                    + "  and pk2.name=un2.package",
+                    + "  and bu1.accounting=un2.accounting",
                     username
                 );
                 break;
@@ -7216,7 +6691,6 @@ final public class TableHandler {
                     + "  vd.*\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     // Allow servers it replicates to
                     //+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
@@ -7224,8 +6698,7 @@ final public class TableHandler {
                     + "  virtual_disks vd\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and (\n"
                     + "    bs.server=vd.virtual_server\n"
                     // Allow servers it replicates to
@@ -7285,13 +6758,12 @@ final public class TableHandler {
                     + "    when vs.vnc_password is null then null\n"
                     // Only provide the password when the user can connect to VNC console
                     + "    when (\n"
-                    + "      select bs2.pkey from business_servers bs2 where bs2.accounting=pk.accounting and bs2.server=vs.server and bs2.can_vnc_console limit 1\n"
+                    + "      select bs2.pkey from business_servers bs2 where bs2.accounting=bs.accounting and bs2.server=vs.server and bs2.can_vnc_console limit 1\n"
                     + "    ) is not null then vs.vnc_password\n"
                     + "    else '"+AOServProtocol.FILTERED+"'::text\n"
                     + "  end\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + "  business_servers bs,\n"
                     // Allow servers it replicates to
                     //+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
@@ -7299,8 +6771,7 @@ final public class TableHandler {
                     + "  virtual_servers vs\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
-                    + "  and pk.accounting=bs.accounting\n"
+                    + "  and un.accounting=bs.accounting\n"
                     + "  and (\n"
                     + "    bs.server=vs.server\n"
                     // Allow servers it replicates to
@@ -7338,14 +6809,12 @@ final public class TableHandler {
                     + "  wh.zone\n"
                     + "from\n"
                     + "  usernames un,\n"
-                    + "  packages pk,\n"
                     + BU1_PARENTS_JOIN
                     + "  whois_history wh\n"
                     + "where\n"
                     + "  un.username=?\n"
-                    + "  and un.package=pk.name\n"
                     + "  and (\n"
-                    + PK_BU1_PARENTS_WHERE
+                    + UN_BU1_PARENTS_WHERE
                     + "  )\n"
                     + "  and bu1.accounting=wh.accounting",
                     username

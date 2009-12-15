@@ -5,7 +5,6 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.BackupReport;
 import com.aoindustries.aoserv.client.Business;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.cron.CronDaemon;
@@ -123,78 +122,6 @@ final public class AccountCleaner implements CronJob {
 
                 Timestamp now=new Timestamp(System.currentTimeMillis());
 
-                    // backup_reports
-                    {
-                        // Those that are part of canceled accounts
-                        if(
-                            conn.executeBooleanQuery(
-                                "select\n"
-                                + "  (\n"
-                                + "    select\n"
-                                + "      br.pkey\n"
-                                + "    from\n"
-                                + "      backup_reports br,\n"
-                                + "      packages pk,\n"
-                                + "      businesses bu\n"
-                                + "    where\n"
-                                + "      br.package=pk.pkey\n"
-                                + "      and pk.accounting=bu.accounting\n"
-                                + "      and bu.canceled is not null\n"
-                                + "      and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
-                                + "    limit 1\n"
-                                + "  ) is not null",
-                                now
-                            )
-                        ) {
-                            conn.executeUpdate(
-                                "delete from\n"
-                                + "  backup_reports\n"
-                                + "where\n"
-                                + "  pkey in (\n"
-                                + "    select\n"
-                                + "      br.pkey\n"
-                                + "    from\n"
-                                + "      backup_reports br,\n"
-                                + "      packages pk,\n"
-                                + "      businesses bu\n"
-                                + "    where\n"
-                                + "      br.package=pk.pkey\n"
-                                + "      and pk.accounting=bu.accounting\n"
-                                + "      and bu.canceled is not null\n"
-                                + "      and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
-                                + "  )",
-                                now
-                            );
-                            invalidateList.addTable(conn, SchemaTable.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-                        }
-
-                        // Those that are older than BackupReport.SendmailSmtpStat.MAX_REPORT_AGE
-                        if(
-                            conn.executeBooleanQuery(
-                                "select\n"
-                                + "  (\n"
-                                + "    select\n"
-                                + "      pkey\n"
-                                + "    from\n"
-                                + "      backup_reports\n"
-                                + "    where\n"
-                                + "      (?::date-date)>"+BackupReport.MAX_REPORT_AGE+"\n" // Convert to interval?
-                                + "    limit 1\n"
-                                + "  ) is not null",
-                                now
-                            )
-                        ) {
-                            conn.executeUpdate(
-                                "delete from\n"
-                                + "  backup_reports\n"
-                                + "where\n"
-                                + "  (?::date-date)>"+BackupReport.MAX_REPORT_AGE, // Convert to interval?
-                                now
-                            );
-                            invalidateList.addTable(conn, SchemaTable.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-                        }
-                    }
-
                 // businesses
                 {
                     {
@@ -274,17 +201,15 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  business_administrators ba,\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
                         + "  (select ac.pkey from ticket_actions ac where ac.administrator=ba.username limit 1) is null\n"
                         + "  and (select dl.pkey from disable_log dl where dl.disabled_by=ba.username limit 1) is null\n"
-                        + "  and (select pk2.name from packages pk2 where pk2.created_by=ba.username limit 1) is null\n"
+                        + "  and (select bu.name from businesses bu where bu.created_by=ba.username limit 1) is null\n"
                         + "  and (select ti.pkey from tickets ti where ti.created_by=ba.username or ti.assigned_to=ba.username or ti.closed_by=ba.username limit 1) is null\n"
                         + "  and (select tr.transid from transactions tr where tr.username=ba.username limit 1) is null\n"
                         + "  and ba.username=un.username\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  and un.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -310,13 +235,11 @@ final public class AccountCleaner implements CronJob {
                         + "  cvs_repositories cr,\n"
                         + "  linux_server_accounts lsa,\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
                         + "  cr.linux_server_account=lsa.pkey\n"
                         + "  and lsa.username=un.username\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  and un.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -335,11 +258,9 @@ final public class AccountCleaner implements CronJob {
                         + "  dz.zone\n"
                         + "from\n"
                         + "  dns_zones dz,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  dz.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  dz.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -360,13 +281,11 @@ final public class AccountCleaner implements CronJob {
                         + "  email_lists el,\n"
                         + "  linux_server_groups lsg,\n"
                         + "  linux_groups lg,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
                         + "  el.linux_server_group=lsg.pkey\n"
                         + "  and lsg.name=lg.name\n"
-                        + "  and lg.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  and lg.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -385,11 +304,9 @@ final public class AccountCleaner implements CronJob {
                         + "  ed.pkey\n"
                         + "from\n"
                         + "  email_domains ed,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  ed.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  ed.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -408,11 +325,9 @@ final public class AccountCleaner implements CronJob {
                         + "  ep.pkey\n"
                         + "from\n"
                         + "  email_pipes ep,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  ep.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  ep.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -431,11 +346,9 @@ final public class AccountCleaner implements CronJob {
                         + "  esr.pkey\n"
                         + "from\n"
                         + "  email_smtp_relays esr,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  esr.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  esr.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -455,13 +368,11 @@ final public class AccountCleaner implements CronJob {
                         + "  fbs.pkey\n"
                         + "from\n"
                         + "  businesses bu,\n"
-                        + "  packages pk,\n"
                         + "  file_backup_settings fbs\n"
                         + "where\n"
                         + "  bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
-                        + "  and bu.accounting=pk.accounting\n"
-                        + "  and pk.pkey=fbs.package",
+                        + "  and bu.accounting=fbs.accounting",
                         now
                     );
                     for(int c=0;c<fbss.size();c++) {
@@ -479,11 +390,9 @@ final public class AccountCleaner implements CronJob {
                         + "  hs.pkey\n"
                         + "from\n"
                         + "  httpd_sites hs,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  hs.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  hs.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -504,13 +413,11 @@ final public class AccountCleaner implements CronJob {
                         + "  httpd_shared_tomcats hst,\n"
                         + "  linux_server_groups lsg,\n"
                         + "  linux_groups lg,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
                         + "  hst.linux_server_group=lsg.pkey\n"
                         + "  and lsg.name=lg.name\n"
-                        + "  and lg.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  and lg.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -530,12 +437,10 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  private_ftp_servers pfs,\n"
                         + "  net_binds nb,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
                         + "  pfs.net_bind=nb.pkey\n"
-                        + "  and nb.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  and nb.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -554,11 +459,9 @@ final public class AccountCleaner implements CronJob {
                         + "  nb.pkey\n"
                         + "from\n"
                         + "  net_binds nb,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  nb.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  nb.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -578,18 +481,16 @@ final public class AccountCleaner implements CronJob {
                         + "  ia.pkey\n"
                         + "from\n"
                         + "  ip_addresses ia,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  ia.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  ia.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
                     for(int c=0;c<ias.size();c++) {
                         int ia=ias.getInt(c);
-                        IPAddressHandler.setIPAddressPackage(conn, invalidateList, ia, BusinessHandler.getRootBusiness());
+                        IPAddressHandler.setIPAddressBusiness(conn, invalidateList, ia, BusinessHandler.getRootBusiness());
                         IPAddressHandler.releaseIPAddress(conn, invalidateList, ia);
                     }
                 }
@@ -603,11 +504,9 @@ final public class AccountCleaner implements CronJob {
                         + "  hs.pkey\n"
                         + "from\n"
                         + "  httpd_servers hs,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  hs.package=pk.pkey\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  hs.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -628,12 +527,10 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  linux_accounts la,\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
                         + "  la.username=un.username\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  and un.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -657,11 +554,9 @@ final public class AccountCleaner implements CronJob {
                         + "  lg.name\n"
                         + "from\n"
                         + "  linux_groups lg,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  lg.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  lg.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -685,11 +580,9 @@ final public class AccountCleaner implements CronJob {
                         + "  md.pkey\n"
                         + "from\n"
                         + "  mysql_databases md,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  md.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  md.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -709,12 +602,10 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  mysql_users mu,\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
                         + "  mu.username=un.username\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  and un.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -735,13 +626,11 @@ final public class AccountCleaner implements CronJob {
                         + "  postgres_databases pd,\n"
                         + "  postgres_server_users psu,\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
                         + "  pd.datdba=psu.pkey\n"
                         + "  and psu.username=un.username\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  and un.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -761,12 +650,10 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  postgres_users pu,\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
                         + "  pu.username=un.username\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  and un.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -786,11 +673,9 @@ final public class AccountCleaner implements CronJob {
                         + "  un.username\n"
                         + "from\n"
                         + "  usernames un,\n"
-                        + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  un.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
+                        + "  un.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
                         + "  and (select ba.username from business_administrators ba where ba.username=un.username) is null",
@@ -828,7 +713,6 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select lsa.pkey from linux_server_accounts lsa where lsa.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select msu.pkey from mysql_server_users msu where msu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select mu.username from mysql_users mu where mu.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select pk.name from packages pk where pk.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select psu.pkey from postgres_server_users psu where psu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select pu.username from postgres_users pu where pu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select un.username from usernames un where un.disable_log=dl.pkey limit 1) is null",
