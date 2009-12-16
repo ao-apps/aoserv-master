@@ -20,7 +20,6 @@ import com.aoindustries.aoserv.client.MasterServerStat;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.Transaction;
-import com.aoindustries.aoserv.client.TransactionSearchCriteria;
 import com.aoindustries.io.BitRateProvider;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
@@ -3775,26 +3774,6 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
-                                    case GET_BANK_TRANSACTIONS_ACCOUNT :
-                                        {
-                                            boolean provideProgress=in.readBoolean();
-                                            String accounting=in.readUTF();
-                                            process.setCommand(
-                                                "get_bank_transactions_account",
-                                                provideProgress?Boolean.TRUE:Boolean.FALSE,
-                                                accounting
-                                            );
-                                            BankAccountHandler.getBankTransactionsAccount(
-                                                conn,
-                                                source,
-                                                out,
-                                                provideProgress,
-                                                accounting
-                                            );
-                                            resp1=AOServProtocol.DONE;
-                                            sendInvalidateList=false;
-                                        }
-                                        break;
                                     case GET_CONFIRMED_ACCOUNT_BALANCE :
                                         {
                                             String accounting=in.readUTF();
@@ -4598,6 +4577,23 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case GET_TRANSACTION_DESCRIPTION :
+                                        {
+                                            int transid=in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_transaction_description",
+                                                Integer.valueOf(transid)
+                                            );
+                                            String description=TransactionHandler.getTransactionDescription(
+                                                conn,
+                                                source,
+                                                transid
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2LongString = description;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case GET_TICKET_RAW_EMAIL :
                                         {
                                             int pkey=in.readCompressedInt();
@@ -4746,7 +4742,7 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
-                                    case GET_TRANSACTIONS_SEARCH :
+                                    /*case GET_TRANSACTIONS_SEARCH :
                                         {
                                             boolean provideProgress=in.readBoolean();
                                             TransactionSearchCriteria criteria=new TransactionSearchCriteria();
@@ -4766,7 +4762,7 @@ public abstract class MasterServer {
                                             resp1=AOServProtocol.DONE;
                                             sendInvalidateList=false;
                                         }
-                                        break;
+                                        break;*/
                                     case GET_WHOIS_HISTORY_WHOIS_OUTPUT :
                                         {
                                             int pkey=in.readCompressedInt();

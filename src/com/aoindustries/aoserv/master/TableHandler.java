@@ -133,6 +133,7 @@ import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.aoserv.client.Rack;
 import com.aoindustries.aoserv.client.Reseller;
 import com.aoindustries.aoserv.client.Resource;
+import com.aoindustries.aoserv.client.ResourceType;
 import com.aoindustries.aoserv.client.SchemaColumn;
 import com.aoindustries.aoserv.client.SchemaForeignKey;
 import com.aoindustries.aoserv.client.SchemaTable;
@@ -4857,7 +4858,7 @@ final public class TableHandler {
                             "select distinct\n"
                             + "  pdl.pkey,\n"
                             + "  pdl.package_definition,\n"
-                            + "  pdl.resource,\n"
+                            + "  pdl.resource_type,\n"
                             + "  pdl.soft_limit,\n"
                             + "  pdl.hard_limit,\n"
                             + "  null,\n"
@@ -5424,15 +5425,66 @@ final public class TableHandler {
                     username
                 );
                 break;
-            case RESOURCES :
+            case RESOURCE_TYPES :
                 MasterServer.writeObjects(
                     conn,
                     source,
                     out,
                     provideProgress,
-                    new Resource(),
-                    "select * from resources"
+                    new ResourceType(),
+                    "select * from resource_types"
                 );
+                break;
+            case RESOURCES :
+                if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                    // Table was renamed
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new ResourceType(),
+                        "select * from resource_types"
+                    );
+                } else {
+                    if(masterUser!=null) {
+                        if(masterServers.length==0) {
+                            MasterServer.writeObjects(
+                                conn,
+                                source,
+                                out,
+                                provideProgress,
+                                new Resource(),
+                                "select * from resources"
+                            );
+                        } else {
+                            // Daemons don't need any resource details
+                            List<Resource> emptyList = Collections.emptyList();
+                            MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                        }
+                    } else {
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new Resource(),
+                            "select\n"
+                            + "  re.*\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + BU1_PARENTS_JOIN
+                            + "  resources re\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and (\n"
+                            + UN_BU1_PARENTS_WHERE
+                            + "  )\n"
+                            + "  and bu1.accounting=re.owner",
+                            username
+                        );
+                    }
+                }
                 break;
             case SCHEMA_COLUMNS :
                 {

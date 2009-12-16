@@ -10,17 +10,13 @@ import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.Transaction;
-import com.aoindustries.aoserv.client.TransactionSearchCriteria;
 import com.aoindustries.aoserv.client.TransactionType;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.SQLUtility;
-import com.aoindustries.util.StringUtility;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -323,6 +319,7 @@ final public class TransactionHandler {
         );
     }
 
+    /*
     public static void getTransactionsSearch(
         DatabaseConnection conn,
         RequestSource source,
@@ -469,7 +466,7 @@ final public class TransactionHandler {
         } finally {
             pstmt.close();
         }
-    }
+    }*/
 
     public static void transactionApproved(
         DatabaseConnection conn,
@@ -563,5 +560,14 @@ final public class TransactionHandler {
 
     public static String getBusinessForTransaction(DatabaseConnection conn, int transid) throws IOException, SQLException {
         return conn.executeStringQuery("select accounting from transactions where transid=?", transid);
+    }
+
+    public static String getTransactionDescription(
+        DatabaseConnection conn,
+        RequestSource source,
+        int transid
+    ) throws IOException, SQLException {
+        checkAccessTransaction(conn, source, "getTransactionDescription", transid);
+        return conn.executeStringQuery("select description from transactions where transid=?", transid);
     }
 }

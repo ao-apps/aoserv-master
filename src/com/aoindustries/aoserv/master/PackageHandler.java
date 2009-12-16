@@ -5,7 +5,7 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.Resource;
+import com.aoindustries.aoserv.client.ResourceType;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.SQLUtility;
@@ -183,14 +183,14 @@ final public class PackageHandler {
             + "  package_definition_limits\n"
             + "(\n"
             + "  package_definition,\n"
-            + "  resource,\n"
+            + "  resource_type,\n"
             + "  soft_limit,\n"
             + "  hard_limit,\n"
             + "  additional_rate,\n"
             + "  additional_transaction_type\n"
             + ") select\n"
             + "  ?,\n"
-            + "  resource,\n"
+            + "  resource_type,\n"
             + "  soft_limit,\n"
             + "  hard_limit,\n"
             + "  additional_rate,\n"
@@ -313,8 +313,8 @@ final public class PackageHandler {
             + "  )",
             accounting,
             SQLUtility.getDecimal(rate),
-            Resource.USER,
-            Resource.EMAIL
+            ResourceType.USER,
+            ResourceType.EMAIL
         );
     }
 
@@ -373,7 +373,7 @@ final public class PackageHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int pkey,
-        String[] resources,
+        String[] resourceTypes,
         int[] soft_limits,
         int[] hard_limits,
         int[] additional_rates,
@@ -385,14 +385,14 @@ final public class PackageHandler {
 
         // Update the database
         conn.executeUpdate("delete from package_definition_limits where package_definition=?", pkey);
-        for(int c=0;c<resources.length;c++) {
+        for(int c=0;c<resourceTypes.length;c++) {
             conn.executeUpdate(
 
                 "insert into\n"
                 + "  package_definition_limits\n"
                 + "(\n"
                 + "  package_definition,\n"
-                + "  resource,\n"
+                + "  resource_type,\n"
                 + "  soft_limit,\n"
                 + "  hard_limit,\n"
                 + "  additional_rate,\n"
@@ -406,7 +406,7 @@ final public class PackageHandler {
                 + "  ?\n"
                 + ")",
                 pkey,
-                resources[c],
+                resourceTypes[c],
                 soft_limits[c]==-1 ? null : Integer.toString(soft_limits[c]),
                 hard_limits[c]==-1 ? null : Integer.toString(hard_limits[c]),
                 additional_rates[c]<=0 ? null : SQLUtility.getDecimal(additional_rates[c]),

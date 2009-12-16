@@ -32,32 +32,6 @@ final public class BankAccountHandler {
         if(!isAccounting(conn, source)) throw new SQLException("Accounting not allowed, '"+action+"'");
     }
 
-    /**
-     * Gets all transactions for one account.
-     */
-    public static void getBankTransactionsAccount(
-        DatabaseConnection conn,
-        RequestSource source,
-        CompressedDataOutputStream out,
-        boolean provideProgress,
-        String account
-    ) throws IOException, SQLException {
-        if(isBankAccounting(conn, source)) {
-            MasterServer.writeObjects(
-                conn,
-                source,
-                out,
-                provideProgress,
-                new BankTransaction(),
-                "select * from bank_transactions where bank_account=?",
-                account
-            );
-        } else {
-            List<BankTransaction> emptyList = Collections.emptyList();
-            MasterServer.writeObjects(source, out, provideProgress, emptyList);
-        }
-    }
-
     public static void checkBankAccounting(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
         if(!isBankAccounting(conn, source)) throw new SQLException("Bank accounting not allowed, '"+action+"'");
     }
