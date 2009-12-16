@@ -7014,13 +7014,13 @@ public abstract class MasterServer {
                                         {
                                             int pkey=in.readCompressedInt();
                                             int count=in.readCompressedInt();
-                                            String[] resources=new String[count];
+                                            String[] resourceTypes=new String[count];
                                             int[] soft_limits=new int[count];
                                             int[] hard_limits=new int[count];
                                             int[] additional_rates=new int[count];
                                             String[] additional_transaction_types=new String[count];
                                             for(int c=0;c<count;c++) {
-                                                resources[c]=in.readUTF();
+                                                resourceTypes[c]=in.readUTF();
                                                 soft_limits[c]=in.readCompressedInt();
                                                 hard_limits[c]=in.readCompressedInt();
                                                 additional_rates[c]=in.readCompressedInt();
@@ -7030,7 +7030,7 @@ public abstract class MasterServer {
                                                 "set_package_definition_limits",
                                                 Integer.valueOf(pkey),
                                                 Integer.valueOf(count),
-                                                resources,
+                                                resourceTypes,
                                                 soft_limits,
                                                 hard_limits,
                                                 additional_rates,
@@ -7041,7 +7041,7 @@ public abstract class MasterServer {
                                                 source,
                                                 invalidateList,
                                                 pkey,
-                                                resources,
+                                                resourceTypes,
                                                 soft_limits,
                                                 hard_limits,
                                                 additional_rates,
