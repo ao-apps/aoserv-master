@@ -13,7 +13,6 @@ import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.MySQLDatabase;
 import com.aoindustries.aoserv.client.MySQLDatabaseTable;
 import com.aoindustries.aoserv.client.MySQLServer;
-import com.aoindustries.aoserv.client.MySQLServerUser;
 import com.aoindustries.aoserv.client.MySQLUser;
 import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
@@ -39,8 +38,7 @@ final public class MySQLHandler {
     private MySQLHandler() {
     }
 
-    private final static Map<Integer,Boolean> disabledMySQLServerUsers=new HashMap<Integer,Boolean>();
-    private final static Map<String,Boolean> disabledMySQLUsers=new HashMap<String,Boolean>();
+    private final static Map<Integer,Boolean> disabledMySQLUsers=new HashMap<Integer,Boolean>();
 
     public static void checkAccessMySQLDatabase(DatabaseConnection conn, RequestSource source, String action, int mysql_database) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
@@ -57,19 +55,19 @@ final public class MySQLHandler {
 
     public static void checkAccessMySQLDBUser(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         checkAccessMySQLDatabase(conn, source, action, getMySQLDatabaseForMySQLDBUser(conn, pkey));
-        checkAccessMySQLServerUser(conn, source, action, getMySQLServerUserForMySQLDBUser(conn, pkey));
+        checkAccessMySQLUser(conn, source, action, getMySQLUserForMySQLDBUser(conn, pkey));
     }
 
-    public static void checkAccessMySQLServerUser(DatabaseConnection conn, RequestSource source, String action, int mysql_server_user) throws IOException, SQLException {
+    public static void checkAccessMySQLUser(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
         if(mu!=null) {
             if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
-                int mysqlServer = getMySQLServerForMySQLServerUser(conn, mysql_server_user);
+                int mysqlServer = getMySQLServerForMySQLUser(conn, pkey);
                 int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
                 ServerHandler.checkAccessServer(conn, source, action, aoServer);
             }
         } else {
-            checkAccessMySQLUser(conn, source, action, getUsernameForMySQLServerUser(conn, mysql_server_user));
+            UsernameHandler.checkAccessUsername(conn, source, action, getUsernameForMySQLUser(conn, pkey));
         }
     }
 
@@ -84,37 +82,6 @@ final public class MySQLHandler {
         } else {
             // Protect by package
             BusinessHandler.checkAccessBusiness(conn, source, action, getBusinessForMySQLServer(conn, mysql_server));
-        }
-    }
-
-    public static void checkAccessMySQLUser(DatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
-        MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
-        if(mu!=null) {
-            if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
-                IntList msus = getMySQLServerUsersForMySQLUser(conn, username);
-                boolean found = false;
-                for(int msu : msus) {
-                    int mysqlServer = getMySQLServerForMySQLServerUser(conn, msu);
-                    int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
-                    if(ServerHandler.canAccessServer(conn, source, aoServer)) {
-                        found=true;
-                        break;
-                    }
-                }
-                if(!found) {
-                    String message=
-                        "business_administrator.username="
-                        +source.getUsername()
-                        +" is not allowed to access mysql_user: action='"
-                        +action
-                        +", username="
-                        +username
-                    ;
-                    throw new SQLException(message);
-                }
-            }
-        } else {
-            UsernameHandler.checkAccessUsername(conn, source, action, username);
         }
     }
 
@@ -172,14 +139,14 @@ final public class MySQLHandler {
     }
 
     /**
-     * Grants a MySQLServerUser access to a MySQLMasterDatabase.getDatabase().
+     * Grants a MySQLUser access to a MySQLMasterDatabase.getDatabase().
      */
     public static int addMySQLDBUser(
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int mysql_database,
-        int mysql_server_user,
+        int mysql_user,
         boolean canSelect,
         boolean canInsert,
         boolean canUpdate,
@@ -200,13 +167,13 @@ final public class MySQLHandler {
     ) throws IOException, SQLException {
         // Must be allowed to access this database and user
         checkAccessMySQLDatabase(conn, source, "addMySQLDBUser", mysql_database);
-        checkAccessMySQLServerUser(conn, source, "addMySQLDBUser", mysql_server_user);
-        if(isMySQLServerUserDisabled(conn, mysql_server_user)) throw new SQLException("Unable to add MySQLDBUser, MySQLServerUser disabled: "+mysql_server_user);
+        checkAccessMySQLUser(conn, source, "addMySQLDBUser", mysql_user);
+        if(isMySQLUserDisabled(conn, mysql_user)) throw new SQLException("Unable to add MySQLDBUser, MySQLUser disabled: "+mysql_user);
 
         // Must also have matching servers
         int dbServer=getMySQLServerForMySQLDatabase(conn, mysql_database);
-        int userServer=getMySQLServerForMySQLServerUser(conn, mysql_server_user);
-        if(dbServer!=userServer) throw new SQLException("Mismatched mysql_servers for mysql_databases and mysql_server_users");
+        int userServer=getMySQLServerForMySQLUser(conn, mysql_user);
+        if(dbServer!=userServer) throw new SQLException("Mismatched mysql_servers for mysql_databases and mysql_users");
 
         // Add the entry to the database
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_db_users_pkey_seq')");
@@ -214,7 +181,7 @@ final public class MySQLHandler {
             "insert into mysql_db_users values(?,?,?,?,?,?,?,?,?,false,false,?,?,?,?,?,?,?,?,?,?,?)",
             pkey,
             mysql_database,
-            mysql_server_user,
+            mysql_user,
             canSelect,
             canInsert,
             canUpdate,
@@ -238,7 +205,7 @@ final public class MySQLHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.MYSQL_DB_USERS,
-            getBusinessForMySQLServerUser(conn, mysql_server_user),
+            getBusinessForMySQLUser(conn, mysql_user),
             getAOServerForMySQLServer(conn, dbServer),
             false
         );
@@ -246,66 +213,65 @@ final public class MySQLHandler {
     }
 
     /**
-     * Adds a MySQL server user.
+     * Adds a MySQL user.
      */
-    public static int addMySQLServerUser(
+    public static int addMySQLUser(
         DatabaseConnection conn,
-        RequestSource source,
+        RequestSource source, 
         InvalidateList invalidateList,
         String username,
         int mysqlServer,
         String host
     ) throws IOException, SQLException {
-        checkAccessMySQLUser(conn, source, "addMySQLServerUser", username);
-        if(isMySQLUserDisabled(conn, username)) throw new SQLException("Unable to add MySQLServerUser, MySQLUser disabled: "+username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add MySQLServerUser for user '"+LinuxAccount.MAIL+'\'');
-        int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-        ServerHandler.checkAccessServer(conn, source, "addMySQLServerUser", aoServer);
-        // This sub-account must have access to the server
-        UsernameHandler.checkUsernameAccessServer(conn, source, "addMySQLServerUser", username, aoServer);
-
-        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_server_users_pkey_seq')");
-        conn.executeUpdate(
-            "insert into mysql_server_users values(?,?,?,?,null,null,?,?,?,?)",
-            pkey,
-            username,
-            mysqlServer,
-            host,
-            username.equals(MySQLUser.ROOT)?MySQLServerUser.UNLIMITED_QUESTIONS:MySQLServerUser.DEFAULT_MAX_QUESTIONS,
-            username.equals(MySQLUser.ROOT)?MySQLServerUser.UNLIMITED_UPDATES:MySQLServerUser.DEFAULT_MAX_UPDATES,
-            username.equals(MySQLUser.ROOT)?MySQLServerUser.UNLIMITED_CONNECTIONS:MySQLServerUser.DEFAULT_MAX_CONNECTIONS,
-            username.equals(MySQLUser.ROOT)?MySQLServerUser.UNLIMITED_USER_CONNECTIONS:MySQLServerUser.DEFAULT_MAX_USER_CONNECTIONS
-        );
-
-        // Notify all clients of the update
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
-        invalidateList.addTable(
-            conn,
-            SchemaTable.TableID.MYSQL_SERVER_USERS,
-            accounting,
-            aoServer,
-            true
-        );
-        return pkey;
-    }
-
-    /**
-     * Adds a MySQL user.
-     */
-    public static void addMySQLUser(
-        DatabaseConnection conn,
-        RequestSource source, 
-        InvalidateList invalidateList,
-        String username
-    ) throws IOException, SQLException {
         UsernameHandler.checkAccessUsername(conn, source, "addMySQLUser", username);
         if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add MySQLUser, Username disabled: "+username);
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add MySQLUser for user '"+LinuxAccount.MAIL+'\'');
         if(!MySQLUser.isValidUsername(username)) throw new SQLException("Invalid MySQLUser username: "+username);
+        int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
+        ServerHandler.checkAccessServer(conn, source, "addMySQLUser", aoServer);
+        // This sub-account must have access to the server
+        UsernameHandler.checkUsernameAccessServer(conn, source, "addMySQLUser", username, aoServer);
 
+        Boolean isRoot = username.equals(MySQLUser.ROOT);
+        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_users_pkey_seq')");
         conn.executeUpdate(
-            "insert into mysql_users(username) values(?)",
-            username
+            "insert into mysql_users values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null,?,?,?,?)",
+            pkey,
+            username,
+            mysqlServer,
+            host,
+            isRoot, // select_priv
+            isRoot, // insert_priv
+            isRoot, // update_priv
+            isRoot, // delete_priv
+            isRoot, // create_priv
+            isRoot, // drop_priv
+            isRoot, // reload_priv
+            isRoot, // shutdown_priv
+            isRoot, // process_priv
+            isRoot, // file_priv
+            isRoot, // grant_priv
+            isRoot, // references_priv
+            isRoot, // index_priv
+            isRoot, // alter_priv
+            isRoot, // show_db_priv
+            isRoot, // super_priv
+            isRoot, // create_tmp_table_priv
+            isRoot, // lock_tables_priv
+            isRoot, // execute_priv
+            isRoot, // repl_slave_priv
+            isRoot, // repl_client_priv
+            isRoot, // create_view_priv
+            isRoot, // show_view_priv
+            isRoot, // create_routine_priv
+            isRoot, // alter_routine_priv
+            isRoot, // create_user_priv
+            isRoot, // event_priv
+            isRoot, // trigger_priv
+            isRoot?MySQLUser.UNLIMITED_QUESTIONS        : MySQLUser.DEFAULT_MAX_QUESTIONS,
+            isRoot?MySQLUser.UNLIMITED_UPDATES          : MySQLUser.DEFAULT_MAX_UPDATES,
+            isRoot?MySQLUser.UNLIMITED_CONNECTIONS      : MySQLUser.DEFAULT_MAX_CONNECTIONS,
+            isRoot?MySQLUser.UNLIMITED_USER_CONNECTIONS : MySQLUser.DEFAULT_MAX_USER_CONNECTIONS
         );
 
         // Notify all clients of the update
@@ -313,36 +279,11 @@ final public class MySQLHandler {
             conn,
             SchemaTable.TableID.MYSQL_USERS,
             UsernameHandler.getBusinessForUsername(conn, username),
-            InvalidateList.allServers,
+            aoServer,
             true
         );
-    }
 
-    public static void disableMySQLServerUser(
-        DatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int disableLog,
-        int pkey
-    ) throws IOException, SQLException {
-        if(isMySQLServerUserDisabled(conn, pkey)) throw new SQLException("MySQLServerUser is already disabled: "+pkey);
-        BusinessHandler.checkAccessDisableLog(conn, source, "disableMySQLServerUser", disableLog, false);
-        checkAccessMySQLServerUser(conn, source, "disableMySQLServerUser", pkey);
-
-        conn.executeUpdate(
-            "update mysql_server_users set disable_log=? where pkey=?",
-            disableLog,
-            pkey
-        );
-
-        // Notify all clients of the update
-        invalidateList.addTable(
-            conn,
-            SchemaTable.TableID.MYSQL_SERVER_USERS,
-            getBusinessForMySQLServerUser(conn, pkey),
-            getAOServerForMySQLServer(conn, getMySQLServerForMySQLServerUser(conn, pkey)),
-            false
-        );
+        return pkey;
     }
 
     public static void disableMySQLUser(
@@ -350,31 +291,24 @@ final public class MySQLHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
-        String username
+        int pkey
     ) throws IOException, SQLException {
-        if(isMySQLUserDisabled(conn, username)) throw new SQLException("MySQLUser is already disabled: "+username);
+        if(isMySQLUserDisabled(conn, pkey)) throw new SQLException("MySQLUser is already disabled: "+pkey);
         BusinessHandler.checkAccessDisableLog(conn, source, "disableMySQLUser", disableLog, false);
-        checkAccessMySQLUser(conn, source, "disableMySQLUser", username);
-        IntList msus=getMySQLServerUsersForMySQLUser(conn, username);
-        for(int c=0;c<msus.size();c++) {
-            int msu=msus.getInt(c);
-            if(!isMySQLServerUserDisabled(conn, msu)) {
-                throw new SQLException("Cannot disable MySQLUser '"+username+"': MySQLServerUser not disabled: "+msu);
-            }
-        }
+        checkAccessMySQLUser(conn, source, "disableMySQLUser", pkey);
 
         conn.executeUpdate(
-            "update mysql_users set disable_log=? where username=?",
+            "update mysql_users set disable_log=? where pkey=?",
             disableLog,
-            username
+            pkey
         );
 
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.MYSQL_USERS,
-            UsernameHandler.getBusinessForUsername(conn, username),
-            UsernameHandler.getServersForUsername(conn, username),
+            getBusinessForMySQLUser(conn, pkey),
+            getAOServerForMySQLServer(conn, getMySQLServerForMySQLUser(conn, pkey)),
             false
         );
     }
@@ -395,57 +329,31 @@ final public class MySQLHandler {
         DaemonHandler.getDaemonConnector(conn, aoServer).dumpMySQLDatabase(dbPKey, out);
     }
 
-    public static void enableMySQLServerUser(
+    public static void enableMySQLUser(
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        int disableLog=getDisableLogForMySQLServerUser(conn, pkey);
-        if(disableLog==-1) throw new SQLException("MySQLServerUser is already enabled: "+pkey);
-        BusinessHandler.checkAccessDisableLog(conn, source, "enableMySQLServerUser", disableLog, true);
-        checkAccessMySQLServerUser(conn, source, "enableMySQLServerUser", pkey);
-        String mu=getUsernameForMySQLServerUser(conn, pkey);
-        if(isMySQLUserDisabled(conn, mu)) throw new SQLException("Unable to enable MySQLServerUser #"+pkey+", MySQLUser not enabled: "+mu);
+        int disableLog=getDisableLogForMySQLUser(conn, pkey);
+        if(disableLog==-1) throw new SQLException("MySQLUser is already enabled: "+pkey);
+        BusinessHandler.checkAccessDisableLog(conn, source, "enableMySQLUser", disableLog, true);
+        checkAccessMySQLUser(conn, source, "enableMySQLUser", pkey);
+        String username = getUsernameForMySQLUser(conn, pkey);
+        UsernameHandler.checkAccessUsername(conn, source, "enableMySQLUser", username);
+        if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable MySQLUser "+pkey+", Username not enabled: "+username);
 
         conn.executeUpdate(
-            "update mysql_server_users set disable_log=null where pkey=?",
+            "update mysql_users set disable_log=null where pkey=?",
             pkey
         );
 
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.MYSQL_SERVER_USERS,
-            UsernameHandler.getBusinessForUsername(conn, mu),
-            getAOServerForMySQLServer(conn, getMySQLServerForMySQLServerUser(conn, pkey)),
-            false
-        );
-    }
-
-    public static void enableMySQLUser(
-        DatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        String username
-    ) throws IOException, SQLException {
-        int disableLog=getDisableLogForMySQLUser(conn, username);
-        if(disableLog==-1) throw new SQLException("MySQLUser is already enabled: "+username);
-        BusinessHandler.checkAccessDisableLog(conn, source, "enableMySQLUser", disableLog, true);
-        UsernameHandler.checkAccessUsername(conn, source, "enableMySQLUser", username);
-        if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable MySQLUser '"+username+"', Username not enabled: "+username);
-
-        conn.executeUpdate(
-            "update mysql_users set disable_log=null where username=?",
-            username
-        );
-
-        // Notify all clients of the update
-        invalidateList.addTable(
-            conn,
             SchemaTable.TableID.MYSQL_USERS,
-            UsernameHandler.getBusinessForUsername(conn, username),
-            UsernameHandler.getServersForUsername(conn, username),
+            username,
+            getAOServerForMySQLServer(conn, getMySQLServerForMySQLUser(conn, pkey)),
             false
         );
     }
@@ -497,16 +405,12 @@ final public class MySQLHandler {
         }
     }
 
-    public static int getDisableLogForMySQLServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql_server_users where pkey=?", pkey);
+    public static int getDisableLogForMySQLUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql_users where pkey=?", pkey);
     }
 
-    public static int getDisableLogForMySQLUser(DatabaseConnection conn, String username) throws IOException, SQLException {
-        return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql_users where username=?", username);
-    }
-
-    public static String getUsernameForMySQLServerUser(DatabaseConnection conn, int msu) throws IOException, SQLException {
-        return conn.executeStringQuery("select username from mysql_server_users where pkey=?", msu);
+    public static String getUsernameForMySQLUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeStringQuery("select username from mysql_users where pkey=?", pkey);
     }
 
     public static String getMySQLDatabaseName(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -520,28 +424,12 @@ final public class MySQLHandler {
                     reservedWordCache=null;
                 }
                 break;
-            case MYSQL_SERVER_USERS :
-                synchronized(MySQLHandler.class) {
-                    disabledMySQLServerUsers.clear();
-                }
-                break;
             case MYSQL_USERS :
                 synchronized(MySQLHandler.class) {
                     disabledMySQLUsers.clear();
                 }
                 break;
         }
-    }
-
-    public static boolean isMySQLServerUserDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-	    synchronized(MySQLHandler.class) {
-            Integer I=Integer.valueOf(pkey);
-            Boolean O=disabledMySQLServerUsers.get(I);
-            if(O!=null) return O.booleanValue();
-            boolean isDisabled=getDisableLogForMySQLServerUser(conn, pkey)!=-1;
-            disabledMySQLServerUsers.put(I, isDisabled?Boolean.TRUE:Boolean.FALSE);
-            return isDisabled;
-	    }
     }
 
     public static boolean isMySQLUser(DatabaseConnection conn, String username) throws IOException, SQLException {
@@ -560,12 +448,12 @@ final public class MySQLHandler {
         );
     }
 
-    public static boolean isMySQLUserDisabled(DatabaseConnection conn, String username) throws IOException, SQLException {
+    public static boolean isMySQLUserDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(MySQLHandler.class) {
-            Boolean O=disabledMySQLUsers.get(username);
+            Boolean O=disabledMySQLUsers.get(pkey);
             if(O!=null) return O.booleanValue();
-            boolean isDisabled=getDisableLogForMySQLUser(conn, username)!=-1;
-            disabledMySQLUsers.put(username, isDisabled);
+            boolean isDisabled=getDisableLogForMySQLUser(conn, pkey)!=-1;
+            disabledMySQLUsers.put(pkey, isDisabled);
             return isDisabled;
 	    }
     }
@@ -584,15 +472,15 @@ final public class MySQLHandler {
         return conn.executeBooleanQuery("select (select pkey from mysql_databases where name=? and mysql_server=?) is null", name, mysqlServer);
     }
 
-    public static boolean isMySQLServerUserPasswordSet(
+    public static boolean isMySQLUserPasswordSet(
         DatabaseConnection conn,
         RequestSource source,
-        int msu
+        int pkey
     ) throws IOException, SQLException {
-        checkAccessMySQLServerUser(conn, source, "isMySQLServerUserPasswordSet", msu);
-        if(isMySQLServerUserDisabled(conn, msu)) throw new SQLException("Unable to determine if the MySQLServerUser password is set, account disabled: "+msu);
-        String username=getUsernameForMySQLServerUser(conn, msu);
-        int mysqlServer=getMySQLServerForMySQLServerUser(conn, msu);
+        checkAccessMySQLUser(conn, source, "isMySQLUserPasswordSet", pkey);
+        if(isMySQLUserDisabled(conn, pkey)) throw new SQLException("Unable to determine if the MySQLUser password is set, account disabled: "+pkey);
+        String username=getUsernameForMySQLUser(conn, pkey);
+        int mysqlServer=getMySQLServerForMySQLUser(conn, pkey);
         int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
         String password=DaemonHandler.getDaemonConnector(conn, aoServer).getEncryptedMySQLUserPassword(mysqlServer, username);
         return !MySQLUser.NO_PASSWORD_DB_VALUE.equals(password);
@@ -630,12 +518,12 @@ final public class MySQLHandler {
             + "  un.accounting\n"
             + "from\n"
             + "  mysql_db_users mdu,\n"
-            + "  mysql_server_users msu,\n"
+            + "  mysql_users mu,\n"
             + "  usernames un\n"
             + "where\n"
             + "  mdu.mysql_database=?\n"
-            + "  and mdu.mysql_server_user=msu.pkey\n"
-            + "  and msu.username=un.username\n"
+            + "  and mdu.mysql_user=mu.pkey\n"
+            + "  and mu.username=un.username\n"
             + "group by\n"
             + "  un.accounting",
             pkey
@@ -692,58 +580,17 @@ final public class MySQLHandler {
     }
 
     /**
-     * Removes a MySQLServerUser from the system.
-     */
-    public static void removeMySQLServerUser(
-        DatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int pkey
-    ) throws IOException, SQLException {
-        checkAccessMySQLServerUser(conn, source, "removeMySQLServerUser", pkey);
-
-        String username=getUsernameForMySQLServerUser(conn, pkey);
-        if(username.equals(MySQLUser.ROOT)) throw new SQLException("Not allowed to remove MySQLServerUser for user '"+MySQLUser.ROOT+'\'');
-
-        // Remove the mysql_db_user
-        boolean dbUsersExist=conn.executeBooleanQuery("select (select pkey from mysql_db_users where mysql_server_user=? limit 1) is not null", pkey);
-        if(dbUsersExist) conn.executeUpdate("delete from mysql_db_users where mysql_server_user=?", pkey);
-
-        // Remove the mysql_server_user
-        String accounting=getBusinessForMySQLServerUser(conn, pkey);
-        int mysqlServer=getMySQLServerForMySQLServerUser(conn, pkey);
-        int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-        conn.executeUpdate("delete from mysql_server_users where pkey=?", pkey);
-
-        // Notify all clients of the updates
-        if(dbUsersExist) invalidateList.addTable(
-            conn,
-            SchemaTable.TableID.MYSQL_DB_USERS,
-            accounting,
-            aoServer,
-            false
-        );
-        invalidateList.addTable(
-            conn,
-            SchemaTable.TableID.MYSQL_SERVER_USERS,
-            accounting,
-            aoServer,
-            true
-        );
-    }
-
-    /**
      * Removes a MySQLUser from the system.
      */
     public static void removeMySQLUser(
         DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
-        String username
+        int pkey
     ) throws IOException, SQLException {
-        checkAccessMySQLUser(conn, source, "removeMySQLUser", username);
+        checkAccessMySQLUser(conn, source, "removeMySQLUser", pkey);
 
-        removeMySQLUser(conn, invalidateList, username);
+        removeMySQLUser(conn, invalidateList, pkey);
     }
 
     /**
@@ -752,78 +599,33 @@ final public class MySQLHandler {
     public static void removeMySQLUser(
         DatabaseConnection conn,
         InvalidateList invalidateList,
-        String username
+        int pkey
     ) throws IOException, SQLException {
+        String username = getUsernameForMySQLUser(conn, pkey);
         if(username.equals(MySQLUser.ROOT)) throw new SQLException("Not allowed to remove MySQLUser for user '"+MySQLUser.ROOT+'\'');
 
         String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        int mysqlServer = getMySQLServerForMySQLUser(conn, pkey);
+        int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
 
         // Remove the mysql_db_user
-        IntList dbUserServers=conn.executeIntListQuery(
-            "select\n"
-            + "  md.mysql_server\n"
-            + "from\n"
-            + "  mysql_server_users msu,\n"
-            + "  mysql_db_users mdu,\n"
-            + "  mysql_databases md\n"
-            + "where\n"
-            + "  msu.username=?\n"
-            + "  and msu.pkey=mdu.mysql_server_user\n"
-            + "  and mdu.mysql_database=md.pkey\n"
-            + "group by\n"
-            + "  md.mysql_server",
-            username
-	    );
-        if(dbUserServers.size()>0) {
-            conn.executeUpdate(
-                "delete from\n"
-                + "  mysql_db_users\n"
-                + "where\n"
-                + "  pkey in (\n"
-                + "    select\n"
-                + "      mdu.pkey\n"
-                + "    from\n"
-                + "      mysql_server_users msu,\n"
-                + "      mysql_db_users mdu\n"
-                + "    where\n"
-                + "      msu.username=?\n"
-                + "      and msu.pkey=mdu.mysql_server_user"
-                + "  )",
-                username
+        if(conn.executeUpdate("delete from mysql_db_users where mysql_user=?", pkey)>0) {
+            invalidateList.addTable(
+                conn,
+                SchemaTable.TableID.MYSQL_DB_USERS,
+                accounting,
+                aoServer,
+                false
             );
-            for(int mysqlServer : dbUserServers) {
-                invalidateList.addTable(
-                    conn,
-                    SchemaTable.TableID.MYSQL_DB_USERS,
-                    accounting,
-                    getAOServerForMySQLServer(conn, mysqlServer),
-                    false
-                );
-            }
-        }
-
-        // Remove the mysql_server_user
-        IntList mysqlServers=conn.executeIntListQuery("select mysql_server from mysql_server_users where username=?", username);
-        if(mysqlServers.size()>0) {
-            conn.executeUpdate("delete from mysql_server_users where username=?", username);
-            for(int mysqlServer : mysqlServers) {
-                invalidateList.addTable(
-                    conn,
-                    SchemaTable.TableID.MYSQL_SERVER_USERS,
-                    accounting,
-                    getAOServerForMySQLServer(conn, mysqlServer),
-                    false
-                );
-            }
         }
 
         // Remove the mysql_user
-        conn.executeUpdate("delete from mysql_users where username=?", username);
+        conn.executeUpdate("delete from mysql_users where pkey=?", pkey);
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.MYSQL_USERS,
             accounting,
-            BusinessHandler.getServersForBusiness(conn, accounting),
+            aoServer,
             false
         );
     }
@@ -831,18 +633,18 @@ final public class MySQLHandler {
     /**
      * Sets a MySQL password.
      */
-    public static void setMySQLServerUserPassword(
+    public static void setMySQLUserPassword(
         DatabaseConnection conn,
         RequestSource source,
-        int mysql_server_user,
+        int pkey,
         String password
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setMySQLServerUserPassword", AOServPermission.Permission.set_mysql_server_user_password);
-        checkAccessMySQLServerUser(conn, source, "setMySQLServerUserPassword", mysql_server_user);
-        if(isMySQLServerUserDisabled(conn, mysql_server_user)) throw new SQLException("Unable to set MySQLServerUser password, account disabled: "+mysql_server_user);
+        BusinessHandler.checkPermission(conn, source, "setMySQLUserPassword", AOServPermission.Permission.set_mysql_user_password);
+        checkAccessMySQLUser(conn, source, "setMySQLUserPassword", pkey);
+        if(isMySQLUserDisabled(conn, pkey)) throw new SQLException("Unable to set MySQLUser password, account disabled: "+pkey);
 
         // Get the server, username for the user
-        String username=getUsernameForMySQLServerUser(conn, mysql_server_user);
+        String username=getUsernameForMySQLUser(conn, pkey);
 
         // No setting the super user password
         if(username.equals(MySQLUser.ROOT)) throw new SQLException("The MySQL "+MySQLUser.ROOT+" password may not be set.");
@@ -855,42 +657,37 @@ final public class MySQLHandler {
         }
 
         // Contact the daemon for the update
-        int mysqlServer=getMySQLServerForMySQLServerUser(conn, mysql_server_user);
+        int mysqlServer=getMySQLServerForMySQLUser(conn, pkey);
         int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-        DaemonHandler.getDaemonConnector(
-            conn,
-            aoServer
-        ).setMySQLUserPassword(mysqlServer, username, password);
+        DaemonHandler.getDaemonConnector(conn, aoServer).setMySQLUserPassword(mysqlServer, username, password);
     }
 
-    public static void setMySQLServerUserPredisablePassword(
+    public static void setMySQLUserPredisablePassword(
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int msu,
+        int pkey,
         String password
     ) throws IOException, SQLException {
-        checkAccessMySQLServerUser(conn, source, "setMySQLServerUserPredisablePassword", msu);
+        checkAccessMySQLUser(conn, source, "setMySQLUserPredisablePassword", pkey);
         if(password==null) {
-            if(isMySQLServerUserDisabled(conn, msu)) throw new SQLException("Unable to clear MySQLServerUser predisable password, account disabled: "+msu);
+            if(isMySQLUserDisabled(conn, pkey)) throw new SQLException("Unable to clear MySQLUser predisable password, account disabled: "+pkey);
         } else {
-            if(!isMySQLServerUserDisabled(conn, msu)) throw new SQLException("Unable to set MySQLServerUser predisable password, account not disabled: "+msu);
+            if(!isMySQLUserDisabled(conn, pkey)) throw new SQLException("Unable to set MySQLUser predisable password, account not disabled: "+pkey);
         }
 
         // Update the database
         conn.executeUpdate(
-            "update mysql_server_users set predisable_password=? where pkey=?",
+            "update mysql_users set predisable_password=? where pkey=?",
             password,
-            msu
+            pkey
         );
 
-        int mysqlServer=getMySQLServerForMySQLServerUser(conn, msu);
-        int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.MYSQL_SERVER_USERS,
-            getBusinessForMySQLServerUser(conn, msu),
-            aoServer,
+            SchemaTable.TableID.MYSQL_USERS,
+            getBusinessForMySQLUser(conn, pkey),
+            getAOServerForMySQLServer(conn, getMySQLServerForMySQLUser(conn, pkey)),
             false
         );
     }
@@ -944,32 +741,32 @@ final public class MySQLHandler {
             + "  un.accounting\n"
             + "from\n"
             + "  mysql_db_users mdu,\n"
-            + "  mysql_server_users msu,\n"
+            + "  mysql_users mu,\n"
             + "  usernames un\n"
             + "where\n"
             + "  mdu.pkey=?\n"
-            + "  and mdu.mysql_server_user=msu.pkey\n"
-            + "  and msu.username=un.username",
+            + "  and mdu.mysql_user=mu.pkey\n"
+            + "  and mu.username=un.username",
             pkey
         );
     }
 
-    public static String getBusinessForMySQLServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static String getBusinessForMySQLUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
             + "  un.accounting\n"
             + "from\n"
-            + "  mysql_server_users msu,\n"
+            + "  mysql_users mu,\n"
             + "  usernames un\n"
             + "where\n"
-            + "  msu.username=un.username\n"
-            + "  and msu.pkey=?",
+            + "  mu.username=un.username\n"
+            + "  and mu.pkey=?",
             pkey
         );
     }
 
-    public static IntList getMySQLServerUsersForMySQLUser(DatabaseConnection conn, String username) throws IOException, SQLException {
-        return conn.executeIntListQuery("select pkey from mysql_server_users where username=?", username);
+    public static IntList getMySQLUsersForUsername(DatabaseConnection conn, String username) throws IOException, SQLException {
+        return conn.executeIntListQuery("select pkey from mysql_users where username=?", username);
     }
 
     public static int getMySQLServerForMySQLDatabase(DatabaseConnection conn, int mysql_database) throws IOException, SQLException {
@@ -993,19 +790,19 @@ final public class MySQLHandler {
     }
 
     public static int getMySQLServerForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeIntQuery("select msu.mysql_server from mysql_db_users mdu, mysql_server_users msu where mdu.pkey=? and mdu.mysql_server_user=msu.pkey", pkey);
+        return conn.executeIntQuery("select mu.mysql_server from mysql_db_users mdu, mysql_users mu where mdu.pkey=? and mdu.mysql_user=mu.pkey", pkey);
     }
 
     public static int getMySQLDatabaseForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select mysql_database from mysql_db_users where pkey=?", pkey);
     }
 
-    public static int getMySQLServerUserForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static int getMySQLUserForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select mysql_user from mysql_db_users where pkey=?", pkey);
     }
 
-    public static int getMySQLServerForMySQLServerUser(DatabaseConnection conn, int mysql_server_user) throws IOException, SQLException {
-        return conn.executeIntQuery("select mysql_server from mysql_server_users where pkey=?", mysql_server_user);
+    public static int getMySQLServerForMySQLUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeIntQuery("select mysql_server from mysql_users where pkey=?", pkey);
     }
 
     public static void restartMySQL(

@@ -104,7 +104,6 @@ import com.aoindustries.aoserv.client.MySQLDBUser;
 import com.aoindustries.aoserv.client.MySQLDatabase;
 import com.aoindustries.aoserv.client.MySQLReservedWord;
 import com.aoindustries.aoserv.client.MySQLServer;
-import com.aoindustries.aoserv.client.MySQLServerUser;
 import com.aoindustries.aoserv.client.MySQLUser;
 import com.aoindustries.aoserv.client.NetBind;
 import com.aoindustries.aoserv.client.NetDevice;
@@ -4268,65 +4267,6 @@ final public class TableHandler {
                     "select * from mysql_reserved_words"
                 );
                 break;
-            case MYSQL_SERVER_USERS :
-                if(masterUser!=null) {
-                    if(masterServers.length==0) MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new MySQLServerUser(),
-                        "select * from mysql_server_users"
-                    ); else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new MySQLServerUser(),
-                        "select\n"
-                        + "  msu.*\n"
-                        + "from\n"
-                        + "  master_servers ms,\n"
-                        + "  mysql_servers mys,\n"
-                        + "  mysql_server_users msu\n"
-                        + "where\n"
-                        + "  ms.username=?\n"
-                        + "  and ms.server=mys.ao_server\n"
-                        + "  and mys.pkey=msu.mysql_server",
-                        username
-                    );
-                } else MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new MySQLServerUser(),
-                     "select\n"
-                    + "  msu.pkey,\n"
-                    + "  msu.username,\n"
-                    + "  msu.mysql_server,\n"
-                    + "  msu.host,\n"
-                    + "  msu.disable_log,\n"
-                    + "  case when msu.predisable_password is null then null else '"+AOServProtocol.FILTERED+"' end,\n"
-                    + "  msu.max_questions,\n"
-                    + "  msu.max_updates\n,"
-                    + "  msu.max_connections,\n"
-                    + "  msu.max_user_connections\n"
-                    + "from\n"
-                    + "  usernames un1,\n"
-                    + BU1_PARENTS_JOIN
-                    + "  usernames un2,\n"
-                    + "  mysql_server_users msu\n"
-                    + "where\n"
-                    + "  un1.username=?\n"
-                    + "  and (\n"
-                    + UN1_BU1_PARENTS_WHERE
-                    + "  )\n"
-                    + "  and bu1.accounting=un2.accounting\n"
-                    + "  and un2.username=msu.username",
-                    username
-                );
-                break;
             case MYSQL_SERVERS :
                 if(masterUser!=null) {
                     if(masterServers.length==0) MasterServer.writeObjects(
@@ -4386,20 +4326,16 @@ final public class TableHandler {
                         out,
                         provideProgress,
                         new MySQLUser(),
-                        "select distinct\n"
+                        "select\n"
                         + "  mu.*\n"
                         + "from\n"
                         + "  master_servers ms,\n"
-                        + "  ao_servers ao,\n"
-                        + "  business_servers bs,\n"
-                        + "  usernames un,\n"
+                        + "  mysql_servers mys,\n"
                         + "  mysql_users mu\n"
                         + "where\n"
                         + "  ms.username=?\n"
-                        + "  and ms.server=ao.server\n"
-                        + "  and ao.server=bs.server\n"
-                        + "  and bs.accounting=un.accounting\n"
-                        + "  and un.username=mu.username",
+                        + "  and ms.server=mys.ao_server\n"
+                        + "  and mys.pkey=mu.mysql_server",
                         username
                     );
                 } else MasterServer.writeObjects(
@@ -4408,8 +4344,45 @@ final public class TableHandler {
                     out,
                     provideProgress,
                     new MySQLUser(),
-                    "select\n"
-                    + "  mu.*\n"
+                     "select\n"
+                    + "  mu.pkey,\n"
+                    + "  mu.username,\n"
+                    + "  mu.mysql_server,\n"
+                    + "  mu.host,\n"
+                    + "  mu.select_priv,\n"
+                    + "  mu.insert_priv,\n"
+                    + "  mu.update_priv,\n"
+                    + "  mu.delete_priv,\n"
+                    + "  mu.create_priv,\n"
+                    + "  mu.drop_priv,\n"
+                    + "  mu.reload_priv,\n"
+                    + "  mu.shutdown_priv,\n"
+                    + "  mu.process_priv,\n"
+                    + "  mu.file_priv,\n"
+                    + "  mu.grant_priv,\n"
+                    + "  mu.references_priv,\n"
+                    + "  mu.index_priv,\n"
+                    + "  mu.alter_priv,\n"
+                    + "  mu.show_db_priv,\n"
+                    + "  mu.super_priv,\n"
+                    + "  mu.create_tmp_table_priv,\n"
+                    + "  mu.lock_tables_priv,\n"
+                    + "  mu.execute_priv,\n"
+                    + "  mu.repl_slave_priv,\n"
+                    + "  mu.repl_client_priv,\n"
+                    + "  mu.create_view_priv,\n"
+                    + "  mu.show_view_priv,\n"
+                    + "  mu.create_routine_priv,\n"
+                    + "  mu.alter_routine_priv,\n"
+                    + "  mu.create_user_priv,\n"
+                    + "  mu.event_priv,\n"
+                    + "  mu.trigger_priv,\n"
+                    + "  mu.disable_log,\n"
+                    + "  case when mu.predisable_password is null then null else '"+AOServProtocol.FILTERED+"' end,\n"
+                    + "  mu.max_questions,\n"
+                    + "  mu.max_updates\n,"
+                    + "  mu.max_connections,\n"
+                    + "  mu.max_user_connections\n"
                     + "from\n"
                     + "  usernames un1,\n"
                     + BU1_PARENTS_JOIN

@@ -1206,7 +1206,7 @@ final public class BusinessHandler {
             )
         ) throw new SQLException("Business="+accounting+" still owns at least one MySQLDatabase on Server="+server);
 
-        // mysql_server_users
+        // mysql_users
         if(
             conn.executeBooleanQuery(
                 Connection.TRANSACTION_READ_COMMITTED,
@@ -1215,15 +1215,15 @@ final public class BusinessHandler {
                 "select\n"
                 + "  (\n"
                 + "    select\n"
-                + "      msu.pkey\n"
+                + "      mu.pkey\n"
                 + "    from\n"
                 + "      usernames un,\n"
-                + "      mysql_server_users msu,\n"
+                + "      mysql_users mu,\n"
                 + "      mysql_servers ms\n"
                 + "    where\n"
                 + "      un.accounting=?\n"
-                + "      and un.username=msu.username\n"
-                + "      and msu.mysql_server=ms.pkey\n"
+                + "      and un.username=mu.username\n"
+                + "      and mu.mysql_server=ms.pkey\n"
                 + "      and ms.ao_server=?\n"
                 + "    limit 1\n"
                 + "  )\n"
@@ -1231,7 +1231,7 @@ final public class BusinessHandler {
                 accounting,
                 server
             )
-        ) throw new SQLException("Business="+accounting+" still owns at least one MySQLServerUser on Server="+server);
+        ) throw new SQLException("Business="+accounting+" still owns at least one MySQLUser on Server="+server);
 
         // net_binds
         if(

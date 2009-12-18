@@ -209,13 +209,9 @@ final public class InvalidateList {
                 case MAJORDOMO_SERVERS :
                     addTable(conn, SchemaTable.TableID.MAJORDOMO_LISTS, businesses, servers, true);
                     break;
-                case MYSQL_SERVER_USERS :
-                    addTable(conn, SchemaTable.TableID.MYSQL_USERS, businesses, servers, true);
-                    break;
                 case MYSQL_SERVERS :
                     addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.MYSQL_DATABASES, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.MYSQL_SERVER_USERS, businesses, servers, true);
                     break;
                 case NET_DEVICES :
                     addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);

@@ -97,10 +97,11 @@ final public class UsernameHandler {
             LinuxAccountHandler.isLinuxAccount(conn, username)
             && !LinuxAccountHandler.isLinuxAccountDisabled(conn, username)
         ) throw new SQLException("Cannot disable Username '"+username+"': LinuxAccount not disabled: "+username);
-        if(
-            MySQLHandler.isMySQLUser(conn, username)
-            && !MySQLHandler.isMySQLUserDisabled(conn, username)
-        ) throw new SQLException("Cannot disable Username '"+username+"': MySQLUser not disabled: "+username);
+
+        for(int mu : MySQLHandler.getMySQLUsersForUsername(conn, username)) {
+            if(!MySQLHandler.isMySQLUserDisabled(conn, mu)) throw new SQLException("Cannot disable Username '"+username+"': MySQLUser not disabled: "+mu);
+        }
+
         if(
             PostgresHandler.isPostgresUser(conn, username)
             && !PostgresHandler.isPostgresUserDisabled(conn, username)

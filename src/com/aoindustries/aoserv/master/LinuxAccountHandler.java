@@ -1002,6 +1002,7 @@ final public class LinuxAccountHandler {
         if(isPrimary) throw new SQLException("linux_group_accounts.pkey="+pkey+" is a primary group");
 
         // Must be needingful not by HttpdTomcatSharedSite to be tying to HttpdSharedTomcat please
+        // This will not be necessary once httpd_shared_sites and httpd_shared_tomcats reference the linux_group_accounts table directly.
         int useCount = conn.executeIntQuery(
             "select count(*) from linux_group_accounts lga, "+
                     "linux_server_accounts lsa, "+
@@ -1042,73 +1043,6 @@ final public class LinuxAccountHandler {
 
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accountings, aoServers, false);
-    }
-
-    public static void removeUnusedAlternateLinuxGroupAccount(
-        DatabaseConnection conn,
-        InvalidateList invalidateList,
-        String group,
-        String username
-    ) throws IOException, SQLException {
-        int pkey=conn.executeIntQuery(
-            "select\n"
-            + "  coalesce(\n"
-            + "    (\n"
-            + "      select\n"
-            + "        lga.pkey\n"
-            + "      from\n"
-            + "        linux_group_accounts lga\n"
-            + "      where\n"
-            + "        lga.group_name=?\n"
-            + "        and lga.username=?\n"
-            + "        and not lga.is_primary\n"
-            + "        and (\n"
-            + "          select\n"
-            + "            htss.tomcat_site\n"
-            + "          from\n"
-            + "            linux_server_accounts lsa,\n"
-            + "            httpd_shared_tomcats hst,\n"
-            + "            httpd_tomcat_shared_sites htss,\n"
-            + "            httpd_sites hs\n"
-            + "          where\n"
-            + "            lga.username=lsa.username\n"
-            + "            and lsa.pkey=hst.linux_server_account\n"
-            + "            and hst.pkey=htss.httpd_shared_tomcat\n"
-            + "            and htss.tomcat_site=hs.pkey\n"
-            + "            and hs.linux_group=lga.group_name\n"
-            + "          limit 1\n"
-            + "        ) is null\n"
-            + "        and (\n"
-            + "          select\n"
-            + "            htss.tomcat_site\n"
-            + "          from\n"
-            + "            linux_server_groups lsg,\n"
-            + "            httpd_shared_tomcats hst,\n"
-            + "            httpd_tomcat_shared_sites htss,\n"
-            + "            httpd_sites hs\n"
-            + "          where\n"
-            + "            lga.group_name=lsg.name\n"
-            + "            and lsg.pkey=hst.linux_server_group\n"
-            + "            and hst.pkey=htss.httpd_shared_tomcat\n"
-            + "            and htss.tomcat_site=hs.pkey\n"
-            + "            and hs.linux_account=lga.username\n"
-            + "          limit 1\n"
-            + "        ) is null\n"
-            + "    ),\n"
-            + "    -1\n"
-            + "  )",
-            group,
-            username
-        );
-        if(pkey!=-1) {
-            // Get the values for later use
-            List<String> accountings=getBusinessesForLinuxGroupAccount(conn, pkey);
-            IntList aoServers=getAOServersForLinuxGroupAccount(conn, pkey);
-            conn.executeUpdate("delete from linux_group_accounts where pkey=?", pkey);
-
-            // Notify all clients of the update
-            invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accountings, aoServers, false);
-        }
     }
 
     public static void removeLinuxServerAccount(

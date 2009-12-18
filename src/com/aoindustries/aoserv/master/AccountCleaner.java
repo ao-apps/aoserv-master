@@ -594,11 +594,9 @@ final public class AccountCleaner implements CronJob {
 
                 // mysql_users
                 {
-                    List<String> mus=conn.executeStringListQuery(
-                        Connection.TRANSACTION_READ_COMMITTED,
-                        true,
+                    List<Integer> mus=conn.executeIntListQuery(
                         "select\n"
-                        + "  mu.username\n"
+                        + "  mu.pkey\n"
                         + "from\n"
                         + "  mysql_users mu,\n"
                         + "  usernames un,\n"
@@ -711,8 +709,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select hs.pkey from httpd_sites hs where hs.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select la.username from linux_accounts la where la.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select lsa.pkey from linux_server_accounts lsa where lsa.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select msu.pkey from mysql_server_users msu where msu.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select mu.username from mysql_users mu where mu.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select mu.pkey from mysql_users mu where mu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select psu.pkey from postgres_server_users psu where psu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select pu.username from postgres_users pu where pu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select un.username from usernames un where un.disable_log=dl.pkey limit 1) is null",

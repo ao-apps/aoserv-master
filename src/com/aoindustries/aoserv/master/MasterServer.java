@@ -18,6 +18,7 @@ import com.aoindustries.aoserv.client.MasterHistory;
 import com.aoindustries.aoserv.client.MasterProcess;
 import com.aoindustries.aoserv.client.MasterServerStat;
 import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.MySQLUser;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.Transaction;
 import com.aoindustries.io.BitRateProvider;
@@ -632,7 +633,7 @@ public abstract class MasterServer {
                                                     if(defaultServer==-1) {
                                                         defaultServer = ServerHandler.getServerForAOServerHostname(conn, hostname);
                                                     }
-                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) throw new SQLException("add_business for protocol version "+AOServProtocol.Version.VERSION_1_61+" or older is no longer supported.");
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) throw new IOException("add_business for protocol version "+AOServProtocol.Version.VERSION_1_61+" or older is no longer supported.");
                                                     int packageDefinition=in.readCompressedInt(); // Version 1.62+
 
                                                     process.setCommand(
@@ -680,7 +681,7 @@ public abstract class MasterServer {
                                                         len=in.readCompressedInt(); byte[] zip=len>=0?new byte[len]:null; if(len>=0) in.readFully(zip);
                                                         boolean useMonthly=in.readBoolean();
                                                         String description=in.readBoolean()?in.readUTF().trim():null;
-                                                        throw new SQLException("add_credit_card for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
+                                                        throw new IOException("add_credit_card for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
                                                     }
                                                     String processorName = in.readUTF();
                                                     String accounting = in.readUTF();
@@ -1369,8 +1370,14 @@ public abstract class MasterServer {
                                                     int aoServer=in.readCompressedInt();
                                                     String siteName=in.readUTF();
                                                     String accounting=in.readUTF();
-                                                    String username=in.readUTF();
-                                                    String group=in.readUTF();
+                                                    int lsa, lsg;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                        lsa = LinuxAccountHandler.getLinuxServerAccount(conn, in.readUTF(), aoServer);
+                                                        lsg = LinuxAccountHandler.getLinuxServerGroup(conn, in.readUTF(), aoServer);
+                                                    } else {
+                                                        lsa = in.readCompressedInt();
+                                                        lsg = in.readCompressedInt();
+                                                    }
                                                     String serverAdmin=in.readUTF().trim();
                                                     boolean useApache=in.readBoolean();
                                                     int ipAddress=in.readCompressedInt();
@@ -1387,8 +1394,8 @@ public abstract class MasterServer {
                                                         Integer.valueOf(aoServer),
                                                         siteName,
                                                         accounting,
-                                                        username,
-                                                        group,
+                                                        lsa,
+                                                        lsg,
                                                         serverAdmin,
                                                         useApache?Boolean.TRUE:Boolean.FALSE,
                                                         ipAddress==-1?null:Integer.valueOf(ipAddress),
@@ -1404,8 +1411,8 @@ public abstract class MasterServer {
                                                         aoServer,
                                                         siteName,
                                                         accounting,
-                                                        username,
-                                                        group,
+                                                        lsa,
+                                                        lsg,
                                                         serverAdmin,
                                                         useApache,
                                                         ipAddress,
@@ -1611,8 +1618,14 @@ public abstract class MasterServer {
                                                     int aoServer=in.readCompressedInt();
                                                     String siteName=in.readUTF();
                                                     String accounting=in.readUTF();
-                                                    String username=in.readUTF();
-                                                    String group=in.readUTF();
+                                                    int lsa, lsg;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                        lsa = LinuxAccountHandler.getLinuxServerAccount(conn, in.readUTF(), aoServer);
+                                                        lsg = LinuxAccountHandler.getLinuxServerGroup(conn, in.readUTF(), aoServer);
+                                                    } else {
+                                                        lsa = in.readCompressedInt();
+                                                        lsg = in.readCompressedInt();
+                                                    }
                                                     String serverAdmin=in.readUTF().trim();
                                                     boolean useApache=in.readBoolean();
                                                     int ipAddress=in.readCompressedInt();
@@ -1620,25 +1633,27 @@ public abstract class MasterServer {
                                                     int len=in.readCompressedInt();
                                                     String[] altHttpHostnames=new String[len];
                                                     for(int c=0;c<len;c++) altHttpHostnames[c]=in.readUTF().trim();
-                                                    String sharedTomcatName=in.readBoolean()?in.readUTF():null;
-                                                    int version=in.readCompressedInt();
+                                                    String sharedTomcatName;
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                        sharedTomcatName=in.readBoolean()?in.readUTF():null;
+                                                        int version=in.readCompressedInt();
                                                         String contentSrc = in.readBoolean()?in.readUTF():null;
+                                                    } else {
+                                                        sharedTomcatName = in.readUTF();
                                                     }
                                                     process.setCommand(
                                                         AOSHCommand.ADD_HTTPD_TOMCAT_SHARED_SITE,
                                                         Integer.valueOf(aoServer),
                                                         siteName,
                                                         accounting,
-                                                        username,
-                                                        group,
+                                                        lsa,
+                                                        lsg,
                                                         serverAdmin,
                                                         useApache?Boolean.TRUE:Boolean.FALSE,
                                                         ipAddress==-1?null:Integer.valueOf(ipAddress),
                                                         primaryHttpHostname,
                                                         altHttpHostnames,
-                                                        sharedTomcatName,
-                                                        version==-1?null:Integer.valueOf(version)
+                                                        sharedTomcatName
                                                     );
 
                                                     int pkey=HttpdHandler.addHttpdTomcatSharedSite(
@@ -1648,15 +1663,14 @@ public abstract class MasterServer {
                                                         aoServer,
                                                         siteName,
                                                         accounting,
-                                                        username,
-                                                        group,
+                                                        lsa,
+                                                        lsg,
                                                         serverAdmin,
                                                         useApache,
                                                         ipAddress,
                                                         primaryHttpHostname,
                                                         altHttpHostnames,
-                                                        sharedTomcatName,
-                                                        version
+                                                        sharedTomcatName
                                                     );
                                                     resp1=AOServProtocol.DONE;
                                                     resp2Int=pkey;
@@ -1668,8 +1682,14 @@ public abstract class MasterServer {
                                                     int aoServer=in.readCompressedInt();
                                                     String siteName=in.readUTF();
                                                     String accounting=in.readUTF();
-                                                    String username=in.readUTF();
-                                                    String group=in.readUTF();
+                                                    int lsa, lsg;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                        lsa = LinuxAccountHandler.getLinuxServerAccount(conn, in.readUTF(), aoServer);
+                                                        lsg = LinuxAccountHandler.getLinuxServerGroup(conn, in.readUTF(), aoServer);
+                                                    } else {
+                                                        lsa = in.readCompressedInt();
+                                                        lsg = in.readCompressedInt();
+                                                    }
                                                     String serverAdmin=in.readUTF().trim();
                                                     boolean useApache=in.readBoolean();
                                                     int ipAddress=in.readCompressedInt();
@@ -1686,8 +1706,8 @@ public abstract class MasterServer {
                                                         Integer.valueOf(aoServer),
                                                         siteName,
                                                         accounting,
-                                                        username,
-                                                        group,
+                                                        lsa,
+                                                        lsg,
                                                         serverAdmin,
                                                         useApache?Boolean.TRUE:Boolean.FALSE,
                                                         ipAddress==-1?null:Integer.valueOf(ipAddress),
@@ -1702,8 +1722,8 @@ public abstract class MasterServer {
                                                         aoServer,
                                                         siteName,
                                                         accounting,
-                                                        username,
-                                                        group,
+                                                        lsa,
+                                                        lsg,
                                                         serverAdmin,
                                                         useApache,
                                                         ipAddress,
@@ -1946,7 +1966,7 @@ public abstract class MasterServer {
                                             case MYSQL_DB_USERS :
                                                 {
                                                     int mysql_database=in.readCompressedInt();
-                                                    int mysql_server_user=in.readCompressedInt();
+                                                    int mysql_user=in.readCompressedInt();
                                                     boolean canSelect=in.readBoolean();
                                                     boolean canInsert=in.readBoolean();
                                                     boolean canUpdate=in.readBoolean();
@@ -1996,7 +2016,7 @@ public abstract class MasterServer {
                                                     process.setCommand(
                                                         AOSHCommand.ADD_MYSQL_DB_USER,
                                                         mysql_database,
-                                                        mysql_server_user,
+                                                        mysql_user,
                                                         canSelect,
                                                         canInsert,
                                                         canUpdate,
@@ -2020,7 +2040,7 @@ public abstract class MasterServer {
                                                         source,
                                                         invalidateList,
                                                         mysql_database,
-                                                        mysql_server_user,
+                                                        mysql_user,
                                                         canSelect,
                                                         canInsert,
                                                         canUpdate,
@@ -2044,18 +2064,25 @@ public abstract class MasterServer {
                                                     hasResp2Int=true;
                                                 }
                                                 break;
-                                            case MYSQL_SERVER_USERS :
+                                            case MYSQL_USERS :
                                                 {
                                                     String username=in.readUTF();
-                                                    int mysqlServer=in.readCompressedInt();
-                                                    String host=in.readBoolean()?in.readUTF().trim():null;
+                                                    int mysqlServer;
+                                                    String host;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                        mysqlServer = -1;
+                                                        host = MySQLUser.ANY_HOST;
+                                                    } else {
+                                                        mysqlServer=in.readCompressedInt();
+                                                        host=in.readBoolean()?in.readUTF().trim():null;
+                                                    }
                                                     process.setCommand(
-                                                        AOSHCommand.ADD_MYSQL_SERVER_USER,
+                                                        AOSHCommand.ADD_MYSQL_USER,
                                                         username,
                                                         Integer.valueOf(mysqlServer),
                                                         host
                                                     );
-                                                    int pkey=MySQLHandler.addMySQLServerUser(
+                                                    int pkey = MySQLHandler.addMySQLUser(
                                                         conn,
                                                         source,
                                                         invalidateList,
@@ -2063,25 +2090,13 @@ public abstract class MasterServer {
                                                         mysqlServer,
                                                         host
                                                     );
-                                                    resp1=AOServProtocol.DONE;
-                                                    resp2Int=pkey;
-                                                    hasResp2Int=true;
-                                                }
-                                                break;
-                                            case MYSQL_USERS :
-                                                {
-                                                    String username=in.readUTF();
-                                                    process.setCommand(
-                                                        AOSHCommand.ADD_MYSQL_USER,
-                                                        username
-                                                    );
-                                                    MySQLHandler.addMySQLUser(
-                                                        conn,
-                                                        source,
-                                                        invalidateList,
-                                                        username
-                                                    );
-                                                    resp1=AOServProtocol.DONE;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                        resp1=AOServProtocol.DONE;
+                                                    } else {
+                                                        resp1=AOServProtocol.DONE;
+                                                        resp2Int=pkey;
+                                                        hasResp2Int=true;
+                                                    }
                                                 }
                                                 break;
                                             case NET_BINDS :
@@ -3268,37 +3283,24 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case MYSQL_SERVER_USERS :
-                                                    {
-                                                        int pkey=in.readCompressedInt();
-                                                        process.setCommand(
-                                                            AOSHCommand.DISABLE_MYSQL_SERVER_USER,
-                                                            dlObj,
-                                                            Integer.valueOf(pkey)
-                                                        );
-                                                        MySQLHandler.disableMySQLServerUser(
-                                                            conn,
-                                                            source,
-                                                            invalidateList,
-                                                            disableLog,
-                                                            pkey
-                                                        );
-                                                    }
-                                                    break;
                                                 case MYSQL_USERS :
                                                     {
-                                                        String username=in.readUTF();
+                                                        if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                            String username=in.readUTF();
+                                                            throw new IOException(AOSHCommand.DISABLE_MYSQL_USER+" for protocol version "+AOServProtocol.Version.VERSION_1_61+" or older is no longer supported.");
+                                                        }
+                                                        int pkey=in.readCompressedInt();
                                                         process.setCommand(
                                                             AOSHCommand.DISABLE_MYSQL_USER,
                                                             dlObj,
-                                                            username
+                                                            pkey
                                                         );
                                                         MySQLHandler.disableMySQLUser(
                                                             conn,
                                                             source,
                                                             invalidateList,
                                                             disableLog,
-                                                            username
+                                                            pkey
                                                         );
                                                     }
                                                     break;
@@ -3571,33 +3573,22 @@ public abstract class MasterServer {
                                                         );
                                                     }
                                                     break;
-                                                case MYSQL_SERVER_USERS :
-                                                    {
-                                                        int pkey=in.readCompressedInt();
-                                                        process.setCommand(
-                                                            AOSHCommand.ENABLE_MYSQL_SERVER_USER,
-                                                            Integer.valueOf(pkey)
-                                                        );
-                                                        MySQLHandler.enableMySQLServerUser(
-                                                            conn,
-                                                            source,
-                                                            invalidateList,
-                                                            pkey
-                                                        );
-                                                    }
-                                                    break;
                                                 case MYSQL_USERS :
                                                     {
-                                                        String username=in.readUTF();
+                                                        if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                            String username=in.readUTF();
+                                                            throw new IOException(AOSHCommand.ENABLE_MYSQL_USER+" for protocol version "+AOServProtocol.Version.VERSION_1_61+" or older is no longer supported.");
+                                                        }
+                                                        int pkey=in.readCompressedInt();
                                                         process.setCommand(
                                                             AOSHCommand.ENABLE_MYSQL_USER,
-                                                            username
+                                                            pkey
                                                         );
                                                         MySQLHandler.enableMySQLUser(
                                                             conn,
                                                             source,
                                                             invalidateList,
-                                                            username
+                                                            pkey
                                                         );
                                                     }
                                                     break;
@@ -4977,14 +4968,14 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
-                                    case IS_MYSQL_SERVER_USER_PASSWORD_SET :
+                                    case IS_MYSQL_USER_PASSWORD_SET :
                                         {
                                             int pkey=in.readCompressedInt();
                                             process.setCommand(
-                                                AOSHCommand.IS_MYSQL_SERVER_USER_PASSWORD_SET,
-                                                Integer.valueOf(pkey)
+                                                AOSHCommand.IS_MYSQL_USER_PASSWORD_SET,
+                                                pkey
                                             );
-                                            boolean isAvailable=MySQLHandler.isMySQLServerUserPasswordSet(
+                                            boolean isAvailable=MySQLHandler.isMySQLUserPasswordSet(
                                                 conn,
                                                 source,
                                                 pkey
@@ -5730,34 +5721,22 @@ public abstract class MasterServer {
                                                     resp1=AOServProtocol.DONE;
                                                 }
                                                 break;
-                                            case MYSQL_SERVER_USERS :
-                                                {
-                                                    int pkey=in.readCompressedInt();
-                                                    process.setCommand(
-                                                        AOSHCommand.REMOVE_MYSQL_SERVER_USER,
-                                                        Integer.valueOf(pkey)
-                                                    );
-                                                    MySQLHandler.removeMySQLServerUser(
-                                                        conn,
-                                                        source,
-                                                        invalidateList,
-                                                        pkey
-                                                    );
-                                                    resp1=AOServProtocol.DONE;
-                                                }
-                                                break;
                                             case MYSQL_USERS :
                                                 {
-                                                    String username=in.readUTF();
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+                                                        String username=in.readUTF();
+                                                        throw new IOException(AOSHCommand.REMOVE_MYSQL_USER+" for protocol version "+AOServProtocol.Version.VERSION_1_61+" or older is no longer supported.");
+                                                    }
+                                                    int pkey=in.readCompressedInt();
                                                     process.setCommand(
                                                         AOSHCommand.REMOVE_MYSQL_USER,
-                                                        username
+                                                        pkey
                                                     );
                                                     MySQLHandler.removeMySQLUser(
                                                         conn,
                                                         source,
                                                         invalidateList,
-                                                        username
+                                                        pkey
                                                     );
                                                     resp1=AOServProtocol.DONE;
                                                 }
@@ -6907,16 +6886,16 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
-                                    case SET_MYSQL_SERVER_USER_PASSWORD :
+                                    case SET_MYSQL_USER_PASSWORD :
                                         {
                                             int pkey=in.readCompressedInt();
                                             String password=in.readBoolean()?in.readUTF():null;
                                             process.setCommand(
-                                                AOSHCommand.SET_MYSQL_SERVER_USER_PASSWORD,
-                                                Integer.valueOf(pkey),
+                                                AOSHCommand.SET_MYSQL_USER_PASSWORD,
+                                                pkey,
                                                 AOServProtocol.FILTERED
                                             );
-                                            MySQLHandler.setMySQLServerUserPassword(
+                                            MySQLHandler.setMySQLUserPassword(
                                                 conn,
                                                 source,
                                                 pkey,
@@ -6926,16 +6905,16 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
-                                    case SET_MYSQL_SERVER_USER_PREDISABLE_PASSWORD :
+                                    case SET_MYSQL_USER_PREDISABLE_PASSWORD :
                                         {
                                             int pkey=in.readCompressedInt();
                                             String password=in.readBoolean()?in.readUTF():null;
                                             process.setCommand(
-                                                "set_mysql_server_user_predisable_password",
+                                                "set_mysql_user_predisable_password",
                                                 Integer.valueOf(pkey),
                                                 AOServProtocol.FILTERED
                                             );
-                                            MySQLHandler.setMySQLServerUserPredisablePassword(
+                                            MySQLHandler.setMySQLUserPredisablePassword(
                                                 conn,
                                                 source,
                                                 invalidateList,
@@ -7573,7 +7552,7 @@ public abstract class MasterServer {
                                                 String apr_num;
                                                 if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_128)<0) apr_num=Integer.toString(in.readCompressedInt());
                                                 else apr_num=in.readUTF();
-                                                throw new SQLException("approve_transaction for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
+                                                throw new IOException("approve_transaction for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
                                             }
                                             int creditCardTransaction = in.readCompressedInt();
                                             process.setCommand(
@@ -7599,7 +7578,7 @@ public abstract class MasterServer {
                                                 String paymentType=in.readUTF();
                                                 String paymentInfo=in.readBoolean()?in.readUTF():null;
                                                 String merchant=in.readBoolean()?in.readUTF():null;
-                                                throw new SQLException("decline_transaction for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
+                                                throw new IOException("decline_transaction for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
                                             }
                                             int creditCardTransaction = in.readCompressedInt();
                                             process.setCommand(
