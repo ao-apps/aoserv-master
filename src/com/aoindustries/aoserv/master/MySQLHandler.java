@@ -169,17 +169,14 @@ final public class MySQLHandler {
         checkAccessMySQLDatabase(conn, source, "addMySQLDBUser", mysql_database);
         checkAccessMySQLUser(conn, source, "addMySQLDBUser", mysql_user);
         if(isMySQLUserDisabled(conn, mysql_user)) throw new SQLException("Unable to add MySQLDBUser, MySQLUser disabled: "+mysql_user);
-
-        // Must also have matching servers
-        int dbServer=getMySQLServerForMySQLDatabase(conn, mysql_database);
-        int userServer=getMySQLServerForMySQLUser(conn, mysql_user);
-        if(dbServer!=userServer) throw new SQLException("Mismatched mysql_servers for mysql_databases and mysql_users");
+        int mysql_server = getMySQLServerForMySQLDatabase(conn, mysql_database);
 
         // Add the entry to the database
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_db_users_pkey_seq')");
         conn.executeUpdate(
-            "insert into mysql_db_users values(?,?,?,?,?,?,?,?,?,false,false,?,?,?,?,?,?,?,?,?,?,?)",
+            "insert into mysql_db_users values(?,?,?,?,?,?,?,?,?,?,false,false,?,?,?,?,?,?,?,?,?,?,?)",
             pkey,
+            mysql_server,
             mysql_database,
             mysql_user,
             canSelect,
@@ -206,7 +203,7 @@ final public class MySQLHandler {
             conn,
             SchemaTable.TableID.MYSQL_DB_USERS,
             getBusinessForMySQLUser(conn, mysql_user),
-            getAOServerForMySQLServer(conn, dbServer),
+            getAOServerForMySQLServer(conn, mysql_server),
             false
         );
         return pkey;
@@ -790,7 +787,7 @@ final public class MySQLHandler {
     }
 
     public static int getMySQLServerForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeIntQuery("select mu.mysql_server from mysql_db_users mdu, mysql_users mu where mdu.pkey=? and mdu.mysql_user=mu.pkey", pkey);
+        return conn.executeIntQuery("select mysql_server from mysql_db_users where pkey=?", pkey);
     }
 
     public static int getMySQLDatabaseForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
