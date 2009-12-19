@@ -11,6 +11,7 @@ import com.aoindustries.aoserv.client.AOServPermission;
 import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.AOServerDaemonHost;
+import com.aoindustries.aoserv.client.AOServerResource;
 import com.aoindustries.aoserv.client.TicketAction;
 import com.aoindustries.aoserv.client.TicketActionType;
 import com.aoindustries.aoserv.client.Architecture;
@@ -503,6 +504,73 @@ final public class TableHandler {
                 } else {
                     List<AOServerDaemonHost> emptyList = Collections.emptyList();
                     MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                }
+                break;
+            case AO_SERVER_RESOURCES :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) {
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new AOServerResource(),
+                            "select resource, ao_server from ao_server_resources"
+                        );
+                    } else {
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new AOServerResource(),
+                            "select\n"
+                            + "  asr.resource, asr.ao_server\n"
+                            + "from\n"
+                            + "  master_servers ms,\n"
+                            + "  ao_server_resources asr\n"
+                            + "where\n"
+                            + "  ms.username=?\n"
+                            + "  and ms.server=asr.ao_server",
+                            username
+                        );
+                    }
+                } else {
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new AOServerResource(),
+                        // owns the resource
+                        "select\n"
+                        + "  re.resource,\n"
+                        + "  re.ao_server\n"
+                        + "from\n"
+                        + "  usernames un,\n"
+                        + BU1_PARENTS_JOIN
+                        + "  ao_server_resources re\n"
+                        + "where\n"
+                        + "  un.username=?\n"
+                        + "  and (\n"
+                        + UN_BU1_PARENTS_WHERE
+                        + "  )\n"
+                        + "  and bu1.accounting=re.accounting\n"
+                        // has access to the mysql_servers
+                        + "union select\n"
+                        + "  ms.ao_server_resource,\n"
+                        + "  ms.ao_server\n"
+                        + "from\n"
+                        + "  usernames un,\n"
+                        + "  business_servers bs,\n"
+                        + "  mysql_servers ms\n"
+                        + "where\n"
+                        + "  un.username=?\n"
+                        + "  and un.accounting=bs.accounting\n"
+                        + "  and bs.server=ms.ao_server",
+                        username,
+                        username
+                    );
                 }
                 break;
             case AO_SERVERS :
@@ -4181,7 +4249,7 @@ final public class TableHandler {
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=mys.ao_server\n"
-                        + "  and mys.pkey=md.mysql_server",
+                        + "  and mys.ao_server_resource=md.mysql_server",
                         username
                     );
                 } else MasterServer.writeObjects(
@@ -4274,7 +4342,7 @@ final public class TableHandler {
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=mys.ao_server\n"
-                        + "  and mys.pkey=mdu.mysql_server",
+                        + "  and mys.ao_server_resource=mdu.mysql_server",
                         username
                     );
                 } else MasterServer.writeObjects(
@@ -4339,7 +4407,7 @@ final public class TableHandler {
                         out,
                         provideProgress,
                         new MySQLServer(),
-                        "select * from mysql_servers"
+                        "select ao_server_resource, name, version, max_connections, net_bind from mysql_servers"
                     ); else MasterServer.writeObjects(
                         conn,
                         source,
@@ -4347,13 +4415,17 @@ final public class TableHandler {
                         provideProgress,
                         new MySQLServer(),
                         "select\n"
-                        + "  ps.*\n"
+                        + "  mys.ao_server_resource,\n"
+                        + "  mys.name,\n"
+                        + "  mys.version,\n"
+                        + "  mys.max_connections,\n"
+                        + "  mys.net_bind\n"
                         + "from\n"
                         + "  master_servers ms,\n"
-                        + "  mysql_servers ps\n"
+                        + "  mysql_servers mys\n"
                         + "where\n"
                         + "  ms.username=?\n"
-                        + "  and ms.server=ps.ao_server",
+                        + "  and ms.server=mys.ao_server",
                         username
                     );
                 } else MasterServer.writeObjects(
@@ -4363,7 +4435,11 @@ final public class TableHandler {
                     provideProgress,
                     new MySQLServer(),
                     "select\n"
-                    + "  ms.*\n"
+                    + "  ms.ao_server_resource,\n"
+                    + "  ms.name,\n"
+                    + "  ms.version,\n"
+                    + "  ms.max_connections,\n"
+                    + "  ms.net_bind\n"
                     + "from\n"
                     + "  usernames un,\n"
                     + "  business_servers bs,\n"
@@ -4399,7 +4475,7 @@ final public class TableHandler {
                         + "where\n"
                         + "  ms.username=?\n"
                         + "  and ms.server=mys.ao_server\n"
-                        + "  and mys.pkey=mu.mysql_server",
+                        + "  and mys.ao_server_resource=mu.mysql_server",
                         username
                     );
                 } else MasterServer.writeObjects(
@@ -4470,7 +4546,18 @@ final public class TableHandler {
                         out,
                         provideProgress,
                         new NetBind(),
-                        "select * from net_binds"
+                        "select\n"
+                        + "  pkey,\n"
+                        + "  business_server,\n"
+                        + "  ip_address,\n"
+                        + "  port,\n"
+                        + "  net_protocol,\n"
+                        + "  app_protocol,\n"
+                        + "  open_firewall,\n"
+                        + "  monitoring_enabled,\n"
+                        + "  monitoring_parameters\n"
+                        + "from\n"
+                        + "  net_binds"
                     ); else MasterServer.writeObjects(
                         conn,
                         source,
@@ -4479,8 +4566,7 @@ final public class TableHandler {
                         new NetBind(),
                         "select\n"
                         + "  nb.pkey,\n"
-                        + "  nb.accounting,\n"
-                        + "  nb.server,\n"
+                        + "  nb.business_server,\n"
                         + "  nb.ip_address,\n"
                         + "  nb.port,\n"
                         + "  nb.net_protocol,\n"
@@ -4523,8 +4609,7 @@ final public class TableHandler {
                     new NetBind(),
                     "select\n"
                     + "  nb.pkey,\n"
-                    + "  nb.accounting,\n"
-                    + "  nb.server,\n"
+                    + "  nb.business_server,\n"
                     + "  nb.ip_address,\n"
                     + "  nb.port,\n"
                     + "  nb.net_protocol,\n"
@@ -5495,9 +5580,24 @@ final public class TableHandler {
                                 "select * from resources"
                             );
                         } else {
-                            // Daemons don't need any resource details
-                            List<Resource> emptyList = Collections.emptyList();
-                            MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                            MasterServer.writeObjects(
+                                conn,
+                                source,
+                                out,
+                                provideProgress,
+                                new Resource(),
+                                "select\n"
+                                + "  re.*\n"
+                                + "from\n"
+                                + "  master_servers ms,\n"
+                                + "  ao_server_resources asr,\n"
+                                + "  resources re\n"
+                                + "where\n"
+                                + "  ms.username=?\n"
+                                + "  and ms.server=asr.ao_server\n"
+                                + "  and asr.resource=re.pkey",
+                                username
+                            );
                         }
                     } else {
                         MasterServer.writeObjects(
@@ -5506,6 +5606,7 @@ final public class TableHandler {
                             out,
                             provideProgress,
                             new Resource(),
+                            // owns the resource
                             "select\n"
                             + "  re.*\n"
                             + "from\n"
@@ -5517,7 +5618,21 @@ final public class TableHandler {
                             + "  and (\n"
                             + UN_BU1_PARENTS_WHERE
                             + "  )\n"
-                            + "  and bu1.accounting=re.owner",
+                            + "  and bu1.accounting=re.accounting\n"
+                            // has access to the mysql_servers
+                            + "union select\n"
+                            + "  re.*\n"
+                            + "from\n"
+                            + "  usernames un,\n"
+                            + "  business_servers bs,\n"
+                            + "  mysql_servers ms,\n"
+                            + "  resources re\n"
+                            + "where\n"
+                            + "  un.username=?\n"
+                            + "  and un.accounting=bs.accounting\n"
+                            + "  and bs.server=ms.ao_server\n"
+                            + "  and ms.ao_server_resource=re.pkey\n",
+                            username,
                             username
                         );
                     }

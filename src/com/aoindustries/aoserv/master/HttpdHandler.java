@@ -1829,14 +1829,16 @@ final public class HttpdHandler {
         // Allocate the net_bind, if needed
         if(netBind==-1) {
             netBind=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('net_binds_pkey_seq')");
-            pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into net_binds values(?,?,?,?,?,'"+NetProtocol.TCP+"',?,true,true)");
+            int businessServer = ServerHandler.getBusinessServer(conn, accounting, aoServer);
+            pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into net_binds values(?,?,?,?,?,?,'"+NetProtocol.TCP+"',?,true,true)");
             try {
                 pstmt.setInt(1, netBind);
                 pstmt.setString(2, accounting);
                 pstmt.setInt(3, aoServer);
-                pstmt.setInt(4, ipAddress);
-                pstmt.setInt(5, httpPort);
-                pstmt.setString(6, protocol);
+                pstmt.setInt(4, businessServer);
+                pstmt.setInt(5, ipAddress);
+                pstmt.setInt(6, httpPort);
+                pstmt.setString(7, protocol);
                 pstmt.executeUpdate();
             } finally {
                 pstmt.close();

@@ -234,6 +234,13 @@ final public class ServerHandler {
 	    }
     }
 
+    /**
+     * Gets the business server or throws SQLException is doesn't exist.
+     */
+    public static int getBusinessServer(DatabaseConnection conn, String accounting, int server) throws IOException, SQLException {
+        return conn.executeIntQuery("select pkey from business_servers where accounting=? and server=?", accounting, server);
+    }
+
     public static List<String> getBusinessesForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
         return conn.executeStringListQuery("select accounting from business_servers where server=?", server);
     }

@@ -173,11 +173,14 @@ final public class NetBindHandler {
                 + "  ?,\n"
                 + "  ?,\n"
                 + "  ?,\n"
+                + "  ?,\n"
+                + "  ?,\n"
                 + "  ?\n"
                 + ")",
                 pkey,
                 accounting,
                 server,
+                ServerHandler.getBusinessServer(conn, accounting, server),
                 ipAddress,
                 port,
                 netProtocol,
@@ -224,6 +227,7 @@ final public class NetBindHandler {
                     + "  ?,\n"
                     + "  ?,\n"
                     + "  ?,\n"
+                    + "  ?,\n"
                     + "  (\n"
                     + "    select\n"
                     + "      np.port\n"
@@ -259,6 +263,7 @@ final public class NetBindHandler {
                     pkey,
                     accounting,
                     server,
+                    ServerHandler.getBusinessServer(conn, accounting, server),
                     ipAddress,
                     minimumPort,
                     //farm,
@@ -271,6 +276,7 @@ final public class NetBindHandler {
                     "insert into\n"
                     + "  net_binds\n"
                     + "values(\n"
+                    + "  ?,\n"
                     + "  ?,\n"
                     + "  ?,\n"
                     + "  ?,\n"
@@ -315,6 +321,7 @@ final public class NetBindHandler {
                     pkey,
                     accounting,
                     server,
+                    ServerHandler.getBusinessServer(conn, accounting, server),
                     ipAddress,
                     minimumPort,
                     //farm,
