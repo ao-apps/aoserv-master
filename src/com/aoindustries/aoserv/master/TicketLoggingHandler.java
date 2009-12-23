@@ -66,6 +66,7 @@ final public class TicketLoggingHandler extends QueuedHandler {
 
     protected void doCustomLogging(Formatter formatter, LogRecord record, String fullReport) {
         try {
+            /* TODO
             String rootAccounting = BusinessHandler.getRootBusiness();
             Level level = record.getLevel();
             // Generate the summary from level, prefix classname, method
@@ -179,6 +180,7 @@ final public class TicketLoggingHandler extends QueuedHandler {
                 conn.releaseConnection();
             }
             if(invalidateList!=null) MasterServer.invalidateTables(invalidateList, null);
+             */
         } catch(Exception err) {
             ErrorPrinter.printStackTraces(err);
         }

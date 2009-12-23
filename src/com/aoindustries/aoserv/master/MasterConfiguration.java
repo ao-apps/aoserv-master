@@ -6,15 +6,9 @@ package com.aoindustries.aoserv.master;
  * All rights reserved.
  */
 import com.aoindustries.io.AOPool;
-import com.aoindustries.profiler.Profiler;
-import com.aoindustries.sql.DatabaseAccess;
-import com.aoindustries.util.StringUtility;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -22,13 +16,13 @@ import java.util.Properties;
  *
  * @author  AO Industries, Inc.
  */
-public final class MasterConfiguration {
+final class MasterConfiguration {
     
     private static Properties props;
     
     private MasterConfiguration() {
     }
-    
+
     private static String getProperty(String name) throws IOException {
         synchronized (MasterConfiguration.class) {
             if (props == null) {
@@ -45,38 +39,41 @@ public final class MasterConfiguration {
         return props.getProperty(name);
     }
     
-    public static String getSSLKeystorePassword() throws IOException {
+    static String getSSLKeystorePassword() throws IOException {
         return getProperty("aoserv.master.ssl.keystore.password");
     }
 
-    public static String getSSLKeystorePath() throws IOException {
+    static String getSSLKeystorePath() throws IOException {
         return getProperty("aoserv.master.ssl.keystore.path");
     }
 
-    public static String getSSLTruststorePassword() throws IOException {
+    /* TODO
+    static String getSSLTruststorePassword() throws IOException {
         return getProperty("aoserv.daemon.client.ssl.truststore.password");
     }
 
-    public static String getSSLTruststorePath() throws IOException {
+    static String getSSLTruststorePath() throws IOException {
         return getProperty("aoserv.daemon.client.ssl.truststore.path");
     }
 
-    public static List<String> getProtocols() throws IOException {
+    static List<String> getProtocols() throws IOException {
         return StringUtility.splitStringCommaSpace(getProperty("aoserv.master.protocols"));
     }
+     */
 
     /**
      * Gets the local IP address used for outgoing connections to the daemons.
      */
-    public static String getLocalIp() throws IOException {
+    /* TODO
+    static String getLocalIp() throws IOException {
         return getProperty("aoserv.master.local_ip");
     }
 
-    public static List<String> getBinds(String protocol) throws IOException {
+    static List<String> getBinds(String protocol) throws IOException {
         return StringUtility.splitStringCommaSpace(getProperty("aoserv.master."+protocol+".bind"));
     }
 
-    public static List<Integer> getPorts(String protocol) throws IOException {
+    static List<Integer> getPorts(String protocol) throws IOException {
         String ports = getProperty("aoserv.master."+protocol+".ports");
         List<String> strings = StringUtility.splitStringCommaSpace(ports);
         List<Integer> ints = new ArrayList<Integer>(strings.size());
@@ -86,97 +83,114 @@ public final class MasterConfiguration {
         return ints;
     }
 
-    public static int getHistorySize() throws IOException {
+    static int getHistorySize() throws IOException {
         return Integer.parseInt(getProperty("aoserv.master.history.size"));
     }
 
-    public static String getRootBusiness() throws IOException {
+    static String getRootBusiness() throws IOException {
         return getProperty("aoserv.master.businesses.root");
     }
-
-    public static String getDBDriver() throws IOException {
+    */
+    static String getDBDriver() throws IOException {
         return getProperty("aoserv.master.db.driver");
     }
 
-    public static String getDBURL() throws IOException {
+    static String getDBURL() throws IOException {
         return getProperty("aoserv.master.db.url");
     }
 
-    public static String getDBUser() throws IOException {
+    static String getDBUser() throws IOException {
         return getProperty("aoserv.master.db.user");
     }
 
-    public static String getDBPassword() throws IOException {
+    static String getDBPassword() throws IOException {
         return getProperty("aoserv.master.db.password");
     }
 
-    public static int getDBConnectionPoolSize() throws IOException {
+    static int getDBConnectionPoolSize() throws IOException {
         return Integer.parseInt(getProperty("aoserv.master.db.connections"));
     }
 
-    public static long getDBMaxConnectionAge() throws IOException {
+    static long getDBMaxConnectionAge() throws IOException {
         String S=getProperty("aoserv.master.db.max_connection_age");
         return S==null || S.length()==0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(S);
     }
-
-    public static String getBackupDBDriver() throws IOException {
+    /* TODO
+    static String getBackupDBDriver() throws IOException {
         return getProperty("aoserv.master.backup.db.driver");
     }
 
-    public static String getBackupDBURL() throws IOException {
+    static String getBackupDBURL() throws IOException {
         return getProperty("aoserv.master.backup.db.url");
     }
 
-    public static String getBackupDBUser() throws IOException {
+    static String getBackupDBUser() throws IOException {
         return getProperty("aoserv.master.backup.db.user");
     }
 
-    public static String getBackupDBPassword() throws IOException {
+    static String getBackupDBPassword() throws IOException {
         return getProperty("aoserv.master.backup.db.password");
     }
 
-    public static int getBackupDBConnectionPoolSize() throws IOException {
+    static int getBackupDBConnectionPoolSize() throws IOException {
         return Integer.parseInt(getProperty("aoserv.master.backup.db.connections"));
     }
 
-    public static long getBackupDBMaxConnectionAge() throws IOException {
+    static long getBackupDBMaxConnectionAge() throws IOException {
         String S=getProperty("aoserv.master.backup.db.max_connection_age");
         return S==null || S.length()==0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(S);
     }
 
-    public static String getDaemonKey(DatabaseAccess database, int aoServer) throws IOException, SQLException {
+    static String getDaemonKey(DatabaseAccess database, int aoServer) throws IOException, SQLException {
         return getProperty("aoserv.daemon.client.key."+ServerHandler.getHostnameForAOServer(database, aoServer));
     }
 
-    public static int getProfilerLevel() throws IOException {
+    static int getProfilerLevel() throws IOException {
         return Profiler.parseProfilerLevel(getProperty("aoserv.master.profiler.level"));
     }
 
-    public static String getTicketSmtpServer() throws IOException {
+    static String getTicketSmtpServer() throws IOException {
         return getProperty("aoserv.master.ticket.smtp.server");
     }
 
-    public static String getTicketSource(String protocol, int index, String field) throws IOException {
+    static String getTicketSource(String protocol, int index, String field) throws IOException {
         return getProperty("aoserv.master.ticket.source."+protocol+"."+index+"."+field);
     }
 
-    public static String getTicketURL() throws IOException {
+    static String getTicketURL() throws IOException {
         return getProperty("aoserv.master.ticket.url");
     }
 
-    public static String getSpamhausScriptPath() throws IOException {
+    static String getSpamhausScriptPath() throws IOException {
         return getProperty("aoserv.master.blacklist.spamhaus.script.path");
     }
 
-    public static String getDsblCachePath() throws IOException {
+    static String getDsblCachePath() throws IOException {
         return getProperty("aoserv.master.blacklist.dsbl.cache.path");
     }
 
-    public static String getDsblScriptPath() throws IOException {
+    static String getDsblScriptPath() throws IOException {
         return getProperty("aoserv.master.blacklist.dsbl.script.path");
     }
     
-    public static String getEntropyPoolFilePath() throws IOException {
+    static String getEntropyPoolFilePath() throws IOException {
         return getProperty("aoserv.master.entropy.file.path");
+    }
+    */
+
+    static String getRmiListenAddress() throws IOException {
+        return getProperty("aoserv.master.rmi.listen_address");
+    }
+
+    static String getRmiPublicAddress() throws IOException {
+        return getProperty("aoserv.master.rmi.public_address");
+    }
+
+    static boolean getRmiUseSsl() throws IOException {
+        return !"false".equals(getProperty("aoserv.master.rmi.useSsl"));
+    }
+
+    static int getRmiPort() throws IOException {
+        return Integer.parseInt(getProperty("aoserv.master.rmi.port"));
     }
 }

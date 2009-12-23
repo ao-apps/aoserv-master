@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 /**
  * @author  AO Industries, Inc.
  */
-public final class MasterDatabase extends Database {
+final class MasterDatabase extends Database {
 
     /**
      * This logger doesn't use ticket logger because it might create a loop
@@ -40,7 +40,7 @@ public final class MasterDatabase extends Database {
         );
     }
     
-    public static MasterDatabase getDatabase() throws IOException {
+    static MasterDatabase getDatabase() throws IOException {
         synchronized(MasterDatabase.class) {
             if(masterDatabase==null) masterDatabase=new MasterDatabase();
             return masterDatabase;
