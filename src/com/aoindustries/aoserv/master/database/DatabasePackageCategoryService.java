@@ -10,9 +10,7 @@ import com.aoindustries.aoserv.client.PackageCategoryService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -26,19 +24,24 @@ final class DatabasePackageCategoryService extends DatabaseServiceStringKey<Pack
         super(connector, PackageCategory.class);
     }
 
-    @Override
-    public Set<PackageCategory> getSet() throws RemoteException {
-        try {
-            return Collections.unmodifiableSet(
-                connector.factory.database.executeObjectSetQuery(
-                    objectFactory,
-                    "select * from package_categories"
-                )
-            );
-        } catch(IOException err) {
-            throw new RemoteException(err.getMessage(), err);
-        } catch(SQLException err) {
-            throw new RemoteException(err.getMessage(), err);
-        }
+    protected Set<PackageCategory> getSetMaster() throws IOException, SQLException {
+        return connector.factory.database.executeObjectSetQuery(
+            objectFactory,
+            "select * from package_categories"
+        );
+    }
+
+    protected Set<PackageCategory> getSetDaemon() throws IOException, SQLException {
+        return connector.factory.database.executeObjectSetQuery(
+            objectFactory,
+            "select * from package_categories"
+        );
+    }
+
+    protected Set<PackageCategory> getSetBusiness() throws IOException, SQLException {
+        return connector.factory.database.executeObjectSetQuery(
+            objectFactory,
+            "select * from package_categories"
+        );
     }
 }

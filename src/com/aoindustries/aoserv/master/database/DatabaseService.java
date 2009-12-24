@@ -10,7 +10,9 @@ import com.aoindustries.aoserv.client.AOServService;
 import com.aoindustries.aoserv.client.AOServServiceUtils;
 import com.aoindustries.aoserv.client.Business;
 import com.aoindustries.aoserv.client.ServiceName;
+import com.aoindustries.security.AccountDisabledException;
 import com.aoindustries.table.Table;
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -135,7 +137,40 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         return connector;
     }
 
-    abstract public Set<V> getSet() throws RemoteException;
+    @Override
+    final public Set<V> getSet() throws RemoteException {
+        try {
+            switch(connector.getAccountType()) {
+                case MASTER : return AOServServiceUtils.unmodifiableSet(getSetMaster());
+                case DAEMON : return AOServServiceUtils.unmodifiableSet(getSetDaemon());
+                case BUSINESS : return AOServServiceUtils.unmodifiableSet(getSetBusiness());
+                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+                default : throw new AssertionError();
+            }
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(SQLException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    /**
+     * Gets the unfiltered set.
+     * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
+     */
+    abstract protected Set<V> getSetMaster() throws IOException, SQLException;
+
+    /**
+     * Gets the set filtered by server access.
+     * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
+     */
+    abstract protected Set<V> getSetDaemon() throws IOException, SQLException;
+
+    /**
+     * Gets the sets filtered by business access.
+     * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
+     */
+    abstract protected Set<V> getSetBusiness() throws IOException, SQLException;
 
     /**
      * Implemented as a call to <code>getSize</code> with sorting performed by <code>TreeSet</code>.
@@ -156,28 +191,126 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         return map;
     }
 
+    final public V get(K key) throws RemoteException {
+        try {
+            switch(connector.getAccountType()) {
+                case MASTER : return getMaster(key);
+                case DAEMON : return getDaemon(key);
+                case BUSINESS : return getBusiness(key);
+                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+                default : throw new AssertionError();
+            }
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(SQLException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
     /**
-     * Implemented as a sequential scan of all objects returned by <code>getSet</code>.
-     * Subclasses are encouraged to provide more efficient implementations.
+     * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    public V get(K key) throws RemoteException {
-        for(V obj : getSet()) if(obj.getKey().equals(key)) return obj;
+    protected V getMaster(K key) throws IOException, SQLException {
+        for(V obj : getSetMaster()) if(obj.getKey().equals(key)) return obj;
         return null;
     }
 
     /**
-     * Implemented as a call to <code>getSize</code>.
-     * Subclasses are encouraged to provide more efficient implementations.
+     * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    public boolean isEmpty() throws RemoteException {
-        return getSize()==0;
+    protected V getDaemon(K key) throws IOException, SQLException {
+        for(V obj : getSetDaemon()) if(obj.getKey().equals(key)) return obj;
+        return null;
     }
 
     /**
-     * Implemented as a call to <code>getSet</code>.
-     * Subclasses are encouraged to provide more efficient implementations.
+     * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    public int getSize() throws RemoteException {
-        return getSet().size();
+    protected V getBusiness(K key) throws IOException, SQLException {
+        for(V obj : getSetBusiness()) if(obj.getKey().equals(key)) return obj;
+        return null;
+    }
+
+    final public boolean isEmpty() throws RemoteException {
+        try {
+            switch(connector.getAccountType()) {
+                case MASTER : return isEmptyMaster();
+                case DAEMON : return isEmptyDaemon();
+                case BUSINESS : return isEmptyBusiness();
+                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+                default : throw new AssertionError();
+            }
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(SQLException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    /**
+     * Implemented as a call to <code>getSizeMaster</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected boolean isEmptyMaster() throws IOException, SQLException {
+        return getSizeMaster()==0;
+    }
+
+    /**
+     * Implemented as a call to <code>getSizeDaemon</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected boolean isEmptyDaemon() throws IOException, SQLException {
+        return getSizeDaemon()==0;
+    }
+
+    /**
+     * Implemented as a call to <code>getSizeBusiness</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected boolean isEmptyBusiness() throws IOException, SQLException {
+        return getSizeBusiness()==0;
+    }
+
+    final public int getSize() throws RemoteException {
+        try {
+            switch(connector.getAccountType()) {
+                case MASTER : return getSizeMaster();
+                case DAEMON : return getSizeDaemon();
+                case BUSINESS : return getSizeBusiness();
+                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+                default : throw new AssertionError();
+            }
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(SQLException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    /**
+     * Implemented as a call to <code>getSetMaster</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected int getSizeMaster() throws IOException, SQLException {
+        return getSetMaster().size();
+    }
+
+    /**
+     * Implemented as a call to <code>getSetDaemon</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected int getSizeDaemon() throws IOException, SQLException {
+        return getSetDaemon().size();
+    }
+
+    /**
+     * Implemented as a call to <code>getSetBusiness</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected int getSizeBusiness() throws IOException, SQLException {
+        return getSetBusiness().size();
     }
 }

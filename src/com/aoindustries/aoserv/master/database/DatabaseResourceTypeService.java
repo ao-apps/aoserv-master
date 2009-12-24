@@ -10,9 +10,7 @@ import com.aoindustries.aoserv.client.ResourceTypeService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -26,19 +24,24 @@ final class DatabaseResourceTypeService extends DatabaseServiceStringKey<Resourc
         super(connector, ResourceType.class);
     }
 
-    @Override
-    public Set<ResourceType> getSet() throws RemoteException {
-        try {
-            return Collections.unmodifiableSet(
-                connector.factory.database.executeObjectSetQuery(
-                    objectFactory,
-                    "select * from resource_types"
-                )
-            );
-        } catch(IOException err) {
-            throw new RemoteException(err.getMessage(), err);
-        } catch(SQLException err) {
-            throw new RemoteException(err.getMessage(), err);
-        }
+    protected Set<ResourceType> getSetMaster() throws IOException, SQLException {
+        return connector.factory.database.executeObjectSetQuery(
+            objectFactory,
+            "select * from resource_types"
+        );
+    }
+
+    protected Set<ResourceType> getSetDaemon() throws IOException, SQLException {
+        return connector.factory.database.executeObjectSetQuery(
+            objectFactory,
+            "select * from resource_types"
+        );
+    }
+
+    protected Set<ResourceType> getSetBusiness() throws IOException, SQLException {
+        return connector.factory.database.executeObjectSetQuery(
+            objectFactory,
+            "select * from resource_types"
+        );
     }
 }
