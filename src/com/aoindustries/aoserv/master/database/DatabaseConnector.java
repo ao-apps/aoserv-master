@@ -9,32 +9,15 @@ import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.AOServConnectorUtils;
 import com.aoindustries.aoserv.client.AOServPermissionService;
 import com.aoindustries.aoserv.client.AOServService;
-import com.aoindustries.aoserv.client.AOServerResourceService;
-import com.aoindustries.aoserv.client.AOServerService;
-import com.aoindustries.aoserv.client.ArchitectureService;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
 import com.aoindustries.aoserv.client.BusinessService;
 import com.aoindustries.aoserv.client.CountryCodeService;
 import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.LanguageService;
-import com.aoindustries.aoserv.client.MySQLServerService;
-import com.aoindustries.aoserv.client.NetBindService;
-import com.aoindustries.aoserv.client.NetDeviceIDService;
-import com.aoindustries.aoserv.client.NetProtocolService;
-import com.aoindustries.aoserv.client.OperatingSystemService;
-import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
-import com.aoindustries.aoserv.client.ProtocolService;
-import com.aoindustries.aoserv.client.ResourceService;
 import com.aoindustries.aoserv.client.ResourceTypeService;
-import com.aoindustries.aoserv.client.ServerFarmService;
-import com.aoindustries.aoserv.client.ServerService;
 import com.aoindustries.aoserv.client.ServiceName;
-import com.aoindustries.aoserv.client.TechnologyClassService;
-import com.aoindustries.aoserv.client.TechnologyNameService;
-import com.aoindustries.aoserv.client.TechnologyService;
-import com.aoindustries.aoserv.client.TechnologyVersionService;
 import com.aoindustries.aoserv.client.TicketCategoryService;
 import com.aoindustries.aoserv.client.TicketPriorityService;
 import com.aoindustries.aoserv.client.TicketStatusService;
@@ -68,16 +51,14 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     private final String password;
     /* TODO
     final DatabaseAOServerDaemonHostService aoserverDaemonHosts;
-     */
     final DatabaseAOServerResourceService aoserverResources;
     final DatabaseAOServerService aoservers;
+     */
     final DatabaseAOServPermissionService aoservPermissions;
     /* TODO
     final DatabaseAOServProtocolService aoservProtocols;
     final DatabaseAOSHCommandService aoshCommands;
-     */
     final DatabaseArchitectureService architectures;
-    /* TODO
     final DatabaseBackupPartitionService backupPartitions;
     final DatabaseBackupRetentionService backupRetentions;
     final DatabaseBankAccountService bankAccounts;
@@ -179,25 +160,19 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseMySQLDatabaseService mysqlDatabases;
     final DatabaseMySQLDBUserService mysqlDBUsers;
     final DatabaseMySQLReservedWordService mysqlReservedWords;
-     */
     final DatabaseMySQLServerService mysqlServers;
-    /* TODO
     final DatabaseMySQLUserService mysqlUsers;
-     */
     final DatabaseNetBindService netBinds;
     final DatabaseNetDeviceIDService netDeviceIDs;
-    /* TODO
     final DatabaseNetDeviceService netDevices;
     final DatabaseNetPortService netPorts;
-     */
     final DatabaseNetProtocolService netProtocols;
-    /* TODO
     final DatabaseNetTcpRedirectService netTcpRedirects;
     final DatabaseNoticeLogService noticeLogs;
     final DatabaseNoticeTypeService noticeTypes;
-    */
     final DatabaseOperatingSystemVersionService operatingSystemVersions;
     final DatabaseOperatingSystemService operatingSystems;
+    */
     final DatabasePackageCategoryService packageCategories;
     /* TODO
     final DatabasePackageDefinitionLimitService packageDefinitionLimits;
@@ -213,28 +188,24 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabasePostgresVersionService postgresVersions;
     final DatabasePrivateFTPServerService privateFTPServers;
     final DatabaseProcessorTypeService processorTypes;
-     */
     final DatabaseProtocolService protocols;
-    /* TODO
     final DatabaseRackService racks;
     final DatabaseResellerService resellers;
      */
     final DatabaseResourceTypeService resourceTypes;
+    /* TODO
     final DatabaseResourceService resources;
     final DatabaseServerFarmService serverFarms;
     final DatabaseServerService servers;
-    /* TODO
     final DatabaseShellService shells;
     final DatabaseSignupRequestOptionService signupRequestOptions;
     final DatabaseSignupRequestService signupRequests;
     final DatabaseSpamEmailMessageService spamEmailMessages;
     final DatabaseSystemEmailAliasService systemEmailAliass;
-     */
     final DatabaseTechnologyService technologies;
-    final DatabaseTechnologyClassService technologyClasses;
+    final DatabaseTechnologyClassService technologyClasss;
     final DatabaseTechnologyNameService technologyNames;
     final DatabaseTechnologyVersionService technologyVersions;
-    /* TODO
     final DatabaseTicketActionTypeService ticketActionTypes;
     final DatabaseTicketActionService ticketActions;
     final DatabaseTicketAssignmentService ticketAssignments;
@@ -268,16 +239,14 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         this.password = password;
         /* TODO
         aoserverDaemonHosts = new DatabaseAOServerDaemonHostService(this);
-         */
         aoserverResources = new DatabaseAOServerResourceService(this);
         aoservers = new DatabaseAOServerService(this);
+         */
         aoservPermissions = new DatabaseAOServPermissionService(this);
         /* TODO
         aoservProtocols = new DatabaseAOServProtocolService(this);
         aoshCommands = new DatabaseAOSHCommandService(this);
-         */
         architectures = new DatabaseArchitectureService(this);
-        /* TODO
         backupPartitions = new DatabaseBackupPartitionService(this);
         backupRetentions = new DatabaseBackupRetentionService(this);
         bankAccounts = new DatabaseBankAccountService(this);
@@ -379,25 +348,19 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         mysqlDatabases = new DatabaseMySQLDatabaseService(this);
         mysqlDBUsers = new DatabaseMySQLDBUserService(this);
         mysqlReservedWords = new DatabaseMySQLReservedWordService(this);
-         */
         mysqlServers = new DatabaseMySQLServerService(this);
-        /* TODO
         mysqlUsers = new DatabaseMySQLUserService(this);
-         */
         netBinds = new DatabaseNetBindService(this);
         netDeviceIDs = new DatabaseNetDeviceIDService(this);
-        /* TODO
         netDevices = new DatabaseNetDeviceService(this);
         netPorts = new DatabaseNetPortService(this);
-         */
         netProtocols = new DatabaseNetProtocolService(this);
-        /* TODO
         netTcpRedirects = new DatabaseNetTcpRedirectService(this);
         noticeLogs = new DatabaseNoticeLogService(this);
         noticeTypes = new DatabaseNoticeTypeService(this);
-        */
         operatingSystemVersions = new DatabaseOperatingSystemVersionService(this);
         operatingSystems = new DatabaseOperatingSystemService(this);
+        */
         packageCategories = new DatabasePackageCategoryService(this);
         /* TODO
         packageDefinitionLimits = new DatabasePackageDefinitionLimitService(this);
@@ -413,28 +376,24 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         postgresVersions = new DatabasePostgresVersionService(this);
         privateFTPServers = new DatabasePrivateFTPServerService(this);
         processorTypes = new DatabaseProcessorTypeService(this);
-         */
         protocols = new DatabaseProtocolService(this);
-        /* TODO
         racks = new DatabaseRackService(this);
         resellers = new DatabaseResellerService(this);
          */
         resourceTypes = new DatabaseResourceTypeService(this);
+        /* TODO
         resources = new DatabaseResourceService(this);
         serverFarms = new DatabaseServerFarmService(this);
         servers = new DatabaseServerService(this);
-        /* TODO
         shells = new DatabaseShellService(this);
         signupRequestOptions = new DatabaseSignupRequestOptionService(this);
         signupRequests = new DatabaseSignupRequestService(this);
         spamEmailMessages = new DatabaseSpamEmailMessageService(this);
         systemEmailAliass = new DatabaseSystemEmailAliasService(this);
-         */
         technologies = new DatabaseTechnologyService(this);
-        technologyClasses = new DatabaseTechnologyClassService(this);
+        technologyClasss = new DatabaseTechnologyClassService(this);
         technologyNames = new DatabaseTechnologyNameService(this);
         technologyVersions = new DatabaseTechnologyVersionService(this);
-        /* TODO
         ticketActionTypes = new DatabaseTicketActionTypeService(this);
         ticketActions = new DatabaseTicketActionService(this);
         ticketAssignments = new DatabaseTicketAssignmentService(this);
@@ -521,15 +480,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     /*
      * TODO
     public AOServerDaemonHostService<DatabaseConnector,DatabaseConnectorFactory> getAoServerDaemonHosts();
+
+    public AOServerResourceService<DatabaseConnector,DatabaseConnectorFactory> getAoServerResources();
+
+    public AOServerService<DatabaseConnector,DatabaseConnectorFactory> getAoServers();
     */
-    public AOServerResourceService<DatabaseConnector,DatabaseConnectorFactory> getAoServerResources() {
-        return aoserverResources;
-    }
-
-    public AOServerService<DatabaseConnector,DatabaseConnectorFactory> getAoServers() {
-        return aoservers;
-    }
-
     public AOServPermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservPermissions() {
         return aoservPermissions;
     }
@@ -537,11 +492,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public AOServProtocolService<DatabaseConnector,DatabaseConnectorFactory> getAoservProtocols();
 
     public AOSHCommandService<DatabaseConnector,DatabaseConnectorFactory> getAoshCommands();
-    */
-    public ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> getArchitectures() {
-        return architectures;
-    }
-    /* TODO
+
+    public ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> getArchitectures();
+
     public BackupPartitionService<DatabaseConnector,DatabaseConnectorFactory> getBackupPartitions();
 
     public BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> getBackupRetentions();
@@ -734,43 +687,31 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public MySQLDBUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDBUsers();
 
     public MySQLReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getMysqlReservedWords();
-    */
-    public MySQLServerService<DatabaseConnector,DatabaseConnectorFactory> getMysqlServers() {
-        return mysqlServers;
-    }
-    /* TODO
-    public MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlUsers();
-    */
-    public NetBindService<DatabaseConnector,DatabaseConnectorFactory> getNetBinds() {
-        return netBinds;
-    }
 
-    public NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> getNetDeviceIDs() {
-        return netDeviceIDs;
-    }
-    /* TODO
+    public MySQLServerService<DatabaseConnector,DatabaseConnectorFactory> getMysqlServers();
+
+    public MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlUsers();
+
+    public NetBindService<DatabaseConnector,DatabaseConnectorFactory> getNetBinds();
+
+    public NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> getNetDeviceIDs();
+
     public NetDeviceService<DatabaseConnector,DatabaseConnectorFactory> getNetDevices();
 
     public NetPortService<DatabaseConnector,DatabaseConnectorFactory> getNetPorts();
-    */
-    public NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> getNetProtocols() {
-        return netProtocols;
-    }
-    /* TODO
+
+    public NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> getNetProtocols();
+
     public NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects();
 
     public NoticeLogService<DatabaseConnector,DatabaseConnectorFactory> getNoticeLogs();
 
     public NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> getNoticeTypes();
+
+    public OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystemVersions();
+
+    public OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystems();
     */
-    public OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystemVersions() {
-        return operatingSystemVersions;
-    }
-
-    public OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystems() {
-        return operatingSystems;
-    }
-
     public PackageCategoryService<DatabaseConnector,DatabaseConnectorFactory> getPackageCategories() {
         return packageCategories;
     }
@@ -800,31 +741,23 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public PrivateFTPServerService<DatabaseConnector,DatabaseConnectorFactory> getPrivateFTPServers();
 
     public ProcessorTypeService<DatabaseConnector,DatabaseConnectorFactory> getProcessorTypes();
-    */
-    public ProtocolService<DatabaseConnector,DatabaseConnectorFactory> getProtocols() {
-        return protocols;
-    }
-    /* TODO
+
+    public ProtocolService<DatabaseConnector,DatabaseConnectorFactory> getProtocols();
+
     public RackService<DatabaseConnector,DatabaseConnectorFactory> getRacks();
 
     public ResellerService<DatabaseConnector,DatabaseConnectorFactory> getResellers();
-    */
+*/
     public ResourceTypeService<DatabaseConnector,DatabaseConnectorFactory> getResourceTypes() {
         return resourceTypes;
     }
+/* TODO
+    public ResourceService<DatabaseConnector,DatabaseConnectorFactory> getResources();
 
-    public ResourceService<DatabaseConnector,DatabaseConnectorFactory> getResources() {
-        return resources;
-    }
+    public ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> getServerFarms();
 
-    public ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> getServerFarms() {
-        return serverFarms;
-    }
+    public ServerTable getServers();
 
-    public ServerService<DatabaseConnector,DatabaseConnectorFactory> getServers() {
-        return servers;
-    }
-    /* TODO
     public ShellService<DatabaseConnector,DatabaseConnectorFactory> getShells();
 
     public SignupRequestOptionService<DatabaseConnector,DatabaseConnectorFactory> getSignupRequestOptions();
@@ -834,23 +767,15 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public SpamEmailMessageService<DatabaseConnector,DatabaseConnectorFactory> getSpamEmailMessages();
 
     public SystemEmailAliasService<DatabaseConnector,DatabaseConnectorFactory> getSystemEmailAliases();
-    */
-    public TechnologyService<DatabaseConnector,DatabaseConnectorFactory> getTechnologies() {
-        return technologies;
-    }
 
-    public TechnologyClassService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyClasses() {
-        return technologyClasses;
-    }
+    public TechnologyService<DatabaseConnector,DatabaseConnectorFactory> getTechnologies();
 
-    public TechnologyNameService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyNames() {
-        return technologyNames;
-    }
+    public TechnologyClassService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyClasses();
 
-    public TechnologyVersionService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyVersions() {
-        return technologyVersions;
-    }
-    /* TODO
+    public TechnologyNameService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyNames();
+
+    public TechnologyVersionService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyVersions();
+
     public TicketActionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketActionTypes();
 
     public TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions();
