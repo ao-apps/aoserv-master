@@ -30,6 +30,7 @@ final public class MasterServer {
 
         // Start the RMI server, if starting other types of servers later, consider starting each on separate threads so
         // a failure in on protocol doesn't affect the start-up of the others.
+        System.out.print("Starting RmiServer: ");
         boolean done = false;
         while(!done) {
             try {
@@ -65,8 +66,8 @@ final public class MasterServer {
                     useSsl,
                     new DatabaseConnectorFactory(MasterDatabase.getDatabase())
                 );
-
                 done = true;
+                System.out.println("Done");
 
                 // Avoid bug: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6597112
                 try {

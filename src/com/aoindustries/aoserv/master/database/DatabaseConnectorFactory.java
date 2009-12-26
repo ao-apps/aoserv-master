@@ -6,6 +6,7 @@ package com.aoindustries.aoserv.master.database;
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.AOServConnectorFactory;
+import com.aoindustries.aoserv.client.AOServConnectorFactoryCache;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.security.AccountDisabledException;
 import com.aoindustries.security.AccountNotFoundException;
@@ -198,6 +199,26 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
         ;
     }
 
+    private final AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory> connectors = new AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory>();
+
+    public DatabaseConnector getConnector(Locale locale, String connectAs, String authenticateAs, String password, String daemonServer) throws LoginException, RemoteException {
+        synchronized(connectors) {
+            DatabaseConnector connector = connectors.get(connectAs, authenticateAs, password, daemonServer);
+            if(connector!=null) {
+                connector.setLocale(locale);
+            } else {
+                connector = newConnector(
+                    locale,
+                    connectAs,
+                    authenticateAs,
+                    password,
+                    daemonServer
+                );
+            }
+            return connector;
+        }
+    }
+
     public DatabaseConnector newConnector(Locale locale, String connectAs, String authenticateAs, String password, String daemonServer) throws LoginException, RemoteException {
         try {
             // Handle the authentication
@@ -229,7 +250,17 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
             }
 
             // Let them in
-            return new DatabaseConnector(this, locale, connectAs);
+            synchronized(connectors) {
+                DatabaseConnector connector = new DatabaseConnector(this, locale, connectAs, authenticateAs, password);
+                connectors.put(
+                    connectAs,
+                    authenticateAs,
+                    password,
+                    daemonServer,
+                    connector
+                );
+                return connector;
+            }
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {

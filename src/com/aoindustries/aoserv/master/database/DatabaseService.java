@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.AOServService;
 import com.aoindustries.aoserv.client.AOServServiceUtils;
 import com.aoindustries.aoserv.client.Business;
+import com.aoindustries.aoserv.client.MethodColumn;
 import com.aoindustries.aoserv.client.ServiceName;
 import com.aoindustries.security.AccountDisabledException;
 import com.aoindustries.table.Table;
@@ -118,7 +119,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
 
     final DatabaseConnector connector;
     final ServiceName serviceName;
-    final Table<V> table;
+    final Table<MethodColumn,V> table;
     final Map<K,V> map;
 
     DatabaseService(DatabaseConnector connector, Class<K> keyClass, Class<V> valueClass) {
@@ -130,7 +131,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
 
     @Override
     final public String toString() {
-        return getServiceName().getDisplay();
+        return getServiceName().toString(connector.getLocale());
     }
 
     final public DatabaseConnector getConnector() {
@@ -183,7 +184,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         return serviceName;
     }
 
-    final public Table<V> getTable() {
+    final public Table<MethodColumn,V> getTable() {
         return table;
     }
 

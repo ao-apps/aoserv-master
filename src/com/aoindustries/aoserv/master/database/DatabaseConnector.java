@@ -7,15 +7,34 @@ package com.aoindustries.aoserv.master.database;
  */
 import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.AOServConnectorUtils;
+import com.aoindustries.aoserv.client.AOServPermissionService;
 import com.aoindustries.aoserv.client.AOServService;
+import com.aoindustries.aoserv.client.AOServerResourceService;
+import com.aoindustries.aoserv.client.AOServerService;
+import com.aoindustries.aoserv.client.ArchitectureService;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
 import com.aoindustries.aoserv.client.BusinessService;
+import com.aoindustries.aoserv.client.CountryCodeService;
 import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.LanguageService;
+import com.aoindustries.aoserv.client.MySQLServerService;
+import com.aoindustries.aoserv.client.NetBindService;
+import com.aoindustries.aoserv.client.NetDeviceIDService;
+import com.aoindustries.aoserv.client.NetProtocolService;
+import com.aoindustries.aoserv.client.OperatingSystemService;
+import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
+import com.aoindustries.aoserv.client.ProtocolService;
+import com.aoindustries.aoserv.client.ResourceService;
 import com.aoindustries.aoserv.client.ResourceTypeService;
+import com.aoindustries.aoserv.client.ServerFarmService;
+import com.aoindustries.aoserv.client.ServerService;
 import com.aoindustries.aoserv.client.ServiceName;
+import com.aoindustries.aoserv.client.TechnologyClassService;
+import com.aoindustries.aoserv.client.TechnologyNameService;
+import com.aoindustries.aoserv.client.TechnologyService;
+import com.aoindustries.aoserv.client.TechnologyVersionService;
 import com.aoindustries.aoserv.client.TicketCategoryService;
 import com.aoindustries.aoserv.client.TicketPriorityService;
 import com.aoindustries.aoserv.client.TicketStatusService;
@@ -45,14 +64,20 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseConnectorFactory factory;
     Locale locale;
     final String connectAs;
+    private final String authenticateAs;
+    private final String password;
     /* TODO
     final DatabaseAOServerDaemonHostService aoserverDaemonHosts;
+     */
     final DatabaseAOServerResourceService aoserverResources;
     final DatabaseAOServerService aoservers;
     final DatabaseAOServPermissionService aoservPermissions;
+    /* TODO
     final DatabaseAOServProtocolService aoservProtocols;
     final DatabaseAOSHCommandService aoshCommands;
+     */
     final DatabaseArchitectureService architectures;
+    /* TODO
     final DatabaseBackupPartitionService backupPartitions;
     final DatabaseBackupRetentionService backupRetentions;
     final DatabaseBankAccountService bankAccounts;
@@ -71,7 +96,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     /* TODO
     final DatabaseBusinessServerService businessServers;
     final DatabaseClientJvmProfileService clientJvmProfiles;
+     */
     final DatabaseCountryCodeService countryCodes;
+    /* TODO
     final DatabaseCreditCardProcessorService creditCardProcessors;
     final DatabaseCreditCardTransactionService creditCardTransactions;
     final DatabaseCreditCardService creditCards;
@@ -152,19 +179,25 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseMySQLDatabaseService mysqlDatabases;
     final DatabaseMySQLDBUserService mysqlDBUsers;
     final DatabaseMySQLReservedWordService mysqlReservedWords;
+     */
     final DatabaseMySQLServerService mysqlServers;
+    /* TODO
     final DatabaseMySQLUserService mysqlUsers;
+     */
     final DatabaseNetBindService netBinds;
     final DatabaseNetDeviceIDService netDeviceIDs;
+    /* TODO
     final DatabaseNetDeviceService netDevices;
     final DatabaseNetPortService netPorts;
+     */
     final DatabaseNetProtocolService netProtocols;
+    /* TODO
     final DatabaseNetTcpRedirectService netTcpRedirects;
     final DatabaseNoticeLogService noticeLogs;
     final DatabaseNoticeTypeService noticeTypes;
+    */
     final DatabaseOperatingSystemVersionService operatingSystemVersions;
     final DatabaseOperatingSystemService operatingSystems;
-    */
     final DatabasePackageCategoryService packageCategories;
     /* TODO
     final DatabasePackageDefinitionLimitService packageDefinitionLimits;
@@ -180,24 +213,28 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabasePostgresVersionService postgresVersions;
     final DatabasePrivateFTPServerService privateFTPServers;
     final DatabaseProcessorTypeService processorTypes;
+     */
     final DatabaseProtocolService protocols;
+    /* TODO
     final DatabaseRackService racks;
     final DatabaseResellerService resellers;
      */
     final DatabaseResourceTypeService resourceTypes;
-    /* TODO
     final DatabaseResourceService resources;
     final DatabaseServerFarmService serverFarms;
     final DatabaseServerService servers;
+    /* TODO
     final DatabaseShellService shells;
     final DatabaseSignupRequestOptionService signupRequestOptions;
     final DatabaseSignupRequestService signupRequests;
     final DatabaseSpamEmailMessageService spamEmailMessages;
     final DatabaseSystemEmailAliasService systemEmailAliass;
+     */
     final DatabaseTechnologyService technologies;
-    final DatabaseTechnologyClassService technologyClasss;
+    final DatabaseTechnologyClassService technologyClasses;
     final DatabaseTechnologyNameService technologyNames;
     final DatabaseTechnologyVersionService technologyVersions;
+    /* TODO
     final DatabaseTicketActionTypeService ticketActionTypes;
     final DatabaseTicketActionService ticketActions;
     final DatabaseTicketAssignmentService ticketAssignments;
@@ -223,18 +260,24 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseWhoisHistoryService whoisHistories;
      */
 
-    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, String connectAs) throws RemoteException, LoginException {
+    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, String connectAs, String authenticateAs, String password) throws RemoteException, LoginException {
         this.factory = factory;
         this.locale = locale;
         this.connectAs = connectAs;
+        this.authenticateAs = authenticateAs;
+        this.password = password;
         /* TODO
         aoserverDaemonHosts = new DatabaseAOServerDaemonHostService(this);
+         */
         aoserverResources = new DatabaseAOServerResourceService(this);
         aoservers = new DatabaseAOServerService(this);
         aoservPermissions = new DatabaseAOServPermissionService(this);
+        /* TODO
         aoservProtocols = new DatabaseAOServProtocolService(this);
         aoshCommands = new DatabaseAOSHCommandService(this);
+         */
         architectures = new DatabaseArchitectureService(this);
+        /* TODO
         backupPartitions = new DatabaseBackupPartitionService(this);
         backupRetentions = new DatabaseBackupRetentionService(this);
         bankAccounts = new DatabaseBankAccountService(this);
@@ -253,7 +296,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         /* TODO
         businessServers = new DatabaseBusinessServerService(this);
         clientJvmProfiles = new DatabaseClientJvmProfileService(this);
+         */
         countryCodes = new DatabaseCountryCodeService(this);
+        /* TODO
         creditCardProcessors = new DatabaseCreditCardProcessorService(this);
         creditCardTransactions = new DatabaseCreditCardTransactionService(this);
         creditCards = new DatabaseCreditCardService(this);
@@ -334,19 +379,25 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         mysqlDatabases = new DatabaseMySQLDatabaseService(this);
         mysqlDBUsers = new DatabaseMySQLDBUserService(this);
         mysqlReservedWords = new DatabaseMySQLReservedWordService(this);
+         */
         mysqlServers = new DatabaseMySQLServerService(this);
+        /* TODO
         mysqlUsers = new DatabaseMySQLUserService(this);
+         */
         netBinds = new DatabaseNetBindService(this);
         netDeviceIDs = new DatabaseNetDeviceIDService(this);
+        /* TODO
         netDevices = new DatabaseNetDeviceService(this);
         netPorts = new DatabaseNetPortService(this);
+         */
         netProtocols = new DatabaseNetProtocolService(this);
+        /* TODO
         netTcpRedirects = new DatabaseNetTcpRedirectService(this);
         noticeLogs = new DatabaseNoticeLogService(this);
         noticeTypes = new DatabaseNoticeTypeService(this);
+        */
         operatingSystemVersions = new DatabaseOperatingSystemVersionService(this);
         operatingSystems = new DatabaseOperatingSystemService(this);
-        */
         packageCategories = new DatabasePackageCategoryService(this);
         /* TODO
         packageDefinitionLimits = new DatabasePackageDefinitionLimitService(this);
@@ -362,24 +413,28 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         postgresVersions = new DatabasePostgresVersionService(this);
         privateFTPServers = new DatabasePrivateFTPServerService(this);
         processorTypes = new DatabaseProcessorTypeService(this);
+         */
         protocols = new DatabaseProtocolService(this);
+        /* TODO
         racks = new DatabaseRackService(this);
         resellers = new DatabaseResellerService(this);
          */
         resourceTypes = new DatabaseResourceTypeService(this);
-        /* TODO
         resources = new DatabaseResourceService(this);
         serverFarms = new DatabaseServerFarmService(this);
         servers = new DatabaseServerService(this);
+        /* TODO
         shells = new DatabaseShellService(this);
         signupRequestOptions = new DatabaseSignupRequestOptionService(this);
         signupRequests = new DatabaseSignupRequestService(this);
         spamEmailMessages = new DatabaseSpamEmailMessageService(this);
         systemEmailAliass = new DatabaseSystemEmailAliasService(this);
+         */
         technologies = new DatabaseTechnologyService(this);
-        technologyClasss = new DatabaseTechnologyClassService(this);
+        technologyClasses = new DatabaseTechnologyClassService(this);
         technologyNames = new DatabaseTechnologyNameService(this);
         technologyVersions = new DatabaseTechnologyVersionService(this);
+        /* TODO
         ticketActionTypes = new DatabaseTicketActionTypeService(this);
         ticketActions = new DatabaseTicketActionService(this);
         ticketAssignments = new DatabaseTicketAssignmentService(this);
@@ -445,6 +500,14 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return obj;
     }
 
+    public String getAuthenticateAs() {
+        return authenticateAs;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
     private final AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>> tables = new AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>>();
     public Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>> getServices() throws RemoteException {
         Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>> ts = tables.get();
@@ -457,306 +520,344 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     /*
      * TODO
-    AOServerDaemonHostService<DatabaseConnector,DatabaseConnectorFactory> getAoServerDaemonHosts();
+    public AOServerDaemonHostService<DatabaseConnector,DatabaseConnectorFactory> getAoServerDaemonHosts();
+    */
+    public AOServerResourceService<DatabaseConnector,DatabaseConnectorFactory> getAoServerResources() {
+        return aoserverResources;
+    }
 
-    AOServerResourceService<DatabaseConnector,DatabaseConnectorFactory> getAoServerResources();
+    public AOServerService<DatabaseConnector,DatabaseConnectorFactory> getAoServers() {
+        return aoservers;
+    }
 
-    AOServerService<DatabaseConnector,DatabaseConnectorFactory> getAoServers();
+    public AOServPermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservPermissions() {
+        return aoservPermissions;
+    }
+    /* TODO
+    public AOServProtocolService<DatabaseConnector,DatabaseConnectorFactory> getAoservProtocols();
 
-    AOServPermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservPermissions();
+    public AOSHCommandService<DatabaseConnector,DatabaseConnectorFactory> getAoshCommands();
+    */
+    public ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> getArchitectures() {
+        return architectures;
+    }
+    /* TODO
+    public BackupPartitionService<DatabaseConnector,DatabaseConnectorFactory> getBackupPartitions();
 
-    AOServProtocolService<DatabaseConnector,DatabaseConnectorFactory> getAoservProtocols();
+    public BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> getBackupRetentions();
 
-    AOSHCommandService<DatabaseConnector,DatabaseConnectorFactory> getAoshCommands();
+    public BankAccountService<DatabaseConnector,DatabaseConnectorFactory> getBankAccounts();
 
-    ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> getArchitectures();
+    public BankTransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactionTypes();
 
-    BackupPartitionService<DatabaseConnector,DatabaseConnectorFactory> getBackupPartitions();
+    public BankTransactionService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactions();
 
-    BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> getBackupRetentions();
+    public BankService<DatabaseConnector,DatabaseConnectorFactory> getBanks();
 
-    BankAccountService<DatabaseConnector,DatabaseConnectorFactory> getBankAccounts();
+    public BlackholeEmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getBlackholeEmailAddresses();
 
-    BankTransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactionTypes();
-
-    BankTransactionService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactions();
-
-    BankService<DatabaseConnector,DatabaseConnectorFactory> getBanks();
-
-    BlackholeEmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getBlackholeEmailAddresses();
-
-    BrandService<DatabaseConnector,DatabaseConnectorFactory> getBrands();
+    public BrandService<DatabaseConnector,DatabaseConnectorFactory> getBrands();
      */
     public BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministrators() {
         return businessAdministrators;
     }
     /*
-    BusinessAdministratorPermissionService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministratorPermissions();
+    public BusinessAdministratorPermissionService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministratorPermissions();
 
-    BusinessProfileService<DatabaseConnector,DatabaseConnectorFactory> getBusinessProfiles();
+    public BusinessProfileService<DatabaseConnector,DatabaseConnectorFactory> getBusinessProfiles();
      */
     public BusinessService<DatabaseConnector,DatabaseConnectorFactory> getBusinesses() {
         return businesses;
     }
 
-    /*
-    BusinessServerService<DatabaseConnector,DatabaseConnectorFactory> getBusinessServers();
+    /* TODO
+    public BusinessServerService<DatabaseConnector,DatabaseConnectorFactory> getBusinessServers();
 
-    ClientJvmProfileService<DatabaseConnector,DatabaseConnectorFactory> getClientJvmProfiles();
+    public ClientJvmProfileService<DatabaseConnector,DatabaseConnectorFactory> getClientJvmProfiles();
+    */
+    public CountryCodeService<DatabaseConnector,DatabaseConnectorFactory> getCountryCodes() {
+        return countryCodes;
+    }
+    /* TODO
+    public CreditCardProcessorService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardProcessors();
 
-    CountryCodeService<DatabaseConnector,DatabaseConnectorFactory> getCountryCodes();
+    public CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardTransactions();
 
-    CreditCardProcessorService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardProcessors();
+    public CreditCardService<DatabaseConnector,DatabaseConnectorFactory> getCreditCards();
 
-    CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardTransactions();
-
-    CreditCardService<DatabaseConnector,DatabaseConnectorFactory> getCreditCards();
-
-    CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> getCvsRepositories();
+    public CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> getCvsRepositories();
      */
     public DisableLogService<DatabaseConnector,DatabaseConnectorFactory> getDisableLogs() {
         return disableLogs;
     }
     /*
-    DistroFileTypeService<DatabaseConnector,DatabaseConnectorFactory> getDistroFileTypes();
+    public DistroFileTypeService<DatabaseConnector,DatabaseConnectorFactory> getDistroFileTypes();
 
-    DistroFileService<DatabaseConnector,DatabaseConnectorFactory> getDistroFiles();
+    public DistroFileService<DatabaseConnector,DatabaseConnectorFactory> getDistroFiles();
 
-    DNSForbiddenZoneService<DatabaseConnector,DatabaseConnectorFactory> getDnsForbiddenZones();
+    public DNSForbiddenZoneService<DatabaseConnector,DatabaseConnectorFactory> getDnsForbiddenZones();
 
-    DNSRecordService<DatabaseConnector,DatabaseConnectorFactory> getDnsRecords();
+    public DNSRecordService<DatabaseConnector,DatabaseConnectorFactory> getDnsRecords();
 
-    DNSTLDService<DatabaseConnector,DatabaseConnectorFactory> getDnsTLDs();
+    public DNSTLDService<DatabaseConnector,DatabaseConnectorFactory> getDnsTLDs();
 
-    DNSTypeService<DatabaseConnector,DatabaseConnectorFactory> getDnsTypes();
+    public DNSTypeService<DatabaseConnector,DatabaseConnectorFactory> getDnsTypes();
 
-    DNSZoneService<DatabaseConnector,DatabaseConnectorFactory> getDnsZones();
+    public DNSZoneService<DatabaseConnector,DatabaseConnectorFactory> getDnsZones();
 
-    EmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailAddresses();
+    public EmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailAddresses();
 
-    EmailAttachmentBlockService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentBlocks();
+    public EmailAttachmentBlockService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentBlocks();
 
-    EmailAttachmentTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentTypes();
+    public EmailAttachmentTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentTypes();
 
-    EmailDomainService<DatabaseConnector,DatabaseConnectorFactory> getEmailDomains();
+    public EmailDomainService<DatabaseConnector,DatabaseConnectorFactory> getEmailDomains();
 
-    EmailForwardingService<DatabaseConnector,DatabaseConnectorFactory> getEmailForwardings();
+    public EmailForwardingService<DatabaseConnector,DatabaseConnectorFactory> getEmailForwardings();
 
-    EmailListAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailListAddresses();
+    public EmailListAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailListAddresses();
 
-    EmailListService<DatabaseConnector,DatabaseConnectorFactory> getEmailLists();
+    public EmailListService<DatabaseConnector,DatabaseConnectorFactory> getEmailLists();
 
-    EmailPipeAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailPipeAddresses();
+    public EmailPipeAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailPipeAddresses();
 
-    EmailPipeService<DatabaseConnector,DatabaseConnectorFactory> getEmailPipes();
+    public EmailPipeService<DatabaseConnector,DatabaseConnectorFactory> getEmailPipes();
 
-    EmailSmtpRelayTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpRelayTypes();
+    public EmailSmtpRelayTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpRelayTypes();
 
-    EmailSmtpRelayService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpRelays();
+    public EmailSmtpRelayService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpRelays();
 
-    EmailSmtpSmartHostDomainService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpSmartHostDomains();
+    public EmailSmtpSmartHostDomainService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpSmartHostDomains();
 
-    EmailSmtpSmartHostService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpSmartHosts();
+    public EmailSmtpSmartHostService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpSmartHosts();
 
-    EmailSpamAssassinIntegrationModeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSpamAssassinIntegrationModes();
+    public EmailSpamAssassinIntegrationModeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSpamAssassinIntegrationModes();
 
-    EncryptionKeyService<DatabaseConnector,DatabaseConnectorFactory> getEncryptionKeys();
+    public EncryptionKeyService<DatabaseConnector,DatabaseConnectorFactory> getEncryptionKeys();
 
-    ExpenseCategoryService<DatabaseConnector,DatabaseConnectorFactory> getExpenseCategories();
+    public ExpenseCategoryService<DatabaseConnector,DatabaseConnectorFactory> getExpenseCategories();
 
-    FailoverFileLogService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileLogs();
+    public FailoverFileLogService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileLogs();
 
-    FailoverFileReplicationService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileReplications();
+    public FailoverFileReplicationService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileReplications();
 
-    FailoverFileScheduleService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileSchedules();
+    public FailoverFileScheduleService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileSchedules();
 
-    FailoverMySQLReplicationService<DatabaseConnector,DatabaseConnectorFactory> getFailoverMySQLReplications();
+    public FailoverMySQLReplicationService<DatabaseConnector,DatabaseConnectorFactory> getFailoverMySQLReplications();
 
-    FileBackupSettingService<DatabaseConnector,DatabaseConnectorFactory> getFileBackupSettings();
+    public FileBackupSettingService<DatabaseConnector,DatabaseConnectorFactory> getFileBackupSettings();
 
-    FTPGuestUserService<DatabaseConnector,DatabaseConnectorFactory> getFtpGuestUsers();
+    public FTPGuestUserService<DatabaseConnector,DatabaseConnectorFactory> getFtpGuestUsers();
 
-    HttpdBindService<DatabaseConnector,DatabaseConnectorFactory> getHttpdBinds();
+    public HttpdBindService<DatabaseConnector,DatabaseConnectorFactory> getHttpdBinds();
 
-    HttpdJBossSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossSites();
+    public HttpdJBossSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossSites();
 
-    HttpdJBossVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossVersions();
+    public HttpdJBossVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossVersions();
 
-    HttpdJKCodeService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKCodes();
+    public HttpdJKCodeService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKCodes();
 
-    HttpdJKProtocolService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKProtocols();
+    public HttpdJKProtocolService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKProtocols();
 
-    HttpdServerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdServers();
+    public HttpdServerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdServers();
 
-    HttpdSharedTomcatService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSharedTomcats();
+    public HttpdSharedTomcatService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSharedTomcats();
 
-    HttpdSiteAuthenticatedLocationService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteAuthenticatedLocations();
+    public HttpdSiteAuthenticatedLocationService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteAuthenticatedLocations();
 
-    HttpdSiteBindService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteBinds();
+    public HttpdSiteBindService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteBinds();
 
-    HttpdSiteURLService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteURLs();
+    public HttpdSiteURLService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteURLs();
 
-    HttpdSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSites();
+    public HttpdSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSites();
 
-    HttpdStaticSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdStaticSites();
+    public HttpdStaticSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdStaticSites();
 
-    HttpdTomcatContextService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatContexts();
+    public HttpdTomcatContextService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatContexts();
 
-    HttpdTomcatDataSourceService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatDataSources();
+    public HttpdTomcatDataSourceService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatDataSources();
 
-    HttpdTomcatParameterService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatParameters();
+    public HttpdTomcatParameterService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatParameters();
 
-    HttpdTomcatSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatSites();
+    public HttpdTomcatSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatSites();
 
-    HttpdTomcatSharedSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatSharedSites();
+    public HttpdTomcatSharedSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatSharedSites();
 
-    HttpdTomcatStdSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatStdSites();
+    public HttpdTomcatStdSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatStdSites();
 
-    HttpdTomcatVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatVersions();
+    public HttpdTomcatVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatVersions();
 
-    HttpdWorkerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdWorkers();
+    public HttpdWorkerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdWorkers();
 
-    IPAddressService<DatabaseConnector,DatabaseConnectorFactory> getIpAddresses();
+    public IPAddressService<DatabaseConnector,DatabaseConnectorFactory> getIpAddresses();
     */
     public LanguageService<DatabaseConnector,DatabaseConnectorFactory> getLanguages() {
         return languages;
     }
     /* TODO
-    LinuxAccAddressService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccAddresses();
+    public LinuxAccAddressService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccAddresses();
 
-    LinuxAccountTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccountTypes();
+    public LinuxAccountTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccountTypes();
 
-    LinuxAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccounts();
+    public LinuxAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccounts();
 
-    LinuxGroupAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupAccounts();
+    public LinuxGroupAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupAccounts();
 
-    LinuxGroupTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupTypes();
+    public LinuxGroupTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupTypes();
 
-    LinuxGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroups();
+    public LinuxGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroups();
 
-    LinuxIDService<DatabaseConnector,DatabaseConnectorFactory> getLinuxIDs();
+    public LinuxIDService<DatabaseConnector,DatabaseConnectorFactory> getLinuxIDs();
 
-    LinuxServerAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxServerAccounts();
+    public LinuxServerAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxServerAccounts();
 
-    LinuxServerGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxServerGroups();
+    public LinuxServerGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxServerGroups();
 
-    MajordomoListService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoLists();
+    public MajordomoListService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoLists();
 
-    MajordomoServerService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoServers();
+    public MajordomoServerService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoServers();
 
-    MajordomoVersionService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoVersions();
+    public MajordomoVersionService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoVersions();
 
-    MasterHistoryService<DatabaseConnector,DatabaseConnectorFactory> getMasterHistory();
+    public MasterHistoryService<DatabaseConnector,DatabaseConnectorFactory> getMasterHistory();
 
-    MasterHostService<DatabaseConnector,DatabaseConnectorFactory> getMasterHosts();
+    public MasterHostService<DatabaseConnector,DatabaseConnectorFactory> getMasterHosts();
 
-    MasterServerService<DatabaseConnector,DatabaseConnectorFactory> getMasterServers();
+    public MasterServerService<DatabaseConnector,DatabaseConnectorFactory> getMasterServers();
 
-    MasterUserService<DatabaseConnector,DatabaseConnectorFactory> getMasterUsers();
+    public MasterUserService<DatabaseConnector,DatabaseConnectorFactory> getMasterUsers();
 
-    MonthlyChargeService<DatabaseConnector,DatabaseConnectorFactory> getMonthlyCharges();
+    public MonthlyChargeService<DatabaseConnector,DatabaseConnectorFactory> getMonthlyCharges();
 
-    MySQLDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDatabases();
+    public MySQLDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDatabases();
 
-    MySQLDBUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDBUsers();
+    public MySQLDBUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDBUsers();
 
-    MySQLReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getMysqlReservedWords();
-
-    MySQLServerService<DatabaseConnector,DatabaseConnectorFactory> getMysqlServers();
-
-    MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlUsers();
-
-    NetBindService<DatabaseConnector,DatabaseConnectorFactory> getNetBinds();
-
-    NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> getNetDeviceIDs();
-
-    NetDeviceService<DatabaseConnector,DatabaseConnectorFactory> getNetDevices();
-
-    NetPortService<DatabaseConnector,DatabaseConnectorFactory> getNetPorts();
-
-    NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> getNetProtocols();
-
-    NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects();
-
-    NoticeLogService<DatabaseConnector,DatabaseConnectorFactory> getNoticeLogs();
-
-    NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> getNoticeTypes();
-
-    OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystemVersions();
-
-    OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystems();
+    public MySQLReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getMysqlReservedWords();
     */
+    public MySQLServerService<DatabaseConnector,DatabaseConnectorFactory> getMysqlServers() {
+        return mysqlServers;
+    }
+    /* TODO
+    public MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlUsers();
+    */
+    public NetBindService<DatabaseConnector,DatabaseConnectorFactory> getNetBinds() {
+        return netBinds;
+    }
+
+    public NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> getNetDeviceIDs() {
+        return netDeviceIDs;
+    }
+    /* TODO
+    public NetDeviceService<DatabaseConnector,DatabaseConnectorFactory> getNetDevices();
+
+    public NetPortService<DatabaseConnector,DatabaseConnectorFactory> getNetPorts();
+    */
+    public NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> getNetProtocols() {
+        return netProtocols;
+    }
+    /* TODO
+    public NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects();
+
+    public NoticeLogService<DatabaseConnector,DatabaseConnectorFactory> getNoticeLogs();
+
+    public NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> getNoticeTypes();
+    */
+    public OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystemVersions() {
+        return operatingSystemVersions;
+    }
+
+    public OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystems() {
+        return operatingSystems;
+    }
+
     public PackageCategoryService<DatabaseConnector,DatabaseConnectorFactory> getPackageCategories() {
         return packageCategories;
     }
     /*
-    PackageDefinitionLimitService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitionLimits();
+    public PackageDefinitionLimitService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitionLimits();
 
-    PackageDefinitionService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitions();
+    public PackageDefinitionService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitions();
 
-    PaymentTypeService<DatabaseConnector,DatabaseConnectorFactory> getPaymentTypes();
+    public PaymentTypeService<DatabaseConnector,DatabaseConnectorFactory> getPaymentTypes();
 
-    PhysicalServerService<DatabaseConnector,DatabaseConnectorFactory> getPhysicalServers();
+    public PhysicalServerService<DatabaseConnector,DatabaseConnectorFactory> getPhysicalServers();
 
-    PostgresDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getPostgresDatabases();
+    public PostgresDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getPostgresDatabases();
 
-    PostgresEncodingService<DatabaseConnector,DatabaseConnectorFactory> getPostgresEncodings();
+    public PostgresEncodingService<DatabaseConnector,DatabaseConnectorFactory> getPostgresEncodings();
 
-    PostgresReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getPostgresReservedWords();
+    public PostgresReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getPostgresReservedWords();
 
-    PostgresServerUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServerUsers();
+    public PostgresServerUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServerUsers();
 
-    PostgresServerService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServers();
+    public PostgresServerService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServers();
 
-    PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresUsers();
+    public PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresUsers();
 
-    PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> getPostgresVersions();
+    public PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> getPostgresVersions();
 
-    PrivateFTPServerService<DatabaseConnector,DatabaseConnectorFactory> getPrivateFTPServers();
+    public PrivateFTPServerService<DatabaseConnector,DatabaseConnectorFactory> getPrivateFTPServers();
 
-    ProcessorTypeService<DatabaseConnector,DatabaseConnectorFactory> getProcessorTypes();
+    public ProcessorTypeService<DatabaseConnector,DatabaseConnectorFactory> getProcessorTypes();
+    */
+    public ProtocolService<DatabaseConnector,DatabaseConnectorFactory> getProtocols() {
+        return protocols;
+    }
+    /* TODO
+    public RackService<DatabaseConnector,DatabaseConnectorFactory> getRacks();
 
-    ProtocolService<DatabaseConnector,DatabaseConnectorFactory> getProtocols();
-
-    RackService<DatabaseConnector,DatabaseConnectorFactory> getRacks();
-
-    ResellerService<DatabaseConnector,DatabaseConnectorFactory> getResellers();
-*/
+    public ResellerService<DatabaseConnector,DatabaseConnectorFactory> getResellers();
+    */
     public ResourceTypeService<DatabaseConnector,DatabaseConnectorFactory> getResourceTypes() {
         return resourceTypes;
     }
-/* TODO
-    ResourceService<DatabaseConnector,DatabaseConnectorFactory> getResources();
 
-    ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> getServerFarms();
+    public ResourceService<DatabaseConnector,DatabaseConnectorFactory> getResources() {
+        return resources;
+    }
 
-    ServerTable getServers();
+    public ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> getServerFarms() {
+        return serverFarms;
+    }
 
-    ShellService<DatabaseConnector,DatabaseConnectorFactory> getShells();
+    public ServerService<DatabaseConnector,DatabaseConnectorFactory> getServers() {
+        return servers;
+    }
+    /* TODO
+    public ShellService<DatabaseConnector,DatabaseConnectorFactory> getShells();
 
-    SignupRequestOptionService<DatabaseConnector,DatabaseConnectorFactory> getSignupRequestOptions();
+    public SignupRequestOptionService<DatabaseConnector,DatabaseConnectorFactory> getSignupRequestOptions();
 
-    SignupRequestService<DatabaseConnector,DatabaseConnectorFactory> getSignupRequests();
+    public SignupRequestService<DatabaseConnector,DatabaseConnectorFactory> getSignupRequests();
 
-    SpamEmailMessageService<DatabaseConnector,DatabaseConnectorFactory> getSpamEmailMessages();
+    public SpamEmailMessageService<DatabaseConnector,DatabaseConnectorFactory> getSpamEmailMessages();
 
-    SystemEmailAliasService<DatabaseConnector,DatabaseConnectorFactory> getSystemEmailAliases();
+    public SystemEmailAliasService<DatabaseConnector,DatabaseConnectorFactory> getSystemEmailAliases();
+    */
+    public TechnologyService<DatabaseConnector,DatabaseConnectorFactory> getTechnologies() {
+        return technologies;
+    }
 
-    TechnologyService<DatabaseConnector,DatabaseConnectorFactory> getTechnologies();
+    public TechnologyClassService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyClasses() {
+        return technologyClasses;
+    }
 
-    TechnologyClassService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyClasses();
+    public TechnologyNameService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyNames() {
+        return technologyNames;
+    }
 
-    TechnologyNameService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyNames();
+    public TechnologyVersionService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyVersions() {
+        return technologyVersions;
+    }
+    /* TODO
+    public TicketActionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketActionTypes();
 
-    TechnologyVersionService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyVersions();
+    public TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions();
 
-    TicketActionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketActionTypes();
+    public TicketAssignmentService<DatabaseConnector,DatabaseConnectorFactory> getTicketAssignments();
 
-    TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions();
-
-    TicketAssignmentService<DatabaseConnector,DatabaseConnectorFactory> getTicketAssignments();
-
-    TicketBrandCategoryService<DatabaseConnector,DatabaseConnectorFactory> getTicketBrandCategories();
+    public TicketBrandCategoryService<DatabaseConnector,DatabaseConnectorFactory> getTicketBrandCategories();
     */
     public TicketCategoryService<DatabaseConnector,DatabaseConnectorFactory> getTicketCategories() {
         return ticketCategories;
@@ -774,27 +875,27 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return ticketTypes;
     }
     /* TODO
-    TicketService<DatabaseConnector,DatabaseConnectorFactory> getTickets();
+    public TicketService<DatabaseConnector,DatabaseConnectorFactory> getTickets();
     */
     public TimeZoneService<DatabaseConnector,DatabaseConnectorFactory> getTimeZones() {
         return timeZones;
     }
     /* TODO
-    TransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTransactionTypes();
+    public TransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTransactionTypes();
 
-    TransactionService<DatabaseConnector,DatabaseConnectorFactory> getTransactions();
+    public TransactionService<DatabaseConnector,DatabaseConnectorFactory> getTransactions();
 
-    USStateService<DatabaseConnector,DatabaseConnectorFactory> getUsStates();
+    public USStateService<DatabaseConnector,DatabaseConnectorFactory> getUsStates();
     */
     public UsernameService<DatabaseConnector,DatabaseConnectorFactory> getUsernames() {
         return usernames;
     }
     /* TODO
 
-    VirtualDiskService<DatabaseConnector,DatabaseConnectorFactory> getVirtualDisks();
+    public VirtualDiskService<DatabaseConnector,DatabaseConnectorFactory> getVirtualDisks();
 
-    VirtualServerService<DatabaseConnector,DatabaseConnectorFactory> getVirtualServers();
+    public VirtualServerService<DatabaseConnector,DatabaseConnectorFactory> getVirtualServers();
 
-    WhoisHistoryService<DatabaseConnector,DatabaseConnectorFactory> getWhoisHistory();
+    public WhoisHistoryService<DatabaseConnector,DatabaseConnectorFactory> getWhoisHistory();
  */
 }
