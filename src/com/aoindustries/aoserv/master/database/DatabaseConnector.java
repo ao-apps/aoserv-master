@@ -9,7 +9,6 @@ import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.AOServConnectorUtils;
 import com.aoindustries.aoserv.client.AOServPermissionService;
 import com.aoindustries.aoserv.client.AOServService;
-import com.aoindustries.aoserv.client.ArchitectureService;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
 import com.aoindustries.aoserv.client.BusinessService;
@@ -17,13 +16,9 @@ import com.aoindustries.aoserv.client.CountryCodeService;
 import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.LanguageService;
 import com.aoindustries.aoserv.client.NetProtocolService;
-import com.aoindustries.aoserv.client.OperatingSystemService;
-import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
 import com.aoindustries.aoserv.client.ProtocolService;
-import com.aoindustries.aoserv.client.ResourceService;
 import com.aoindustries.aoserv.client.ResourceTypeService;
-import com.aoindustries.aoserv.client.ServerFarmService;
 import com.aoindustries.aoserv.client.ServiceName;
 import com.aoindustries.aoserv.client.TicketCategoryService;
 import com.aoindustries.aoserv.client.TicketPriorityService;
@@ -65,9 +60,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     /* TODO
     final DatabaseAOServProtocolService aoservProtocols;
     final DatabaseAOSHCommandService aoshCommands;
-     */
     final DatabaseArchitectureService architectures;
-    /* TODO
     final DatabaseBackupPartitionService backupPartitions;
     final DatabaseBackupRetentionService backupRetentions;
     final DatabaseBankAccountService bankAccounts;
@@ -181,9 +174,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseNetTcpRedirectService netTcpRedirects;
     final DatabaseNoticeLogService noticeLogs;
     final DatabaseNoticeTypeService noticeTypes;
-    */
     final DatabaseOperatingSystemVersionService operatingSystemVersions;
     final DatabaseOperatingSystemService operatingSystems;
+    */
     final DatabasePackageCategoryService packageCategories;
     /* TODO
     final DatabasePackageDefinitionLimitService packageDefinitionLimits;
@@ -206,9 +199,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseResellerService resellers;
      */
     final DatabaseResourceTypeService resourceTypes;
+    /* TODO
     final DatabaseResourceService resources;
     final DatabaseServerFarmService serverFarms;
-    /* TODO
     final DatabaseServerService servers;
     final DatabaseShellService shells;
     final DatabaseSignupRequestOptionService signupRequestOptions;
@@ -259,9 +252,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         /* TODO
         aoservProtocols = new DatabaseAOServProtocolService(this);
         aoshCommands = new DatabaseAOSHCommandService(this);
-         */
         architectures = new DatabaseArchitectureService(this);
-        /* TODO
         backupPartitions = new DatabaseBackupPartitionService(this);
         backupRetentions = new DatabaseBackupRetentionService(this);
         bankAccounts = new DatabaseBankAccountService(this);
@@ -375,9 +366,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         netTcpRedirects = new DatabaseNetTcpRedirectService(this);
         noticeLogs = new DatabaseNoticeLogService(this);
         noticeTypes = new DatabaseNoticeTypeService(this);
-        */
         operatingSystemVersions = new DatabaseOperatingSystemVersionService(this);
         operatingSystems = new DatabaseOperatingSystemService(this);
+        */
         packageCategories = new DatabasePackageCategoryService(this);
         /* TODO
         packageDefinitionLimits = new DatabasePackageDefinitionLimitService(this);
@@ -400,9 +391,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         resellers = new DatabaseResellerService(this);
          */
         resourceTypes = new DatabaseResourceTypeService(this);
+        /* TODO
         resources = new DatabaseResourceService(this);
         serverFarms = new DatabaseServerFarmService(this);
-        /* TODO
         servers = new DatabaseServerService(this);
         shells = new DatabaseShellService(this);
         signupRequestOptions = new DatabaseSignupRequestOptionService(this);
@@ -511,11 +502,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public AOServProtocolService<DatabaseConnector,DatabaseConnectorFactory> getAoservProtocols();
 
     public AOSHCommandService<DatabaseConnector,DatabaseConnectorFactory> getAoshCommands();
-    */
-    public ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> getArchitectures() {
-        return architectures;
-    }
-    /* TODO
+
+    public ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> getArchitectures();
+
     public BackupPartitionService<DatabaseConnector,DatabaseConnectorFactory> getBackupPartitions();
 
     public BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> getBackupRetentions();
@@ -730,15 +719,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public NoticeLogService<DatabaseConnector,DatabaseConnectorFactory> getNoticeLogs();
 
     public NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> getNoticeTypes();
+
+    public OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystemVersions();
+
+    public OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystems();
     */
-    public OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystemVersions() {
-        return operatingSystemVersions;
-    }
-
-    public OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystems() {
-        return operatingSystems;
-    }
-
     public PackageCategoryService<DatabaseConnector,DatabaseConnectorFactory> getPackageCategories() {
         return packageCategories;
     }
@@ -780,15 +765,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public ResourceTypeService<DatabaseConnector,DatabaseConnectorFactory> getResourceTypes() {
         return resourceTypes;
     }
+/* TODO
+    public ResourceService<DatabaseConnector,DatabaseConnectorFactory> getResources();
 
-    public ResourceService<DatabaseConnector,DatabaseConnectorFactory> getResources() {
-        return resources;
-    }
+    public ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> getServerFarms();
 
-    public ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> getServerFarms() {
-        return serverFarms;
-    }
-    /* TODO
     public ServerTable getServers();
 
     public ShellService<DatabaseConnector,DatabaseConnectorFactory> getShells();
