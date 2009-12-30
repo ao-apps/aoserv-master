@@ -5,6 +5,7 @@ package com.aoindustries.aoserv.master.database;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.MySQLDBUser;
 import com.aoindustries.aoserv.client.MySQLDBUserService;
 import com.aoindustries.sql.AutoObjectFactory;
@@ -122,15 +123,15 @@ final class DatabaseMySQLDBUserService extends DatabaseServiceIntegerKey<MySQLDB
             + "from\n"
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN
-            + "  ao_server_resources aor,\n"
+            + "  mysql_databases md,\n"
             + "  mysql_db_users mdu\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=aor.accounting\n"
-            + "  and aor.resource=mdu.mysql_database",
+            + "  and bu1.accounting=md.accounting\n"
+            + "  and md.pkey=mdu.mysql_database",
             connector.getConnectAs()
         );
     }

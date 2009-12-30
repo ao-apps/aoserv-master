@@ -357,7 +357,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column not primary key or unique: "+columnName);
         if(value==null) return null;
         Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        if(value.getClass()!=method.getReturnType()) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
         try {
             for(V obj : getSetMaster()) {
                 if(value.equals(method.invoke(obj))) return obj;
@@ -380,7 +380,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column not primary key or unique: "+columnName);
         if(value==null) return null;
         Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        if(value.getClass()!=method.getReturnType()) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
         try {
             for(V obj : getSetDaemon()) {
                 if(value.equals(method.invoke(obj))) return obj;
@@ -403,7 +403,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column not primary key or unique: "+columnName);
         if(value==null) return null;
         Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        if(value.getClass()!=method.getReturnType()) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
         try {
             for(V obj : getSetBusiness()) {
                 if(value.equals(method.invoke(obj))) return obj;
@@ -443,7 +443,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         if(methodColumn.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+columnName);
         if(value==null) return null;
         Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        if(value.getClass()!=method.getReturnType()) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
         try {
             Set<V> results = new HashSet<V>();
             for(V obj : getSetMaster()) {
@@ -469,7 +469,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         if(methodColumn.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+columnName);
         if(value==null) return null;
         Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        if(value.getClass()!=method.getReturnType()) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
         try {
             Set<V> results = new HashSet<V>();
             for(V obj : getSetDaemon()) {
@@ -495,7 +495,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         if(methodColumn.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+columnName);
         if(value==null) return null;
         Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        if(value.getClass()!=method.getReturnType()) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
         try {
             Set<V> results = new HashSet<V>();
             for(V obj : getSetBusiness()) {

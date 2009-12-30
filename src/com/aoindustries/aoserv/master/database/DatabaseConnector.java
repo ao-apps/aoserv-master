@@ -22,11 +22,8 @@ import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
 import com.aoindustries.aoserv.client.FailoverMySQLReplicationService;
 import com.aoindustries.aoserv.client.LanguageService;
-import com.aoindustries.aoserv.client.MySQLDBUserService;
 import com.aoindustries.aoserv.client.MySQLDatabaseService;
-import com.aoindustries.aoserv.client.MySQLReservedWordService;
 import com.aoindustries.aoserv.client.MySQLServerService;
-import com.aoindustries.aoserv.client.MySQLUserService;
 import com.aoindustries.aoserv.client.NetBindService;
 import com.aoindustries.aoserv.client.NetDeviceIDService;
 import com.aoindustries.aoserv.client.NetProtocolService;
@@ -188,10 +185,12 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseMonthlyChargeService monthlyCharges;
      */
     final DatabaseMySQLDatabaseService mysqlDatabases;
-    final DatabaseMySQLDBUserService mysqlDBUsers;
-    final DatabaseMySQLReservedWordService mysqlReservedWords;
+    // TODO: final DatabaseMySQLDBUserService mysqlDBUsers;
+    // TODO: final DatabaseMySQLReservedWordService mysqlReservedWords;
     final DatabaseMySQLServerService mysqlServers;
+    /* TODO
     final DatabaseMySQLUserService mysqlUsers;
+     */
     final DatabaseNetBindService netBinds;
     final DatabaseNetDeviceIDService netDeviceIDs;
     /* TODO
@@ -388,10 +387,12 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         monthlyCharges = new DatabaseMonthlyChargeService(this);
          */
         mysqlDatabases = new DatabaseMySQLDatabaseService(this);
-        mysqlDBUsers = new DatabaseMySQLDBUserService(this);
-        mysqlReservedWords = new DatabaseMySQLReservedWordService(this);
+        // TODO: mysqlDBUsers = new DatabaseMySQLDBUserService(this);
+        // TODO: mysqlReservedWords = new DatabaseMySQLReservedWordService(this);
         mysqlServers = new DatabaseMySQLServerService(this);
+        /* TODO
         mysqlUsers = new DatabaseMySQLUserService(this);
+         */
         netBinds = new DatabaseNetBindService(this);
         netDeviceIDs = new DatabaseNetDeviceIDService(this);
         /* TODO
@@ -748,23 +749,17 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public MySQLDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDatabases() {
         return mysqlDatabases;
     }
+    /* TODO
+    public MySQLDBUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDBUsers();
 
-    public MySQLDBUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDBUsers() {
-        return mysqlDBUsers;
-    }
-
-    public MySQLReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getMysqlReservedWords() {
-        return mysqlReservedWords;
-    }
-
+    public MySQLReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getMysqlReservedWords();
+    */
     public MySQLServerService<DatabaseConnector,DatabaseConnectorFactory> getMysqlServers() {
         return mysqlServers;
     }
-
-    public MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlUsers() {
-        return mysqlUsers;
-    }
-
+    /* TODO
+    public MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlUsers();
+    */
     public NetBindService<DatabaseConnector,DatabaseConnectorFactory> getNetBinds() {
         return netBinds;
     }

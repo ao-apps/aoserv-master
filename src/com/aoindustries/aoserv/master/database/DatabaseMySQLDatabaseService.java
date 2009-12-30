@@ -27,7 +27,7 @@ final class DatabaseMySQLDatabaseService extends DatabaseServiceIntegerKey<MySQL
     protected Set<MySQLDatabase> getSetMaster() throws IOException, SQLException {
         return connector.factory.database.executeObjectSetQuery(
             objectFactory,
-            "select ao_server_resource, name, mysql_server from mysql_databases"
+            "select * from mysql_databases"
         );
     }
 
@@ -35,15 +35,15 @@ final class DatabaseMySQLDatabaseService extends DatabaseServiceIntegerKey<MySQL
         return connector.factory.database.executeObjectSetQuery(
             objectFactory,
             "select\n"
-            + "  md.ao_server_resource,\n"
-            + "  md.name,\n"
-            + "  md.mysql_server\n"
+            + "  md.*\n"
             + "from\n"
             + "  master_servers ms,\n"
+            + "  mysql_servers mys,\n"
             + "  mysql_databases md\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=md.ao_server",
+            + "  and ms.server=mys.ao_server\n"
+            + "  and mys.ao_server_resource=md.mysql_server",
             connector.getConnectAs()
         );
     }
@@ -52,21 +52,17 @@ final class DatabaseMySQLDatabaseService extends DatabaseServiceIntegerKey<MySQL
         return connector.factory.database.executeObjectSetQuery(
             objectFactory,
             "select\n"
-            + "  md.ao_server_resource,\n"
-            + "  md.name,\n"
-            + "  md.mysql_server\n"
+            + "  md.*\n"
             + "from\n"
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN
-            + "  ao_server_resources aor,\n"
             + "  mysql_databases md\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=aor.accounting\n"
-            + "  and aor.resource=md.ao_server_resource",
+            + "  and bu1.accounting=md.accounting",
             connector.getConnectAs()
         );
     }
