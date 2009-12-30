@@ -12,12 +12,16 @@ import com.aoindustries.aoserv.client.Business;
 import com.aoindustries.aoserv.client.MethodColumn;
 import com.aoindustries.aoserv.client.ServiceName;
 import com.aoindustries.security.AccountDisabledException;
+import com.aoindustries.table.IndexType;
 import com.aoindustries.table.Table;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -118,12 +122,14 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
     }
 
     final DatabaseConnector connector;
+    //final Class<K> keyClass;
     final ServiceName serviceName;
-    final Table<MethodColumn,V> table;
+    final AOServServiceUtils.AnnotationTable<K,V> table;
     final Map<K,V> map;
 
     DatabaseService(DatabaseConnector connector, Class<K> keyClass, Class<V> valueClass) {
         this.connector = connector;
+        //this.keyClass = keyClass;
         serviceName = AOServServiceUtils.findServiceNameByAnnotation(getClass());
         table = new AOServServiceUtils.AnnotationTable<K,V>(this, valueClass);
         map = new AOServServiceUtils.ServiceMap<K,V>(this, keyClass, valueClass);
@@ -148,6 +154,8 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
                 case DISABLED : throw new RemoteException(null, new AccountDisabledException());
                 default : throw new AssertionError();
             }
+        } catch(RemoteException err) {
+            throw err;
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {
@@ -192,49 +200,6 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         return map;
     }
 
-    final public V get(K key) throws RemoteException {
-        try {
-            switch(connector.getAccountType()) {
-                case MASTER : return getMaster(key);
-                case DAEMON : return getDaemon(key);
-                case BUSINESS : return getBusiness(key);
-                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
-                default : throw new AssertionError();
-            }
-        } catch(IOException err) {
-            throw new RemoteException(err.getMessage(), err);
-        } catch(SQLException err) {
-            throw new RemoteException(err.getMessage(), err);
-        }
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected V getMaster(K key) throws IOException, SQLException {
-        for(V obj : getSetMaster()) if(obj.getKey().equals(key)) return obj;
-        return null;
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected V getDaemon(K key) throws IOException, SQLException {
-        for(V obj : getSetDaemon()) if(obj.getKey().equals(key)) return obj;
-        return null;
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected V getBusiness(K key) throws IOException, SQLException {
-        for(V obj : getSetBusiness()) if(obj.getKey().equals(key)) return obj;
-        return null;
-    }
-
     final public boolean isEmpty() throws RemoteException {
         try {
             switch(connector.getAccountType()) {
@@ -244,6 +209,8 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
                 case DISABLED : throw new RemoteException(null, new AccountDisabledException());
                 default : throw new AssertionError();
             }
+        } catch(RemoteException err) {
+            throw err;
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {
@@ -284,6 +251,8 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
                 case DISABLED : throw new RemoteException(null, new AccountDisabledException());
                 default : throw new AssertionError();
             }
+        } catch(RemoteException err) {
+            throw err;
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {
@@ -313,5 +282,233 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      */
     protected int getSizeBusiness() throws IOException, SQLException {
         return getSetBusiness().size();
+    }
+
+    final public V get(K key) throws RemoteException {
+        try {
+            switch(connector.getAccountType()) {
+                case MASTER : return getMaster(key);
+                case DAEMON : return getDaemon(key);
+                case BUSINESS : return getBusiness(key);
+                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+                default : throw new AssertionError();
+            }
+        } catch(RemoteException err) {
+            throw err;
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(SQLException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected V getMaster(K key) throws IOException, SQLException {
+        for(V obj : getSetMaster()) if(obj.getKey().equals(key)) return obj;
+        return null;
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected V getDaemon(K key) throws IOException, SQLException {
+        for(V obj : getSetDaemon()) if(obj.getKey().equals(key)) return obj;
+        return null;
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected V getBusiness(K key) throws IOException, SQLException {
+        for(V obj : getSetBusiness()) if(obj.getKey().equals(key)) return obj;
+        return null;
+    }
+
+    final public V getUnique(String columnName, Object value) throws RemoteException {
+        try {
+            switch(connector.getAccountType()) {
+                case MASTER : return getUniqueMaster(columnName, value);
+                case DAEMON : return getUniqueDaemon(columnName, value);
+                case BUSINESS : return getUniqueBusiness(columnName, value);
+                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+                default : throw new AssertionError();
+            }
+        } catch(RemoteException err) {
+            throw err;
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(SQLException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected V getUniqueMaster(String columnName, Object value) throws IOException, SQLException {
+        MethodColumn methodColumn = table.getColumn(columnName);
+        IndexType indexType = methodColumn.getIndexType();
+        if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column not primary key or unique: "+columnName);
+        if(value==null) return null;
+        Method method = methodColumn.getMethod();
+        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        try {
+            for(V obj : getSetMaster()) {
+                if(value.equals(method.invoke(obj))) return obj;
+            }
+            return null;
+        } catch(IllegalAccessException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(InvocationTargetException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected V getUniqueDaemon(String columnName, Object value) throws IOException, SQLException {
+        MethodColumn methodColumn = table.getColumn(columnName);
+        IndexType indexType = methodColumn.getIndexType();
+        if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column not primary key or unique: "+columnName);
+        if(value==null) return null;
+        Method method = methodColumn.getMethod();
+        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        try {
+            for(V obj : getSetDaemon()) {
+                if(value.equals(method.invoke(obj))) return obj;
+            }
+            return null;
+        } catch(IllegalAccessException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(InvocationTargetException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected V getUniqueBusiness(String columnName, Object value) throws IOException, SQLException {
+        MethodColumn methodColumn = table.getColumn(columnName);
+        IndexType indexType = methodColumn.getIndexType();
+        if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column not primary key or unique: "+columnName);
+        if(value==null) return null;
+        Method method = methodColumn.getMethod();
+        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        try {
+            for(V obj : getSetBusiness()) {
+                if(value.equals(method.invoke(obj))) return obj;
+            }
+            return null;
+        } catch(IllegalAccessException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(InvocationTargetException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    final public Set<V> getIndexed(String columnName, Object value) throws RemoteException {
+        try {
+            switch(connector.getAccountType()) {
+                case MASTER : return getIndexedMaster(columnName, value);
+                case DAEMON : return getIndexedDaemon(columnName, value);
+                case BUSINESS : return getIndexedBusiness(columnName, value);
+                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+                default : throw new AssertionError();
+            }
+        } catch(RemoteException err) {
+            throw err;
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(SQLException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected Set<V> getIndexedMaster(String columnName, Object value) throws IOException, SQLException {
+        MethodColumn methodColumn = table.getColumn(columnName);
+        if(methodColumn.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+columnName);
+        if(value==null) return null;
+        Method method = methodColumn.getMethod();
+        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        try {
+            Set<V> results = new HashSet<V>();
+            for(V obj : getSetMaster()) {
+                if(value.equals(method.invoke(obj))) results.add(obj);
+            }
+            int size = results.size();
+            if(size==0) return Collections.emptySet();
+            if(size==1) return Collections.singleton(results.iterator().next());
+            return Collections.unmodifiableSet(results);
+        } catch(IllegalAccessException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(InvocationTargetException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected Set<V> getIndexedDaemon(String columnName, Object value) throws IOException, SQLException {
+        MethodColumn methodColumn = table.getColumn(columnName);
+        if(methodColumn.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+columnName);
+        if(value==null) return null;
+        Method method = methodColumn.getMethod();
+        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        try {
+            Set<V> results = new HashSet<V>();
+            for(V obj : getSetDaemon()) {
+                if(value.equals(method.invoke(obj))) results.add(obj);
+            }
+            int size = results.size();
+            if(size==0) return Collections.emptySet();
+            if(size==1) return Collections.singleton(results.iterator().next());
+            return Collections.unmodifiableSet(results);
+        } catch(IllegalAccessException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(InvocationTargetException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected Set<V> getIndexedBusiness(String columnName, Object value) throws IOException, SQLException {
+        MethodColumn methodColumn = table.getColumn(columnName);
+        if(methodColumn.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+columnName);
+        if(value==null) return null;
+        Method method = methodColumn.getMethod();
+        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        try {
+            Set<V> results = new HashSet<V>();
+            for(V obj : getSetBusiness()) {
+                if(value.equals(method.invoke(obj))) results.add(obj);
+            }
+            int size = results.size();
+            if(size==0) return Collections.emptySet();
+            if(size==1) return Collections.singleton(results.iterator().next());
+            return Collections.unmodifiableSet(results);
+        } catch(IllegalAccessException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(InvocationTargetException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
     }
 }

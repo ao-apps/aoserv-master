@@ -261,6 +261,8 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
                 );
                 return connector;
             }
+        } catch(RemoteException err) {
+            throw err;
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {
