@@ -22,14 +22,19 @@ import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
 import com.aoindustries.aoserv.client.FailoverMySQLReplicationService;
 import com.aoindustries.aoserv.client.LanguageService;
+import com.aoindustries.aoserv.client.MySQLDBUserService;
 import com.aoindustries.aoserv.client.MySQLDatabaseService;
+import com.aoindustries.aoserv.client.MySQLReservedWordService;
 import com.aoindustries.aoserv.client.MySQLServerService;
+import com.aoindustries.aoserv.client.MySQLUserService;
 import com.aoindustries.aoserv.client.NetBindService;
 import com.aoindustries.aoserv.client.NetDeviceIDService;
 import com.aoindustries.aoserv.client.NetProtocolService;
 import com.aoindustries.aoserv.client.OperatingSystemService;
 import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
+import com.aoindustries.aoserv.client.PostgresServerService;
+import com.aoindustries.aoserv.client.PostgresVersionService;
 import com.aoindustries.aoserv.client.ProtocolService;
 import com.aoindustries.aoserv.client.ResourceService;
 import com.aoindustries.aoserv.client.ResourceTypeService;
@@ -185,12 +190,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseMonthlyChargeService monthlyCharges;
      */
     final DatabaseMySQLDatabaseService mysqlDatabases;
-    // TODO: final DatabaseMySQLDBUserService mysqlDBUsers;
-    // TODO: final DatabaseMySQLReservedWordService mysqlReservedWords;
+    final DatabaseMySQLDBUserService mysqlDBUsers;
+    final DatabaseMySQLReservedWordService mysqlReservedWords;
     final DatabaseMySQLServerService mysqlServers;
-    /* TODO
     final DatabaseMySQLUserService mysqlUsers;
-     */
     final DatabaseNetBindService netBinds;
     final DatabaseNetDeviceIDService netDeviceIDs;
     /* TODO
@@ -215,12 +218,12 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabasePostgresEncodingService postgresEncodings;
     final DatabasePostgresReservedWordService postgresReservedWords;
     final DatabasePostgresServerUserService postgresServerUsers;
-    final DatabasePostgresServerService postgresServers;
-    final DatabasePostgresUserService postgresUsers;
-    final DatabasePostgresVersionService postgresVersions;
-    final DatabasePrivateFTPServerService privateFTPServers;
-    final DatabaseProcessorTypeService processorTypes;
      */
+    final DatabasePostgresServerService postgresServers;
+    // TODO: final DatabasePostgresUserService postgresUsers;
+    final DatabasePostgresVersionService postgresVersions;
+    // TODO: final DatabasePrivateFTPServerService privateFTPServers;
+    // TODO: final DatabaseProcessorTypeService processorTypes;
     final DatabaseProtocolService protocols;
     /* TODO
     final DatabaseRackService racks;
@@ -387,12 +390,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         monthlyCharges = new DatabaseMonthlyChargeService(this);
          */
         mysqlDatabases = new DatabaseMySQLDatabaseService(this);
-        // TODO: mysqlDBUsers = new DatabaseMySQLDBUserService(this);
-        // TODO: mysqlReservedWords = new DatabaseMySQLReservedWordService(this);
+        mysqlDBUsers = new DatabaseMySQLDBUserService(this);
+        mysqlReservedWords = new DatabaseMySQLReservedWordService(this);
         mysqlServers = new DatabaseMySQLServerService(this);
-        /* TODO
         mysqlUsers = new DatabaseMySQLUserService(this);
-         */
         netBinds = new DatabaseNetBindService(this);
         netDeviceIDs = new DatabaseNetDeviceIDService(this);
         /* TODO
@@ -417,12 +418,12 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         postgresEncodings = new DatabasePostgresEncodingService(this);
         postgresReservedWords = new DatabasePostgresReservedWordService(this);
         postgresServerUsers = new DatabasePostgresServerUserService(this);
-        postgresServers = new DatabasePostgresServerService(this);
-        postgresUsers = new DatabasePostgresUserService(this);
-        postgresVersions = new DatabasePostgresVersionService(this);
-        privateFTPServers = new DatabasePrivateFTPServerService(this);
-        processorTypes = new DatabaseProcessorTypeService(this);
          */
+        postgresServers = new DatabasePostgresServerService(this);
+        // TODO: postgresUsers = new DatabasePostgresUserService(this);
+        postgresVersions = new DatabasePostgresVersionService(this);
+        // TODO: privateFTPServers = new DatabasePrivateFTPServerService(this);
+        // TODO: processorTypes = new DatabaseProcessorTypeService(this);
         protocols = new DatabaseProtocolService(this);
         /* TODO
         racks = new DatabaseRackService(this);
@@ -749,17 +750,23 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public MySQLDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDatabases() {
         return mysqlDatabases;
     }
-    /* TODO
-    public MySQLDBUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDBUsers();
 
-    public MySQLReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getMysqlReservedWords();
-    */
+    public MySQLDBUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDBUsers() {
+        return mysqlDBUsers;
+    }
+
+    public MySQLReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getMysqlReservedWords() {
+        return mysqlReservedWords;
+    }
+
     public MySQLServerService<DatabaseConnector,DatabaseConnectorFactory> getMysqlServers() {
         return mysqlServers;
     }
-    /* TODO
-    public MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlUsers();
-    */
+
+    public MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlUsers() {
+        return mysqlUsers;
+    }
+
     public NetBindService<DatabaseConnector,DatabaseConnectorFactory> getNetBinds() {
         return netBinds;
     }
@@ -809,17 +816,21 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public PostgresReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getPostgresReservedWords();
 
     public PostgresServerUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServerUsers();
-
-    public PostgresServerService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServers();
-
-    public PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresUsers();
-
-    public PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> getPostgresVersions();
-
-    public PrivateFTPServerService<DatabaseConnector,DatabaseConnectorFactory> getPrivateFTPServers();
-
-    public ProcessorTypeService<DatabaseConnector,DatabaseConnectorFactory> getProcessorTypes();
     */
+    public PostgresServerService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServers() {
+        return postgresServers;
+    }
+
+    // TODO: public PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresUsers();
+
+    public PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> getPostgresVersions() {
+        return postgresVersions;
+    }
+
+    // TODO: public PrivateFTPServerService<DatabaseConnector,DatabaseConnectorFactory> getPrivateFTPServers();
+
+    // TODO: public ProcessorTypeService<DatabaseConnector,DatabaseConnectorFactory> getProcessorTypes();
+
     public ProtocolService<DatabaseConnector,DatabaseConnectorFactory> getProtocols() {
         return protocols;
     }
