@@ -34,6 +34,7 @@ import com.aoindustries.aoserv.client.OperatingSystemService;
 import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
 import com.aoindustries.aoserv.client.PostgresServerService;
+import com.aoindustries.aoserv.client.PostgresUserService;
 import com.aoindustries.aoserv.client.PostgresVersionService;
 import com.aoindustries.aoserv.client.ProtocolService;
 import com.aoindustries.aoserv.client.ResourceService;
@@ -217,10 +218,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabasePostgresDatabaseService postgresDatabases;
     final DatabasePostgresEncodingService postgresEncodings;
     final DatabasePostgresReservedWordService postgresReservedWords;
-    final DatabasePostgresServerUserService postgresServerUsers;
      */
     final DatabasePostgresServerService postgresServers;
-    // TODO: final DatabasePostgresUserService postgresUsers;
+    final DatabasePostgresUserService postgresUsers;
     final DatabasePostgresVersionService postgresVersions;
     // TODO: final DatabasePrivateFTPServerService privateFTPServers;
     // TODO: final DatabaseProcessorTypeService processorTypes;
@@ -417,10 +417,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         postgresDatabases = new DatabasePostgresDatabaseService(this);
         postgresEncodings = new DatabasePostgresEncodingService(this);
         postgresReservedWords = new DatabasePostgresReservedWordService(this);
-        postgresServerUsers = new DatabasePostgresServerUserService(this);
          */
         postgresServers = new DatabasePostgresServerService(this);
-        // TODO: postgresUsers = new DatabasePostgresUserService(this);
+        postgresUsers = new DatabasePostgresUserService(this);
         postgresVersions = new DatabasePostgresVersionService(this);
         // TODO: privateFTPServers = new DatabasePrivateFTPServerService(this);
         // TODO: processorTypes = new DatabaseProcessorTypeService(this);
@@ -814,14 +813,14 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public PostgresEncodingService<DatabaseConnector,DatabaseConnectorFactory> getPostgresEncodings();
 
     public PostgresReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getPostgresReservedWords();
-
-    public PostgresServerUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServerUsers();
     */
     public PostgresServerService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServers() {
         return postgresServers;
     }
 
-    // TODO: public PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresUsers();
+    public PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresUsers() {
+        return postgresUsers;
+    }
 
     public PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> getPostgresVersions() {
         return postgresVersions;

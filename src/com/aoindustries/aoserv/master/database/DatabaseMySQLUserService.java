@@ -158,7 +158,7 @@ final class DatabaseMySQLUserService extends DatabaseServiceIntegerKey<MySQLUser
             + "  mu.create_user_priv,\n"
             + "  mu.event_priv,\n"
             + "  mu.trigger_priv,\n"
-            + "  case when mu.predisable_password is null then null else '"+AOServObject.FILTERED+"' end,\n"
+            + "  case when mu.predisable_password is null then null else ? end,\n"
             + "  mu.max_questions,\n"
             + "  mu.max_updates\n,"
             + "  mu.max_connections,\n"
@@ -173,6 +173,7 @@ final class DatabaseMySQLUserService extends DatabaseServiceIntegerKey<MySQLUser
             + UN1_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=mu.accounting",
+            AOServObject.FILTERED,
             connector.getConnectAs()
         );
     }
