@@ -22,6 +22,9 @@ import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
 import com.aoindustries.aoserv.client.FailoverMySQLReplicationService;
 import com.aoindustries.aoserv.client.LanguageService;
+import com.aoindustries.aoserv.client.LinuxAccountService;
+import com.aoindustries.aoserv.client.LinuxAccountTypeService;
+import com.aoindustries.aoserv.client.LinuxGroupTypeService;
 import com.aoindustries.aoserv.client.MySQLDBUserService;
 import com.aoindustries.aoserv.client.MySQLDatabaseService;
 import com.aoindustries.aoserv.client.MySQLReservedWordService;
@@ -33,6 +36,9 @@ import com.aoindustries.aoserv.client.NetProtocolService;
 import com.aoindustries.aoserv.client.OperatingSystemService;
 import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
+import com.aoindustries.aoserv.client.PostgresDatabaseService;
+import com.aoindustries.aoserv.client.PostgresEncodingService;
+import com.aoindustries.aoserv.client.PostgresReservedWordService;
 import com.aoindustries.aoserv.client.PostgresServerService;
 import com.aoindustries.aoserv.client.PostgresUserService;
 import com.aoindustries.aoserv.client.PostgresVersionService;
@@ -42,6 +48,7 @@ import com.aoindustries.aoserv.client.ResourceTypeService;
 import com.aoindustries.aoserv.client.ServerFarmService;
 import com.aoindustries.aoserv.client.ServerService;
 import com.aoindustries.aoserv.client.ServiceName;
+import com.aoindustries.aoserv.client.ShellService;
 import com.aoindustries.aoserv.client.TechnologyClassService;
 import com.aoindustries.aoserv.client.TechnologyNameService;
 import com.aoindustries.aoserv.client.TechnologyService;
@@ -171,25 +178,20 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseIPAddressService ipAddresss;
     */
     final DatabaseLanguageService languages;
-    /* TODO
-    final DatabaseLinuxAccAddressService linuxAccAddresss;
+    // TODO: final DatabaseLinuxAccAddressService linuxAccAddresss;
     final DatabaseLinuxAccountTypeService linuxAccountTypes;
     final DatabaseLinuxAccountService linuxAccounts;
-    final DatabaseLinuxGroupAccountService linuxGroupAccounts;
+    // TODO: final DatabaseLinuxGroupAccountService linuxGroupAccounts;
     final DatabaseLinuxGroupTypeService linuxGroupTypes;
-    final DatabaseLinuxGroupService linuxGroups;
-    final DatabaseLinuxIDService linuxIDs;
-    final DatabaseLinuxServerAccountService linuxServerAccounts;
-    final DatabaseLinuxServerGroupService linuxServerGroups;
-    final DatabaseMajordomoListService majordomoLists;
-    final DatabaseMajordomoServerService majordomoServers;
-    final DatabaseMajordomoVersionService majordomoVersions;
-    final DatabaseMasterHistoryService masterHistories;
-    final DatabaseMasterHostService masterHosts;
-    final DatabaseMasterServerService masterServers;
-    final DatabaseMasterUserService masterUsers;
-    final DatabaseMonthlyChargeService monthlyCharges;
-     */
+    // TODO: final DatabaseLinuxGroupService linuxGroups;
+    // TODO: final DatabaseMajordomoListService majordomoLists;
+    // TODO: final DatabaseMajordomoServerService majordomoServers;
+    // TODO: final DatabaseMajordomoVersionService majordomoVersions;
+    // TODO: final DatabaseMasterHistoryService masterHistories;
+    // TODO: final DatabaseMasterHostService masterHosts;
+    // TODO: final DatabaseMasterServerService masterServers;
+    // TODO: final DatabaseMasterUserService masterUsers;
+    // TODO: final DatabaseMonthlyChargeService monthlyCharges;
     final DatabaseMySQLDatabaseService mysqlDatabases;
     final DatabaseMySQLDBUserService mysqlDBUsers;
     final DatabaseMySQLReservedWordService mysqlReservedWords;
@@ -199,7 +201,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseNetDeviceIDService netDeviceIDs;
     /* TODO
     final DatabaseNetDeviceService netDevices;
-    final DatabaseNetPortService netPorts;
      */
     final DatabaseNetProtocolService netProtocols;
     /* TODO
@@ -215,10 +216,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabasePackageDefinitionService packageDefinitions;
     final DatabasePaymentTypeService paymentTypes;
     final DatabasePhysicalServerService physicalServers;
+     */
     final DatabasePostgresDatabaseService postgresDatabases;
     final DatabasePostgresEncodingService postgresEncodings;
     final DatabasePostgresReservedWordService postgresReservedWords;
-     */
     final DatabasePostgresServerService postgresServers;
     final DatabasePostgresUserService postgresUsers;
     final DatabasePostgresVersionService postgresVersions;
@@ -233,8 +234,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseResourceService resources;
     final DatabaseServerFarmService serverFarms;
     final DatabaseServerService servers;
-    /* TODO
     final DatabaseShellService shells;
+    /* TODO
     final DatabaseSignupRequestOptionService signupRequestOptions;
     final DatabaseSignupRequestService signupRequests;
     final DatabaseSpamEmailMessageService spamEmailMessages;
@@ -370,25 +371,20 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         ipAddresss = new DatabaseIPAddressService(this);
         */
         languages = new DatabaseLanguageService(this);
-        /* TODO
-        linuxAccAddresss = new DatabaseLinuxAccAddressService(this);
+        // TODO: linuxAccAddresss = new DatabaseLinuxAccAddressService(this);
         linuxAccountTypes = new DatabaseLinuxAccountTypeService(this);
         linuxAccounts = new DatabaseLinuxAccountService(this);
-        linuxGroupAccounts = new DatabaseLinuxGroupAccountService(this);
+        // TODO: linuxGroupAccounts = new DatabaseLinuxGroupAccountService(this);
         linuxGroupTypes = new DatabaseLinuxGroupTypeService(this);
-        linuxGroups = new DatabaseLinuxGroupService(this);
-        linuxIDs = new DatabaseLinuxIDService(this);
-        linuxServerAccounts = new DatabaseLinuxServerAccountService(this);
-        linuxServerGroups = new DatabaseLinuxServerGroupService(this);
-        majordomoLists = new DatabaseMajordomoListService(this);
-        majordomoServers = new DatabaseMajordomoServerService(this);
-        majordomoVersions = new DatabaseMajordomoVersionService(this);
-        masterHistories = new DatabaseMasterHistoryService(this);
-        masterHosts = new DatabaseMasterHostService(this);
-        masterServers = new DatabaseMasterServerService(this);
-        masterUsers = new DatabaseMasterUserService(this);
-        monthlyCharges = new DatabaseMonthlyChargeService(this);
-         */
+        // TODO: linuxGroups = new DatabaseLinuxGroupService(this);
+        // TODO: majordomoLists = new DatabaseMajordomoListService(this);
+        // TODO: majordomoServers = new DatabaseMajordomoServerService(this);
+        // TODO: majordomoVersions = new DatabaseMajordomoVersionService(this);
+        // TODO: masterHistories = new DatabaseMasterHistoryService(this);
+        // TODO: masterHosts = new DatabaseMasterHostService(this);
+        // TODO: masterServers = new DatabaseMasterServerService(this);
+        // TODO: masterUsers = new DatabaseMasterUserService(this);
+        // TODO: monthlyCharges = new DatabaseMonthlyChargeService(this);
         mysqlDatabases = new DatabaseMySQLDatabaseService(this);
         mysqlDBUsers = new DatabaseMySQLDBUserService(this);
         mysqlReservedWords = new DatabaseMySQLReservedWordService(this);
@@ -398,7 +394,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         netDeviceIDs = new DatabaseNetDeviceIDService(this);
         /* TODO
         netDevices = new DatabaseNetDeviceService(this);
-        netPorts = new DatabaseNetPortService(this);
          */
         netProtocols = new DatabaseNetProtocolService(this);
         /* TODO
@@ -414,10 +409,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         packageDefinitions = new DatabasePackageDefinitionService(this);
         paymentTypes = new DatabasePaymentTypeService(this);
         physicalServers = new DatabasePhysicalServerService(this);
+         */
         postgresDatabases = new DatabasePostgresDatabaseService(this);
         postgresEncodings = new DatabasePostgresEncodingService(this);
         postgresReservedWords = new DatabasePostgresReservedWordService(this);
-         */
         postgresServers = new DatabasePostgresServerService(this);
         postgresUsers = new DatabasePostgresUserService(this);
         postgresVersions = new DatabasePostgresVersionService(this);
@@ -432,8 +427,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         resources = new DatabaseResourceService(this);
         serverFarms = new DatabaseServerFarmService(this);
         servers = new DatabaseServerService(this);
-        /* TODO
         shells = new DatabaseShellService(this);
+        /* TODO
         signupRequestOptions = new DatabaseSignupRequestOptionService(this);
         signupRequests = new DatabaseSignupRequestService(this);
         spamEmailMessages = new DatabaseSpamEmailMessageService(this);
@@ -711,41 +706,41 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public LanguageService<DatabaseConnector,DatabaseConnectorFactory> getLanguages() {
         return languages;
     }
-    /* TODO
-    public LinuxAccAddressService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccAddresses();
 
-    public LinuxAccountTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccountTypes();
+    // TODO: public LinuxAccAddressService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccAddresses();
 
-    public LinuxAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccounts();
+    public LinuxAccountTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccountTypes() {
+        return linuxAccountTypes;
+    }
 
-    public LinuxGroupAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupAccounts();
+    public LinuxAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccounts() {
+        return linuxAccounts;
+    }
 
-    public LinuxGroupTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupTypes();
+    // TODO: public LinuxGroupAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupAccounts();
 
-    public LinuxGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroups();
+    public LinuxGroupTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupTypes() {
+        return linuxGroupTypes;
+    }
 
-    public LinuxIDService<DatabaseConnector,DatabaseConnectorFactory> getLinuxIDs();
+    // TODO: public LinuxGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroups();
 
-    public LinuxServerAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxServerAccounts();
+    // TODO: public MajordomoListService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoLists();
 
-    public LinuxServerGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxServerGroups();
+    // TODO: public MajordomoServerService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoServers();
 
-    public MajordomoListService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoLists();
+    // TODO: public MajordomoVersionService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoVersions();
 
-    public MajordomoServerService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoServers();
+    // TODO: public MasterHistoryService<DatabaseConnector,DatabaseConnectorFactory> getMasterHistory();
 
-    public MajordomoVersionService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoVersions();
+    // TODO: public MasterHostService<DatabaseConnector,DatabaseConnectorFactory> getMasterHosts();
 
-    public MasterHistoryService<DatabaseConnector,DatabaseConnectorFactory> getMasterHistory();
+    // TODO: public MasterServerService<DatabaseConnector,DatabaseConnectorFactory> getMasterServers();
 
-    public MasterHostService<DatabaseConnector,DatabaseConnectorFactory> getMasterHosts();
+    // TODO: public MasterUserService<DatabaseConnector,DatabaseConnectorFactory> getMasterUsers();
 
-    public MasterServerService<DatabaseConnector,DatabaseConnectorFactory> getMasterServers();
+    // TODO: public MonthlyChargeService<DatabaseConnector,DatabaseConnectorFactory> getMonthlyCharges();
 
-    public MasterUserService<DatabaseConnector,DatabaseConnectorFactory> getMasterUsers();
-
-    public MonthlyChargeService<DatabaseConnector,DatabaseConnectorFactory> getMonthlyCharges();
-    */
     public MySQLDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDatabases() {
         return mysqlDatabases;
     }
@@ -775,8 +770,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     }
     /* TODO
     public NetDeviceService<DatabaseConnector,DatabaseConnectorFactory> getNetDevices();
-
-    public NetPortService<DatabaseConnector,DatabaseConnectorFactory> getNetPorts();
     */
     public NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> getNetProtocols() {
         return netProtocols;
@@ -807,13 +800,19 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public PaymentTypeService<DatabaseConnector,DatabaseConnectorFactory> getPaymentTypes();
 
     public PhysicalServerService<DatabaseConnector,DatabaseConnectorFactory> getPhysicalServers();
-
-    public PostgresDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getPostgresDatabases();
-
-    public PostgresEncodingService<DatabaseConnector,DatabaseConnectorFactory> getPostgresEncodings();
-
-    public PostgresReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getPostgresReservedWords();
     */
+    public PostgresDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getPostgresDatabases() {
+        return postgresDatabases;
+    }
+
+    public PostgresEncodingService<DatabaseConnector,DatabaseConnectorFactory> getPostgresEncodings() {
+        return postgresEncodings;
+    }
+
+    public PostgresReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getPostgresReservedWords() {
+        return postgresReservedWords;
+    }
+
     public PostgresServerService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServers() {
         return postgresServers;
     }
@@ -853,9 +852,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public ServerService<DatabaseConnector,DatabaseConnectorFactory> getServers() {
         return servers;
     }
-    /* TODO
-    public ShellService<DatabaseConnector,DatabaseConnectorFactory> getShells();
 
+    public ShellService<DatabaseConnector,DatabaseConnectorFactory> getShells() {
+        return shells;
+    }
+    /* TODO
     public SignupRequestOptionService<DatabaseConnector,DatabaseConnectorFactory> getSignupRequestOptions();
 
     public SignupRequestService<DatabaseConnector,DatabaseConnectorFactory> getSignupRequests();

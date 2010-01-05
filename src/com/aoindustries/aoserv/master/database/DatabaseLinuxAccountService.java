@@ -61,11 +61,15 @@ final class DatabaseLinuxAccountService extends DatabaseServiceIntegerKey<LinuxA
             + "  la.shell,\n"
             + "  la.predisable_password\n"
             + "from\n"
-            + "  master_servers ms,\n"
+            + "  master_servers ms\n"
+            + "  left join ao_servers ff on ms.server=ff.failover_server,\n"
             + "  linux_accounts la\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=la.ao_server",
+            + "  and (\n"
+            + "    ms.server=la.ao_server\n"
+            + "    or ff.server=la.ao_server\n"
+            + "  )",
             connector.getConnectAs()
         );
     }
