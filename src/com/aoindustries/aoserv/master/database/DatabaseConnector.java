@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master.database;
 
 /*
- * Copyright 2009 by AO Industries, Inc.,
+ * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -21,9 +21,12 @@ import com.aoindustries.aoserv.client.CountryCodeService;
 import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
 import com.aoindustries.aoserv.client.FailoverMySQLReplicationService;
+import com.aoindustries.aoserv.client.GroupNameService;
 import com.aoindustries.aoserv.client.LanguageService;
+import com.aoindustries.aoserv.client.LinuxAccountGroupService;
 import com.aoindustries.aoserv.client.LinuxAccountService;
 import com.aoindustries.aoserv.client.LinuxAccountTypeService;
+import com.aoindustries.aoserv.client.LinuxGroupService;
 import com.aoindustries.aoserv.client.LinuxGroupTypeService;
 import com.aoindustries.aoserv.client.MySQLDBUserService;
 import com.aoindustries.aoserv.client.MySQLDatabaseService;
@@ -155,6 +158,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     /* TODO
     final DatabaseFileBackupSettingService fileBackupSettings;
     final DatabaseFTPGuestUserService ftpGuestUsers;
+     */
+    final DatabaseGroupNameService groupNames;
+    /* TODO
     final DatabaseHttpdBindService httpdBinds;
     final DatabaseHttpdJBossSiteService httpdJBossSites;
     final DatabaseHttpdJBossVersionService httpdJBossVersions;
@@ -179,11 +185,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     */
     final DatabaseLanguageService languages;
     // TODO: final DatabaseLinuxAccAddressService linuxAccAddresss;
+    final DatabaseLinuxAccountGroupService linuxAccountGroups;
     final DatabaseLinuxAccountTypeService linuxAccountTypes;
     final DatabaseLinuxAccountService linuxAccounts;
-    // TODO: final DatabaseLinuxGroupAccountService linuxGroupAccounts;
     final DatabaseLinuxGroupTypeService linuxGroupTypes;
-    // TODO: final DatabaseLinuxGroupService linuxGroups;
+    final DatabaseLinuxGroupService linuxGroups;
     // TODO: final DatabaseMajordomoListService majordomoLists;
     // TODO: final DatabaseMajordomoServerService majordomoServers;
     // TODO: final DatabaseMajordomoVersionService majordomoVersions;
@@ -348,6 +354,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         /* TODO
         fileBackupSettings = new DatabaseFileBackupSettingService(this);
         ftpGuestUsers = new DatabaseFTPGuestUserService(this);
+         */
+        groupNames = new DatabaseGroupNameService(this);
+        /* TODO
         httpdBinds = new DatabaseHttpdBindService(this);
         httpdJBossSites = new DatabaseHttpdJBossSiteService(this);
         httpdJBossVersions = new DatabaseHttpdJBossVersionService(this);
@@ -372,11 +381,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         */
         languages = new DatabaseLanguageService(this);
         // TODO: linuxAccAddresss = new DatabaseLinuxAccAddressService(this);
+        linuxAccountGroups = new DatabaseLinuxAccountGroupService(this);
         linuxAccountTypes = new DatabaseLinuxAccountTypeService(this);
         linuxAccounts = new DatabaseLinuxAccountService(this);
-        // TODO: linuxGroupAccounts = new DatabaseLinuxGroupAccountService(this);
         linuxGroupTypes = new DatabaseLinuxGroupTypeService(this);
-        // TODO: linuxGroups = new DatabaseLinuxGroupService(this);
+        linuxGroups = new DatabaseLinuxGroupService(this);
         // TODO: majordomoLists = new DatabaseMajordomoListService(this);
         // TODO: majordomoServers = new DatabaseMajordomoServerService(this);
         // TODO: majordomoVersions = new DatabaseMajordomoVersionService(this);
@@ -660,7 +669,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public FileBackupSettingService<DatabaseConnector,DatabaseConnectorFactory> getFileBackupSettings();
 
     public FTPGuestUserService<DatabaseConnector,DatabaseConnectorFactory> getFtpGuestUsers();
-
+     */
+    public GroupNameService<DatabaseConnector,DatabaseConnectorFactory> getGroupNames() {
+        return groupNames;
+    }
+    /* TODO
     public HttpdBindService<DatabaseConnector,DatabaseConnectorFactory> getHttpdBinds();
 
     public HttpdJBossSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossSites();
@@ -709,6 +722,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     // TODO: public LinuxAccAddressService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccAddresses();
 
+    public LinuxAccountGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccountGroups() {
+        return linuxAccountGroups;
+    }
+
     public LinuxAccountTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccountTypes() {
         return linuxAccountTypes;
     }
@@ -717,13 +734,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return linuxAccounts;
     }
 
-    // TODO: public LinuxGroupAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupAccounts();
-
     public LinuxGroupTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupTypes() {
         return linuxGroupTypes;
     }
 
-    // TODO: public LinuxGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroups();
+    public LinuxGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroups() {
+        return linuxGroups;
+    }
 
     // TODO: public MajordomoListService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoLists();
 
