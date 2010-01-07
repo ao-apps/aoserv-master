@@ -8,6 +8,9 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.AOServConnectorFactory;
 import com.aoindustries.aoserv.client.AOServConnectorFactoryCache;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
+import com.aoindustries.aoserv.client.validator.DomainName;
+import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.security.AccountDisabledException;
 import com.aoindustries.security.AccountNotFoundException;
 import com.aoindustries.security.BadPasswordException;
@@ -23,6 +26,7 @@ import java.rmi.server.ServerNotActiveException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -37,25 +41,31 @@ import java.util.Set;
  */
 final public class DatabaseConnectorFactory implements AOServConnectorFactory<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private static final ObjectFactory<String> stringFactory = new ObjectFactory<String>() {
-        public String createObject(ResultSet result) throws SQLException {
-            return result.getString(1);
+    private static final ObjectFactory<UserId> userIdFactory = new ObjectFactory<UserId>() {
+        public UserId createObject(ResultSet result) throws SQLException {
+            try {
+                return UserId.valueOf(result.getString(1)).intern();
+            } catch(ValidationException ex) {
+                SQLException sqlEx = new SQLException(ex.getMessage());
+                sqlEx.initCause(ex);
+                throw sqlEx;
+            }
         }
     };
 
     final Database database;
 
     private final Object masterHostsLock = new Object();
-    private Map<String,Set<String>> masterHosts;
+    private Map<UserId,Set<String>> masterHosts;
 
     private final Object enabledMasterUsersLock = new Object();
-    private Set<String> enabledMasterUsers;
+    private Set<UserId> enabledMasterUsers;
 
     private final Object enabledDaemonUsersLock = new Object();
-    private Set<String> enabledDaemonUsers;
+    private Set<UserId> enabledDaemonUsers;
 
     private final Object enabledBusinessAdministratorsLock = new Object();
-    private Set<String> enabledBusinessAdministrators;
+    private Set<UserId> enabledBusinessAdministrators;
 
     public DatabaseConnectorFactory(Database database) {
         this.database = database;
@@ -66,11 +76,11 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
      * master_users table but no master_servers restrictions.  A master user has
      * no filters applied.
      */
-    boolean isEnabledMasterUser(String username) throws IOException, SQLException {
+    boolean isEnabledMasterUser(UserId username) throws IOException, SQLException {
         synchronized(enabledMasterUsersLock) {
             if(enabledMasterUsers==null) {
                 enabledMasterUsers=database.executeObjectSetQuery(
-                    stringFactory,
+                    userIdFactory,
                     "select\n"
                     + "  mu.username\n"
                     + "from\n"
@@ -91,11 +101,11 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
      * master_users table and at least one row in master_servers restrictions.
      * A daemon user has filters applied by server access.
      */
-    boolean isEnabledDaemonUser(String username) throws IOException, SQLException {
+    boolean isEnabledDaemonUser(UserId username) throws IOException, SQLException {
         synchronized(enabledDaemonUsersLock) {
             if(enabledDaemonUsers==null) {
                 enabledDaemonUsers=database.executeObjectSetQuery(
-                    stringFactory,
+                    userIdFactory,
                     "select\n"
                     + "  mu.username\n"
                     + "from\n"
@@ -115,11 +125,11 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
      * Determines if the provided username is an enabled business administrator.
      * Master users and daemons are also considered administrators.
      */
-    boolean isEnabledBusinessAdministrator(String username) throws IOException, SQLException {
+    boolean isEnabledBusinessAdministrator(UserId username) throws IOException, SQLException {
         synchronized(enabledBusinessAdministratorsLock) {
             if(enabledBusinessAdministrators==null) {
                 enabledBusinessAdministrators=database.executeObjectSetQuery(
-                    stringFactory,
+                    userIdFactory,
                     "select username from business_administrators where disable_log is null"
                 );
             }
@@ -149,7 +159,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
         }
     }*/
 
-    boolean canSwitchUser(String authenticatedAs, String connectAs) throws IOException, SQLException {
+    boolean canSwitchUser(UserId authenticatedAs, UserId connectAs) throws IOException, SQLException {
         return database.executeBooleanQuery(
             "select\n"
             // Must have can_switch_users enabled
@@ -161,30 +171,43 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
             + "    (select accounting from usernames where username=?),\n"
             + "    (select accounting from usernames where username=?)\n"
             + "  )",
-            authenticatedAs,
-            authenticatedAs,
-            connectAs,
-            authenticatedAs,
-            connectAs
+            authenticatedAs.getId(),
+            authenticatedAs.getId(),
+            connectAs.getId(),
+            authenticatedAs.getId(),
+            connectAs.getId()
         );
     }
 
     /**
      * Gets the hosts that are allowed for the provided username.
      */
-    boolean isHostAllowed(String username, String host) throws IOException, SQLException {
+    boolean isHostAllowed(UserId username, String host) throws IOException, SQLException {
         Set<String> hosts;
         synchronized(masterHostsLock) {
             if(masterHosts==null) {
-                final Map<String,Set<String>> table=new HashMap<String,Set<String>>();
+                final Map<UserId,Set<String>> table=new HashMap<UserId,Set<String>>();
                 database.executeQuery(
                     new ResultSetHandler() {
                         public void handleResultSet(ResultSet result) throws SQLException {
-                            String un=result.getString(1);
-                            String ho=result.getString(2);
-                            Set<String> sv=table.get(un);
-                            if(sv==null) table.put(un, sv=new HashSet<String>());
-                            sv.add(ho);
+                            try {
+                                UserId un=UserId.valueOf(result.getString(1)).intern();
+                                String ho=result.getString(2);
+                                Set<String> sv=table.get(un);
+                                if(sv==null) table.put(un, sv=Collections.singleton(ho.intern()));
+                                else {
+                                    if(sv.size()==1) {
+                                        Set<String> newSV = new HashSet<String>();
+                                        newSV.add(sv.iterator().next());
+                                        table.put(un, sv = newSV);
+                                    }
+                                    sv.add(ho.intern());
+                                }
+                            } catch(ValidationException ex) {
+                                SQLException sqlEx = new SQLException(ex.getMessage());
+                                sqlEx.initCause(ex);
+                                throw sqlEx;
+                            }
                         }
                     },
                     "select mh.username, mh.host from master_hosts mh, master_users mu where mh.username=mu.username and mu.is_active"
@@ -201,7 +224,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
 
     private final AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory> connectors = new AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory>();
 
-    public DatabaseConnector getConnector(Locale locale, String connectAs, String authenticateAs, String password, String daemonServer) throws LoginException, RemoteException {
+    public DatabaseConnector getConnector(Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) throws LoginException, RemoteException {
         synchronized(connectors) {
             DatabaseConnector connector = connectors.get(connectAs, authenticateAs, password, daemonServer);
             if(connector!=null) {
@@ -219,12 +242,13 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
         }
     }
 
-    public DatabaseConnector newConnector(Locale locale, String connectAs, String authenticateAs, String password, String daemonServer) throws LoginException, RemoteException {
+    public DatabaseConnector newConnector(Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) throws LoginException, RemoteException {
         try {
             // Handle the authentication
-            if(connectAs.length()==0)      throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.connectAs.empty"));
-            if(authenticateAs.length()==0) throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.authenticateAs.empty"));
-            if(password.length()==0)       throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.password.empty"));
+            if(connectAs==null)      throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.connectAs.empty"));
+            if(authenticateAs==null) throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.authenticateAs.null"));
+            if(password==null)       throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.password.null"));
+            if(password.length()==0) throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.password.empty"));
 
             String correctCrypted = database.executeStringQuery(
                 Connection.TRANSACTION_READ_COMMITTED,

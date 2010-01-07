@@ -135,7 +135,7 @@ final class DatabaseNetBindService extends DatabaseServiceIntegerKey<NetBind> im
             + UN3_BU2_PARENTS_WHERE
             + "      )\n"
             + "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=hs.accounting\n"
-            + "      and hs.pkey=hsb.httpd_site\n"
+            + "      and hs.ao_server_resource=hsb.httpd_site\n"
             + "      and hsb.httpd_bind=nb3.pkey\n"
             + "  ) or nb.pkey in (\n"
             + "    select\n"

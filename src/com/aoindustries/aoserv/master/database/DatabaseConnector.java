@@ -22,6 +22,7 @@ import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
 import com.aoindustries.aoserv.client.FailoverMySQLReplicationService;
 import com.aoindustries.aoserv.client.GroupNameService;
+import com.aoindustries.aoserv.client.HttpdSiteService;
 import com.aoindustries.aoserv.client.LanguageService;
 import com.aoindustries.aoserv.client.LinuxAccountGroupService;
 import com.aoindustries.aoserv.client.LinuxAccountService;
@@ -30,7 +31,6 @@ import com.aoindustries.aoserv.client.LinuxGroupService;
 import com.aoindustries.aoserv.client.LinuxGroupTypeService;
 import com.aoindustries.aoserv.client.MySQLDBUserService;
 import com.aoindustries.aoserv.client.MySQLDatabaseService;
-import com.aoindustries.aoserv.client.MySQLReservedWordService;
 import com.aoindustries.aoserv.client.MySQLServerService;
 import com.aoindustries.aoserv.client.MySQLUserService;
 import com.aoindustries.aoserv.client.NetBindService;
@@ -41,7 +41,6 @@ import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
 import com.aoindustries.aoserv.client.PostgresDatabaseService;
 import com.aoindustries.aoserv.client.PostgresEncodingService;
-import com.aoindustries.aoserv.client.PostgresReservedWordService;
 import com.aoindustries.aoserv.client.PostgresServerService;
 import com.aoindustries.aoserv.client.PostgresUserService;
 import com.aoindustries.aoserv.client.PostgresVersionService;
@@ -62,6 +61,7 @@ import com.aoindustries.aoserv.client.TicketStatusService;
 import com.aoindustries.aoserv.client.TicketTypeService;
 import com.aoindustries.aoserv.client.TimeZoneService;
 import com.aoindustries.aoserv.client.UsernameService;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.security.LoginException;
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -84,8 +84,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     final DatabaseConnectorFactory factory;
     Locale locale;
-    final String connectAs;
-    private final String authenticateAs;
+    final UserId connectAs;
+    private final UserId authenticateAs;
     private final String password;
     /* TODO
     final DatabaseAOServerDaemonHostService aoserverDaemonHosts;
@@ -171,7 +171,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseHttpdSiteAuthenticatedLocationService httpdSiteAuthenticatedLocations;
     final DatabaseHttpdSiteBindService httpdSiteBinds;
     final DatabaseHttpdSiteURLService httpdSiteURLs;
+     */
     final DatabaseHttpdSiteService httpdSites;
+    /* TODO
     final DatabaseHttpdStaticSiteService httpdStaticSites;
     final DatabaseHttpdTomcatContextService httpdTomcatContexts;
     final DatabaseHttpdTomcatDataSourceService httpdTomcatDataSources;
@@ -200,7 +202,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     // TODO: final DatabaseMonthlyChargeService monthlyCharges;
     final DatabaseMySQLDatabaseService mysqlDatabases;
     final DatabaseMySQLDBUserService mysqlDBUsers;
-    final DatabaseMySQLReservedWordService mysqlReservedWords;
     final DatabaseMySQLServerService mysqlServers;
     final DatabaseMySQLUserService mysqlUsers;
     final DatabaseNetBindService netBinds;
@@ -225,7 +226,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
      */
     final DatabasePostgresDatabaseService postgresDatabases;
     final DatabasePostgresEncodingService postgresEncodings;
-    final DatabasePostgresReservedWordService postgresReservedWords;
     final DatabasePostgresServerService postgresServers;
     final DatabasePostgresUserService postgresUsers;
     final DatabasePostgresVersionService postgresVersions;
@@ -277,7 +277,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseWhoisHistoryService whoisHistories;
      */
 
-    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, String connectAs, String authenticateAs, String password) throws RemoteException, LoginException {
+    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password) throws RemoteException, LoginException {
         this.factory = factory;
         this.locale = locale;
         this.connectAs = connectAs;
@@ -367,7 +367,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         httpdSiteAuthenticatedLocations = new DatabaseHttpdSiteAuthenticatedLocationService(this);
         httpdSiteBinds = new DatabaseHttpdSiteBindService(this);
         httpdSiteURLs = new DatabaseHttpdSiteURLService(this);
+         */
         httpdSites = new DatabaseHttpdSiteService(this);
+        /* TODO
         httpdStaticSites = new DatabaseHttpdStaticSiteService(this);
         httpdTomcatContexts = new DatabaseHttpdTomcatContextService(this);
         httpdTomcatDataSources = new DatabaseHttpdTomcatDataSourceService(this);
@@ -396,7 +398,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         // TODO: monthlyCharges = new DatabaseMonthlyChargeService(this);
         mysqlDatabases = new DatabaseMySQLDatabaseService(this);
         mysqlDBUsers = new DatabaseMySQLDBUserService(this);
-        mysqlReservedWords = new DatabaseMySQLReservedWordService(this);
         mysqlServers = new DatabaseMySQLServerService(this);
         mysqlUsers = new DatabaseMySQLUserService(this);
         netBinds = new DatabaseNetBindService(this);
@@ -421,7 +422,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
          */
         postgresDatabases = new DatabasePostgresDatabaseService(this);
         postgresEncodings = new DatabasePostgresEncodingService(this);
-        postgresReservedWords = new DatabasePostgresReservedWordService(this);
         postgresServers = new DatabasePostgresServerService(this);
         postgresUsers = new DatabasePostgresUserService(this);
         postgresVersions = new DatabasePostgresVersionService(this);
@@ -503,7 +503,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         this.locale = locale;
     }
 
-    public String getConnectAs() {
+    public UserId getConnectAs() {
         return connectAs;
     }
 
@@ -513,7 +513,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return obj;
     }
 
-    public String getAuthenticateAs() {
+    public UserId getAuthenticateAs() {
         return authenticateAs;
     }
 
@@ -693,9 +693,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public HttpdSiteBindService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteBinds();
 
     public HttpdSiteURLService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteURLs();
-
-    public HttpdSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSites();
-
+    */
+    public HttpdSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSites() {
+        return httpdSites;
+    }
+    /* TODO
     public HttpdStaticSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdStaticSites();
 
     public HttpdTomcatContextService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatContexts();
@@ -766,10 +768,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return mysqlDBUsers;
     }
 
-    public MySQLReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getMysqlReservedWords() {
-        return mysqlReservedWords;
-    }
-
     public MySQLServerService<DatabaseConnector,DatabaseConnectorFactory> getMysqlServers() {
         return mysqlServers;
     }
@@ -824,10 +822,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     public PostgresEncodingService<DatabaseConnector,DatabaseConnectorFactory> getPostgresEncodings() {
         return postgresEncodings;
-    }
-
-    public PostgresReservedWordService<DatabaseConnector,DatabaseConnectorFactory> getPostgresReservedWords() {
-        return postgresReservedWords;
     }
 
     public PostgresServerService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServers() {

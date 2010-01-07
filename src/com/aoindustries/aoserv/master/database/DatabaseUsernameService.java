@@ -5,7 +5,6 @@ package com.aoindustries.aoserv.master.database;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.Username;
 import com.aoindustries.aoserv.client.UsernameService;
 import com.aoindustries.sql.AutoObjectFactory;
@@ -17,7 +16,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseUsernameService extends DatabaseServiceStringKey<Username> implements UsernameService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseUsernameService extends DatabaseServiceUserIdKey<Username> implements UsernameService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Username> objectFactory = new AutoObjectFactory<Username>(Username.class, this);
 
