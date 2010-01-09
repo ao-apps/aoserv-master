@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.AOServConnectorFactory;
 import com.aoindustries.aoserv.client.AOServConnectorFactoryCache;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.validator.DomainName;
+import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.security.AccountDisabledException;
@@ -56,7 +57,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
     final Database database;
 
     private final Object masterHostsLock = new Object();
-    private Map<UserId,Set<String>> masterHosts;
+    private Map<UserId,Set<InetAddress>> masterHosts;
 
     private final Object enabledMasterUsersLock = new Object();
     private Set<UserId> enabledMasterUsers;
@@ -182,26 +183,26 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
     /**
      * Gets the hosts that are allowed for the provided username.
      */
-    boolean isHostAllowed(UserId username, String host) throws IOException, SQLException {
-        Set<String> hosts;
+    boolean isHostAllowed(UserId username, InetAddress host) throws IOException, SQLException {
+        Set<InetAddress> hosts;
         synchronized(masterHostsLock) {
             if(masterHosts==null) {
-                final Map<UserId,Set<String>> table=new HashMap<UserId,Set<String>>();
+                final Map<UserId,Set<InetAddress>> table=new HashMap<UserId,Set<InetAddress>>();
                 database.executeQuery(
                     new ResultSetHandler() {
                         public void handleResultSet(ResultSet result) throws SQLException {
                             try {
                                 UserId un=UserId.valueOf(result.getString(1)).intern();
-                                String ho=result.getString(2);
-                                Set<String> sv=table.get(un);
-                                if(sv==null) table.put(un, sv=Collections.singleton(ho.intern()));
+                                InetAddress ho=InetAddress.valueOf(result.getString(2)).intern();
+                                Set<InetAddress> sv=table.get(un);
+                                if(sv==null) table.put(un, sv=Collections.singleton(ho));
                                 else {
                                     if(sv.size()==1) {
-                                        Set<String> newSV = new HashSet<String>();
+                                        Set<InetAddress> newSV = new HashSet<InetAddress>();
                                         newSV.add(sv.iterator().next());
                                         table.put(un, sv = newSV);
                                     }
-                                    sv.add(ho.intern());
+                                    sv.add(ho);
                                 }
                             } catch(ValidationException ex) {
                                 SQLException sqlEx = new SQLException(ex.getMessage());
@@ -262,7 +263,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
 
             if(!isEnabledBusinessAdministrator(authenticateAs)) throw new AccountDisabledException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.accountDisabled"));
 
-            String remoteHost = RemoteServer.getClientHost();
+            InetAddress remoteHost = InetAddress.valueOf(RemoteServer.getClientHost());
             if(!isHostAllowed(authenticateAs, remoteHost)) throw new LoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.hostNotAllowed", remoteHost, authenticateAs));
 
             // If connectAs is not authenticateAs, must be authenticated with switch user permissions
@@ -293,6 +294,8 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
             throw new RemoteException(err.getMessage(), err);
         } catch(ServerNotActiveException err) {
             throw new RemoteException(err.getMessage(), err);
+        } catch(ValidationException err) {
+            throw new RemoteException(err.getLocalizedMessage(locale), err);
         }
     }
 }

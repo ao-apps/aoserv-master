@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBusinessService extends DatabaseServiceStringKey<Business> implements BusinessService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseBusinessService extends DatabaseServiceAccountingCodeKey<Business> implements BusinessService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Business> objectFactory = new AutoObjectFactory<Business>(Business.class, this);
 

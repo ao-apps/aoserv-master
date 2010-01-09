@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseGroupNameService extends DatabaseServiceStringKey<GroupName> implements GroupNameService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseGroupNameService extends DatabaseServiceGroupIdKey<GroupName> implements GroupNameService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<GroupName> objectFactory = new AutoObjectFactory<GroupName>(GroupName.class, this);
 

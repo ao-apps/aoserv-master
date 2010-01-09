@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseServerFarmService extends DatabaseServiceStringKey<ServerFarm> implements ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseServerFarmService extends DatabaseServiceDomainLabelKey<ServerFarm> implements ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<ServerFarm> objectFactory = new AutoObjectFactory<ServerFarm>(ServerFarm.class, this);
 

@@ -5,7 +5,6 @@ package com.aoindustries.aoserv.master.database;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.TechnologyVersion;
 import com.aoindustries.aoserv.client.TechnologyVersionService;
 import com.aoindustries.sql.AutoObjectFactory;
@@ -40,11 +39,10 @@ final class DatabaseTechnologyVersionService extends DatabaseServiceIntegerKey<T
             + "  name,\n"
             + "  version,\n"
             + "  updated,\n"
-            + "  ?,\n"
+            + "  null,\n"
             + "  operating_system_version\n"
             + "from\n"
-            + "  technology_versions",
-            AOServObject.FILTERED
+            + "  technology_versions"
         );
     }
 
@@ -56,11 +54,10 @@ final class DatabaseTechnologyVersionService extends DatabaseServiceIntegerKey<T
             + "  name,\n"
             + "  version,\n"
             + "  updated,\n"
-            + "  ?,\n"
+            + "  null,\n"
             + "  operating_system_version\n"
             + "from\n"
-            + "  technology_versions",
-            AOServObject.FILTERED
+            + "  technology_versions"
         );
     }
 }
