@@ -5,6 +5,10 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.aoserv.client.validator.Hostname;
+import com.aoindustries.aoserv.client.validator.InetAddress;
+import com.aoindustries.aoserv.client.validator.NetPort;
+import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.io.AOPool;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -178,19 +182,21 @@ final class MasterConfiguration {
     }
     */
 
-    static String getRmiListenAddress() throws IOException {
-        return getProperty("aoserv.master.rmi.listen_address");
+    static InetAddress getRmiListenAddress() throws IOException, ValidationException {
+        String s = getProperty("aoserv.master.rmi.listen_address");
+        return s==null || s.length()==0 ? null : InetAddress.valueOf(s);
     }
 
-    static String getRmiPublicAddress() throws IOException {
-        return getProperty("aoserv.master.rmi.public_address");
+    static Hostname getRmiPublicAddress() throws IOException, ValidationException {
+        String s = getProperty("aoserv.master.rmi.public_address");
+        return s==null || s.length()==0 ? null : Hostname.valueOf(s);
     }
 
     static boolean getRmiUseSsl() throws IOException {
         return !"false".equals(getProperty("aoserv.master.rmi.useSsl"));
     }
 
-    static int getRmiPort() throws IOException {
-        return Integer.parseInt(getProperty("aoserv.master.rmi.port"));
+    static NetPort getRmiPort() throws IOException, ValidationException {
+        return NetPort.valueOf(Integer.parseInt(getProperty("aoserv.master.rmi.port")));
     }
 }

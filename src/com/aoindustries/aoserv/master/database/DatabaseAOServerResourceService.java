@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master.database;
 
 /*
- * Copyright 2009 by AO Industries, Inc.,
+ * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -27,7 +27,13 @@ final class DatabaseAOServerResourceService extends DatabaseServiceIntegerKey<AO
     protected Set<AOServerResource> getSetMaster() throws IOException, SQLException {
         return connector.factory.database.executeObjectSetQuery(
             objectFactory,
-            "select resource, ao_server from ao_server_resources"
+            "select\n"
+            + "  asr.resource,\n"
+            + "  asr.ao_server,\n"
+            + "  bs.pkey\n"
+            + "from\n"
+            + "  ao_server_resources asr\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server"
         );
     }
 
@@ -35,10 +41,13 @@ final class DatabaseAOServerResourceService extends DatabaseServiceIntegerKey<AO
         return connector.factory.database.executeObjectSetQuery(
             objectFactory,
             "select\n"
-            + "  asr.resource, asr.ao_server\n"
+            + "  asr.resource,\n"
+            + "  asr.ao_server,\n"
+            + "  bs.pkey\n"
             + "from\n"
             + "  master_servers ms,\n"
             + "  ao_server_resources asr\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=asr.ao_server",
@@ -47,35 +56,31 @@ final class DatabaseAOServerResourceService extends DatabaseServiceIntegerKey<AO
     }
 
     protected Set<AOServerResource> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
-            objectFactory,
-            // owns the resource
+        // owns the resource
+        StringBuilder sql = new StringBuilder(
             "select\n"
-            + "  re.resource,\n"
-            + "  re.ao_server\n"
+            + "  asr.resource,\n"
+            + "  asr.ao_server,\n"
+            + "  bs.pkey\n"
             + "from\n"
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN
-            + "  ao_server_resources re\n"
+            + "  ao_server_resources asr\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
-            + "  )\n"
-            + "  and bu1.accounting=re.accounting\n"
-            // has access to the mysql_servers
-            + "union select\n"
-            + "  ms.ao_server_resource,\n"
-            + "  ms.ao_server\n"
-            + "from\n"
-            + "  usernames un,\n"
-            + "  business_servers bs,\n"
-            + "  mysql_servers ms\n"
-            + "where\n"
-            + "  un.username=?\n"
-            + "  and un.accounting=bs.accounting\n"
-            + "  and bs.server=ms.ao_server",
-            connector.getConnectAs(),
+            + "  ) and (\n"
+            + "    bu1.accounting=asr.accounting\n"
+        );
+        addOptionalInInteger(sql, "    or asr.resource in (", connector.linuxGroups.getSetBusiness(), ")\n");
+        addOptionalInInteger(sql, "    or asr.resource in (", connector.mysqlServers.getSetBusiness(), ")\n");
+        addOptionalInInteger(sql, "    or asr.resource in (", connector.postgresServers.getSetBusiness(), ")\n");
+        sql.append("  )");
+        return connector.factory.database.executeObjectSetQuery(
+            objectFactory,
+            sql.toString(),
             connector.getConnectAs()
         );
     }

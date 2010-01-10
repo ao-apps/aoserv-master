@@ -6,6 +6,9 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.rmi.RmiServerConnectorFactory;
+import com.aoindustries.aoserv.client.validator.Hostname;
+import com.aoindustries.aoserv.client.validator.InetAddress;
+import com.aoindustries.aoserv.client.validator.NetPort;
 import com.aoindustries.aoserv.master.database.DatabaseConnector;
 import com.aoindustries.aoserv.master.database.DatabaseConnectorFactory;
 import java.util.logging.Level;
@@ -35,9 +38,9 @@ final public class MasterServer {
         while(!done) {
             try {
                 // Get the configuration
-                String publicAddress = MasterConfiguration.getRmiPublicAddress();
-                String listenAddress = MasterConfiguration.getRmiListenAddress();
-                int port = MasterConfiguration.getRmiPort();
+                Hostname publicAddress = MasterConfiguration.getRmiPublicAddress();
+                InetAddress listenAddress = MasterConfiguration.getRmiListenAddress();
+                NetPort port = MasterConfiguration.getRmiPort();
                 boolean useSsl = MasterConfiguration.getRmiUseSsl();
                 if(useSsl) {
                     String keystorePath = MasterConfiguration.getSSLKeystorePath();

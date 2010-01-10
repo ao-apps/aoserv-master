@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.AOServConnectorUtils;
 import com.aoindustries.aoserv.client.AOServPermissionService;
 import com.aoindustries.aoserv.client.AOServService;
+import com.aoindustries.aoserv.client.AOServerDaemonHostService;
 import com.aoindustries.aoserv.client.AOServerResourceService;
 import com.aoindustries.aoserv.client.AOServerService;
 import com.aoindustries.aoserv.client.ArchitectureService;
@@ -16,8 +17,10 @@ import com.aoindustries.aoserv.client.BackupPartitionService;
 import com.aoindustries.aoserv.client.BackupRetentionService;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
+import com.aoindustries.aoserv.client.BusinessServerService;
 import com.aoindustries.aoserv.client.BusinessService;
 import com.aoindustries.aoserv.client.CountryCodeService;
+import com.aoindustries.aoserv.client.CvsRepositoryService;
 import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.FailoverFileLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
@@ -26,6 +29,7 @@ import com.aoindustries.aoserv.client.FailoverMySQLReplicationService;
 import com.aoindustries.aoserv.client.FileBackupSettingService;
 import com.aoindustries.aoserv.client.GroupNameService;
 import com.aoindustries.aoserv.client.HttpdSiteService;
+import com.aoindustries.aoserv.client.IPAddressService;
 import com.aoindustries.aoserv.client.LanguageService;
 import com.aoindustries.aoserv.client.LinuxAccountGroupService;
 import com.aoindustries.aoserv.client.LinuxAccountService;
@@ -38,7 +42,9 @@ import com.aoindustries.aoserv.client.MySQLServerService;
 import com.aoindustries.aoserv.client.MySQLUserService;
 import com.aoindustries.aoserv.client.NetBindService;
 import com.aoindustries.aoserv.client.NetDeviceIDService;
+import com.aoindustries.aoserv.client.NetDeviceService;
 import com.aoindustries.aoserv.client.NetProtocolService;
+import com.aoindustries.aoserv.client.NetTcpRedirectService;
 import com.aoindustries.aoserv.client.OperatingSystemService;
 import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
@@ -51,6 +57,7 @@ import com.aoindustries.aoserv.client.ProtocolService;
 import com.aoindustries.aoserv.client.ResourceService;
 import com.aoindustries.aoserv.client.ResourceTypeService;
 import com.aoindustries.aoserv.client.ServerFarmService;
+import com.aoindustries.aoserv.client.ServerResourceService;
 import com.aoindustries.aoserv.client.ServerService;
 import com.aoindustries.aoserv.client.ServiceName;
 import com.aoindustries.aoserv.client.ShellService;
@@ -64,6 +71,7 @@ import com.aoindustries.aoserv.client.TicketStatusService;
 import com.aoindustries.aoserv.client.TicketTypeService;
 import com.aoindustries.aoserv.client.TimeZoneService;
 import com.aoindustries.aoserv.client.UsernameService;
+import com.aoindustries.aoserv.client.command.AOServCommand;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.security.LoginException;
 import java.io.IOException;
@@ -90,9 +98,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final UserId connectAs;
     private final UserId authenticateAs;
     private final String password;
-    /* TODO
     final DatabaseAOServerDaemonHostService aoserverDaemonHosts;
-     */
     final DatabaseAOServerResourceService aoserverResources;
     final DatabaseAOServerService aoservers;
     final DatabaseAOServPermissionService aoservPermissions;
@@ -117,17 +123,14 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseBusinessProfileService businessProfiles;
      */
     final DatabaseBusinessService businesses;
-    /* TODO
     final DatabaseBusinessServerService businessServers;
-    final DatabaseClientJvmProfileService clientJvmProfiles;
-     */
     final DatabaseCountryCodeService countryCodes;
     /* TODO
     final DatabaseCreditCardProcessorService creditCardProcessors;
     final DatabaseCreditCardTransactionService creditCardTransactions;
     final DatabaseCreditCardService creditCards;
-    final DatabaseCvsRepositoryService cvsRepositories;
      */
+    final DatabaseCvsRepositoryService cvsRepositories;
     final DatabaseDisableLogService disableLogs;
     /*
     final DatabaseDistroFileTypeService distroFileTypes;
@@ -186,8 +189,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseHttpdTomcatStdSiteService httpdTomcatStdSites;
     final DatabaseHttpdTomcatVersionService httpdTomcatVersions;
     final DatabaseHttpdWorkerService httpdWorkers;
-    final DatabaseIPAddressService ipAddresss;
     */
+    final DatabaseIPAddressService ipAddresses;
     final DatabaseLanguageService languages;
     // TODO: final DatabaseLinuxAccAddressService linuxAccAddresss;
     final DatabaseLinuxAccountGroupService linuxAccountGroups;
@@ -209,12 +212,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseMySQLUserService mysqlUsers;
     final DatabaseNetBindService netBinds;
     final DatabaseNetDeviceIDService netDeviceIDs;
-    /* TODO
     final DatabaseNetDeviceService netDevices;
-     */
     final DatabaseNetProtocolService netProtocols;
-    /* TODO
     final DatabaseNetTcpRedirectService netTcpRedirects;
+    /* TODO
     final DatabaseNoticeLogService noticeLogs;
     final DatabaseNoticeTypeService noticeTypes;
     */
@@ -242,6 +243,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseResourceTypeService resourceTypes;
     final DatabaseResourceService resources;
     final DatabaseServerFarmService serverFarms;
+    final DatabaseServerResourceService serverResources;
     final DatabaseServerService servers;
     final DatabaseShellService shells;
     /* TODO
@@ -286,9 +288,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         this.connectAs = connectAs;
         this.authenticateAs = authenticateAs;
         this.password = password;
-        /* TODO
         aoserverDaemonHosts = new DatabaseAOServerDaemonHostService(this);
-         */
         aoserverResources = new DatabaseAOServerResourceService(this);
         aoservers = new DatabaseAOServerService(this);
         aoservPermissions = new DatabaseAOServPermissionService(this);
@@ -313,17 +313,14 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         businessProfiles = new DatabaseBusinessProfileService(this);
          */
         businesses = new DatabaseBusinessService(this);
-        /* TODO
         businessServers = new DatabaseBusinessServerService(this);
-        clientJvmProfiles = new DatabaseClientJvmProfileService(this);
-         */
         countryCodes = new DatabaseCountryCodeService(this);
         /* TODO
         creditCardProcessors = new DatabaseCreditCardProcessorService(this);
         creditCardTransactions = new DatabaseCreditCardTransactionService(this);
         creditCards = new DatabaseCreditCardService(this);
-        cvsRepositories = new DatabaseCvsRepositoryService(this);
          */
+        cvsRepositories = new DatabaseCvsRepositoryService(this);
         disableLogs = new DatabaseDisableLogService(this);
         /*
         distroFileTypes = new DatabaseDistroFileTypeService(this);
@@ -382,8 +379,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         httpdTomcatStdSites = new DatabaseHttpdTomcatStdSiteService(this);
         httpdTomcatVersions = new DatabaseHttpdTomcatVersionService(this);
         httpdWorkers = new DatabaseHttpdWorkerService(this);
-        ipAddresss = new DatabaseIPAddressService(this);
         */
+        ipAddresses = new DatabaseIPAddressService(this);
         languages = new DatabaseLanguageService(this);
         // TODO: linuxAccAddresss = new DatabaseLinuxAccAddressService(this);
         linuxAccountGroups = new DatabaseLinuxAccountGroupService(this);
@@ -405,12 +402,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         mysqlUsers = new DatabaseMySQLUserService(this);
         netBinds = new DatabaseNetBindService(this);
         netDeviceIDs = new DatabaseNetDeviceIDService(this);
-        /* TODO
         netDevices = new DatabaseNetDeviceService(this);
-         */
         netProtocols = new DatabaseNetProtocolService(this);
-        /* TODO
         netTcpRedirects = new DatabaseNetTcpRedirectService(this);
+        /* TODO
         noticeLogs = new DatabaseNoticeLogService(this);
         noticeTypes = new DatabaseNoticeTypeService(this);
         */
@@ -438,6 +433,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         resourceTypes = new DatabaseResourceTypeService(this);
         resources = new DatabaseResourceService(this);
         serverFarms = new DatabaseServerFarmService(this);
+        serverResources = new DatabaseServerResourceService(this);
         servers = new DatabaseServerService(this);
         shells = new DatabaseShellService(this);
         /* TODO
@@ -511,9 +507,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     }
 
     public BusinessAdministrator getThisBusinessAdministrator() throws RemoteException {
-        BusinessAdministrator obj = getBusinessAdministrators().get(connectAs);
-        if(obj==null) throw new RemoteException("Unable to find BusinessAdministrator: "+connectAs);
-        return obj;
+        return getBusinessAdministrators().get(connectAs);
     }
 
     public UserId getAuthenticateAs() {
@@ -522,6 +516,14 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     public String getPassword() {
         return password;
+    }
+
+    public <R> R executeCommand(AOServCommand<R> command, boolean isInteractive) throws RemoteException {
+        // TODO: Check account enabled
+        // TODO: Check permissions
+        // TODO: Validate command
+        // TODO: Execute command
+        throw new RemoteException("TODO: Not supported yet.");
     }
 
     private final AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>> tables = new AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>>();
@@ -534,10 +536,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return ts;
     }
 
-    /*
-     * TODO
-    public AOServerDaemonHostService<DatabaseConnector,DatabaseConnectorFactory> getAoServerDaemonHosts();
-    */
+    public AOServerDaemonHostService<DatabaseConnector,DatabaseConnectorFactory> getAoServerDaemonHosts() {
+        return aoserverDaemonHosts;
+    }
+
     public AOServerResourceService<DatabaseConnector,DatabaseConnectorFactory> getAoServerResources() {
         return aoserverResources;
     }
@@ -590,11 +592,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return businesses;
     }
 
-    /* TODO
-    public BusinessServerService<DatabaseConnector,DatabaseConnectorFactory> getBusinessServers();
+    public BusinessServerService<DatabaseConnector,DatabaseConnectorFactory> getBusinessServers() {
+        return businessServers;
+    }
 
-    public ClientJvmProfileService<DatabaseConnector,DatabaseConnectorFactory> getClientJvmProfiles();
-    */
     public CountryCodeService<DatabaseConnector,DatabaseConnectorFactory> getCountryCodes() {
         return countryCodes;
     }
@@ -604,9 +605,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardTransactions();
 
     public CreditCardService<DatabaseConnector,DatabaseConnectorFactory> getCreditCards();
-
-    public CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> getCvsRepositories();
      */
+    public CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> getCvsRepositories() {
+        return cvsRepositories;
+    }
+
     public DisableLogService<DatabaseConnector,DatabaseConnectorFactory> getDisableLogs() {
         return disableLogs;
     }
@@ -724,9 +727,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public HttpdTomcatVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatVersions();
 
     public HttpdWorkerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdWorkers();
-
-    public IPAddressService<DatabaseConnector,DatabaseConnectorFactory> getIpAddresses();
     */
+    public IPAddressService<DatabaseConnector,DatabaseConnectorFactory> getIpAddresses() {
+        return ipAddresses;
+    }
+
     public LanguageService<DatabaseConnector,DatabaseConnectorFactory> getLanguages() {
         return languages;
     }
@@ -792,15 +797,19 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> getNetDeviceIDs() {
         return netDeviceIDs;
     }
-    /* TODO
-    public NetDeviceService<DatabaseConnector,DatabaseConnectorFactory> getNetDevices();
-    */
+
+    public NetDeviceService<DatabaseConnector,DatabaseConnectorFactory> getNetDevices() {
+        return netDevices;
+    }
+
     public NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> getNetProtocols() {
         return netProtocols;
     }
-    /* TODO
-    public NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects();
 
+    public NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects() {
+        return netTcpRedirects;
+    }
+    /* TODO
     public NoticeLogService<DatabaseConnector,DatabaseConnectorFactory> getNoticeLogs();
 
     public NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> getNoticeTypes();
@@ -867,6 +876,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     public ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> getServerFarms() {
         return serverFarms;
+    }
+
+    public ServerResourceService<DatabaseConnector,DatabaseConnectorFactory> getServerResources() {
+        return serverResources;
     }
 
     public ServerService<DatabaseConnector,DatabaseConnectorFactory> getServers() {

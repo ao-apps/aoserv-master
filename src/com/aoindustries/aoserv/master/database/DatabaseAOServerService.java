@@ -70,16 +70,16 @@ final class DatabaseAOServerService extends DatabaseServiceIntegerKey<AOServer> 
             "select distinct\n"
             + "  ao.server,\n"
             + "  ao.hostname,\n"
-            + "  ao.daemon_bind,\n"
+            + "  null,\n" // daemon_bind
             + "  ?,\n"
             + "  ao.pool_size,\n"
             + "  ao.distro_hour,\n"
             + "  ao.last_distro_time,\n"
             + "  ao.failover_server,\n"
             + "  ao.daemon_device_id,\n"
-            + "  ao.daemon_connect_bind,\n"
+            + "  null,\n" // daemon_connect_bind
             + "  ao.time_zone,\n"
-            + "  ao.jilter_bind,\n"
+            + "  null,\n" // jilter_bind
             + "  ao.restrict_outbound_email,\n"
             + "  ao.daemon_connect_address,\n"
             + "  ao.failover_batch_size,\n"

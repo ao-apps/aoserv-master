@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.database;
  */
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
+import com.aoindustries.aoserv.client.validator.HashedPassword;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
@@ -36,7 +37,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseServiceUserIdKe
             objectFactory,
             "select distinct\n"
             + "  ba.username,\n"
-            + "  '"+BusinessAdministrator.NO_PASSWORD+"'::text,\n"
+            + "  '"+HashedPassword.NO_PASSWORD+"'::text,\n"
             + "  ba.name,\n"
             + "  ba.title,\n"
             + "  ba.birthday,\n"
@@ -76,7 +77,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseServiceUserIdKe
             objectFactory,
             "select\n"
             + "  ba.username,\n"
-            + "  '"+BusinessAdministrator.NO_PASSWORD+"'::text,\n"
+            + "  '"+HashedPassword.NO_PASSWORD+"'::text,\n"
             + "  ba.name,\n"
             + "  ba.title,\n"
             + "  ba.birthday,\n"
