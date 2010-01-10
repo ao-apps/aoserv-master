@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.AOServService;
 import com.aoindustries.aoserv.client.AOServServiceUtils;
 import com.aoindustries.aoserv.client.Business;
+import com.aoindustries.aoserv.client.IndexedSet;
 import com.aoindustries.aoserv.client.MethodColumn;
 import com.aoindustries.aoserv.client.ServiceName;
 import com.aoindustries.security.AccountDisabledException;
@@ -20,12 +21,9 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * @author  AO Industries, Inc.
@@ -149,15 +147,17 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
     }
 
     @Override
-    final public Set<V> getSet() throws RemoteException {
+    final public IndexedSet<V> getSet() throws RemoteException {
         try {
+            Set<V> set;
             switch(connector.getAccountType()) {
-                case MASTER : return AOServServiceUtils.unmodifiableSet(getSetMaster());
-                case DAEMON : return AOServServiceUtils.unmodifiableSet(getSetDaemon());
-                case BUSINESS : return AOServServiceUtils.unmodifiableSet(getSetBusiness());
+                case MASTER : set = getSetMaster(); break;
+                case DAEMON : set = getSetDaemon(); break;
+                case BUSINESS : set = getSetBusiness(); break;
                 case DISABLED : throw new RemoteException(null, new AccountDisabledException());
                 default : throw new AssertionError();
             }
+            return IndexedSet.wrap(set);
         } catch(RemoteException err) {
             throw err;
         } catch(IOException err) {
@@ -184,13 +184,6 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
      */
     abstract protected Set<V> getSetBusiness() throws IOException, SQLException;
-
-    /**
-     * Implemented as a call to <code>getSize</code> with sorting performed by <code>TreeSet</code>.
-     */
-    final public SortedSet<V> getSortedSet() throws RemoteException {
-        return Collections.unmodifiableSortedSet(new TreeSet<V>(getSet()));
-    }
 
     final public ServiceName getServiceName() {
         return serviceName;
@@ -306,13 +299,17 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         }
     }
 
+    private V get(K key, Set<V> set) {
+        for(V obj : set) if(obj.getKey().equals(key)) return obj;
+        return null;
+    }
+
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
     protected V getMaster(K key) throws IOException, SQLException {
-        for(V obj : getSetMaster()) if(obj.getKey().equals(key)) return obj;
-        return null;
+        return get(key, getSetMaster());
     }
 
     /**
@@ -320,8 +317,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
     protected V getDaemon(K key) throws IOException, SQLException {
-        for(V obj : getSetDaemon()) if(obj.getKey().equals(key)) return obj;
-        return null;
+        return get(key, getSetDaemon());
     }
 
     /**
@@ -329,16 +325,15 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
     protected V getBusiness(K key) throws IOException, SQLException {
-        for(V obj : getSetBusiness()) if(obj.getKey().equals(key)) return obj;
-        return null;
+        return get(key, getSetBusiness());
     }
 
-    final public V getUnique(String columnName, Object value) throws RemoteException {
+    final public V filterUnique(String columnName, Object value) throws RemoteException {
         try {
             switch(connector.getAccountType()) {
-                case MASTER : return getUniqueMaster(columnName, value);
-                case DAEMON : return getUniqueDaemon(columnName, value);
-                case BUSINESS : return getUniqueBusiness(columnName, value);
+                case MASTER : return filterUniqueMaster(columnName, value);
+                case DAEMON : return filterUniqueDaemon(columnName, value);
+                case BUSINESS : return filterUniqueBusiness(columnName, value);
                 case DISABLED : throw new RemoteException(null, new AccountDisabledException());
                 default : throw new AssertionError();
             }
@@ -351,81 +346,64 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         }
     }
 
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected V getUniqueMaster(String columnName, Object value) throws IOException, SQLException {
+    private V filterUnique(String columnName, Object value, Set<V> set) throws IOException, SQLException {
         MethodColumn methodColumn = table.getColumn(columnName);
         IndexType indexType = methodColumn.getIndexType();
-        if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column not primary key or unique: "+columnName);
-        if(value==null) return null;
+        if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column neither primary key nor unique: "+columnName);
         Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        assert AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType()) : "value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName();
         try {
-            for(V obj : getSetMaster()) {
-                if(value.equals(method.invoke(obj))) return obj;
+            boolean assertsEnabled = false;
+            assert assertsEnabled = true; // Intentional side effect!!!
+            V foundObj = null;
+            for(V obj : set) {
+                if(value.equals(method.invoke(obj))) {
+                    if(!assertsEnabled) return obj;
+                    assert foundObj==null : "Duplicate value in unique column "+getServiceName()+"."+columnName+": "+value;
+                    foundObj = obj;
+                }
             }
-            return null;
+            return foundObj;
         } catch(IllegalAccessException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(InvocationTargetException err) {
             throw new RemoteException(err.getMessage(), err);
         }
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected V filterUniqueMaster(String columnName, Object value) throws IOException, SQLException {
+        if(value==null) return null;
+        return filterUnique(columnName, value, getSetMaster());
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected V getUniqueDaemon(String columnName, Object value) throws IOException, SQLException {
-        MethodColumn methodColumn = table.getColumn(columnName);
-        IndexType indexType = methodColumn.getIndexType();
-        if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column not primary key or unique: "+columnName);
+    protected V filterUniqueDaemon(String columnName, Object value) throws IOException, SQLException {
         if(value==null) return null;
-        Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
-        try {
-            for(V obj : getSetDaemon()) {
-                if(value.equals(method.invoke(obj))) return obj;
-            }
-            return null;
-        } catch(IllegalAccessException err) {
-            throw new RemoteException(err.getMessage(), err);
-        } catch(InvocationTargetException err) {
-            throw new RemoteException(err.getMessage(), err);
-        }
+        return filterUnique(columnName, value, getSetDaemon());
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected V getUniqueBusiness(String columnName, Object value) throws IOException, SQLException {
-        MethodColumn methodColumn = table.getColumn(columnName);
-        IndexType indexType = methodColumn.getIndexType();
-        if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column not primary key or unique: "+columnName);
+    protected V filterUniqueBusiness(String columnName, Object value) throws IOException, SQLException {
         if(value==null) return null;
-        Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
-        try {
-            for(V obj : getSetBusiness()) {
-                if(value.equals(method.invoke(obj))) return obj;
-            }
-            return null;
-        } catch(IllegalAccessException err) {
-            throw new RemoteException(err.getMessage(), err);
-        } catch(InvocationTargetException err) {
-            throw new RemoteException(err.getMessage(), err);
-        }
+        return filterUnique(columnName, value, getSetBusiness());
     }
 
-    final public Set<V> getIndexed(String columnName, Object value) throws RemoteException {
+    final public IndexedSet<V> filterUniqueSet(String columnName, Set<?> values) throws RemoteException {
         try {
             switch(connector.getAccountType()) {
-                case MASTER : return getIndexedMaster(columnName, value);
-                case DAEMON : return getIndexedDaemon(columnName, value);
-                case BUSINESS : return getIndexedBusiness(columnName, value);
+                case MASTER : return filterUniqueSetMaster(columnName, values);
+                case DAEMON : return filterUniqueSetDaemon(columnName, values);
+                case BUSINESS : return filterUniqueSetBusiness(columnName, values);
                 case DISABLED : throw new RemoteException(null, new AccountDisabledException());
                 default : throw new AssertionError();
             }
@@ -438,51 +416,81 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         }
     }
 
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected Set<V> getIndexedMaster(String columnName, Object value) throws IOException, SQLException {
+    private IndexedSet<V> filterUniqueSet(String columnName, Set<?> values, Set<V> set) throws IOException, SQLException {
         MethodColumn methodColumn = table.getColumn(columnName);
-        if(methodColumn.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+columnName);
-        if(value==null) return null;
+        IndexType indexType = methodColumn.getIndexType();
+        if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column neither primary key nor unique: "+columnName);
         Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
         try {
             Set<V> results = new HashSet<V>();
-            for(V obj : getSetMaster()) {
-                if(value.equals(method.invoke(obj))) results.add(obj);
+            for(V obj : set) {
+                Object retVal = method.invoke(obj);
+                if(retVal!=null && values.contains(retVal)) if(!results.add(obj)) throw new AssertionError("Duplicate value in unique column "+getServiceName()+"."+columnName+": "+retVal);
             }
-            int size = results.size();
-            if(size==0) return Collections.emptySet();
-            if(size==1) return Collections.singleton(results.iterator().next());
-            return Collections.unmodifiableSet(results);
+            return IndexedSet.wrap(results);
         } catch(IllegalAccessException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(InvocationTargetException err) {
             throw new RemoteException(err.getMessage(), err);
         }
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected IndexedSet<V> filterUniqueSetMaster(String columnName, Set<?> values) throws IOException, SQLException {
+        if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
+        return filterUniqueSet(columnName, values, getSetMaster());
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected Set<V> getIndexedDaemon(String columnName, Object value) throws IOException, SQLException {
+    protected IndexedSet<V> filterUniqueSetDaemon(String columnName, Set<?> values) throws IOException, SQLException {
+        if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
+        return filterUniqueSet(columnName, values, getSetDaemon());
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected IndexedSet<V> filterUniqueSetBusiness(String columnName, Set<?> values) throws IOException, SQLException {
+        if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
+        return filterUniqueSet(columnName, values, getSetBusiness());
+    }
+
+    final public IndexedSet<V> filterIndexed(String columnName, Object value) throws RemoteException {
+        try {
+            switch(connector.getAccountType()) {
+                case MASTER : return filterIndexedMaster(columnName, value);
+                case DAEMON : return filterIndexedDaemon(columnName, value);
+                case BUSINESS : return filterIndexedBusiness(columnName, value);
+                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+                default : throw new AssertionError();
+            }
+        } catch(RemoteException err) {
+            throw err;
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(SQLException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    private IndexedSet<V> filterIndexed(String columnName, Object value, Set<V> set) throws IOException, SQLException {
         MethodColumn methodColumn = table.getColumn(columnName);
         if(methodColumn.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+columnName);
-        if(value==null) return null;
         Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
+        assert AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType()) : "value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName();
         try {
             Set<V> results = new HashSet<V>();
-            for(V obj : getSetDaemon()) {
+            for(V obj : set) {
                 if(value.equals(method.invoke(obj))) results.add(obj);
             }
-            int size = results.size();
-            if(size==0) return Collections.emptySet();
-            if(size==1) return Collections.singleton(results.iterator().next());
-            return Collections.unmodifiableSet(results);
+            return IndexedSet.wrap(results);
         } catch(IllegalAccessException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(InvocationTargetException err) {
@@ -491,28 +499,29 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
     }
 
     /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected IndexedSet<V> filterIndexedMaster(String columnName, Object value) throws IOException, SQLException {
+        if(value==null) return null;
+        return filterIndexed(columnName, value, getSetMaster());
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected IndexedSet<V> filterIndexedDaemon(String columnName, Object value) throws IOException, SQLException {
+        if(value==null) return null;
+        return filterIndexed(columnName, value, getSetDaemon());
+    }
+
+    /**
      * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected Set<V> getIndexedBusiness(String columnName, Object value) throws IOException, SQLException {
-        MethodColumn methodColumn = table.getColumn(columnName);
-        if(methodColumn.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+columnName);
+    protected IndexedSet<V> filterIndexedBusiness(String columnName, Object value) throws IOException, SQLException {
         if(value==null) return null;
-        Method method = methodColumn.getMethod();
-        if(!AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType())) throw new IllegalArgumentException("value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName());
-        try {
-            Set<V> results = new HashSet<V>();
-            for(V obj : getSetBusiness()) {
-                if(value.equals(method.invoke(obj))) results.add(obj);
-            }
-            int size = results.size();
-            if(size==0) return Collections.emptySet();
-            if(size==1) return Collections.singleton(results.iterator().next());
-            return Collections.unmodifiableSet(results);
-        } catch(IllegalAccessException err) {
-            throw new RemoteException(err.getMessage(), err);
-        } catch(InvocationTargetException err) {
-            throw new RemoteException(err.getMessage(), err);
-        }
+        return filterIndexed(columnName, value, getSetBusiness());
     }
 }

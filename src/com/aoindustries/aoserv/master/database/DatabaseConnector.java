@@ -19,8 +19,11 @@ import com.aoindustries.aoserv.client.BusinessAdministratorService;
 import com.aoindustries.aoserv.client.BusinessService;
 import com.aoindustries.aoserv.client.CountryCodeService;
 import com.aoindustries.aoserv.client.DisableLogService;
+import com.aoindustries.aoserv.client.FailoverFileLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
+import com.aoindustries.aoserv.client.FailoverFileScheduleService;
 import com.aoindustries.aoserv.client.FailoverMySQLReplicationService;
+import com.aoindustries.aoserv.client.FileBackupSettingService;
 import com.aoindustries.aoserv.client.GroupNameService;
 import com.aoindustries.aoserv.client.HttpdSiteService;
 import com.aoindustries.aoserv.client.LanguageService;
@@ -150,13 +153,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseEmailSpamAssassinIntegrationModeService emailSpamAssassinIntegrationModes;
     final DatabaseEncryptionKeyService encryptionKeys;
     final DatabaseExpenseCategoryService expenseCategories;
-    final DatabaseFailoverFileLogService failoverFileLogs;
      */
+    final DatabaseFailoverFileLogService failoverFileLogs;
     final DatabaseFailoverFileReplicationService failoverFileReplications;
-    // TODO: final DatabaseFailoverFileScheduleService failoverFileSchedules;
+    final DatabaseFailoverFileScheduleService failoverFileSchedules;
     final DatabaseFailoverMySQLReplicationService failoverMySQLReplications;
-    /* TODO
     final DatabaseFileBackupSettingService fileBackupSettings;
+    /* TODO
     final DatabaseFTPGuestUserService ftpGuestUsers;
      */
     final DatabaseGroupNameService groupNames;
@@ -346,13 +349,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         emailSpamAssassinIntegrationModes = new DatabaseEmailSpamAssassinIntegrationModeService(this);
         encryptionKeys = new DatabaseEncryptionKeyService(this);
         expenseCategories = new DatabaseExpenseCategoryService(this);
-        failoverFileLogs = new DatabaseFailoverFileLogService(this);
          */
+        failoverFileLogs = new DatabaseFailoverFileLogService(this);
         failoverFileReplications = new DatabaseFailoverFileReplicationService(this);
-        // TODO: failoverFileSchedules = new DatabaseFailoverFileScheduleService(this);
+        failoverFileSchedules = new DatabaseFailoverFileScheduleService(this);
         failoverMySQLReplications = new DatabaseFailoverMySQLReplicationService(this);
-        /* TODO
         fileBackupSettings = new DatabaseFileBackupSettingService(this);
+        /* TODO
         ftpGuestUsers = new DatabaseFTPGuestUserService(this);
          */
         groupNames = new DatabaseGroupNameService(this);
@@ -653,21 +656,27 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public EncryptionKeyService<DatabaseConnector,DatabaseConnectorFactory> getEncryptionKeys();
 
     public ExpenseCategoryService<DatabaseConnector,DatabaseConnectorFactory> getExpenseCategories();
-
-    public FailoverFileLogService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileLogs();
     */
+    public FailoverFileLogService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileLogs() {
+        return failoverFileLogs;
+    }
+
     public FailoverFileReplicationService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileReplications() {
         return failoverFileReplications;
     }
-    /* TODO
-    public FailoverFileScheduleService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileSchedules();
-    */
+
+    public FailoverFileScheduleService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileSchedules() {
+        return failoverFileSchedules;
+    }
+
     public FailoverMySQLReplicationService<DatabaseConnector,DatabaseConnectorFactory> getFailoverMySQLReplications() {
         return failoverMySQLReplications;
     }
-    /* TODO
-    public FileBackupSettingService<DatabaseConnector,DatabaseConnectorFactory> getFileBackupSettings();
 
+    public FileBackupSettingService<DatabaseConnector,DatabaseConnectorFactory> getFileBackupSettings() {
+        return fileBackupSettings;
+    }
+    /* TODO
     public FTPGuestUserService<DatabaseConnector,DatabaseConnectorFactory> getFtpGuestUsers();
      */
     public GroupNameService<DatabaseConnector,DatabaseConnectorFactory> getGroupNames() {

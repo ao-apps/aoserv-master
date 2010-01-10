@@ -1,14 +1,14 @@
 package com.aoindustries.aoserv.master.database;
 
 /*
- * Copyright 2009 by AO Industries, Inc.,
+ * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 import com.aoindustries.aoserv.client.AOServConnectorFactory;
 import com.aoindustries.aoserv.client.AOServConnectorFactoryCache;
-import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.validator.DomainName;
+import com.aoindustries.aoserv.client.validator.HashedPassword;
 import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
@@ -259,7 +259,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
                 authenticateAs
             );
             if(correctCrypted==null) throw new AccountNotFoundException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.accountNotFound"));
-            if(!BusinessAdministrator.passwordMatches(password, correctCrypted)) throw new BadPasswordException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.badPassword"));
+            if(!HashedPassword.valueOf(correctCrypted).passwordMatches(password)) throw new BadPasswordException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.badPassword"));
 
             if(!isEnabledBusinessAdministrator(authenticateAs)) throw new AccountDisabledException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.accountDisabled"));
 
