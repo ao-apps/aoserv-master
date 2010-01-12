@@ -23,6 +23,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -281,7 +282,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         return getSetBusiness().size();
     }
 
-    final public V get(K key) throws RemoteException {
+    final public V get(K key) throws RemoteException, NoSuchElementException {
         try {
             switch(connector.getAccountType()) {
                 case MASTER : return getMaster(key);
@@ -299,16 +300,16 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         }
     }
 
-    private V get(K key, Set<V> set) {
+    private V get(K key, Set<V> set) throws NoSuchElementException {
         for(V obj : set) if(obj.getKey().equals(key)) return obj;
-        return null;
+        throw new NoSuchElementException("service="+getServiceName().name()+", key="+key);
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected V getMaster(K key) throws IOException, SQLException {
+    protected V getMaster(K key) throws IOException, SQLException, NoSuchElementException {
         return get(key, getSetMaster());
     }
 
@@ -316,7 +317,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected V getDaemon(K key) throws IOException, SQLException {
+    protected V getDaemon(K key) throws IOException, SQLException, NoSuchElementException {
         return get(key, getSetDaemon());
     }
 
@@ -324,7 +325,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected V getBusiness(K key) throws IOException, SQLException {
+    protected V getBusiness(K key) throws IOException, SQLException, NoSuchElementException {
         return get(key, getSetBusiness());
     }
 
@@ -422,10 +423,16 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column neither primary key nor unique: "+columnName);
         Method method = methodColumn.getMethod();
         try {
+            boolean assertsEnabled = false;
+            assert assertsEnabled = true; // Intentional side effect!!!
+            Set<Object> seenValues = assertsEnabled ? new HashSet<Object>(set.size()*4/3+1) : null;
             Set<V> results = new HashSet<V>();
             for(V obj : set) {
                 Object retVal = method.invoke(obj);
-                if(retVal!=null && values.contains(retVal)) if(!results.add(obj)) throw new AssertionError("Duplicate value in unique column "+getServiceName()+"."+columnName+": "+retVal);
+                if(retVal!=null) {
+                    if(assertsEnabled && !seenValues.add(retVal)) throw new AssertionError("Duplicate value in unique column "+getServiceName()+"."+columnName+": "+retVal);
+                    if(values.contains(retVal) && !results.add(obj)) throw new AssertionError("Already in set: "+obj);
+                }
             }
             return IndexedSet.wrap(results);
         } catch(IllegalAccessException err) {
@@ -503,7 +510,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
     protected IndexedSet<V> filterIndexedMaster(String columnName, Object value) throws IOException, SQLException {
-        if(value==null) return null;
+        if(value==null) return IndexedSet.emptyIndexedSet();
         return filterIndexed(columnName, value, getSetMaster());
     }
 
@@ -512,7 +519,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
     protected IndexedSet<V> filterIndexedDaemon(String columnName, Object value) throws IOException, SQLException {
-        if(value==null) return null;
+        if(value==null) return IndexedSet.emptyIndexedSet();
         return filterIndexed(columnName, value, getSetDaemon());
     }
 
@@ -521,7 +528,70 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
     protected IndexedSet<V> filterIndexedBusiness(String columnName, Object value) throws IOException, SQLException {
-        if(value==null) return null;
+        if(value==null) return IndexedSet.emptyIndexedSet();
         return filterIndexed(columnName, value, getSetBusiness());
+    }
+
+    final public IndexedSet<V> filterIndexedSet(String columnName, Set<?> values) throws RemoteException {
+        try {
+            switch(connector.getAccountType()) {
+                case MASTER : return filterIndexedSetMaster(columnName, values);
+                case DAEMON : return filterIndexedSetDaemon(columnName, values);
+                case BUSINESS : return filterIndexedSetBusiness(columnName, values);
+                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+                default : throw new AssertionError();
+            }
+        } catch(RemoteException err) {
+            throw err;
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(SQLException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    private IndexedSet<V> filterIndexedSet(String columnName, Set<?> values, Set<V> set) throws IOException, SQLException {
+        MethodColumn methodColumn = table.getColumn(columnName);
+        if(methodColumn.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+columnName);
+        Method method = methodColumn.getMethod();
+        try {
+            Set<V> results = new HashSet<V>();
+            for(V obj : set) {
+                Object retVal = method.invoke(obj);
+                if(retVal!=null && values.contains(retVal)) if(!results.add(obj)) throw new AssertionError("Already in set: "+obj);
+            }
+            return IndexedSet.wrap(results);
+        } catch(IllegalAccessException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(InvocationTargetException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected IndexedSet<V> filterIndexedSetMaster(String columnName, Set<?> values) throws IOException, SQLException {
+        if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
+        return filterIndexedSet(columnName, values, getSetMaster());
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected IndexedSet<V> filterIndexedSetDaemon(String columnName, Set<?> values) throws IOException, SQLException {
+        if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
+        return filterIndexedSet(columnName, values, getSetDaemon());
+    }
+
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     */
+    protected IndexedSet<V> filterIndexedSetBusiness(String columnName, Set<?> values) throws IOException, SQLException {
+        if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
+        return filterIndexedSet(columnName, values, getSetBusiness());
     }
 }
