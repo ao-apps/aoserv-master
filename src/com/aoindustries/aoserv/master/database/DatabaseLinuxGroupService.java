@@ -58,6 +58,7 @@ final class DatabaseLinuxGroupService extends DatabaseServiceIntegerKey<LinuxGro
     protected Set<LinuxGroup> getSetBusiness() throws IOException, SQLException {
         return connector.factory.database.executeObjectSetQuery(
             objectFactory,
+            // Owns group
              "select\n"
             + "  lg.ao_server_resource,\n"
             + "  lg.linux_group_type,\n"
@@ -72,8 +73,23 @@ final class DatabaseLinuxGroupService extends DatabaseServiceIntegerKey<LinuxGro
             + "  and (\n"
             + UN1_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=lg.accounting",
-            connector.getConnectAs()
+            + "  and bu1.accounting=lg.accounting\n"
+            // Has access to server, include mailonly group
+            + "union select\n"
+            + "  lg.ao_server_resource,\n"
+            + "  lg.linux_group_type,\n"
+            + "  lg.group_name,\n"
+            + "  lg.gid\n"
+            + "from\n"
+            + "  usernames un\n"
+            + "  inner join business_servers bs on un.accounting=bs.accounting\n"
+            + "  inner join linux_groups lg on bs.server=lg.ao_server\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and lg.group_name=?",
+            connector.getConnectAs(),
+            connector.getConnectAs(),
+            LinuxGroup.MAILONLY
         );
     }
 }

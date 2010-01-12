@@ -120,6 +120,20 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         return result.wasNull() ? Float.NaN : f;
     }
 
+    protected static void addOptionalInInteger(Appendable sql, String sqlPrefix, Set<? extends AOServObject<Integer,?>> set, String sqlSuffix) throws IOException {
+        if(!set.isEmpty()) {
+            sql.append(sqlPrefix);
+            boolean didOne = false;
+            for(AOServObject<Integer,?> obj : set) {
+                if(didOne) sql.append(',');
+                else didOne = true;
+                Integer key = obj.getKey();
+                sql.append(key==null ? "null" : key.toString());
+            }
+            sql.append(sqlSuffix);
+        }
+    }
+
     final DatabaseConnector connector;
     //final Class<K> keyClass;
     final ServiceName serviceName;

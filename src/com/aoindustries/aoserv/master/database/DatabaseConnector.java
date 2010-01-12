@@ -20,7 +20,6 @@ import com.aoindustries.aoserv.client.BusinessAdministratorService;
 import com.aoindustries.aoserv.client.BusinessServerService;
 import com.aoindustries.aoserv.client.BusinessService;
 import com.aoindustries.aoserv.client.CountryCodeService;
-import com.aoindustries.aoserv.client.CvsRepositoryService;
 import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.FailoverFileLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
@@ -44,7 +43,6 @@ import com.aoindustries.aoserv.client.NetBindService;
 import com.aoindustries.aoserv.client.NetDeviceIDService;
 import com.aoindustries.aoserv.client.NetDeviceService;
 import com.aoindustries.aoserv.client.NetProtocolService;
-import com.aoindustries.aoserv.client.NetTcpRedirectService;
 import com.aoindustries.aoserv.client.OperatingSystemService;
 import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
@@ -71,7 +69,6 @@ import com.aoindustries.aoserv.client.TicketStatusService;
 import com.aoindustries.aoserv.client.TicketTypeService;
 import com.aoindustries.aoserv.client.TimeZoneService;
 import com.aoindustries.aoserv.client.UsernameService;
-import com.aoindustries.aoserv.client.command.AOServCommand;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.security.LoginException;
 import java.io.IOException;
@@ -129,8 +126,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseCreditCardProcessorService creditCardProcessors;
     final DatabaseCreditCardTransactionService creditCardTransactions;
     final DatabaseCreditCardService creditCards;
-     */
     final DatabaseCvsRepositoryService cvsRepositories;
+     */
     final DatabaseDisableLogService disableLogs;
     /*
     final DatabaseDistroFileTypeService distroFileTypes;
@@ -214,8 +211,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseNetDeviceIDService netDeviceIDs;
     final DatabaseNetDeviceService netDevices;
     final DatabaseNetProtocolService netProtocols;
-    final DatabaseNetTcpRedirectService netTcpRedirects;
     /* TODO
+    final DatabaseNetTcpRedirectService netTcpRedirects;
     final DatabaseNoticeLogService noticeLogs;
     final DatabaseNoticeTypeService noticeTypes;
     */
@@ -319,8 +316,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         creditCardProcessors = new DatabaseCreditCardProcessorService(this);
         creditCardTransactions = new DatabaseCreditCardTransactionService(this);
         creditCards = new DatabaseCreditCardService(this);
-         */
         cvsRepositories = new DatabaseCvsRepositoryService(this);
+         */
         disableLogs = new DatabaseDisableLogService(this);
         /*
         distroFileTypes = new DatabaseDistroFileTypeService(this);
@@ -404,8 +401,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         netDeviceIDs = new DatabaseNetDeviceIDService(this);
         netDevices = new DatabaseNetDeviceService(this);
         netProtocols = new DatabaseNetProtocolService(this);
-        netTcpRedirects = new DatabaseNetTcpRedirectService(this);
         /* TODO
+        netTcpRedirects = new DatabaseNetTcpRedirectService(this);
         noticeLogs = new DatabaseNoticeLogService(this);
         noticeTypes = new DatabaseNoticeTypeService(this);
         */
@@ -518,14 +515,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return password;
     }
 
-    public <R> R executeCommand(AOServCommand<R> command, boolean isInteractive) throws RemoteException {
-        // TODO: Check account enabled
-        // TODO: Check permissions
-        // TODO: Validate command
-        // TODO: Execute command
-        throw new RemoteException("TODO: Not supported yet.");
-    }
-
     private final AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>> tables = new AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>>();
     public Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>> getServices() throws RemoteException {
         Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>> ts = tables.get();
@@ -605,11 +594,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardTransactions();
 
     public CreditCardService<DatabaseConnector,DatabaseConnectorFactory> getCreditCards();
-     */
-    public CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> getCvsRepositories() {
-        return cvsRepositories;
-    }
 
+    public CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> getCvsRepositories();
+     */
     public DisableLogService<DatabaseConnector,DatabaseConnectorFactory> getDisableLogs() {
         return disableLogs;
     }
@@ -805,11 +792,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> getNetProtocols() {
         return netProtocols;
     }
-
-    public NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects() {
-        return netTcpRedirects;
-    }
     /* TODO
+    public NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects();
+
     public NoticeLogService<DatabaseConnector,DatabaseConnectorFactory> getNoticeLogs();
 
     public NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> getNoticeTypes();

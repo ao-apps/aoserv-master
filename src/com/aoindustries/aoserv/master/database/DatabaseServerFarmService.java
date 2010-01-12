@@ -50,7 +50,7 @@ final class DatabaseServerFarmService extends DatabaseServiceDomainLabelKey<Serv
             + "    se.farm=sf.name\n"
             + "    or fs.farm=sf.name\n"
             + "  )",
-            getConnector().getConnectAs()
+            connector.getConnectAs()
         );
     }
 
@@ -73,7 +73,7 @@ final class DatabaseServerFarmService extends DatabaseServiceDomainLabelKey<Serv
             + "      and se.farm=sf.name\n"
             + "    ) or un.accounting=sf.owner\n"
             + "  )",
-            getConnector().getConnectAs()
+            connector.getConnectAs()
         );
     }
 }

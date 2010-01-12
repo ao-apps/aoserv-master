@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.database;
  */
 import com.aoindustries.aoserv.client.GroupName;
 import com.aoindustries.aoserv.client.GroupNameService;
+import com.aoindustries.aoserv.client.LinuxGroup;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
@@ -64,9 +65,12 @@ final class DatabaseGroupNameService extends DatabaseServiceGroupIdKey<GroupName
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
-            + "  )\n"
-            + "  and bu1.accounting=gn.accounting",
-            connector.connectAs
+            + "  ) and (\n"
+            + "    bu1.accounting=gn.accounting\n"
+            + "    or gn.group_name=?\n"
+            + "  )",
+            connector.connectAs,
+            LinuxGroup.MAILONLY
         );
     }
 }

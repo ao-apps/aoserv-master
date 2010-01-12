@@ -56,8 +56,8 @@ final class DatabaseServerResourceService extends DatabaseServiceIntegerKey<Serv
     }
 
     protected Set<ServerResource> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
-            objectFactory,
+        // owns the resource
+        StringBuilder sql = new StringBuilder(
             "select\n"
             + "  sr.resource,\n"
             + "  sr.server,\n"
@@ -71,8 +71,14 @@ final class DatabaseServerResourceService extends DatabaseServiceIntegerKey<Serv
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
-            + "  )\n"
-            + "  and bu1.accounting=sr.accounting",
+            + "  ) and (\n"
+            + "    bu1.accounting=sr.accounting\n"
+        );
+        addOptionalInInteger(sql, "    or sr.resource in (", connector.ipAddresses.getSetBusiness(), ")\n");
+        sql.append("  )");
+        return connector.factory.database.executeObjectSetQuery(
+            objectFactory,
+            sql.toString(),
             connector.getConnectAs()
         );
     }
