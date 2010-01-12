@@ -47,8 +47,8 @@ final class DatabaseBusinessServerService extends DatabaseServiceIntegerKey<Busi
     }
 
     protected Set<BusinessServer> getSetBusiness() throws IOException, SQLException {
-        // owns the resource
-        StringBuilder sql = new StringBuilder(
+        return connector.factory.database.executeObjectSetQuery(
+            objectFactory,
             "select\n"
             + "  bs.*\n"
             + "from\n"
@@ -59,17 +59,8 @@ final class DatabaseBusinessServerService extends DatabaseServiceIntegerKey<Busi
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
-            + "  ) and (\n"
-            + "    bu1.accounting=bs.accounting\n"
-        );
-        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.ipAddresses.getSetBusiness(), "))\n");
-        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.linuxGroups.getSetBusiness(), "))\n");
-        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.mysqlServers.getSetBusiness(), "))\n");
-        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.postgresServers.getSetBusiness(), "))\n");
-        sql.append("  )");
-        return connector.factory.database.executeObjectSetQuery(
-            objectFactory,
-            sql.toString(),
+            + "  )\n"
+            + "  and bu1.accounting=bs.accounting",
             connector.getConnectAs()
         );
     }

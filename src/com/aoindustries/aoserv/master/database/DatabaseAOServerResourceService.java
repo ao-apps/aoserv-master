@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master.database;
 
 /*
- * Copyright 2009-2010 by AO Industries, Inc.,
+ * Copyright 2009 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -56,8 +56,9 @@ final class DatabaseAOServerResourceService extends DatabaseServiceIntegerKey<AO
     }
 
     protected Set<AOServerResource> getSetBusiness() throws IOException, SQLException {
-        // owns the resource
-        StringBuilder sql = new StringBuilder(
+        return connector.factory.database.executeObjectSetQuery(
+            objectFactory,
+            // owns the resource
             "select\n"
             + "  asr.resource,\n"
             + "  asr.ao_server,\n"
@@ -71,16 +72,23 @@ final class DatabaseAOServerResourceService extends DatabaseServiceIntegerKey<AO
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
-            + "  ) and (\n"
-            + "    bu1.accounting=asr.accounting\n"
-        );
-        addOptionalInInteger(sql, "    or asr.resource in (", connector.linuxGroups.getSetBusiness(), ")\n");
-        addOptionalInInteger(sql, "    or asr.resource in (", connector.mysqlServers.getSetBusiness(), ")\n");
-        addOptionalInInteger(sql, "    or asr.resource in (", connector.postgresServers.getSetBusiness(), ")\n");
-        sql.append("  )");
-        return connector.factory.database.executeObjectSetQuery(
-            objectFactory,
-            sql.toString(),
+            + "  )\n"
+            + "  and bu1.accounting=asr.accounting\n"
+            // has access to the mysql_servers
+            + "union select\n"
+            + "  ms.ao_server_resource,\n"
+            + "  ms.ao_server,\n"
+            + "  bs2.pkey\n"
+            + "from\n"
+            + "  usernames un,\n"
+            + "  business_servers bs,\n"
+            + "  mysql_servers ms\n"
+            + "  inner join business_servers bs2 on ms.accounting=bs2.accounting and ms.ao_server=bs2.server\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.accounting=bs.accounting\n"
+            + "  and bs.server=ms.ao_server",
+            connector.getConnectAs(),
             connector.getConnectAs()
         );
     }

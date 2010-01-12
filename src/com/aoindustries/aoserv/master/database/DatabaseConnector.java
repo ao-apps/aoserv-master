@@ -20,6 +20,7 @@ import com.aoindustries.aoserv.client.BusinessAdministratorService;
 import com.aoindustries.aoserv.client.BusinessServerService;
 import com.aoindustries.aoserv.client.BusinessService;
 import com.aoindustries.aoserv.client.CountryCodeService;
+import com.aoindustries.aoserv.client.CvsRepositoryService;
 import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.FailoverFileLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
@@ -126,8 +127,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseCreditCardProcessorService creditCardProcessors;
     final DatabaseCreditCardTransactionService creditCardTransactions;
     final DatabaseCreditCardService creditCards;
-    final DatabaseCvsRepositoryService cvsRepositories;
      */
+    final DatabaseCvsRepositoryService cvsRepositories;
     final DatabaseDisableLogService disableLogs;
     /*
     final DatabaseDistroFileTypeService distroFileTypes;
@@ -316,8 +317,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         creditCardProcessors = new DatabaseCreditCardProcessorService(this);
         creditCardTransactions = new DatabaseCreditCardTransactionService(this);
         creditCards = new DatabaseCreditCardService(this);
-        cvsRepositories = new DatabaseCvsRepositoryService(this);
          */
+        cvsRepositories = new DatabaseCvsRepositoryService(this);
         disableLogs = new DatabaseDisableLogService(this);
         /*
         distroFileTypes = new DatabaseDistroFileTypeService(this);
@@ -594,9 +595,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardTransactions();
 
     public CreditCardService<DatabaseConnector,DatabaseConnectorFactory> getCreditCards();
-
-    public CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> getCvsRepositories();
      */
+    public CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> getCvsRepositories() {
+        return cvsRepositories;
+    }
+
     public DisableLogService<DatabaseConnector,DatabaseConnectorFactory> getDisableLogs() {
         return disableLogs;
     }
