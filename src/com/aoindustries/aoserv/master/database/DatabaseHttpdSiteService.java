@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseHttpdSiteService extends DatabaseServiceIntegerKey<HttpdSite> implements HttpdSiteService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseHttpdSiteService extends DatabaseService<Integer,HttpdSite> implements HttpdSiteService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<HttpdSite> objectFactory = new AutoObjectFactory<HttpdSite>(HttpdSite.class, this);
 
     DatabaseHttpdSiteService(DatabaseConnector connector) {
-        super(connector, HttpdSite.class);
+        super(connector, Integer.class, HttpdSite.class);
     }
 
     protected Set<HttpdSite> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

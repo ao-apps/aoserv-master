@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseFailoverFileReplicationService extends DatabaseServiceIntegerKey<FailoverFileReplication> implements FailoverFileReplicationService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseFailoverFileReplicationService extends DatabaseService<Integer,FailoverFileReplication> implements FailoverFileReplicationService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<FailoverFileReplication> objectFactory = new AutoObjectFactory<FailoverFileReplication>(FailoverFileReplication.class, this);
 
     DatabaseFailoverFileReplicationService(DatabaseConnector connector) {
-        super(connector, FailoverFileReplication.class);
+        super(connector, Integer.class, FailoverFileReplication.class);
     }
 
     protected Set<FailoverFileReplication> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

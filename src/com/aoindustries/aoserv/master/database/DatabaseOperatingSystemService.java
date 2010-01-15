@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseOperatingSystemService extends DatabaseServiceStringKey<OperatingSystem> implements OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseOperatingSystemService extends DatabaseService<String,OperatingSystem> implements OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<OperatingSystem> objectFactory = new AutoObjectFactory<OperatingSystem>(OperatingSystem.class, this);
 
     DatabaseOperatingSystemService(DatabaseConnector connector) {
-        super(connector, OperatingSystem.class);
+        super(connector, String.class, OperatingSystem.class);
     }
 
     protected Set<OperatingSystem> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

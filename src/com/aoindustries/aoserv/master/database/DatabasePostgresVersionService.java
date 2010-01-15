@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresVersionService extends DatabaseServiceIntegerKey<PostgresVersion> implements PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePostgresVersionService extends DatabaseService<Integer,PostgresVersion> implements PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<PostgresVersion> objectFactory = new AutoObjectFactory<PostgresVersion>(PostgresVersion.class, this);
 
     DatabasePostgresVersionService(DatabaseConnector connector) {
-        super(connector, PostgresVersion.class);
+        super(connector, Integer.class, PostgresVersion.class);
     }
 
     protected Set<PostgresVersion> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.database;
  */
 import com.aoindustries.aoserv.client.ServerFarm;
 import com.aoindustries.aoserv.client.ServerFarmService;
+import com.aoindustries.aoserv.client.validator.DomainLabel;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -17,12 +18,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseServerFarmService extends DatabaseServiceDomainLabelKey<ServerFarm> implements ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseServerFarmService extends DatabaseService<DomainLabel,ServerFarm> implements ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<ServerFarm> objectFactory = new AutoObjectFactory<ServerFarm>(ServerFarm.class, this);
 
     DatabaseServerFarmService(DatabaseConnector connector) {
-        super(connector, ServerFarm.class);
+        super(connector, DomainLabel.class, ServerFarm.class);
     }
 
     protected Set<ServerFarm> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

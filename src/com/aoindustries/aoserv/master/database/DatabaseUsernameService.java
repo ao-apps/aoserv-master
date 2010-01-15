@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.database;
  */
 import com.aoindustries.aoserv.client.Username;
 import com.aoindustries.aoserv.client.UsernameService;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -17,12 +18,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseUsernameService extends DatabaseServiceUserIdKey<Username> implements UsernameService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseUsernameService extends DatabaseService<UserId,Username> implements UsernameService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Username> objectFactory = new AutoObjectFactory<Username>(Username.class, this);
 
     DatabaseUsernameService(DatabaseConnector connector) {
-        super(connector, Username.class);
+        super(connector, UserId.class, Username.class);
     }
 
     protected Set<Username> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

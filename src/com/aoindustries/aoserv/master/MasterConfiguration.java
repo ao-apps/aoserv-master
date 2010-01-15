@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.validator.Hostname;
 import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.NetPort;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.io.AOPool;
 import java.io.BufferedInputStream;
@@ -198,5 +199,13 @@ final class MasterConfiguration {
 
     static NetPort getRmiPort() throws IOException, ValidationException {
         return NetPort.valueOf(Integer.parseInt(getProperty("aoserv.master.rmi.port")));
+    }
+
+    static UserId getRootUsername() throws IOException, ValidationException {
+        return UserId.valueOf(getProperty("aoserv.master.root.username"));
+    }
+
+    static String getRootPassword() throws IOException {
+        return getProperty("aoserv.master.root.password");
     }
 }

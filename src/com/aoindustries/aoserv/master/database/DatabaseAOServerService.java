@@ -18,12 +18,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseAOServerService extends DatabaseServiceIntegerKey<AOServer> implements AOServerService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> implements AOServerService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<AOServer> objectFactory = new AutoObjectFactory<AOServer>(AOServer.class, this);
 
     DatabaseAOServerService(DatabaseConnector connector) {
-        super(connector, AOServer.class);
+        super(connector, Integer.class, AOServer.class);
     }
 
     protected Set<AOServer> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

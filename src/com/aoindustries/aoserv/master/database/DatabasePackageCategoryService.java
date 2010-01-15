@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePackageCategoryService extends DatabaseServiceStringKey<PackageCategory> implements PackageCategoryService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePackageCategoryService extends DatabaseService<String,PackageCategory> implements PackageCategoryService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<PackageCategory> objectFactory = new AutoObjectFactory<PackageCategory>(PackageCategory.class, this);
 
     DatabasePackageCategoryService(DatabaseConnector connector) {
-        super(connector, PackageCategory.class);
+        super(connector, String.class, PackageCategory.class);
     }
 
     protected Set<PackageCategory> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

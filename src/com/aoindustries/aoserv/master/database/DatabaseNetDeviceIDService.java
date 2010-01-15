@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNetDeviceIDService extends DatabaseServiceStringKey<NetDeviceID> implements NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseNetDeviceIDService extends DatabaseService<String,NetDeviceID> implements NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<NetDeviceID> objectFactory = new AutoObjectFactory<NetDeviceID>(NetDeviceID.class, this);
 
     DatabaseNetDeviceIDService(DatabaseConnector connector) {
-        super(connector, NetDeviceID.class);
+        super(connector, String.class, NetDeviceID.class);
     }
 
     protected Set<NetDeviceID> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

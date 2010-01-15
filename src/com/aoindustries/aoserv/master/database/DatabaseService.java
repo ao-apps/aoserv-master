@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master.database;
 
 /*
- * Copyright 2009 by AO Industries, Inc.,
+ * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -13,6 +13,8 @@ import com.aoindustries.aoserv.client.IndexedSet;
 import com.aoindustries.aoserv.client.MethodColumn;
 import com.aoindustries.aoserv.client.ServiceName;
 import com.aoindustries.security.AccountDisabledException;
+import com.aoindustries.sql.DatabaseCallable;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.table.IndexType;
 import com.aoindustries.table.Table;
 import java.io.IOException;
@@ -31,6 +33,7 @@ import java.util.Set;
  */
 abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,V>> implements AOServService<DatabaseConnector,DatabaseConnectorFactory,K,V> {
 
+    // <editor-fold defaultstate="collapsed" desc="Business Tree Joins">
     /**
      * The joins used for the business tree.
      */
@@ -103,7 +106,9 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
             + "        or un3.accounting=bu11.parent\n"
             + "        or un3.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n"
     ;
+    // </editor-fold>
 
+    // <editor-fold defaultstate="collapsed" desc="Utilities">
     /**
      * Gets the int value or <code>-1</code> if <code>null</code>.
      */
@@ -133,16 +138,15 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
             sql.append(sqlSuffix);
         }
     }
+    // </editor-fold>
 
     final DatabaseConnector connector;
-    //final Class<K> keyClass;
     final ServiceName serviceName;
     final AOServServiceUtils.AnnotationTable<K,V> table;
     final Map<K,V> map;
 
     DatabaseService(DatabaseConnector connector, Class<K> keyClass, Class<V> valueClass) {
         this.connector = connector;
-        //this.keyClass = keyClass;
         serviceName = AOServServiceUtils.findServiceNameByAnnotation(getClass());
         table = new AOServServiceUtils.AnnotationTable<K,V>(this, valueClass);
         map = new AOServServiceUtils.ServiceMap<K,V>(this, keyClass, valueClass);
@@ -161,18 +165,17 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         return true;
     }
 
+    // <editor-fold defaultstate="collapsed" desc="getSet">
     @Override
     final public IndexedSet<V> getSet() throws RemoteException {
         try {
-            Set<V> set;
-            switch(connector.getAccountType()) {
-                case MASTER : set = getSetMaster(); break;
-                case DAEMON : set = getSetDaemon(); break;
-                case BUSINESS : set = getSetBusiness(); break;
-                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
-                default : throw new AssertionError();
-            }
-            return IndexedSet.wrap(set);
+            return connector.factory.database.executeTransaction(
+                new DatabaseCallable<IndexedSet<V>>() {
+                    public IndexedSet<V> call(DatabaseConnection db) throws IOException, SQLException {
+                        return getSet(db);
+                    }
+                }
+            );
         } catch(RemoteException err) {
             throw err;
         } catch(IOException err) {
@@ -182,23 +185,36 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         }
     }
 
+    final protected IndexedSet<V> getSet(DatabaseConnection db) throws IOException, SQLException {
+        Set<V> set;
+        switch(connector.getAccountType(db)) {
+            case MASTER : set = getSetMaster(db); break;
+            case DAEMON : set = getSetDaemon(db); break;
+            case BUSINESS : set = getSetBusiness(db); break;
+            case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+            default : throw new AssertionError();
+        }
+        return IndexedSet.wrap(set);
+    }
+
     /**
      * Gets the unfiltered set.
      * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
      */
-    abstract protected Set<V> getSetMaster() throws IOException, SQLException;
+    abstract protected Set<V> getSetMaster(DatabaseConnection db) throws IOException, SQLException;
 
     /**
      * Gets the set filtered by server access.
      * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
      */
-    abstract protected Set<V> getSetDaemon() throws IOException, SQLException;
+    abstract protected Set<V> getSetDaemon(DatabaseConnection db) throws IOException, SQLException;
 
     /**
      * Gets the sets filtered by business access.
      * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
      */
-    abstract protected Set<V> getSetBusiness() throws IOException, SQLException;
+    abstract protected Set<V> getSetBusiness(DatabaseConnection db) throws IOException, SQLException;
+    // </editor-fold>
 
     final public ServiceName getServiceName() {
         return serviceName;
@@ -212,21 +228,32 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         return map;
     }
 
+    // <editor-fold defaultstate="collapsed" desc="isEmpty">
     final public boolean isEmpty() throws RemoteException {
         try {
-            switch(connector.getAccountType()) {
-                case MASTER : return isEmptyMaster();
-                case DAEMON : return isEmptyDaemon();
-                case BUSINESS : return isEmptyBusiness();
-                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
-                default : throw new AssertionError();
-            }
+            return connector.factory.database.executeTransaction(
+                new DatabaseCallable<Boolean>() {
+                    public Boolean call(DatabaseConnection db) throws IOException, SQLException {
+                        return isEmpty(db);
+                    }
+                }
+            );
         } catch(RemoteException err) {
             throw err;
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {
             throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    final protected boolean isEmpty(DatabaseConnection db) throws IOException, SQLException {
+        switch(connector.getAccountType(db)) {
+            case MASTER : return isEmptyMaster(db);
+            case DAEMON : return isEmptyDaemon(db);
+            case BUSINESS : return isEmptyBusiness(db);
+            case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+            default : throw new AssertionError();
         }
     }
 
@@ -234,35 +261,37 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Implemented as a call to <code>getSizeMaster</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected boolean isEmptyMaster() throws IOException, SQLException {
-        return getSizeMaster()==0;
+    protected boolean isEmptyMaster(DatabaseConnection db) throws IOException, SQLException {
+        return getSizeMaster(db)==0;
     }
 
     /**
      * Implemented as a call to <code>getSizeDaemon</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected boolean isEmptyDaemon() throws IOException, SQLException {
-        return getSizeDaemon()==0;
+    protected boolean isEmptyDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return getSizeDaemon(db)==0;
     }
 
     /**
      * Implemented as a call to <code>getSizeBusiness</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected boolean isEmptyBusiness() throws IOException, SQLException {
-        return getSizeBusiness()==0;
+    protected boolean isEmptyBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return getSizeBusiness(db)==0;
     }
+    // </editor-fold>
 
+    // <editor-fold defaultstate="collapsed" desc="getSize">
     final public int getSize() throws RemoteException {
         try {
-            switch(connector.getAccountType()) {
-                case MASTER : return getSizeMaster();
-                case DAEMON : return getSizeDaemon();
-                case BUSINESS : return getSizeBusiness();
-                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
-                default : throw new AssertionError();
-            }
+            return connector.factory.database.executeTransaction(
+                new DatabaseCallable<Integer>() {
+                    public Integer call(DatabaseConnection db) throws IOException, SQLException {
+                        return getSize(db);
+                    }
+                }
+            );
         } catch(RemoteException err) {
             throw err;
         } catch(IOException err) {
@@ -272,45 +301,67 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         }
     }
 
+    final protected int getSize(DatabaseConnection db) throws IOException, SQLException {
+        switch(connector.getAccountType(db)) {
+            case MASTER : return getSizeMaster(db);
+            case DAEMON : return getSizeDaemon(db);
+            case BUSINESS : return getSizeBusiness(db);
+            case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+            default : throw new AssertionError();
+        }
+    }
+
     /**
      * Implemented as a call to <code>getSetMaster</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected int getSizeMaster() throws IOException, SQLException {
-        return getSetMaster().size();
+    protected int getSizeMaster(DatabaseConnection db) throws IOException, SQLException {
+        return getSetMaster(db).size();
     }
 
     /**
      * Implemented as a call to <code>getSetDaemon</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected int getSizeDaemon() throws IOException, SQLException {
-        return getSetDaemon().size();
+    protected int getSizeDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return getSetDaemon(db).size();
     }
 
     /**
      * Implemented as a call to <code>getSetBusiness</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected int getSizeBusiness() throws IOException, SQLException {
-        return getSetBusiness().size();
+    protected int getSizeBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return getSetBusiness(db).size();
     }
+    // </editor-fold>
 
-    final public V get(K key) throws RemoteException, NoSuchElementException {
+    // <editor-fold defaultstate="collapsed" desc="get">
+    final public V get(final K key) throws RemoteException, NoSuchElementException {
         try {
-            switch(connector.getAccountType()) {
-                case MASTER : return getMaster(key);
-                case DAEMON : return getDaemon(key);
-                case BUSINESS : return getBusiness(key);
-                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
-                default : throw new AssertionError();
-            }
+            return connector.factory.database.executeTransaction(
+                new DatabaseCallable<V>() {
+                    public V call(DatabaseConnection db) throws IOException, SQLException, NoSuchElementException {
+                        return get(db, key);
+                    }
+                }
+            );
         } catch(RemoteException err) {
             throw err;
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {
             throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    final protected V get(DatabaseConnection db, K key) throws IOException, SQLException, NoSuchElementException {
+        switch(connector.getAccountType(db)) {
+            case MASTER : return getMaster(db, key);
+            case DAEMON : return getDaemon(db, key);
+            case BUSINESS : return getBusiness(db, key);
+            case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+            default : throw new AssertionError();
         }
     }
 
@@ -323,41 +374,53 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected V getMaster(K key) throws IOException, SQLException, NoSuchElementException {
-        return get(key, getSetMaster());
+    protected V getMaster(DatabaseConnection db, K key) throws IOException, SQLException, NoSuchElementException {
+        return get(key, getSetMaster(db));
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected V getDaemon(K key) throws IOException, SQLException, NoSuchElementException {
-        return get(key, getSetDaemon());
+    protected V getDaemon(DatabaseConnection db, K key) throws IOException, SQLException, NoSuchElementException {
+        return get(key, getSetDaemon(db));
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected V getBusiness(K key) throws IOException, SQLException, NoSuchElementException {
-        return get(key, getSetBusiness());
+    protected V getBusiness(DatabaseConnection db, K key) throws IOException, SQLException, NoSuchElementException {
+        return get(key, getSetBusiness(db));
     }
+    // </editor-fold>
 
-    final public V filterUnique(String columnName, Object value) throws RemoteException {
+    // <editor-fold defaultstate="collapsed" desc="filterUnique">
+    final public V filterUnique(final String columnName, final Object value) throws RemoteException {
         try {
-            switch(connector.getAccountType()) {
-                case MASTER : return filterUniqueMaster(columnName, value);
-                case DAEMON : return filterUniqueDaemon(columnName, value);
-                case BUSINESS : return filterUniqueBusiness(columnName, value);
-                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
-                default : throw new AssertionError();
-            }
+            return connector.factory.database.executeTransaction(
+                new DatabaseCallable<V>() {
+                    public V call(DatabaseConnection db) throws IOException, SQLException {
+                        return filterUnique(db, columnName, value);
+                    }
+                }
+            );
         } catch(RemoteException err) {
             throw err;
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {
             throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    final protected V filterUnique(DatabaseConnection db, String columnName, Object value) throws IOException, SQLException {
+        switch(connector.getAccountType(db)) {
+            case MASTER : return filterUniqueMaster(db, columnName, value);
+            case DAEMON : return filterUniqueDaemon(db, columnName, value);
+            case BUSINESS : return filterUniqueBusiness(db, columnName, value);
+            case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+            default : throw new AssertionError();
         }
     }
 
@@ -390,44 +453,56 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected V filterUniqueMaster(String columnName, Object value) throws IOException, SQLException {
+    protected V filterUniqueMaster(DatabaseConnection db, String columnName, Object value) throws IOException, SQLException {
         if(value==null) return null;
-        return filterUnique(columnName, value, getSetMaster());
+        return filterUnique(columnName, value, getSetMaster(db));
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected V filterUniqueDaemon(String columnName, Object value) throws IOException, SQLException {
+    protected V filterUniqueDaemon(DatabaseConnection db, String columnName, Object value) throws IOException, SQLException {
         if(value==null) return null;
-        return filterUnique(columnName, value, getSetDaemon());
+        return filterUnique(columnName, value, getSetDaemon(db));
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected V filterUniqueBusiness(String columnName, Object value) throws IOException, SQLException {
+    protected V filterUniqueBusiness(DatabaseConnection db, String columnName, Object value) throws IOException, SQLException {
         if(value==null) return null;
-        return filterUnique(columnName, value, getSetBusiness());
+        return filterUnique(columnName, value, getSetBusiness(db));
     }
+    // </editor-fold>
 
-    final public IndexedSet<V> filterUniqueSet(String columnName, Set<?> values) throws RemoteException {
+    // <editor-fold defaultstate="collapsed" desc="filterUniqueSet">
+    final public IndexedSet<V> filterUniqueSet(final String columnName, final Set<?> values) throws RemoteException {
         try {
-            switch(connector.getAccountType()) {
-                case MASTER : return filterUniqueSetMaster(columnName, values);
-                case DAEMON : return filterUniqueSetDaemon(columnName, values);
-                case BUSINESS : return filterUniqueSetBusiness(columnName, values);
-                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
-                default : throw new AssertionError();
-            }
+            return connector.factory.database.executeTransaction(
+                new DatabaseCallable<IndexedSet<V>>() {
+                    public IndexedSet<V> call(DatabaseConnection db) throws IOException, SQLException {
+                        return filterUniqueSet(db, columnName, values);
+                    }
+                }
+            );
         } catch(RemoteException err) {
             throw err;
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {
             throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    final protected IndexedSet<V> filterUniqueSet(DatabaseConnection db, String columnName, Set<?> values) throws IOException, SQLException {
+        switch(connector.getAccountType(db)) {
+            case MASTER : return filterUniqueSetMaster(db, columnName, values);
+            case DAEMON : return filterUniqueSetDaemon(db, columnName, values);
+            case BUSINESS : return filterUniqueSetBusiness(db, columnName, values);
+            case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+            default : throw new AssertionError();
         }
     }
 
@@ -460,44 +535,56 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected IndexedSet<V> filterUniqueSetMaster(String columnName, Set<?> values) throws IOException, SQLException {
+    protected IndexedSet<V> filterUniqueSetMaster(DatabaseConnection db, String columnName, Set<?> values) throws IOException, SQLException {
         if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
-        return filterUniqueSet(columnName, values, getSetMaster());
+        return filterUniqueSet(columnName, values, getSetMaster(db));
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected IndexedSet<V> filterUniqueSetDaemon(String columnName, Set<?> values) throws IOException, SQLException {
+    protected IndexedSet<V> filterUniqueSetDaemon(DatabaseConnection db, String columnName, Set<?> values) throws IOException, SQLException {
         if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
-        return filterUniqueSet(columnName, values, getSetDaemon());
+        return filterUniqueSet(columnName, values, getSetDaemon(db));
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected IndexedSet<V> filterUniqueSetBusiness(String columnName, Set<?> values) throws IOException, SQLException {
+    protected IndexedSet<V> filterUniqueSetBusiness(DatabaseConnection db, String columnName, Set<?> values) throws IOException, SQLException {
         if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
-        return filterUniqueSet(columnName, values, getSetBusiness());
+        return filterUniqueSet(columnName, values, getSetBusiness(db));
     }
+    // </editor-fold>
 
-    final public IndexedSet<V> filterIndexed(String columnName, Object value) throws RemoteException {
+    // <editor-fold defaultstate="collapsed" desc="filterIndexed">
+    final public IndexedSet<V> filterIndexed(final String columnName, final Object value) throws RemoteException {
         try {
-            switch(connector.getAccountType()) {
-                case MASTER : return filterIndexedMaster(columnName, value);
-                case DAEMON : return filterIndexedDaemon(columnName, value);
-                case BUSINESS : return filterIndexedBusiness(columnName, value);
-                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
-                default : throw new AssertionError();
-            }
+            return connector.factory.database.executeTransaction(
+                new DatabaseCallable<IndexedSet<V>>() {
+                    public IndexedSet<V> call(DatabaseConnection db) throws IOException, SQLException {
+                        return filterIndexed(db, columnName, value);
+                    }
+                }
+            );
         } catch(RemoteException err) {
             throw err;
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {
             throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    final protected IndexedSet<V> filterIndexed(DatabaseConnection db, String columnName, Object value) throws IOException, SQLException {
+        switch(connector.getAccountType(db)) {
+            case MASTER : return filterIndexedMaster(db, columnName, value);
+            case DAEMON : return filterIndexedDaemon(db, columnName, value);
+            case BUSINESS : return filterIndexedBusiness(db, columnName, value);
+            case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+            default : throw new AssertionError();
         }
     }
 
@@ -523,44 +610,56 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected IndexedSet<V> filterIndexedMaster(String columnName, Object value) throws IOException, SQLException {
+    protected IndexedSet<V> filterIndexedMaster(DatabaseConnection db, String columnName, Object value) throws IOException, SQLException {
         if(value==null) return IndexedSet.emptyIndexedSet();
-        return filterIndexed(columnName, value, getSetMaster());
+        return filterIndexed(columnName, value, getSetMaster(db));
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected IndexedSet<V> filterIndexedDaemon(String columnName, Object value) throws IOException, SQLException {
+    protected IndexedSet<V> filterIndexedDaemon(DatabaseConnection db, String columnName, Object value) throws IOException, SQLException {
         if(value==null) return IndexedSet.emptyIndexedSet();
-        return filterIndexed(columnName, value, getSetDaemon());
+        return filterIndexed(columnName, value, getSetDaemon(db));
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected IndexedSet<V> filterIndexedBusiness(String columnName, Object value) throws IOException, SQLException {
+    protected IndexedSet<V> filterIndexedBusiness(DatabaseConnection db, String columnName, Object value) throws IOException, SQLException {
         if(value==null) return IndexedSet.emptyIndexedSet();
-        return filterIndexed(columnName, value, getSetBusiness());
+        return filterIndexed(columnName, value, getSetBusiness(db));
     }
+    // </editor-fold>
 
-    final public IndexedSet<V> filterIndexedSet(String columnName, Set<?> values) throws RemoteException {
+    // <editor-fold defaultstate="collapsed" desc="filterIndexedSet">
+    final public IndexedSet<V> filterIndexedSet(final String columnName, final Set<?> values) throws RemoteException {
         try {
-            switch(connector.getAccountType()) {
-                case MASTER : return filterIndexedSetMaster(columnName, values);
-                case DAEMON : return filterIndexedSetDaemon(columnName, values);
-                case BUSINESS : return filterIndexedSetBusiness(columnName, values);
-                case DISABLED : throw new RemoteException(null, new AccountDisabledException());
-                default : throw new AssertionError();
-            }
+            return connector.factory.database.executeTransaction(
+                new DatabaseCallable<IndexedSet<V>>() {
+                    public IndexedSet<V> call(DatabaseConnection db) throws IOException, SQLException {
+                        return filterIndexedSet(db, columnName, values);
+                    }
+                }
+            );
         } catch(RemoteException err) {
             throw err;
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {
             throw new RemoteException(err.getMessage(), err);
+        }
+    }
+
+    final protected IndexedSet<V> filterIndexedSet(DatabaseConnection db, String columnName, Set<?> values) throws IOException, SQLException {
+        switch(connector.getAccountType(db)) {
+            case MASTER : return filterIndexedSetMaster(db, columnName, values);
+            case DAEMON : return filterIndexedSetDaemon(db, columnName, values);
+            case BUSINESS : return filterIndexedSetBusiness(db, columnName, values);
+            case DISABLED : throw new RemoteException(null, new AccountDisabledException());
+            default : throw new AssertionError();
         }
     }
 
@@ -586,26 +685,27 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      * Implemented as a sequential scan of all objects returned by <code>getSetMaster</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected IndexedSet<V> filterIndexedSetMaster(String columnName, Set<?> values) throws IOException, SQLException {
+    protected IndexedSet<V> filterIndexedSetMaster(DatabaseConnection db, String columnName, Set<?> values) throws IOException, SQLException {
         if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
-        return filterIndexedSet(columnName, values, getSetMaster());
+        return filterIndexedSet(columnName, values, getSetMaster(db));
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetDaemon</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected IndexedSet<V> filterIndexedSetDaemon(String columnName, Set<?> values) throws IOException, SQLException {
+    protected IndexedSet<V> filterIndexedSetDaemon(DatabaseConnection db, String columnName, Set<?> values) throws IOException, SQLException {
         if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
-        return filterIndexedSet(columnName, values, getSetDaemon());
+        return filterIndexedSet(columnName, values, getSetDaemon(db));
     }
 
     /**
      * Implemented as a sequential scan of all objects returned by <code>getSetBusiness</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
      */
-    protected IndexedSet<V> filterIndexedSetBusiness(String columnName, Set<?> values) throws IOException, SQLException {
+    protected IndexedSet<V> filterIndexedSetBusiness(DatabaseConnection db, String columnName, Set<?> values) throws IOException, SQLException {
         if(values==null || values.isEmpty()) return IndexedSet.emptyIndexedSet();
-        return filterIndexedSet(columnName, values, getSetBusiness());
+        return filterIndexedSet(columnName, values, getSetBusiness(db));
     }
+    // </editor-fold>
 }

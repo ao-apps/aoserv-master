@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseMySQLDatabaseService extends DatabaseServiceIntegerKey<MySQLDatabase> implements MySQLDatabaseService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseMySQLDatabaseService extends DatabaseService<Integer,MySQLDatabase> implements MySQLDatabaseService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<MySQLDatabase> objectFactory = new AutoObjectFactory<MySQLDatabase>(MySQLDatabase.class, this);
 
     DatabaseMySQLDatabaseService(DatabaseConnector connector) {
-        super(connector, MySQLDatabase.class);
+        super(connector, Integer.class, MySQLDatabase.class);
     }
 
     protected Set<MySQLDatabase> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

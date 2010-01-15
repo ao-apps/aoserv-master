@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBackupRetentionService extends DatabaseServiceShortKey<BackupRetention> implements BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseBackupRetentionService extends DatabaseService<Short,BackupRetention> implements BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<BackupRetention> objectFactory = new AutoObjectFactory<BackupRetention>(BackupRetention.class, this);
 
     DatabaseBackupRetentionService(DatabaseConnector connector) {
-        super(connector, BackupRetention.class);
+        super(connector, Short.class, BackupRetention.class);
     }
 
     protected Set<BackupRetention> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

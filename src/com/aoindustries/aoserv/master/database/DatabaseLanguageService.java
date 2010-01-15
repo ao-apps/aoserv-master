@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLanguageService extends DatabaseServiceStringKey<Language> implements LanguageService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseLanguageService extends DatabaseService<String,Language> implements LanguageService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Language> objectFactory = new AutoObjectFactory<Language>(Language.class, this);
 
     DatabaseLanguageService(DatabaseConnector connector) {
-        super(connector, Language.class);
+        super(connector, String.class, Language.class);
     }
 
     protected Set<Language> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

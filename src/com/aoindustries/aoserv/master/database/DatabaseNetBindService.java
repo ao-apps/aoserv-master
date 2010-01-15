@@ -20,12 +20,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNetBindService extends DatabaseServiceIntegerKey<NetBind> implements NetBindService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseNetBindService extends DatabaseService<Integer,NetBind> implements NetBindService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<NetBind> objectFactory = new AutoObjectFactory<NetBind>(NetBind.class, this);
 
     DatabaseNetBindService(DatabaseConnector connector) {
-        super(connector, NetBind.class);
+        super(connector, Integer.class, NetBind.class);
     }
 
     protected Set<NetBind> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseOperatingSystemVersionService extends DatabaseServiceIntegerKey<OperatingSystemVersion> implements OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseOperatingSystemVersionService extends DatabaseService<Integer,OperatingSystemVersion> implements OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<OperatingSystemVersion> objectFactory = new AutoObjectFactory<OperatingSystemVersion>(OperatingSystemVersion.class, this);
 
     DatabaseOperatingSystemVersionService(DatabaseConnector connector) {
-        super(connector, OperatingSystemVersion.class);
+        super(connector, Integer.class, OperatingSystemVersion.class);
     }
 
     protected Set<OperatingSystemVersion> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

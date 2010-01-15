@@ -15,6 +15,7 @@ import com.aoindustries.aoserv.client.AOServerService;
 import com.aoindustries.aoserv.client.ArchitectureService;
 import com.aoindustries.aoserv.client.BackupPartitionService;
 import com.aoindustries.aoserv.client.BackupRetentionService;
+import com.aoindustries.aoserv.client.BrandService;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
 import com.aoindustries.aoserv.client.BusinessServerService;
@@ -44,6 +45,7 @@ import com.aoindustries.aoserv.client.NetBindService;
 import com.aoindustries.aoserv.client.NetDeviceIDService;
 import com.aoindustries.aoserv.client.NetDeviceService;
 import com.aoindustries.aoserv.client.NetProtocolService;
+import com.aoindustries.aoserv.client.NetTcpRedirectService;
 import com.aoindustries.aoserv.client.OperatingSystemService;
 import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
@@ -53,6 +55,7 @@ import com.aoindustries.aoserv.client.PostgresServerService;
 import com.aoindustries.aoserv.client.PostgresUserService;
 import com.aoindustries.aoserv.client.PostgresVersionService;
 import com.aoindustries.aoserv.client.ProtocolService;
+import com.aoindustries.aoserv.client.ResellerService;
 import com.aoindustries.aoserv.client.ResourceService;
 import com.aoindustries.aoserv.client.ResourceTypeService;
 import com.aoindustries.aoserv.client.ServerFarmService;
@@ -64,14 +67,17 @@ import com.aoindustries.aoserv.client.TechnologyClassService;
 import com.aoindustries.aoserv.client.TechnologyNameService;
 import com.aoindustries.aoserv.client.TechnologyService;
 import com.aoindustries.aoserv.client.TechnologyVersionService;
+import com.aoindustries.aoserv.client.TicketAssignmentService;
 import com.aoindustries.aoserv.client.TicketCategoryService;
 import com.aoindustries.aoserv.client.TicketPriorityService;
+import com.aoindustries.aoserv.client.TicketService;
 import com.aoindustries.aoserv.client.TicketStatusService;
 import com.aoindustries.aoserv.client.TicketTypeService;
 import com.aoindustries.aoserv.client.TimeZoneService;
 import com.aoindustries.aoserv.client.UsernameService;
+import com.aoindustries.aoserv.client.command.AOServCommand;
 import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.security.LoginException;
+import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
@@ -113,8 +119,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseBankTransactionService bankTransactions;
     final DatabaseBankService banks;
     final DatabaseBlackholeEmailAddressService blackholeEmailAddresss;
-    final DatabaseBrandService brands;
      */
+    final DatabaseBrandService brands;
     final DatabaseBusinessAdministratorService businessAdministrators;
     /* TODO
     final DatabaseBusinessAdministratorPermissionService businessAdministratorPermissions;
@@ -212,8 +218,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseNetDeviceIDService netDeviceIDs;
     final DatabaseNetDeviceService netDevices;
     final DatabaseNetProtocolService netProtocols;
-    /* TODO
     final DatabaseNetTcpRedirectService netTcpRedirects;
+    /* TODO
     final DatabaseNoticeLogService noticeLogs;
     final DatabaseNoticeTypeService noticeTypes;
     */
@@ -236,8 +242,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseProtocolService protocols;
     /* TODO
     final DatabaseRackService racks;
-    final DatabaseResellerService resellers;
      */
+    final DatabaseResellerService resellers;
     final DatabaseResourceTypeService resourceTypes;
     final DatabaseResourceService resources;
     final DatabaseServerFarmService serverFarms;
@@ -257,16 +263,14 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     /* TODO
     final DatabaseTicketActionTypeService ticketActionTypes;
     final DatabaseTicketActionService ticketActions;
-    final DatabaseTicketAssignmentService ticketAssignments;
-    final DatabaseTicketBrandCategoryService ticketBrandCategories;
     */
+    final DatabaseTicketAssignmentService ticketAssignments;
+    // TODO: final DatabaseTicketBrandCategoryService ticketBrandCategories;
     final DatabaseTicketCategoryService ticketCategories;
     final DatabaseTicketPriorityService ticketPriorities;
     final DatabaseTicketStatusService ticketStatuses;
     final DatabaseTicketTypeService ticketTypes;
-    /* TODO
     final DatabaseTicketService tickets;
-    */
     final DatabaseTimeZoneService timeZones;
     /* TODO
     final DatabaseTransactionTypeService transactionTypes;
@@ -280,7 +284,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseWhoisHistoryService whoisHistories;
      */
 
-    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password) throws RemoteException, LoginException {
+    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password) {
         this.factory = factory;
         this.locale = locale;
         this.connectAs = connectAs;
@@ -303,8 +307,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         bankTransactions = new DatabaseBankTransactionService(this);
         banks = new DatabaseBankService(this);
         blackholeEmailAddresss = new DatabaseBlackholeEmailAddressService(this);
-        brands = new DatabaseBrandService(this);
          */
+        brands = new DatabaseBrandService(this);
         businessAdministrators = new DatabaseBusinessAdministratorService(this);
         /* TODO
         businessAdministratorPermissions = new DatabaseBusinessAdministratorPermissionService(this);
@@ -402,8 +406,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         netDeviceIDs = new DatabaseNetDeviceIDService(this);
         netDevices = new DatabaseNetDeviceService(this);
         netProtocols = new DatabaseNetProtocolService(this);
-        /* TODO
         netTcpRedirects = new DatabaseNetTcpRedirectService(this);
+        /* TODO
         noticeLogs = new DatabaseNoticeLogService(this);
         noticeTypes = new DatabaseNoticeTypeService(this);
         */
@@ -426,8 +430,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         protocols = new DatabaseProtocolService(this);
         /* TODO
         racks = new DatabaseRackService(this);
-        resellers = new DatabaseResellerService(this);
          */
+        resellers = new DatabaseResellerService(this);
         resourceTypes = new DatabaseResourceTypeService(this);
         resources = new DatabaseResourceService(this);
         serverFarms = new DatabaseServerFarmService(this);
@@ -447,16 +451,14 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         /* TODO
         ticketActionTypes = new DatabaseTicketActionTypeService(this);
         ticketActions = new DatabaseTicketActionService(this);
+         */
         ticketAssignments = new DatabaseTicketAssignmentService(this);
-        ticketBrandCategories = new DatabaseTicketBrandCategoryService(this);
-        */
+        // TODO: ticketBrandCategories = new DatabaseTicketBrandCategoryService(this);
         ticketCategories = new DatabaseTicketCategoryService(this);
         ticketPriorities = new DatabaseTicketPriorityService(this);
         ticketStatuses = new DatabaseTicketStatusService(this);
         ticketTypes = new DatabaseTicketTypeService(this);
-        /* TODO
         tickets = new DatabaseTicketService(this);
-        */
         timeZones = new DatabaseTimeZoneService(this);
         /* TODO
         transactionTypes = new DatabaseTransactionTypeService(this);
@@ -481,10 +483,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     /**
      * Determines the type of account logged-in based on the connectAs value.  This controls filtering and access.
      */
-    AccountType getAccountType() throws IOException, SQLException {
-        if(factory.isEnabledMasterUser(connectAs)) return AccountType.MASTER;
-        if(factory.isEnabledDaemonUser(connectAs)) return AccountType.DAEMON;
-        if(factory.isEnabledBusinessAdministrator(connectAs)) return AccountType.BUSINESS;
+    AccountType getAccountType(DatabaseConnection db) throws IOException, SQLException {
+        if(factory.isEnabledMasterUser(db, connectAs)) return AccountType.MASTER;
+        if(factory.isEnabledDaemonUser(db, connectAs)) return AccountType.DAEMON;
+        if(factory.isEnabledBusinessAdministrator(db, connectAs)) return AccountType.BUSINESS;
         return AccountType.DISABLED;
     }
 
@@ -514,6 +516,14 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     public String getPassword() {
         return password;
+    }
+
+    public <R> R executeCommand(AOServCommand<R> command, boolean isInteractive) throws RemoteException {
+        // TODO: Check account enabled
+        // TODO: Check permissions
+        // TODO: Validate command
+        // TODO: Execute command
+        throw new RemoteException("TODO: Not supported yet.");
     }
 
     private final AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>> tables = new AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>>();
@@ -567,9 +577,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public BankService<DatabaseConnector,DatabaseConnectorFactory> getBanks();
 
     public BlackholeEmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getBlackholeEmailAddresses();
-
-    public BrandService<DatabaseConnector,DatabaseConnectorFactory> getBrands();
      */
+    public BrandService<DatabaseConnector,DatabaseConnectorFactory> getBrands() {
+        return brands;
+    }
+
     public BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministrators() {
         return businessAdministrators;
     }
@@ -795,9 +807,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> getNetProtocols() {
         return netProtocols;
     }
-    /* TODO
-    public NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects();
 
+    public NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects() {
+        return netTcpRedirects;
+    }
+    /* TODO
     public NoticeLogService<DatabaseConnector,DatabaseConnectorFactory> getNoticeLogs();
 
     public NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> getNoticeTypes();
@@ -851,9 +865,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     }
     /* TODO
     public RackService<DatabaseConnector,DatabaseConnectorFactory> getRacks();
-
-    public ResellerService<DatabaseConnector,DatabaseConnectorFactory> getResellers();
     */
+    public ResellerService<DatabaseConnector,DatabaseConnectorFactory> getResellers() {
+        return resellers;
+    }
+
     public ResourceTypeService<DatabaseConnector,DatabaseConnectorFactory> getResourceTypes() {
         return resourceTypes;
     }
@@ -905,11 +921,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public TicketActionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketActionTypes();
 
     public TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions();
-
-    public TicketAssignmentService<DatabaseConnector,DatabaseConnectorFactory> getTicketAssignments();
-
-    public TicketBrandCategoryService<DatabaseConnector,DatabaseConnectorFactory> getTicketBrandCategories();
     */
+    public TicketAssignmentService<DatabaseConnector,DatabaseConnectorFactory> getTicketAssignments() {
+        return ticketAssignments;
+    }
+
+    // TODO: public TicketBrandCategoryService<DatabaseConnector,DatabaseConnectorFactory> getTicketBrandCategories();
+
     public TicketCategoryService<DatabaseConnector,DatabaseConnectorFactory> getTicketCategories() {
         return ticketCategories;
     }
@@ -925,9 +943,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public TicketTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketTypes() {
         return ticketTypes;
     }
-    /* TODO
-    public TicketService<DatabaseConnector,DatabaseConnectorFactory> getTickets();
-    */
+
+    public TicketService<DatabaseConnector,DatabaseConnectorFactory> getTickets() {
+        return tickets;
+    }
+
     public TimeZoneService<DatabaseConnector,DatabaseConnectorFactory> getTimeZones() {
         return timeZones;
     }

@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
 import com.aoindustries.aoserv.client.validator.HashedPassword;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -18,12 +19,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBusinessAdministratorService extends DatabaseServiceUserIdKey<BusinessAdministrator> implements BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,BusinessAdministrator> implements BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<BusinessAdministrator> objectFactory = new AutoObjectFactory<BusinessAdministrator>(BusinessAdministrator.class, this);
 
     DatabaseBusinessAdministratorService(DatabaseConnector connector) {
-        super(connector, BusinessAdministrator.class);
+        super(connector, UserId.class, BusinessAdministrator.class);
     }
 
     protected Set<BusinessAdministrator> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

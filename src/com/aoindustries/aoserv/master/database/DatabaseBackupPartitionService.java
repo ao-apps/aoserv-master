@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBackupPartitionService extends DatabaseServiceIntegerKey<BackupPartition> implements BackupPartitionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseBackupPartitionService extends DatabaseService<Integer,BackupPartition> implements BackupPartitionService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<BackupPartition> objectFactory = new AutoObjectFactory<BackupPartition>(BackupPartition.class, this);
 
     DatabaseBackupPartitionService(DatabaseConnector connector) {
-        super(connector, BackupPartition.class);
+        super(connector, Integer.class, BackupPartition.class);
     }
 
     protected Set<BackupPartition> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

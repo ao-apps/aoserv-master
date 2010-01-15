@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.rmi.RmiServerConnectorFactory;
 import com.aoindustries.aoserv.client.validator.Hostname;
 import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.NetPort;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.master.database.DatabaseConnector;
 import com.aoindustries.aoserv.master.database.DatabaseConnectorFactory;
 import java.util.logging.Level;
@@ -42,6 +43,8 @@ final public class MasterServer {
                 InetAddress listenAddress = MasterConfiguration.getRmiListenAddress();
                 NetPort port = MasterConfiguration.getRmiPort();
                 boolean useSsl = MasterConfiguration.getRmiUseSsl();
+                UserId rootUsername = MasterConfiguration.getRootUsername();
+                String rootPassword = MasterConfiguration.getRootPassword();
                 if(useSsl) {
                     String keystorePath = MasterConfiguration.getSSLKeystorePath();
                     String keystorePassword = MasterConfiguration.getSSLKeystorePassword();
@@ -67,7 +70,7 @@ final public class MasterServer {
                     listenAddress,
                     port,
                     useSsl,
-                    new DatabaseConnectorFactory(MasterDatabase.getDatabase())
+                    new DatabaseConnectorFactory(MasterDatabase.getDatabase(), rootUsername, rootPassword)
                 );
                 done = true;
                 System.out.println("Done");

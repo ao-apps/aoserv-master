@@ -18,12 +18,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresUserService extends DatabaseServiceIntegerKey<PostgresUser> implements PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePostgresUserService extends DatabaseService<Integer,PostgresUser> implements PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<PostgresUser> objectFactory = new AutoObjectFactory<PostgresUser>(PostgresUser.class, this);
 
     DatabasePostgresUserService(DatabaseConnector connector) {
-        super(connector, PostgresUser.class);
+        super(connector, Integer.class, PostgresUser.class);
     }
 
     protected Set<PostgresUser> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

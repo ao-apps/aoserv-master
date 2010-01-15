@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTicketCategoryService extends DatabaseServiceIntegerKey<TicketCategory> implements TicketCategoryService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTicketCategoryService extends DatabaseService<Integer,TicketCategory> implements TicketCategoryService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<TicketCategory> objectFactory = new AutoObjectFactory<TicketCategory>(TicketCategory.class, this);
 
     DatabaseTicketCategoryService(DatabaseConnector connector) {
-        super(connector, TicketCategory.class);
+        super(connector, Integer.class, TicketCategory.class);
     }
 
     protected Set<TicketCategory> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

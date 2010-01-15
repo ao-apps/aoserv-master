@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseCountryCodeService extends DatabaseServiceStringKey<CountryCode> implements CountryCodeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseCountryCodeService extends DatabaseService<String,CountryCode> implements CountryCodeService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<CountryCode> objectFactory = new AutoObjectFactory<CountryCode>(CountryCode.class, this);
 
     DatabaseCountryCodeService(DatabaseConnector connector) {
-        super(connector, CountryCode.class);
+        super(connector, String.class, CountryCode.class);
     }
 
     protected Set<CountryCode> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

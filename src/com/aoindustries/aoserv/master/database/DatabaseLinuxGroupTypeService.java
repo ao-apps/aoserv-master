@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLinuxGroupTypeService extends DatabaseServiceStringKey<LinuxGroupType> implements LinuxGroupTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseLinuxGroupTypeService extends DatabaseService<String,LinuxGroupType> implements LinuxGroupTypeService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<LinuxGroupType> objectFactory = new AutoObjectFactory<LinuxGroupType>(LinuxGroupType.class, this);
 
     DatabaseLinuxGroupTypeService(DatabaseConnector connector) {
-        super(connector, LinuxGroupType.class);
+        super(connector, String.class, LinuxGroupType.class);
     }
 
     protected Set<LinuxGroupType> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

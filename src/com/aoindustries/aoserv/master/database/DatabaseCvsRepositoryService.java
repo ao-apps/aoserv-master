@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseCvsRepositoryService extends DatabaseServiceIntegerKey<CvsRepository> implements CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepository> implements CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<CvsRepository> objectFactory = new AutoObjectFactory<CvsRepository>(CvsRepository.class, this);
 
     DatabaseCvsRepositoryService(DatabaseConnector connector) {
-        super(connector, CvsRepository.class);
+        super(connector, Integer.class, CvsRepository.class);
     }
 
     protected Set<CvsRepository> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTechnologyVersionService extends DatabaseServiceIntegerKey<TechnologyVersion> implements TechnologyVersionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTechnologyVersionService extends DatabaseService<Integer,TechnologyVersion> implements TechnologyVersionService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<TechnologyVersion> objectFactory = new AutoObjectFactory<TechnologyVersion>(TechnologyVersion.class, this);
 
     DatabaseTechnologyVersionService(DatabaseConnector connector) {
-        super(connector, TechnologyVersion.class);
+        super(connector, Integer.class, TechnologyVersion.class);
     }
 
     protected Set<TechnologyVersion> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

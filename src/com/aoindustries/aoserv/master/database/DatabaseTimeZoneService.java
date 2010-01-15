@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTimeZoneService extends DatabaseServiceStringKey<TimeZone> implements TimeZoneService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTimeZoneService extends DatabaseService<String,TimeZone> implements TimeZoneService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<TimeZone> objectFactory = new AutoObjectFactory<TimeZone>(TimeZone.class, this);
 
     DatabaseTimeZoneService(DatabaseConnector connector) {
-        super(connector, TimeZone.class);
+        super(connector, String.class, TimeZone.class);
     }
 
     protected Set<TimeZone> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

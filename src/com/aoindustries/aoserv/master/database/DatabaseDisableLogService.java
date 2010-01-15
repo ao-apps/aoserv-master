@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseDisableLogService extends DatabaseServiceIntegerKey<DisableLog> implements DisableLogService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog> implements DisableLogService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<DisableLog> objectFactory = new AutoObjectFactory<DisableLog>(DisableLog.class, this);
 
     DatabaseDisableLogService(DatabaseConnector connector) {
-        super(connector, DisableLog.class);
+        super(connector, Integer.class, DisableLog.class);
     }
 
     protected Set<DisableLog> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseArchitectureService extends DatabaseServiceStringKey<Architecture> implements ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseArchitectureService extends DatabaseService<String,Architecture> implements ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Architecture> objectFactory = new AutoObjectFactory<Architecture>(Architecture.class, this);
 
     DatabaseArchitectureService(DatabaseConnector connector) {
-        super(connector, Architecture.class);
+        super(connector, String.class, Architecture.class);
     }
 
     protected Set<Architecture> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

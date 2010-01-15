@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.database;
  */
 import com.aoindustries.aoserv.client.Reseller;
 import com.aoindustries.aoserv.client.ResellerService;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -18,12 +19,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseResellerService extends DatabaseServiceAccountingCodeKey<Reseller> implements ResellerService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseResellerService extends DatabaseService<AccountingCode,Reseller> implements ResellerService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Reseller> objectFactory = new AutoObjectFactory<Reseller>(Reseller.class, this);
 
     DatabaseResellerService(DatabaseConnector connector) {
-        super(connector, Reseller.class);
+        super(connector, AccountingCode.class, Reseller.class);
     }
 
     protected Set<Reseller> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

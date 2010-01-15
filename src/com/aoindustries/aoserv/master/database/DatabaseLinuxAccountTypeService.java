@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLinuxAccountTypeService extends DatabaseServiceStringKey<LinuxAccountType> implements LinuxAccountTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseLinuxAccountTypeService extends DatabaseService<String,LinuxAccountType> implements LinuxAccountTypeService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<LinuxAccountType> objectFactory = new AutoObjectFactory<LinuxAccountType>(LinuxAccountType.class, this);
 
     DatabaseLinuxAccountTypeService(DatabaseConnector connector) {
-        super(connector, LinuxAccountType.class);
+        super(connector, String.class, LinuxAccountType.class);
     }
 
     protected Set<LinuxAccountType> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

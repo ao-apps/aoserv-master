@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseProtocolService extends DatabaseServiceStringKey<Protocol> implements ProtocolService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseProtocolService extends DatabaseService<String,Protocol> implements ProtocolService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Protocol> objectFactory = new AutoObjectFactory<Protocol>(Protocol.class, this);
 
     DatabaseProtocolService(DatabaseConnector connector) {
-        super(connector, Protocol.class);
+        super(connector, String.class, Protocol.class);
     }
 
     protected Set<Protocol> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

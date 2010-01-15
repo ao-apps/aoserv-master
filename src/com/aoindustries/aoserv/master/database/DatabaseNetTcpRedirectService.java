@@ -17,12 +17,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNetTcpRedirectService extends DatabaseServiceIntegerKey<NetTcpRedirect> implements NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseNetTcpRedirectService extends DatabaseService<Integer,NetTcpRedirect> implements NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<NetTcpRedirect> objectFactory = new AutoObjectFactory<NetTcpRedirect>(NetTcpRedirect.class, this);
 
     DatabaseNetTcpRedirectService(DatabaseConnector connector) {
-        super(connector, NetTcpRedirect.class);
+        super(connector, Integer.class, NetTcpRedirect.class);
     }
 
     protected Set<NetTcpRedirect> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

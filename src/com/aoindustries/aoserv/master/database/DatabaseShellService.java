@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.database;
  */
 import com.aoindustries.aoserv.client.Shell;
 import com.aoindustries.aoserv.client.ShellService;
+import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -17,12 +18,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseShellService extends DatabaseServiceUnixPathKey<Shell> implements ShellService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseShellService extends DatabaseService<UnixPath,Shell> implements ShellService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Shell> objectFactory = new AutoObjectFactory<Shell>(Shell.class, this);
 
     DatabaseShellService(DatabaseConnector connector) {
-        super(connector, Shell.class);
+        super(connector, UnixPath.class, Shell.class);
     }
 
     protected Set<Shell> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

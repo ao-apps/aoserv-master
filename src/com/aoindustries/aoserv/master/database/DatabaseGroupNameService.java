@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.GroupName;
 import com.aoindustries.aoserv.client.GroupNameService;
 import com.aoindustries.aoserv.client.LinuxGroup;
+import com.aoindustries.aoserv.client.validator.GroupId;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -18,12 +19,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseGroupNameService extends DatabaseServiceGroupIdKey<GroupName> implements GroupNameService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> implements GroupNameService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<GroupName> objectFactory = new AutoObjectFactory<GroupName>(GroupName.class, this);
 
     DatabaseGroupNameService(DatabaseConnector connector) {
-        super(connector, GroupName.class);
+        super(connector, GroupId.class, GroupName.class);
     }
 
     protected Set<GroupName> getSetMaster(DatabaseConnection db) throws IOException, SQLException {

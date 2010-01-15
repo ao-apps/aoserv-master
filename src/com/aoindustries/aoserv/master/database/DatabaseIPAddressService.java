@@ -18,12 +18,12 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseIPAddressService extends DatabaseServiceIntegerKey<IPAddress> implements IPAddressService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> implements IPAddressService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<IPAddress> objectFactory = new AutoObjectFactory<IPAddress>(IPAddress.class, this);
 
     DatabaseIPAddressService(DatabaseConnector connector) {
-        super(connector, IPAddress.class);
+        super(connector, Integer.class, IPAddress.class);
     }
 
     protected Set<IPAddress> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
