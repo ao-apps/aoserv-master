@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.LinuxAccountGroup;
 import com.aoindustries.aoserv.client.LinuxAccountGroupService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseLinuxAccountGroupService extends DatabaseServiceIntegerKey<L
         super(connector, LinuxAccountGroup.class);
     }
 
-    protected Set<LinuxAccountGroup> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<LinuxAccountGroup> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select pkey, linux_account, linux_group, is_primary from linux_account_groups"
         );
     }
 
-    protected Set<LinuxAccountGroup> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<LinuxAccountGroup> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  lag.pkey,\n"
@@ -53,8 +54,8 @@ final class DatabaseLinuxAccountGroupService extends DatabaseServiceIntegerKey<L
         );
     }
 
-    protected Set<LinuxAccountGroup> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<LinuxAccountGroup> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  pkey,\n"

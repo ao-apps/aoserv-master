@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.HttpdSite;
 import com.aoindustries.aoserv.client.HttpdSiteService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,8 +25,8 @@ final class DatabaseHttpdSiteService extends DatabaseServiceIntegerKey<HttpdSite
         super(connector, HttpdSite.class);
     }
 
-    protected Set<HttpdSite> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<HttpdSite> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -40,8 +41,8 @@ final class DatabaseHttpdSiteService extends DatabaseServiceIntegerKey<HttpdSite
         );
     }
 
-    protected Set<HttpdSite> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<HttpdSite> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  hs.ao_server_resource,\n"
@@ -61,8 +62,8 @@ final class DatabaseHttpdSiteService extends DatabaseServiceIntegerKey<HttpdSite
         );
     }
 
-    protected Set<HttpdSite> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<HttpdSite> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  hs.ao_server_resource,\n"

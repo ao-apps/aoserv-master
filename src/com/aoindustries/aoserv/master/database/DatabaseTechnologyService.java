@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.Technology;
 import com.aoindustries.aoserv.client.TechnologyService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,22 +25,22 @@ final class DatabaseTechnologyService extends DatabaseServiceIntegerKey<Technolo
         super(connector, Technology.class);
     }
 
-    protected Set<Technology> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<Technology> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from technologies"
         );
     }
 
-    protected Set<Technology> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<Technology> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from technologies"
         );
     }
 
-    protected Set<Technology> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<Technology> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from technologies"
         );

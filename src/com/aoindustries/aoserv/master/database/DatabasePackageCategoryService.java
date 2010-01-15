@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.PackageCategory;
 import com.aoindustries.aoserv.client.PackageCategoryService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,22 +25,22 @@ final class DatabasePackageCategoryService extends DatabaseServiceStringKey<Pack
         super(connector, PackageCategory.class);
     }
 
-    protected Set<PackageCategory> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<PackageCategory> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from package_categories"
         );
     }
 
-    protected Set<PackageCategory> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<PackageCategory> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from package_categories"
         );
     }
 
-    protected Set<PackageCategory> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<PackageCategory> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from package_categories"
         );

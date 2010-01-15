@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.GroupName;
 import com.aoindustries.aoserv.client.GroupNameService;
 import com.aoindustries.aoserv.client.LinuxGroup;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -25,15 +26,15 @@ final class DatabaseGroupNameService extends DatabaseServiceGroupIdKey<GroupName
         super(connector, GroupName.class);
     }
 
-    protected Set<GroupName> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<GroupName> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from group_names"
         );
     }
 
-    protected Set<GroupName> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<GroupName> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
             + "  gn.*\n"
@@ -52,8 +53,8 @@ final class DatabaseGroupNameService extends DatabaseServiceGroupIdKey<GroupName
         );
     }
 
-    protected Set<GroupName> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<GroupName> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  gn.*\n"

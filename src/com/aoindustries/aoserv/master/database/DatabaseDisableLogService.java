@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.DisableLog;
 import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseDisableLogService extends DatabaseServiceIntegerKey<DisableL
         super(connector, DisableLog.class);
     }
 
-    protected Set<DisableLog> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<DisableLog> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from disable_log"
         );
     }
 
-    protected Set<DisableLog> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<DisableLog> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
             + "  dl.*\n"
@@ -53,8 +54,8 @@ final class DatabaseDisableLogService extends DatabaseServiceIntegerKey<DisableL
         );
     }
 
-    protected Set<DisableLog> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<DisableLog> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  dl.*\n"

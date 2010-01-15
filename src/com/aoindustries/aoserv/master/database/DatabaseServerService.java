@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.Server;
 import com.aoindustries.aoserv.client.ServerService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseServerService extends DatabaseServiceIntegerKey<Server> impl
         super(connector, Server.class);
     }
 
-    protected Set<Server> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<Server> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from servers"
         );
     }
 
-    protected Set<Server> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<Server> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
             + "  se.*\n"
@@ -63,8 +64,8 @@ final class DatabaseServerService extends DatabaseServiceIntegerKey<Server> impl
         );
     }
 
-    protected Set<Server> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<Server> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
             + "  se.*\n"

@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.FailoverFileSchedule;
 import com.aoindustries.aoserv.client.FailoverFileScheduleService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseFailoverFileScheduleService extends DatabaseServiceIntegerKe
         super(connector, FailoverFileSchedule.class);
     }
 
-    protected Set<FailoverFileSchedule> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<FailoverFileSchedule> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from failover_file_schedule"
         );
     }
 
-    protected Set<FailoverFileSchedule> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<FailoverFileSchedule> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  ffs.*\n"
@@ -48,8 +49,8 @@ final class DatabaseFailoverFileScheduleService extends DatabaseServiceIntegerKe
         );
     }
 
-    protected Set<FailoverFileSchedule> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<FailoverFileSchedule> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  ffs.*\n"

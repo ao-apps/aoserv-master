@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.PostgresEncoding;
 import com.aoindustries.aoserv.client.PostgresEncodingService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,22 +25,22 @@ final class DatabasePostgresEncodingService extends DatabaseServiceIntegerKey<Po
         super(connector, PostgresEncoding.class);
     }
 
-    protected Set<PostgresEncoding> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<PostgresEncoding> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from postgres_encodings"
         );
     }
 
-    protected Set<PostgresEncoding> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<PostgresEncoding> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from postgres_encodings"
         );
     }
 
-    protected Set<PostgresEncoding> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<PostgresEncoding> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from postgres_encodings"
         );

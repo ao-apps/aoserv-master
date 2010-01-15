@@ -11,6 +11,7 @@ import com.aoindustries.aoserv.client.NetBind;
 import com.aoindustries.aoserv.client.NetBindService;
 import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -27,8 +28,8 @@ final class DatabaseNetBindService extends DatabaseServiceIntegerKey<NetBind> im
         super(connector, NetBind.class);
     }
 
-    protected Set<NetBind> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<NetBind> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -45,8 +46,8 @@ final class DatabaseNetBindService extends DatabaseServiceIntegerKey<NetBind> im
         );
     }
 
-    protected Set<NetBind> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<NetBind> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  nb.pkey,\n"
@@ -90,8 +91,8 @@ final class DatabaseNetBindService extends DatabaseServiceIntegerKey<NetBind> im
         );
     }
 
-    protected Set<NetBind> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<NetBind> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  nb.pkey,\n"

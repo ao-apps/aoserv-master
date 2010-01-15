@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.LinuxGroup;
 import com.aoindustries.aoserv.client.LinuxGroupService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,8 +25,8 @@ final class DatabaseLinuxGroupService extends DatabaseServiceIntegerKey<LinuxGro
         super(connector, LinuxGroup.class);
     }
 
-    protected Set<LinuxGroup> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<LinuxGroup> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -37,8 +38,8 @@ final class DatabaseLinuxGroupService extends DatabaseServiceIntegerKey<LinuxGro
         );
     }
 
-    protected Set<LinuxGroup> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<LinuxGroup> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  lg.ao_server_resource,\n"
@@ -55,8 +56,8 @@ final class DatabaseLinuxGroupService extends DatabaseServiceIntegerKey<LinuxGro
         );
     }
 
-    protected Set<LinuxGroup> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<LinuxGroup> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             // Owns group
              "select\n"

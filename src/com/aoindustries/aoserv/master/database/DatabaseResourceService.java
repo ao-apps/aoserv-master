@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.Resource;
 import com.aoindustries.aoserv.client.ResourceService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseResourceService extends DatabaseServiceIntegerKey<Resource> 
         super(connector, Resource.class);
     }
 
-    protected Set<Resource> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<Resource> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from resources"
         );
     }
 
-    protected Set<Resource> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<Resource> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             // ao_server_resources
             "select\n"
@@ -61,7 +62,7 @@ final class DatabaseResourceService extends DatabaseServiceIntegerKey<Resource> 
         );
     }
 
-    protected Set<Resource> getSetBusiness() throws IOException, SQLException {
+    protected Set<Resource> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"
@@ -78,12 +79,12 @@ final class DatabaseResourceService extends DatabaseServiceIntegerKey<Resource> 
             + "  and (\n"
             + "    bu1.accounting=re.accounting\n"
         );
-        addOptionalInInteger(sql, "    or re.pkey in (", connector.ipAddresses.getSetBusiness(), ")\n");
-        addOptionalInInteger(sql, "    or re.pkey in (", connector.linuxGroups.getSetBusiness(), ")\n");
-        addOptionalInInteger(sql, "    or re.pkey in (", connector.mysqlServers.getSetBusiness(), ")\n");
-        addOptionalInInteger(sql, "    or re.pkey in (", connector.postgresServers.getSetBusiness(), ")\n");
+        addOptionalInInteger(sql, "    or re.pkey in (", connector.ipAddresses.getSetBusiness(db), ")\n");
+        addOptionalInInteger(sql, "    or re.pkey in (", connector.linuxGroups.getSetBusiness(db), ")\n");
+        addOptionalInInteger(sql, "    or re.pkey in (", connector.mysqlServers.getSetBusiness(db), ")\n");
+        addOptionalInInteger(sql, "    or re.pkey in (", connector.postgresServers.getSetBusiness(db), ")\n");
         sql.append("  )");
-        return connector.factory.database.executeObjectSetQuery(
+        return db.executeObjectSetQuery(
             objectFactory,
             sql.toString(),
             connector.getConnectAs()

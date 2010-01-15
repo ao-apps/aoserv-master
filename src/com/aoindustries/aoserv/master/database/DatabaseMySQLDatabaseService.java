@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.MySQLDatabase;
 import com.aoindustries.aoserv.client.MySQLDatabaseService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,45 +25,49 @@ final class DatabaseMySQLDatabaseService extends DatabaseServiceIntegerKey<MySQL
         super(connector, MySQLDatabase.class);
     }
 
-    protected Set<MySQLDatabase> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<MySQLDatabase> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
-            "select * from mysql_databases"
+            "select ao_server_resource, name, mysql_server from mysql_databases"
         );
     }
 
-    protected Set<MySQLDatabase> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<MySQLDatabase> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
-            + "  md.*\n"
+            + "  md.ao_server_resource,\n"
+            + "  md.name,\n"
+            + "  md.mysql_server\n"
             + "from\n"
             + "  master_servers ms,\n"
-            + "  mysql_servers mys,\n"
             + "  mysql_databases md\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=mys.ao_server\n"
-            + "  and mys.ao_server_resource=md.mysql_server",
+            + "  and ms.server=md.ao_server",
             connector.getConnectAs()
         );
     }
 
-    protected Set<MySQLDatabase> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<MySQLDatabase> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
-            + "  md.*\n"
+            + "  md.ao_server_resource,\n"
+            + "  md.name,\n"
+            + "  md.mysql_server\n"
             + "from\n"
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN
+            + "  ao_server_resources aor,\n"
             + "  mysql_databases md\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=md.accounting",
+            + "  and bu1.accounting=aor.accounting\n"
+            + "  and aor.resource=md.ao_server_resource",
             connector.getConnectAs()
         );
     }

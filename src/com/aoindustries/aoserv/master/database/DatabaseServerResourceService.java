@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.ServerResource;
 import com.aoindustries.aoserv.client.ServerResourceService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,8 +25,8 @@ final class DatabaseServerResourceService extends DatabaseServiceIntegerKey<Serv
         super(connector, ServerResource.class);
     }
 
-    protected Set<ServerResource> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<ServerResource> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  sr.resource,\n"
@@ -37,8 +38,8 @@ final class DatabaseServerResourceService extends DatabaseServiceIntegerKey<Serv
         );
     }
 
-    protected Set<ServerResource> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<ServerResource> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  sr.resource,\n"
@@ -55,7 +56,7 @@ final class DatabaseServerResourceService extends DatabaseServiceIntegerKey<Serv
         );
     }
 
-    protected Set<ServerResource> getSetBusiness() throws IOException, SQLException {
+    protected Set<ServerResource> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"
@@ -74,9 +75,9 @@ final class DatabaseServerResourceService extends DatabaseServiceIntegerKey<Serv
             + "  ) and (\n"
             + "    bu1.accounting=sr.accounting\n"
         );
-        addOptionalInInteger(sql, "    or sr.resource in (", connector.ipAddresses.getSetBusiness(), ")\n");
+        addOptionalInInteger(sql, "    or sr.resource in (", connector.ipAddresses.getSetBusiness(db), ")\n");
         sql.append("  )");
-        return connector.factory.database.executeObjectSetQuery(
+        return db.executeObjectSetQuery(
             objectFactory,
             sql.toString(),
             connector.getConnectAs()

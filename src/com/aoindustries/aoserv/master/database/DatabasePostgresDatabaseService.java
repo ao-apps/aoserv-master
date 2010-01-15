@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.PostgresDatabase;
 import com.aoindustries.aoserv.client.PostgresDatabaseService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,8 +25,8 @@ final class DatabasePostgresDatabaseService extends DatabaseServiceIntegerKey<Po
         super(connector, PostgresDatabase.class);
     }
 
-    protected Set<PostgresDatabase> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<PostgresDatabase> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -41,8 +42,8 @@ final class DatabasePostgresDatabaseService extends DatabaseServiceIntegerKey<Po
         );
     }
 
-    protected Set<PostgresDatabase> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<PostgresDatabase> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  pd.ao_server_resource,\n"
@@ -63,8 +64,8 @@ final class DatabasePostgresDatabaseService extends DatabaseServiceIntegerKey<Po
         );
     }
 
-    protected Set<PostgresDatabase> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<PostgresDatabase> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  pd.ao_server_resource,\n"

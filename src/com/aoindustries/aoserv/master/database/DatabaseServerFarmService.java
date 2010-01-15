@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.ServerFarm;
 import com.aoindustries.aoserv.client.ServerFarmService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseServerFarmService extends DatabaseServiceDomainLabelKey<Serv
         super(connector, ServerFarm.class);
     }
 
-    protected Set<ServerFarm> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<ServerFarm> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from server_farms"
         );
     }
 
-    protected Set<ServerFarm> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<ServerFarm> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
             + "  sf.*\n"
@@ -54,8 +55,8 @@ final class DatabaseServerFarmService extends DatabaseServiceDomainLabelKey<Serv
         );
     }
 
-    protected Set<ServerFarm> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<ServerFarm> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
             + "  sf.*\n"

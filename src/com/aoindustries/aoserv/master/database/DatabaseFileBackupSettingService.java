@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.FileBackupSetting;
 import com.aoindustries.aoserv.client.FileBackupSettingService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseFileBackupSettingService extends DatabaseServiceIntegerKey<F
         super(connector, FileBackupSetting.class);
     }
 
-    protected Set<FileBackupSetting> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<FileBackupSetting> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from file_backup_settings"
         );
     }
 
-    protected Set<FileBackupSetting> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<FileBackupSetting> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  fbs.*\n"
@@ -48,8 +49,8 @@ final class DatabaseFileBackupSettingService extends DatabaseServiceIntegerKey<F
         );
     }
 
-    protected Set<FileBackupSetting> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<FileBackupSetting> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  fbs.*\n"

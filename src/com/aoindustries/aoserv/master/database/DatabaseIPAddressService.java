@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.Business;
 import com.aoindustries.aoserv.client.IPAddress;
 import com.aoindustries.aoserv.client.IPAddressService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -25,8 +26,8 @@ final class DatabaseIPAddressService extends DatabaseServiceIntegerKey<IPAddress
         super(connector, IPAddress.class);
     }
 
-    protected Set<IPAddress> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<IPAddress> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  server_resource,\n"
@@ -45,8 +46,8 @@ final class DatabaseIPAddressService extends DatabaseServiceIntegerKey<IPAddress
         );
     }
 
-    protected Set<IPAddress> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<IPAddress> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
             + "  ia.server_resource,\n"
@@ -88,8 +89,8 @@ final class DatabaseIPAddressService extends DatabaseServiceIntegerKey<IPAddress
         );
     }
 
-    protected Set<IPAddress> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<IPAddress> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  ia.server_resource,\n"

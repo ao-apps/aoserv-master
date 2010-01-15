@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.NetTcpRedirect;
 import com.aoindustries.aoserv.client.NetTcpRedirectService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseNetTcpRedirectService extends DatabaseServiceIntegerKey<NetT
         super(connector, NetTcpRedirect.class);
     }
 
-    protected Set<NetTcpRedirect> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<NetTcpRedirect> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from net_tcp_redirects"
         );
     }
 
-    protected Set<NetTcpRedirect> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<NetTcpRedirect> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  ntr.*\n"
@@ -48,8 +49,8 @@ final class DatabaseNetTcpRedirectService extends DatabaseServiceIntegerKey<NetT
         );
     }
 
-    protected Set<NetTcpRedirect> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<NetTcpRedirect> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  ntr.*\n"

@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.BackupPartition;
 import com.aoindustries.aoserv.client.BackupPartitionService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseBackupPartitionService extends DatabaseServiceIntegerKey<Bac
         super(connector, BackupPartition.class);
     }
 
-    protected Set<BackupPartition> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<BackupPartition> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from backup_partitions"
         );
     }
 
-    protected Set<BackupPartition> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<BackupPartition> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  bp.*\n"
@@ -59,8 +60,8 @@ final class DatabaseBackupPartitionService extends DatabaseServiceIntegerKey<Bac
         );
     }
 
-    protected Set<BackupPartition> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<BackupPartition> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
             + "  bp.*\n"

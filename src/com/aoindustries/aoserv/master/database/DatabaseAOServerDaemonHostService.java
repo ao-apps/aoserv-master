@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.AOServerDaemonHost;
 import com.aoindustries.aoserv.client.AOServerDaemonHostService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -25,15 +26,15 @@ final class DatabaseAOServerDaemonHostService extends DatabaseServiceIntegerKey<
         super(connector, AOServerDaemonHost.class);
     }
 
-    protected Set<AOServerDaemonHost> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<AOServerDaemonHost> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from ao_server_daemon_hosts"
         );
     }
 
-    protected Set<AOServerDaemonHost> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<AOServerDaemonHost> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  sdh.*\n"
@@ -47,7 +48,7 @@ final class DatabaseAOServerDaemonHostService extends DatabaseServiceIntegerKey<
         );
     }
 
-    protected Set<AOServerDaemonHost> getSetBusiness() {
+    protected Set<AOServerDaemonHost> getSetBusiness(DatabaseConnection db) {
         return Collections.emptySet();
     }
 }

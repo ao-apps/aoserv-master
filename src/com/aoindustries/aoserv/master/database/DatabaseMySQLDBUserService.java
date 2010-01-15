@@ -5,10 +5,10 @@ package com.aoindustries.aoserv.master.database;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.MySQLDBUser;
 import com.aoindustries.aoserv.client.MySQLDBUserService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -25,8 +25,8 @@ final class DatabaseMySQLDBUserService extends DatabaseServiceIntegerKey<MySQLDB
         super(connector, MySQLDBUser.class);
     }
 
-    protected Set<MySQLDBUser> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<MySQLDBUser> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -56,8 +56,8 @@ final class DatabaseMySQLDBUserService extends DatabaseServiceIntegerKey<MySQLDB
         );
     }
 
-    protected Set<MySQLDBUser> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<MySQLDBUser> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  mdu.pkey,\n"
@@ -94,8 +94,8 @@ final class DatabaseMySQLDBUserService extends DatabaseServiceIntegerKey<MySQLDB
         );
     }
 
-    protected Set<MySQLDBUser> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<MySQLDBUser> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  mdu.pkey,\n"
@@ -123,15 +123,15 @@ final class DatabaseMySQLDBUserService extends DatabaseServiceIntegerKey<MySQLDB
             + "from\n"
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN
-            + "  mysql_databases md,\n"
+            + "  ao_server_resources aor,\n"
             + "  mysql_db_users mdu\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=md.accounting\n"
-            + "  and md.pkey=mdu.mysql_database",
+            + "  and bu1.accounting=aor.accounting\n"
+            + "  and aor.resource=mdu.mysql_database",
             connector.getConnectAs()
         );
     }

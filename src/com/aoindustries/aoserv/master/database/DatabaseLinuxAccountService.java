@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.LinuxAccountService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -25,8 +26,8 @@ final class DatabaseLinuxAccountService extends DatabaseServiceIntegerKey<LinuxA
         super(connector, LinuxAccount.class);
     }
 
-    protected Set<LinuxAccount> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<LinuxAccount> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -45,8 +46,8 @@ final class DatabaseLinuxAccountService extends DatabaseServiceIntegerKey<LinuxA
         );
     }
 
-    protected Set<LinuxAccount> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<LinuxAccount> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  la.ao_server_resource,\n"
@@ -74,8 +75,8 @@ final class DatabaseLinuxAccountService extends DatabaseServiceIntegerKey<LinuxA
         );
     }
 
-    protected Set<LinuxAccount> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<LinuxAccount> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
              "select\n"
             + "  la.ao_server_resource,\n"

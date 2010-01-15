@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
 import com.aoindustries.aoserv.client.validator.HashedPassword;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -25,15 +26,39 @@ final class DatabaseBusinessAdministratorService extends DatabaseServiceUserIdKe
         super(connector, BusinessAdministrator.class);
     }
 
-    protected Set<BusinessAdministrator> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<BusinessAdministrator> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
-            "select * from business_administrators"
+            "select\n"
+            + "  username,\n"
+            + "  password,\n"
+            + "  name,\n"
+            + "  title,\n"
+            + "  birthday,\n"
+            + "  is_preferred,\n"
+            + "  private,\n"
+            + "  created,\n"
+            + "  work_phone,\n"
+            + "  home_phone,\n"
+            + "  cell_phone,\n"
+            + "  fax,\n"
+            + "  email,\n"
+            + "  address1,\n"
+            + "  address2,\n"
+            + "  city,\n"
+            + "  state,\n"
+            + "  country,\n"
+            + "  zip,\n"
+            + "  disable_log,\n"
+            + "  can_switch_users,\n"
+            + "  support_code\n"
+            + "from\n"
+            + "  business_administrators"
         );
     }
 
-    protected Set<BusinessAdministrator> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<BusinessAdministrator> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
             + "  ba.username,\n"
@@ -61,19 +86,17 @@ final class DatabaseBusinessAdministratorService extends DatabaseServiceUserIdKe
             + "from\n"
             + "  master_servers ms,\n"
             + "  business_servers bs,\n"
-            + "  usernames un,\n"
             + "  business_administrators ba\n"
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=bs.server\n"
-            + "  and bs.accounting=un.accounting\n"
-            + "  and un.username=ba.username",
+            + "  and bs.accounting=ba.accounting",
             connector.getConnectAs()
         );
     }
 
-    protected Set<BusinessAdministrator> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<BusinessAdministrator> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  ba.username,\n"
@@ -101,16 +124,14 @@ final class DatabaseBusinessAdministratorService extends DatabaseServiceUserIdKe
             + "from\n"
             + "  usernames un1,\n"
             + BU1_PARENTS_JOIN
-            + "  usernames un2,\n"
             + "  business_administrators ba\n"
             + "where\n"
             + "  un1.username=?\n"
             + "  and (\n"
-            + "    un2.username=un1.username\n"
+            + "    ba.username=un1.username\n"
             + UN1_BU1_PARENTS_OR_WHERE
             + "  )\n"
-            + "  and bu1.accounting=un2.accounting\n"
-            + "  and un2.username=ba.username",
+            + "  and bu1.accounting=ba.accounting",
             connector.getConnectAs()
         );
     }

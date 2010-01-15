@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.MySQLUser;
 import com.aoindustries.aoserv.client.MySQLUserService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -25,8 +26,8 @@ final class DatabaseMySQLUserService extends DatabaseServiceIntegerKey<MySQLUser
         super(connector, MySQLUser.class);
     }
 
-    protected Set<MySQLUser> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<MySQLUser> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -71,8 +72,8 @@ final class DatabaseMySQLUserService extends DatabaseServiceIntegerKey<MySQLUser
         );
     }
 
-    protected Set<MySQLUser> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<MySQLUser> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  mu.ao_server_resource,\n"
@@ -122,8 +123,8 @@ final class DatabaseMySQLUserService extends DatabaseServiceIntegerKey<MySQLUser
         );
     }
 
-    protected Set<MySQLUser> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<MySQLUser> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
              "select\n"
             + "  mu.ao_server_resource,\n"

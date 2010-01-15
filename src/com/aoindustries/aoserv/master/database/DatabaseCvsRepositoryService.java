@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.CvsRepository;
 import com.aoindustries.aoserv.client.CvsRepositoryService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseCvsRepositoryService extends DatabaseServiceIntegerKey<CvsRe
         super(connector, CvsRepository.class);
     }
 
-    protected Set<CvsRepository> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<CvsRepository> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select ao_server_resource, path, linux_account_group, mode from cvs_repositories"
         );
     }
 
-    protected Set<CvsRepository> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<CvsRepository> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  cr.ao_server_resource, cr.path, cr.linux_account_group, cr.mode\n"
@@ -46,8 +47,8 @@ final class DatabaseCvsRepositoryService extends DatabaseServiceIntegerKey<CvsRe
         );
     }
 
-    protected Set<CvsRepository> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<CvsRepository> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  cr.ao_server_resource, cr.path, cr.linux_account_group, cr.mode\n"

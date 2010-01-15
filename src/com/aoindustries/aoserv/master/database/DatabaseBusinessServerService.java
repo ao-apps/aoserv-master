@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.BusinessServer;
 import com.aoindustries.aoserv.client.BusinessServerService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseBusinessServerService extends DatabaseServiceIntegerKey<Busi
         super(connector, BusinessServer.class);
     }
 
-    protected Set<BusinessServer> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<BusinessServer> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from business_servers"
         );
     }
 
-    protected Set<BusinessServer> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<BusinessServer> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
             + "  bs.*\n"
@@ -46,9 +47,9 @@ final class DatabaseBusinessServerService extends DatabaseServiceIntegerKey<Busi
         );
     }
 
-    protected Set<BusinessServer> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
-            objectFactory,
+    protected Set<BusinessServer> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        // owns the resource
+        StringBuilder sql = new StringBuilder(
             "select\n"
             + "  bs.*\n"
             + "from\n"
@@ -59,8 +60,17 @@ final class DatabaseBusinessServerService extends DatabaseServiceIntegerKey<Busi
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
-            + "  )\n"
-            + "  and bu1.accounting=bs.accounting",
+            + "  ) and (\n"
+            + "    bu1.accounting=bs.accounting\n"
+        );
+        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.ipAddresses.getSetBusiness(db), "))\n");
+        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.linuxGroups.getSetBusiness(db), "))\n");
+        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.mysqlServers.getSetBusiness(db), "))\n");
+        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.postgresServers.getSetBusiness(db), "))\n");
+        sql.append("  )");
+        return db.executeObjectSetQuery(
+            objectFactory,
+            sql.toString(),
             connector.getConnectAs()
         );
     }

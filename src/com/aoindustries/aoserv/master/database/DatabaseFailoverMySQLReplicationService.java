@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.FailoverMySQLReplication;
 import com.aoindustries.aoserv.client.FailoverMySQLReplicationService;
 import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,15 +25,15 @@ final class DatabaseFailoverMySQLReplicationService extends DatabaseServiceInteg
         super(connector, FailoverMySQLReplication.class);
     }
 
-    protected Set<FailoverMySQLReplication> getSetMaster() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<FailoverMySQLReplication> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select * from failover_mysql_replications"
         );
     }
 
-    protected Set<FailoverMySQLReplication> getSetDaemon() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<FailoverMySQLReplication> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
             + "  fmr.*\n"
@@ -56,8 +57,8 @@ final class DatabaseFailoverMySQLReplicationService extends DatabaseServiceInteg
         );
     }
 
-    protected Set<FailoverMySQLReplication> getSetBusiness() throws IOException, SQLException {
-        return connector.factory.database.executeObjectSetQuery(
+    protected Set<FailoverMySQLReplication> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+        return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
             + "  fmr.*\n"
