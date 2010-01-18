@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTicketTypeService extends DatabaseService<String,TicketType> implements TicketTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTicketTypeService extends DatabasePublicService<String,TicketType> implements TicketTypeService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<TicketType> objectFactory = new AutoObjectFactory<TicketType>(TicketType.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseTicketTypeService extends DatabaseService<String,TicketType>
         super(connector, String.class, TicketType.class);
     }
 
-    protected Set<TicketType> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from ticket_types"
-        );
-    }
-
-    protected Set<TicketType> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from ticket_types"
-        );
-    }
-
-    protected Set<TicketType> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TicketType> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from ticket_types"

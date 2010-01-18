@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLinuxGroupTypeService extends DatabaseService<String,LinuxGroupType> implements LinuxGroupTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseLinuxGroupTypeService extends DatabasePublicService<String,LinuxGroupType> implements LinuxGroupTypeService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<LinuxGroupType> objectFactory = new AutoObjectFactory<LinuxGroupType>(LinuxGroupType.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseLinuxGroupTypeService extends DatabaseService<String,LinuxGr
         super(connector, String.class, LinuxGroupType.class);
     }
 
-    protected Set<LinuxGroupType> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from linux_group_types"
-        );
-    }
-
-    protected Set<LinuxGroupType> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from linux_group_types"
-        );
-    }
-
-    protected Set<LinuxGroupType> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<LinuxGroupType> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from linux_group_types"

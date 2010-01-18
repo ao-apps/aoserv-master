@@ -79,6 +79,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
             + "  and (\n"
             + "    bu1.accounting=re.accounting\n"
         );
+        addOptionalInInteger(sql, "    or re.pkey in (", connector.httpdServers.getSetBusiness(db), ")\n");
         addOptionalInInteger(sql, "    or re.pkey in (", connector.ipAddresses.getSetBusiness(db), ")\n");
         addOptionalInInteger(sql, "    or re.pkey in (", connector.linuxGroups.getSetBusiness(db), ")\n");
         addOptionalInInteger(sql, "    or re.pkey in (", connector.mysqlServers.getSetBusiness(db), ")\n");

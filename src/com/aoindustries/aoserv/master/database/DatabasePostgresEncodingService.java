@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresEncodingService extends DatabaseService<Integer,PostgresEncoding> implements PostgresEncodingService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePostgresEncodingService extends DatabasePublicService<Integer,PostgresEncoding> implements PostgresEncodingService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<PostgresEncoding> objectFactory = new AutoObjectFactory<PostgresEncoding>(PostgresEncoding.class, this);
 
@@ -25,21 +25,7 @@ final class DatabasePostgresEncodingService extends DatabaseService<Integer,Post
         super(connector,Integer.class,  PostgresEncoding.class);
     }
 
-    protected Set<PostgresEncoding> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from postgres_encodings"
-        );
-    }
-
-    protected Set<PostgresEncoding> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from postgres_encodings"
-        );
-    }
-
-    protected Set<PostgresEncoding> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<PostgresEncoding> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from postgres_encodings"

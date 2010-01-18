@@ -18,7 +18,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseShellService extends DatabaseService<UnixPath,Shell> implements ShellService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseShellService extends DatabasePublicService<UnixPath,Shell> implements ShellService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Shell> objectFactory = new AutoObjectFactory<Shell>(Shell.class, this);
 
@@ -26,21 +26,7 @@ final class DatabaseShellService extends DatabaseService<UnixPath,Shell> impleme
         super(connector, UnixPath.class, Shell.class);
     }
 
-    protected Set<Shell> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from shells"
-        );
-    }
-
-    protected Set<Shell> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from shells"
-        );
-    }
-
-    protected Set<Shell> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Shell> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from shells"

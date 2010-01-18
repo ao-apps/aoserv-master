@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseOperatingSystemService extends DatabaseService<String,OperatingSystem> implements OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseOperatingSystemService extends DatabasePublicService<String,OperatingSystem> implements OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<OperatingSystem> objectFactory = new AutoObjectFactory<OperatingSystem>(OperatingSystem.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseOperatingSystemService extends DatabaseService<String,Operat
         super(connector, String.class, OperatingSystem.class);
     }
 
-    protected Set<OperatingSystem> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from operating_systems"
-        );
-    }
-
-    protected Set<OperatingSystem> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from operating_systems"
-        );
-    }
-
-    protected Set<OperatingSystem> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<OperatingSystem> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from operating_systems"

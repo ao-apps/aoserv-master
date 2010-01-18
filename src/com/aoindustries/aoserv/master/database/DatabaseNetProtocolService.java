@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNetProtocolService extends DatabaseService<String,NetProtocol> implements NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseNetProtocolService extends DatabasePublicService<String,NetProtocol> implements NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<NetProtocol> objectFactory = new AutoObjectFactory<NetProtocol>(NetProtocol.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseNetProtocolService extends DatabaseService<String,NetProtoco
         super(connector, String.class, NetProtocol.class);
     }
 
-    protected Set<NetProtocol> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from net_protocols"
-        );
-    }
-
-    protected Set<NetProtocol> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from net_protocols"
-        );
-    }
-
-    protected Set<NetProtocol> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<NetProtocol> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from net_protocols"

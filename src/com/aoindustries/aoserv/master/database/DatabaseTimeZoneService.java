@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTimeZoneService extends DatabaseService<String,TimeZone> implements TimeZoneService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTimeZoneService extends DatabasePublicService<String,TimeZone> implements TimeZoneService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<TimeZone> objectFactory = new AutoObjectFactory<TimeZone>(TimeZone.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseTimeZoneService extends DatabaseService<String,TimeZone> imp
         super(connector, String.class, TimeZone.class);
     }
 
-    protected Set<TimeZone> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from time_zones"
-        );
-    }
-
-    protected Set<TimeZone> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from time_zones"
-        );
-    }
-
-    protected Set<TimeZone> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TimeZone> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from time_zones"

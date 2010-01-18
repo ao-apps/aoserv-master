@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePackageCategoryService extends DatabaseService<String,PackageCategory> implements PackageCategoryService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePackageCategoryService extends DatabasePublicService<String,PackageCategory> implements PackageCategoryService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<PackageCategory> objectFactory = new AutoObjectFactory<PackageCategory>(PackageCategory.class, this);
 
@@ -25,21 +25,7 @@ final class DatabasePackageCategoryService extends DatabaseService<String,Packag
         super(connector, String.class, PackageCategory.class);
     }
 
-    protected Set<PackageCategory> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from package_categories"
-        );
-    }
-
-    protected Set<PackageCategory> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from package_categories"
-        );
-    }
-
-    protected Set<PackageCategory> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<PackageCategory> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from package_categories"

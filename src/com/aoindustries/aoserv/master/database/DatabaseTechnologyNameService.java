@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTechnologyNameService extends DatabaseService<String,TechnologyName> implements TechnologyNameService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTechnologyNameService extends DatabasePublicService<String,TechnologyName> implements TechnologyNameService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<TechnologyName> objectFactory = new AutoObjectFactory<TechnologyName>(TechnologyName.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseTechnologyNameService extends DatabaseService<String,Technol
         super(connector, String.class, TechnologyName.class);
     }
 
-    protected Set<TechnologyName> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from technology_names"
-        );
-    }
-
-    protected Set<TechnologyName> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from technology_names"
-        );
-    }
-
-    protected Set<TechnologyName> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TechnologyName> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from technology_names"

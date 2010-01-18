@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLinuxAccountTypeService extends DatabaseService<String,LinuxAccountType> implements LinuxAccountTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseLinuxAccountTypeService extends DatabasePublicService<String,LinuxAccountType> implements LinuxAccountTypeService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<LinuxAccountType> objectFactory = new AutoObjectFactory<LinuxAccountType>(LinuxAccountType.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseLinuxAccountTypeService extends DatabaseService<String,Linux
         super(connector, String.class, LinuxAccountType.class);
     }
 
-    protected Set<LinuxAccountType> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from linux_account_types"
-        );
-    }
-
-    protected Set<LinuxAccountType> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from linux_account_types"
-        );
-    }
-
-    protected Set<LinuxAccountType> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<LinuxAccountType> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from linux_account_types"

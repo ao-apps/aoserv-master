@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseProtocolService extends DatabaseService<String,Protocol> implements ProtocolService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseProtocolService extends DatabasePublicService<String,Protocol> implements ProtocolService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Protocol> objectFactory = new AutoObjectFactory<Protocol>(Protocol.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseProtocolService extends DatabaseService<String,Protocol> imp
         super(connector, String.class, Protocol.class);
     }
 
-    protected Set<Protocol> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from protocols"
-        );
-    }
-
-    protected Set<Protocol> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from protocols"
-        );
-    }
-
-    protected Set<Protocol> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Protocol> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from protocols"

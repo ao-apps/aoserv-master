@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBackupRetentionService extends DatabaseService<Short,BackupRetention> implements BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseBackupRetentionService extends DatabasePublicService<Short,BackupRetention> implements BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<BackupRetention> objectFactory = new AutoObjectFactory<BackupRetention>(BackupRetention.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseBackupRetentionService extends DatabaseService<Short,BackupR
         super(connector, Short.class, BackupRetention.class);
     }
 
-    protected Set<BackupRetention> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from backup_retentions"
-        );
-    }
-
-    protected Set<BackupRetention> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from backup_retentions"
-        );
-    }
-
-    protected Set<BackupRetention> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<BackupRetention> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from backup_retentions"

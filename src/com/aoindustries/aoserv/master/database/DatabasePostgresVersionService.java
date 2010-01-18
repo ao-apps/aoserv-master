@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresVersionService extends DatabaseService<Integer,PostgresVersion> implements PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePostgresVersionService extends DatabasePublicService<Integer,PostgresVersion> implements PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<PostgresVersion> objectFactory = new AutoObjectFactory<PostgresVersion>(PostgresVersion.class, this);
 
@@ -25,21 +25,7 @@ final class DatabasePostgresVersionService extends DatabaseService<Integer,Postg
         super(connector, Integer.class, PostgresVersion.class);
     }
 
-    protected Set<PostgresVersion> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from postgres_versions"
-        );
-    }
-
-    protected Set<PostgresVersion> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from postgres_versions"
-        );
-    }
-
-    protected Set<PostgresVersion> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<PostgresVersion> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from postgres_versions"

@@ -75,6 +75,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
             + "  ) and (\n"
             + "    bu1.accounting=asr.accounting\n"
         );
+        addOptionalInInteger(sql, "    or asr.resource in (", connector.httpdServers.getSetBusiness(db), ")\n");
         addOptionalInInteger(sql, "    or asr.resource in (", connector.linuxGroups.getSetBusiness(db), ")\n");
         addOptionalInInteger(sql, "    or asr.resource in (", connector.mysqlServers.getSetBusiness(db), ")\n");
         addOptionalInInteger(sql, "    or asr.resource in (", connector.postgresServers.getSetBusiness(db), ")\n");

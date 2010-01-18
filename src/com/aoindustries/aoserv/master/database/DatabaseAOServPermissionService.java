@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseAOServPermissionService extends DatabaseService<String,AOServPermission> implements AOServPermissionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseAOServPermissionService extends DatabasePublicService<String,AOServPermission> implements AOServPermissionService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<AOServPermission> objectFactory = new AutoObjectFactory<AOServPermission>(AOServPermission.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseAOServPermissionService extends DatabaseService<String,AOSer
         super(connector, String.class, AOServPermission.class);
     }
 
-    protected Set<AOServPermission> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from aoserv_permissions"
-        );
-    }
-
-    protected Set<AOServPermission> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from aoserv_permissions"
-        );
-    }
-
-    protected Set<AOServPermission> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServPermission> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from aoserv_permissions"

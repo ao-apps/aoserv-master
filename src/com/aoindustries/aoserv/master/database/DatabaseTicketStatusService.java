@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTicketStatusService extends DatabaseService<String,TicketStatus> implements TicketStatusService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTicketStatusService extends DatabasePublicService<String,TicketStatus> implements TicketStatusService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<TicketStatus> objectFactory = new AutoObjectFactory<TicketStatus>(TicketStatus.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseTicketStatusService extends DatabaseService<String,TicketSta
         super(connector, String.class, TicketStatus.class);
     }
 
-    protected Set<TicketStatus> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from ticket_stati"
-        );
-    }
-
-    protected Set<TicketStatus> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from ticket_stati"
-        );
-    }
-
-    protected Set<TicketStatus> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TicketStatus> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from ticket_stati"

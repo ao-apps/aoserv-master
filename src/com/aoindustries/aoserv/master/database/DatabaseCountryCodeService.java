@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseCountryCodeService extends DatabaseService<String,CountryCode> implements CountryCodeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseCountryCodeService extends DatabasePublicService<String,CountryCode> implements CountryCodeService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<CountryCode> objectFactory = new AutoObjectFactory<CountryCode>(CountryCode.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseCountryCodeService extends DatabaseService<String,CountryCod
         super(connector, String.class, CountryCode.class);
     }
 
-    protected Set<CountryCode> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from country_codes"
-        );
-    }
-
-    protected Set<CountryCode> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from country_codes"
-        );
-    }
-
-    protected Set<CountryCode> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<CountryCode> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from country_codes"

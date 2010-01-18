@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLanguageService extends DatabaseService<String,Language> implements LanguageService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseLanguageService extends DatabasePublicService<String,Language> implements LanguageService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Language> objectFactory = new AutoObjectFactory<Language>(Language.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseLanguageService extends DatabaseService<String,Language> imp
         super(connector, String.class, Language.class);
     }
 
-    protected Set<Language> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from languages"
-        );
-    }
-
-    protected Set<Language> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from languages"
-        );
-    }
-
-    protected Set<Language> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Language> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from languages"

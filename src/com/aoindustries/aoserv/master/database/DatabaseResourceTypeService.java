@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseResourceTypeService extends DatabaseService<String,ResourceType> implements ResourceTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseResourceTypeService extends DatabasePublicService<String,ResourceType> implements ResourceTypeService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<ResourceType> objectFactory = new AutoObjectFactory<ResourceType>(ResourceType.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseResourceTypeService extends DatabaseService<String,ResourceT
         super(connector, String.class, ResourceType.class);
     }
 
-    protected Set<ResourceType> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from resource_types"
-        );
-    }
-
-    protected Set<ResourceType> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from resource_types"
-        );
-    }
-
-    protected Set<ResourceType> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<ResourceType> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from resource_types"

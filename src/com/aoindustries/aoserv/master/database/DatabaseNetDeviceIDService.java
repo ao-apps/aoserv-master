@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNetDeviceIDService extends DatabaseService<String,NetDeviceID> implements NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseNetDeviceIDService extends DatabasePublicService<String,NetDeviceID> implements NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<NetDeviceID> objectFactory = new AutoObjectFactory<NetDeviceID>(NetDeviceID.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseNetDeviceIDService extends DatabaseService<String,NetDeviceI
         super(connector, String.class, NetDeviceID.class);
     }
 
-    protected Set<NetDeviceID> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from net_device_ids"
-        );
-    }
-
-    protected Set<NetDeviceID> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from net_device_ids"
-        );
-    }
-
-    protected Set<NetDeviceID> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<NetDeviceID> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from net_device_ids"

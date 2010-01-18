@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseArchitectureService extends DatabaseService<String,Architecture> implements ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseArchitectureService extends DatabasePublicService<String,Architecture> implements ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> {
 
     private final ObjectFactory<Architecture> objectFactory = new AutoObjectFactory<Architecture>(Architecture.class, this);
 
@@ -25,21 +25,7 @@ final class DatabaseArchitectureService extends DatabaseService<String,Architect
         super(connector, String.class, Architecture.class);
     }
 
-    protected Set<Architecture> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from architectures"
-        );
-    }
-
-    protected Set<Architecture> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
-            "select * from architectures"
-        );
-    }
-
-    protected Set<Architecture> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Architecture> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from architectures"

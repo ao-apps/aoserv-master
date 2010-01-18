@@ -23,12 +23,19 @@ import com.aoindustries.aoserv.client.BusinessService;
 import com.aoindustries.aoserv.client.CountryCodeService;
 import com.aoindustries.aoserv.client.CvsRepositoryService;
 import com.aoindustries.aoserv.client.DisableLogService;
+import com.aoindustries.aoserv.client.DnsRecordService;
+import com.aoindustries.aoserv.client.DnsTldService;
+import com.aoindustries.aoserv.client.DnsTypeService;
+import com.aoindustries.aoserv.client.DnsZoneService;
+import com.aoindustries.aoserv.client.EmailInboxService;
 import com.aoindustries.aoserv.client.FailoverFileLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
 import com.aoindustries.aoserv.client.FailoverFileScheduleService;
 import com.aoindustries.aoserv.client.FailoverMySQLReplicationService;
 import com.aoindustries.aoserv.client.FileBackupSettingService;
+import com.aoindustries.aoserv.client.FtpGuestUserService;
 import com.aoindustries.aoserv.client.GroupNameService;
+import com.aoindustries.aoserv.client.HttpdServerService;
 import com.aoindustries.aoserv.client.HttpdSiteService;
 import com.aoindustries.aoserv.client.IPAddressService;
 import com.aoindustries.aoserv.client.LanguageService;
@@ -37,6 +44,9 @@ import com.aoindustries.aoserv.client.LinuxAccountService;
 import com.aoindustries.aoserv.client.LinuxAccountTypeService;
 import com.aoindustries.aoserv.client.LinuxGroupService;
 import com.aoindustries.aoserv.client.LinuxGroupTypeService;
+import com.aoindustries.aoserv.client.MasterHostService;
+import com.aoindustries.aoserv.client.MasterServerService;
+import com.aoindustries.aoserv.client.MasterUserService;
 import com.aoindustries.aoserv.client.MySQLDBUserService;
 import com.aoindustries.aoserv.client.MySQLDatabaseService;
 import com.aoindustries.aoserv.client.MySQLServerService;
@@ -136,19 +146,23 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
      */
     final DatabaseCvsRepositoryService cvsRepositories;
     final DatabaseDisableLogService disableLogs;
-    /*
+    /* TODO
     final DatabaseDistroFileTypeService distroFileTypes;
     final DatabaseDistroFileService distroFiles;
-    final DatabaseDNSForbiddenZoneService dnsForbiddenZones;
-    final DatabaseDNSRecordService dnsRecords;
-    final DatabaseDNSTLDService dnsTLDs;
-    final DatabaseDNSTypeService dnsTypes;
-    final DatabaseDNSZoneService dnsZones;
+     */
+    final DatabaseDnsRecordService dnsRecords;
+    final DatabaseDnsTldService dnsTlds;
+    final DatabaseDnsTypeService dnsTypes;
+    final DatabaseDnsZoneService dnsZones;
+    /* TODO
     final DatabaseEmailAddressService emailAddresss;
     final DatabaseEmailAttachmentBlockService emailAttachmentBlocks;
     final DatabaseEmailAttachmentTypeService emailAttachmentTypes;
     final DatabaseEmailDomainService emailDomains;
     final DatabaseEmailForwardingService emailForwardings;
+     */
+    final DatabaseEmailInboxService emailInboxes;
+    /* TODO
     final DatabaseEmailListAddressService emailListAddresss;
     final DatabaseEmailListService emailLists;
     final DatabaseEmailPipeAddressService emailPipeAddresss;
@@ -166,9 +180,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseFailoverFileScheduleService failoverFileSchedules;
     final DatabaseFailoverMySQLReplicationService failoverMySQLReplications;
     final DatabaseFileBackupSettingService fileBackupSettings;
-    /* TODO
-    final DatabaseFTPGuestUserService ftpGuestUsers;
-     */
+    final DatabaseFtpGuestUserService ftpGuestUsers;
     final DatabaseGroupNameService groupNames;
     /* TODO
     final DatabaseHttpdBindService httpdBinds;
@@ -176,7 +188,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseHttpdJBossVersionService httpdJBossVersions;
     final DatabaseHttpdJKCodeService httpdJKCodes;
     final DatabaseHttpdJKProtocolService httpdJKProtocols;
+     */
     final DatabaseHttpdServerService httpdServers;
+    /* TODO
     final DatabaseHttpdSharedTomcatService httpdSharedTomcats;
     final DatabaseHttpdSiteAuthenticatedLocationService httpdSiteAuthenticatedLocations;
     final DatabaseHttpdSiteBindService httpdSiteBinds;
@@ -205,10 +219,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     // TODO: final DatabaseMajordomoListService majordomoLists;
     // TODO: final DatabaseMajordomoServerService majordomoServers;
     // TODO: final DatabaseMajordomoVersionService majordomoVersions;
-    // TODO: final DatabaseMasterHistoryService masterHistories;
-    // TODO: final DatabaseMasterHostService masterHosts;
-    // TODO: final DatabaseMasterServerService masterServers;
-    // TODO: final DatabaseMasterUserService masterUsers;
+    final DatabaseMasterHostService masterHosts;
+    final DatabaseMasterServerService masterServers;
+    final DatabaseMasterUserService masterUsers;
     // TODO: final DatabaseMonthlyChargeService monthlyCharges;
     final DatabaseMySQLDatabaseService mysqlDatabases;
     final DatabaseMySQLDBUserService mysqlDBUsers;
@@ -324,19 +337,23 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
          */
         cvsRepositories = new DatabaseCvsRepositoryService(this);
         disableLogs = new DatabaseDisableLogService(this);
-        /*
+        /* TODO
         distroFileTypes = new DatabaseDistroFileTypeService(this);
         distroFiles = new DatabaseDistroFileService(this);
-        dnsForbiddenZones = new DatabaseDNSForbiddenZoneService(this);
-        dnsRecords = new DatabaseDNSRecordService(this);
-        dnsTLDs = new DatabaseDNSTLDService(this);
-        dnsTypes = new DatabaseDNSTypeService(this);
-        dnsZones = new DatabaseDNSZoneService(this);
+         */
+        dnsRecords = new DatabaseDnsRecordService(this);
+        dnsTlds = new DatabaseDnsTldService(this);
+        dnsTypes = new DatabaseDnsTypeService(this);
+        dnsZones = new DatabaseDnsZoneService(this);
+        /* TODO
         emailAddresss = new DatabaseEmailAddressService(this);
         emailAttachmentBlocks = new DatabaseEmailAttachmentBlockService(this);
         emailAttachmentTypes = new DatabaseEmailAttachmentTypeService(this);
         emailDomains = new DatabaseEmailDomainService(this);
         emailForwardings = new DatabaseEmailForwardingService(this);
+         */
+        emailInboxes = new DatabaseEmailInboxService(this);
+        /* TODO
         emailListAddresss = new DatabaseEmailListAddressService(this);
         emailLists = new DatabaseEmailListService(this);
         emailPipeAddresss = new DatabaseEmailPipeAddressService(this);
@@ -354,9 +371,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         failoverFileSchedules = new DatabaseFailoverFileScheduleService(this);
         failoverMySQLReplications = new DatabaseFailoverMySQLReplicationService(this);
         fileBackupSettings = new DatabaseFileBackupSettingService(this);
-        /* TODO
-        ftpGuestUsers = new DatabaseFTPGuestUserService(this);
-         */
+        ftpGuestUsers = new DatabaseFtpGuestUserService(this);
         groupNames = new DatabaseGroupNameService(this);
         /* TODO
         httpdBinds = new DatabaseHttpdBindService(this);
@@ -364,7 +379,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         httpdJBossVersions = new DatabaseHttpdJBossVersionService(this);
         httpdJKCodes = new DatabaseHttpdJKCodeService(this);
         httpdJKProtocols = new DatabaseHttpdJKProtocolService(this);
+         */
         httpdServers = new DatabaseHttpdServerService(this);
+        /* TODO
         httpdSharedTomcats = new DatabaseHttpdSharedTomcatService(this);
         httpdSiteAuthenticatedLocations = new DatabaseHttpdSiteAuthenticatedLocationService(this);
         httpdSiteBinds = new DatabaseHttpdSiteBindService(this);
@@ -393,10 +410,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         // TODO: majordomoLists = new DatabaseMajordomoListService(this);
         // TODO: majordomoServers = new DatabaseMajordomoServerService(this);
         // TODO: majordomoVersions = new DatabaseMajordomoVersionService(this);
-        // TODO: masterHistories = new DatabaseMasterHistoryService(this);
-        // TODO: masterHosts = new DatabaseMasterHostService(this);
-        // TODO: masterServers = new DatabaseMasterServerService(this);
-        // TODO: masterUsers = new DatabaseMasterUserService(this);
+        masterHosts = new DatabaseMasterHostService(this);
+        masterServers = new DatabaseMasterServerService(this);
+        masterUsers = new DatabaseMasterUserService(this);
         // TODO: monthlyCharges = new DatabaseMonthlyChargeService(this);
         mysqlDatabases = new DatabaseMySQLDatabaseService(this);
         mysqlDBUsers = new DatabaseMySQLDBUserService(this);
@@ -615,21 +631,27 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public DisableLogService<DatabaseConnector,DatabaseConnectorFactory> getDisableLogs() {
         return disableLogs;
     }
-    /*
+    /* TODO
     public DistroFileTypeService<DatabaseConnector,DatabaseConnectorFactory> getDistroFileTypes();
 
     public DistroFileService<DatabaseConnector,DatabaseConnectorFactory> getDistroFiles();
+     */
+    public DnsRecordService<DatabaseConnector,DatabaseConnectorFactory> getDnsRecords() {
+        return dnsRecords;
+    }
 
-    public DNSForbiddenZoneService<DatabaseConnector,DatabaseConnectorFactory> getDnsForbiddenZones();
+    public DnsTldService<DatabaseConnector,DatabaseConnectorFactory> getDnsTlds() {
+        return dnsTlds;
+    }
 
-    public DNSRecordService<DatabaseConnector,DatabaseConnectorFactory> getDnsRecords();
+    public DnsTypeService<DatabaseConnector,DatabaseConnectorFactory> getDnsTypes() {
+        return dnsTypes;
+    }
 
-    public DNSTLDService<DatabaseConnector,DatabaseConnectorFactory> getDnsTLDs();
-
-    public DNSTypeService<DatabaseConnector,DatabaseConnectorFactory> getDnsTypes();
-
-    public DNSZoneService<DatabaseConnector,DatabaseConnectorFactory> getDnsZones();
-
+    public DnsZoneService<DatabaseConnector,DatabaseConnectorFactory> getDnsZones() {
+        return dnsZones;
+    }
+    /* TODO
     public EmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailAddresses();
 
     public EmailAttachmentBlockService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentBlocks();
@@ -639,7 +661,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public EmailDomainService<DatabaseConnector,DatabaseConnectorFactory> getEmailDomains();
 
     public EmailForwardingService<DatabaseConnector,DatabaseConnectorFactory> getEmailForwardings();
-
+     */
+    public EmailInboxService<DatabaseConnector,DatabaseConnectorFactory> getEmailInboxes() {
+        return emailInboxes;
+    }
+    /* TODO
     public EmailListAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailListAddresses();
 
     public EmailListService<DatabaseConnector,DatabaseConnectorFactory> getEmailLists();
@@ -681,9 +707,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public FileBackupSettingService<DatabaseConnector,DatabaseConnectorFactory> getFileBackupSettings() {
         return fileBackupSettings;
     }
-    /* TODO
-    public FTPGuestUserService<DatabaseConnector,DatabaseConnectorFactory> getFtpGuestUsers();
-     */
+
+    public FtpGuestUserService<DatabaseConnector,DatabaseConnectorFactory> getFtpGuestUsers() {
+        return ftpGuestUsers;
+    }
+
     public GroupNameService<DatabaseConnector,DatabaseConnectorFactory> getGroupNames() {
         return groupNames;
     }
@@ -697,9 +725,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public HttpdJKCodeService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKCodes();
 
     public HttpdJKProtocolService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKProtocols();
-
-    public HttpdServerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdServers();
-
+    */
+    public HttpdServerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdServers() {
+        return httpdServers;
+    }
+    /* TODO
     public HttpdSharedTomcatService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSharedTomcats();
 
     public HttpdSiteAuthenticatedLocationService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteAuthenticatedLocations();
@@ -768,11 +798,17 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     // TODO: public MasterHistoryService<DatabaseConnector,DatabaseConnectorFactory> getMasterHistory();
 
-    // TODO: public MasterHostService<DatabaseConnector,DatabaseConnectorFactory> getMasterHosts();
+    public MasterHostService<DatabaseConnector,DatabaseConnectorFactory> getMasterHosts() {
+        return masterHosts;
+    }
 
-    // TODO: public MasterServerService<DatabaseConnector,DatabaseConnectorFactory> getMasterServers();
+    public MasterServerService<DatabaseConnector,DatabaseConnectorFactory> getMasterServers() {
+        return masterServers;
+    }
 
-    // TODO: public MasterUserService<DatabaseConnector,DatabaseConnectorFactory> getMasterUsers();
+    public MasterUserService<DatabaseConnector,DatabaseConnectorFactory> getMasterUsers() {
+        return masterUsers;
+    }
 
     // TODO: public MonthlyChargeService<DatabaseConnector,DatabaseConnectorFactory> getMonthlyCharges();
 
