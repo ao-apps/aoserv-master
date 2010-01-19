@@ -28,7 +28,7 @@ final class DatabaseTicketStatusService extends DatabasePublicService<String,Tic
     protected Set<TicketStatus> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
-            "select * from ticket_stati"
+            "select * from ticket_statuses"
         );
     }
 }

@@ -8,6 +8,8 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.AOServConnectorUtils;
 import com.aoindustries.aoserv.client.AOServPermissionService;
+import com.aoindustries.aoserv.client.AOServRolePermissionService;
+import com.aoindustries.aoserv.client.AOServRoleService;
 import com.aoindustries.aoserv.client.AOServService;
 import com.aoindustries.aoserv.client.AOServerDaemonHostService;
 import com.aoindustries.aoserv.client.AOServerResourceService;
@@ -15,8 +17,10 @@ import com.aoindustries.aoserv.client.AOServerService;
 import com.aoindustries.aoserv.client.ArchitectureService;
 import com.aoindustries.aoserv.client.BackupPartitionService;
 import com.aoindustries.aoserv.client.BackupRetentionService;
+import com.aoindustries.aoserv.client.BankTransactionTypeService;
 import com.aoindustries.aoserv.client.BrandService;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
+import com.aoindustries.aoserv.client.BusinessAdministratorRoleService;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
 import com.aoindustries.aoserv.client.BusinessServerService;
 import com.aoindustries.aoserv.client.BusinessService;
@@ -27,7 +31,10 @@ import com.aoindustries.aoserv.client.DnsRecordService;
 import com.aoindustries.aoserv.client.DnsTldService;
 import com.aoindustries.aoserv.client.DnsTypeService;
 import com.aoindustries.aoserv.client.DnsZoneService;
+import com.aoindustries.aoserv.client.EmailAttachmentTypeService;
 import com.aoindustries.aoserv.client.EmailInboxService;
+import com.aoindustries.aoserv.client.EmailSmtpRelayTypeService;
+import com.aoindustries.aoserv.client.EmailSpamAssassinIntegrationModeService;
 import com.aoindustries.aoserv.client.ExpenseCategoryService;
 import com.aoindustries.aoserv.client.FailoverFileLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
@@ -128,26 +135,20 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseAOServerResourceService aoserverResources;
     final DatabaseAOServerService aoservers;
     final DatabaseAOServPermissionService aoservPermissions;
-    /* TODO
-    final DatabaseAOServProtocolService aoservProtocols;
-    final DatabaseAOSHCommandService aoshCommands;
-     */
+    final DatabaseAOServRoleService aoservRoles;
+    final DatabaseAOServRolePermissionService aoservRolePermissions;
     final DatabaseArchitectureService architectures;
     final DatabaseBackupPartitionService backupPartitions;
     final DatabaseBackupRetentionService backupRetentions;
-    /* TODO
-    final DatabaseBankAccountService bankAccounts;
+    // TODO: final DatabaseBankAccountService bankAccounts;
     final DatabaseBankTransactionTypeService bankTransactionTypes;
-    final DatabaseBankTransactionService bankTransactions;
-    final DatabaseBankService banks;
-    final DatabaseBlackholeEmailAddressService blackholeEmailAddresss;
-     */
+    // TODO: final DatabaseBankTransactionService bankTransactions;
+    // TODO: final DatabaseBankService banks;
+    // TODO: final DatabaseBlackholeEmailAddressService blackholeEmailAddresss;
     final DatabaseBrandService brands;
     final DatabaseBusinessAdministratorService businessAdministrators;
-    /* TODO
-    final DatabaseBusinessAdministratorPermissionService businessAdministratorPermissions;
-    final DatabaseBusinessProfileService businessProfiles;
-     */
+    final DatabaseBusinessAdministratorRoleService businessAdministratorRoles;
+    // TODO: final DatabaseBusinessProfileService businessProfiles;
     final DatabaseBusinessService businesses;
     final DatabaseBusinessServerService businessServers;
     final DatabaseCountryCodeService countryCodes;
@@ -166,26 +167,24 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseDnsTldService dnsTlds;
     final DatabaseDnsTypeService dnsTypes;
     final DatabaseDnsZoneService dnsZones;
-    /* TODO
-    final DatabaseEmailAddressService emailAddresss;
-    final DatabaseEmailAttachmentBlockService emailAttachmentBlocks;
+    // TODO: final DatabaseEmailAddressService emailAddresss;
+    // TODO: final DatabaseEmailAttachmentBlockService emailAttachmentBlocks;
     final DatabaseEmailAttachmentTypeService emailAttachmentTypes;
-    final DatabaseEmailDomainService emailDomains;
-    final DatabaseEmailForwardingService emailForwardings;
-     */
+    // TODO: final DatabaseEmailDomainService emailDomains;
+    // TODO: final DatabaseEmailForwardingService emailForwardings;
     final DatabaseEmailInboxService emailInboxes;
     /* TODO
     final DatabaseEmailListAddressService emailListAddresss;
     final DatabaseEmailListService emailLists;
     final DatabaseEmailPipeAddressService emailPipeAddresss;
     final DatabaseEmailPipeService emailPipes;
-    final DatabaseEmailSmtpRelayTypeService emailSmtpRelayTypes;
-    final DatabaseEmailSmtpRelayService emailSmtpRelays;
-    final DatabaseEmailSmtpSmartHostDomainService emailSmtpSmartHostDomains;
-    final DatabaseEmailSmtpSmartHostService emailSmtpSmartHosts;
-    final DatabaseEmailSpamAssassinIntegrationModeService emailSpamAssassinIntegrationModes;
-    final DatabaseEncryptionKeyService encryptionKeys;
      */
+    final DatabaseEmailSmtpRelayTypeService emailSmtpRelayTypes;
+    // TODO: final DatabaseEmailSmtpRelayService emailSmtpRelays;
+    // TODO: final DatabaseEmailSmtpSmartHostDomainService emailSmtpSmartHostDomains;
+    // TODO: final DatabaseEmailSmtpSmartHostService emailSmtpSmartHosts;
+    final DatabaseEmailSpamAssassinIntegrationModeService emailSpamAssassinIntegrationModes;
+    // TODO: final DatabaseEncryptionKeyService encryptionKeys;
     final DatabaseExpenseCategoryService expenseCategories;
     final DatabaseFailoverFileLogService failoverFileLogs;
     final DatabaseFailoverFileReplicationService failoverFileReplications;
@@ -311,26 +310,20 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         aoserverResources = new DatabaseAOServerResourceService(this);
         aoservers = new DatabaseAOServerService(this);
         aoservPermissions = new DatabaseAOServPermissionService(this);
-        /* TODO
-        aoservProtocols = new DatabaseAOServProtocolService(this);
-        aoshCommands = new DatabaseAOSHCommandService(this);
-         */
+        aoservRoles = new DatabaseAOServRoleService(this);
+        aoservRolePermissions = new DatabaseAOServRolePermissionService(this);
         architectures = new DatabaseArchitectureService(this);
         backupPartitions = new DatabaseBackupPartitionService(this);
         backupRetentions = new DatabaseBackupRetentionService(this);
-        /* TODO
-        bankAccounts = new DatabaseBankAccountService(this);
+        // TODO: bankAccounts = new DatabaseBankAccountService(this);
         bankTransactionTypes = new DatabaseBankTransactionTypeService(this);
-        bankTransactions = new DatabaseBankTransactionService(this);
-        banks = new DatabaseBankService(this);
-        blackholeEmailAddresss = new DatabaseBlackholeEmailAddressService(this);
-         */
+        // TODO: bankTransactions = new DatabaseBankTransactionService(this);
+        // TODO: banks = new DatabaseBankService(this);
+        // TODO: blackholeEmailAddresss = new DatabaseBlackholeEmailAddressService(this);
         brands = new DatabaseBrandService(this);
         businessAdministrators = new DatabaseBusinessAdministratorService(this);
-        /* TODO
-        businessAdministratorPermissions = new DatabaseBusinessAdministratorPermissionService(this);
-        businessProfiles = new DatabaseBusinessProfileService(this);
-         */
+        businessAdministratorRoles = new DatabaseBusinessAdministratorRoleService(this);
+        // TODO: businessProfiles = new DatabaseBusinessProfileService(this);
         businesses = new DatabaseBusinessService(this);
         businessServers = new DatabaseBusinessServerService(this);
         countryCodes = new DatabaseCountryCodeService(this);
@@ -349,26 +342,24 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         dnsTlds = new DatabaseDnsTldService(this);
         dnsTypes = new DatabaseDnsTypeService(this);
         dnsZones = new DatabaseDnsZoneService(this);
-        /* TODO
-        emailAddresss = new DatabaseEmailAddressService(this);
-        emailAttachmentBlocks = new DatabaseEmailAttachmentBlockService(this);
+        // TODO: emailAddresss = new DatabaseEmailAddressService(this);
+        // TODO: emailAttachmentBlocks = new DatabaseEmailAttachmentBlockService(this);
         emailAttachmentTypes = new DatabaseEmailAttachmentTypeService(this);
-        emailDomains = new DatabaseEmailDomainService(this);
-        emailForwardings = new DatabaseEmailForwardingService(this);
-         */
+        // TODO: emailDomains = new DatabaseEmailDomainService(this);
+        // TODO: emailForwardings = new DatabaseEmailForwardingService(this);
         emailInboxes = new DatabaseEmailInboxService(this);
         /* TODO
         emailListAddresss = new DatabaseEmailListAddressService(this);
         emailLists = new DatabaseEmailListService(this);
         emailPipeAddresss = new DatabaseEmailPipeAddressService(this);
         emailPipes = new DatabaseEmailPipeService(this);
-        emailSmtpRelayTypes = new DatabaseEmailSmtpRelayTypeService(this);
-        emailSmtpRelays = new DatabaseEmailSmtpRelayService(this);
-        emailSmtpSmartHostDomains = new DatabaseEmailSmtpSmartHostDomainService(this);
-        emailSmtpSmartHosts = new DatabaseEmailSmtpSmartHostService(this);
-        emailSpamAssassinIntegrationModes = new DatabaseEmailSpamAssassinIntegrationModeService(this);
-        encryptionKeys = new DatabaseEncryptionKeyService(this);
          */
+        emailSmtpRelayTypes = new DatabaseEmailSmtpRelayTypeService(this);
+        // TODO: emailSmtpRelays = new DatabaseEmailSmtpRelayService(this);
+        // TODO: emailSmtpSmartHostDomains = new DatabaseEmailSmtpSmartHostDomainService(this);
+        // TODO: emailSmtpSmartHosts = new DatabaseEmailSmtpSmartHostService(this);
+        emailSpamAssassinIntegrationModes = new DatabaseEmailSpamAssassinIntegrationModeService(this);
+        // TODO: encryptionKeys = new DatabaseEncryptionKeyService(this);
         expenseCategories = new DatabaseExpenseCategoryService(this);
         failoverFileLogs = new DatabaseFailoverFileLogService(this);
         failoverFileReplications = new DatabaseFailoverFileReplicationService(this);
@@ -563,11 +554,15 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public AOServPermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservPermissions() {
         return aoservPermissions;
     }
-    /* TODO
-    public AOServProtocolService<DatabaseConnector,DatabaseConnectorFactory> getAoservProtocols();
 
-    public AOSHCommandService<DatabaseConnector,DatabaseConnectorFactory> getAoshCommands();
-    */
+    public AOServRoleService<DatabaseConnector,DatabaseConnectorFactory> getAoservRoles() {
+        return aoservRoles;
+    }
+
+    public AOServRolePermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservRolePermissions() {
+        return aoservRolePermissions;
+    }
+
     public ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> getArchitectures() {
         return architectures;
     }
@@ -579,17 +574,19 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> getBackupRetentions() {
         return backupRetentions;
     }
-    /* TODO
-    public BankAccountService<DatabaseConnector,DatabaseConnectorFactory> getBankAccounts();
 
-    public BankTransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactionTypes();
+    // TODO: public BankAccountService<DatabaseConnector,DatabaseConnectorFactory> getBankAccounts();
 
-    public BankTransactionService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactions();
+    public BankTransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactionTypes() {
+        return bankTransactionTypes;
+    }
 
-    public BankService<DatabaseConnector,DatabaseConnectorFactory> getBanks();
+    // TODO: public BankTransactionService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactions();
 
-    public BlackholeEmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getBlackholeEmailAddresses();
-     */
+    // TODO: public BankService<DatabaseConnector,DatabaseConnectorFactory> getBanks();
+
+    // TODO: public BlackholeEmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getBlackholeEmailAddresses();
+
     public BrandService<DatabaseConnector,DatabaseConnectorFactory> getBrands() {
         return brands;
     }
@@ -597,11 +594,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministrators() {
         return businessAdministrators;
     }
-    /*
-    public BusinessAdministratorPermissionService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministratorPermissions();
 
-    public BusinessProfileService<DatabaseConnector,DatabaseConnectorFactory> getBusinessProfiles();
-     */
+    public BusinessAdministratorRoleService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministratorRoles() {
+        return businessAdministratorRoles;
+    }
+
+    // TODO: public BusinessProfileService<DatabaseConnector,DatabaseConnectorFactory> getBusinessProfiles();
+
     public BusinessService<DatabaseConnector,DatabaseConnectorFactory> getBusinesses() {
         return businesses;
     }
@@ -647,17 +646,19 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public DnsZoneService<DatabaseConnector,DatabaseConnectorFactory> getDnsZones() {
         return dnsZones;
     }
-    /* TODO
-    public EmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailAddresses();
 
-    public EmailAttachmentBlockService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentBlocks();
+    // TODO: public EmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailAddresses();
 
-    public EmailAttachmentTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentTypes();
+    // TODO: public EmailAttachmentBlockService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentBlocks();
 
-    public EmailDomainService<DatabaseConnector,DatabaseConnectorFactory> getEmailDomains();
+    public EmailAttachmentTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentTypes() {
+        return emailAttachmentTypes;
+    }
 
-    public EmailForwardingService<DatabaseConnector,DatabaseConnectorFactory> getEmailForwardings();
-     */
+    // TODO: public EmailDomainService<DatabaseConnector,DatabaseConnectorFactory> getEmailDomains();
+
+    // TODO: public EmailForwardingService<DatabaseConnector,DatabaseConnectorFactory> getEmailForwardings();
+
     public EmailInboxService<DatabaseConnector,DatabaseConnectorFactory> getEmailInboxes() {
         return emailInboxes;
     }
@@ -669,19 +670,23 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public EmailPipeAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailPipeAddresses();
 
     public EmailPipeService<DatabaseConnector,DatabaseConnectorFactory> getEmailPipes();
-
-    public EmailSmtpRelayTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpRelayTypes();
-
-    public EmailSmtpRelayService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpRelays();
-
-    public EmailSmtpSmartHostDomainService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpSmartHostDomains();
-
-    public EmailSmtpSmartHostService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpSmartHosts();
-
-    public EmailSpamAssassinIntegrationModeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSpamAssassinIntegrationModes();
-
-    public EncryptionKeyService<DatabaseConnector,DatabaseConnectorFactory> getEncryptionKeys();
     */
+    public EmailSmtpRelayTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpRelayTypes() {
+        return emailSmtpRelayTypes;
+    }
+
+    // TODO: public EmailSmtpRelayService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpRelays();
+
+    // TODO: public EmailSmtpSmartHostDomainService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpSmartHostDomains();
+
+    // TODO: public EmailSmtpSmartHostService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpSmartHosts();
+
+    public EmailSpamAssassinIntegrationModeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSpamAssassinIntegrationModes() {
+        return emailSpamAssassinIntegrationModes;
+    }
+
+    // TODO: public EncryptionKeyService<DatabaseConnector,DatabaseConnectorFactory> getEncryptionKeys();
+
     public ExpenseCategoryService<DatabaseConnector,DatabaseConnectorFactory> getExpenseCategories() {
         return expenseCategories;
     }

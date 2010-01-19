@@ -310,7 +310,7 @@ final public class FailoverHandler implements CronJob {
 
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         try {
-            MasterDatabase.getDatabase().executeUpdate("delete from failover_file_log where end_time <= (now()-'1 year'::interval)");
+            MasterDatabase.getDatabase().executeUpdate("delete from failover_file_log where end_time <= (now()-'7 days'::interval)");
         } catch(ThreadDeath TD) {
             throw TD;
         } catch(Throwable T) {

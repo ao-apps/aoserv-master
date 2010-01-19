@@ -763,7 +763,7 @@ final public class HttpdHandler {
             }
         } else {
             ipAddress=IPAddressHandler.getSharedHttpdIP(conn, aoServer, isTomcat4);
-            if(ipAddress==-1) throw new SQLException("Unable to find shared IP address for AOServer #"+aoServer);
+            if(ipAddress==-1) throw new NoSuchElementException("Unable to find shared IP address for AOServer #"+aoServer);
         }
 
         BusinessHandler.checkBusinessAccessServer(conn, source, methodName, accounting, aoServer);
@@ -771,9 +771,9 @@ final public class HttpdHandler {
         int httpPort = 80;
         int httpdSitePKey;
 
-        List<String> tlds=DNSHandler.getDNSTLDs(conn);
+        List<String> tlds=DNSHandler.getDnsTlds(conn);
         String testURL = siteName+"."+ServerHandler.getHostnameForAOServer(conn, aoServer);
-        DNSHandler.addDNSRecord(
+        DNSHandler.addDnsRecord(
             conn,
             invalidateList,
             testURL,
@@ -1474,7 +1474,7 @@ final public class HttpdHandler {
         }
 
         // If could not find one, report and error
-        if(goodOne==null) throw new SQLException("Unable to find available shared Tomcat name for template: "+template);
+        if(goodOne==null) throw new NoSuchElementException("Unable to find available shared Tomcat name for template: "+template);
         else return goodOne;
     }
 
@@ -1510,7 +1510,7 @@ final public class HttpdHandler {
         }
 
         // If could not find one, report and error
-        if(goodOne==null) throw new SQLException("Unable to find available site name for template: "+template);
+        if(goodOne==null) throw new NoSuchElementException("Unable to find available site name for template: "+template);
         return goodOne;
     }
 
@@ -2103,7 +2103,7 @@ final public class HttpdHandler {
         // httpd_site_binds
         IntList httpdSiteBinds=conn.executeIntListQuery("select pkey from httpd_site_binds where httpd_site=?", httpdSitePKey);
         if(httpdSiteBinds.size()>0) {
-            List<String> tlds=DNSHandler.getDNSTLDs(conn);
+            List<String> tlds=DNSHandler.getDnsTlds(conn);
             SortedIntArrayList httpdBinds=new SortedIntArrayList();
             for(int c=0;c<httpdSiteBinds.size();c++) {
                 int httpdSiteBind=httpdSiteBinds.getInt(c);
@@ -2117,7 +2117,7 @@ final public class HttpdHandler {
                     String hostname=conn.executeStringQuery("select hostname from httpd_site_urls where pkey=?", httpdSiteURL);
                     conn.executeUpdate("delete from httpd_site_urls where pkey=?", httpdSiteURL);
                     invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_URLS, accounting, aoServer, false);
-                    DNSHandler.removeUnusedDNSRecord(conn, invalidateList, hostname, tlds);
+                    DNSHandler.removeUnusedDnsRecord(conn, invalidateList, hostname, tlds);
                 }
 
                 int hb=conn.executeIntQuery("select httpd_bind from httpd_site_binds where pkey=?", httpdSiteBind);

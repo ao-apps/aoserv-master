@@ -986,7 +986,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             status,
             pkey
         );
-        if(updated!=1) throw new SQLException("Unable to find credit_card_transactions with pkey="+pkey+" and status='PROCESSING'");
+        if(updated!=1) throw new NoSuchElementException("Unable to find credit_card_transactions with pkey="+pkey+" and status='PROCESSING'");
 
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
@@ -1113,7 +1113,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             status,
             pkey
         );
-        if(updated!=1) throw new SQLException("Unable to find credit_card_transactions with pkey="+pkey+" and status='PROCESSING'");
+        if(updated!=1) throw new NoSuchElementException("Unable to find credit_card_transactions with pkey="+pkey+" and status='PROCESSING'");
 
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);

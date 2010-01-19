@@ -111,6 +111,7 @@ final public class MySQLHandler {
         BusinessHandler.checkAccessBusiness(conn, source, "addMySQLDatabase", accounting);
 
         // Add the entry to the database
+        // TODO: Add resource
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_databases_pkey_seq')");
         conn.executeUpdate(
             "insert into\n"
@@ -230,9 +231,10 @@ final public class MySQLHandler {
         UsernameHandler.checkUsernameAccessServer(conn, source, "addMySQLUser", username, aoServer);
 
         Boolean isRoot = username.equals(MySQLUser.ROOT);
+        // TODO: resources, ao_server_resources, then mysql_users
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_users_pkey_seq')");
         conn.executeUpdate(
-            "insert into mysql_users values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null,?,?,?,?)",
+            "insert into mysql_users values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,?,?,?,?)",
             pkey,
             username,
             mysqlServer,
@@ -294,8 +296,9 @@ final public class MySQLHandler {
         BusinessHandler.checkAccessDisableLog(conn, source, "disableMySQLUser", disableLog, false);
         checkAccessMySQLUser(conn, source, "disableMySQLUser", pkey);
 
+        // TODO: Moved to resources table
         conn.executeUpdate(
-            "update mysql_users set disable_log=? where pkey=?",
+            "update mysql_users set disable_log=? where ao_server_resource=?",
             disableLog,
             pkey
         );
@@ -340,6 +343,7 @@ final public class MySQLHandler {
         UsernameHandler.checkAccessUsername(conn, source, "enableMySQLUser", username);
         if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable MySQLUser "+pkey+", Username not enabled: "+username);
 
+        // TODO: Moved to resources table
         conn.executeUpdate(
             "update mysql_users set disable_log=null where pkey=?",
             pkey
@@ -366,7 +370,7 @@ final public class MySQLHandler {
         List<String> reservedWords=getReservedWords(conn);
 
         // Load the entire list of mysql database names
-        List<String> names=conn.executeStringListQuery("select name from mysql_databases group by name");
+        List<String> names=conn.executeStringListQuery("select distinct name from mysql_databases");
         int size=names.size();
 
         // Sort them
@@ -386,7 +390,7 @@ final public class MySQLHandler {
         }
 
         // If could not find one, report and error
-        if(goodOne==null) throw new SQLException("Unable to find available MySQL database name for template_base="+template_base+" and template_added="+template_added);
+        if(goodOne==null) throw new NoSuchElementException("Unable to find available MySQL database name for template_base="+template_base+" and template_added="+template_added);
         return goodOne;
     }
 
@@ -402,16 +406,17 @@ final public class MySQLHandler {
         }
     }
 
+    // TODO: Moved to resources table
     public static int getDisableLogForMySQLUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql_users where pkey=?", pkey);
     }
 
-    public static String getUsernameForMySQLUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select username from mysql_users where pkey=?", pkey);
+    public static String getUsernameForMySQLUser(DatabaseConnection conn, int ao_server_resource) throws IOException, SQLException {
+        return conn.executeStringQuery("select username from mysql_users where ao_server_resource=?", ao_server_resource);
     }
 
-    public static String getMySQLDatabaseName(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select name from mysql_databases where pkey=?", pkey);
+    public static String getMySQLDatabaseName(DatabaseConnection conn, int ao_server_resource) throws IOException, SQLException {
+        return conn.executeStringQuery("select name from mysql_databases where ao_server_resource=?", ao_server_resource);
     }
 
     public static void invalidateTable(SchemaTable.TableID tableID) {
@@ -466,7 +471,7 @@ final public class MySQLHandler {
     ) throws IOException, SQLException {
         int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
         ServerHandler.checkAccessServer(conn, source, "isMySQLDatabaseNameAvailable", aoServer);
-        return conn.executeBooleanQuery("select (select pkey from mysql_databases where name=? and mysql_server=?) is null", name, mysqlServer);
+        return conn.executeBooleanQuery("select (select ao_server_resource from mysql_databases where name=? and mysql_server=?) is null", name, mysqlServer);
     }
 
     public static boolean isMySQLUserPasswordSet(
@@ -519,7 +524,7 @@ final public class MySQLHandler {
             + "  usernames un\n"
             + "where\n"
             + "  mdu.mysql_database=?\n"
-            + "  and mdu.mysql_user=mu.pkey\n"
+            + "  and mdu.mysql_user=mu.ao_server_resource\n"
             + "  and mu.username=un.username\n"
             + "group by\n"
             + "  un.accounting",
@@ -531,7 +536,7 @@ final public class MySQLHandler {
         String accounting=getBusinessForMySQLDatabase(conn, pkey);
         int mysqlServer=getMySQLServerForMySQLDatabase(conn, pkey);
         int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-        conn.executeUpdate("delete from mysql_databases where pkey=?", pkey);
+        conn.executeUpdate("delete from mysql_databases where ao_server_resource=?", ao_server_resource);
 
         // Notify all clients of the update
         invalidateList.addTable(
@@ -617,7 +622,8 @@ final public class MySQLHandler {
         }
 
         // Remove the mysql_user
-        conn.executeUpdate("delete from mysql_users where pkey=?", pkey);
+        // TODO: Remove from ao_server_resources, resources
+        conn.executeUpdate("delete from mysql_users where ao_server_resource=?", ao_server_resource);
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.MYSQL_USERS,
@@ -675,9 +681,9 @@ final public class MySQLHandler {
 
         // Update the database
         conn.executeUpdate(
-            "update mysql_users set predisable_password=? where pkey=?",
+            "update mysql_users set predisable_password=? where ao_server_resource=?",
             password,
-            pkey
+            ao_server_resource
         );
 
         invalidateList.addTable(
@@ -728,46 +734,34 @@ final public class MySQLHandler {
         DaemonHandler.getDaemonConnector(conn, aoServer).waitForMySQLUserRebuild();
     }
 
-    public static String getBusinessForMySQLDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select accounting from mysql_databases where pkey=?", pkey);
+    public static String getBusinessForMySQLDatabase(DatabaseConnection conn, int ao_server_resource) throws IOException, SQLException {
+        return conn.executeStringQuery("select accounting from mysql_databases where ao_server_resource=?", ao_server_resource);
     }
 
     public static String getBusinessForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery(
             "select\n"
-            + "  un.accounting\n"
+            + "  mu.accounting\n"
             + "from\n"
             + "  mysql_db_users mdu,\n"
-            + "  mysql_users mu,\n"
-            + "  usernames un\n"
+            + "  mysql_users mu\n"
             + "where\n"
             + "  mdu.pkey=?\n"
-            + "  and mdu.mysql_user=mu.pkey\n"
-            + "  and mu.username=un.username",
+            + "  and mdu.mysql_user=mu.ao_server_resource",
             pkey
         );
     }
 
-    public static String getBusinessForMySQLUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery(
-            "select\n"
-            + "  un.accounting\n"
-            + "from\n"
-            + "  mysql_users mu,\n"
-            + "  usernames un\n"
-            + "where\n"
-            + "  mu.username=un.username\n"
-            + "  and mu.pkey=?",
-            pkey
-        );
+    public static String getBusinessForMySQLUser(DatabaseConnection conn, int ao_server_resource) throws IOException, SQLException {
+        return conn.executeStringQuery("select accounting from mysql_users where mu.ao_server_resource=?", ao_server_resource);
     }
 
     public static IntList getMySQLUsersForUsername(DatabaseConnection conn, String username) throws IOException, SQLException {
-        return conn.executeIntListQuery("select pkey from mysql_users where username=?", username);
+        return conn.executeIntListQuery("select ao_server_resource from mysql_users where username=?", username);
     }
 
-    public static int getMySQLServerForMySQLDatabase(DatabaseConnection conn, int mysql_database) throws IOException, SQLException {
-        return conn.executeIntQuery("select mysql_server from mysql_databases where pkey=?", mysql_database);
+    public static int getMySQLServerForMySQLDatabase(DatabaseConnection conn, int ao_server_resource) throws IOException, SQLException {
+        return conn.executeIntQuery("select mysql_server from mysql_databases where ao_server_resource=?", ao_server_resource);
     }
 
     public static int getAOServerForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
@@ -798,8 +792,8 @@ final public class MySQLHandler {
         return conn.executeIntQuery("select mysql_user from mysql_db_users where pkey=?", pkey);
     }
 
-    public static int getMySQLServerForMySQLUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeIntQuery("select mysql_server from mysql_users where pkey=?", pkey);
+    public static int getMySQLServerForMySQLUser(DatabaseConnection conn, int ao_server_resource) throws IOException, SQLException {
+        return conn.executeIntQuery("select mysql_server from mysql_users where ao_server_resource=?", ao_server_resource);
     }
 
     public static void restartMySQL(

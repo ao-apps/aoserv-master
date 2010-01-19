@@ -17,16 +17,16 @@ import java.sql.*;
  */
 final public class FTPHandler {
 
-    public static void addFTPGuestUser(
+    public static void addFtpGuestUser(
         DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
         String username
     ) throws IOException, SQLException {
-        LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "addFTPGuestUser", username);
+        LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "addFtpGuestUser", username);
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add FTP guest user for mail");
 
-        if(LinuxAccountHandler.isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to add FTPGuestUser, LinuxAccount disabled: "+username);
+        if(LinuxAccountHandler.isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to add FtpGuestUser, LinuxAccount disabled: "+username);
 
         // FTP Guest Users may only be added to user and ftponly accounts
         String type=LinuxAccountHandler.getTypeForLinuxAccount(conn, username);
@@ -47,14 +47,14 @@ final public class FTPHandler {
         );
     }
 
-    public static void removeFTPGuestUser(
+    public static void removeFtpGuestUser(
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
         String username
     ) throws IOException, SQLException {
-        LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "removeFTPGuestUser", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove FTPGuestUser for user '"+LinuxAccount.MAIL+'\'');
+        LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "removeFtpGuestUser", username);
+        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove FtpGuestUser for user '"+LinuxAccount.MAIL+'\'');
 
         conn.executeUpdate("delete from ftp_guest_users where username=?", username);
 
@@ -68,7 +68,7 @@ final public class FTPHandler {
         );
     }
 
-    public static void removePrivateFTPServer(
+    public static void removePrivateFtpServer(
         DatabaseConnection conn,
         InvalidateList invalidateList,
         int net_bind

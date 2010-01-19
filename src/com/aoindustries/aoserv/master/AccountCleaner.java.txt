@@ -266,7 +266,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<dzs.size();c++) {
-                        DNSHandler.removeDNSZone(conn, invalidateList, dzs.get(c));
+                        DNSHandler.removeDnsZone(conn, invalidateList, dzs.get(c));
                     }
                 }
 
@@ -446,7 +446,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<pfss.size();c++) {
-                        FTPHandler.removePrivateFTPServer(conn, invalidateList, pfss.getInt(c));
+                        FTPHandler.removePrivateFtpServer(conn, invalidateList, pfss.getInt(c));
                     }
                 }
 
@@ -571,18 +571,21 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
+                // TODO: Handle this at a more generalized resource/dependency level
                 // mysql_databases
                 {
                     IntList mds=conn.executeIntListQuery(
                         Connection.TRANSACTION_READ_COMMITTED,
                         true,
                         "select\n"
-                        + "  md.pkey\n"
+                        + "  md.ao_server_resource\n"
                         + "from\n"
                         + "  mysql_databases md,\n"
+                        + "  ao_server_resources aor,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  md.accounting=bu.accounting\n"
+                        + "  md.ao_server_resource=aor.resource\n"
+                        + "  and aor.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -596,14 +599,12 @@ final public class AccountCleaner implements CronJob {
                 {
                     List<Integer> mus=conn.executeIntListQuery(
                         "select\n"
-                        + "  mu.pkey\n"
+                        + "  mu.ao_server_resource\n"
                         + "from\n"
                         + "  mysql_users mu,\n"
-                        + "  usernames un,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  mu.username=un.username\n"
-                        + "  and un.accounting=bu.accounting\n"
+                        + "  mu.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
@@ -709,7 +710,8 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select hs.pkey from httpd_sites hs where hs.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select la.username from linux_accounts la where la.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select lsa.pkey from linux_server_accounts lsa where lsa.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select mu.pkey from mysql_users mu where mu.disable_log=dl.pkey limit 1) is null\n"
+                        // TODO: Will use other dependency code - no need to maintain this old code
+                        + "  and (select mu.ao_server_resource from mysql_users mu where mu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select psu.pkey from postgres_server_users psu where psu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select pu.username from postgres_users pu where pu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select un.username from usernames un where un.disable_log=dl.pkey limit 1) is null",

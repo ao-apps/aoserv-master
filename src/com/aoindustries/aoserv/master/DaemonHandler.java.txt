@@ -76,7 +76,7 @@ final public class DaemonHandler {
             + "  and nb.ip_address=ia.pkey",
             aoServer
         );
-        if(ip==null) throw new SQLException("Unable to find daemon IP address for AOServer: "+aoServer);
+        if(ip==null) throw new NoSuchElementException("Unable to find daemon IP address for AOServer: "+aoServer);
         if(ip.equals(IPAddress.WILDCARD_IP)) {
             ip=database.executeStringQuery(
                 "select\n"
@@ -98,7 +98,7 @@ final public class DaemonHandler {
                 + "limit 1",
                 aoServer
             );
-            if(ip==null) throw new SQLException("Unable to find daemon IP address for AOServer: "+aoServer);
+            if(ip==null) throw new NoSuchElementException("Unable to find daemon IP address for AOServer: "+aoServer);
         }
         return ip;
     }

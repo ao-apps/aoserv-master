@@ -1546,13 +1546,6 @@ final public class TicketHandler /*implements Runnable*/ {
     }*/
     // </editor-fold>
     // <editor-fold desc="Internal Master Data Access">
-    /**
-     * A ticket administrator is part of a business that is also a reseller.
-     */
-    public static boolean isTicketAdmin(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-        return conn.executeBooleanQuery("select (select accounting from resellers where accounting=?) is not null", UsernameHandler.getBusinessForUsername(conn, source.getUsername()));
-    }
-
     public static String getBusinessForTicket(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeStringQuery("select accounting from tickets where pkey=?", pkey);
     }

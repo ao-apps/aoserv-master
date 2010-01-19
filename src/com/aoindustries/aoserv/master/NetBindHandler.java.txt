@@ -44,7 +44,7 @@ final public class NetBindHandler {
     ) throws IOException, SQLException {
         if(
             conn.executeBooleanQuery("select (select protocol from protocols where protocol=?) is null", appProtocol)
-        ) throw new SQLException("Unable to find in table protocols: "+appProtocol);
+        ) throw new NoSuchElementException("Unable to find in table protocols: "+appProtocol);
 
         MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
         if(mu==null) {

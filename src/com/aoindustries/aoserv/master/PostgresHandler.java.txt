@@ -416,7 +416,7 @@ final public class PostgresHandler {
         }
 
         // If could not find one, report and error
-        if(goodOne==null) throw new SQLException("Unable to find available PostgreSQL database name for template_base="+template_base+" and template_added="+template_added);
+        if(goodOne==null) throw new NoSuchElementException("Unable to find available PostgreSQL database name for template_base="+template_base+" and template_added="+template_added);
         return goodOne;
     }
 

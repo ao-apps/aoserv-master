@@ -896,7 +896,7 @@ final public class BusinessHandler {
         }
 
         // If could not find one, report and error
-        if(goodOne==null) throw new SQLException("Unable to find available accounting code for template: "+template);
+        if(goodOne==null) throw new NoSuchElementException("Unable to find available accounting code for template: "+template);
 
         // Write the one we found
         return goodOne;
@@ -1190,14 +1190,12 @@ final public class BusinessHandler {
                 "select\n"
                 + "  (\n"
                 + "    select\n"
-                + "      md.pkey\n"
+                + "      ao_server_resource\n"
                 + "    from\n"
-                + "      mysql_databases md,\n"
-                + "      mysql_servers ms\n"
+                + "      mysql_databases\n"
                 + "    where\n"
-                + "      md.accounting=?\n"
-                + "      and md.mysql_server=ms.pkey\n"
-                + "      and ms.ao_server=?\n"
+                + "      accounting=?\n"
+                + "      and ao_server=?\n"
                 + "    limit 1\n"
                 + "  )\n"
                 + "  is not null\n",
@@ -1215,16 +1213,12 @@ final public class BusinessHandler {
                 "select\n"
                 + "  (\n"
                 + "    select\n"
-                + "      mu.pkey\n"
+                + "      ao_server_resource\n"
                 + "    from\n"
-                + "      usernames un,\n"
-                + "      mysql_users mu,\n"
-                + "      mysql_servers ms\n"
+                + "      mysql_users\n"
                 + "    where\n"
-                + "      un.accounting=?\n"
-                + "      and un.username=mu.username\n"
-                + "      and mu.mysql_server=ms.pkey\n"
-                + "      and ms.ao_server=?\n"
+                + "      accounting=?\n"
+                + "      and ao_server=?\n"
                 + "    limit 1\n"
                 + "  )\n"
                 + "  is not null\n",
@@ -1648,24 +1642,6 @@ final public class BusinessHandler {
 
     public static boolean isBusinessOrParent(DatabaseConnection conn, String parentAccounting, String accounting) throws IOException, SQLException {
         return conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select is_business_or_parent(?,?)", parentAccounting, accounting);
-    }
-
-    public static boolean canSwitchUser(DatabaseConnection conn, String authenticatedAs, String connectAs) throws IOException, SQLException {
-        String authAccounting=UsernameHandler.getBusinessForUsername(conn, authenticatedAs);
-        String connectAccounting=UsernameHandler.getBusinessForUsername(conn, connectAs);
-        // Cannot switch within same business
-        if(authAccounting.equals(connectAccounting)) return false;
-        return conn.executeBooleanQuery(
-            Connection.TRANSACTION_READ_COMMITTED,
-            true,
-            true,
-            "select\n"
-            + "  (select can_switch_users from business_administrators where username=?)\n"
-            + "  and is_business_or_parent(?,?)",
-            authenticatedAs,
-            authAccounting,
-            connectAccounting
-        );
     }
 
     /**

@@ -348,7 +348,7 @@ final public class LinuxAccountHandler {
         // The primary group for this user must exist on this server
         String primaryGroup=getPrimaryLinuxGroup(conn, username);
         int primaryLSG=getLinuxServerGroup(conn, primaryGroup, aoServer);
-        if(primaryLSG<0) throw new SQLException("Unable to find primary Linux group '"+primaryGroup+"' on AOServer #"+aoServer+" for Linux account '"+username+"'");
+        if(primaryLSG<0) throw new NoSuchElementException("Unable to find primary Linux group '"+primaryGroup+"' on AOServer #"+aoServer+" for Linux account '"+username+"'");
 
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('linux_server_accounts_pkey_seq')");
         // Now allocating unique to entire system for server portability between farms
@@ -856,7 +856,7 @@ final public class LinuxAccountHandler {
 
     public static int getLinuxServerGroup(DatabaseConnection conn, String group, int aoServer) throws IOException, SQLException {
         int pkey=conn.executeIntQuery("select coalesce((select pkey from linux_server_groups where name=? and ao_server=?), -1)", group, aoServer);
-        if(pkey==-1) throw new SQLException("Unable to find LinuxServerGroup "+group+" on "+aoServer);
+        if(pkey==-1) throw new NoSuchElementException("Unable to find LinuxServerGroup "+group+" on "+aoServer);
         return pkey;
     }
 
@@ -1859,7 +1859,7 @@ final public class LinuxAccountHandler {
             username,
             aoServer
         );
-        if(pkey==-1) throw new SQLException("Unable to find LinuxServerAccount for "+username+" on "+aoServer);
+        if(pkey==-1) throw new NoSuchElementException("Unable to find LinuxServerAccount for "+username+" on "+aoServer);
         return pkey;
     }
 
