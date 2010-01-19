@@ -28,6 +28,7 @@ import com.aoindustries.aoserv.client.DnsTldService;
 import com.aoindustries.aoserv.client.DnsTypeService;
 import com.aoindustries.aoserv.client.DnsZoneService;
 import com.aoindustries.aoserv.client.EmailInboxService;
+import com.aoindustries.aoserv.client.ExpenseCategoryService;
 import com.aoindustries.aoserv.client.FailoverFileLogService;
 import com.aoindustries.aoserv.client.FailoverFileReplicationService;
 import com.aoindustries.aoserv.client.FailoverFileScheduleService;
@@ -35,8 +36,12 @@ import com.aoindustries.aoserv.client.FailoverMySQLReplicationService;
 import com.aoindustries.aoserv.client.FileBackupSettingService;
 import com.aoindustries.aoserv.client.FtpGuestUserService;
 import com.aoindustries.aoserv.client.GroupNameService;
+import com.aoindustries.aoserv.client.HttpdJBossVersionService;
+import com.aoindustries.aoserv.client.HttpdJKCodeService;
+import com.aoindustries.aoserv.client.HttpdJKProtocolService;
 import com.aoindustries.aoserv.client.HttpdServerService;
 import com.aoindustries.aoserv.client.HttpdSiteService;
+import com.aoindustries.aoserv.client.HttpdTomcatVersionService;
 import com.aoindustries.aoserv.client.IPAddressService;
 import com.aoindustries.aoserv.client.LanguageService;
 import com.aoindustries.aoserv.client.LinuxAccountGroupService;
@@ -44,6 +49,7 @@ import com.aoindustries.aoserv.client.LinuxAccountService;
 import com.aoindustries.aoserv.client.LinuxAccountTypeService;
 import com.aoindustries.aoserv.client.LinuxGroupService;
 import com.aoindustries.aoserv.client.LinuxGroupTypeService;
+import com.aoindustries.aoserv.client.MajordomoVersionService;
 import com.aoindustries.aoserv.client.MasterHostService;
 import com.aoindustries.aoserv.client.MasterServerService;
 import com.aoindustries.aoserv.client.MasterUserService;
@@ -56,14 +62,18 @@ import com.aoindustries.aoserv.client.NetDeviceIDService;
 import com.aoindustries.aoserv.client.NetDeviceService;
 import com.aoindustries.aoserv.client.NetProtocolService;
 import com.aoindustries.aoserv.client.NetTcpRedirectService;
+import com.aoindustries.aoserv.client.NoticeTypeService;
 import com.aoindustries.aoserv.client.OperatingSystemService;
 import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
+import com.aoindustries.aoserv.client.PaymentTypeService;
 import com.aoindustries.aoserv.client.PostgresDatabaseService;
 import com.aoindustries.aoserv.client.PostgresEncodingService;
 import com.aoindustries.aoserv.client.PostgresServerService;
 import com.aoindustries.aoserv.client.PostgresUserService;
 import com.aoindustries.aoserv.client.PostgresVersionService;
+import com.aoindustries.aoserv.client.PrivateFtpServerService;
+import com.aoindustries.aoserv.client.ProcessorTypeService;
 import com.aoindustries.aoserv.client.ProtocolService;
 import com.aoindustries.aoserv.client.ResellerService;
 import com.aoindustries.aoserv.client.ResourceService;
@@ -77,6 +87,7 @@ import com.aoindustries.aoserv.client.TechnologyClassService;
 import com.aoindustries.aoserv.client.TechnologyNameService;
 import com.aoindustries.aoserv.client.TechnologyService;
 import com.aoindustries.aoserv.client.TechnologyVersionService;
+import com.aoindustries.aoserv.client.TicketActionTypeService;
 import com.aoindustries.aoserv.client.TicketAssignmentService;
 import com.aoindustries.aoserv.client.TicketCategoryService;
 import com.aoindustries.aoserv.client.TicketPriorityService;
@@ -84,6 +95,7 @@ import com.aoindustries.aoserv.client.TicketService;
 import com.aoindustries.aoserv.client.TicketStatusService;
 import com.aoindustries.aoserv.client.TicketTypeService;
 import com.aoindustries.aoserv.client.TimeZoneService;
+import com.aoindustries.aoserv.client.TransactionTypeService;
 import com.aoindustries.aoserv.client.UsernameService;
 import com.aoindustries.aoserv.client.command.AOServCommand;
 import com.aoindustries.aoserv.client.validator.UserId;
@@ -173,8 +185,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseEmailSmtpSmartHostService emailSmtpSmartHosts;
     final DatabaseEmailSpamAssassinIntegrationModeService emailSpamAssassinIntegrationModes;
     final DatabaseEncryptionKeyService encryptionKeys;
-    final DatabaseExpenseCategoryService expenseCategories;
      */
+    final DatabaseExpenseCategoryService expenseCategories;
     final DatabaseFailoverFileLogService failoverFileLogs;
     final DatabaseFailoverFileReplicationService failoverFileReplications;
     final DatabaseFailoverFileScheduleService failoverFileSchedules;
@@ -182,13 +194,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseFileBackupSettingService fileBackupSettings;
     final DatabaseFtpGuestUserService ftpGuestUsers;
     final DatabaseGroupNameService groupNames;
-    /* TODO
-    final DatabaseHttpdBindService httpdBinds;
-    final DatabaseHttpdJBossSiteService httpdJBossSites;
+    // TODO: final DatabaseHttpdBindService httpdBinds;
+    // TODO: final DatabaseHttpdJBossSiteService httpdJBossSites;
     final DatabaseHttpdJBossVersionService httpdJBossVersions;
     final DatabaseHttpdJKCodeService httpdJKCodes;
     final DatabaseHttpdJKProtocolService httpdJKProtocols;
-     */
     final DatabaseHttpdServerService httpdServers;
     /* TODO
     final DatabaseHttpdSharedTomcatService httpdSharedTomcats;
@@ -197,17 +207,15 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseHttpdSiteURLService httpdSiteURLs;
      */
     final DatabaseHttpdSiteService httpdSites;
-    /* TODO
-    final DatabaseHttpdStaticSiteService httpdStaticSites;
-    final DatabaseHttpdTomcatContextService httpdTomcatContexts;
-    final DatabaseHttpdTomcatDataSourceService httpdTomcatDataSources;
-    final DatabaseHttpdTomcatParameterService httpdTomcatParameters;
-    final DatabaseHttpdTomcatSiteService httpdTomcatSites;
-    final DatabaseHttpdTomcatSharedSiteService httpdTomcatSharedSites;
-    final DatabaseHttpdTomcatStdSiteService httpdTomcatStdSites;
+    // TODO: final DatabaseHttpdStaticSiteService httpdStaticSites;
+    // TODO: final DatabaseHttpdTomcatContextService httpdTomcatContexts;
+    // TODO: final DatabaseHttpdTomcatDataSourceService httpdTomcatDataSources;
+    // TODO: final DatabaseHttpdTomcatParameterService httpdTomcatParameters;
+    // TODO: final DatabaseHttpdTomcatSiteService httpdTomcatSites;
+    // TODO: final DatabaseHttpdTomcatSharedSiteService httpdTomcatSharedSites;
+    // TODO: final DatabaseHttpdTomcatStdSiteService httpdTomcatStdSites;
     final DatabaseHttpdTomcatVersionService httpdTomcatVersions;
-    final DatabaseHttpdWorkerService httpdWorkers;
-    */
+    // TODO: final DatabaseHttpdWorkerService httpdWorkers;
     final DatabaseIPAddressService ipAddresses;
     final DatabaseLanguageService languages;
     // TODO: final DatabaseLinuxAccAddressService linuxAccAddresss;
@@ -218,7 +226,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseLinuxGroupService linuxGroups;
     // TODO: final DatabaseMajordomoListService majordomoLists;
     // TODO: final DatabaseMajordomoServerService majordomoServers;
-    // TODO: final DatabaseMajordomoVersionService majordomoVersions;
+    final DatabaseMajordomoVersionService majordomoVersions;
     final DatabaseMasterHostService masterHosts;
     final DatabaseMasterServerService masterServers;
     final DatabaseMasterUserService masterUsers;
@@ -232,26 +240,22 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseNetDeviceService netDevices;
     final DatabaseNetProtocolService netProtocols;
     final DatabaseNetTcpRedirectService netTcpRedirects;
-    /* TODO
-    final DatabaseNoticeLogService noticeLogs;
+    // TODO: final DatabaseNoticeLogService noticeLogs;
     final DatabaseNoticeTypeService noticeTypes;
-    */
     final DatabaseOperatingSystemVersionService operatingSystemVersions;
     final DatabaseOperatingSystemService operatingSystems;
     final DatabasePackageCategoryService packageCategories;
-    /* TODO
-    final DatabasePackageDefinitionLimitService packageDefinitionLimits;
-    final DatabasePackageDefinitionService packageDefinitions;
-    final DatabasePaymentTypeService paymentTypes;
-    final DatabasePhysicalServerService physicalServers;
-     */
+    // TODO: final DatabasePackageDefinitionLimitService packageDefinitionLimits;
+    // TODO: final DatabasePackageDefinitionService packageDefinitions;
+    DatabasePaymentTypeService paymentTypes;
+    // TODO: final DatabasePhysicalServerService physicalServers;
     final DatabasePostgresDatabaseService postgresDatabases;
     final DatabasePostgresEncodingService postgresEncodings;
     final DatabasePostgresServerService postgresServers;
     final DatabasePostgresUserService postgresUsers;
     final DatabasePostgresVersionService postgresVersions;
-    // TODO: final DatabasePrivateFTPServerService privateFTPServers;
-    // TODO: final DatabaseProcessorTypeService processorTypes;
+    final DatabasePrivateFtpServerService privateFtpServers;
+    final DatabaseProcessorTypeService processorTypes;
     final DatabaseProtocolService protocols;
     /* TODO
     final DatabaseRackService racks;
@@ -273,8 +277,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseTechnologyClassService technologyClasses;
     final DatabaseTechnologyNameService technologyNames;
     final DatabaseTechnologyVersionService technologyVersions;
-    /* TODO
     final DatabaseTicketActionTypeService ticketActionTypes;
+    /* TODO
     final DatabaseTicketActionService ticketActions;
     */
     final DatabaseTicketAssignmentService ticketAssignments;
@@ -285,8 +289,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseTicketTypeService ticketTypes;
     final DatabaseTicketService tickets;
     final DatabaseTimeZoneService timeZones;
-    /* TODO
     final DatabaseTransactionTypeService transactionTypes;
+    /* TODO
     final DatabaseTransactionService transactions;
     final DatabaseUSStateService usStates;
      */
@@ -364,8 +368,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         emailSmtpSmartHosts = new DatabaseEmailSmtpSmartHostService(this);
         emailSpamAssassinIntegrationModes = new DatabaseEmailSpamAssassinIntegrationModeService(this);
         encryptionKeys = new DatabaseEncryptionKeyService(this);
-        expenseCategories = new DatabaseExpenseCategoryService(this);
          */
+        expenseCategories = new DatabaseExpenseCategoryService(this);
         failoverFileLogs = new DatabaseFailoverFileLogService(this);
         failoverFileReplications = new DatabaseFailoverFileReplicationService(this);
         failoverFileSchedules = new DatabaseFailoverFileScheduleService(this);
@@ -373,13 +377,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         fileBackupSettings = new DatabaseFileBackupSettingService(this);
         ftpGuestUsers = new DatabaseFtpGuestUserService(this);
         groupNames = new DatabaseGroupNameService(this);
-        /* TODO
-        httpdBinds = new DatabaseHttpdBindService(this);
-        httpdJBossSites = new DatabaseHttpdJBossSiteService(this);
+        // TODO: httpdBinds = new DatabaseHttpdBindService(this);
+        // TODO: httpdJBossSites = new DatabaseHttpdJBossSiteService(this);
         httpdJBossVersions = new DatabaseHttpdJBossVersionService(this);
         httpdJKCodes = new DatabaseHttpdJKCodeService(this);
         httpdJKProtocols = new DatabaseHttpdJKProtocolService(this);
-         */
         httpdServers = new DatabaseHttpdServerService(this);
         /* TODO
         httpdSharedTomcats = new DatabaseHttpdSharedTomcatService(this);
@@ -388,17 +390,15 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         httpdSiteURLs = new DatabaseHttpdSiteURLService(this);
          */
         httpdSites = new DatabaseHttpdSiteService(this);
-        /* TODO
-        httpdStaticSites = new DatabaseHttpdStaticSiteService(this);
-        httpdTomcatContexts = new DatabaseHttpdTomcatContextService(this);
-        httpdTomcatDataSources = new DatabaseHttpdTomcatDataSourceService(this);
-        httpdTomcatParameters = new DatabaseHttpdTomcatParameterService(this);
-        httpdTomcatSites = new DatabaseHttpdTomcatSiteService(this);
-        httpdTomcatSharedSites = new DatabaseHttpdTomcatSharedSiteService(this);
-        httpdTomcatStdSites = new DatabaseHttpdTomcatStdSiteService(this);
+        // TODO: httpdStaticSites = new DatabaseHttpdStaticSiteService(this);
+        // TODO: httpdTomcatContexts = new DatabaseHttpdTomcatContextService(this);
+        // TODO: httpdTomcatDataSources = new DatabaseHttpdTomcatDataSourceService(this);
+        // TODO: httpdTomcatParameters = new DatabaseHttpdTomcatParameterService(this);
+        // TODO: httpdTomcatSites = new DatabaseHttpdTomcatSiteService(this);
+        // TODO: httpdTomcatSharedSites = new DatabaseHttpdTomcatSharedSiteService(this);
+        // TODO: httpdTomcatStdSites = new DatabaseHttpdTomcatStdSiteService(this);
         httpdTomcatVersions = new DatabaseHttpdTomcatVersionService(this);
-        httpdWorkers = new DatabaseHttpdWorkerService(this);
-        */
+        // TODO: httpdWorkers = new DatabaseHttpdWorkerService(this);
         ipAddresses = new DatabaseIPAddressService(this);
         languages = new DatabaseLanguageService(this);
         // TODO: linuxAccAddresss = new DatabaseLinuxAccAddressService(this);
@@ -409,7 +409,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         linuxGroups = new DatabaseLinuxGroupService(this);
         // TODO: majordomoLists = new DatabaseMajordomoListService(this);
         // TODO: majordomoServers = new DatabaseMajordomoServerService(this);
-        // TODO: majordomoVersions = new DatabaseMajordomoVersionService(this);
+        majordomoVersions = new DatabaseMajordomoVersionService(this);
         masterHosts = new DatabaseMasterHostService(this);
         masterServers = new DatabaseMasterServerService(this);
         masterUsers = new DatabaseMasterUserService(this);
@@ -423,26 +423,22 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         netDevices = new DatabaseNetDeviceService(this);
         netProtocols = new DatabaseNetProtocolService(this);
         netTcpRedirects = new DatabaseNetTcpRedirectService(this);
-        /* TODO
-        noticeLogs = new DatabaseNoticeLogService(this);
+        // TODO: noticeLogs = new DatabaseNoticeLogService(this);
         noticeTypes = new DatabaseNoticeTypeService(this);
-        */
         operatingSystemVersions = new DatabaseOperatingSystemVersionService(this);
         operatingSystems = new DatabaseOperatingSystemService(this);
         packageCategories = new DatabasePackageCategoryService(this);
-        /* TODO
-        packageDefinitionLimits = new DatabasePackageDefinitionLimitService(this);
-        packageDefinitions = new DatabasePackageDefinitionService(this);
+        // TODO: packageDefinitionLimits = new DatabasePackageDefinitionLimitService(this);
+        // TODO: packageDefinitions = new DatabasePackageDefinitionService(this);
         paymentTypes = new DatabasePaymentTypeService(this);
-        physicalServers = new DatabasePhysicalServerService(this);
-         */
+        // TODO: physicalServers = new DatabasePhysicalServerService(this);
         postgresDatabases = new DatabasePostgresDatabaseService(this);
         postgresEncodings = new DatabasePostgresEncodingService(this);
         postgresServers = new DatabasePostgresServerService(this);
         postgresUsers = new DatabasePostgresUserService(this);
         postgresVersions = new DatabasePostgresVersionService(this);
-        // TODO: privateFTPServers = new DatabasePrivateFTPServerService(this);
-        // TODO: processorTypes = new DatabaseProcessorTypeService(this);
+        privateFtpServers = new DatabasePrivateFtpServerService(this);
+        processorTypes = new DatabaseProcessorTypeService(this);
         protocols = new DatabaseProtocolService(this);
         /* TODO
         racks = new DatabaseRackService(this);
@@ -464,8 +460,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         technologyClasses = new DatabaseTechnologyClassService(this);
         technologyNames = new DatabaseTechnologyNameService(this);
         technologyVersions = new DatabaseTechnologyVersionService(this);
-        /* TODO
         ticketActionTypes = new DatabaseTicketActionTypeService(this);
+        /* TODO
         ticketActions = new DatabaseTicketActionService(this);
          */
         ticketAssignments = new DatabaseTicketAssignmentService(this);
@@ -476,8 +472,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         ticketTypes = new DatabaseTicketTypeService(this);
         tickets = new DatabaseTicketService(this);
         timeZones = new DatabaseTimeZoneService(this);
-        /* TODO
         transactionTypes = new DatabaseTransactionTypeService(this);
+        /* TODO
         transactions = new DatabaseTransactionService(this);
         usStates = new DatabaseUSStateService(this);
          */
@@ -685,9 +681,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public EmailSpamAssassinIntegrationModeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSpamAssassinIntegrationModes();
 
     public EncryptionKeyService<DatabaseConnector,DatabaseConnectorFactory> getEncryptionKeys();
-
-    public ExpenseCategoryService<DatabaseConnector,DatabaseConnectorFactory> getExpenseCategories();
     */
+    public ExpenseCategoryService<DatabaseConnector,DatabaseConnectorFactory> getExpenseCategories() {
+        return expenseCategories;
+    }
+
     public FailoverFileLogService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileLogs() {
         return failoverFileLogs;
     }
@@ -715,17 +713,23 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public GroupNameService<DatabaseConnector,DatabaseConnectorFactory> getGroupNames() {
         return groupNames;
     }
-    /* TODO
-    public HttpdBindService<DatabaseConnector,DatabaseConnectorFactory> getHttpdBinds();
 
-    public HttpdJBossSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossSites();
+    // TODO: public HttpdBindService<DatabaseConnector,DatabaseConnectorFactory> getHttpdBinds();
 
-    public HttpdJBossVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossVersions();
+    // TODO: public HttpdJBossSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossSites();
 
-    public HttpdJKCodeService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKCodes();
+    public HttpdJBossVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossVersions() {
+        return httpdJBossVersions;
+    }
 
-    public HttpdJKProtocolService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKProtocols();
-    */
+    public HttpdJKCodeService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKCodes() {
+        return httpdJKCodes;
+    }
+
+    public HttpdJKProtocolService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKProtocols() {
+        return httpdJKProtocols;
+    }
+
     public HttpdServerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdServers() {
         return httpdServers;
     }
@@ -755,11 +759,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public HttpdTomcatSharedSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatSharedSites();
 
     public HttpdTomcatStdSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatStdSites();
-
-    public HttpdTomcatVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatVersions();
-
-    public HttpdWorkerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdWorkers();
     */
+    public HttpdTomcatVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatVersions() {
+        return httpdTomcatVersions;
+    }
+
+    // TODO: public HttpdWorkerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdWorkers();
+
     public IPAddressService<DatabaseConnector,DatabaseConnectorFactory> getIpAddresses() {
         return ipAddresses;
     }
@@ -794,7 +800,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     // TODO: public MajordomoServerService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoServers();
 
-    // TODO: public MajordomoVersionService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoVersions();
+    public MajordomoVersionService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoVersions() {
+        return majordomoVersions;
+    }
 
     // TODO: public MasterHistoryService<DatabaseConnector,DatabaseConnectorFactory> getMasterHistory();
 
@@ -847,11 +855,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects() {
         return netTcpRedirects;
     }
-    /* TODO
-    public NoticeLogService<DatabaseConnector,DatabaseConnectorFactory> getNoticeLogs();
 
-    public NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> getNoticeTypes();
-    */
+    // TODO: public NoticeLogService<DatabaseConnector,DatabaseConnectorFactory> getNoticeLogs();
+
+    public NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> getNoticeTypes() {
+        return noticeTypes;
+    }
+
     public OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystemVersions() {
         return operatingSystemVersions;
     }
@@ -863,15 +873,17 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public PackageCategoryService<DatabaseConnector,DatabaseConnectorFactory> getPackageCategories() {
         return packageCategories;
     }
-    /*
-    public PackageDefinitionLimitService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitionLimits();
 
-    public PackageDefinitionService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitions();
+    // TODO: public PackageDefinitionLimitService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitionLimits();
 
-    public PaymentTypeService<DatabaseConnector,DatabaseConnectorFactory> getPaymentTypes();
+    // TODO: public PackageDefinitionService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitions();
 
-    public PhysicalServerService<DatabaseConnector,DatabaseConnectorFactory> getPhysicalServers();
-    */
+    public PaymentTypeService<DatabaseConnector,DatabaseConnectorFactory> getPaymentTypes() {
+        return paymentTypes;
+    }
+
+    // TODO: public PhysicalServerService<DatabaseConnector,DatabaseConnectorFactory> getPhysicalServers();
+
     public PostgresDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getPostgresDatabases() {
         return postgresDatabases;
     }
@@ -892,9 +904,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return postgresVersions;
     }
 
-    // TODO: public PrivateFTPServerService<DatabaseConnector,DatabaseConnectorFactory> getPrivateFTPServers();
+    public PrivateFtpServerService<DatabaseConnector,DatabaseConnectorFactory> getPrivateFtpServers() {
+        return privateFtpServers;
+    }
 
-    // TODO: public ProcessorTypeService<DatabaseConnector,DatabaseConnectorFactory> getProcessorTypes();
+    public ProcessorTypeService<DatabaseConnector,DatabaseConnectorFactory> getProcessorTypes() {
+        return processorTypes;
+    }
 
     public ProtocolService<DatabaseConnector,DatabaseConnectorFactory> getProtocols() {
         return protocols;
@@ -953,9 +969,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public TechnologyVersionService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyVersions() {
         return technologyVersions;
     }
-    /* TODO
-    public TicketActionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketActionTypes();
 
+    public TicketActionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketActionTypes() {
+        return ticketActionTypes;
+    }
+    /* TODO
     public TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions();
     */
     public TicketAssignmentService<DatabaseConnector,DatabaseConnectorFactory> getTicketAssignments() {
@@ -987,9 +1005,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public TimeZoneService<DatabaseConnector,DatabaseConnectorFactory> getTimeZones() {
         return timeZones;
     }
-    /* TODO
-    public TransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTransactionTypes();
 
+    public TransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTransactionTypes() {
+        return transactionTypes;
+    }
+    /* TODO
     public TransactionService<DatabaseConnector,DatabaseConnectorFactory> getTransactions();
 
     public USStateService<DatabaseConnector,DatabaseConnectorFactory> getUsStates();
