@@ -264,6 +264,21 @@ final public class TableHandler {
                     MasterServer.writeObjects(source, out, provideProgress, emptyList);
                 }
                 break;
+            case BANK_TRANSACTION_TYPES :
+                if(BankAccountHandler.isBankAccounting(conn, source)) {
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new BankTransactionType(),
+                        "select * from bank_transaction_types"
+                    );
+                } else {
+                    List<BankTransactionType> emptyList = Collections.emptyList();
+                    MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                }
+                break;
             case BANKS :
                 if(BankAccountHandler.isBankAccounting(conn, source)) {
                     MasterServer.writeObjects(
@@ -721,6 +736,16 @@ final public class TableHandler {
                     username
                 );
                 break;
+            case EMAIL_ATTACHMENT_TYPES :
+                MasterServer.writeObjects(
+                    conn,
+                    source,
+                    out,
+                    provideProgress,
+                    new EmailAttachmentType(),
+                    "select * from email_attachment_types"
+                );
+                break;
             case EMAIL_FORWARDING :
                 if(masterUser!=null) {
                     if(masterServers.length==0) MasterServer.writeObjects(
@@ -979,6 +1004,16 @@ final public class TableHandler {
                     + "  )\n"
                     + "  and bu1.accounting=ep.accounting",
                     username
+                );
+                break;
+            case EMAIL_SPAMASSASSIN_INTEGRATION_MODES :
+                MasterServer.writeObjects(
+                    conn,
+                    source,
+                    out,
+                    provideProgress,
+                    new EmailSpamAssassinIntegrationMode(),
+                    "select * from email_sa_integration_modes"
                 );
                 break;
             case ENCRYPTION_KEYS :
@@ -2699,6 +2734,16 @@ final public class TableHandler {
                     + "  )\n"
                     + "  and bu1.accounting=ed.accounting",
                     username
+                );
+                break;
+            case EMAIL_SMTP_RELAY_TYPES :
+                MasterServer.writeObjects(
+                    conn,
+                    source,
+                    out,
+                    provideProgress,
+                    new EmailSmtpRelayType(),
+                    "select * from email_smtp_relay_types"
                 );
                 break;
             case EMAIL_SMTP_RELAYS :

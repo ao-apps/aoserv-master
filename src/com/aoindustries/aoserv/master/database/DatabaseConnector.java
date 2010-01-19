@@ -8,8 +8,6 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.AOServConnectorUtils;
 import com.aoindustries.aoserv.client.AOServPermissionService;
-import com.aoindustries.aoserv.client.AOServRolePermissionService;
-import com.aoindustries.aoserv.client.AOServRoleService;
 import com.aoindustries.aoserv.client.AOServService;
 import com.aoindustries.aoserv.client.AOServerDaemonHostService;
 import com.aoindustries.aoserv.client.AOServerResourceService;
@@ -20,7 +18,6 @@ import com.aoindustries.aoserv.client.BackupRetentionService;
 import com.aoindustries.aoserv.client.BankTransactionTypeService;
 import com.aoindustries.aoserv.client.BrandService;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
-import com.aoindustries.aoserv.client.BusinessAdministratorRoleService;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
 import com.aoindustries.aoserv.client.BusinessServerService;
 import com.aoindustries.aoserv.client.BusinessService;
@@ -135,8 +132,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseAOServerResourceService aoserverResources;
     final DatabaseAOServerService aoservers;
     final DatabaseAOServPermissionService aoservPermissions;
-    final DatabaseAOServRoleService aoservRoles;
-    final DatabaseAOServRolePermissionService aoservRolePermissions;
+    /* TODO
+    final DatabaseAOServProtocolService aoservProtocols;
+    final DatabaseAOSHCommandService aoshCommands;
+     */
     final DatabaseArchitectureService architectures;
     final DatabaseBackupPartitionService backupPartitions;
     final DatabaseBackupRetentionService backupRetentions;
@@ -147,8 +146,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     // TODO: final DatabaseBlackholeEmailAddressService blackholeEmailAddresss;
     final DatabaseBrandService brands;
     final DatabaseBusinessAdministratorService businessAdministrators;
-    final DatabaseBusinessAdministratorRoleService businessAdministratorRoles;
-    // TODO: final DatabaseBusinessProfileService businessProfiles;
+    /* TODO
+    final DatabaseBusinessAdministratorPermissionService businessAdministratorPermissions;
+    final DatabaseBusinessProfileService businessProfiles;
+     */
     final DatabaseBusinessService businesses;
     final DatabaseBusinessServerService businessServers;
     final DatabaseCountryCodeService countryCodes;
@@ -310,8 +311,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         aoserverResources = new DatabaseAOServerResourceService(this);
         aoservers = new DatabaseAOServerService(this);
         aoservPermissions = new DatabaseAOServPermissionService(this);
-        aoservRoles = new DatabaseAOServRoleService(this);
-        aoservRolePermissions = new DatabaseAOServRolePermissionService(this);
+        /* TODO
+        aoservProtocols = new DatabaseAOServProtocolService(this);
+        aoshCommands = new DatabaseAOSHCommandService(this);
+         */
         architectures = new DatabaseArchitectureService(this);
         backupPartitions = new DatabaseBackupPartitionService(this);
         backupRetentions = new DatabaseBackupRetentionService(this);
@@ -322,8 +325,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         // TODO: blackholeEmailAddresss = new DatabaseBlackholeEmailAddressService(this);
         brands = new DatabaseBrandService(this);
         businessAdministrators = new DatabaseBusinessAdministratorService(this);
-        businessAdministratorRoles = new DatabaseBusinessAdministratorRoleService(this);
-        // TODO: businessProfiles = new DatabaseBusinessProfileService(this);
+        /* TODO
+        businessAdministratorPermissions = new DatabaseBusinessAdministratorPermissionService(this);
+        businessProfiles = new DatabaseBusinessProfileService(this);
+         */
         businesses = new DatabaseBusinessService(this);
         businessServers = new DatabaseBusinessServerService(this);
         countryCodes = new DatabaseCountryCodeService(this);
@@ -554,15 +559,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public AOServPermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservPermissions() {
         return aoservPermissions;
     }
+    /* TODO
+    public AOServProtocolService<DatabaseConnector,DatabaseConnectorFactory> getAoservProtocols();
 
-    public AOServRoleService<DatabaseConnector,DatabaseConnectorFactory> getAoservRoles() {
-        return aoservRoles;
-    }
-
-    public AOServRolePermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservRolePermissions() {
-        return aoservRolePermissions;
-    }
-
+    public AOSHCommandService<DatabaseConnector,DatabaseConnectorFactory> getAoshCommands();
+    */
     public ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> getArchitectures() {
         return architectures;
     }
@@ -594,13 +595,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministrators() {
         return businessAdministrators;
     }
+    /*
+    public BusinessAdministratorPermissionService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministratorPermissions();
 
-    public BusinessAdministratorRoleService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministratorRoles() {
-        return businessAdministratorRoles;
-    }
-
-    // TODO: public BusinessProfileService<DatabaseConnector,DatabaseConnectorFactory> getBusinessProfiles();
-
+    public BusinessProfileService<DatabaseConnector,DatabaseConnectorFactory> getBusinessProfiles();
+     */
     public BusinessService<DatabaseConnector,DatabaseConnectorFactory> getBusinesses() {
         return businesses;
     }
