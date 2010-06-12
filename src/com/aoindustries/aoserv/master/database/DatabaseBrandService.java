@@ -11,7 +11,6 @@ import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -26,14 +25,14 @@ final class DatabaseBrandService extends DatabaseService<AccountingCode,Brand> i
         super(connector, AccountingCode.class, Brand.class);
     }
 
-    protected Set<Brand> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Brand> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from brands"
         );
     }
 
-    protected Set<Brand> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Brand> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -86,7 +85,7 @@ final class DatabaseBrandService extends DatabaseService<AccountingCode,Brand> i
         );
     }
 
-    protected Set<Brand> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Brand> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

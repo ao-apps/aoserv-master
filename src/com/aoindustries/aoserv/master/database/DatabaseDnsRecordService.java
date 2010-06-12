@@ -11,7 +11,7 @@ import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
@@ -27,7 +27,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
         super(connector, Integer.class, DnsRecord.class);
     }
 
-    protected Set<DnsRecord> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<DnsRecord> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -45,7 +45,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
         );
     }
 
-    protected Set<DnsRecord> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<DnsRecord> getSetDaemon(DatabaseConnection db) throws RemoteException, SQLException {
         MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
         if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
             return db.executeObjectSetQuery(
@@ -68,7 +68,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
         }
     }
 
-    protected Set<DnsRecord> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<DnsRecord> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

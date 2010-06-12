@@ -7,7 +7,6 @@ package com.aoindustries.aoserv.master.database;
  */
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.sql.DatabaseConnection;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,26 +24,26 @@ abstract class DatabasePublicService<K extends Comparable<K>,V extends AOServObj
     /**
      * @see  #getPublicSet(DatabaseConnection)
      */
-    final protected Set<V> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    final protected Set<V> getSetMaster(DatabaseConnection db) throws SQLException {
         return getPublicSet(db);
     }
 
     /**
      * @see  #getPublicSet(DatabaseConnection)
      */
-    final protected Set<V> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    final protected Set<V> getSetDaemon(DatabaseConnection db) throws SQLException {
         return getPublicSet(db);
     }
 
     /**
      * @see  #getPublicSet(DatabaseConnection)
      */
-    final protected Set<V> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    final protected Set<V> getSetBusiness(DatabaseConnection db) throws SQLException {
         return getPublicSet(db);
     }
 
     /**
      * All accounts types use this method to retrieve the rows.
      */
-    abstract protected Set<V> getPublicSet(DatabaseConnection db) throws IOException, SQLException;
+    abstract protected Set<V> getPublicSet(DatabaseConnection db) throws SQLException;
 }

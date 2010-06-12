@@ -10,7 +10,7 @@ import com.aoindustries.aoserv.client.BankTransactionTypeService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
@@ -26,7 +26,7 @@ final class DatabaseBankTransactionTypeService extends DatabaseService<String,Ba
         super(connector, String.class, BankTransactionType.class);
     }
 
-    protected Set<BankTransactionType> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<BankTransactionType> getSetMaster(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getMasterUsers().get(connector.getConnectAs()).getCanAccessBankAccount()) {
             return db.executeObjectSetQuery(
                 objectFactory,

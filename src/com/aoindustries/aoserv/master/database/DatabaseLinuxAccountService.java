@@ -11,7 +11,6 @@ import com.aoindustries.aoserv.client.LinuxAccountService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -26,7 +25,7 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
         super(connector, Integer.class, LinuxAccount.class);
     }
 
-    protected Set<LinuxAccount> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<LinuxAccount> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -46,7 +45,7 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
         );
     }
 
-    protected Set<LinuxAccount> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<LinuxAccount> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -75,7 +74,7 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
         );
     }
 
-    protected Set<LinuxAccount> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<LinuxAccount> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
              "select\n"

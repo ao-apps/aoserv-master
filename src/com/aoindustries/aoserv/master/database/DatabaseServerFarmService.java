@@ -11,7 +11,6 @@ import com.aoindustries.aoserv.client.validator.DomainLabel;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -26,14 +25,14 @@ final class DatabaseServerFarmService extends DatabaseService<DomainLabel,Server
         super(connector, DomainLabel.class, ServerFarm.class);
     }
 
-    protected Set<ServerFarm> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<ServerFarm> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from server_farms"
         );
     }
 
-    protected Set<ServerFarm> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<ServerFarm> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
@@ -56,7 +55,7 @@ final class DatabaseServerFarmService extends DatabaseService<DomainLabel,Server
         );
     }
 
-    protected Set<ServerFarm> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<ServerFarm> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"

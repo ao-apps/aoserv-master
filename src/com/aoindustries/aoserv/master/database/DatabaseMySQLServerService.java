@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.MySQLServerService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServ
         super(connector, Integer.class, MySQLServer.class);
     }
 
-    protected Set<MySQLServer> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MySQLServer> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select ao_server_resource, name, version, max_connections, net_bind from mysql_servers"
         );
     }
 
-    protected Set<MySQLServer> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MySQLServer> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -51,7 +50,7 @@ final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServ
         );
     }
 
-    protected Set<MySQLServer> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MySQLServer> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

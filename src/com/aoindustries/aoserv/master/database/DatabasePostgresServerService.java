@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.PostgresServerService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
         super(connector, Integer.class, PostgresServer.class);
     }
 
-    protected Set<PostgresServer> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<PostgresServer> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -42,7 +41,7 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
         );
     }
 
-    protected Set<PostgresServer> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<PostgresServer> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -64,7 +63,7 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
         );
     }
 
-    protected Set<PostgresServer> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<PostgresServer> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

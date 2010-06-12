@@ -25,7 +25,6 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.sql.ResultSetHandler;
 import com.aoindustries.util.WrappedException;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
@@ -76,13 +75,13 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
     /**
      * An unrestricted, shared, cached database connector is available for use by any of the
      * individual user connectors.  This should be used sparingly and carefully, and should only
-     * be used to query information.
+     * be used to query information.  This connector is read-only.
      */
     final protected AOServConnector<?,?> rootConnector;
 
     public DatabaseConnectorFactory(Database database, UserId rootUserId, String rootPassword) throws LoginException, RemoteException {
         this.database = database;
-        this.rootConnector = new CachedConnectorFactory(this).newConnector(Locale.getDefault(), rootUserId, rootUserId, rootPassword, null);
+        this.rootConnector = new CachedConnectorFactory(this).newConnector(Locale.getDefault(), rootUserId, rootUserId, rootPassword, null, true);
     }
 
     /**
@@ -90,7 +89,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
      * master_users table but no master_servers restrictions.  A master user has
      * no filters applied.
      */
-    boolean isEnabledMasterUser(DatabaseConnection db, UserId username) throws IOException, SQLException {
+    boolean isEnabledMasterUser(DatabaseConnection db, UserId username) throws SQLException {
         synchronized(enabledMasterUsersLock) {
             if(enabledMasterUsers==null) {
                 enabledMasterUsers=db.executeObjectSetQuery(
@@ -115,7 +114,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
      * master_users table and at least one row in master_servers restrictions.
      * A daemon user has filters applied by server access.
      */
-    boolean isEnabledDaemonUser(DatabaseConnection db, UserId username) throws IOException, SQLException {
+    boolean isEnabledDaemonUser(DatabaseConnection db, UserId username) throws SQLException {
         synchronized(enabledDaemonUsersLock) {
             if(enabledDaemonUsers==null) {
                 enabledDaemonUsers=db.executeObjectSetQuery(
@@ -139,7 +138,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
      * Determines if the provided username is an enabled business administrator.
      * Master users and daemons are also considered administrators.
      */
-    boolean isEnabledBusinessAdministrator(DatabaseConnection db, UserId username) throws IOException, SQLException {
+    boolean isEnabledBusinessAdministrator(DatabaseConnection db, UserId username) throws SQLException {
         synchronized(enabledBusinessAdministratorsLock) {
             if(enabledBusinessAdministrators==null) {
                 enabledBusinessAdministrators=db.executeObjectSetQuery(
@@ -173,7 +172,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
         }
     }*/
 
-    boolean canSwitchUser(DatabaseConnection db, UserId authenticatedAs, UserId connectAs) throws IOException, SQLException {
+    boolean canSwitchUser(DatabaseConnection db, UserId authenticatedAs, UserId connectAs) throws SQLException {
         return db.executeBooleanQuery(
             "select\n"
             // Must have can_switch_users enabled
@@ -196,7 +195,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
     /**
      * Gets the hosts that are allowed for the provided username.
      */
-    boolean isHostAllowed(DatabaseConnection db, UserId username, InetAddress host) throws IOException, SQLException {
+    boolean isHostAllowed(DatabaseConnection db, UserId username, InetAddress host) throws SQLException {
         Set<InetAddress> hosts;
         synchronized(masterHostsLock) {
             if(masterHosts==null) {
@@ -238,9 +237,9 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
 
     private final AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory> connectors = new AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory>();
 
-    public DatabaseConnector getConnector(Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) throws LoginException, RemoteException {
+    public DatabaseConnector getConnector(Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer, boolean readOnly) throws LoginException, RemoteException {
         synchronized(connectors) {
-            DatabaseConnector connector = connectors.get(connectAs, authenticateAs, password, daemonServer);
+            DatabaseConnector connector = connectors.get(connectAs, authenticateAs, password, daemonServer, readOnly);
             if(connector!=null) {
                 connector.setLocale(locale);
             } else {
@@ -249,20 +248,23 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
                     connectAs,
                     authenticateAs,
                     password,
-                    daemonServer
+                    daemonServer,
+                    readOnly
                 );
             }
             return connector;
         }
     }
 
-    public DatabaseConnector newConnector(final Locale locale, final UserId connectAs, final UserId authenticateAs, final String password, final DomainName daemonServer) throws LoginException, RemoteException {
+    public DatabaseConnector newConnector(final Locale locale, final UserId connectAs, final UserId authenticateAs, final String password, final DomainName daemonServer, final boolean readOnly) throws LoginException, RemoteException {
         try {
             return database.executeTransaction(
                 new DatabaseCallable<DatabaseConnector>() {
-                    public DatabaseConnector call(DatabaseConnection db) throws IOException, SQLException {
+                    public DatabaseConnector call(DatabaseConnection db) throws SQLException {
                         try {
-                            return newConnector(db, locale, connectAs, authenticateAs, password, daemonServer);
+                            return newConnector(db, locale, connectAs, authenticateAs, password, daemonServer, readOnly);
+                        } catch(RemoteException err) {
+                            throw new WrappedException(err);
                         } catch(LoginException err) {
                             throw new WrappedException(err);
                         }
@@ -271,19 +273,16 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
             );
         } catch(WrappedException err) {
             Throwable wrapped = err.getCause();
+            if(wrapped instanceof RemoteException) throw (RemoteException)wrapped;
             if(wrapped instanceof LoginException) throw (LoginException)wrapped;
             if(wrapped instanceof RemoteException) throw (RemoteException)wrapped;
             throw err;
-        } catch(RemoteException err) {
-            throw err;
-        } catch(IOException err) {
-            throw new RemoteException(err.getMessage(), err);
         } catch(SQLException err) {
             throw new RemoteException(err.getMessage(), err);
         }
     }
 
-    protected DatabaseConnector newConnector(DatabaseConnection db, Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) throws LoginException, IOException, SQLException {
+    protected DatabaseConnector newConnector(DatabaseConnection db, Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer, boolean readOnly) throws RemoteException, LoginException, SQLException {
         try {
             // Handle the authentication
             if(connectAs==null)      throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.connectAs.empty"));
@@ -321,12 +320,13 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
 
             // Let them in
             synchronized(connectors) {
-                DatabaseConnector connector = new DatabaseConnector(this, locale, connectAs, authenticateAs, password);
+                DatabaseConnector connector = new DatabaseConnector(this, locale, connectAs, authenticateAs, password, readOnly);
                 connectors.put(
                     connectAs,
                     authenticateAs,
                     password,
                     daemonServer,
+                    readOnly,
                     connector
                 );
                 return connector;

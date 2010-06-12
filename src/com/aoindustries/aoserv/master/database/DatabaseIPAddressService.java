@@ -11,7 +11,6 @@ import com.aoindustries.aoserv.client.IPAddressService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -26,7 +25,7 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
         super(connector, Integer.class, IPAddress.class);
     }
 
-    protected Set<IPAddress> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<IPAddress> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -46,7 +45,7 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
         );
     }
 
-    protected Set<IPAddress> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<IPAddress> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
@@ -89,7 +88,7 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
         );
     }
 
-    protected Set<IPAddress> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<IPAddress> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

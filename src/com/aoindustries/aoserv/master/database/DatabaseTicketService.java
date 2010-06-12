@@ -12,7 +12,7 @@ import com.aoindustries.aoserv.client.TicketType;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -27,7 +27,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
         super(connector, Integer.class, Ticket.class);
     }
 
-    protected Set<Ticket> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Ticket> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -53,7 +53,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
         );
     }
 
-    protected Set<Ticket> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Ticket> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -91,7 +91,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
         );
     }
 
-    protected Set<Ticket> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Ticket> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             return db.executeObjectSetQuery(
                 objectFactory,

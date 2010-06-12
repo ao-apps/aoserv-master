@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.AOServRoleService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
         super(connector, Integer.class, AOServRole.class);
     }
 
-    protected Set<AOServRole> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServRole> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from aoserv_roles"
@@ -35,7 +34,7 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
     /**
      * Can only see their own roles.
      */
-    protected Set<AOServRole> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServRole> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -52,7 +51,7 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
     /**
      * Can see the roles owned by the business tree and their own roles.
      */
-    protected Set<AOServRole> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServRole> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             // Business-based

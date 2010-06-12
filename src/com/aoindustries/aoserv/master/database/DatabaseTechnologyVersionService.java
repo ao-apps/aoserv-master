@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.TechnologyVersionService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
         super(connector, Integer.class, TechnologyVersion.class);
     }
 
-    protected Set<TechnologyVersion> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TechnologyVersion> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from technology_versions"
         );
     }
 
-    protected Set<TechnologyVersion> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TechnologyVersion> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -47,7 +46,7 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
         );
     }
 
-    protected Set<TechnologyVersion> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TechnologyVersion> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

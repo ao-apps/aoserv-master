@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.FailoverFileScheduleService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseFailoverFileScheduleService extends DatabaseService<Integer,
         super(connector, Integer.class, FailoverFileSchedule.class);
     }
 
-    protected Set<FailoverFileSchedule> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<FailoverFileSchedule> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from failover_file_schedule"
         );
     }
 
-    protected Set<FailoverFileSchedule> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<FailoverFileSchedule> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -49,7 +48,7 @@ final class DatabaseFailoverFileScheduleService extends DatabaseService<Integer,
         );
     }
 
-    protected Set<FailoverFileSchedule> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<FailoverFileSchedule> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

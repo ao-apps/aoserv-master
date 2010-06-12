@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.AOServerDaemonHostService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
@@ -26,14 +25,14 @@ final class DatabaseAOServerDaemonHostService extends DatabaseService<Integer,AO
         super(connector, Integer.class, AOServerDaemonHost.class);
     }
 
-    protected Set<AOServerDaemonHost> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServerDaemonHost> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from ao_server_daemon_hosts"
         );
     }
 
-    protected Set<AOServerDaemonHost> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServerDaemonHost> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

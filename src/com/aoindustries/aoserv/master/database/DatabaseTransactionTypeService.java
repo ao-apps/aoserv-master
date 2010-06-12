@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.TransactionTypeService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseTransactionTypeService extends DatabasePublicService<String,
         super(connector, String.class, TransactionType.class);
     }
 
-    protected Set<TransactionType> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TransactionType> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from transaction_types"

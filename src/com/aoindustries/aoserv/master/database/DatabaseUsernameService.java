@@ -11,7 +11,6 @@ import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -26,14 +25,14 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
         super(connector, UserId.class, Username.class);
     }
 
-    protected Set<Username> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Username> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from usernames"
         );
     }
 
-    protected Set<Username> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Username> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
@@ -53,7 +52,7 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
         );
     }
 
-    protected Set<Username> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Username> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

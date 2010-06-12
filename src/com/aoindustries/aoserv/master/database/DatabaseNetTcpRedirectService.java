@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.NetTcpRedirectService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseNetTcpRedirectService extends DatabaseService<Integer,NetTcp
         super(connector, Integer.class, NetTcpRedirect.class);
     }
 
-    protected Set<NetTcpRedirect> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<NetTcpRedirect> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from net_tcp_redirects"
         );
     }
 
-    protected Set<NetTcpRedirect> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<NetTcpRedirect> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -49,7 +48,7 @@ final class DatabaseNetTcpRedirectService extends DatabaseService<Integer,NetTcp
         );
     }
 
-    protected Set<NetTcpRedirect> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<NetTcpRedirect> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

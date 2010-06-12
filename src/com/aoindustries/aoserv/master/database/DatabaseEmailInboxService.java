@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.EmailInboxService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseEmailInboxService extends DatabaseService<Integer,EmailInbox
         super(connector, Integer.class, EmailInbox.class);
     }
 
-    protected Set<EmailInbox> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<EmailInbox> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -45,7 +44,7 @@ final class DatabaseEmailInboxService extends DatabaseService<Integer,EmailInbox
         );
     }
 
-    protected Set<EmailInbox> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<EmailInbox> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -72,7 +71,7 @@ final class DatabaseEmailInboxService extends DatabaseService<Integer,EmailInbox
         );
     }
 
-    protected Set<EmailInbox> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<EmailInbox> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

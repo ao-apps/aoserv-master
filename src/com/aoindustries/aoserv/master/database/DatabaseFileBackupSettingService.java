@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.FileBackupSettingService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
         super(connector, Integer.class, FileBackupSetting.class);
     }
 
-    protected Set<FileBackupSetting> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<FileBackupSetting> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from file_backup_settings"
         );
     }
 
-    protected Set<FileBackupSetting> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<FileBackupSetting> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -49,7 +48,7 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
         );
     }
 
-    protected Set<FileBackupSetting> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<FileBackupSetting> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

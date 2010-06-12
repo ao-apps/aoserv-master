@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.TicketCategoryService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseTicketCategoryService extends DatabasePublicService<Integer,
         super(connector, Integer.class, TicketCategory.class);
     }
 
-    protected Set<TicketCategory> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TicketCategory> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from ticket_categories"

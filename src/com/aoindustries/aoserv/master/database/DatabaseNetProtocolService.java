@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.NetProtocolService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseNetProtocolService extends DatabasePublicService<String,NetP
         super(connector, String.class, NetProtocol.class);
     }
 
-    protected Set<NetProtocol> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<NetProtocol> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from net_protocols"

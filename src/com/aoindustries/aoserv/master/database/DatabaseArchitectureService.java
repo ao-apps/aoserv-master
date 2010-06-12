@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.ArchitectureService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseArchitectureService extends DatabasePublicService<String,Arc
         super(connector, String.class, Architecture.class);
     }
 
-    protected Set<Architecture> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Architecture> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from architectures"

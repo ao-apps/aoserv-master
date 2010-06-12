@@ -264,21 +264,6 @@ final public class TableHandler {
                     MasterServer.writeObjects(source, out, provideProgress, emptyList);
                 }
                 break;
-            case BANK_TRANSACTION_TYPES :
-                if(BankAccountHandler.isBankAccounting(conn, source)) {
-                    MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new BankTransactionType(),
-                        "select * from bank_transaction_types"
-                    );
-                } else {
-                    List<BankTransactionType> emptyList = Collections.emptyList();
-                    MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                }
-                break;
             case BANKS :
                 if(BankAccountHandler.isBankAccounting(conn, source)) {
                     MasterServer.writeObjects(
@@ -398,54 +383,6 @@ final public class TableHandler {
                     + "  )\n"
                     + "  and bu1.accounting=un2.accounting\n"
                     + "  and un2.username=bp.username",
-                    username
-                );
-                break;
-            case BUSINESS_PROFILES :
-                if(masterUser!=null) {
-                    if(masterServers.length==0) MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new BusinessProfile(),
-                        "select * from business_profiles"
-                    ); else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new BusinessProfile(),
-                        "select distinct\n"
-                        + "  bp.*\n"
-                        + "from\n"
-                        + "  master_servers ms,\n"
-                        + "  business_servers bs,\n"
-                        + "  business_profiles bp\n"
-                        + "where\n"
-                        + "  ms.username=?\n"
-                        + "  and ms.server=bs.server\n"
-                        + "  and bs.accounting=bp.accounting",
-                        username
-                    );
-                } else MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new BusinessProfile(),
-                    "select\n"
-                    + "  bp.*\n"
-                    + "from\n"
-                    + "  usernames un,\n"
-                    + BU1_PARENTS_JOIN
-                    + "  business_profiles bp\n"
-                    + "where\n"
-                    + "  un.username=?\n"
-                    + "  and (\n"
-                    + UN_BU1_PARENTS_WHERE
-                    + "  )\n"
-                    + "  and bu1.accounting=bp.accounting",
                     username
                 );
                 break;
@@ -736,16 +673,6 @@ final public class TableHandler {
                     username
                 );
                 break;
-            case EMAIL_ATTACHMENT_TYPES :
-                MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new EmailAttachmentType(),
-                    "select * from email_attachment_types"
-                );
-                break;
             case EMAIL_FORWARDING :
                 if(masterUser!=null) {
                     if(masterServers.length==0) MasterServer.writeObjects(
@@ -1004,16 +931,6 @@ final public class TableHandler {
                     + "  )\n"
                     + "  and bu1.accounting=ep.accounting",
                     username
-                );
-                break;
-            case EMAIL_SPAMASSASSIN_INTEGRATION_MODES :
-                MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new EmailSpamAssassinIntegrationMode(),
-                    "select * from email_sa_integration_modes"
                 );
                 break;
             case ENCRYPTION_KEYS :
@@ -2734,16 +2651,6 @@ final public class TableHandler {
                     + "  )\n"
                     + "  and bu1.accounting=ed.accounting",
                     username
-                );
-                break;
-            case EMAIL_SMTP_RELAY_TYPES :
-                MasterServer.writeObjects(
-                    conn,
-                    source,
-                    out,
-                    provideProgress,
-                    new EmailSmtpRelayType(),
-                    "select * from email_smtp_relay_types"
                 );
                 break;
             case EMAIL_SMTP_RELAYS :

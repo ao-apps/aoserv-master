@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.TechnologyNameService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseTechnologyNameService extends DatabasePublicService<String,T
         super(connector, String.class, TechnologyName.class);
     }
 
-    protected Set<TechnologyName> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TechnologyName> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from technology_names"

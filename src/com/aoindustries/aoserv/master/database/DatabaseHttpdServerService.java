@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.HttpdServerService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseHttpdServerService extends DatabaseService<Integer,HttpdServ
         super(connector, Integer.class, HttpdServer.class);
     }
 
-    protected Set<HttpdServer> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<HttpdServer> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -43,7 +42,7 @@ final class DatabaseHttpdServerService extends DatabaseService<Integer,HttpdServ
         );
     }
 
-    protected Set<HttpdServer> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<HttpdServer> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -66,7 +65,7 @@ final class DatabaseHttpdServerService extends DatabaseService<Integer,HttpdServ
         );
     }
 
-    protected Set<HttpdServer> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<HttpdServer> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

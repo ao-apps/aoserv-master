@@ -8,6 +8,8 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.AOServConnectorUtils;
 import com.aoindustries.aoserv.client.AOServPermissionService;
+import com.aoindustries.aoserv.client.AOServRolePermissionService;
+import com.aoindustries.aoserv.client.AOServRoleService;
 import com.aoindustries.aoserv.client.AOServService;
 import com.aoindustries.aoserv.client.AOServerDaemonHostService;
 import com.aoindustries.aoserv.client.AOServerResourceService;
@@ -18,10 +20,14 @@ import com.aoindustries.aoserv.client.BackupRetentionService;
 import com.aoindustries.aoserv.client.BankTransactionTypeService;
 import com.aoindustries.aoserv.client.BrandService;
 import com.aoindustries.aoserv.client.BusinessAdministrator;
+import com.aoindustries.aoserv.client.BusinessAdministratorRoleService;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
+import com.aoindustries.aoserv.client.BusinessProfileService;
 import com.aoindustries.aoserv.client.BusinessServerService;
 import com.aoindustries.aoserv.client.BusinessService;
+import com.aoindustries.aoserv.client.CommandResult;
 import com.aoindustries.aoserv.client.CountryCodeService;
+import com.aoindustries.aoserv.client.CreditCardProcessorService;
 import com.aoindustries.aoserv.client.CvsRepositoryService;
 import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.DnsRecordService;
@@ -104,7 +110,6 @@ import com.aoindustries.aoserv.client.UsernameService;
 import com.aoindustries.aoserv.client.command.AOServCommand;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.sql.DatabaseConnection;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Locale;
@@ -128,14 +133,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final UserId connectAs;
     private final UserId authenticateAs;
     private final String password;
+    private final boolean readOnly;
     final DatabaseAOServerDaemonHostService aoserverDaemonHosts;
     final DatabaseAOServerResourceService aoserverResources;
     final DatabaseAOServerService aoservers;
     final DatabaseAOServPermissionService aoservPermissions;
-    /* TODO
-    final DatabaseAOServProtocolService aoservProtocols;
-    final DatabaseAOSHCommandService aoshCommands;
-     */
+    final DatabaseAOServRoleService aoservRoles;
+    final DatabaseAOServRolePermissionService aoservRolePermissions;
     final DatabaseArchitectureService architectures;
     final DatabaseBackupPartitionService backupPartitions;
     final DatabaseBackupRetentionService backupRetentions;
@@ -146,15 +150,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     // TODO: final DatabaseBlackholeEmailAddressService blackholeEmailAddresss;
     final DatabaseBrandService brands;
     final DatabaseBusinessAdministratorService businessAdministrators;
-    /* TODO
-    final DatabaseBusinessAdministratorPermissionService businessAdministratorPermissions;
+    final DatabaseBusinessAdministratorRoleService businessAdministratorRoles;
     final DatabaseBusinessProfileService businessProfiles;
-     */
     final DatabaseBusinessService businesses;
     final DatabaseBusinessServerService businessServers;
     final DatabaseCountryCodeService countryCodes;
-    /* TODO
     final DatabaseCreditCardProcessorService creditCardProcessors;
+    /* TODO
     final DatabaseCreditCardTransactionService creditCardTransactions;
     final DatabaseCreditCardService creditCards;
      */
@@ -301,20 +303,19 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseWhoisHistoryService whoisHistories;
      */
 
-    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password) {
+    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password, boolean readOnly) {
         this.factory = factory;
         this.locale = locale;
         this.connectAs = connectAs;
         this.authenticateAs = authenticateAs;
         this.password = password;
+        this.readOnly = readOnly;
         aoserverDaemonHosts = new DatabaseAOServerDaemonHostService(this);
         aoserverResources = new DatabaseAOServerResourceService(this);
         aoservers = new DatabaseAOServerService(this);
         aoservPermissions = new DatabaseAOServPermissionService(this);
-        /* TODO
-        aoservProtocols = new DatabaseAOServProtocolService(this);
-        aoshCommands = new DatabaseAOSHCommandService(this);
-         */
+        aoservRoles = new DatabaseAOServRoleService(this);
+        aoservRolePermissions = new DatabaseAOServRolePermissionService(this);
         architectures = new DatabaseArchitectureService(this);
         backupPartitions = new DatabaseBackupPartitionService(this);
         backupRetentions = new DatabaseBackupRetentionService(this);
@@ -325,15 +326,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         // TODO: blackholeEmailAddresss = new DatabaseBlackholeEmailAddressService(this);
         brands = new DatabaseBrandService(this);
         businessAdministrators = new DatabaseBusinessAdministratorService(this);
-        /* TODO
-        businessAdministratorPermissions = new DatabaseBusinessAdministratorPermissionService(this);
+        businessAdministratorRoles = new DatabaseBusinessAdministratorRoleService(this);
         businessProfiles = new DatabaseBusinessProfileService(this);
-         */
         businesses = new DatabaseBusinessService(this);
         businessServers = new DatabaseBusinessServerService(this);
         countryCodes = new DatabaseCountryCodeService(this);
-        /* TODO
         creditCardProcessors = new DatabaseCreditCardProcessorService(this);
+        /* TODO
         creditCardTransactions = new DatabaseCreditCardTransactionService(this);
         creditCards = new DatabaseCreditCardService(this);
          */
@@ -491,7 +490,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     /**
      * Determines the type of account logged-in based on the connectAs value.  This controls filtering and access.
      */
-    AccountType getAccountType(DatabaseConnection db) throws IOException, SQLException {
+    AccountType getAccountType(DatabaseConnection db) throws SQLException {
         if(factory.isEnabledMasterUser(db, connectAs)) return AccountType.MASTER;
         if(factory.isEnabledDaemonUser(db, connectAs)) return AccountType.DAEMON;
         if(factory.isEnabledBusinessAdministrator(db, connectAs)) return AccountType.BUSINESS;
@@ -526,7 +525,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return password;
     }
 
-    public <R> R executeCommand(AOServCommand<R> command, boolean isInteractive) throws RemoteException {
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public <R> CommandResult<R> executeCommand(AOServCommand<R> command, boolean isInteractive) throws RemoteException {
         // TODO: Check account enabled
         // TODO: Check permissions
         // TODO: Validate command
@@ -559,11 +562,15 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public AOServPermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservPermissions() {
         return aoservPermissions;
     }
-    /* TODO
-    public AOServProtocolService<DatabaseConnector,DatabaseConnectorFactory> getAoservProtocols();
 
-    public AOSHCommandService<DatabaseConnector,DatabaseConnectorFactory> getAoshCommands();
-    */
+    public AOServRoleService<DatabaseConnector,DatabaseConnectorFactory> getAoservRoles() {
+        return aoservRoles;
+    }
+
+    public AOServRolePermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservRolePermissions() {
+        return aoservRolePermissions;
+    }
+
     public ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> getArchitectures() {
         return architectures;
     }
@@ -595,11 +602,15 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministrators() {
         return businessAdministrators;
     }
-    /*
-    public BusinessAdministratorPermissionService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministratorPermissions();
 
-    public BusinessProfileService<DatabaseConnector,DatabaseConnectorFactory> getBusinessProfiles();
-     */
+    public BusinessAdministratorRoleService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministratorRoles() {
+        return businessAdministratorRoles;
+    }
+
+    public BusinessProfileService<DatabaseConnector,DatabaseConnectorFactory> getBusinessProfiles() {
+        return businessProfiles;
+    }
+
     public BusinessService<DatabaseConnector,DatabaseConnectorFactory> getBusinesses() {
         return businesses;
     }
@@ -611,9 +622,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public CountryCodeService<DatabaseConnector,DatabaseConnectorFactory> getCountryCodes() {
         return countryCodes;
     }
-    /* TODO
-    public CreditCardProcessorService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardProcessors();
 
+    public CreditCardProcessorService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardProcessors() {
+        return creditCardProcessors;
+    }
+    /* TODO
     public CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardTransactions();
 
     public CreditCardService<DatabaseConnector,DatabaseConnectorFactory> getCreditCards();

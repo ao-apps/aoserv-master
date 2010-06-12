@@ -10,7 +10,7 @@ import com.aoindustries.aoserv.client.TicketAssignmentService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
@@ -26,7 +26,7 @@ final class DatabaseTicketAssignmentService extends DatabaseService<Integer,Tick
         super(connector, Integer.class, TicketAssignment.class);
     }
 
-    protected Set<TicketAssignment> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TicketAssignment> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select pkey, ticket, reseller, administrator from ticket_assignments"
@@ -40,7 +40,7 @@ final class DatabaseTicketAssignmentService extends DatabaseService<Integer,Tick
         return Collections.emptySet();
     }
 
-    protected Set<TicketAssignment> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<TicketAssignment> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             // Only ticket admin can see assignments
             return db.executeObjectSetQuery(

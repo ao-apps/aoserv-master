@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.AOServerResourceService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
         super(connector, Integer.class, AOServerResource.class);
     }
 
-    protected Set<AOServerResource> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServerResource> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -38,7 +37,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
         );
     }
 
-    protected Set<AOServerResource> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServerResource> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -56,7 +55,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
         );
     }
 
-    protected Set<AOServerResource> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServerResource> getSetBusiness(DatabaseConnection db) throws SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"

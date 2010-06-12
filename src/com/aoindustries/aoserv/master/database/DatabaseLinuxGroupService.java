@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.LinuxGroupService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup
         super(connector, Integer.class, LinuxGroup.class);
     }
 
-    protected Set<LinuxGroup> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<LinuxGroup> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -38,7 +37,7 @@ final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup
         );
     }
 
-    protected Set<LinuxGroup> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<LinuxGroup> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -56,7 +55,7 @@ final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup
         );
     }
 
-    protected Set<LinuxGroup> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<LinuxGroup> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             // Owns group

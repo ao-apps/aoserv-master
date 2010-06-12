@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.BusinessServerService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
         super(connector, Integer.class, BusinessServer.class);
     }
 
-    protected Set<BusinessServer> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<BusinessServer> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from business_servers"
         );
     }
 
-    protected Set<BusinessServer> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<BusinessServer> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
@@ -47,7 +46,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
         );
     }
 
-    protected Set<BusinessServer> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<BusinessServer> getSetBusiness(DatabaseConnection db) throws SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"

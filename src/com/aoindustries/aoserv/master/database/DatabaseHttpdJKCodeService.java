@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.HttpdJKCodeService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseHttpdJKCodeService extends DatabasePublicService<String,Http
         super(connector, String.class, HttpdJKCode.class);
     }
 
-    protected Set<HttpdJKCode> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<HttpdJKCode> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from httpd_jk_codes"

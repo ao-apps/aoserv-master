@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.NoticeTypeService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseNoticeTypeService extends DatabasePublicService<String,Notic
         super(connector, String.class, NoticeType.class);
     }
 
-    protected Set<NoticeType> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<NoticeType> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from notice_types"

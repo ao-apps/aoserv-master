@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.MySQLDatabaseService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseMySQLDatabaseService extends DatabaseService<Integer,MySQLDa
         super(connector, Integer.class, MySQLDatabase.class);
     }
 
-    protected Set<MySQLDatabase> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MySQLDatabase> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select ao_server_resource, name, mysql_server from mysql_databases"
         );
     }
 
-    protected Set<MySQLDatabase> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MySQLDatabase> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -49,7 +48,7 @@ final class DatabaseMySQLDatabaseService extends DatabaseService<Integer,MySQLDa
         );
     }
 
-    protected Set<MySQLDatabase> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MySQLDatabase> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

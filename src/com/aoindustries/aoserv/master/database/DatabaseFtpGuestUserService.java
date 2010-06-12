@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.FtpGuestUserService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseFtpGuestUserService extends DatabaseService<Integer,FtpGuest
         super(connector, Integer.class, FtpGuestUser.class);
     }
 
-    protected Set<FtpGuestUser> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<FtpGuestUser> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select linux_account from ftp_guest_users"
         );
     }
 
-    protected Set<FtpGuestUser> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<FtpGuestUser> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -49,7 +48,7 @@ final class DatabaseFtpGuestUserService extends DatabaseService<Integer,FtpGuest
         );
     }
 
-    protected Set<FtpGuestUser> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<FtpGuestUser> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

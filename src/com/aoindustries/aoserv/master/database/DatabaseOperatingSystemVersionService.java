@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseOperatingSystemVersionService extends DatabasePublicService<
         super(connector, Integer.class, OperatingSystemVersion.class);
     }
 
-    protected Set<OperatingSystemVersion> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<OperatingSystemVersion> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from operating_system_versions"

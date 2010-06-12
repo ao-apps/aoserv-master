@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.LinuxGroupTypeService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseLinuxGroupTypeService extends DatabasePublicService<String,L
         super(connector, String.class, LinuxGroupType.class);
     }
 
-    protected Set<LinuxGroupType> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<LinuxGroupType> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from linux_group_types"

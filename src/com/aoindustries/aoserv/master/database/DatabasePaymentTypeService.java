@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.PaymentTypeService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabasePaymentTypeService extends DatabasePublicService<String,Paym
         super(connector, String.class, PaymentType.class);
     }
 
-    protected Set<PaymentType> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<PaymentType> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from payment_types"

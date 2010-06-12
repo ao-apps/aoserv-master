@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.ResourceService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
         super(connector, Integer.class, Resource.class);
     }
 
-    protected Set<Resource> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Resource> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from resources"
         );
     }
 
-    protected Set<Resource> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Resource> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             // ao_server_resources
@@ -62,7 +61,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
         );
     }
 
-    protected Set<Resource> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<Resource> getSetBusiness(DatabaseConnection db) throws SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"

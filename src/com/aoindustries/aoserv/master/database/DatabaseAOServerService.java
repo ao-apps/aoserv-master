@@ -11,7 +11,6 @@ import com.aoindustries.aoserv.client.AOServerService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -26,14 +25,14 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
         super(connector, Integer.class, AOServer.class);
     }
 
-    protected Set<AOServer> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServer> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from ao_servers"
         );
     }
 
-    protected Set<AOServer> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServer> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
@@ -65,7 +64,7 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
         );
     }
 
-    protected Set<AOServer> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<AOServer> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"

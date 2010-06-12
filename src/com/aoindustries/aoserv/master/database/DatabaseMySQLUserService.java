@@ -11,7 +11,6 @@ import com.aoindustries.aoserv.client.MySQLUserService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -26,7 +25,7 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
         super(connector, Integer.class, MySQLUser.class);
     }
 
-    protected Set<MySQLUser> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MySQLUser> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -72,7 +71,7 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
         );
     }
 
-    protected Set<MySQLUser> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MySQLUser> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -123,7 +122,7 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
         );
     }
 
-    protected Set<MySQLUser> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MySQLUser> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
              "select\n"

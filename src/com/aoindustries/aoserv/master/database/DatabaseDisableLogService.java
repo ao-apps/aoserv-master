@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
         super(connector, Integer.class, DisableLog.class);
     }
 
-    protected Set<DisableLog> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<DisableLog> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from disable_log"
         );
     }
 
-    protected Set<DisableLog> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<DisableLog> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select distinct\n"
@@ -54,7 +53,7 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
         );
     }
 
-    protected Set<DisableLog> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<DisableLog> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

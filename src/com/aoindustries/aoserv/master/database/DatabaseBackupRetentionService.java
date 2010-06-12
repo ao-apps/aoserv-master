@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.BackupRetentionService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseBackupRetentionService extends DatabasePublicService<Short,B
         super(connector, Short.class, BackupRetention.class);
     }
 
-    protected Set<BackupRetention> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<BackupRetention> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from backup_retentions"

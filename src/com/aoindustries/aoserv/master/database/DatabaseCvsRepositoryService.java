@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.CvsRepositoryService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepo
         super(connector, Integer.class, CvsRepository.class);
     }
 
-    protected Set<CvsRepository> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<CvsRepository> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select ao_server_resource, path, linux_account_group, mode from cvs_repositories"
         );
     }
 
-    protected Set<CvsRepository> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<CvsRepository> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -47,7 +46,7 @@ final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepo
         );
     }
 
-    protected Set<CvsRepository> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<CvsRepository> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"

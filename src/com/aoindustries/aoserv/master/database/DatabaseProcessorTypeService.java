@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.ProcessorTypeService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ final class DatabaseProcessorTypeService extends DatabasePublicService<String,Pr
         super(connector, String.class, ProcessorType.class);
     }
 
-    protected Set<ProcessorType> getPublicSet(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<ProcessorType> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from processor_types"

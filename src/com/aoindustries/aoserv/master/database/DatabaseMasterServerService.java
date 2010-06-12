@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.MasterServerService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,14 +24,14 @@ final class DatabaseMasterServerService extends DatabaseService<Integer,MasterSe
         super(connector, Integer.class, MasterServer.class);
     }
 
-    protected Set<MasterServer> getSetMaster(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MasterServer> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select * from master_servers"
         );
     }
 
-    protected Set<MasterServer> getSetDaemon(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MasterServer> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
@@ -47,7 +46,7 @@ final class DatabaseMasterServerService extends DatabaseService<Integer,MasterSe
         );
     }
 
-    protected Set<MasterServer> getSetBusiness(DatabaseConnection db) throws IOException, SQLException {
+    protected Set<MasterServer> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
             "select\n"
