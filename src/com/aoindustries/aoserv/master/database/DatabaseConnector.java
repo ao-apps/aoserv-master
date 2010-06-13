@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.AOServConnectorUtils;
 import com.aoindustries.aoserv.client.AOServPermissionService;
@@ -98,6 +98,7 @@ import com.aoindustries.aoserv.client.TechnologyClassService;
 import com.aoindustries.aoserv.client.TechnologyNameService;
 import com.aoindustries.aoserv.client.TechnologyService;
 import com.aoindustries.aoserv.client.TechnologyVersionService;
+import com.aoindustries.aoserv.client.TicketActionService;
 import com.aoindustries.aoserv.client.TicketActionTypeService;
 import com.aoindustries.aoserv.client.TicketAssignmentService;
 import com.aoindustries.aoserv.client.TicketCategoryService;
@@ -108,6 +109,7 @@ import com.aoindustries.aoserv.client.TicketTypeService;
 import com.aoindustries.aoserv.client.TimeZoneService;
 import com.aoindustries.aoserv.client.TransactionTypeService;
 import com.aoindustries.aoserv.client.UsernameService;
+import com.aoindustries.aoserv.client.VirtualServerService;
 import com.aoindustries.aoserv.client.command.RemoteCommand;
 import com.aoindustries.aoserv.client.command.ReadOnlyException;
 import com.aoindustries.aoserv.client.validator.UserId;
@@ -280,9 +282,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseTechnologyNameService technologyNames;
     final DatabaseTechnologyVersionService technologyVersions;
     final DatabaseTicketActionTypeService ticketActionTypes;
-    /* TODO
     final DatabaseTicketActionService ticketActions;
-    */
     final DatabaseTicketAssignmentService ticketAssignments;
     // TODO: final DatabaseTicketBrandCategoryService ticketBrandCategories;
     final DatabaseTicketCategoryService ticketCategories;
@@ -297,11 +297,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseUSStateService usStates;
      */
     final DatabaseUsernameService usernames;
-    /* TODO
-    final DatabaseVirtualDiskService virtualDisks;
-    final DatabaseVirtualServerService virtualServers;
-    final DatabaseWhoisHistoryService whoisHistories;
-     */
+    // TODO: final DatabaseVirtualDiskService virtualDisks;
+    DatabaseVirtualServerService virtualServers;
+    // TODO: final DatabaseWhoisHistoryService whoisHistories;
 
     DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password, boolean readOnly) {
         this.factory = factory;
@@ -454,9 +452,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         technologyNames = new DatabaseTechnologyNameService(this);
         technologyVersions = new DatabaseTechnologyVersionService(this);
         ticketActionTypes = new DatabaseTicketActionTypeService(this);
-        /* TODO
         ticketActions = new DatabaseTicketActionService(this);
-         */
         ticketAssignments = new DatabaseTicketAssignmentService(this);
         // TODO: ticketBrandCategories = new DatabaseTicketBrandCategoryService(this);
         ticketCategories = new DatabaseTicketCategoryService(this);
@@ -471,11 +467,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         usStates = new DatabaseUSStateService(this);
          */
         usernames = new DatabaseUsernameService(this);
-        /* TODO
-        virtualDisks = new DatabaseVirtualDiskService(this);
+        // TODO: virtualDisks = new DatabaseVirtualDiskService(this);
         virtualServers = new DatabaseVirtualServerService(this);
-        whoisHistories = new DatabaseWhoisHistoryService(this);
-         */
+        // TODO: whoisHistories = new DatabaseWhoisHistoryService(this);
     }
 
     enum AccountType {
@@ -992,9 +986,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public TicketActionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketActionTypes() {
         return ticketActionTypes;
     }
-    /* TODO
-    public TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions();
-    */
+
+    public TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions() {
+        return ticketActions;
+    }
+
     public TicketAssignmentService<DatabaseConnector,DatabaseConnectorFactory> getTicketAssignments() {
         return ticketAssignments;
     }
@@ -1037,11 +1033,12 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return usernames;
     }
     /* TODO
-
     public VirtualDiskService<DatabaseConnector,DatabaseConnectorFactory> getVirtualDisks();
-
-    public VirtualServerService<DatabaseConnector,DatabaseConnectorFactory> getVirtualServers();
-
+     */
+    public VirtualServerService<DatabaseConnector,DatabaseConnectorFactory> getVirtualServers() {
+        return virtualServers;
+    }
+    /* TODO
     public WhoisHistoryService<DatabaseConnector,DatabaseConnectorFactory> getWhoisHistory();
- */
+     */
 }

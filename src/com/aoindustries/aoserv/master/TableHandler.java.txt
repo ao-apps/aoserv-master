@@ -426,46 +426,6 @@ final public class TableHandler {
                     MasterServer.writeObjects(source, out, provideProgress, emptyList);
                 }
                 break;
-            case CREDIT_CARDS :
-                if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_cards)) {
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new CreditCard(),
-                            "select * from credit_cards"
-                        ); else {
-                            List<CreditCard> emptyList = Collections.emptyList();
-                            MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                        }
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new CreditCard(),
-                        "select\n"
-                        + "  cc.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  credit_cards cc\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and (\n"
-                        + UN_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=cc.accounting",
-                        username
-                    );
-                } else {
-                    // No permission, return empty list
-                    List<CreditCard> emptyList = Collections.emptyList();
-                    MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                }
-                break;
             case CREDIT_CARD_TRANSACTIONS :
                 if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_card_transactions)) {
                     if(masterUser!=null) {
