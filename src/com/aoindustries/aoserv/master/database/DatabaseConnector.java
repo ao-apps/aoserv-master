@@ -1,10 +1,10 @@
+package com.aoindustries.aoserv.master.database;
+
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-package com.aoindustries.aoserv.master.database;
-
 import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.AOServConnectorUtils;
 import com.aoindustries.aoserv.client.AOServPermissionService;
@@ -98,7 +98,6 @@ import com.aoindustries.aoserv.client.TechnologyClassService;
 import com.aoindustries.aoserv.client.TechnologyNameService;
 import com.aoindustries.aoserv.client.TechnologyService;
 import com.aoindustries.aoserv.client.TechnologyVersionService;
-import com.aoindustries.aoserv.client.TicketActionService;
 import com.aoindustries.aoserv.client.TicketActionTypeService;
 import com.aoindustries.aoserv.client.TicketAssignmentService;
 import com.aoindustries.aoserv.client.TicketCategoryService;
@@ -282,7 +281,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseTechnologyNameService technologyNames;
     final DatabaseTechnologyVersionService technologyVersions;
     final DatabaseTicketActionTypeService ticketActionTypes;
+    /* TODO
     final DatabaseTicketActionService ticketActions;
+    */
     final DatabaseTicketAssignmentService ticketAssignments;
     // TODO: final DatabaseTicketBrandCategoryService ticketBrandCategories;
     final DatabaseTicketCategoryService ticketCategories;
@@ -452,7 +453,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         technologyNames = new DatabaseTechnologyNameService(this);
         technologyVersions = new DatabaseTechnologyVersionService(this);
         ticketActionTypes = new DatabaseTicketActionTypeService(this);
+        /* TODO
         ticketActions = new DatabaseTicketActionService(this);
+         */
         ticketAssignments = new DatabaseTicketAssignmentService(this);
         // TODO: ticketBrandCategories = new DatabaseTicketBrandCategoryService(this);
         ticketCategories = new DatabaseTicketCategoryService(this);
@@ -986,11 +989,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public TicketActionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketActionTypes() {
         return ticketActionTypes;
     }
-
-    public TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions() {
-        return ticketActions;
-    }
-
+    /* TODO
+    public TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions();
+    */
     public TicketAssignmentService<DatabaseConnector,DatabaseConnectorFactory> getTicketAssignments() {
         return ticketAssignments;
     }
