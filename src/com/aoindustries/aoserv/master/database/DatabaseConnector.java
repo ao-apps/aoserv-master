@@ -28,6 +28,7 @@ import com.aoindustries.aoserv.client.BusinessService;
 import com.aoindustries.aoserv.client.CommandResult;
 import com.aoindustries.aoserv.client.CountryCodeService;
 import com.aoindustries.aoserv.client.CreditCardProcessorService;
+import com.aoindustries.aoserv.client.CreditCardService;
 import com.aoindustries.aoserv.client.CvsRepositoryService;
 import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.DnsRecordService;
@@ -107,7 +108,8 @@ import com.aoindustries.aoserv.client.TicketTypeService;
 import com.aoindustries.aoserv.client.TimeZoneService;
 import com.aoindustries.aoserv.client.TransactionTypeService;
 import com.aoindustries.aoserv.client.UsernameService;
-import com.aoindustries.aoserv.client.command.AOServCommand;
+import com.aoindustries.aoserv.client.command.RemoteCommand;
+import com.aoindustries.aoserv.client.command.ReadOnlyException;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.sql.DatabaseConnection;
 import java.rmi.RemoteException;
@@ -156,10 +158,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseBusinessServerService businessServers;
     final DatabaseCountryCodeService countryCodes;
     final DatabaseCreditCardProcessorService creditCardProcessors;
-    /* TODO
-    final DatabaseCreditCardTransactionService creditCardTransactions;
+    // TODO: final DatabaseCreditCardTransactionService creditCardTransactions;
     final DatabaseCreditCardService creditCards;
-     */
     final DatabaseCvsRepositoryService cvsRepositories;
     final DatabaseDisableLogService disableLogs;
     /* TODO
@@ -332,10 +332,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         businessServers = new DatabaseBusinessServerService(this);
         countryCodes = new DatabaseCountryCodeService(this);
         creditCardProcessors = new DatabaseCreditCardProcessorService(this);
-        /* TODO
-        creditCardTransactions = new DatabaseCreditCardTransactionService(this);
+        // TODO: creditCardTransactions = new DatabaseCreditCardTransactionService(this);
         creditCards = new DatabaseCreditCardService(this);
-         */
         cvsRepositories = new DatabaseCvsRepositoryService(this);
         disableLogs = new DatabaseDisableLogService(this);
         /* TODO
@@ -529,7 +527,9 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return readOnly;
     }
 
-    public <R> CommandResult<R> executeCommand(AOServCommand<R> command, boolean isInteractive) throws RemoteException {
+    public <R> CommandResult<R> executeCommand(RemoteCommand<R> command, boolean isInteractive) throws RemoteException {
+        // Check read-only commands
+        if(readOnly && !command.isReadOnlyCommand()) throw new ReadOnlyException();
         // TODO: Check account enabled
         // TODO: Check permissions
         // TODO: Validate command
@@ -628,9 +628,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     }
     /* TODO
     public CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardTransactions();
+    */
+    public CreditCardService<DatabaseConnector,DatabaseConnectorFactory> getCreditCards() {
+        return creditCards;
+    }
 
-    public CreditCardService<DatabaseConnector,DatabaseConnectorFactory> getCreditCards();
-     */
     public CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> getCvsRepositories() {
         return cvsRepositories;
     }
