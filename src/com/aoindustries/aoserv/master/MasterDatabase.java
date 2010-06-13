@@ -46,4 +46,12 @@ final class MasterDatabase extends Database {
             return masterDatabase;
         }
     }
+
+    /**
+     * TODO: Refuse to provide read-write connection to any read-only connector.
+     */
+    /*@Override
+    public Connection getConnection(int isolationLevel, boolean readOnly, int maxConnections) throws SQLException {
+        return super.getConnection(isolationLevel, readOnly, maxConnections);
+    }*/
 }
