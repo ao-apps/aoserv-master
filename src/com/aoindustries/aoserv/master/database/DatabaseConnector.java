@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.AOServConnectorUtils;
 import com.aoindustries.aoserv.client.AOServPermissionService;
@@ -98,6 +98,7 @@ import com.aoindustries.aoserv.client.TechnologyClassService;
 import com.aoindustries.aoserv.client.TechnologyNameService;
 import com.aoindustries.aoserv.client.TechnologyService;
 import com.aoindustries.aoserv.client.TechnologyVersionService;
+import com.aoindustries.aoserv.client.TicketActionService;
 import com.aoindustries.aoserv.client.TicketActionTypeService;
 import com.aoindustries.aoserv.client.TicketAssignmentService;
 import com.aoindustries.aoserv.client.TicketCategoryService;
@@ -106,6 +107,7 @@ import com.aoindustries.aoserv.client.TicketService;
 import com.aoindustries.aoserv.client.TicketStatusService;
 import com.aoindustries.aoserv.client.TicketTypeService;
 import com.aoindustries.aoserv.client.TimeZoneService;
+import com.aoindustries.aoserv.client.TransactionService;
 import com.aoindustries.aoserv.client.TransactionTypeService;
 import com.aoindustries.aoserv.client.UsernameService;
 import com.aoindustries.aoserv.client.VirtualServerService;
@@ -281,9 +283,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseTechnologyNameService technologyNames;
     final DatabaseTechnologyVersionService technologyVersions;
     final DatabaseTicketActionTypeService ticketActionTypes;
-    /* TODO
     final DatabaseTicketActionService ticketActions;
-    */
     final DatabaseTicketAssignmentService ticketAssignments;
     // TODO: final DatabaseTicketBrandCategoryService ticketBrandCategories;
     final DatabaseTicketCategoryService ticketCategories;
@@ -293,10 +293,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseTicketService tickets;
     final DatabaseTimeZoneService timeZones;
     final DatabaseTransactionTypeService transactionTypes;
-    /* TODO
     final DatabaseTransactionService transactions;
-    final DatabaseUSStateService usStates;
-     */
+    // TODO: final DatabaseUSStateService usStates;
     final DatabaseUsernameService usernames;
     // TODO: final DatabaseVirtualDiskService virtualDisks;
     DatabaseVirtualServerService virtualServers;
@@ -453,9 +451,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         technologyNames = new DatabaseTechnologyNameService(this);
         technologyVersions = new DatabaseTechnologyVersionService(this);
         ticketActionTypes = new DatabaseTicketActionTypeService(this);
-        /* TODO
         ticketActions = new DatabaseTicketActionService(this);
-         */
         ticketAssignments = new DatabaseTicketAssignmentService(this);
         // TODO: ticketBrandCategories = new DatabaseTicketBrandCategoryService(this);
         ticketCategories = new DatabaseTicketCategoryService(this);
@@ -465,10 +461,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         tickets = new DatabaseTicketService(this);
         timeZones = new DatabaseTimeZoneService(this);
         transactionTypes = new DatabaseTransactionTypeService(this);
-        /* TODO
         transactions = new DatabaseTransactionService(this);
-        usStates = new DatabaseUSStateService(this);
-         */
+        // TODO: usStates = new DatabaseUSStateService(this);
         usernames = new DatabaseUsernameService(this);
         // TODO: virtualDisks = new DatabaseVirtualDiskService(this);
         virtualServers = new DatabaseVirtualServerService(this);
@@ -492,38 +486,47 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return AccountType.DISABLED;
     }
 
+    @Override
     public DatabaseConnectorFactory getFactory() {
         return factory;
     }
 
+    @Override
     public Locale getLocale() {
         return locale;
     }
 
+    @Override
     public void setLocale(Locale locale) {
         this.locale = locale;
     }
 
+    @Override
     public UserId getConnectAs() {
         return connectAs;
     }
 
+    @Override
     public BusinessAdministrator getThisBusinessAdministrator() throws RemoteException {
         return getBusinessAdministrators().get(connectAs);
     }
 
+    @Override
     public UserId getAuthenticateAs() {
         return authenticateAs;
     }
 
+    @Override
     public String getPassword() {
         return password;
     }
 
+    @Override
     public boolean isReadOnly() {
         return readOnly;
     }
 
+    @Override
     public <R> CommandResult<R> executeCommand(RemoteCommand<R> command, boolean isInteractive) throws RemoteException {
         // Check read-only commands
         if(readOnly && !command.isReadOnlyCommand()) throw new ReadOnlyException();
@@ -535,6 +538,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     }
 
     private final AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>> tables = new AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>>();
+    @Override
     public Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>> getServices() throws RemoteException {
         Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>> ts = tables.get();
         if(ts==null) {
@@ -544,44 +548,54 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return ts;
     }
 
+    @Override
     public AOServerDaemonHostService<DatabaseConnector,DatabaseConnectorFactory> getAoServerDaemonHosts() {
         return aoserverDaemonHosts;
     }
 
+    @Override
     public AOServerResourceService<DatabaseConnector,DatabaseConnectorFactory> getAoServerResources() {
         return aoserverResources;
     }
 
+    @Override
     public AOServerService<DatabaseConnector,DatabaseConnectorFactory> getAoServers() {
         return aoservers;
     }
 
+    @Override
     public AOServPermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservPermissions() {
         return aoservPermissions;
     }
 
+    @Override
     public AOServRoleService<DatabaseConnector,DatabaseConnectorFactory> getAoservRoles() {
         return aoservRoles;
     }
 
+    @Override
     public AOServRolePermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservRolePermissions() {
         return aoservRolePermissions;
     }
 
+    @Override
     public ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> getArchitectures() {
         return architectures;
     }
 
+    @Override
     public BackupPartitionService<DatabaseConnector,DatabaseConnectorFactory> getBackupPartitions() {
         return backupPartitions;
     }
 
+    @Override
     public BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> getBackupRetentions() {
         return backupRetentions;
     }
 
     // TODO: public BankAccountService<DatabaseConnector,DatabaseConnectorFactory> getBankAccounts();
 
+    @Override
     public BankTransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactionTypes() {
         return bankTransactionTypes;
     }
@@ -592,48 +606,59 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     // TODO: public BlackholeEmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getBlackholeEmailAddresses();
 
+    @Override
     public BrandService<DatabaseConnector,DatabaseConnectorFactory> getBrands() {
         return brands;
     }
 
+    @Override
     public BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministrators() {
         return businessAdministrators;
     }
 
+    @Override
     public BusinessAdministratorRoleService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministratorRoles() {
         return businessAdministratorRoles;
     }
 
+    @Override
     public BusinessProfileService<DatabaseConnector,DatabaseConnectorFactory> getBusinessProfiles() {
         return businessProfiles;
     }
 
+    @Override
     public BusinessService<DatabaseConnector,DatabaseConnectorFactory> getBusinesses() {
         return businesses;
     }
 
+    @Override
     public BusinessServerService<DatabaseConnector,DatabaseConnectorFactory> getBusinessServers() {
         return businessServers;
     }
 
+    @Override
     public CountryCodeService<DatabaseConnector,DatabaseConnectorFactory> getCountryCodes() {
         return countryCodes;
     }
 
+    @Override
     public CreditCardProcessorService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardProcessors() {
         return creditCardProcessors;
     }
     /* TODO
     public CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardTransactions();
     */
+    @Override
     public CreditCardService<DatabaseConnector,DatabaseConnectorFactory> getCreditCards() {
         return creditCards;
     }
 
+    @Override
     public CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> getCvsRepositories() {
         return cvsRepositories;
     }
 
+    @Override
     public DisableLogService<DatabaseConnector,DatabaseConnectorFactory> getDisableLogs() {
         return disableLogs;
     }
@@ -642,18 +667,22 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     public DistroFileService<DatabaseConnector,DatabaseConnectorFactory> getDistroFiles();
      */
+    @Override
     public DnsRecordService<DatabaseConnector,DatabaseConnectorFactory> getDnsRecords() {
         return dnsRecords;
     }
 
+    @Override
     public DnsTldService<DatabaseConnector,DatabaseConnectorFactory> getDnsTlds() {
         return dnsTlds;
     }
 
+    @Override
     public DnsTypeService<DatabaseConnector,DatabaseConnectorFactory> getDnsTypes() {
         return dnsTypes;
     }
 
+    @Override
     public DnsZoneService<DatabaseConnector,DatabaseConnectorFactory> getDnsZones() {
         return dnsZones;
     }
@@ -662,6 +691,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     // TODO: public EmailAttachmentBlockService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentBlocks();
 
+    @Override
     public EmailAttachmentTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentTypes() {
         return emailAttachmentTypes;
     }
@@ -670,6 +700,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     // TODO: public EmailForwardingService<DatabaseConnector,DatabaseConnectorFactory> getEmailForwardings();
 
+    @Override
     public EmailInboxService<DatabaseConnector,DatabaseConnectorFactory> getEmailInboxes() {
         return emailInboxes;
     }
@@ -682,6 +713,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     public EmailPipeService<DatabaseConnector,DatabaseConnectorFactory> getEmailPipes();
     */
+    @Override
     public EmailSmtpRelayTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpRelayTypes() {
         return emailSmtpRelayTypes;
     }
@@ -692,40 +724,49 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     // TODO: public EmailSmtpSmartHostService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpSmartHosts();
 
+    @Override
     public EmailSpamAssassinIntegrationModeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSpamAssassinIntegrationModes() {
         return emailSpamAssassinIntegrationModes;
     }
 
     // TODO: public EncryptionKeyService<DatabaseConnector,DatabaseConnectorFactory> getEncryptionKeys();
 
+    @Override
     public ExpenseCategoryService<DatabaseConnector,DatabaseConnectorFactory> getExpenseCategories() {
         return expenseCategories;
     }
 
+    @Override
     public FailoverFileLogService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileLogs() {
         return failoverFileLogs;
     }
 
+    @Override
     public FailoverFileReplicationService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileReplications() {
         return failoverFileReplications;
     }
 
+    @Override
     public FailoverFileScheduleService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileSchedules() {
         return failoverFileSchedules;
     }
 
+    @Override
     public FailoverMySQLReplicationService<DatabaseConnector,DatabaseConnectorFactory> getFailoverMySQLReplications() {
         return failoverMySQLReplications;
     }
 
+    @Override
     public FileBackupSettingService<DatabaseConnector,DatabaseConnectorFactory> getFileBackupSettings() {
         return fileBackupSettings;
     }
 
+    @Override
     public FtpGuestUserService<DatabaseConnector,DatabaseConnectorFactory> getFtpGuestUsers() {
         return ftpGuestUsers;
     }
 
+    @Override
     public GroupNameService<DatabaseConnector,DatabaseConnectorFactory> getGroupNames() {
         return groupNames;
     }
@@ -734,18 +775,22 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     // TODO: public HttpdJBossSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossSites();
 
+    @Override
     public HttpdJBossVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossVersions() {
         return httpdJBossVersions;
     }
 
+    @Override
     public HttpdJKCodeService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKCodes() {
         return httpdJKCodes;
     }
 
+    @Override
     public HttpdJKProtocolService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKProtocols() {
         return httpdJKProtocols;
     }
 
+    @Override
     public HttpdServerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdServers() {
         return httpdServers;
     }
@@ -758,6 +803,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     public HttpdSiteURLService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteURLs();
     */
+    @Override
     public HttpdSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSites() {
         return httpdSites;
     }
@@ -776,38 +822,46 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     public HttpdTomcatStdSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatStdSites();
     */
+    @Override
     public HttpdTomcatVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatVersions() {
         return httpdTomcatVersions;
     }
 
     // TODO: public HttpdWorkerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdWorkers();
 
+    @Override
     public IPAddressService<DatabaseConnector,DatabaseConnectorFactory> getIpAddresses() {
         return ipAddresses;
     }
 
+    @Override
     public LanguageService<DatabaseConnector,DatabaseConnectorFactory> getLanguages() {
         return languages;
     }
 
     // TODO: public LinuxAccAddressService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccAddresses();
 
+    @Override
     public LinuxAccountGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccountGroups() {
         return linuxAccountGroups;
     }
 
+    @Override
     public LinuxAccountTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccountTypes() {
         return linuxAccountTypes;
     }
 
+    @Override
     public LinuxAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccounts() {
         return linuxAccounts;
     }
 
+    @Override
     public LinuxGroupTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupTypes() {
         return linuxGroupTypes;
     }
 
+    @Override
     public LinuxGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroups() {
         return linuxGroups;
     }
@@ -816,76 +870,93 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     // TODO: public MajordomoServerService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoServers();
 
+    @Override
     public MajordomoVersionService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoVersions() {
         return majordomoVersions;
     }
 
     // TODO: public MasterHistoryService<DatabaseConnector,DatabaseConnectorFactory> getMasterHistory();
 
+    @Override
     public MasterHostService<DatabaseConnector,DatabaseConnectorFactory> getMasterHosts() {
         return masterHosts;
     }
 
+    @Override
     public MasterServerService<DatabaseConnector,DatabaseConnectorFactory> getMasterServers() {
         return masterServers;
     }
 
+    @Override
     public MasterUserService<DatabaseConnector,DatabaseConnectorFactory> getMasterUsers() {
         return masterUsers;
     }
 
     // TODO: public MonthlyChargeService<DatabaseConnector,DatabaseConnectorFactory> getMonthlyCharges();
 
+    @Override
     public MySQLDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDatabases() {
         return mysqlDatabases;
     }
 
+    @Override
     public MySQLDBUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDBUsers() {
         return mysqlDBUsers;
     }
 
+    @Override
     public MySQLServerService<DatabaseConnector,DatabaseConnectorFactory> getMysqlServers() {
         return mysqlServers;
     }
 
+    @Override
     public MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlUsers() {
         return mysqlUsers;
     }
 
+    @Override
     public NetBindService<DatabaseConnector,DatabaseConnectorFactory> getNetBinds() {
         return netBinds;
     }
 
+    @Override
     public NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> getNetDeviceIDs() {
         return netDeviceIDs;
     }
 
+    @Override
     public NetDeviceService<DatabaseConnector,DatabaseConnectorFactory> getNetDevices() {
         return netDevices;
     }
 
+    @Override
     public NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> getNetProtocols() {
         return netProtocols;
     }
 
+    @Override
     public NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects() {
         return netTcpRedirects;
     }
 
     // TODO: public NoticeLogService<DatabaseConnector,DatabaseConnectorFactory> getNoticeLogs();
 
+    @Override
     public NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> getNoticeTypes() {
         return noticeTypes;
     }
 
+    @Override
     public OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystemVersions() {
         return operatingSystemVersions;
     }
 
+    @Override
     public OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystems() {
         return operatingSystems;
     }
 
+    @Override
     public PackageCategoryService<DatabaseConnector,DatabaseConnectorFactory> getPackageCategories() {
         return packageCategories;
     }
@@ -894,70 +965,86 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     // TODO: public PackageDefinitionService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitions();
 
+    @Override
     public PaymentTypeService<DatabaseConnector,DatabaseConnectorFactory> getPaymentTypes() {
         return paymentTypes;
     }
 
     // TODO: public PhysicalServerService<DatabaseConnector,DatabaseConnectorFactory> getPhysicalServers();
 
+    @Override
     public PostgresDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getPostgresDatabases() {
         return postgresDatabases;
     }
 
+    @Override
     public PostgresEncodingService<DatabaseConnector,DatabaseConnectorFactory> getPostgresEncodings() {
         return postgresEncodings;
     }
 
+    @Override
     public PostgresServerService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServers() {
         return postgresServers;
     }
 
+    @Override
     public PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresUsers() {
         return postgresUsers;
     }
 
+    @Override
     public PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> getPostgresVersions() {
         return postgresVersions;
     }
 
+    @Override
     public PrivateFtpServerService<DatabaseConnector,DatabaseConnectorFactory> getPrivateFtpServers() {
         return privateFtpServers;
     }
 
+    @Override
     public ProcessorTypeService<DatabaseConnector,DatabaseConnectorFactory> getProcessorTypes() {
         return processorTypes;
     }
 
+    @Override
     public ProtocolService<DatabaseConnector,DatabaseConnectorFactory> getProtocols() {
         return protocols;
     }
     /* TODO
     public RackService<DatabaseConnector,DatabaseConnectorFactory> getRacks();
     */
+    @Override
     public ResellerService<DatabaseConnector,DatabaseConnectorFactory> getResellers() {
         return resellers;
     }
 
+    @Override
     public ResourceTypeService<DatabaseConnector,DatabaseConnectorFactory> getResourceTypes() {
         return resourceTypes;
     }
 
+    @Override
     public ResourceService<DatabaseConnector,DatabaseConnectorFactory> getResources() {
         return resources;
     }
 
+    @Override
     public ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> getServerFarms() {
         return serverFarms;
     }
 
+    @Override
     public ServerResourceService<DatabaseConnector,DatabaseConnectorFactory> getServerResources() {
         return serverResources;
     }
 
+    @Override
     public ServerService<DatabaseConnector,DatabaseConnectorFactory> getServers() {
         return servers;
     }
 
+    @Override
     public ShellService<DatabaseConnector,DatabaseConnectorFactory> getShells() {
         return shells;
     }
@@ -970,72 +1057,93 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     public SystemEmailAliasService<DatabaseConnector,DatabaseConnectorFactory> getSystemEmailAliases();
     */
+    @Override
     public TechnologyService<DatabaseConnector,DatabaseConnectorFactory> getTechnologies() {
         return technologies;
     }
 
+    @Override
     public TechnologyClassService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyClasses() {
         return technologyClasses;
     }
 
+    @Override
     public TechnologyNameService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyNames() {
         return technologyNames;
     }
 
+    @Override
     public TechnologyVersionService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyVersions() {
         return technologyVersions;
     }
 
+    @Override
     public TicketActionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketActionTypes() {
         return ticketActionTypes;
     }
-    /* TODO
-    public TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions();
-    */
+
+    @Override
+    public TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions() {
+        return ticketActions;
+    }
+
+    @Override
     public TicketAssignmentService<DatabaseConnector,DatabaseConnectorFactory> getTicketAssignments() {
         return ticketAssignments;
     }
 
     // TODO: public TicketBrandCategoryService<DatabaseConnector,DatabaseConnectorFactory> getTicketBrandCategories();
 
+    @Override
     public TicketCategoryService<DatabaseConnector,DatabaseConnectorFactory> getTicketCategories() {
         return ticketCategories;
     }
 
+    @Override
     public TicketPriorityService<DatabaseConnector,DatabaseConnectorFactory> getTicketPriorities() {
         return ticketPriorities;
     }
 
+    @Override
     public TicketStatusService<DatabaseConnector,DatabaseConnectorFactory> getTicketStatuses() {
         return ticketStatuses;
     }
 
+    @Override
     public TicketTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketTypes() {
         return ticketTypes;
     }
 
+    @Override
     public TicketService<DatabaseConnector,DatabaseConnectorFactory> getTickets() {
         return tickets;
     }
 
+    @Override
     public TimeZoneService<DatabaseConnector,DatabaseConnectorFactory> getTimeZones() {
         return timeZones;
     }
 
+    @Override
     public TransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTransactionTypes() {
         return transactionTypes;
     }
-    /* TODO
-    public TransactionService<DatabaseConnector,DatabaseConnectorFactory> getTransactions();
 
+    @Override
+    public TransactionService<DatabaseConnector,DatabaseConnectorFactory> getTransactions() {
+        return transactions;
+    }
+    /* TODO
     public USStateService<DatabaseConnector,DatabaseConnectorFactory> getUsStates();
     */
+    @Override
     public UsernameService<DatabaseConnector,DatabaseConnectorFactory> getUsernames() {
         return usernames;
     }
     /* TODO
     public VirtualDiskService<DatabaseConnector,DatabaseConnectorFactory> getVirtualDisks();
      */
+    @Override
     public VirtualServerService<DatabaseConnector,DatabaseConnectorFactory> getVirtualServers() {
         return virtualServers;
     }

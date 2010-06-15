@@ -154,7 +154,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
 
     @Override
     final public String toString() {
-        return getServiceName().toString(connector.getLocale());
+        return getServiceName().toString();
     }
 
     final public DatabaseConnector getConnector() {
