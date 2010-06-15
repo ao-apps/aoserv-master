@@ -77,6 +77,7 @@ import com.aoindustries.aoserv.client.NoticeTypeService;
 import com.aoindustries.aoserv.client.OperatingSystemService;
 import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
+import com.aoindustries.aoserv.client.PackageDefinitionService;
 import com.aoindustries.aoserv.client.PaymentTypeService;
 import com.aoindustries.aoserv.client.PostgresDatabaseService;
 import com.aoindustries.aoserv.client.PostgresEncodingService;
@@ -251,8 +252,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseOperatingSystemService operatingSystems;
     final DatabasePackageCategoryService packageCategories;
     // TODO: final DatabasePackageDefinitionLimitService packageDefinitionLimits;
-    // TODO: final DatabasePackageDefinitionService packageDefinitions;
-    DatabasePaymentTypeService paymentTypes;
+    final DatabasePackageDefinitionService packageDefinitions;
+    final DatabasePaymentTypeService paymentTypes;
     // TODO: final DatabasePhysicalServerService physicalServers;
     final DatabasePostgresDatabaseService postgresDatabases;
     final DatabasePostgresEncodingService postgresEncodings;
@@ -419,7 +420,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         operatingSystems = new DatabaseOperatingSystemService(this);
         packageCategories = new DatabasePackageCategoryService(this);
         // TODO: packageDefinitionLimits = new DatabasePackageDefinitionLimitService(this);
-        // TODO: packageDefinitions = new DatabasePackageDefinitionService(this);
+        packageDefinitions = new DatabasePackageDefinitionService(this);
         paymentTypes = new DatabasePaymentTypeService(this);
         // TODO: physicalServers = new DatabasePhysicalServerService(this);
         postgresDatabases = new DatabasePostgresDatabaseService(this);
@@ -963,7 +964,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
 
     // TODO: public PackageDefinitionLimitService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitionLimits();
 
-    // TODO: public PackageDefinitionService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitions();
+    @Override
+    public PackageDefinitionService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitions() {
+        return packageDefinitions;
+    }
 
     @Override
     public PaymentTypeService<DatabaseConnector,DatabaseConnectorFactory> getPaymentTypes() {

@@ -237,6 +237,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
 
     private final AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory> connectors = new AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory>();
 
+    @Override
     public DatabaseConnector getConnector(Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer, boolean readOnly) throws LoginException, RemoteException {
         synchronized(connectors) {
             DatabaseConnector connector = connectors.get(connectAs, authenticateAs, password, daemonServer, readOnly);
@@ -256,10 +257,12 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
         }
     }
 
+    @Override
     public DatabaseConnector newConnector(final Locale locale, final UserId connectAs, final UserId authenticateAs, final String password, final DomainName daemonServer, final boolean readOnly) throws LoginException, RemoteException {
         try {
             return database.executeTransaction(
                 new DatabaseCallable<DatabaseConnector>() {
+                    @Override
                     public DatabaseConnector call(DatabaseConnection db) throws SQLException {
                         try {
                             return newConnector(db, locale, connectAs, authenticateAs, password, daemonServer, readOnly);
@@ -285,10 +288,10 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
     protected DatabaseConnector newConnector(DatabaseConnection db, Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer, boolean readOnly) throws RemoteException, LoginException, SQLException {
         try {
             // Handle the authentication
-            if(connectAs==null)      throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.connectAs.empty"));
-            if(authenticateAs==null) throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.authenticateAs.null"));
-            if(password==null)       throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.password.null"));
-            if(password.length()==0) throw new IncompleteLoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.password.empty"));
+            if(connectAs==null)      throw new IncompleteLoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.connectAs.empty"));
+            if(authenticateAs==null) throw new IncompleteLoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.authenticateAs.null"));
+            if(password==null)       throw new IncompleteLoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.password.null"));
+            if(password.length()==0) throw new IncompleteLoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.password.empty"));
 
             String correctCrypted = db.executeStringQuery(
                 Connection.TRANSACTION_READ_COMMITTED,
@@ -297,10 +300,10 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
                 "select password from business_administrators where username=?",
                 authenticateAs
             );
-            if(correctCrypted==null) throw new AccountNotFoundException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.accountNotFound"));
-            if(!HashedPassword.valueOf(correctCrypted).passwordMatches(password)) throw new BadPasswordException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.badPassword"));
+            if(correctCrypted==null) throw new AccountNotFoundException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountNotFound"));
+            if(!HashedPassword.valueOf(correctCrypted).passwordMatches(password)) throw new BadPasswordException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.badPassword"));
 
-            if(!isEnabledBusinessAdministrator(db, authenticateAs)) throw new AccountDisabledException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.accountDisabled"));
+            if(!isEnabledBusinessAdministrator(db, authenticateAs)) throw new AccountDisabledException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
 
             InetAddress remoteHost;
             try {
@@ -308,14 +311,14 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
             } catch(ServerNotActiveException err) {
                 remoteHost = InetAddress.LOOPBACK;
             }
-            if(!isHostAllowed(db, authenticateAs, remoteHost)) throw new LoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.hostNotAllowed", remoteHost, authenticateAs));
+            if(!isHostAllowed(db, authenticateAs, remoteHost)) throw new LoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.hostNotAllowed", remoteHost, authenticateAs));
 
             // If connectAs is not authenticateAs, must be authenticated with switch user permissions
             if(
                 !connectAs.equals(authenticateAs)
                 && !canSwitchUser(db, authenticateAs, connectAs)
             ) {
-                throw new LoginException(ApplicationResources.accessor.getMessage(locale, "DatabaseConnectorFactory.createConnector.switchUserNotAllowed", authenticateAs, connectAs));
+                throw new LoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.switchUserNotAllowed", authenticateAs, connectAs));
             }
 
             // Let them in
@@ -332,7 +335,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
                 return connector;
             }
         } catch(ValidationException err) {
-            throw new RemoteException(err.getLocalizedMessage(locale), err);
+            throw new RemoteException(err.getLocalizedMessage(), err);
         }
     }
 }

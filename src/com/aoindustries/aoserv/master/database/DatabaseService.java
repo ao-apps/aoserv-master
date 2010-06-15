@@ -18,11 +18,14 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.table.IndexType;
 import com.aoindustries.table.Table;
 import com.aoindustries.util.WrappedException;
+import com.aoindustries.util.i18n.Money;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Currency;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -112,17 +115,33 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
     /**
      * Gets the int value or <code>-1</code> if <code>null</code>.
      */
+    /* TODO: used?
     protected static int getNullableInt(ResultSet result, int pos) throws SQLException {
         int i = result.getInt(pos);
         return result.wasNull() ? -1 : i;
     }
+     */
 
     /**
      * Gets the float value or <code>Float.NaN</code> if <code>null</code>.
      */
+    /* TODO: used?
     protected static float getNullableFloat(ResultSet result, int pos) throws SQLException {
         float f = result.getInt(pos);
         return result.wasNull() ? Float.NaN : f;
+    }
+     */
+
+    /**
+     * Gets a Money type from two columns of a <code>ResultSet</code>.  Supports
+     * <code>null</code>.  If value is non-null then currency must also be non-null.
+     */
+    protected static Money getMoney(ResultSet result, String currencyColumnLabel, String valueColumnLabel) throws SQLException {
+        BigDecimal value = result.getBigDecimal(valueColumnLabel);
+        if(value==null) return null;
+        String currencyCode = result.getString(currencyColumnLabel);
+        if(currencyCode==null) throw new SQLException(currencyColumnLabel+"==null && "+valueColumnLabel+"!=null");
+        return new Money(Currency.getInstance(currencyCode), value);
     }
 
     protected static void addOptionalInInteger(StringBuilder sql, String sqlPrefix, Set<? extends AOServObject<Integer,?>> set, String sqlSuffix) {
@@ -157,10 +176,12 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         return getServiceName().toString();
     }
 
+    @Override
     final public DatabaseConnector getConnector() {
         return connector;
     }
 
+    @Override
     final public boolean isAoServObjectServiceSettable() {
         return true;
     }
@@ -171,6 +192,7 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         try {
             return connector.factory.database.executeTransaction(
                 new DatabaseCallable<IndexedSet<V>>() {
+                    @Override
                     public IndexedSet<V> call(DatabaseConnection db) throws SQLException {
                         try {
                             return getSet(db);
@@ -220,23 +242,28 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
     abstract protected Set<V> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException;
     // </editor-fold>
 
+    @Override
     final public ServiceName getServiceName() {
         return serviceName;
     }
 
+    @Override
     final public Table<MethodColumn,V> getTable() {
         return table;
     }
 
+    @Override
     final public Map<K,V> getMap() {
         return map;
     }
 
     // <editor-fold defaultstate="collapsed" desc="isEmpty">
+    @Override
     final public boolean isEmpty() throws RemoteException {
         try {
             return connector.factory.database.executeTransaction(
                 new DatabaseCallable<Boolean>() {
+                    @Override
                     public Boolean call(DatabaseConnection db) throws SQLException {
                         try {
                             return isEmpty(db);
@@ -291,10 +318,12 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="getSize">
+    @Override
     final public int getSize() throws RemoteException {
         try {
             return connector.factory.database.executeTransaction(
                 new DatabaseCallable<Integer>() {
+                    @Override
                     public Integer call(DatabaseConnection db) throws SQLException {
                         try {
                             return getSize(db);
@@ -349,10 +378,12 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="get">
+    @Override
     final public V get(final K key) throws RemoteException, NoSuchElementException {
         try {
             return connector.factory.database.executeTransaction(
                 new DatabaseCallable<V>() {
+                    @Override
                     public V call(DatabaseConnection db) throws SQLException, NoSuchElementException {
                         try {
                             return get(db, key);
@@ -412,10 +443,12 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="filterUnique">
+    @Override
     final public V filterUnique(final String columnName, final Object value) throws RemoteException, RemoteException {
         try {
             return connector.factory.database.executeTransaction(
                 new DatabaseCallable<V>() {
+                    @Override
                     public V call(DatabaseConnection db) throws SQLException {
                         try {
                             return filterUnique(db, columnName, value);
@@ -498,10 +531,12 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="filterUniqueSet">
+    @Override
     final public IndexedSet<V> filterUniqueSet(final String columnName, final Set<?> values) throws RemoteException {
         try {
             return connector.factory.database.executeTransaction(
                 new DatabaseCallable<IndexedSet<V>>() {
+                    @Override
                     public IndexedSet<V> call(DatabaseConnection db) throws SQLException {
                         try {
                             return filterUniqueSet(db, columnName, values);
@@ -584,10 +619,12 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="filterIndexed">
+    @Override
     final public IndexedSet<V> filterIndexed(final String columnName, final Object value) throws RemoteException {
         try {
             return connector.factory.database.executeTransaction(
                 new DatabaseCallable<IndexedSet<V>>() {
+                    @Override
                     public IndexedSet<V> call(DatabaseConnection db) throws SQLException {
                         try {
                             return filterIndexed(db, columnName, value);
@@ -663,10 +700,12 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="filterIndexedSet">
+    @Override
     final public IndexedSet<V> filterIndexedSet(final String columnName, final Set<?> values) throws RemoteException, RemoteException {
         try {
             return connector.factory.database.executeTransaction(
                 new DatabaseCallable<IndexedSet<V>>() {
+                    @Override
                     public IndexedSet<V> call(DatabaseConnection db) throws SQLException {
                         try {
                             return filterIndexedSet(db, columnName, values);
