@@ -26,6 +26,7 @@ final class DatabaseExpenseCategoryService extends DatabaseService<String,Expens
         super(connector, String.class, ExpenseCategory.class);
     }
 
+    @Override
     protected Set<ExpenseCategory> getSetMaster(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getMasterUsers().get(connector.getConnectAs()).getCanAccessBankAccount()) {
             return db.executeObjectSetQuery(
@@ -37,10 +38,12 @@ final class DatabaseExpenseCategoryService extends DatabaseService<String,Expens
         }
     }
 
+    @Override
     protected Set<ExpenseCategory> getSetDaemon(DatabaseConnection db) {
         return Collections.emptySet();
     }
 
+    @Override
     protected Set<ExpenseCategory> getSetBusiness(DatabaseConnection db) {
         return Collections.emptySet();
     }

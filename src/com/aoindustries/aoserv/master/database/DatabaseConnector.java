@@ -29,6 +29,7 @@ import com.aoindustries.aoserv.client.CommandResult;
 import com.aoindustries.aoserv.client.CountryCodeService;
 import com.aoindustries.aoserv.client.CreditCardProcessorService;
 import com.aoindustries.aoserv.client.CreditCardService;
+import com.aoindustries.aoserv.client.CreditCardTransactionService;
 import com.aoindustries.aoserv.client.CvsRepositoryService;
 import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.aoserv.client.DnsRecordService;
@@ -162,7 +163,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseBusinessServerService businessServers;
     final DatabaseCountryCodeService countryCodes;
     final DatabaseCreditCardProcessorService creditCardProcessors;
-    // TODO: final DatabaseCreditCardTransactionService creditCardTransactions;
+    final DatabaseCreditCardTransactionService creditCardTransactions;
     final DatabaseCreditCardService creditCards;
     final DatabaseCvsRepositoryService cvsRepositories;
     final DatabaseDisableLogService disableLogs;
@@ -330,7 +331,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         businessServers = new DatabaseBusinessServerService(this);
         countryCodes = new DatabaseCountryCodeService(this);
         creditCardProcessors = new DatabaseCreditCardProcessorService(this);
-        // TODO: creditCardTransactions = new DatabaseCreditCardTransactionService(this);
+        creditCardTransactions = new DatabaseCreditCardTransactionService(this);
         creditCards = new DatabaseCreditCardService(this);
         cvsRepositories = new DatabaseCvsRepositoryService(this);
         disableLogs = new DatabaseDisableLogService(this);
@@ -646,9 +647,12 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     public CreditCardProcessorService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardProcessors() {
         return creditCardProcessors;
     }
-    /* TODO
-    public CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardTransactions();
-    */
+
+    @Override
+    public CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardTransactions() {
+        return creditCardTransactions;
+    }
+
     @Override
     public CreditCardService<DatabaseConnector,DatabaseConnectorFactory> getCreditCards() {
         return creditCards;

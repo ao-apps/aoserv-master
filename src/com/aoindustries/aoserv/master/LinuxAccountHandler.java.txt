@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2009 by AO Industries, Inc.,
+ * Copyright 2001-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -28,7 +28,6 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -322,7 +321,7 @@ final public class LinuxAccountHandler {
             ServerHandler.checkAccessServer(conn, source, "addLinuxServerAccount", aoServer);
             UsernameHandler.checkUsernameAccessServer(conn, source, "addLinuxServerAccount", username, aoServer);
         }
-        if(!home.equals(LinuxServerAccount.getDefaultHomeDirectory(username, Locale.getDefault()))) {
+        if(!home.equals(LinuxServerAccount.getDefaultHomeDirectory(username))) {
             // Must be in /www/... or /wwwgroup/...
             if(
                 (home.length()<=(HttpdSite.WWW_DIRECTORY.length()+1) || !home.substring(0, HttpdSite.WWW_DIRECTORY.length()+1).equals(HttpdSite.WWW_DIRECTORY+'/'))
@@ -1425,8 +1424,8 @@ final public class LinuxAccountHandler {
 
         if(password!=null && password.length()>0) {
             // Perform the password check here, too.
-            PasswordChecker.Result[] results = LinuxAccount.checkPassword(Locale.getDefault(), username, type, password);
-            if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
+            PasswordChecker.Result[] results = LinuxAccount.checkPassword(username, type, password);
+            if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
         }
 
         String accounting=UsernameHandler.getBusinessForUsername(conn, username);

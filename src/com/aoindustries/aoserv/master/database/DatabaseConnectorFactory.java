@@ -184,11 +184,11 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
             + "    (select accounting from usernames where username=?),\n"
             + "    (select accounting from usernames where username=?)\n"
             + "  )",
-            authenticatedAs.getId(),
-            authenticatedAs.getId(),
-            connectAs.getId(),
-            authenticatedAs.getId(),
-            connectAs.getId()
+            authenticatedAs.toString(),
+            authenticatedAs.toString(),
+            connectAs.toString(),
+            authenticatedAs.toString(),
+            connectAs.toString()
         );
     }
 

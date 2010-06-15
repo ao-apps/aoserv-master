@@ -12,6 +12,9 @@ import com.aoindustries.aoserv.client.Business;
 import com.aoindustries.aoserv.client.IndexedSet;
 import com.aoindustries.aoserv.client.MethodColumn;
 import com.aoindustries.aoserv.client.ServiceName;
+import com.aoindustries.aoserv.client.validator.Email;
+import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.security.AccountDisabledException;
 import com.aoindustries.sql.DatabaseCallable;
 import com.aoindustries.sql.DatabaseConnection;
@@ -142,6 +145,20 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         String currencyCode = result.getString(currencyColumnLabel);
         if(currencyCode==null) throw new SQLException(currencyColumnLabel+"==null && "+valueColumnLabel+"!=null");
         return new Money(Currency.getInstance(currencyCode), value);
+    }
+
+    /**
+     * Null-safe conversion from String to Email.
+     */
+    protected static Email getEmail(String email) throws ValidationException {
+        return email==null ? null : Email.valueOf(email);
+    }
+
+    /**
+     * Null-safe conversion from String to UserId.
+     */
+    protected static UserId getUserId(String userid) throws ValidationException {
+        return userid==null ? null : UserId.valueOf(userid);
     }
 
     protected static void addOptionalInInteger(StringBuilder sql, String sqlPrefix, Set<? extends AOServObject<Integer,?>> set, String sqlSuffix) {

@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2009 by AO Industries, Inc.,
+ * Copyright 2001-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -21,7 +21,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -708,8 +707,8 @@ final public class PostgresHandler {
 
         // Perform the password check here, too.
         if(password!=PostgresUser.NO_PASSWORD) {
-            PasswordChecker.Result[] results = PostgresUser.checkPassword(Locale.getDefault(), username, password);
-            if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
+            PasswordChecker.Result[] results = PostgresUser.checkPassword(username, password);
+            if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
         }
 
         // Contact the daemon for the update

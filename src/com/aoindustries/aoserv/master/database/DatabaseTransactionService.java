@@ -12,11 +12,9 @@ import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.i18n.Money;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.Currency;
 import java.util.Set;
 
 /**
@@ -37,10 +35,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
                     UserId.valueOf(result.getString("username")),
                     result.getString("type"),
                     result.getBigDecimal("quantity"),
-                    new Money(
-                        Currency.getInstance(result.getString("currency")),
-                        result.getBigDecimal("rate")
-                    ),
+                    getMoney(result, "currency", "rate"),
                     result.getString("payment_type"),
                     result.getString("payment_info"),
                     result.getString("processor"),

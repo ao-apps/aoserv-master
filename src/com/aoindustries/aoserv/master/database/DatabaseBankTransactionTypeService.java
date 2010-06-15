@@ -26,6 +26,7 @@ final class DatabaseBankTransactionTypeService extends DatabaseService<String,Ba
         super(connector, String.class, BankTransactionType.class);
     }
 
+    @Override
     protected Set<BankTransactionType> getSetMaster(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getMasterUsers().get(connector.getConnectAs()).getCanAccessBankAccount()) {
             return db.executeObjectSetQuery(
@@ -37,10 +38,12 @@ final class DatabaseBankTransactionTypeService extends DatabaseService<String,Ba
         }
     }
 
+    @Override
     protected Set<BankTransactionType> getSetDaemon(DatabaseConnection db) {
         return Collections.emptySet();
     }
 
+    @Override
     protected Set<BankTransactionType> getSetBusiness(DatabaseConnection db) {
         return Collections.emptySet();
     }

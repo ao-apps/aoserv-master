@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master;
 
 /*
- * Copyright 2001-2009 by AO Industries, Inc.,
+ * Copyright 2001-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -25,7 +25,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -103,7 +102,7 @@ final public class MySQLHandler {
 
         // Must be a valid name format
         List<String> reservedWords=getReservedWords(conn);
-        String invalidReason = MySQLDatabaseTable.isValidDatabaseName(Locale.getDefault(), name, reservedWords);
+        String invalidReason = MySQLDatabaseTable.isValidDatabaseName(name, reservedWords);
         if(invalidReason!=null) throw new SQLException(invalidReason);
 
         // Must be allowed to access this server and business
@@ -381,7 +380,7 @@ final public class MySQLHandler {
         String goodOne=null;
         for(int c=0;c<Integer.MAX_VALUE;c++) {
             String name= (c==0) ? template_base : (template_base+template_added+c);
-            String invalidReason = MySQLDatabaseTable.isValidDatabaseName(Locale.getDefault(), name, reservedWords);
+            String invalidReason = MySQLDatabaseTable.isValidDatabaseName(name, reservedWords);
             if(invalidReason!=null) throw new SQLException(invalidReason);
             if(!sorted.contains(name)) {
                 goodOne=name;
@@ -655,8 +654,8 @@ final public class MySQLHandler {
         // Perform the password check here, too.
         if(password!=null && password.length()==0) password=MySQLUser.NO_PASSWORD;
         if(password!=MySQLUser.NO_PASSWORD) {
-            PasswordChecker.Result[] results = MySQLUser.checkPassword(Locale.getDefault(), username, password);
-            if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
+            PasswordChecker.Result[] results = MySQLUser.checkPassword(username, password);
+            if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
         }
 
         // Contact the daemon for the update
