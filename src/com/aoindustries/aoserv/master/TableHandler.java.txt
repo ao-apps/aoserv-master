@@ -411,46 +411,6 @@ final public class TableHandler {
                     MasterServer.writeObjects(source, out, provideProgress, emptyList);
                 }
                 break;
-            case CREDIT_CARD_TRANSACTIONS :
-                if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_card_transactions)) {
-                    if(masterUser!=null) {
-                        if(masterServers.length==0) MasterServer.writeObjects(
-                            conn,
-                            source,
-                            out,
-                            provideProgress,
-                            new CreditCardTransaction(),
-                            "select * from credit_card_transactions"
-                        ); else {
-                            List<CreditCardTransaction> emptyList = Collections.emptyList();
-                            MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                        }
-                    } else MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new CreditCardTransaction(),
-                        "select\n"
-                        + "  cct.*\n"
-                        + "from\n"
-                        + "  usernames un,\n"
-                        + BU1_PARENTS_JOIN
-                        + "  credit_card_transactions cct\n"
-                        + "where\n"
-                        + "  un.username=?\n"
-                        + "  and (\n"
-                        + UN_BU1_PARENTS_WHERE
-                        + "  )\n"
-                        + "  and bu1.accounting=cct.accounting",
-                        username
-                    );
-                } else {
-                    // No permission, return empty list
-                    List<CreditCardTransaction> emptyList = Collections.emptyList();
-                    MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                }
-                break;
             case DISTRO_FILE_TYPES :
                 MasterServer.writeObjects(
                     conn,
