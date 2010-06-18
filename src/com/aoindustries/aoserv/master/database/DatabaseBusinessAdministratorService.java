@@ -62,7 +62,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
             objectFactory,
             "select distinct\n"
             + "  ba.username,\n"
-            + "  '"+HashedPassword.NO_PASSWORD+"'::text,\n"
+            + "  '"+HashedPassword.NO_PASSWORD+"'::text as password,\n"
             + "  ba.full_name,\n"
             + "  ba.title,\n"
             + "  ba.birthday,\n"
@@ -100,7 +100,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
             objectFactory,
             "select\n"
             + "  ba.username,\n"
-            + "  '"+HashedPassword.NO_PASSWORD+"'::text,\n"
+            + "  '"+HashedPassword.NO_PASSWORD+"'::text as password,\n"
             + "  ba.full_name,\n"
             + "  ba.title,\n"
             + "  ba.birthday,\n"

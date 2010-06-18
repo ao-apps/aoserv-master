@@ -78,6 +78,8 @@ import com.aoindustries.aoserv.client.NoticeTypeService;
 import com.aoindustries.aoserv.client.OperatingSystemService;
 import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.aoserv.client.PackageCategoryService;
+import com.aoindustries.aoserv.client.PackageDefinitionBusinessService;
+import com.aoindustries.aoserv.client.PackageDefinitionLimitService;
 import com.aoindustries.aoserv.client.PackageDefinitionService;
 import com.aoindustries.aoserv.client.PaymentTypeService;
 import com.aoindustries.aoserv.client.PostgresDatabaseService;
@@ -252,7 +254,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseOperatingSystemVersionService operatingSystemVersions;
     final DatabaseOperatingSystemService operatingSystems;
     final DatabasePackageCategoryService packageCategories;
-    // TODO: final DatabasePackageDefinitionLimitService packageDefinitionLimits;
+    final DatabasePackageDefinitionBusinessService packageDefinitionBusinesses;
+    final DatabasePackageDefinitionLimitService packageDefinitionLimits;
     final DatabasePackageDefinitionService packageDefinitions;
     final DatabasePaymentTypeService paymentTypes;
     // TODO: final DatabasePhysicalServerService physicalServers;
@@ -420,7 +423,8 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         operatingSystemVersions = new DatabaseOperatingSystemVersionService(this);
         operatingSystems = new DatabaseOperatingSystemService(this);
         packageCategories = new DatabasePackageCategoryService(this);
-        // TODO: packageDefinitionLimits = new DatabasePackageDefinitionLimitService(this);
+        packageDefinitionBusinesses = new DatabasePackageDefinitionBusinessService(this);
+        packageDefinitionLimits = new DatabasePackageDefinitionLimitService(this);
         packageDefinitions = new DatabasePackageDefinitionService(this);
         paymentTypes = new DatabasePaymentTypeService(this);
         // TODO: physicalServers = new DatabasePhysicalServerService(this);
@@ -966,7 +970,15 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         return packageCategories;
     }
 
-    // TODO: public PackageDefinitionLimitService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitionLimits();
+    @Override
+    public PackageDefinitionBusinessService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitionBusinesses() {
+        return packageDefinitionBusinesses;
+    }
+
+    @Override
+    public PackageDefinitionLimitService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitionLimits() {
+        return packageDefinitionLimits;
+    }
 
     @Override
     public PackageDefinitionService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitions() {

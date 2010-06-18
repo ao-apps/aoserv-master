@@ -24,6 +24,7 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
         super(connector, Integer.class, DisableLog.class);
     }
 
+    @Override
     protected Set<DisableLog> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -31,6 +32,7 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
         );
     }
 
+    @Override
     protected Set<DisableLog> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -53,6 +55,7 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
         );
     }
 
+    @Override
     protected Set<DisableLog> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,

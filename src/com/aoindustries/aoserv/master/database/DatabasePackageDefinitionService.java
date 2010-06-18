@@ -28,13 +28,10 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
                 result.getString("category"),
                 result.getString("name"),
                 result.getString("version"),
-                result.getString("display"),
-                result.getString("description"),
                 getMoney(result, "currency", "setup_fee"),
                 result.getString("setup_fee_transaction_type"),
                 getMoney(result, "currency", "monthly_rate"),
                 result.getString("monthly_rate_transaction_type"),
-                result.getBoolean("active"),
                 result.getBoolean("approved")
             );
         }
@@ -82,15 +79,17 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
                 + "from\n"
                 + "  usernames un,\n"
                 + BU1_PARENTS_JOIN
+                + "  package_definition_businesses pdb,\n"
                 + "  package_definitions pd\n"
                 + "where\n"
                 + "  un.username=?\n"
                 + "  and (\n"
                 + UN_BU1_PARENTS_WHERE
                 + "  )\n"
+                + "  and bu1.accounting=pdb.accounting\n"
                 + "  and (\n"
                 + "    bu1.package_definition=pd.pkey\n"
-                // + "    or bu1.accounting=pd.accounting\n"
+                + "    or pdb.package_definition=pd.pkey\n"
                 + "  )",
                 connector.getConnectAs()
             );
@@ -102,27 +101,26 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
                 + "  pd.category,\n"
                 + "  pd.name,\n"
                 + "  pd.version,\n"
-                + "  pd.display,\n"
-                + "  pd.description,\n"
                 + "  null as currency,\n"
                 + "  null as setup_fee,\n"
                 + "  null as setup_fee_transaction_type,\n"
                 + "  null as monthly_rate,\n"
                 + "  null as monthly_rate_transaction_type,\n"
-                + "  pd.active,\n"
                 + "  pd.approved\n"
                 + "from\n"
                 + "  usernames un,\n"
                 + BU1_PARENTS_JOIN
+                + "  package_definition_businesses pdb,\n"
                 + "  package_definitions pd\n"
                 + "where\n"
                 + "  un.username=?\n"
                 + "  and (\n"
                 + UN_BU1_PARENTS_WHERE
                 + "  )\n"
+                + "  and bu1.accounting=pdb.accounting\n"
                 + "  and (\n"
                 + "    bu1.package_definition=pd.pkey\n"
-                // + "    or bu1.accounting=pd.accounting\n"
+                + "    or pdb.package_definition=pd.pkey\n"
                 + "  )",
                 connector.getConnectAs()
             );
