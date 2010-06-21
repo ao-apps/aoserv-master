@@ -12,7 +12,9 @@ import com.aoindustries.aoserv.client.Business;
 import com.aoindustries.aoserv.client.IndexedSet;
 import com.aoindustries.aoserv.client.MethodColumn;
 import com.aoindustries.aoserv.client.ServiceName;
+import com.aoindustries.aoserv.client.validator.DomainName;
 import com.aoindustries.aoserv.client.validator.Email;
+import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.security.AccountDisabledException;
@@ -159,6 +161,20 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
      */
     protected static UserId getUserId(String userid) throws ValidationException {
         return userid==null ? null : UserId.valueOf(userid);
+    }
+
+    /**
+     * Null-safe conversion from String to InetAddress.
+     */
+    protected static InetAddress getInetAddress(String address) throws ValidationException {
+        return address==null ? null : InetAddress.valueOf(address);
+    }
+
+    /**
+     * Null-safe conversion from String to DomainName.
+     */
+    protected static DomainName getDomainName(String domain) throws ValidationException {
+        return domain==null ? null : DomainName.valueOf(domain);
     }
 
     protected static void addOptionalInInteger(StringBuilder sql, String sqlPrefix, Set<? extends AOServObject<Integer,?>> set, String sqlSuffix) {
