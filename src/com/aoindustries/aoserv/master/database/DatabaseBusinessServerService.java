@@ -5,12 +5,15 @@ package com.aoindustries.aoserv.master.database;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.BusinessServer;
 import com.aoindustries.aoserv.client.BusinessServerService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -24,6 +27,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
         super(connector, Integer.class, BusinessServer.class);
     }
 
+    @Override
     protected Set<BusinessServer> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -31,6 +35,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
         );
     }
 
+    @Override
     protected Set<BusinessServer> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -46,6 +51,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
         );
     }
 
+    @Override
     protected Set<BusinessServer> getSetBusiness(DatabaseConnection db) throws SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
@@ -59,14 +65,38 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
-            + "  ) and (\n"
-            + "    bu1.accounting=bs.accounting\n"
+            + "  ) and bu1.accounting=bs.accounting"
         );
-        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.ipAddresses.getSetBusiness(db), "))\n");
-        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.linuxGroups.getSetBusiness(db), "))\n");
-        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.mysqlServers.getSetBusiness(db), "))\n");
-        addOptionalInInteger(sql, "    or (bs.accounting, bs.server) in (select accounting, server from resources where pkey in (", connector.postgresServers.getSetBusiness(db), "))\n");
-        sql.append("  )");
+        // Extra server_resources
+        List<Set<? extends AOServObject<Integer,?>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        connector.serverResources.addExtraServerResourcesBusiness(db, extraServerResources);
+        addOptionalInInteger(
+            sql,
+            "\nunion select\n"
+            + "  bs.*\n"
+            + "from\n"
+            + "  server_resources sr\n"
+            + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
+            + "where\n"
+            + "  sr.resource in (",
+            extraServerResources,
+            ")"
+        );
+        // Extra ao_server_resources
+        List<Set<? extends AOServObject<Integer,?>>> extraAoserverResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        connector.aoserverResources.addExtraAOServerResourcesBusiness(db, extraAoserverResources);
+        addOptionalInInteger(
+            sql,
+            "\nunion select\n"
+            + "  bs.*\n"
+            + "from\n"
+            + "  ao_server_resources asr\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "where\n"
+            + "  asr.resource in (",
+            extraAoserverResources,
+            ")"
+        );
         return db.executeObjectSetQuery(
             objectFactory,
             sql.toString(),

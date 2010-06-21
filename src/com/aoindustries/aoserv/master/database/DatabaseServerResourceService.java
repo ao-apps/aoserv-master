@@ -5,12 +5,15 @@ package com.aoindustries.aoserv.master.database;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.ServerResource;
 import com.aoindustries.aoserv.client.ServerResourceService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -24,6 +27,7 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
         super(connector, Integer.class, ServerResource.class);
     }
 
+    @Override
     protected Set<ServerResource> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -37,6 +41,7 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
         );
     }
 
+    @Override
     protected Set<ServerResource> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -55,6 +60,14 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
         );
     }
 
+    /**
+     * Adds the extra server resources for the current user.
+     */
+    void addExtraServerResourcesBusiness(DatabaseConnection db, List<Set<? extends AOServObject<Integer,?>>> extraServerResources) throws SQLException {
+        extraServerResources.add(connector.ipAddresses.getSetBusiness(db));
+    }
+
+    @Override
     protected Set<ServerResource> getSetBusiness(DatabaseConnection db) throws SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
@@ -71,11 +84,24 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
-            + "  ) and (\n"
-            + "    bu1.accounting=sr.accounting\n"
+            + "  ) and bu1.accounting=sr.accounting"
         );
-        addOptionalInInteger(sql, "    or sr.resource in (", connector.ipAddresses.getSetBusiness(db), ")\n");
-        sql.append("  )");
+        List<Set<? extends AOServObject<Integer,?>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        addExtraServerResourcesBusiness(db, extraServerResources);
+        addOptionalInInteger(
+            sql,
+            "\nunion select\n"
+            + "  sr.resource,\n"
+            + "  sr.server,\n"
+            + "  bs.pkey\n"
+            + "from\n"
+            + "  server_resources sr\n"
+            + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
+            + "where\n"
+            + "  sr.resource in (",
+            extraServerResources,
+            ")"
+        );
         return db.executeObjectSetQuery(
             objectFactory,
             sql.toString(),

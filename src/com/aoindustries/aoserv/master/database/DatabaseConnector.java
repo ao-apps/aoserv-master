@@ -116,7 +116,6 @@ import com.aoindustries.aoserv.client.TransactionTypeService;
 import com.aoindustries.aoserv.client.UsernameService;
 import com.aoindustries.aoserv.client.VirtualServerService;
 import com.aoindustries.aoserv.client.command.RemoteCommand;
-import com.aoindustries.aoserv.client.command.ReadOnlyException;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.sql.DatabaseConnection;
 import java.rmi.RemoteException;
@@ -142,7 +141,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final UserId connectAs;
     private final UserId authenticateAs;
     private final String password;
-    private final boolean readOnly;
     final DatabaseAOServerDaemonHostService aoserverDaemonHosts;
     final DatabaseAOServerResourceService aoserverResources;
     final DatabaseAOServerService aoservers;
@@ -305,13 +303,12 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     DatabaseVirtualServerService virtualServers;
     // TODO: final DatabaseWhoisHistoryService whoisHistories;
 
-    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password, boolean readOnly) {
+    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password) {
         this.factory = factory;
         this.locale = locale;
         this.connectAs = connectAs;
         this.authenticateAs = authenticateAs;
         this.password = password;
-        this.readOnly = readOnly;
         aoserverDaemonHosts = new DatabaseAOServerDaemonHostService(this);
         aoserverResources = new DatabaseAOServerResourceService(this);
         aoservers = new DatabaseAOServerService(this);
@@ -528,14 +525,7 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     }
 
     @Override
-    public boolean isReadOnly() {
-        return readOnly;
-    }
-
-    @Override
     public <R> CommandResult<R> executeCommand(RemoteCommand<R> command, boolean isInteractive) throws RemoteException {
-        // Check read-only commands
-        if(readOnly && !command.isReadOnlyCommand()) throw new ReadOnlyException();
         // TODO: Check account enabled
         // TODO: Check permissions
         // TODO: Validate command

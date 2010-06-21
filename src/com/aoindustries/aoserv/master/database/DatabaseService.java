@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Currency;
 import java.util.HashSet;
 import java.util.Map;
@@ -185,7 +186,30 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
                 if(didOne) sql.append(',');
                 else didOne = true;
                 Integer key = obj.getKey();
-                sql.append(key==null ? "null" : key.toString());
+                if(key!=null) sql.append(key.toString());
+            }
+            sql.append(sqlSuffix);
+        }
+    }
+
+    protected static void addOptionalInInteger(StringBuilder sql, String sqlPrefix, Collection<Set<? extends AOServObject<Integer,?>>> sets, String sqlSuffix) {
+        boolean isEmpty = true;
+        for(Set<? extends AOServObject<Integer,?>> set : sets) {
+            if(!set.isEmpty()) {
+                isEmpty = false;
+                break;
+            }
+        }
+        if(!isEmpty) {
+            sql.append(sqlPrefix);
+            boolean didOne = false;
+            for(Set<? extends AOServObject<Integer,?>> set : sets) {
+                for(AOServObject<Integer,?> obj : set) {
+                    if(didOne) sql.append(',');
+                    else didOne = true;
+                    Integer key = obj.getKey();
+                    if(key!=null) sql.append(key.toString());
+                }
             }
             sql.append(sqlSuffix);
         }

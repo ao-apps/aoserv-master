@@ -5,6 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
+import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.Resource;
 import com.aoindustries.aoserv.client.ResourceService;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
@@ -14,6 +15,8 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -99,15 +102,22 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and (\n"
-            + "    bu1.accounting=re.accounting\n"
+            + "  and bu1.accounting=re.accounting"
         );
-        addOptionalInInteger(sql, "    or re.pkey in (", connector.httpdServers.getSetBusiness(db), ")\n");
-        addOptionalInInteger(sql, "    or re.pkey in (", connector.ipAddresses.getSetBusiness(db), ")\n");
-        addOptionalInInteger(sql, "    or re.pkey in (", connector.linuxGroups.getSetBusiness(db), ")\n");
-        addOptionalInInteger(sql, "    or re.pkey in (", connector.mysqlServers.getSetBusiness(db), ")\n");
-        addOptionalInInteger(sql, "    or re.pkey in (", connector.postgresServers.getSetBusiness(db), ")\n");
-        sql.append("  )");
+        List<Set<? extends AOServObject<Integer,?>>> extraResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        connector.serverResources.addExtraServerResourcesBusiness(db, extraResources);
+        connector.aoserverResources.addExtraAOServerResourcesBusiness(db, extraResources);
+        addOptionalInInteger(
+            sql,
+            "\nunion select\n"
+            + "  *\n"
+            + "from\n"
+            + "  resources\n"
+            + "where\n"
+            + "  pkey in (",
+            extraResources,
+            ")"
+        );
         return db.executeObjectSetQuery(
             objectFactory,
             sql.toString(),
