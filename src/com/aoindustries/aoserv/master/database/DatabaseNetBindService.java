@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.Business;
 import com.aoindustries.aoserv.client.NetBind;
@@ -27,6 +27,7 @@ final class DatabaseNetBindService extends DatabaseService<Integer,NetBind> impl
         super(connector, Integer.class, NetBind.class);
     }
 
+    @Override
     protected Set<NetBind> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -45,6 +46,7 @@ final class DatabaseNetBindService extends DatabaseService<Integer,NetBind> impl
         );
     }
 
+    @Override
     protected Set<NetBind> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -90,6 +92,7 @@ final class DatabaseNetBindService extends DatabaseService<Integer,NetBind> impl
         );
     }
 
+    @Override
     protected Set<NetBind> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,

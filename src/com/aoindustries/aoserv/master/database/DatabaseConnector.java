@@ -154,7 +154,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     final DatabaseBankTransactionTypeService bankTransactionTypes;
     // TODO: final DatabaseBankTransactionService bankTransactions;
     // TODO: final DatabaseBankService banks;
-    // TODO: final DatabaseBlackholeEmailAddressService blackholeEmailAddresss;
     final DatabaseBrandService brands;
     final DatabaseBusinessAdministratorService businessAdministrators;
     final DatabaseBusinessAdministratorRoleService businessAdministratorRoles;
@@ -322,7 +321,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
         bankTransactionTypes = new DatabaseBankTransactionTypeService(this);
         // TODO: bankTransactions = new DatabaseBankTransactionService(this);
         // TODO: banks = new DatabaseBankService(this);
-        // TODO: blackholeEmailAddresss = new DatabaseBlackholeEmailAddressService(this);
         brands = new DatabaseBrandService(this);
         businessAdministrators = new DatabaseBusinessAdministratorService(this);
         businessAdministratorRoles = new DatabaseBusinessAdministratorRoleService(this);
@@ -599,8 +597,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     // TODO: public BankTransactionService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactions();
 
     // TODO: public BankService<DatabaseConnector,DatabaseConnectorFactory> getBanks();
-
-    // TODO: public BlackholeEmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getBlackholeEmailAddresses();
 
     @Override
     public BrandService<DatabaseConnector,DatabaseConnectorFactory> getBrands() {

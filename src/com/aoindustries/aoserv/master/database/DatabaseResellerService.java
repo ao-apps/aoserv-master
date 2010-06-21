@@ -26,6 +26,7 @@ final class DatabaseResellerService extends DatabaseService<AccountingCode,Resel
         super(connector, AccountingCode.class, Reseller.class);
     }
 
+    @Override
     protected Set<Reseller> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -33,10 +34,12 @@ final class DatabaseResellerService extends DatabaseService<AccountingCode,Resel
         );
     }
 
+    @Override
     protected Set<Reseller> getSetDaemon(DatabaseConnection db) {
         return Collections.emptySet();
     }
 
+    @Override
     protected Set<Reseller> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,

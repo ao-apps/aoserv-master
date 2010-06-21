@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.BackupPartition;
 import com.aoindustries.aoserv.client.BackupPartitionService;
 import com.aoindustries.sql.AutoObjectFactory;
@@ -24,6 +24,7 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
         super(connector, Integer.class, BackupPartition.class);
     }
 
+    @Override
     protected Set<BackupPartition> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -31,6 +32,7 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
         );
     }
 
+    @Override
     protected Set<BackupPartition> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -59,6 +61,7 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
         );
     }
 
+    @Override
     protected Set<BackupPartition> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,

@@ -12,6 +12,7 @@ import com.aoindustries.aoserv.client.Business;
 import com.aoindustries.aoserv.client.IndexedSet;
 import com.aoindustries.aoserv.client.MethodColumn;
 import com.aoindustries.aoserv.client.ServiceName;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.DomainName;
 import com.aoindustries.aoserv.client.validator.Email;
 import com.aoindustries.aoserv.client.validator.InetAddress;
@@ -148,6 +149,13 @@ abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,
         String currencyCode = result.getString(currencyColumnLabel);
         if(currencyCode==null) throw new SQLException(currencyColumnLabel+"==null && "+valueColumnLabel+"!=null");
         return new Money(Currency.getInstance(currencyCode), value);
+    }
+
+    /**
+     * Null-safe conversion from String to AccountingCode.
+     */
+    protected static AccountingCode getAccountingCode(String accounting) throws ValidationException {
+        return accounting==null ? null : AccountingCode.valueOf(accounting);
     }
 
     /**

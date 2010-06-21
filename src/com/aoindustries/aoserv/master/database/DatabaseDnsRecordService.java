@@ -8,10 +8,11 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.DnsRecord;
 import com.aoindustries.aoserv.client.DnsRecordService;
 import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
@@ -21,12 +22,34 @@ import java.util.Set;
  */
 final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> implements DnsRecordService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<DnsRecord> objectFactory = new AutoObjectFactory<DnsRecord>(DnsRecord.class, this);
+    private final ObjectFactory<DnsRecord> objectFactory = new ObjectFactory<DnsRecord>() {
+        @Override
+        public DnsRecord createObject(ResultSet result) throws SQLException {
+            try {
+                return new DnsRecord(
+                    DatabaseDnsRecordService.this,
+                    result.getInt("resource"),
+                    result.getInt("zone"),
+                    result.getString("domain"),
+                    result.getString("type"),
+                    (Integer)result.getObject("mx_priority"),
+                    getInetAddress(result.getString("data_ip_address")),
+                    getDomainName(result.getString("data_domain_name")),
+                    result.getString("data_text"),
+                    (Integer)result.getObject("dhcp_address"),
+                    (Integer)result.getObject("ttl")
+                );
+            } catch(ValidationException err) {
+                throw new SQLException(err);
+            }
+        }
+    };
 
     DatabaseDnsRecordService(DatabaseConnector connector) {
         super(connector, Integer.class, DnsRecord.class);
     }
 
+    @Override
     protected Set<DnsRecord> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -45,6 +68,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
         );
     }
 
+    @Override
     protected Set<DnsRecord> getSetDaemon(DatabaseConnection db) throws RemoteException, SQLException {
         MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
         if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
@@ -68,6 +92,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
         }
     }
 
+    @Override
     protected Set<DnsRecord> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,

@@ -1,16 +1,18 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.TicketAction;
 import com.aoindustries.aoserv.client.TicketActionService;
-import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
@@ -20,12 +22,43 @@ import java.util.Set;
  */
 final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAction> implements TicketActionService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<TicketAction> objectFactory = new AutoObjectFactory<TicketAction>(TicketAction.class, this);
+    private final ObjectFactory<TicketAction> objectFactory = new ObjectFactory<TicketAction>() {
+        @Override
+        public TicketAction createObject(ResultSet result) throws SQLException {
+            try {
+                return new TicketAction(
+                    DatabaseTicketActionService.this,
+                    result.getInt("pkey"),
+                    result.getInt("ticket"),
+                    getUserId(result.getString("administrator")),
+                    result.getTimestamp("time"),
+                    result.getString("action_type"),
+                    getAccountingCode(result.getString("old_accounting")),
+                    getAccountingCode(result.getString("new_accounting")),
+                    result.getString("old_priority"),
+                    result.getString("new_priority"),
+                    result.getString("old_type"),
+                    result.getString("new_type"),
+                    result.getString("old_status"),
+                    result.getString("new_status"),
+                    getUserId(result.getString("old_assigned_to")),
+                    getUserId(result.getString("new_assigned_to")),
+                    (Integer)result.getObject("old_category"),
+                    (Integer)result.getObject("new_category"),
+                    getEmail(result.getString("from_address")),
+                    result.getString("summary")
+                );
+            } catch(ValidationException err) {
+                throw new SQLException(err);
+            }
+        }
+    };
 
     DatabaseTicketActionService(DatabaseConnector connector) {
         super(connector, Integer.class, TicketAction.class);
     }
 
+    @Override
     protected Set<TicketAction> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -54,10 +87,12 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
         );
     }
 
+    @Override
     protected Set<TicketAction> getSetDaemon(DatabaseConnection db) {
         return Collections.emptySet();
     }
 
+    @Override
     protected Set<TicketAction> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             // If a ticket admin, can see all ticket_actions

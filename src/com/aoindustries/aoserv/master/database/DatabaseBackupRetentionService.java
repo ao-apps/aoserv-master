@@ -24,6 +24,7 @@ final class DatabaseBackupRetentionService extends DatabasePublicService<Short,B
         super(connector, Short.class, BackupRetention.class);
     }
 
+    @Override
     protected Set<BackupRetention> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,

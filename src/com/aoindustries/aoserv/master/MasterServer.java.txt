@@ -5188,22 +5188,6 @@ public abstract class MasterServer {
                                         SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
                                         if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
                                         switch(tableID) {
-                                            case BLACKHOLE_EMAIL_ADDRESSES :
-                                                {
-                                                    int pkey=in.readCompressedInt();
-                                                    process.setCommand(
-                                                        AOSHCommand.REMOVE_BLACKHOLE_EMAIL_ADDRESS,
-                                                        Integer.valueOf(pkey)
-                                                    );
-                                                    EmailHandler.removeBlackholeEmailAddress(
-                                                        conn,
-                                                        source,
-                                                        invalidateList,
-                                                        pkey
-                                                    );
-                                                    resp1=AOServProtocol.DONE;
-                                                }
-                                                break;
                                             case BUSINESS_ADMINISTRATORS :
                                                 {
                                                     String username=in.readUTF();

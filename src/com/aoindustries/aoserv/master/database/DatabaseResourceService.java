@@ -58,8 +58,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
 
     @Override
     protected Set<Resource> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
+        StringBuilder sql = new StringBuilder(
             // ao_server_resources
             "select\n"
             + "  re.*\n"
@@ -81,7 +80,24 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=sr.server\n"
-            + "  and sr.resource=re.pkey",
+            + "  and sr.resource=re.pkey"
+        );
+        List<Set<? extends AOServObject<Integer,?>>> extraResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        connector.serverResources.addExtraServerResourcesDaemon(db, extraResources);
+        addOptionalInInteger(
+            sql,
+            "\nunion select\n"
+            + "  *\n"
+            + "from\n"
+            + "  resources\n"
+            + "where\n"
+            + "  pkey in (",
+            extraResources,
+            ")"
+        );
+        return db.executeObjectSetQuery(
+            objectFactory,
+            sql.toString(),
             connector.getConnectAs(),
             connector.getConnectAs()
         );

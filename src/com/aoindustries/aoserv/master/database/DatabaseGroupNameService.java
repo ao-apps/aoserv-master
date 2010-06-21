@@ -26,6 +26,7 @@ final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> 
         super(connector, GroupId.class, GroupName.class);
     }
 
+    @Override
     protected Set<GroupName> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -33,6 +34,7 @@ final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> 
         );
     }
 
+    @Override
     protected Set<GroupName> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -53,6 +55,7 @@ final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> 
         );
     }
 
+    @Override
     protected Set<GroupName> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -66,10 +69,13 @@ final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> 
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
-            + "  ) and (\n"
-            + "    bu1.accounting=gn.accounting\n"
-            + "    or gn.group_name=?\n"
-            + "  )",
+            + "  ) and bu1.accounting=gn.accounting\n"
+            + "union select\n"
+            + "  gn.*\n"
+            + "from\n"
+            + "  group_names gn\n"
+            + "where\n"
+            + "  gn.group_name=?",
             connector.connectAs,
             LinuxGroup.MAILONLY
         );

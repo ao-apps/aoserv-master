@@ -27,6 +27,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
         super(connector, Integer.class, DnsZone.class);
     }
 
+    @Override
     protected Set<DnsZone> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -41,6 +42,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
         );
     }
 
+    @Override
     protected Set<DnsZone> getSetDaemon(DatabaseConnection db) throws RemoteException, SQLException {
         MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
         if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
@@ -60,6 +62,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
         }
     }
 
+    @Override
     protected Set<DnsZone> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,

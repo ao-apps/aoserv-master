@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.BusinessServer;
 import com.aoindustries.aoserv.client.BusinessServerService;
@@ -37,8 +37,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
 
     @Override
     protected Set<BusinessServer> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
+        StringBuilder sql = new StringBuilder(
             "select distinct\n"
             + "  bs.*\n"
             + "from\n"
@@ -46,7 +45,39 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             + "  business_servers bs\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=bs.server",
+            + "  and ms.server=bs.server"
+        );
+        // Extra net_binds
+        addOptionalInInteger(
+            sql,
+            "\nunion select\n"
+            + "  bs.*\n"
+            + "from\n"
+            + "  net_binds nb\n"
+            + "  inner join business_servers bs on nb.business_server=bs.pkey\n"
+            + "where\n"
+            + "  nb.pkey in (",
+            connector.netBinds.getSetDaemon(db),
+            ")"
+        );
+        // Extra server_resources
+        List<Set<? extends AOServObject<Integer,?>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        connector.serverResources.addExtraServerResourcesDaemon(db, extraServerResources);
+        addOptionalInInteger(
+            sql,
+            "\nunion select\n"
+            + "  bs.*\n"
+            + "from\n"
+            + "  server_resources sr\n"
+            + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
+            + "where\n"
+            + "  sr.resource in (",
+            extraServerResources,
+            ")"
+        );
+        return db.executeObjectSetQuery(
+            objectFactory,
+            sql.toString(),
             connector.getConnectAs()
         );
     }
@@ -66,6 +97,19 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  ) and bu1.accounting=bs.accounting"
+        );
+        // Extra net_binds
+        addOptionalInInteger(
+            sql,
+            "\nunion select\n"
+            + "  bs.*\n"
+            + "from\n"
+            + "  net_binds nb\n"
+            + "  inner join business_servers bs on nb.business_server=bs.pkey\n"
+            + "where\n"
+            + "  nb.pkey in (",
+            connector.netBinds.getSetBusiness(db),
+            ")"
         );
         // Extra server_resources
         List<Set<? extends AOServObject<Integer,?>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();

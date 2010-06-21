@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.ServerResource;
 import com.aoindustries.aoserv.client.ServerResourceService;
@@ -41,10 +41,16 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
         );
     }
 
+    /**
+     * Adds the extra server resources for the current user.
+     */
+    void addExtraServerResourcesDaemon(DatabaseConnection db, List<Set<? extends AOServObject<Integer,?>>> extraServerResources) throws SQLException {
+        extraServerResources.add(connector.ipAddresses.getSetDaemon(db));
+    }
+
     @Override
     protected Set<ServerResource> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
-            objectFactory,
+        StringBuilder sql = new StringBuilder(
             "select\n"
             + "  sr.resource,\n"
             + "  sr.server,\n"
@@ -55,7 +61,27 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
             + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=sr.server",
+            + "  and ms.server=sr.server"
+        );
+        List<Set<? extends AOServObject<Integer,?>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        addExtraServerResourcesDaemon(db, extraServerResources);
+        addOptionalInInteger(
+            sql,
+            "\nunion select\n"
+            + "  sr.resource,\n"
+            + "  sr.server,\n"
+            + "  bs.pkey\n"
+            + "from\n"
+            + "  server_resources sr\n"
+            + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
+            + "where\n"
+            + "  sr.resource in (",
+            extraServerResources,
+            ")"
+        );
+        return db.executeObjectSetQuery(
+            objectFactory,
+            sql.toString(),
             connector.getConnectAs()
         );
     }

@@ -47,6 +47,7 @@ import java.util.Set;
 final public class DatabaseConnectorFactory implements AOServConnectorFactory<DatabaseConnector,DatabaseConnectorFactory> {
 
     private static final ObjectFactory<UserId> userIdFactory = new ObjectFactory<UserId>() {
+        @Override
         public UserId createObject(ResultSet result) throws SQLException {
             try {
                 return UserId.valueOf(result.getString(1)).intern();
@@ -81,7 +82,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
 
     public DatabaseConnectorFactory(Database database, UserId rootUserId, String rootPassword) throws LoginException, RemoteException {
         this.database = database;
-        this.rootConnector = new CachedConnectorFactory(this).newConnector(Locale.getDefault(), rootUserId, rootUserId, rootPassword, null, true);
+        this.rootConnector = new CachedConnectorFactory(this).newConnector(Locale.getDefault(), rootUserId, rootUserId, rootPassword, null);
     }
 
     /**
@@ -202,6 +203,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
                 final Map<UserId,Set<InetAddress>> table=new HashMap<UserId,Set<InetAddress>>();
                 db.executeQuery(
                     new ResultSetHandler() {
+                        @Override
                         public void handleResultSet(ResultSet result) throws SQLException {
                             try {
                                 UserId un=UserId.valueOf(result.getString(1)).intern();
@@ -238,9 +240,9 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
     private final AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory> connectors = new AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory>();
 
     @Override
-    public DatabaseConnector getConnector(Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer, boolean readOnly) throws LoginException, RemoteException {
+    public DatabaseConnector getConnector(Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) throws LoginException, RemoteException {
         synchronized(connectors) {
-            DatabaseConnector connector = connectors.get(connectAs, authenticateAs, password, daemonServer, readOnly);
+            DatabaseConnector connector = connectors.get(connectAs, authenticateAs, password, daemonServer);
             if(connector!=null) {
                 connector.setLocale(locale);
             } else {
@@ -249,8 +251,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
                     connectAs,
                     authenticateAs,
                     password,
-                    daemonServer,
-                    readOnly
+                    daemonServer
                 );
             }
             return connector;
@@ -258,14 +259,14 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
     }
 
     @Override
-    public DatabaseConnector newConnector(final Locale locale, final UserId connectAs, final UserId authenticateAs, final String password, final DomainName daemonServer, final boolean readOnly) throws LoginException, RemoteException {
+    public DatabaseConnector newConnector(final Locale locale, final UserId connectAs, final UserId authenticateAs, final String password, final DomainName daemonServer) throws LoginException, RemoteException {
         try {
             return database.executeTransaction(
                 new DatabaseCallable<DatabaseConnector>() {
                     @Override
                     public DatabaseConnector call(DatabaseConnection db) throws SQLException {
                         try {
-                            return newConnector(db, locale, connectAs, authenticateAs, password, daemonServer, readOnly);
+                            return newConnector(db, locale, connectAs, authenticateAs, password, daemonServer);
                         } catch(RemoteException err) {
                             throw new WrappedException(err);
                         } catch(LoginException err) {
@@ -285,7 +286,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
         }
     }
 
-    protected DatabaseConnector newConnector(DatabaseConnection db, Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer, boolean readOnly) throws RemoteException, LoginException, SQLException {
+    protected DatabaseConnector newConnector(DatabaseConnection db, Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) throws RemoteException, LoginException, SQLException {
         try {
             // Handle the authentication
             if(connectAs==null)      throw new IncompleteLoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.connectAs.empty"));
@@ -323,13 +324,12 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
 
             // Let them in
             synchronized(connectors) {
-                DatabaseConnector connector = new DatabaseConnector(this, locale, connectAs, authenticateAs, password, readOnly);
+                DatabaseConnector connector = new DatabaseConnector(this, locale, connectAs, authenticateAs, password);
                 connectors.put(
                     connectAs,
                     authenticateAs,
                     password,
                     daemonServer,
-                    readOnly,
                     connector
                 );
                 return connector;

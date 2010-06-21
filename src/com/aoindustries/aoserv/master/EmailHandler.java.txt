@@ -1262,31 +1262,6 @@ final public class EmailHandler {
         invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_SMTP_RELAYS, accounting, aoServer, false);
     }
 
-    public static void removeBlackholeEmailAddress(
-        DatabaseConnection conn,
-        RequestSource source, 
-        InvalidateList invalidateList,
-        int bea
-    ) throws IOException, SQLException {
-        checkAccessEmailAddress(conn, source, "removeBlackholeEmailAddress", bea);
-
-        // Get stuff for use after the try block
-        String accounting=getBusinessForEmailAddress(conn, bea);
-        int aoServer=getAOServerForEmailAddress(conn, bea);
-
-        // Delete from the database
-        conn.executeUpdate("delete from blackhole_email_addresses where email_address=?", bea);
-
-        // Notify all clients of the update
-        invalidateList.addTable(
-            conn,
-            SchemaTable.TableID.BLACKHOLE_EMAIL_ADDRESSES,
-            accounting,
-            aoServer,
-            false
-        );
-    }
-
     public static void removeEmailAddress(
         DatabaseConnection conn,
         RequestSource source, 
@@ -1300,9 +1275,6 @@ final public class EmailHandler {
         int aoServer=getAOServerForEmailAddress(conn, address);
 
         // Delete the objects that depend on this one first
-        boolean isBlackhole=conn.executeBooleanQuery("select (select email_address from blackhole_email_addresses where email_address=?) is not null", address);
-        if(isBlackhole) conn.executeUpdate("delete from blackhole_email_addresses where email_address=?", address);
-
         IntList pkeys=conn.executeIntListQuery("select pkey from linux_acc_addresses where email_address=?", address);
         boolean isLinuxAccAddress=pkeys.size()>0;
         if(isLinuxAccAddress) {
@@ -1324,7 +1296,6 @@ final public class EmailHandler {
         conn.executeUpdate("delete from email_addresses where pkey=?", address);
 
         // Notify all clients of the update
-        if(isBlackhole) invalidateList.addTable(conn, SchemaTable.TableID.BLACKHOLE_EMAIL_ADDRESSES, accounting, aoServer, false);
         if(isLinuxAccAddress) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
         if(isEmailForwarding) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_FORWARDING, accounting, aoServer, false);
         if(isEmailListAddress) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
@@ -1608,16 +1579,6 @@ final public class EmailHandler {
         for(int c=0;c<len;c++) {
             int address=addresses.getInt(c);
 
-            if(
-                conn.executeBooleanQuery(
-                    "select (select email_address from blackhole_email_addresses where email_address=?) is not null",
-                    address
-                )
-            ) {
-                conn.executeUpdate("delete from blackhole_email_addresses where email_address=?", address);
-                beaMod=true;
-            }
-
             // Delete any linux_acc_addresses used by this email address
     IntList pkeys=conn.executeIntListQuery("select pkey from linux_acc_addresses where email_address=?", address);
     if(pkeys.size()>0) {
@@ -1668,7 +1629,6 @@ final public class EmailHandler {
         conn.executeUpdate("delete from email_domains where pkey=?", pkey);
 
         // Notify all clients of the update
-        if(beaMod) invalidateList.addTable(conn, SchemaTable.TableID.BLACKHOLE_EMAIL_ADDRESSES, accounting, aoServer, false);
         if(laaMod) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
         if(efMod) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_FORWARDING, accounting, aoServer, false);
         if(elaMod) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
@@ -1869,8 +1829,7 @@ final public class EmailHandler {
 
     public static boolean isEmailAddressUsed(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return
-            conn.executeBooleanQuery("select (select email_address from blackhole_email_addresses where email_address=? limit 1) is not null", pkey)
-            || conn.executeBooleanQuery("select (select pkey from email_forwarding where email_address=? limit 1) is not null", pkey)
+            conn.executeBooleanQuery("select (select pkey from email_forwarding where email_address=? limit 1) is not null", pkey)
             || conn.executeBooleanQuery("select (select pkey from email_list_addresses where email_address=? limit 1) is not null", pkey)
             || conn.executeBooleanQuery("select (select pkey from email_pipe_addresses where email_address=? limit 1) is not null", pkey)
             || conn.executeBooleanQuery("select (select pkey from linux_acc_addresses where email_address=? limit 1) is not null", pkey)
