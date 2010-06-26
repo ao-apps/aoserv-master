@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
@@ -30,7 +29,7 @@ final class DatabaseAOServerDaemonHostService extends DatabaseService<Integer,AO
     @Override
     protected Set<AOServerDaemonHost> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<AOServerDaemonHost>(HashCodeComparator.getInstance()),
+            new ArraySet<AOServerDaemonHost>(),
             objectFactory,
             "select * from ao_server_daemon_hosts order by pkey"
         );
@@ -39,7 +38,7 @@ final class DatabaseAOServerDaemonHostService extends DatabaseService<Integer,AO
     @Override
     protected Set<AOServerDaemonHost> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<AOServerDaemonHost>(HashCodeComparator.getInstance()),
+            new ArraySet<AOServerDaemonHost>(),
             objectFactory,
             "select\n"
             + "  sdh.*\n"

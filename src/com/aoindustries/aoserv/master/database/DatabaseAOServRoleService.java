@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
     @Override
     protected Set<AOServRole> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<AOServRole>(HashCodeComparator.getInstance()),
+            new ArraySet<AOServRole>(),
             objectFactory,
             "select * from aoserv_roles order by pkey"
         );
@@ -41,7 +40,7 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
     @Override
     protected Set<AOServRole> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<AOServRole>(HashCodeComparator.getInstance()),
+            new ArraySet<AOServRole>(),
             objectFactory,
             "select\n"
             + "  ar.*\n"
@@ -62,7 +61,7 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
     @Override
     protected Set<AOServRole> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<AOServRole>(HashCodeComparator.getInstance()),
+            new ArraySet<AOServRole>(),
             objectFactory,
             // Business-based
             "select\n"

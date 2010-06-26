@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.AOServerService;
@@ -31,7 +31,30 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
         return db.executeObjectSetQuery(
             new ArraySet<AOServer>(),
             objectFactory,
-            "select * from ao_servers order by server"
+            "select\n"
+            + "  server,\n"
+            + "  hostname,\n"
+            + "  daemon_bind,\n"
+            + "  daemon_key,\n"
+            + "  pool_size,\n"
+            + "  distro_hour,\n"
+            + "  (extract(epoch from last_distro_time)*1000)::int8 as last_distro_time,\n"
+            + "  failover_server,\n"
+            + "  daemon_device_id,\n"
+            + "  daemon_connect_bind,\n"
+            + "  time_zone,\n"
+            + "  jilter_bind,\n"
+            + "  restrict_outbound_email,\n"
+            + "  daemon_connect_address,\n"
+            + "  failover_batch_size,\n"
+            + "  monitoring_load_low,\n"
+            + "  monitoring_load_medium,\n"
+            + "  monitoring_load_high,\n"
+            + "  monitoring_load_critical\n"
+            + "from\n"
+            + "  ao_servers\n"
+            + "order by\n"
+            + "  server"
         );
     }
 
@@ -41,7 +64,25 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
             new ArraySet<AOServer>(),
             objectFactory,
             "select distinct\n"
-            + "  ao2.*\n"
+            + "  ao2.server,\n"
+            + "  ao2.hostname,\n"
+            + "  ao2.daemon_bind,\n"
+            + "  ao2.daemon_key,\n"
+            + "  ao2.pool_size,\n"
+            + "  ao2.distro_hour,\n"
+            + "  (extract(epoch from ao2.last_distro_time)*1000)::int8 as last_distro_time,\n"
+            + "  ao2.failover_server,\n"
+            + "  ao2.daemon_device_id,\n"
+            + "  ao2.daemon_connect_bind,\n"
+            + "  ao2.time_zone,\n"
+            + "  ao2.jilter_bind,\n"
+            + "  ao2.restrict_outbound_email,\n"
+            + "  ao2.daemon_connect_address,\n"
+            + "  ao2.failover_batch_size,\n"
+            + "  ao2.monitoring_load_low,\n"
+            + "  ao2.monitoring_load_medium,\n"
+            + "  ao2.monitoring_load_high,\n"
+            + "  ao2.monitoring_load_critical\n"
             + "from\n"
             + "  master_servers ms\n"
             + "  inner join ao_servers ao on ms.server=ao.server\n"
@@ -83,7 +124,7 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
             + "  ?,\n"
             + "  ao.pool_size,\n"
             + "  ao.distro_hour,\n"
-            + "  ao.last_distro_time,\n"
+            + "  (extract(epoch from ao.last_distro_time)*1000)::int8 as last_distro_time,\n"
             + "  ao.failover_server,\n"
             + "  ao.daemon_device_id,\n"
             + "  null,\n" // daemon_connect_bind

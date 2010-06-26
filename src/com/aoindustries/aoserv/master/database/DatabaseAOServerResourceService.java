@@ -12,7 +12,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
     @Override
     protected Set<AOServerResource> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<AOServerResource>(HashCodeComparator.getInstance()),
+            new ArraySet<AOServerResource>(),
             objectFactory,
             "select\n"
             + "  asr.resource,\n"
@@ -49,7 +48,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
     @Override
     protected Set<AOServerResource> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<AOServerResource>(HashCodeComparator.getInstance()),
+            new ArraySet<AOServerResource>(),
             objectFactory,
             "select\n"
             + "  asr.resource,\n"
@@ -116,7 +115,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
         sql.append("order by\n"
                 + "  resource");
         return db.executeObjectSetQuery(
-            new ArraySet<AOServerResource>(HashCodeComparator.getInstance()),
+            new ArraySet<AOServerResource>(),
             objectFactory,
             sql.toString(),
             connector.getConnectAs()

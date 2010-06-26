@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
     @Override
     protected Set<AOServRolePermission> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<AOServRolePermission>(HashCodeComparator.getInstance()),
+            new ArraySet<AOServRolePermission>(),
             objectFactory,
             "select * from aoserv_role_permissions order by pkey"
         );
@@ -41,7 +40,7 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
     @Override
     protected Set<AOServRolePermission> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<AOServRolePermission>(HashCodeComparator.getInstance()),
+            new ArraySet<AOServRolePermission>(),
             objectFactory,
             "select\n"
             + "  arp.*\n"
@@ -62,7 +61,7 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
     @Override
     protected Set<AOServRolePermission> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<AOServRolePermission>(HashCodeComparator.getInstance()),
+            new ArraySet<AOServRolePermission>(),
             objectFactory,
             // Business-based
             "select\n"
