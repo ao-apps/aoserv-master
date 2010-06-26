@@ -11,6 +11,8 @@ import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -30,6 +32,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
     @Override
     protected Set<DnsZone> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<DnsZone>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  resource,\n"
@@ -38,7 +41,10 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
             + "  hostmaster,\n"
             + "  serial,\n"
             + "  ttl\n"
-            + "from dns_zones"
+            + "from\n"
+            + "  dns_zones\n"
+            + "order by\n"
+            + "  resource"
         );
     }
 
@@ -47,6 +53,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
         MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
         if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
             return db.executeObjectSetQuery(
+                new ArraySet<DnsZone>(HashCodeComparator.getInstance()),
                 objectFactory,
                 "select\n"
                 + "  resource,\n"
@@ -55,7 +62,10 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
                 + "  hostmaster,\n"
                 + "  serial,\n"
                 + "  ttl\n"
-                + "from dns_records"
+                + "from\n"
+                + "  dns_zones\n"
+                + "order by\n"
+                + "  resource"
             );
         } else {
             return Collections.emptySet();
@@ -65,6 +75,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
     @Override
     protected Set<DnsZone> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<DnsZone>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  dz.resource,\n"
@@ -82,7 +93,9 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=dz.accounting",
+            + "  and bu1.accounting=dz.accounting\n"
+            + "order by\n"
+            + "  dz.resource",
             connector.getConnectAs()
         );
     }

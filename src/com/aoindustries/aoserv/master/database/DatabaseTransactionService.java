@@ -13,7 +13,6 @@ import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -57,7 +56,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
     @Override
     protected Set<Transaction> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<Transaction>(HashCodeComparator.getInstance()),
+            new ArraySet<Transaction>(),
             objectFactory,
             "select\n"
             + "  transid,\n"
@@ -89,7 +88,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
     @Override
     protected Set<Transaction> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<Transaction>(HashCodeComparator.getInstance()),
+            new ArraySet<Transaction>(),
             objectFactory,
             "select\n"
             + "  tr.transid,\n"

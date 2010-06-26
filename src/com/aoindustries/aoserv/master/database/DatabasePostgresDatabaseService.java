@@ -1,15 +1,17 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.PostgresDatabase;
 import com.aoindustries.aoserv.client.PostgresDatabaseService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,8 +26,10 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
         super(connector, Integer.class, PostgresDatabase.class);
     }
 
+    @Override
     protected Set<PostgresDatabase> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<PostgresDatabase>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -37,12 +41,16 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
             + "  allow_conn,\n"
             + "  enable_postgis\n"
             + "from\n"
-            + "  postgres_databases"
+            + "  postgres_databases\n"
+            + "order by\n"
+            + "  ao_server_resource"
         );
     }
 
+    @Override
     protected Set<PostgresDatabase> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<PostgresDatabase>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  pd.ao_server_resource,\n"
@@ -58,13 +66,17 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
             + "  postgres_databases pd\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=pd.ao_server",
+            + "  and ms.server=pd.ao_server\n"
+            + "order by\n"
+            + "  pd.ao_server_resource",
             connector.getConnectAs()
         );
     }
 
+    @Override
     protected Set<PostgresDatabase> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<PostgresDatabase>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  pd.ao_server_resource,\n"
@@ -86,7 +98,9 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=aor.accounting\n"
-            + "  and aor.resource=pd.ao_server_resource",
+            + "  and aor.resource=pd.ao_server_resource\n"
+            + "order by\n"
+            + "  pd.ao_server_resource",
             connector.getConnectAs()
         );
     }

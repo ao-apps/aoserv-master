@@ -9,6 +9,8 @@ import com.aoindustries.aoserv.client.PackageDefinition;
 import com.aoindustries.aoserv.client.PackageDefinitionService;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -44,14 +46,16 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
     @Override
     protected Set<PackageDefinition> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<PackageDefinition>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from package_definitions"
+            "select * from package_definitions order by pkey"
         );
     }
 
     @Override
     protected Set<PackageDefinition> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<PackageDefinition>(HashCodeComparator.getInstance()),
             objectFactory,
             "select distinct\n"
             + "  pd.*\n"
@@ -64,7 +68,9 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
             + "  ms.username=?\n"
             + "  and ms.server=bs.server\n"
             + "  and bs.accounting=bu.accounting\n"
-            + "  and bu.package_definition=pd.pkey",
+            + "  and bu.package_definition=pd.pkey\n"
+            + "order by\n"
+            + "  pd.pkey",
             connector.getConnectAs()
         );
     }
@@ -73,6 +79,7 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
     protected Set<PackageDefinition> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getUsername().getBusiness().canSeePrices()) {
             return db.executeObjectSetQuery(
+                new ArraySet<PackageDefinition>(HashCodeComparator.getInstance()),
                 objectFactory,
                 "select distinct\n"
                 + "  pd.*\n"
@@ -90,11 +97,14 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
                 + "  and (\n"
                 + "    bu1.package_definition=pd.pkey\n"
                 + "    or pdb.package_definition=pd.pkey\n"
-                + "  )",
+                + "  )\n"
+                + "order by\n"
+                + "  pd.pkey",
                 connector.getConnectAs()
             );
         } else {
             return db.executeObjectSetQuery(
+                new ArraySet<PackageDefinition>(HashCodeComparator.getInstance()),
                 objectFactory,
                 "select distinct\n"
                 + "  pd.pkey,\n"
@@ -121,7 +131,9 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
                 + "  and (\n"
                 + "    bu1.package_definition=pd.pkey\n"
                 + "    or pdb.package_definition=pd.pkey\n"
-                + "  )",
+                + "  )\n"
+                + "order by\n"
+                + "  pd.pkey",
                 connector.getConnectAs()
             );
         }

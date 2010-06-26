@@ -14,7 +14,6 @@ import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -53,7 +52,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
     @Override
     protected Set<Resource> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<Resource>(HashCodeComparator.getInstance()),
+            new ArraySet<Resource>(),
             objectFactory,
             "select * from resources order by pkey"
         );
@@ -101,7 +100,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
         sql.append("order by\n"
                 + "  pkey");
         return db.executeObjectSetQuery(
-            new ArraySet<Resource>(HashCodeComparator.getInstance()),
+            new ArraySet<Resource>(),
             objectFactory,
             sql.toString(),
             connector.getConnectAs(),
@@ -143,7 +142,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
         sql.append("order by\n"
                 + "  pkey");
         return db.executeObjectSetQuery(
-            new ArraySet<Resource>(HashCodeComparator.getInstance()),
+            new ArraySet<Resource>(),
             objectFactory,
             sql.toString(),
             connector.getConnectAs()

@@ -1,15 +1,17 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.TicketCategory;
 import com.aoindustries.aoserv.client.TicketCategoryService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,10 +26,12 @@ final class DatabaseTicketCategoryService extends DatabasePublicService<Integer,
         super(connector, Integer.class, TicketCategory.class);
     }
 
+    @Override
     protected Set<TicketCategory> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<TicketCategory>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from ticket_categories"
+            "select * from ticket_categories order by pkey"
         );
     }
 }

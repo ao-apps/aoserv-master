@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.LinuxAccountGroupService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,15 +26,19 @@ final class DatabaseLinuxAccountGroupService extends DatabaseService<Integer,Lin
         super(connector, Integer.class, LinuxAccountGroup.class);
     }
 
+    @Override
     protected Set<LinuxAccountGroup> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<LinuxAccountGroup>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select pkey, linux_account, linux_group, is_primary from linux_account_groups"
+            "select pkey, linux_account, linux_group, is_primary from linux_account_groups order by pkey"
         );
     }
 
+    @Override
     protected Set<LinuxAccountGroup> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<LinuxAccountGroup>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  lag.pkey,\n"
@@ -48,13 +54,17 @@ final class DatabaseLinuxAccountGroupService extends DatabaseService<Integer,Lin
             + "  and (\n"
             + "    ms.server=lag.ao_server\n"
             + "    or ff.server=lag.ao_server\n"
-            + "  )",
+            + "  )\n"
+            + "order by\n"
+            + "  lag.pkey",
             connector.getConnectAs()
         );
     }
 
+    @Override
     protected Set<LinuxAccountGroup> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<LinuxAccountGroup>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -91,7 +101,9 @@ final class DatabaseLinuxAccountGroupService extends DatabaseService<Integer,Lin
             + UN1_BU1_PARENTS_WHERE
             + "      )\n"
             + "      and bu1.accounting=lg.accounting\n"
-            + "  )",
+            + "  )\n"
+            + "order by\n"
+            + "  pkey",
             connector.getConnectAs(),
             connector.getConnectAs()
         );

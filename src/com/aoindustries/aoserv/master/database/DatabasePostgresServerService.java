@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.PostgresServerService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,8 +26,10 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
         super(connector, Integer.class, PostgresServer.class);
     }
 
+    @Override
     protected Set<PostgresServer> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<PostgresServer>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -37,12 +41,16 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
             + "  shared_buffers,\n"
             + "  fsync\n"
             + "from\n"
-            + "  postgres_servers"
+            + "  postgres_servers\n"
+            + "order by\n"
+            + "ao_server_resource"
         );
     }
 
+    @Override
     protected Set<PostgresServer> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<PostgresServer>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  ps.ao_server_resource,\n"
@@ -58,13 +66,17 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
             + "  postgres_servers ps\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=ps.ao_server",
+            + "  and ms.server=ps.ao_server\n"
+            + "order by\n"
+            + "  ps.ao_server_resource",
             connector.getConnectAs()
         );
     }
 
+    @Override
     protected Set<PostgresServer> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<PostgresServer>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  ps.ao_server_resource,\n"
@@ -82,7 +94,9 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
             + "where\n"
             + "  un.username=?\n"
             + "  and un.accounting=bs.accounting\n"
-            + "  and bs.server=ps.ao_server",
+            + "  and bs.server=ps.ao_server\n"
+            + "order by\n"
+            + "  ps.ao_server_resource",
             connector.getConnectAs()
         );
     }

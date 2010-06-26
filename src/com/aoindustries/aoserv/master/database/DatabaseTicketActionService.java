@@ -11,7 +11,6 @@ import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -62,7 +61,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
     @Override
     protected Set<TicketAction> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<TicketAction>(HashCodeComparator.getInstance()),
+            new ArraySet<TicketAction>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -101,7 +100,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             // If a ticket admin, can see all ticket_actions
             return db.executeObjectSetQuery(
-                new ArraySet<TicketAction>(HashCodeComparator.getInstance()),
+                new ArraySet<TicketAction>(),
                 objectFactory,
                 "select\n"
                 + "  ta.pkey,\n"
@@ -146,7 +145,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
         } else {
             // Can only see non-admin types and statuses
             return db.executeObjectSetQuery(
-                new ArraySet<TicketAction>(HashCodeComparator.getInstance()),
+                new ArraySet<TicketAction>(),
                 objectFactory,
                 "select\n"
                 + "  ta.pkey,\n"

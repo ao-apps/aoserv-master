@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.BusinessAdministratorRoleService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,31 +26,39 @@ final class DatabaseBusinessAdministratorRoleService extends DatabaseService<Int
         super(connector, Integer.class, BusinessAdministratorRole.class);
     }
 
+    @Override
     protected Set<BusinessAdministratorRole> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<BusinessAdministratorRole>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from business_administrator_roles"
+            "select * from business_administrator_roles order by pkey"
         );
     }
 
     /**
      * Can only see their own roles.
      */
+    @Override
     protected Set<BusinessAdministratorRole> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<BusinessAdministratorRole>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  *\n"
             + "from\n"
             + "  business_administrator_roles\n"
             + "where\n"
-            + "  username=?",
+            + "  username=?\n"
+            + "order by\n"
+            + "  pkey",
             connector.getConnectAs()
         );
     }
 
+    @Override
     protected Set<BusinessAdministratorRole> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<BusinessAdministratorRole>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  bar.*\n"
@@ -64,7 +74,9 @@ final class DatabaseBusinessAdministratorRoleService extends DatabaseService<Int
             + UN1_BU1_PARENTS_OR_WHERE
             + "  )\n"
             + "  and bu1.accounting=ba.accounting\n"
-            + "  and ba.username=bar.username",
+            + "  and ba.username=bar.username\n"
+            + "order by\n"
+            + "  bar.pkey",
             connector.getConnectAs()
         );
     }

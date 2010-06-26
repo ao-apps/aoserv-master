@@ -14,7 +14,6 @@ import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -129,7 +128,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
     protected Set<CreditCardTransaction> getSetMaster(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
             return db.executeObjectSetQuery(
-                new ArraySet<CreditCardTransaction>(HashCodeComparator.getInstance()),
+                new ArraySet<CreditCardTransaction>(),
                 objectFactory,
                 "select * from credit_card_transactions order by pkey"
             );
@@ -147,7 +146,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
     protected Set<CreditCardTransaction> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
             return db.executeObjectSetQuery(
-                new ArraySet<CreditCardTransaction>(HashCodeComparator.getInstance()),
+                new ArraySet<CreditCardTransaction>(),
                 objectFactory,
                 "select\n"
                 + "  cct.*\n"

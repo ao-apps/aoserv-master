@@ -12,6 +12,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -25,15 +26,19 @@ final class DatabaseBusinessService extends DatabaseService<AccountingCode,Busin
         super(connector, AccountingCode.class, Business.class);
     }
 
+    @Override
     protected Set<Business> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<Business>(),
             objectFactory,
             "select * from businesses"
         );
     }
 
+    @Override
     protected Set<Business> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<Business>(),
             objectFactory,
             "select distinct\n"
             + "  bu.*\n"
@@ -49,8 +54,10 @@ final class DatabaseBusinessService extends DatabaseService<AccountingCode,Busin
         );
     }
 
+    @Override
     protected Set<Business> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<Business>(),
             objectFactory,
             "select\n"
             + "  bu1.*\n"

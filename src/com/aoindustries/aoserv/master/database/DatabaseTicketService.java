@@ -15,7 +15,6 @@ import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -63,7 +62,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
     @Override
     protected Set<Ticket> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<Ticket>(HashCodeComparator.getInstance()),
+            new ArraySet<Ticket>(),
             objectFactory,
             "select\n"
             + "  ticket_id,\n"
@@ -93,7 +92,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
     @Override
     protected Set<Ticket> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<Ticket>(HashCodeComparator.getInstance()),
+            new ArraySet<Ticket>(),
             objectFactory,
             "select\n"
             + "  ti.ticket_id,\n"
@@ -136,7 +135,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
     protected Set<Ticket> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             return db.executeObjectSetQuery(
-                new ArraySet<Ticket>(HashCodeComparator.getInstance()),
+                new ArraySet<Ticket>(),
                 objectFactory,
                 "select distinct\n"
                 + "  ti.ticket_id,\n"
@@ -176,7 +175,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
             );
         } else {
             return db.executeObjectSetQuery(
-                new ArraySet<Ticket>(HashCodeComparator.getInstance()),
+                new ArraySet<Ticket>(),
                 objectFactory,
                 "select\n"
                 + "  ti.ticket_id,\n"

@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.OperatingSystemVersionService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,10 +26,12 @@ final class DatabaseOperatingSystemVersionService extends DatabasePublicService<
         super(connector, Integer.class, OperatingSystemVersion.class);
     }
 
+    @Override
     protected Set<OperatingSystemVersion> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<OperatingSystemVersion>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from operating_system_versions"
+            "select * from operating_system_versions order by pkey"
         );
     }
 }

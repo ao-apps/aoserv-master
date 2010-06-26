@@ -1,15 +1,17 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.Server;
 import com.aoindustries.aoserv.client.ServerService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,15 +26,19 @@ final class DatabaseServerService extends DatabaseService<Integer,Server> implem
         super(connector, Integer.class, Server.class);
     }
 
+    @Override
     protected Set<Server> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<Server>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from servers"
+            "select * from servers order by pkey"
         );
     }
 
+    @Override
     protected Set<Server> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<Server>(HashCodeComparator.getInstance()),
             objectFactory,
             "select distinct\n"
             + "  se.*\n"
@@ -58,13 +64,17 @@ final class DatabaseServerService extends DatabaseService<Integer,Server> implem
             + "    or fs.server=se.pkey\n"
             // Allow servers it replicates to
             + "    or bp.ao_server=se.pkey\n"
-            + "  )",
+            + "  )\n"
+            + "order by\n"
+            + "  se.pkey",
             connector.getConnectAs()
         );
     }
 
+    @Override
     protected Set<Server> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<Server>(HashCodeComparator.getInstance()),
             objectFactory,
             "select distinct\n"
             + "  se.*\n"
@@ -82,7 +92,9 @@ final class DatabaseServerService extends DatabaseService<Integer,Server> implem
             + "    bs.server=se.pkey\n"
             // Allow servers it replicates to
             //+ "    or bp.ao_server=se.pkey\n"
-            + "  )",
+            + "  )\n"
+            + "order by\n"
+            + "  se.pkey",
             connector.getConnectAs()
         );
     }

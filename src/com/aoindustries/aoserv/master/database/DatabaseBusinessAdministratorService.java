@@ -13,6 +13,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -26,8 +27,10 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
         super(connector, UserId.class, BusinessAdministrator.class);
     }
 
+    @Override
     protected Set<BusinessAdministrator> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<BusinessAdministrator>(),
             objectFactory,
             "select\n"
             + "  username,\n"
@@ -57,8 +60,10 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
         );
     }
 
+    @Override
     protected Set<BusinessAdministrator> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<BusinessAdministrator>(),
             objectFactory,
             "select distinct\n"
             + "  ba.username,\n"
@@ -95,8 +100,10 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
         );
     }
 
+    @Override
     protected Set<BusinessAdministrator> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<BusinessAdministrator>(),
             objectFactory,
             "select\n"
             + "  ba.username,\n"

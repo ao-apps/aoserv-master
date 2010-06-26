@@ -11,6 +11,8 @@ import com.aoindustries.aoserv.client.AOServerService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,15 +27,19 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
         super(connector, Integer.class, AOServer.class);
     }
 
+    @Override
     protected Set<AOServer> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServer>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from ao_servers"
+            "select * from ao_servers order by server"
         );
     }
 
+    @Override
     protected Set<AOServer> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServer>(HashCodeComparator.getInstance()),
             objectFactory,
             "select distinct\n"
             + "  ao2.*\n"
@@ -59,13 +65,17 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
             + "    or fs.server=ao2.server\n"
             // Allow servers it replicates to
             + "    or bp.ao_server=ao2.server\n"
-            + "  )",
+            + "  )\n"
+            + "order by\n"
+            + "  server",
             connector.getConnectAs()
         );
     }
 
+    @Override
     protected Set<AOServer> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServer>(HashCodeComparator.getInstance()),
             objectFactory,
             "select distinct\n"
             + "  ao.server,\n"
@@ -101,7 +111,9 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
             + "    bs.server=ao.server\n"
             // Allow servers it replicates to
             //+ "    or bp.ao_server=ao.server\n"
-            + "  )",
+            + "  )\n"
+            + "order by\n"
+            + "  server",
             AOServObject.FILTERED,
             connector.getConnectAs()
         );

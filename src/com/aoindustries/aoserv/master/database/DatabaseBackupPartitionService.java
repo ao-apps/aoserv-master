@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.BackupPartitionService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -27,14 +29,16 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
     @Override
     protected Set<BackupPartition> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<BackupPartition>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from backup_partitions"
+            "select * from backup_partitions order by pkey"
         );
     }
 
     @Override
     protected Set<BackupPartition> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<BackupPartition>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  bp.*\n"
@@ -56,7 +60,9 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
             + "        and bp.ao_server=bp2.ao_server\n"
             + "      limit 1\n"
             + "    ) is not null\n"
-            + "  )",
+            + "  )\n"
+            + "order by\n"
+            + "  pkey",
             connector.getConnectAs()
         );
     }
@@ -64,6 +70,7 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
     @Override
     protected Set<BackupPartition> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<BackupPartition>(HashCodeComparator.getInstance()),
             objectFactory,
             "select distinct\n"
             + "  bp.*\n"
@@ -87,7 +94,9 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
             //+ "        and bp.ao_server=bp2.ao_server\n"
             //+ "      limit 1\n"
             //+ "    ) is not null\n"
-            + "  )",
+            + "  )\n"
+            + "order by\n"
+            + "  pkey",
             connector.getConnectAs()
         );
     }

@@ -1,16 +1,18 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.DnsRecord;
 import com.aoindustries.aoserv.client.DnsRecordService;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -52,6 +54,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
     @Override
     protected Set<DnsRecord> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<DnsRecord>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  resource,\n"
@@ -64,7 +67,10 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
             + "  data_text,\n"
             + "  dhcp_address,\n"
             + "  ttl\n"
-            + "from dns_records"
+            + "from\n"
+            + "  dns_records\n"
+            + "order by\n"
+            + "  resource"
         );
     }
 
@@ -73,6 +79,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
         MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
         if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
             return db.executeObjectSetQuery(
+                new ArraySet<DnsRecord>(HashCodeComparator.getInstance()),
                 objectFactory,
                 "select\n"
                 + "  resource,\n"
@@ -85,7 +92,10 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
                 + "  data_text,\n"
                 + "  dhcp_address,\n"
                 + "  ttl\n"
-                + "from dns_records"
+                + "from\n"
+                + "  dns_records\n"
+                + "order by\n"
+                + "  resource"
             );
         } else {
             return Collections.emptySet();
@@ -95,6 +105,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
     @Override
     protected Set<DnsRecord> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<DnsRecord>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  dr.resource,\n"
@@ -116,7 +127,9 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=dr.accounting",
+            + "  and bu1.accounting=dr.accounting\n"
+            + "order by\n"
+            + "  dr.resource",
             connector.getConnectAs()
         );
     }

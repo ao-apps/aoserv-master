@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.FileBackupSettingService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,15 +26,19 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
         super(connector, Integer.class, FileBackupSetting.class);
     }
 
+    @Override
     protected Set<FileBackupSetting> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<FileBackupSetting>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from file_backup_settings"
+            "select * from file_backup_settings order by pkey"
         );
     }
 
+    @Override
     protected Set<FileBackupSetting> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<FileBackupSetting>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  fbs.*\n"
@@ -43,13 +49,17 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=ffr.server\n"
-            + "  and ffr.pkey=fbs.replication",
+            + "  and ffr.pkey=fbs.replication\n"
+            + "order by\n"
+            + "  fbs.pkey",
             connector.getConnectAs()
         );
     }
 
+    @Override
     protected Set<FileBackupSetting> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<FileBackupSetting>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  fbs.*\n"
@@ -66,7 +76,9 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
             + "  )\n"
             + "  and bu1.accounting=se.accounting\n"
             + "  and se.pkey=ffr.server\n"
-            + "  and ffr.pkey=fbs.replication",
+            + "  and ffr.pkey=fbs.replication\n"
+            + "order by\n"
+            + "  fbs.pkey",
             connector.getConnectAs()
         );
     }

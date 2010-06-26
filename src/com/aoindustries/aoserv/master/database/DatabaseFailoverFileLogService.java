@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
     @Override
     protected Set<FailoverFileLog> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<FailoverFileLog>(HashCodeComparator.getInstance()),
+            new ArraySet<FailoverFileLog>(),
             objectFactory,
             "select * from failover_file_log order by pkey"
         );
@@ -38,7 +37,7 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
     @Override
     protected Set<FailoverFileLog> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<FailoverFileLog>(HashCodeComparator.getInstance()),
+            new ArraySet<FailoverFileLog>(),
             objectFactory,
             "select\n"
             + "  ffl.*\n"
@@ -59,7 +58,7 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
     @Override
     protected Set<FailoverFileLog> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<FailoverFileLog>(HashCodeComparator.getInstance()),
+            new ArraySet<FailoverFileLog>(),
             objectFactory,
             "select\n"
             + "  ffl.*\n"
