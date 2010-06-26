@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.BusinessProfileService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,15 +26,19 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
         super(connector, Integer.class, BusinessProfile.class);
     }
 
+    @Override
     protected Set<BusinessProfile> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<BusinessProfile>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from business_profiles"
+            "select * from business_profiles order by pkey"
         );
     }
 
+    @Override
     protected Set<BusinessProfile> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<BusinessProfile>(HashCodeComparator.getInstance()),
             objectFactory,
             "select distinct\n"
             + "  bp.*\n"
@@ -43,13 +49,17 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=bs.server\n"
-            + "  and bs.accounting=bp.accounting",
+            + "  and bs.accounting=bp.accounting\n"
+            + "order by\n"
+            + "  bp.pkey",
             connector.getConnectAs()
         );
     }
 
+    @Override
     protected Set<BusinessProfile> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<BusinessProfile>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  bp.*\n"
@@ -62,7 +72,9 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=bp.accounting",
+            + "  and bu1.accounting=bp.accounting\n"
+            + "order by\n"
+            + "  bp.pkey",
             connector.getConnectAs()
         );
     }

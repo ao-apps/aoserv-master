@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.DisableLogService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -27,14 +29,16 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
     @Override
     protected Set<DisableLog> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<DisableLog>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from disable_log"
+            "select * from disable_log order by pkey"
         );
     }
 
     @Override
     protected Set<DisableLog> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<DisableLog>(HashCodeComparator.getInstance()),
             objectFactory,
             "select distinct\n"
             + "  dl.*\n"
@@ -50,7 +54,9 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
             + "  and (\n"
             + "    ao.server=bs.server\n"
             + "    or ff.server=bs.server\n"
-            + "  ) and bs.accounting=dl.accounting",
+            + "  ) and bs.accounting=dl.accounting\n"
+            + "order by\n"
+            + "  dl.pkey",
             connector.getConnectAs()
         );
     }
@@ -58,6 +64,7 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
     @Override
     protected Set<DisableLog> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<DisableLog>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  dl.*\n"
@@ -70,7 +77,9 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=dl.accounting",
+            + "  and bu1.accounting=dl.accounting\n"
+            + "order by\n"
+            + "  dl.pkey",
             connector.getConnectAs()
         );
     }

@@ -13,6 +13,8 @@ import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -127,8 +129,9 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
     protected Set<CreditCardTransaction> getSetMaster(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
             return db.executeObjectSetQuery(
+                new ArraySet<CreditCardTransaction>(HashCodeComparator.getInstance()),
                 objectFactory,
-                "select * from credit_card_transactions"
+                "select * from credit_card_transactions order by pkey"
             );
         } else {
             return Collections.emptySet();
@@ -144,6 +147,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
     protected Set<CreditCardTransaction> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
             return db.executeObjectSetQuery(
+                new ArraySet<CreditCardTransaction>(HashCodeComparator.getInstance()),
                 objectFactory,
                 "select\n"
                 + "  cct.*\n"
@@ -156,7 +160,9 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
                 + "  and (\n"
                 + UN_BU1_PARENTS_WHERE
                 + "  )\n"
-                + "  and bu1.accounting=cct.accounting",
+                + "  and bu1.accounting=cct.accounting\n"
+                + "order by\n"
+                + "  cct.pkey",
                 connector.getConnectAs()
             );
         } else {

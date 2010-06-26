@@ -14,6 +14,8 @@ import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -61,6 +63,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
     @Override
     protected Set<Ticket> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<Ticket>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  ticket_id,\n"
@@ -81,13 +84,16 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
             + "  contact_emails,\n"
             + "  contact_phone_numbers\n"
             + "from\n"
-            + "  tickets"
+            + "  tickets\n"
+            + "order by\n"
+            + "  ticket_id"
         );
     }
 
     @Override
     protected Set<Ticket> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<Ticket>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  ti.ticket_id,\n"
@@ -115,7 +121,9 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
             + "  and un.accounting=ti.brand\n"
             + "  and un.accounting=ti.accounting\n"
             + "  and ti.status in (?,?,?)\n"
-            + "  and ti.ticket_type=?",
+            + "  and ti.ticket_type=?\n"
+            + "order by\n"
+            + "  ti.ticket_id",
             connector.getConnectAs(),
             TicketStatus.OPEN,
             TicketStatus.HOLD,
@@ -128,6 +136,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
     protected Set<Ticket> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             return db.executeObjectSetQuery(
+                new ArraySet<Ticket>(HashCodeComparator.getInstance()),
                 objectFactory,
                 "select distinct\n"
                 + "  ti.ticket_id,\n"
@@ -160,11 +169,14 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
                 + "    bu1.accounting=ti.accounting\n" // Has access to ticket accounting
                 + "    or bu1.accounting=ti.brand\n" // Has access to brand
                 + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
-                + "  )",
+                + "  )\n"
+                + "order by\n"
+                + "  ti.ticket_id",
                 connector.getConnectAs()
             );
         } else {
             return db.executeObjectSetQuery(
+                new ArraySet<Ticket>(HashCodeComparator.getInstance()),
                 objectFactory,
                 "select\n"
                 + "  ti.ticket_id,\n"
@@ -194,7 +206,9 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
                 + UN_BU1_PARENTS_WHERE
                 + "  )\n"
                 + "  and bu1.accounting=ti.accounting\n"
-                + "  and ti.status not in ('junk', 'deleted')",
+                + "  and ti.status not in ('junk', 'deleted')\n"
+                + "order by\n"
+                + "  ti.ticket_id",
                 connector.getConnectAs()
             );
         }

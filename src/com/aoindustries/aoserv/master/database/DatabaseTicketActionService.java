@@ -7,10 +7,11 @@ package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.TicketAction;
 import com.aoindustries.aoserv.client.TicketActionService;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -61,6 +62,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
     @Override
     protected Set<TicketAction> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<TicketAction>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -83,7 +85,9 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
             + "  from_address,\n"
             + "  summary\n"
             + "from\n"
-            + "  ticket_actions"
+            + "  ticket_actions\n"
+            + "order by\n"
+            + "  pkey"
         );
     }
 
@@ -97,6 +101,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             // If a ticket admin, can see all ticket_actions
             return db.executeObjectSetQuery(
+                new ArraySet<TicketAction>(HashCodeComparator.getInstance()),
                 objectFactory,
                 "select\n"
                 + "  ta.pkey,\n"
@@ -133,12 +138,15 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
                 + "    or bu1.accounting=ti.brand\n" // Has access to brand
                 + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
                 + "  )\n"
-                + "  and ti.ticket_id=ta.ticket",
+                + "  and ti.ticket_id=ta.ticket\n"
+                + "order by\n"
+                + "  ta.pkey",
                 connector.getConnectAs()
             );
         } else {
             // Can only see non-admin types and statuses
             return db.executeObjectSetQuery(
+                new ArraySet<TicketAction>(HashCodeComparator.getInstance()),
                 objectFactory,
                 "select\n"
                 + "  ta.pkey,\n"
@@ -175,7 +183,9 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
                 + "  and ti.status not in ('junk', 'deleted')\n"
                 + "  and ti.ticket_id=ta.ticket\n"
                 + "  and ta.action_type=tat.type\n"
-                + "  and not tat.visible_admin_only",
+                + "  and not tat.visible_admin_only\n"
+                + "order by\n"
+                + "  ta.pkey",
                 connector.getConnectAs()
             );
         }

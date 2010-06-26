@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.FailoverFileLogService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,15 +26,19 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
         super(connector, Integer.class, FailoverFileLog.class);
     }
 
+    @Override
     protected Set<FailoverFileLog> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<FailoverFileLog>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from failover_file_log"
+            "select * from failover_file_log order by pkey"
         );
     }
 
+    @Override
     protected Set<FailoverFileLog> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<FailoverFileLog>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  ffl.*\n"
@@ -43,13 +49,17 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=ffr.server\n"
-            + "  and ffr.pkey=ffl.replication",
+            + "  and ffr.pkey=ffl.replication\n"
+            + "order by\n"
+            + "  pkey",
             connector.getConnectAs()
         );
     }
 
+    @Override
     protected Set<FailoverFileLog> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<FailoverFileLog>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  ffl.*\n"
@@ -62,7 +72,9 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
             + "  un.username=?\n"
             + "  and un.accounting=bs.accounting\n"
             + "  and bs.server=ffr.server\n"
-            + "  and ffr.pkey=ffl.replication",
+            + "  and ffr.pkey=ffl.replication\n"
+            + "order by\n"
+            + "  pkey",
             connector.getConnectAs()
         );
     }

@@ -13,6 +13,8 @@ import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -51,8 +53,9 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
     @Override
     protected Set<Resource> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<Resource>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from resources"
+            "select * from resources order by pkey"
         );
     }
 
@@ -80,22 +83,25 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=sr.server\n"
-            + "  and sr.resource=re.pkey"
+            + "  and sr.resource=re.pkey\n"
         );
         List<Set<? extends AOServObject<Integer,?>>> extraResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
         connector.serverResources.addExtraServerResourcesDaemon(db, extraResources);
         addOptionalInInteger(
             sql,
-            "\nunion select\n"
+            "union select\n"
             + "  *\n"
             + "from\n"
             + "  resources\n"
             + "where\n"
             + "  pkey in (",
             extraResources,
-            ")"
+            ")\n"
         );
+        sql.append("order by\n"
+                + "  pkey");
         return db.executeObjectSetQuery(
+            new ArraySet<Resource>(HashCodeComparator.getInstance()),
             objectFactory,
             sql.toString(),
             connector.getConnectAs(),
@@ -118,23 +124,26 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=re.accounting"
+            + "  and bu1.accounting=re.accounting\n"
         );
         List<Set<? extends AOServObject<Integer,?>>> extraResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
         connector.serverResources.addExtraServerResourcesBusiness(db, extraResources);
         connector.aoserverResources.addExtraAOServerResourcesBusiness(db, extraResources);
         addOptionalInInteger(
             sql,
-            "\nunion select\n"
+            "union select\n"
             + "  *\n"
             + "from\n"
             + "  resources\n"
             + "where\n"
             + "  pkey in (",
             extraResources,
-            ")"
+            ")\n"
         );
+        sql.append("order by\n"
+                + "  pkey");
         return db.executeObjectSetQuery(
+            new ArraySet<Resource>(HashCodeComparator.getInstance()),
             objectFactory,
             sql.toString(),
             connector.getConnectAs()

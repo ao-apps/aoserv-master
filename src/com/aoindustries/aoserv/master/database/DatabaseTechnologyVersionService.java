@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.TechnologyVersionService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,15 +26,19 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
         super(connector, Integer.class, TechnologyVersion.class);
     }
 
+    @Override
     protected Set<TechnologyVersion> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<TechnologyVersion>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from technology_versions"
+            "select * from technology_versions order by pkey"
         );
     }
 
+    @Override
     protected Set<TechnologyVersion> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<TechnologyVersion>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -42,12 +48,16 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
             + "  null,\n"
             + "  operating_system_version\n"
             + "from\n"
-            + "  technology_versions"
+            + "  technology_versions\n"
+            + "order by\n"
+            + "  pkey"
         );
     }
 
+    @Override
     protected Set<TechnologyVersion> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<TechnologyVersion>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -57,7 +67,9 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
             + "  null,\n"
             + "  operating_system_version\n"
             + "from\n"
-            + "  technology_versions"
+            + "  technology_versions\n"
+            + "order by\n"
+            + "  pkey"
         );
     }
 }
