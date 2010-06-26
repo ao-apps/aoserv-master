@@ -11,6 +11,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,8 +25,10 @@ final class DatabaseTechnologyNameService extends DatabasePublicService<String,T
         super(connector, String.class, TechnologyName.class);
     }
 
+    @Override
     protected Set<TechnologyName> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<TechnologyName>(),
             objectFactory,
             "select * from technology_names"
         );

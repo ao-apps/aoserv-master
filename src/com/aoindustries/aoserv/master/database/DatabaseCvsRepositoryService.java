@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepo
     @Override
     protected Set<CvsRepository> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<CvsRepository>(HashCodeComparator.getInstance()),
+            new ArraySet<CvsRepository>(),
             objectFactory,
             "select ao_server_resource, path, linux_account_group, mode from cvs_repositories order by ao_server_resource"
         );
@@ -38,7 +37,7 @@ final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepo
     @Override
     protected Set<CvsRepository> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<CvsRepository>(HashCodeComparator.getInstance()),
+            new ArraySet<CvsRepository>(),
             objectFactory,
             "select\n"
             + "  cr.ao_server_resource, cr.path, cr.linux_account_group, cr.mode\n"
@@ -57,7 +56,7 @@ final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepo
     @Override
     protected Set<CvsRepository> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<CvsRepository>(HashCodeComparator.getInstance()),
+            new ArraySet<CvsRepository>(),
             objectFactory,
             "select\n"
             + "  cr.ao_server_resource, cr.path, cr.linux_account_group, cr.mode\n"

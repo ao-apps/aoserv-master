@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.ServerFarm;
 import com.aoindustries.aoserv.client.ServerFarmService;
 import com.aoindustries.aoserv.client.validator.DomainLabel;
@@ -12,6 +12,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -25,15 +26,19 @@ final class DatabaseServerFarmService extends DatabaseService<DomainLabel,Server
         super(connector, DomainLabel.class, ServerFarm.class);
     }
 
+    @Override
     protected Set<ServerFarm> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<ServerFarm>(),
             objectFactory,
             "select * from server_farms"
         );
     }
 
+    @Override
     protected Set<ServerFarm> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<ServerFarm>(),
             objectFactory,
             "select distinct\n"
             + "  sf.*\n"
@@ -55,8 +60,10 @@ final class DatabaseServerFarmService extends DatabaseService<DomainLabel,Server
         );
     }
 
+    @Override
     protected Set<ServerFarm> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<ServerFarm>(),
             objectFactory,
             "select distinct\n"
             + "  sf.*\n"

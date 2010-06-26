@@ -13,6 +13,7 @@ import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -30,6 +31,7 @@ final class DatabaseBankTransactionTypeService extends DatabaseService<String,Ba
     protected Set<BankTransactionType> getSetMaster(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getMasterUsers().get(connector.getConnectAs()).getCanAccessBankAccount()) {
             return db.executeObjectSetQuery(
+                new HashSet<BankTransactionType>(),
                 objectFactory,
                 "select * from bank_transaction_types"
             );

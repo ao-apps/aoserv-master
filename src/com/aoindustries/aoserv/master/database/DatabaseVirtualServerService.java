@@ -11,6 +11,7 @@ import com.aoindustries.aoserv.client.VirtualServerService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -25,15 +26,19 @@ final class DatabaseVirtualServerService extends DatabaseService<Integer,Virtual
         super(connector, Integer.class, VirtualServer.class);
     }
 
+    @Override
     protected Set<VirtualServer> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<VirtualServer>(),
             objectFactory,
-            "select * from virtual_servers"
+            "select * from virtual_servers order by server"
         );
     }
 
+    @Override
     protected Set<VirtualServer> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<VirtualServer>(),
             objectFactory,
             "select distinct\n"
             + "  vs.*\n"
@@ -41,13 +46,17 @@ final class DatabaseVirtualServerService extends DatabaseService<Integer,Virtual
             + "  master_servers ms\n"
             + "  inner join virtual_servers vs on ms.server=vs.server\n"
             + "where\n"
-            + "  ms.username=?",
+            + "  ms.username=?\n"
+            + "order by\n"
+            + "  vs.server",
             connector.getConnectAs()
         );
     }
 
+    @Override
     protected Set<VirtualServer> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<VirtualServer>(),
             objectFactory,
             "select distinct\n"
             + "  vs.server,\n"
@@ -88,7 +97,9 @@ final class DatabaseVirtualServerService extends DatabaseService<Integer,Virtual
             + "    bs.server=vs.server\n"
             // Allow servers it replicates to
             //+ "    or bp.ao_server=vs.server\n"
-            + "  )",
+            + "  )\n"
+            + "order by\n"
+            + "  vs.server",
             AOServObject.FILTERED,
             connector.getConnectAs()
         );

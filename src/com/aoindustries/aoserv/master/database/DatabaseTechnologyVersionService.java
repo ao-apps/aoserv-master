@@ -1,16 +1,17 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.TechnologyVersion;
 import com.aoindustries.aoserv.client.TechnologyVersionService;
-import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -19,7 +20,24 @@ import java.util.Set;
  */
 final class DatabaseTechnologyVersionService extends DatabaseService<Integer,TechnologyVersion> implements TechnologyVersionService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<TechnologyVersion> objectFactory = new AutoObjectFactory<TechnologyVersion>(TechnologyVersion.class, this);
+    private final ObjectFactory<TechnologyVersion> objectFactory = new ObjectFactory<TechnologyVersion>() {
+        @Override
+        public TechnologyVersion createObject(ResultSet result) throws SQLException {
+            try {
+                return new TechnologyVersion(
+                    DatabaseTechnologyVersionService.this,
+                    result.getInt("pkey"),
+                    result.getString("name"),
+                    result.getString("version"),
+                    result.getLong("updated"),
+                    getUserId(result.getString("owner")),
+                    result.getInt("operating_system_version")
+                );
+            } catch(ValidationException err) {
+                throw new SQLException(err);
+            }
+        }
+    };
 
     DatabaseTechnologyVersionService(DatabaseConnector connector) {
         super(connector, Integer.class, TechnologyVersion.class);
@@ -30,7 +48,17 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
         return db.executeObjectSetQuery(
             new ArraySet<TechnologyVersion>(),
             objectFactory,
-            "select * from technology_versions order by pkey"
+            "select\n"
+            + "  pkey,\n"
+            + "  name,\n"
+            + "  version,\n"
+            + "  (extract(epoch from updated)*1000)::int8 as updated,\n"
+            + "  owner,\n"
+            + "  operating_system_version\n"
+            + "from\n"
+            + "  technology_versions\n"
+            + "order by\n"
+            + "  pkey"
         );
     }
 
@@ -43,8 +71,8 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
             + "  pkey,\n"
             + "  name,\n"
             + "  version,\n"
-            + "  updated,\n"
-            + "  null,\n"
+            + "  (extract(epoch from updated)*1000)::int8 as updated,\n"
+            + "  null as owner,\n"
             + "  operating_system_version\n"
             + "from\n"
             + "  technology_versions\n"
@@ -62,8 +90,8 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
             + "  pkey,\n"
             + "  name,\n"
             + "  version,\n"
-            + "  updated,\n"
-            + "  null,\n"
+            + "  (extract(epoch from updated)*1000)::int8 as updated,\n"
+            + "  null as owner,\n"
             + "  operating_system_version\n"
             + "from\n"
             + "  technology_versions\n"

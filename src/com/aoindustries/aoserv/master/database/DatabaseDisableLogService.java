@@ -1,16 +1,19 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.DisableLog;
 import com.aoindustries.aoserv.client.DisableLogService;
-import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -19,7 +22,23 @@ import java.util.Set;
  */
 final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog> implements DisableLogService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<DisableLog> objectFactory = new AutoObjectFactory<DisableLog>(DisableLog.class, this);
+    private final ObjectFactory<DisableLog> objectFactory = new ObjectFactory<DisableLog>() {
+        @Override
+        public DisableLog createObject(ResultSet result) throws SQLException {
+            try {
+                return new DisableLog(
+                    DatabaseDisableLogService.this,
+                    result.getInt("pkey"),
+                    result.getLong("time"),
+                    AccountingCode.valueOf(result.getString("accounting")),
+                    UserId.valueOf(result.getString("disabled_by")),
+                    result.getString("disable_reason")
+                );
+            } catch(ValidationException err) {
+                throw new SQLException(err);
+            }
+        }
+    };
 
     DatabaseDisableLogService(DatabaseConnector connector) {
         super(connector, Integer.class, DisableLog.class);
@@ -30,7 +49,16 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
         return db.executeObjectSetQuery(
             new ArraySet<DisableLog>(),
             objectFactory,
-            "select * from disable_log order by pkey"
+            "select\n"
+            + "  pkey,\n"
+            + "  (extract(epoch from time)*1000)::int8 as time,\n"
+            + "  accounting,\n"
+            + "  disabled_by,\n"
+            + "  disable_reason\n"
+            + "from\n"
+            + "  disable_log\n"
+            + "order by\n"
+            + "  pkey"
         );
     }
 
@@ -40,7 +68,11 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
             new ArraySet<DisableLog>(),
             objectFactory,
             "select distinct\n"
-            + "  dl.*\n"
+            + "  dl.pkey,\n"
+            + "  (extract(epoch from dl.time)*1000)::int8 as time,\n"
+            + "  dl.accounting,\n"
+            + "  dl.disabled_by,\n"
+            + "  dl.disable_reason\n"
             + "from\n"
             + "  master_servers ms,\n"
             + "  ao_servers ao\n"
@@ -66,7 +98,11 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
             new ArraySet<DisableLog>(),
             objectFactory,
             "select\n"
-            + "  dl.*\n"
+            + "  dl.pkey,\n"
+            + "  (extract(epoch from dl.time)*1000)::int8 as time,\n"
+            + "  dl.accounting,\n"
+            + "  dl.disabled_by,\n"
+            + "  dl.disable_reason\n"
             + "from\n"
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN

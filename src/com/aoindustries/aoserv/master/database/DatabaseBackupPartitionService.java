@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
     @Override
     protected Set<BackupPartition> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<BackupPartition>(HashCodeComparator.getInstance()),
+            new ArraySet<BackupPartition>(),
             objectFactory,
             "select * from backup_partitions order by pkey"
         );
@@ -38,7 +37,7 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
     @Override
     protected Set<BackupPartition> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<BackupPartition>(HashCodeComparator.getInstance()),
+            new ArraySet<BackupPartition>(),
             objectFactory,
             "select\n"
             + "  bp.*\n"
@@ -70,7 +69,7 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
     @Override
     protected Set<BackupPartition> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<BackupPartition>(HashCodeComparator.getInstance()),
+            new ArraySet<BackupPartition>(),
             objectFactory,
             "select distinct\n"
             + "  bp.*\n"

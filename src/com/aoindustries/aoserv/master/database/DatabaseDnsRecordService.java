@@ -12,7 +12,6 @@ import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -54,7 +53,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
     @Override
     protected Set<DnsRecord> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<DnsRecord>(HashCodeComparator.getInstance()),
+            new ArraySet<DnsRecord>(),
             objectFactory,
             "select\n"
             + "  resource,\n"
@@ -79,7 +78,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
         MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
         if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
             return db.executeObjectSetQuery(
-                new ArraySet<DnsRecord>(HashCodeComparator.getInstance()),
+                new ArraySet<DnsRecord>(),
                 objectFactory,
                 "select\n"
                 + "  resource,\n"
@@ -105,7 +104,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
     @Override
     protected Set<DnsRecord> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<DnsRecord>(HashCodeComparator.getInstance()),
+            new ArraySet<DnsRecord>(),
             objectFactory,
             "select\n"
             + "  dr.resource,\n"

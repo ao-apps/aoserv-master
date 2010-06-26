@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -31,7 +30,7 @@ final class DatabasePackageDefinitionBusinessService extends DatabaseService<Int
     @Override
     protected Set<PackageDefinitionBusiness> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<PackageDefinitionBusiness>(HashCodeComparator.getInstance()),
+            new ArraySet<PackageDefinitionBusiness>(),
             objectFactory,
             "select pkey, package_definition, accounting, display, description, approved from package_definition_businesses order by pkey"
         );
@@ -45,7 +44,7 @@ final class DatabasePackageDefinitionBusinessService extends DatabaseService<Int
     @Override
     protected Set<PackageDefinitionBusiness> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<PackageDefinitionBusiness>(HashCodeComparator.getInstance()),
+            new ArraySet<PackageDefinitionBusiness>(),
             objectFactory,
             "select distinct\n"
             + "  pdb.pkey,\n"

@@ -11,6 +11,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,8 +25,10 @@ final class DatabaseDnsTypeService extends DatabasePublicService<String,DnsType>
         super(connector, String.class, DnsType.class);
     }
 
+    @Override
     protected Set<DnsType> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<DnsType>(),
             objectFactory,
             "select * from dns_types"
         );

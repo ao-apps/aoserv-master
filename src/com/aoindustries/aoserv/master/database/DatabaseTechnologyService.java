@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseTechnologyService extends DatabasePublicService<Integer,Tech
     @Override
     protected Set<Technology> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<Technology>(HashCodeComparator.getInstance()),
+            new ArraySet<Technology>(),
             objectFactory,
             "select * from technologies order by pkey"
         );

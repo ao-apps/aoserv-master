@@ -24,6 +24,7 @@ final class DatabaseFtpGuestUserService extends DatabaseService<Integer,FtpGuest
         super(connector, Integer.class, FtpGuestUser.class);
     }
 
+    @Override
     protected Set<FtpGuestUser> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -31,6 +32,7 @@ final class DatabaseFtpGuestUserService extends DatabaseService<Integer,FtpGuest
         );
     }
 
+    @Override
     protected Set<FtpGuestUser> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -48,6 +50,7 @@ final class DatabaseFtpGuestUserService extends DatabaseService<Integer,FtpGuest
         );
     }
 
+    @Override
     protected Set<FtpGuestUser> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,

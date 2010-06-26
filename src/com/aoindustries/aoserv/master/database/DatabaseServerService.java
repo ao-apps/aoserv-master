@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseServerService extends DatabaseService<Integer,Server> implem
     @Override
     protected Set<Server> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<Server>(HashCodeComparator.getInstance()),
+            new ArraySet<Server>(),
             objectFactory,
             "select * from servers order by pkey"
         );
@@ -38,7 +37,7 @@ final class DatabaseServerService extends DatabaseService<Integer,Server> implem
     @Override
     protected Set<Server> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<Server>(HashCodeComparator.getInstance()),
+            new ArraySet<Server>(),
             objectFactory,
             "select distinct\n"
             + "  se.*\n"
@@ -74,7 +73,7 @@ final class DatabaseServerService extends DatabaseService<Integer,Server> implem
     @Override
     protected Set<Server> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<Server>(HashCodeComparator.getInstance()),
+            new ArraySet<Server>(),
             objectFactory,
             "select distinct\n"
             + "  se.*\n"

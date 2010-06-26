@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.AOServerDaemonHostService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
@@ -25,15 +27,19 @@ final class DatabaseAOServerDaemonHostService extends DatabaseService<Integer,AO
         super(connector, Integer.class, AOServerDaemonHost.class);
     }
 
+    @Override
     protected Set<AOServerDaemonHost> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServerDaemonHost>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from ao_server_daemon_hosts"
+            "select * from ao_server_daemon_hosts order by pkey"
         );
     }
 
+    @Override
     protected Set<AOServerDaemonHost> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServerDaemonHost>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  sdh.*\n"
@@ -42,11 +48,14 @@ final class DatabaseAOServerDaemonHostService extends DatabaseService<Integer,AO
             + "  ao_server_daemon_hosts sdh\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=sdh.ao_server",
+            + "  and ms.server=sdh.ao_server\n"
+            + "order by\n"
+            + "  pkey",
             connector.getConnectAs()
         );
     }
 
+    @Override
     protected Set<AOServerDaemonHost> getSetBusiness(DatabaseConnection db) {
         return Collections.emptySet();
     }

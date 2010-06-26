@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.BusinessProfile;
 import com.aoindustries.aoserv.client.BusinessProfileService;
 import com.aoindustries.sql.AutoObjectFactory;
@@ -30,7 +30,30 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
         return db.executeObjectSetQuery(
             new ArraySet<BusinessProfile>(),
             objectFactory,
-            "select * from business_profiles order by pkey"
+            "select\n"
+            + "  pkey,\n"
+            + "  accounting,\n"
+            + "  priority,\n"
+            + "  name,\n"
+            + "  private,\n"
+            + "  phone,\n"
+            + "  fax,\n"
+            + "  address1,\n"
+            + "  address2,\n"
+            + "  city,\n"
+            + "  state,\n"
+            + "  country,\n"
+            + "  zip,\n"
+            + "  send_invoice,\n"
+            + "  (extract(epoch from created)*1000)::int8 as created,\n"
+            + "  billing_contact,\n"
+            + "  billing_email,\n"
+            + "  technical_contact,\n"
+            + "  technical_email\n"
+            + "from\n"
+            + "  business_profiles\n"
+            + "order by\n"
+            + "  pkey"
         );
     }
 
@@ -40,7 +63,25 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
             new ArraySet<BusinessProfile>(),
             objectFactory,
             "select distinct\n"
-            + "  bp.*\n"
+            + "  bp.pkey,\n"
+            + "  bp.accounting,\n"
+            + "  bp.priority,\n"
+            + "  bp.name,\n"
+            + "  bp.private,\n"
+            + "  bp.phone,\n"
+            + "  bp.fax,\n"
+            + "  bp.address1,\n"
+            + "  bp.address2,\n"
+            + "  bp.city,\n"
+            + "  bp.state,\n"
+            + "  bp.country,\n"
+            + "  bp.zip,\n"
+            + "  bp.send_invoice,\n"
+            + "  (extract(epoch from bp.created)*1000)::int8 as created,\n"
+            + "  bp.billing_contact,\n"
+            + "  bp.billing_email,\n"
+            + "  bp.technical_contact,\n"
+            + "  bp.technical_email\n"
             + "from\n"
             + "  master_servers ms,\n"
             + "  business_servers bs,\n"
@@ -61,7 +102,25 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
             new ArraySet<BusinessProfile>(),
             objectFactory,
             "select\n"
-            + "  bp.*\n"
+            + "  bp.pkey,\n"
+            + "  bp.accounting,\n"
+            + "  bp.priority,\n"
+            + "  bp.name,\n"
+            + "  bp.private,\n"
+            + "  bp.phone,\n"
+            + "  bp.fax,\n"
+            + "  bp.address1,\n"
+            + "  bp.address2,\n"
+            + "  bp.city,\n"
+            + "  bp.state,\n"
+            + "  bp.country,\n"
+            + "  bp.zip,\n"
+            + "  bp.send_invoice,\n"
+            + "  (extract(epoch from bp.created)*1000)::int8 as created,\n"
+            + "  bp.billing_contact,\n"
+            + "  bp.billing_email,\n"
+            + "  bp.technical_contact,\n"
+            + "  bp.technical_email\n"
             + "from\n"
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN

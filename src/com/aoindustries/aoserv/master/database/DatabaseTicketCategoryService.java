@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseTicketCategoryService extends DatabasePublicService<Integer,
     @Override
     protected Set<TicketCategory> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<TicketCategory>(HashCodeComparator.getInstance()),
+            new ArraySet<TicketCategory>(),
             objectFactory,
             "select * from ticket_categories order by pkey"
         );

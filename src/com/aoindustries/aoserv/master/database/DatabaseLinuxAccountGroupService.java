@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseLinuxAccountGroupService extends DatabaseService<Integer,Lin
     @Override
     protected Set<LinuxAccountGroup> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<LinuxAccountGroup>(HashCodeComparator.getInstance()),
+            new ArraySet<LinuxAccountGroup>(),
             objectFactory,
             "select pkey, linux_account, linux_group, is_primary from linux_account_groups order by pkey"
         );
@@ -38,7 +37,7 @@ final class DatabaseLinuxAccountGroupService extends DatabaseService<Integer,Lin
     @Override
     protected Set<LinuxAccountGroup> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<LinuxAccountGroup>(HashCodeComparator.getInstance()),
+            new ArraySet<LinuxAccountGroup>(),
             objectFactory,
             "select\n"
             + "  lag.pkey,\n"
@@ -64,7 +63,7 @@ final class DatabaseLinuxAccountGroupService extends DatabaseService<Integer,Lin
     @Override
     protected Set<LinuxAccountGroup> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<LinuxAccountGroup>(HashCodeComparator.getInstance()),
+            new ArraySet<LinuxAccountGroup>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"

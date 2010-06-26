@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
     @Override
     protected Set<PostgresDatabase> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<PostgresDatabase>(HashCodeComparator.getInstance()),
+            new ArraySet<PostgresDatabase>(),
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -50,7 +49,7 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
     @Override
     protected Set<PostgresDatabase> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<PostgresDatabase>(HashCodeComparator.getInstance()),
+            new ArraySet<PostgresDatabase>(),
             objectFactory,
             "select\n"
             + "  pd.ao_server_resource,\n"
@@ -76,7 +75,7 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
     @Override
     protected Set<PostgresDatabase> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<PostgresDatabase>(HashCodeComparator.getInstance()),
+            new ArraySet<PostgresDatabase>(),
             objectFactory,
             "select\n"
             + "  pd.ao_server_resource,\n"

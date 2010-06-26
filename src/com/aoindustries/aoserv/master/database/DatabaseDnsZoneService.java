@@ -12,7 +12,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -32,7 +31,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
     @Override
     protected Set<DnsZone> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<DnsZone>(HashCodeComparator.getInstance()),
+            new ArraySet<DnsZone>(),
             objectFactory,
             "select\n"
             + "  resource,\n"
@@ -53,7 +52,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
         MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
         if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
             return db.executeObjectSetQuery(
-                new ArraySet<DnsZone>(HashCodeComparator.getInstance()),
+                new ArraySet<DnsZone>(),
                 objectFactory,
                 "select\n"
                 + "  resource,\n"
@@ -75,7 +74,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
     @Override
     protected Set<DnsZone> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<DnsZone>(HashCodeComparator.getInstance()),
+            new ArraySet<DnsZone>(),
             objectFactory,
             "select\n"
             + "  dz.resource,\n"

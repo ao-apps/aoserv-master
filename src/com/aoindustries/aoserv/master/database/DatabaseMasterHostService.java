@@ -24,6 +24,7 @@ final class DatabaseMasterHostService extends DatabaseService<Integer,MasterHost
         super(connector, Integer.class, MasterHost.class);
     }
 
+    @Override
     protected Set<MasterHost> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -31,6 +32,7 @@ final class DatabaseMasterHostService extends DatabaseService<Integer,MasterHost
         );
     }
 
+    @Override
     protected Set<MasterHost> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,
@@ -50,6 +52,7 @@ final class DatabaseMasterHostService extends DatabaseService<Integer,MasterHost
         );
     }
 
+    @Override
     protected Set<MasterHost> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
             objectFactory,

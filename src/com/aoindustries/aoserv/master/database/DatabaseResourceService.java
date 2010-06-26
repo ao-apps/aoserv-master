@@ -34,10 +34,10 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
                     result.getInt("pkey"),
                     result.getString("resource_type"),
                     AccountingCode.valueOf(result.getString("accounting")),
-                    result.getTimestamp("created"),
+                    result.getLong("created"),
                     UserId.valueOf(result.getString("created_by")),
                     (Integer)result.getObject("disable_log"),
-                    result.getTimestamp("last_enabled")
+                    result.getLong("last_enabled")
                 );
             } catch(ValidationException err) {
                 throw new SQLException(err);
@@ -54,7 +54,18 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
         return db.executeObjectSetQuery(
             new ArraySet<Resource>(),
             objectFactory,
-            "select * from resources order by pkey"
+            "select\n"
+            + "  pkey,\n"
+            + "  resource_type,\n"
+            + "  accounting,\n"
+            + "  (extract(epoch from created)*1000)::int8 as created,\n"
+            + "  created_by,\n"
+            + "  disable_log,\n"
+            + "  (extract(epoch from last_enabled)*1000)::int8 as last_enabled\n"
+            + "from\n"
+            + "  resources\n"
+            + "  order by\n"
+            + "pkey"
         );
     }
 
@@ -63,7 +74,13 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
         StringBuilder sql = new StringBuilder(
             // ao_server_resources
             "select\n"
-            + "  re.*\n"
+            + "  re.pkey,\n"
+            + "  re.resource_type,\n"
+            + "  re.accounting,\n"
+            + "  (extract(epoch from re.created)*1000)::int8 as created,\n"
+            + "  re.created_by,\n"
+            + "  re.disable_log,\n"
+            + "  (extract(epoch from re.last_enabled)*1000)::int8 as last_enabled\n"
             + "from\n"
             + "  master_servers ms,\n"
             + "  ao_server_resources asr,\n"
@@ -74,7 +91,13 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
             + "  and asr.resource=re.pkey\n"
             // server_resources
             + "union select\n"
-            + "  re.*\n"
+            + "  re.pkey,\n"
+            + "  re.resource_type,\n"
+            + "  re.accounting,\n"
+            + "  (extract(epoch from re.created)*1000)::int8 as created,\n"
+            + "  re.created_by,\n"
+            + "  re.disable_log,\n"
+            + "  (extract(epoch from re.last_enabled)*1000)::int8 as last_enabled\n"
             + "from\n"
             + "  master_servers ms,\n"
             + "  server_resources sr,\n"
@@ -89,7 +112,13 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
         addOptionalInInteger(
             sql,
             "union select\n"
-            + "  *\n"
+            + "  pkey,\n"
+            + "  resource_type,\n"
+            + "  accounting,\n"
+            + "  (extract(epoch from created)*1000)::int8 as created,\n"
+            + "  created_by,\n"
+            + "  disable_log,\n"
+            + "  (extract(epoch from last_enabled)*1000)::int8 as last_enabled\n"
             + "from\n"
             + "  resources\n"
             + "where\n"
@@ -113,7 +142,13 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"
-            + "  re.*\n"
+            + "  re.pkey,\n"
+            + "  re.resource_type,\n"
+            + "  re.accounting,\n"
+            + "  (extract(epoch from re.created)*1000)::int8 as created,\n"
+            + "  re.created_by,\n"
+            + "  re.disable_log,\n"
+            + "  (extract(epoch from re.last_enabled)*1000)::int8 as last_enabled\n"
             + "from\n"
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN
@@ -131,7 +166,13 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
         addOptionalInInteger(
             sql,
             "union select\n"
-            + "  *\n"
+            + "  pkey,\n"
+            + "  resource_type,\n"
+            + "  accounting,\n"
+            + "  (extract(epoch from created)*1000)::int8 as created,\n"
+            + "  created_by,\n"
+            + "  disable_log,\n"
+            + "  (extract(epoch from last_enabled)*1000)::int8 as last_enabled\n"
             + "from\n"
             + "  resources\n"
             + "where\n"

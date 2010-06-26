@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.AOServRolePermissionService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,18 +26,22 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
         super(connector, Integer.class, AOServRolePermission.class);
     }
 
+    @Override
     protected Set<AOServRolePermission> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServRolePermission>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from aoserv_role_permissions"
+            "select * from aoserv_role_permissions order by pkey"
         );
     }
 
     /**
      * Can only see their own roles.
      */
+    @Override
     protected Set<AOServRolePermission> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServRolePermission>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  arp.*\n"
@@ -43,7 +49,9 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
             + "  business_administrator_roles bar\n"
             + "  inner join aoserv_role_permissions arp on bar.role=arp.role\n"
             + "where\n"
-            + "  bar.username=?",
+            + "  bar.username=?\n"
+            + "order by\n"
+            + "  arp.pkey",
             connector.getConnectAs()
         );
     }
@@ -51,8 +59,10 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
     /**
      * Can see the roles owned by the business tree and their own roles.
      */
+    @Override
     protected Set<AOServRolePermission> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServRolePermission>(HashCodeComparator.getInstance()),
             objectFactory,
             // Business-based
             "select\n"
@@ -85,7 +95,9 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
             + "  )\n"
             + "  and bu1.accounting=ba.accounting\n"
             + "  and ba.username=bar.username\n"
-            + "  and bar.role=arp.role",
+            + "  and bar.role=arp.role\n"
+            + "order by\n"
+            + "  pkey",
             connector.getConnectAs(),
             connector.getConnectAs()
         );

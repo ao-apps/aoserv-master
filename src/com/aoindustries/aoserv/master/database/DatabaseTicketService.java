@@ -41,11 +41,11 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
                     result.getString("ticket_type"),
                     getEmail(result.getString("from_address")),
                     result.getString("summary"),
-                    result.getTimestamp("open_date"),
+                    result.getLong("open_date"),
                     result.getString("client_priority"),
                     result.getString("admin_priority"),
                     result.getString("status"),
-                    result.getTimestamp("status_timeout"),
+                    (Long)result.getObject("status_timeout"),
                     result.getString("contact_emails"),
                     result.getString("contact_phone_numbers")
                 );
@@ -75,11 +75,11 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
             + "  ticket_type,\n"
             + "  from_address,\n"
             + "  summary,\n"
-            + "  open_date,\n"
+            + "  (extract(epoch from open_date)*1000)::int8 as open_date,\n"
             + "  client_priority,\n"
             + "  admin_priority,\n"
             + "  status,\n"
-            + "  status_timeout,\n"
+            + "  (extract(epoch from status_timeout)*1000)::int8 as status_timeout,\n"
             + "  contact_emails,\n"
             + "  contact_phone_numbers\n"
             + "from\n"
@@ -105,11 +105,11 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
             + "  ti.ticket_type,\n"
             + "  ti.from_address,\n"
             + "  ti.summary,\n"
-            + "  ti.open_date,\n"
+            + "  (extract(epoch from ti.open_date)*1000)::int8 as open_date,\n"
             + "  ti.client_priority,\n"
             + "  ti.admin_priority,\n"
             + "  ti.status,\n"
-            + "  ti.status_timeout,\n"
+            + "  (extract(epoch from ti.status_timeout)*1000)::int8 as status_timeout,\n"
             + "  ti.contact_emails,\n"
             + "  ti.contact_phone_numbers\n"
             + "from\n"
@@ -148,11 +148,11 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
                 + "  ti.ticket_type,\n"
                 + "  ti.from_address,\n"
                 + "  ti.summary,\n"
-                + "  ti.open_date,\n"
+                + "  (extract(epoch from ti.open_date)*1000)::int8 as open_date,\n"
                 + "  ti.client_priority,\n"
                 + "  ti.admin_priority,\n"
                 + "  ti.status,\n"
-                + "  ti.status_timeout,\n"
+                + "  (extract(epoch from ti.status_timeout)*1000)::int8 as status_timeout,\n"
                 + "  ti.contact_emails,\n"
                 + "  ti.contact_phone_numbers\n"
                 + "from\n"
@@ -188,11 +188,11 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
                 + "  ti.ticket_type,\n"
                 + "  ti.from_address,\n"
                 + "  ti.summary,\n"
-                + "  ti.open_date,\n"
+                + "  (extract(epoch from ti.open_date)*1000)::int8 as open_date,\n"
                 + "  ti.client_priority,\n"
                 + "  null,\n" // admin_priority
                 + "  ti.status,\n"
-                + "  ti.status_timeout,\n"
+                + "  (extract(epoch from ti.status_timeout)*1000)::int8 as status_timeout,\n"
                 + "  ti.contact_emails,\n"
                 + "  ti.contact_phone_numbers\n"
                 + "from\n"

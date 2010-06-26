@@ -11,6 +11,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,8 +25,10 @@ final class DatabaseTicketStatusService extends DatabasePublicService<String,Tic
         super(connector, String.class, TicketStatus.class);
     }
 
+    @Override
     protected Set<TicketStatus> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<TicketStatus>(),
             objectFactory,
             "select * from ticket_statuses"
         );

@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.PackageDefinitionLimitService;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -45,7 +44,7 @@ final class DatabasePackageDefinitionLimitService extends DatabaseService<Intege
     @Override
     protected Set<PackageDefinitionLimit> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<PackageDefinitionLimit>(HashCodeComparator.getInstance()),
+            new ArraySet<PackageDefinitionLimit>(),
             objectFactory,
             "select\n"
             + "  pdl.pkey,\n"
@@ -98,7 +97,7 @@ final class DatabasePackageDefinitionLimitService extends DatabaseService<Intege
     protected Set<PackageDefinitionLimit> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getUsername().getBusiness().canSeePrices()) {
             return db.executeObjectSetQuery(
-                new ArraySet<PackageDefinitionLimit>(HashCodeComparator.getInstance()),
+                new ArraySet<PackageDefinitionLimit>(),
                 objectFactory,
                 "select distinct\n"
                 + "  pdl.pkey,\n"
@@ -131,7 +130,7 @@ final class DatabasePackageDefinitionLimitService extends DatabaseService<Intege
             );
         } else {
             return db.executeObjectSetQuery(
-                new ArraySet<PackageDefinitionLimit>(HashCodeComparator.getInstance()),
+                new ArraySet<PackageDefinitionLimit>(),
                 objectFactory,
                 "select distinct\n"
                 + "  pdl.pkey,\n"

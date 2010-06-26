@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.sql.DatabaseConnection;
 import java.sql.SQLException;
@@ -24,6 +24,7 @@ abstract class DatabasePublicService<K extends Comparable<K>,V extends AOServObj
     /**
      * @see  #getPublicSet(DatabaseConnection)
      */
+    @Override
     final protected Set<V> getSetMaster(DatabaseConnection db) throws SQLException {
         return getPublicSet(db);
     }
@@ -31,6 +32,7 @@ abstract class DatabasePublicService<K extends Comparable<K>,V extends AOServObj
     /**
      * @see  #getPublicSet(DatabaseConnection)
      */
+    @Override
     final protected Set<V> getSetDaemon(DatabaseConnection db) throws SQLException {
         return getPublicSet(db);
     }
@@ -38,6 +40,7 @@ abstract class DatabasePublicService<K extends Comparable<K>,V extends AOServObj
     /**
      * @see  #getPublicSet(DatabaseConnection)
      */
+    @Override
     final protected Set<V> getSetBusiness(DatabaseConnection db) throws SQLException {
         return getPublicSet(db);
     }

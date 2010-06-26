@@ -11,6 +11,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,8 +25,10 @@ final class DatabaseOperatingSystemService extends DatabasePublicService<String,
         super(connector, String.class, OperatingSystem.class);
     }
 
+    @Override
     protected Set<OperatingSystem> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<OperatingSystem>(),
             objectFactory,
             "select * from operating_systems"
         );

@@ -30,7 +30,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
                 return new Transaction(
                     DatabaseTransactionService.this,
                     result.getInt("transid"),
-                    result.getTimestamp("time"),
+                    result.getLong("time"),
                     AccountingCode.valueOf(result.getString("accounting")),
                     AccountingCode.valueOf(result.getString("source_accounting")),
                     UserId.valueOf(result.getString("username")),
@@ -60,7 +60,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
             objectFactory,
             "select\n"
             + "  transid,\n"
-            + "  time,\n"
+            + "  (extract(epoch from time)*1000)::int8 as time,\n"
             + "  accounting,\n"
             + "  source_accounting,\n"
             + "  username,\n"
@@ -92,7 +92,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
             objectFactory,
             "select\n"
             + "  tr.transid,\n"
-            + "  tr.time,\n"
+            + "  (extract(epoch from tr.time)*1000)::int8 as time,\n"
             + "  tr.accounting,\n"
             + "  tr.source_accounting,\n"
             + "  tr.username,\n"

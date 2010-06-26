@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.CreditCard;
 import com.aoindustries.aoserv.client.CreditCardService;
 import com.aoindustries.sql.AutoObjectFactory;
@@ -31,7 +31,44 @@ final class DatabaseCreditCardService extends DatabaseService<Integer,CreditCard
         return db.executeObjectSetQuery(
             new ArraySet<CreditCard>(),
             objectFactory,
-            "select * from credit_cards order by pkey"
+            "select\n"
+            + "  pkey,\n"
+            + "  processor_id,\n"
+            + "  accounting,\n"
+            + "  group_name,\n"
+            + "  card_info,\n"
+            + "  provider_unique_id,\n"
+            + "  first_name,\n"
+            + "  last_name,\n"
+            + "  company_name,\n"
+            + "  email,\n"
+            + "  phone,\n"
+            + "  fax,\n"
+            + "  customer_tax_id,\n"
+            + "  street_address1,\n"
+            + "  street_address2,\n"
+            + "  city,\n"
+            + "  state,\n"
+            + "  postal_code,\n"
+            + "  country_code,\n"
+            + "  (extract(epoch from created)*1000)::int8 as created,\n"
+            + "  created_by,\n"
+            + "  principal_name,\n"
+            + "  use_monthly,\n"
+            + "  active,\n"
+            + "  (extract(epoch from deactivated_on)*1000)::int8 as deactivated_on,\n"
+            + "  deactivate_reason,\n"
+            + "  description,\n"
+            + "  encrypted_card_number,\n"
+            + "  encryption_card_number_from,\n"
+            + "  encryption_card_number_recipient,\n"
+            + "  encrypted_expiration,\n"
+            + "  encryption_expiration_from,\n"
+            + "  encryption_expiration_recipient\n"
+            + "from\n"
+            + "  credit_cards\n"
+            + "order by\n"
+            + "  pkey"
         );
     }
 
@@ -46,7 +83,39 @@ final class DatabaseCreditCardService extends DatabaseService<Integer,CreditCard
             new ArraySet<CreditCard>(),
             objectFactory,
             "select\n"
-            + "  cc.*\n"
+            + "  cc.pkey,\n"
+            + "  cc.processor_id,\n"
+            + "  cc.accounting,\n"
+            + "  cc.group_name,\n"
+            + "  cc.card_info,\n"
+            + "  cc.provider_unique_id,\n"
+            + "  cc.first_name,\n"
+            + "  cc.last_name,\n"
+            + "  cc.company_name,\n"
+            + "  cc.email,\n"
+            + "  cc.phone,\n"
+            + "  cc.fax,\n"
+            + "  cc.customer_tax_id,\n"
+            + "  cc.street_address1,\n"
+            + "  cc.street_address2,\n"
+            + "  cc.city,\n"
+            + "  cc.state,\n"
+            + "  cc.postal_code,\n"
+            + "  cc.country_code,\n"
+            + "  (extract(epoch from cc.created)*1000)::int8 as created,\n"
+            + "  cc.created_by,\n"
+            + "  cc.principal_name,\n"
+            + "  cc.use_monthly,\n"
+            + "  cc.active,\n"
+            + "  (extract(epoch from cc.deactivated_on)*1000)::int8 as deactivated_on,\n"
+            + "  cc.deactivate_reason,\n"
+            + "  cc.description,\n"
+            + "  cc.encrypted_card_number,\n"
+            + "  cc.encryption_card_number_from,\n"
+            + "  cc.encryption_card_number_recipient,\n"
+            + "  cc.encrypted_expiration,\n"
+            + "  cc.encryption_expiration_from,\n"
+            + "  cc.encryption_expiration_recipient\n"
             + "from\n"
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN

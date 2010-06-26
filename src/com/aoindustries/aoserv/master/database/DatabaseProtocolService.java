@@ -11,6 +11,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,8 +25,10 @@ final class DatabaseProtocolService extends DatabasePublicService<String,Protoco
         super(connector, String.class, Protocol.class);
     }
 
+    @Override
     protected Set<Protocol> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<Protocol>(),
             objectFactory,
             "select * from protocols"
         );

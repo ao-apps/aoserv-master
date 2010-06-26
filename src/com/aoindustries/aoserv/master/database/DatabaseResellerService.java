@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.Reseller;
 import com.aoindustries.aoserv.client.ResellerService;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
@@ -13,6 +13,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -29,6 +30,7 @@ final class DatabaseResellerService extends DatabaseService<AccountingCode,Resel
     @Override
     protected Set<Reseller> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<Reseller>(),
             objectFactory,
             "select * from resellers"
         );
@@ -42,6 +44,7 @@ final class DatabaseResellerService extends DatabaseService<AccountingCode,Resel
     @Override
     protected Set<Reseller> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<Reseller>(),
             objectFactory,
             "select\n"
             + "  re.*\n"

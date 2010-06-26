@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.PackageDefinitionService;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -46,7 +45,7 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
     @Override
     protected Set<PackageDefinition> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<PackageDefinition>(HashCodeComparator.getInstance()),
+            new ArraySet<PackageDefinition>(),
             objectFactory,
             "select * from package_definitions order by pkey"
         );
@@ -55,7 +54,7 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
     @Override
     protected Set<PackageDefinition> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<PackageDefinition>(HashCodeComparator.getInstance()),
+            new ArraySet<PackageDefinition>(),
             objectFactory,
             "select distinct\n"
             + "  pd.*\n"
@@ -79,7 +78,7 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
     protected Set<PackageDefinition> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getUsername().getBusiness().canSeePrices()) {
             return db.executeObjectSetQuery(
-                new ArraySet<PackageDefinition>(HashCodeComparator.getInstance()),
+                new ArraySet<PackageDefinition>(),
                 objectFactory,
                 "select distinct\n"
                 + "  pd.*\n"
@@ -104,7 +103,7 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
             );
         } else {
             return db.executeObjectSetQuery(
-                new ArraySet<PackageDefinition>(HashCodeComparator.getInstance()),
+                new ArraySet<PackageDefinition>(),
                 objectFactory,
                 "select distinct\n"
                 + "  pd.pkey,\n"

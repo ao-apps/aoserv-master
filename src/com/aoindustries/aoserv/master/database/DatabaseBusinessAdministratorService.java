@@ -1,17 +1,19 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
+import com.aoindustries.aoserv.client.validator.Email;
 import com.aoindustries.aoserv.client.validator.HashedPassword;
 import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.sql.AutoObjectFactory;
+import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,7 +23,41 @@ import java.util.Set;
  */
 final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,BusinessAdministrator> implements BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<BusinessAdministrator> objectFactory = new AutoObjectFactory<BusinessAdministrator>(BusinessAdministrator.class, this);
+    private final ObjectFactory<BusinessAdministrator> objectFactory = new ObjectFactory<BusinessAdministrator>() {
+        @Override
+        public BusinessAdministrator createObject(ResultSet result) throws SQLException {
+            try {
+                return new BusinessAdministrator(
+                    DatabaseBusinessAdministratorService.this,
+                    UserId.valueOf(result.getString("username")),
+                    HashedPassword.valueOf(result.getString("password")),
+                    result.getString("full_name"),
+                    result.getString("title"),
+                    result.getDate("birthday"),
+                    result.getBoolean("is_preferred"),
+                    result.getBoolean("private"),
+                    result.getLong("created"),
+                    result.getString("work_phone"),
+                    result.getString("home_phone"),
+                    result.getString("cell_phone"),
+                    result.getString("fax"),
+                    Email.valueOf(result.getString("email")),
+                    result.getString("address1"),
+                    result.getString("address2"),
+                    result.getString("city"),
+                    result.getString("state"),
+                    result.getString("country"),
+                    result.getString("zip"),
+                    (Integer)result.getObject("disable_log"),
+                    result.getBoolean("can_switch_users"),
+                    result.getString("support_code")
+                );
+            } catch(ValidationException err) {
+                throw new SQLException(err);
+            }
+        }
+
+    };
 
     DatabaseBusinessAdministratorService(DatabaseConnector connector) {
         super(connector, UserId.class, BusinessAdministrator.class);
@@ -40,7 +76,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
             + "  birthday,\n"
             + "  is_preferred,\n"
             + "  private,\n"
-            + "  created,\n"
+            + "  (extract(epoch from created)*1000)::int8 as created,\n"
             + "  work_phone,\n"
             + "  home_phone,\n"
             + "  cell_phone,\n"
@@ -73,7 +109,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
             + "  ba.birthday,\n"
             + "  ba.is_preferred,\n"
             + "  ba.private,\n"
-            + "  ba.created,\n"
+            + "  (extract(epoch from ba.created)*1000)::int8 as created,\n"
             + "  ba.work_phone,\n"
             + "  ba.home_phone,\n"
             + "  ba.cell_phone,\n"
@@ -87,7 +123,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
             + "  ba.zip,\n"
             + "  ba.disable_log,\n"
             + "  ba.can_switch_users,\n"
-            + "  null\n"
+            + "  null as support_code\n"
             + "from\n"
             + "  master_servers ms,\n"
             + "  business_servers bs,\n"
@@ -113,7 +149,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
             + "  ba.birthday,\n"
             + "  ba.is_preferred,\n"
             + "  ba.private,\n"
-            + "  ba.created,\n"
+            + "  (extract(epoch from ba.created)*1000)::int8 as created,\n"
             + "  ba.work_phone,\n"
             + "  ba.home_phone,\n"
             + "  ba.cell_phone,\n"

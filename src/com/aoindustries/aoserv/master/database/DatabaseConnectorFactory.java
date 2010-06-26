@@ -94,6 +94,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
         synchronized(enabledMasterUsersLock) {
             if(enabledMasterUsers==null) {
                 enabledMasterUsers=db.executeObjectSetQuery(
+                    new HashSet<UserId>(),
                     userIdFactory,
                     "select\n"
                     + "  mu.username\n"
@@ -119,6 +120,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
         synchronized(enabledDaemonUsersLock) {
             if(enabledDaemonUsers==null) {
                 enabledDaemonUsers=db.executeObjectSetQuery(
+                    new HashSet<UserId>(),
                     userIdFactory,
                     "select\n"
                     + "  mu.username\n"
@@ -143,6 +145,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
         synchronized(enabledBusinessAdministratorsLock) {
             if(enabledBusinessAdministrators==null) {
                 enabledBusinessAdministrators=db.executeObjectSetQuery(
+                    new HashSet<UserId>(),
                     userIdFactory,
                     "select username from business_administrators where disable_log is null"
                 );

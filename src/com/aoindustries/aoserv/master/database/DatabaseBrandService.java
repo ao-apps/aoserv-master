@@ -12,6 +12,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -25,15 +26,19 @@ final class DatabaseBrandService extends DatabaseService<AccountingCode,Brand> i
         super(connector, AccountingCode.class, Brand.class);
     }
 
+    @Override
     protected Set<Brand> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<Brand>(),
             objectFactory,
             "select * from brands"
         );
     }
 
+    @Override
     protected Set<Brand> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<Brand>(),
             objectFactory,
             "select\n"
             + "  br.accounting,\n"
@@ -85,8 +90,10 @@ final class DatabaseBrandService extends DatabaseService<AccountingCode,Brand> i
         );
     }
 
+    @Override
     protected Set<Brand> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<Brand>(),
             objectFactory,
             "select\n"
             + "  br.*\n"

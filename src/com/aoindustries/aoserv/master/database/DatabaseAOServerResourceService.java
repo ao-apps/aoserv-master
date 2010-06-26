@@ -11,6 +11,8 @@ import com.aoindustries.aoserv.client.AOServerResourceService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
     @Override
     protected Set<AOServerResource> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServerResource>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  asr.resource,\n"
@@ -37,13 +40,16 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
             + "  bs.pkey\n"
             + "from\n"
             + "  ao_server_resources asr\n"
-            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "order by\n"
+            + "  asr.resource"
         );
     }
 
     @Override
     protected Set<AOServerResource> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServerResource>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  asr.resource,\n"
@@ -55,7 +61,9 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
             + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=asr.ao_server",
+            + "  and ms.server=asr.ao_server\n"
+            + "order by\n"
+            + "  asr.resource",
             connector.getConnectAs()
         );
     }
@@ -87,13 +95,13 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
-            + "  ) and bu1.accounting=asr.accounting"
+            + "  ) and bu1.accounting=asr.accounting\n"
         );
         List<Set<? extends AOServObject<Integer,?>>> extraAoserverResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
         addExtraAOServerResourcesBusiness(db, extraAoserverResources);
         addOptionalInInteger(
             sql,
-            "\nunion select\n"
+            "union select\n"
             + "  asr.resource,\n"
             + "  asr.ao_server,\n"
             + "  bs.pkey\n"
@@ -103,9 +111,12 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
             + "where\n"
             + "  asr.resource in (",
             extraAoserverResources,
-            ")"
+            ")\n"
         );
+        sql.append("order by\n"
+                + "  resource");
         return db.executeObjectSetQuery(
+            new ArraySet<AOServerResource>(HashCodeComparator.getInstance()),
             objectFactory,
             sql.toString(),
             connector.getConnectAs()

@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
     @Override
     protected Set<FileBackupSetting> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<FileBackupSetting>(HashCodeComparator.getInstance()),
+            new ArraySet<FileBackupSetting>(),
             objectFactory,
             "select * from file_backup_settings order by pkey"
         );
@@ -38,7 +37,7 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
     @Override
     protected Set<FileBackupSetting> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<FileBackupSetting>(HashCodeComparator.getInstance()),
+            new ArraySet<FileBackupSetting>(),
             objectFactory,
             "select\n"
             + "  fbs.*\n"
@@ -59,7 +58,7 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
     @Override
     protected Set<FileBackupSetting> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<FileBackupSetting>(HashCodeComparator.getInstance()),
+            new ArraySet<FileBackupSetting>(),
             objectFactory,
             "select\n"
             + "  fbs.*\n"

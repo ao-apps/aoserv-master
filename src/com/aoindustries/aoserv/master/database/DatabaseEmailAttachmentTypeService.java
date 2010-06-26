@@ -11,6 +11,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,8 +25,10 @@ final class DatabaseEmailAttachmentTypeService extends DatabasePublicService<Str
         super(connector, String.class, EmailAttachmentType.class);
     }
 
+    @Override
     protected Set<EmailAttachmentType> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<EmailAttachmentType>(),
             objectFactory,
             "select * from email_attachment_types"
         );

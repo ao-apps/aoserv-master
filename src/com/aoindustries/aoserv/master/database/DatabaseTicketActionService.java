@@ -31,7 +31,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
                     result.getInt("pkey"),
                     result.getInt("ticket"),
                     getUserId(result.getString("administrator")),
-                    result.getTimestamp("time"),
+                    result.getLong("time"),
                     result.getString("action_type"),
                     getAccountingCode(result.getString("old_accounting")),
                     getAccountingCode(result.getString("new_accounting")),
@@ -67,7 +67,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
             + "  pkey,\n"
             + "  ticket,\n"
             + "  administrator,\n"
-            + "  time,\n"
+            + "  (extract(epoch from time)*1000)::int8 as time,\n"
             + "  action_type,\n"
             + "  old_accounting,\n"
             + "  new_accounting,\n"
@@ -106,7 +106,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
                 + "  ta.pkey,\n"
                 + "  ta.ticket,\n"
                 + "  ta.administrator,\n"
-                + "  ta.time,\n"
+                + "  (extract(epoch from ta.time)*1000)::int8 as time,\n"
                 + "  ta.action_type,\n"
                 + "  ta.old_accounting,\n"
                 + "  ta.new_accounting,\n"
@@ -151,7 +151,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
                 + "  ta.pkey,\n"
                 + "  ta.ticket,\n"
                 + "  ta.administrator,\n"
-                + "  ta.time,\n"
+                + "  (extract(epoch from ta.time)*1000)::int8 as time,\n"
                 + "  ta.action_type,\n"
                 + "  ta.old_accounting,\n"
                 + "  ta.new_accounting,\n"

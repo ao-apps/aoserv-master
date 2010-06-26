@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseBackupRetentionService extends DatabasePublicService<Short,B
     @Override
     protected Set<BackupRetention> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<BackupRetention>(HashCodeComparator.getInstance()),
+            new ArraySet<BackupRetention>(),
             objectFactory,
             "select * from backup_retentions order by days"
         );

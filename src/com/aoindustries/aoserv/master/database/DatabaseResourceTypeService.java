@@ -11,6 +11,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,8 +25,10 @@ final class DatabaseResourceTypeService extends DatabasePublicService<String,Res
         super(connector, String.class, ResourceType.class);
     }
 
+    @Override
     protected Set<ResourceType> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<ResourceType>(),
             objectFactory,
             "select * from resource_types"
         );

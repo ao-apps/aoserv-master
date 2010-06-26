@@ -11,7 +11,6 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -29,7 +28,7 @@ final class DatabaseHttpdJBossVersionService extends DatabasePublicService<Integ
     @Override
     protected Set<HttpdJBossVersion> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
-            new ArraySet<HttpdJBossVersion>(HashCodeComparator.getInstance()),
+            new ArraySet<HttpdJBossVersion>(),
             objectFactory,
             "select * from httpd_jboss_versions order by version"
         );

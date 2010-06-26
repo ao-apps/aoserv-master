@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.AOServRoleService;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import com.aoindustries.util.ArraySet;
+import com.aoindustries.util.HashCodeComparator;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -24,18 +26,22 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
         super(connector, Integer.class, AOServRole.class);
     }
 
+    @Override
     protected Set<AOServRole> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServRole>(HashCodeComparator.getInstance()),
             objectFactory,
-            "select * from aoserv_roles"
+            "select * from aoserv_roles order by pkey"
         );
     }
 
     /**
      * Can only see their own roles.
      */
+    @Override
     protected Set<AOServRole> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServRole>(HashCodeComparator.getInstance()),
             objectFactory,
             "select\n"
             + "  ar.*\n"
@@ -43,7 +49,9 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
             + "  business_administrator_roles bar\n"
             + "  inner join aoserv_roles ar on bar.role=ar.pkey\n"
             + "where\n"
-            + "  bar.username=?",
+            + "  bar.username=?\n"
+            + "order by\n"
+            + "  ar.pkey",
             connector.getConnectAs()
         );
     }
@@ -51,8 +59,10 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
     /**
      * Can see the roles owned by the business tree and their own roles.
      */
+    @Override
     protected Set<AOServRole> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new ArraySet<AOServRole>(HashCodeComparator.getInstance()),
             objectFactory,
             // Business-based
             "select\n"
@@ -84,7 +94,9 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
             + "  )\n"
             + "  and bu1.accounting=ba.accounting\n"
             + "  and ba.username=bar.username\n"
-            + "  and bar.role=ar.pkey",
+            + "  and bar.role=ar.pkey\n"
+            + "order by\n"
+            + "  pkey",
             connector.getConnectAs(),
             connector.getConnectAs()
         );

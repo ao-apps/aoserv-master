@@ -12,6 +12,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -25,19 +26,24 @@ final class DatabaseCreditCardProcessorService extends DatabaseService<String,Cr
         super(connector, String.class, CreditCardProcessor.class);
     }
 
+    @Override
     protected Set<CreditCardProcessor> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<CreditCardProcessor>(),
             objectFactory,
             "select * from credit_card_processors"
         );
     }
 
+    @Override
     protected Set<CreditCardProcessor> getSetDaemon(DatabaseConnection db) {
         return Collections.emptySet();
     }
 
+    @Override
     protected Set<CreditCardProcessor> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<CreditCardProcessor>(),
             objectFactory,
             "select\n"
             + "  ccp.*\n"
