@@ -7,12 +7,16 @@ package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.BusinessAdministratorService;
+import com.aoindustries.aoserv.client.ServiceName;
+import com.aoindustries.aoserv.client.command.SetBusinessAdministratorPasswordCommand;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.Email;
 import com.aoindustries.aoserv.client.validator.HashedPassword;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -23,6 +27,7 @@ import java.util.Set;
  */
 final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,BusinessAdministrator> implements BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> {
 
+    // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<BusinessAdministrator> objectFactory = new ObjectFactory<BusinessAdministrator>() {
         @Override
         public BusinessAdministrator createObject(ResultSet result) throws SQLException {
@@ -178,4 +183,22 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
             connector.getConnectAs()
         );
     }
+    // </editor-fold>
+
+    // <editor-fold defaultstate="collapsed" desc="Commands">
+    public void setBusinessAdministratorPassword(DatabaseConnection db, InvalidateSet invalidateSet, SetBusinessAdministratorPasswordCommand command) throws RemoteException, SQLException {
+        String plaintext = command.getPlaintext();
+        String hashed =
+            plaintext==null || plaintext.length()==0
+            ? HashedPassword.NO_PASSWORD
+            : HashedPassword.hash(plaintext)
+        ;
+        UserId username = command.getUsername();
+        AccountingCode accounting = connector.factory.rootConnector.getUsernames().get(username).getBusiness().getAccounting();
+        db.executeUpdate("update business_administrators set password=? where username=?", hashed, username);
+
+        // Notify all clients of the update
+        invalidateSet.add(ServiceName.business_administrators, accounting);
+    }
+    // </editor-fold>
 }

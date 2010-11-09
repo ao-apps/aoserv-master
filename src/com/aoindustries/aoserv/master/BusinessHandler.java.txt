@@ -58,16 +58,6 @@ final public class BusinessHandler {
     private final static Map<String,Boolean> disabledBusinessAdministrators=new HashMap<String,Boolean>();
     private final static Map<String,Boolean> disabledBusinesses=new HashMap<String,Boolean>();
 
-    public static boolean canAccessBusiness(DatabaseConnection conn, RequestSource source, String accounting) throws IOException, SQLException {
-        //String username=source.getUsername();
-        return
-            getAllowedBusinesses(conn, source)
-            .contains(
-                accounting //UsernameHandler.getBusinessForUsername(conn, username)
-            )
-        ;
-    }
-    
     public static boolean canAccessDisableLog(DatabaseConnection conn, RequestSource source, int pkey, boolean enabling) throws IOException, SQLException {
         String username=source.getUsername();
         String disabledBy=getDisableLogDisabledBy(conn, pkey);
@@ -136,20 +126,6 @@ final public class BusinessHandler {
         );
     }
 
-    public static void checkAccessBusiness(DatabaseConnection conn, RequestSource source, String action, String accounting) throws IOException, SQLException {
-        if(!canAccessBusiness(conn, source, accounting)) {
-            String message=
-            "business_administrator.username="
-            +source.getUsername()
-            +" is not allowed to access business: action='"
-            +action
-            +"', accounting="
-            +accounting
-            ;
-            throw new SQLException(message);
-        }
-    }
-    
     public static void checkAccessDisableLog(DatabaseConnection conn, RequestSource source, String action, int pkey, boolean enabling) throws IOException, SQLException {
         if(!canAccessDisableLog(conn, source, pkey, enabling)) {
             String message=
@@ -1404,40 +1380,6 @@ final public class BusinessHandler {
         invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accts, InvalidateList.allServers, false);
     }
 
-    public static void setBusinessAdministratorPassword(
-        DatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        String username,
-        String plaintext
-    ) throws IOException, SQLException {
-        // An administrator may always reset their own passwords
-        if(!username.equals(source.getUsername())) checkPermission(conn, source, "setBusinessAdministratorPassword", AOServPermission.Permission.set_business_administrator_password);
-
-        UsernameHandler.checkAccessUsername(conn, source, "setBusinessAdministratorPassword", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set password for BusinessAdministrator named '"+LinuxAccount.MAIL+'\'');
-
-        if(isBusinessAdministratorDisabled(conn, username)) throw new SQLException("Unable to set password, BusinessAdministrator disabled: "+username);
-
-        if(plaintext!=null && plaintext.length()>0) {
-            // Perform the password check here, too.
-            PasswordChecker.Result[] results=BusinessAdministrator.checkPassword(username, plaintext);
-            if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
-        }
-
-        String encrypted =
-            plaintext==null || plaintext.length()==0
-            ? BusinessAdministrator.NO_PASSWORD
-            : BusinessAdministrator.hash(plaintext)
-        ;
-
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
-        conn.executeUpdate("update business_administrators set password=? where username=?", encrypted, username);
-
-        // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
-    }
-    
     /**
      * Sets a business_administrators profile.
      */

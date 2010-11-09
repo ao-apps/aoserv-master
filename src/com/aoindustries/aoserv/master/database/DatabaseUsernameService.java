@@ -5,12 +5,19 @@
  */
 package com.aoindustries.aoserv.master.database;
 
+import com.aoindustries.aoserv.client.BusinessAdministrator;
+import com.aoindustries.aoserv.client.LinuxAccount;
+import com.aoindustries.aoserv.client.MySQLUser;
+import com.aoindustries.aoserv.client.PostgresUser;
 import com.aoindustries.aoserv.client.Username;
 import com.aoindustries.aoserv.client.UsernameService;
+import com.aoindustries.aoserv.client.command.SetBusinessAdministratorPasswordCommand;
+import com.aoindustries.aoserv.client.command.SetUsernamePasswordCommand;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,6 +27,7 @@ import java.util.Set;
  */
 final class DatabaseUsernameService extends DatabaseService<UserId,Username> implements UsernameService<DatabaseConnector,DatabaseConnectorFactory> {
 
+    // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<Username> objectFactory = new AutoObjectFactory<Username>(Username.class, this);
 
     DatabaseUsernameService(DatabaseConnector connector) {
@@ -78,4 +86,42 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
             connector.connectAs
         );
     }
+    // </editor-fold>
+
+    // <editor-fold defaultstate="collapsed" desc="Commands">
+    public void setUsernamePassword(DatabaseConnection db, InvalidateSet invalidateSet, SetUsernamePasswordCommand command) throws RemoteException, SQLException {
+        // Cascade to specific account types
+        Username un = connector.factory.rootConnector.getUsernames().get(command.getUsername());
+        // Make sure passes other command validations
+        BusinessAdministrator ba = un.getBusinessAdministrator();
+        if(ba!=null) {
+            connector.businessAdministrators.setBusinessAdministratorPassword(
+                db,
+                invalidateSet,
+                new SetBusinessAdministratorPasswordCommand(command.getUsername(), command.getPlaintext())
+            );
+        }
+        for(LinuxAccount la : un.getLinuxAccounts()) {
+            connector.linuxAccounts.setLinuxAccountPassword(
+                db,
+                invalidateSet,
+                new SetLinuxAccountPasswordCommand(la.getKey(), command.getPlaintext())
+            );
+        }
+        for(MySQLUser mu : un.getMysqlUsers()) {
+            connector.mysqlUsers.setMySQLUserPassword(
+                db,
+                invalidateSet,
+                new SetMySQLUserPasswordCommand(mu.getKey(), command.getPlaintext())
+            );
+        }
+        for(PostgresUser pu : un.getPostgresUsers()) {
+            connector.postgresUsers.setPostgresUserPassword(
+                db,
+                invalidateSet,
+                new SetPostgresUserPasswordCommand(pu.getKey(), command.getPlaintext())
+            );
+        }
+    }
+    // </editor-fold>
 }

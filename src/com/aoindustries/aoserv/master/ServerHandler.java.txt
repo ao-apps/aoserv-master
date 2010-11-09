@@ -184,15 +184,6 @@ final public class ServerHandler {
         }
     }
 
-    /*
-    public static boolean canAccessServer(DatabaseConnection conn, RequestSource source, String server) throws IOException, SQLException {
-        return getAllowedServers(conn, source).contains(server);
-    }*/
-
-    public static boolean canAccessServer(DatabaseConnection conn, RequestSource source, int server) throws IOException, SQLException {
-        return getAllowedServers(conn, source).contains(server);
-    }
-
     /**
      * Gets the servers that are allowed for the provided username.
      */

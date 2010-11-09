@@ -13,6 +13,7 @@ import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -26,8 +27,10 @@ final class DatabaseTicketAssignmentService extends DatabaseService<Integer,Tick
         super(connector, Integer.class, TicketAssignment.class);
     }
 
+    @Override
     protected Set<TicketAssignment> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<TicketAssignment>(),
             objectFactory,
             "select pkey, ticket, reseller, administrator from ticket_assignments"
         );
@@ -36,14 +39,17 @@ final class DatabaseTicketAssignmentService extends DatabaseService<Integer,Tick
     /**
      * Daemons do not get any ticket assignment data.
      */
+    @Override
     protected Set<TicketAssignment> getSetDaemon(DatabaseConnection db) {
         return Collections.emptySet();
     }
 
+    @Override
     protected Set<TicketAssignment> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             // Only ticket admin can see assignments
             return db.executeObjectSetQuery(
+                new HashSet<TicketAssignment>(),
                 objectFactory,
                 "select\n"
                 + "  ta.pkey,\n"

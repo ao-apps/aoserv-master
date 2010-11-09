@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.AOServConnectorUtils;
+import com.aoindustries.aoserv.client.AOServPermission;
 import com.aoindustries.aoserv.client.AOServPermissionService;
 import com.aoindustries.aoserv.client.AOServRolePermissionService;
 import com.aoindustries.aoserv.client.AOServRoleService;
@@ -115,13 +116,21 @@ import com.aoindustries.aoserv.client.TransactionService;
 import com.aoindustries.aoserv.client.TransactionTypeService;
 import com.aoindustries.aoserv.client.UsernameService;
 import com.aoindustries.aoserv.client.VirtualServerService;
+import com.aoindustries.aoserv.client.command.CommandValidationException;
 import com.aoindustries.aoserv.client.command.RemoteCommand;
+import com.aoindustries.aoserv.client.command.SetBusinessAdministratorPasswordCommand;
+import com.aoindustries.aoserv.client.command.SetUsernamePasswordCommand;
 import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.sql.DatabaseCallable;
 import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.util.WrappedException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -523,14 +532,84 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     }
 
     @Override
-    public <R> CommandResult<R> executeCommand(RemoteCommand<R> command, boolean isInteractive) throws RemoteException {
-        // TODO: Check account enabled
-        // TODO: Check permissions
-        // TODO: Validate command
-        // TODO: Execute command
-        throw new RemoteException("TODO: Not supported yet.");
+    public <R> CommandResult<R> executeCommand(final RemoteCommand<R> command, boolean isInteractive) throws RemoteException {
+        try {
+            // Make sure not accidentally running command on root user
+            if(
+                authenticateAs.equals(factory.rootConnector.getAuthenticateAs())
+                || connectAs.equals(factory.rootConnector.getConnectAs())
+            ) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnector.executeCommand.refusingRootConnector", command.getCommandName()));
+
+            final InvalidateSet invalidateSet = new InvalidateSet();
+            R result = factory.database.executeTransaction(
+                new DatabaseCallable<R>() {
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public R call(DatabaseConnection db) throws SQLException {
+                        try {
+                            // Make sure current user is enabled
+                            if(!factory.isEnabledBusinessAdministrator(db, authenticateAs)) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
+                            if(!factory.isEnabledBusinessAdministrator(db, connectAs)) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
+
+                            // Check permissions using root connector
+                            Set<AOServPermission.Permission> permissions = command.getCommandName().getPermissions();
+                            BusinessAdministrator rootBa = factory.rootConnector.getBusinessAdministrators().get(connectAs);
+                            if(!rootBa.hasPermissions(permissions)) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnector.executeCommand.permissionDenied", command.getCommandName()));
+
+                            // Validate command using root connector
+                            Map<String,List<String>> errors = command.validate(factory.rootConnector);
+                            if(!errors.isEmpty()) throw new CommandValidationException(command, errors);
+                            
+                            // Execute command using this connector
+                            switch(command.getCommandName()) {
+                                case set_business_administrator_password :
+                                    businessAdministrators.setBusinessAdministratorPassword(db, invalidateSet, (SetBusinessAdministratorPasswordCommand)command);
+                                    return null;
+                                case set_username_password :
+                                    usernames.setUsernamePassword(db, invalidateSet, (SetUsernamePasswordCommand)command);
+                                    return null;
+                                default : throw new RemoteException("Command not implemented: " + command.getCommandName());
+                            }
+                        } catch(RemoteException err) {
+                            throw new WrappedException(err);
+                        }
+                    }
+                }
+            );
+            // Now that the transaction has been committed, send invalidation signals and return result.
+            return new CommandResult<R>(
+                result,
+                factory.addInvalidateSet(this, invalidateSet)
+            );
+        } catch(WrappedException err) {
+            Throwable wrapped = err.getCause();
+            if(wrapped instanceof RemoteException) throw (RemoteException)wrapped;
+            throw err;
+        } catch(SQLException err) {
+            throw new RemoteException(err.getMessage(), err);
+        } catch(RuntimeException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
     }
 
+    // <editor-fold defaultstate="collapsed" desc="Invalidate Set Management">
+    private final EnumSet<ServiceName> invalidatedServices = EnumSet.noneOf(ServiceName.class);
+    void clearInvalidatedServices(EnumSet<ServiceName> addTo) {
+        addTo.addAll(invalidatedServices);
+        invalidatedServices.clear();
+    }
+
+    /**
+     * This is called with the factory.connectors lock held - must complete
+     * quickly with careful locking to avoid deadlock.
+     */
+    void servicesInvalidated(EnumSet<ServiceName> invalidatedSet) {
+        invalidatedServices.addAll(invalidatedSet);
+        // TODO: Cache signaling
+    }
+    // </editor-fold>
+
+    // <editor-fold defaultstate="collapsed" desc="Services">
     private final AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>> tables = new AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>>();
     @Override
     public Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>> getServices() throws RemoteException {
@@ -1156,4 +1235,5 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     /* TODO
     public WhoisHistoryService<DatabaseConnector,DatabaseConnectorFactory> getWhoisHistory();
      */
+    // </editor-fold>
 }

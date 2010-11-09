@@ -10,8 +10,9 @@ import com.aoindustries.aoserv.client.validator.Hostname;
 import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.NetPort;
 import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.master.database.DatabaseConnector;
 import com.aoindustries.aoserv.master.database.DatabaseConnectorFactory;
+import com.aoindustries.aoserv.master.threadLocale.ThreadLocaleConnector;
+import com.aoindustries.aoserv.master.threadLocale.ThreadLocaleConnectorFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -65,12 +66,12 @@ final public class MasterServer {
                 }
 
                 // Start the RMI server
-                RmiServerConnectorFactory<DatabaseConnector,DatabaseConnectorFactory> factory = new RmiServerConnectorFactory<DatabaseConnector,DatabaseConnectorFactory>(
+                RmiServerConnectorFactory<ThreadLocaleConnector,ThreadLocaleConnectorFactory> factory = new RmiServerConnectorFactory<ThreadLocaleConnector,ThreadLocaleConnectorFactory>(
                     publicAddress,
                     listenAddress,
                     port,
                     useSsl,
-                    new DatabaseConnectorFactory(MasterDatabase.getDatabase(), rootUsername, rootPassword)
+                    new ThreadLocaleConnectorFactory(new DatabaseConnectorFactory(MasterDatabase.getDatabase(), rootUsername, rootPassword))
                 );
                 done = true;
                 System.out.println("Done");
