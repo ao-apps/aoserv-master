@@ -18,6 +18,7 @@ import com.aoindustries.aoserv.client.validator.HashedPassword;
 import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.aoserv.master.DaemonHandler;
 import com.aoindustries.security.AccountDisabledException;
 import com.aoindustries.security.AccountNotFoundException;
 import com.aoindustries.security.BadPasswordException;
@@ -373,6 +374,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
 
         // Invalidate local caches
         invalidateLocalCaches(services);
+        DaemonHandler.invalidateServices(services);
 
         final List<Integer> addServers = new ArrayList<Integer>();
         final EnumSet<ServiceName> otherConnectorInvalidates = EnumSet.noneOf(ServiceName.class);

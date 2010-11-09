@@ -5,12 +5,16 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.AOServConnectorFactory;
 import com.aoindustries.aoserv.client.rmi.RmiServerConnectorFactory;
 import com.aoindustries.aoserv.client.validator.Hostname;
 import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.NetPort;
 import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.master.database.DatabaseConnector;
 import com.aoindustries.aoserv.master.database.DatabaseConnectorFactory;
+import com.aoindustries.aoserv.client.trace.TraceConnector;
+import com.aoindustries.aoserv.client.trace.TraceConnectorFactory;
 import com.aoindustries.aoserv.master.threadLocale.ThreadLocaleConnector;
 import com.aoindustries.aoserv.master.threadLocale.ThreadLocaleConnectorFactory;
 import java.util.logging.Level;
@@ -65,14 +69,39 @@ final public class MasterServer {
                     }
                 }
 
-                // Start the RMI server
-                RmiServerConnectorFactory<ThreadLocaleConnector,ThreadLocaleConnectorFactory> factory = new RmiServerConnectorFactory<ThreadLocaleConnector,ThreadLocaleConnectorFactory>(
-                    publicAddress,
-                    listenAddress,
-                    port,
-                    useSsl,
-                    new ThreadLocaleConnectorFactory(new DatabaseConnectorFactory(MasterDatabase.getDatabase(), rootUsername, rootPassword))
-                );
+                // Create the database factory
+                AOServConnectorFactory<DatabaseConnector,DatabaseConnectorFactory> databaseFactory = new DatabaseConnectorFactory(MasterDatabase.getDatabase(), rootUsername, rootPassword);
+
+                // Wrap with ThreadLocale factory when enabled
+                if(MasterConfiguration.isThreadLocaleEnabled()) {
+                    ThreadLocaleConnectorFactory threadLocaleFactory = new ThreadLocaleConnectorFactory(databaseFactory);
+                    System.out.print("ThreadLocale enabled: ");
+
+                    // Wrap with Trace factory when enabled
+                    if(MasterConfiguration.isTraceEnabled()) {
+                        TraceConnectorFactory traceFactory = new TraceConnectorFactory(threadLocaleFactory);
+                        System.out.print("Tracing enabled: ");
+
+                        // Start the RMI server: threadLocale+trace
+                        new RmiServerConnectorFactory<TraceConnector,TraceConnectorFactory>(publicAddress, listenAddress, port, useSsl, traceFactory);
+                    } else {
+                        // Start the RMI server: threadLocale
+                        new RmiServerConnectorFactory<ThreadLocaleConnector,ThreadLocaleConnectorFactory>(publicAddress, listenAddress, port, useSsl, threadLocaleFactory);
+                    }
+                } else {
+                    // Wrap with Trace factory when enabled
+                    if(MasterConfiguration.isTraceEnabled()) {
+                        TraceConnectorFactory traceFactory = new TraceConnectorFactory(databaseFactory);
+                        System.out.print("Tracing enabled: ");
+
+                        // Start the RMI server: trace
+                        new RmiServerConnectorFactory<TraceConnector,TraceConnectorFactory>(publicAddress, listenAddress, port, useSsl, traceFactory);
+                    } else {
+                        // Start the RMI server: no options
+                        new RmiServerConnectorFactory<DatabaseConnector,DatabaseConnectorFactory>(publicAddress, listenAddress, port, useSsl, databaseFactory);
+                    }
+                }
+
                 done = true;
                 System.out.println("Done");
 

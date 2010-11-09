@@ -685,36 +685,6 @@ final public class PostgresHandler {
         );
     }
 
-    /**
-     * Sets a PostgreSQL password.
-     */
-    public static void setPostgresServerUserPassword(
-        DatabaseConnection conn,
-        RequestSource source,
-        int postgres_server_user,
-        String password
-    ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setPostgresServerUserPassword", AOServPermission.Permission.set_postgres_server_user_password);
-        checkAccessPostgresServerUser(conn, source, "setPostgresServerUserPassword", postgres_server_user);
-        if(isPostgresServerUserDisabled(conn, postgres_server_user)) throw new SQLException("Unable to set PostgresServerUser password, account disabled: "+postgres_server_user);
-
-        // Get the server for the user
-        int aoServer=getAOServerForPostgresServerUser(conn, postgres_server_user);
-        String username=getUsernameForPostgresServerUser(conn, postgres_server_user);
-
-        // No setting the super user password
-        if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("The PostgreSQL "+PostgresUser.POSTGRES+" password may not be set.");
-
-        // Perform the password check here, too.
-        if(password!=PostgresUser.NO_PASSWORD) {
-            PasswordChecker.Result[] results = PostgresUser.checkPassword(username, password);
-            if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
-        }
-
-        // Contact the daemon for the update
-        DaemonHandler.getDaemonConnector(conn, aoServer).setPostgresUserPassword(postgres_server_user, password);
-    }
-
     public static void setPostgresServerUserPredisablePassword(
         DatabaseConnection conn,
         RequestSource source,

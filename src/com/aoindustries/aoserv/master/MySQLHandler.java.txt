@@ -632,38 +632,6 @@ final public class MySQLHandler {
         );
     }
 
-    /**
-     * Sets a MySQL password.
-     */
-    public static void setMySQLUserPassword(
-        DatabaseConnection conn,
-        RequestSource source,
-        int pkey,
-        String password
-    ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setMySQLUserPassword", AOServPermission.Permission.set_mysql_user_password);
-        checkAccessMySQLUser(conn, source, "setMySQLUserPassword", pkey);
-        if(isMySQLUserDisabled(conn, pkey)) throw new SQLException("Unable to set MySQLUser password, account disabled: "+pkey);
-
-        // Get the server, username for the user
-        String username=getUsernameForMySQLUser(conn, pkey);
-
-        // No setting the super user password
-        if(username.equals(MySQLUser.ROOT)) throw new SQLException("The MySQL "+MySQLUser.ROOT+" password may not be set.");
-
-        // Perform the password check here, too.
-        if(password!=null && password.length()==0) password=MySQLUser.NO_PASSWORD;
-        if(password!=MySQLUser.NO_PASSWORD) {
-            PasswordChecker.Result[] results = MySQLUser.checkPassword(username, password);
-            if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
-        }
-
-        // Contact the daemon for the update
-        int mysqlServer=getMySQLServerForMySQLUser(conn, pkey);
-        int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-        DaemonHandler.getDaemonConnector(conn, aoServer).setMySQLUserPassword(mysqlServer, username, password);
-    }
-
     public static void setMySQLUserPredisablePassword(
         DatabaseConnection conn,
         RequestSource source,

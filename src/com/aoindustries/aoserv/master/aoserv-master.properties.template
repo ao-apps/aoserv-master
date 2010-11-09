@@ -1,15 +1,3 @@
-# Profiling provides data in the master_server_profile table
-aoserv.master.profiler.level=io
-
-# The root business in the business tree
-aoserv.master.businesses.root=AOINDUSTRIES
-
-# The number of commands to keep in the history
-aoserv.master.history.size=1000
-
-# The file that stores the entropy pool
-aoserv.master.entropy.file.path=<entropy_pool_path>
-
 # The database connection details
 aoserv.master.db.driver=org.postgresql.Driver
 aoserv.master.db.user=<postgres_app_username>
@@ -18,50 +6,32 @@ aoserv.master.db.password=<postgres_app_password>
 aoserv.master.db.connections=<max_num_connections>
 aoserv.master.db.max_connection_age=
 
-# The people responsible for system security
-aoserv.master.security.email.to=aoserv@aoindustries.com
-aoserv.master.security.email.from=master@<hostname>
-aoserv.master.security.smtp.server=<smtp_server>
+# root user internally used for command validation with caching
+aoserv.master.root.username=root
+aoserv.master.root.password=<root_password>
 
-# The people responsible for system reliability
-aoserv.master.error.email.to=aoserv@aoindustries.com
-aoserv.master.error.email.from=master@<hostname>
-aoserv.master.error.smtp.server=<smtp_server>
-aoserv.master.warning.email.to=aoserv@aoindustries.com
-aoserv.master.warning.email.from=master@<hostname>
-aoserv.master.warning.smtp.server=<smtp_server>
+# RMI server
+aoserv.master.rmi.listen_address=<rmi_listen_address>
+aoserv.master.rmi.public_address=<rmi_public_address>
+aoserv.master.rmi.useSsl=true
+aoserv.master.rmi.port=1099
 
-# The protocols this server will listen on
-aoserv.master.protocols=tcp, ssl
-#aoserv.server.protocols=tcp, ssl, http, https
-aoserv.master.local_ip=192.168.1.128
+# Enables ThreadLocale being set for every request
+aoserv.master.threadLocale.enabled=true
 
-# TCP server parameters
-aoserv.master.tcp.bind=192.168.1.128
-#aoserv.master.tcp.bind=192.168.1.4
-aoserv.master.tcp.ports=4582
+# Enables request tracing
+aoserv.master.trace.enabled=false
 
-# SSL server parameters
-aoserv.master.ssl.bind=<ssl_bind_ip>
-aoserv.master.ssl.ports=4583
+# The local IP used for outgoing connections
+aoserv.master.local_ip=<local_address>
+
+# Server SSL
 aoserv.master.ssl.keystore.password=<keystore_password>
 aoserv.master.ssl.keystore.path=<keystore_path>
 
-# SSL certificates
+# Client SSL
 aoserv.daemon.client.ssl.truststore.password=<truststore_password>
 aoserv.daemon.client.ssl.truststore.path=<truststore_path>
-
-# Ticket URL
-aoserv.master.ticket.url=<website_prefix>/clientarea/ticket/EditTicket?pkey=
-aoserv.master.ticket.smtp.server=<smtp_server>
-# The following ticket sources must start with 1 and be incremented by 1
-aoserv.master.ticket.source.imap.1.hostname=
-aoserv.master.ticket.source.imap.1.username=
-aoserv.master.ticket.source.imap.1.password=
-aoserv.master.ticket.source.imap.1.folder=
-aoserv.master.ticket.source.imap.1.archivefolder=
-aoserv.master.ticket.source.imap.1.ignore_recipients=
-aoserv.master.ticket.source.imap.1.assign_to=
 
 # Keys for each of the daemons
 aoserv.daemon.client.key.<hostname>=<password>

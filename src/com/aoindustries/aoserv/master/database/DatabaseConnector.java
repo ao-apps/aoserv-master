@@ -119,6 +119,9 @@ import com.aoindustries.aoserv.client.VirtualServerService;
 import com.aoindustries.aoserv.client.command.CommandValidationException;
 import com.aoindustries.aoserv.client.command.RemoteCommand;
 import com.aoindustries.aoserv.client.command.SetBusinessAdministratorPasswordCommand;
+import com.aoindustries.aoserv.client.command.SetLinuxAccountPasswordCommand;
+import com.aoindustries.aoserv.client.command.SetMySQLUserPasswordCommand;
+import com.aoindustries.aoserv.client.command.SetPostgresUserPasswordCommand;
 import com.aoindustries.aoserv.client.command.SetUsernamePasswordCommand;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.sql.DatabaseCallable;
@@ -564,6 +567,15 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
                             switch(command.getCommandName()) {
                                 case set_business_administrator_password :
                                     businessAdministrators.setBusinessAdministratorPassword(db, invalidateSet, (SetBusinessAdministratorPasswordCommand)command);
+                                    return null;
+                                case set_linux_account_password :
+                                    linuxAccounts.setLinuxAccountPassword(db, invalidateSet, (SetLinuxAccountPasswordCommand)command);
+                                    return null;
+                                case set_mysql_user_password :
+                                    mysqlUsers.setMySQLUserPassword(db, invalidateSet, (SetMySQLUserPasswordCommand)command);
+                                    return null;
+                                case set_postgres_user_password :
+                                    postgresUsers.setPostgresUserPassword(db, invalidateSet, (SetPostgresUserPasswordCommand)command);
                                     return null;
                                 case set_username_password :
                                     usernames.setUsernamePassword(db, invalidateSet, (SetUsernamePasswordCommand)command);

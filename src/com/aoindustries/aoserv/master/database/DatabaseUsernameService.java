@@ -101,28 +101,28 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
             connector.businessAdministrators.setBusinessAdministratorPassword(
                 db,
                 invalidateSet,
-                new SetBusinessAdministratorPasswordCommand(command.getUsername(), command.getPlaintext())
+                new SetBusinessAdministratorPasswordCommand(ba, command.getPlaintext())
             );
         }
         for(LinuxAccount la : un.getLinuxAccounts()) {
             connector.linuxAccounts.setLinuxAccountPassword(
                 db,
                 invalidateSet,
-                new SetLinuxAccountPasswordCommand(la.getKey(), command.getPlaintext())
+                new SetLinuxAccountPasswordCommand(la, command.getPlaintext())
             );
         }
         for(MySQLUser mu : un.getMysqlUsers()) {
             connector.mysqlUsers.setMySQLUserPassword(
                 db,
                 invalidateSet,
-                new SetMySQLUserPasswordCommand(mu.getKey(), command.getPlaintext())
+                new SetMySQLUserPasswordCommand(mu, command.getPlaintext())
             );
         }
         for(PostgresUser pu : un.getPostgresUsers()) {
             connector.postgresUsers.setPostgresUserPassword(
                 db,
                 invalidateSet,
-                new SetPostgresUserPasswordCommand(pu.getKey(), command.getPlaintext())
+                new SetPostgresUserPasswordCommand(pu, command.getPlaintext())
             );
         }
     }

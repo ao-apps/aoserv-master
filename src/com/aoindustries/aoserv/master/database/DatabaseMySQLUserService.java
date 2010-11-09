@@ -1,17 +1,22 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.MySQLUser;
 import com.aoindustries.aoserv.client.MySQLUserService;
+import com.aoindustries.aoserv.client.command.SetMySQLUserPasswordCommand;
+import com.aoindustries.aoserv.master.DaemonHandler;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import java.io.IOException;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -19,14 +24,17 @@ import java.util.Set;
  */
 final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> implements MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> {
 
+    // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<MySQLUser> objectFactory = new AutoObjectFactory<MySQLUser>(MySQLUser.class, this);
 
     DatabaseMySQLUserService(DatabaseConnector connector) {
         super(connector, Integer.class, MySQLUser.class);
     }
 
+    @Override
     protected Set<MySQLUser> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<MySQLUser>(),
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -71,8 +79,10 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
         );
     }
 
+    @Override
     protected Set<MySQLUser> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<MySQLUser>(),
             objectFactory,
             "select\n"
             + "  mu.ao_server_resource,\n"
@@ -122,8 +132,10 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
         );
     }
 
+    @Override
     protected Set<MySQLUser> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<MySQLUser>(),
             objectFactory,
              "select\n"
             + "  mu.ao_server_resource,\n"
@@ -177,4 +189,16 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
             connector.getConnectAs()
         );
     }
+    // </editor-fold>
+
+    // <editor-fold defaultstate="collapsed" desc="Commands">
+    void setMySQLUserPassword(DatabaseConnection db, InvalidateSet invalidateSet, SetMySQLUserPasswordCommand command) throws RemoteException, SQLException {
+        try {
+            MySQLUser mu = connector.factory.rootConnector.getMysqlUsers().get(command.getMysqlUser());
+            DaemonHandler.getDaemonConnector(mu.getAoServerResource().getAoServer()).setMySQLUserPassword(command.getMysqlUser(), command.getPlaintext());
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+    // </editor-fold>
 }

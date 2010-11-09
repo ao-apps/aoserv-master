@@ -1,17 +1,22 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.PostgresUser;
 import com.aoindustries.aoserv.client.PostgresUserService;
+import com.aoindustries.aoserv.client.command.SetPostgresUserPasswordCommand;
+import com.aoindustries.aoserv.master.DaemonHandler;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import java.io.IOException;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -19,14 +24,17 @@ import java.util.Set;
  */
 final class DatabasePostgresUserService extends DatabaseService<Integer,PostgresUser> implements PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> {
 
+    // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<PostgresUser> objectFactory = new AutoObjectFactory<PostgresUser>(PostgresUser.class, this);
 
     DatabasePostgresUserService(DatabaseConnector connector) {
         super(connector, Integer.class, PostgresUser.class);
     }
 
+    @Override
     protected Set<PostgresUser> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<PostgresUser>(),
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -42,8 +50,10 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
         );
     }
 
+    @Override
     protected Set<PostgresUser> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<PostgresUser>(),
             objectFactory,
             "select\n"
             + "  pu.ao_server_resource,\n"
@@ -64,8 +74,10 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
         );
     }
 
+    @Override
     protected Set<PostgresUser> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<PostgresUser>(),
             objectFactory,
              "select\n"
             + "  pu.ao_server_resource,\n"
@@ -90,4 +102,16 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
             connector.getConnectAs()
         );
     }
+    // </editor-fold>
+
+    // <editor-fold defaultstate="collapsed" desc="Commands">
+    void setPostgresUserPassword(DatabaseConnection db, InvalidateSet invalidateSet, SetPostgresUserPasswordCommand command) throws RemoteException, SQLException {
+        try {
+            PostgresUser mu = connector.factory.rootConnector.getPostgresUsers().get(command.getPostgresUser());
+            DaemonHandler.getDaemonConnector(mu.getAoServerResource().getAoServer()).setPostgresUserPassword(command.getPostgresUser(), command.getPlaintext());
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+    }
+    // </editor-fold>
 }

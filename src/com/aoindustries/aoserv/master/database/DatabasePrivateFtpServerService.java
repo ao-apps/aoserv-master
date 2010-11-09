@@ -11,6 +11,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,8 +25,10 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
         super(connector, Integer.class, PrivateFtpServer.class);
     }
 
+    @Override
     protected Set<PrivateFtpServer> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<PrivateFtpServer>(),
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -40,8 +43,10 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
         );
     }
 
+    @Override
     protected Set<PrivateFtpServer> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<PrivateFtpServer>(),
             objectFactory,
             "select\n"
             + "  pfs.ao_server_resource,\n"
@@ -61,8 +66,10 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
         );
     }
 
+    @Override
     protected Set<PrivateFtpServer> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<PrivateFtpServer>(),
             objectFactory,
             "select\n"
             + "  pfs.ao_server_resource,\n"

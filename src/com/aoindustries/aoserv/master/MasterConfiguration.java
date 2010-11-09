@@ -5,6 +5,7 @@ package com.aoindustries.aoserv.master;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.validator.Hostname;
 import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.NetPort;
@@ -52,7 +53,6 @@ final class MasterConfiguration {
         return getProperty("aoserv.master.ssl.keystore.path");
     }
 
-    /* TODO
     static String getSSLTruststorePassword() throws IOException {
         return getProperty("aoserv.daemon.client.ssl.truststore.password");
     }
@@ -61,6 +61,7 @@ final class MasterConfiguration {
         return getProperty("aoserv.daemon.client.ssl.truststore.path");
     }
 
+    /* TODO
     static List<String> getProtocols() throws IOException {
         return StringUtility.splitStringCommaSpace(getProperty("aoserv.master.protocols"));
     }
@@ -69,11 +70,10 @@ final class MasterConfiguration {
     /**
      * Gets the local IP address used for outgoing connections to the daemons.
      */
-    /* TODO
-    static String getLocalIp() throws IOException {
-        return getProperty("aoserv.master.local_ip");
+    static InetAddress getLocalIp() throws IOException, ValidationException {
+        return InetAddress.valueOf(getProperty("aoserv.master.local_ip"));
     }
-
+    /*
     static List<String> getBinds(String protocol) throws IOException {
         return StringUtility.splitStringCommaSpace(getProperty("aoserv.master."+protocol+".bind"));
     }
@@ -145,11 +145,12 @@ final class MasterConfiguration {
         String S=getProperty("aoserv.master.backup.db.max_connection_age");
         return S==null || S.length()==0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(S);
     }
-
-    static String getDaemonKey(DatabaseAccess database, int aoServer) throws IOException, SQLException {
-        return getProperty("aoserv.daemon.client.key."+ServerHandler.getHostnameForAOServer(database, aoServer));
+    */
+    static String getDaemonKey(AOServer aoServer) throws IOException {
+        return getProperty("aoserv.daemon.client.key."+aoServer.getHostname());
     }
 
+    /*
     static int getProfilerLevel() throws IOException {
         return Profiler.parseProfilerLevel(getProperty("aoserv.master.profiler.level"));
     }

@@ -1,17 +1,22 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.database;
+
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.LinuxAccountService;
+import com.aoindustries.aoserv.client.command.SetLinuxAccountPasswordCommand;
+import com.aoindustries.aoserv.master.DaemonHandler;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import java.io.IOException;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -19,14 +24,17 @@ import java.util.Set;
  */
 final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAccount> implements LinuxAccountService<DatabaseConnector,DatabaseConnectorFactory> {
 
+    // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<LinuxAccount> objectFactory = new AutoObjectFactory<LinuxAccount>(LinuxAccount.class, this);
 
     DatabaseLinuxAccountService(DatabaseConnector connector) {
         super(connector, Integer.class, LinuxAccount.class);
     }
 
+    @Override
     protected Set<LinuxAccount> getSetMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<LinuxAccount>(),
             objectFactory,
             "select\n"
             + "  ao_server_resource,\n"
@@ -45,8 +53,10 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
         );
     }
 
+    @Override
     protected Set<LinuxAccount> getSetDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<LinuxAccount>(),
             objectFactory,
             "select\n"
             + "  la.ao_server_resource,\n"
@@ -74,8 +84,10 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
         );
     }
 
+    @Override
     protected Set<LinuxAccount> getSetBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<LinuxAccount>(),
             objectFactory,
              "select\n"
             + "  la.ao_server_resource,\n"
@@ -103,4 +115,25 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
             connector.getConnectAs()
         );
     }
+    // </editor-fold>
+
+    // <editor-fold defaultstate="collapsed" desc="Commands">
+    void setLinuxAccountPassword(DatabaseConnection db, InvalidateSet invalidateSet, SetLinuxAccountPasswordCommand command) throws RemoteException, SQLException {
+        try {
+            LinuxAccount la = connector.factory.rootConnector.getLinuxAccounts().get(command.getLinuxAccount());
+            DaemonHandler.getDaemonConnector(la.getAoServerResource().getAoServer()).setLinuxAccountPassword(la.getUserId(), command.getPlaintext());
+        } catch(IOException err) {
+            throw new RemoteException(err.getMessage(), err);
+        }
+
+        // Update the ao_servers table for emailmon and ftpmon
+        /*if(username.equals(LinuxAccount.EMAILMON)) {
+            conn.executeUpdate("update ao_servers set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
+            invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
+        } else if(username.equals(LinuxAccount.FTPMON)) {
+            conn.executeUpdate("update ao_servers set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
+            invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
+        }*/
+    }
+    // </editor-fold>
 }

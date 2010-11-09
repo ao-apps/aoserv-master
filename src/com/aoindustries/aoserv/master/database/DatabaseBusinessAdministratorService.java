@@ -186,7 +186,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Commands">
-    public void setBusinessAdministratorPassword(DatabaseConnection db, InvalidateSet invalidateSet, SetBusinessAdministratorPasswordCommand command) throws RemoteException, SQLException {
+    void setBusinessAdministratorPassword(DatabaseConnection db, InvalidateSet invalidateSet, SetBusinessAdministratorPasswordCommand command) throws RemoteException, SQLException {
         String plaintext = command.getPlaintext();
         String hashed =
             plaintext==null || plaintext.length()==0
