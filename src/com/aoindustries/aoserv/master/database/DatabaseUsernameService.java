@@ -12,6 +12,9 @@ import com.aoindustries.aoserv.client.PostgresUser;
 import com.aoindustries.aoserv.client.Username;
 import com.aoindustries.aoserv.client.UsernameService;
 import com.aoindustries.aoserv.client.command.SetBusinessAdministratorPasswordCommand;
+import com.aoindustries.aoserv.client.command.SetLinuxAccountPasswordCommand;
+import com.aoindustries.aoserv.client.command.SetMySQLUserPasswordCommand;
+import com.aoindustries.aoserv.client.command.SetPostgresUserPasswordCommand;
 import com.aoindustries.aoserv.client.command.SetUsernamePasswordCommand;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.sql.AutoObjectFactory;
@@ -89,7 +92,7 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Commands">
-    public void setUsernamePassword(DatabaseConnection db, InvalidateSet invalidateSet, SetUsernamePasswordCommand command) throws RemoteException, SQLException {
+    void setUsernamePassword(DatabaseConnection db, InvalidateSet invalidateSet, SetUsernamePasswordCommand command) throws RemoteException, SQLException {
         // Cascade to specific account types
         Username un = connector.factory.rootConnector.getUsernames().get(command.getUsername());
         // Make sure passes other command validations
