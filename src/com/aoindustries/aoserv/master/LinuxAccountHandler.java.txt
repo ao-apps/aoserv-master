@@ -106,17 +106,6 @@ final public class LinuxAccountHandler {
         checkAccessLinuxGroup(conn, source, action, getLinuxGroupForLinuxGroupAccount(conn, pkey));
     }
 
-    public static boolean canAccessLinuxServerAccount(DatabaseConnection conn, RequestSource source, int account) throws IOException, SQLException {
-        MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
-        if(mu!=null) {
-            if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
-                return ServerHandler.canAccessServer(conn, source, getAOServerForLinuxServerAccount(conn, account));
-            } else return true;
-        } else {
-            return UsernameHandler.canAccessUsername(conn, source, getUsernameForLinuxServerAccount(conn, account));
-        }
-    }
-
     public static void checkAccessLinuxServerAccount(DatabaseConnection conn, RequestSource source, String action, int account) throws IOException, SQLException {
         if(!canAccessLinuxServerAccount(conn, source, account)) {
             String message=
@@ -1402,52 +1391,6 @@ final public class LinuxAccountHandler {
 
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
-    }
-
-    public static void setLinuxServerAccountPassword(
-        DatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        int pkey,
-        String password
-    ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setLinuxServerAccountPassword", AOServPermission.Permission.set_linux_server_account_password);
-        checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountPassword", pkey);
-        if(isLinuxServerAccountDisabled(conn, pkey)) throw new SQLException("Unable to set LinuxServerAccount password, account disabled: "+pkey);
-
-        String username=getUsernameForLinuxServerAccount(conn, pkey);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set password for LinuxServerAccount named '"+LinuxAccount.MAIL+"': "+pkey);
-        String type=conn.executeStringQuery("select type from linux_accounts where username=?", username);
-
-        // Make sure passwords can be set before doing a strength check
-        if(!LinuxAccountType.canSetPassword(type)) throw new SQLException("Passwords may not be set for LinuxAccountType="+type);
-
-        if(password!=null && password.length()>0) {
-            // Perform the password check here, too.
-            PasswordChecker.Result[] results = LinuxAccount.checkPassword(username, type, password);
-            if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
-        }
-
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
-        int aoServer=getAOServerForLinuxServerAccount(conn, pkey);
-        try {
-            DaemonHandler.getDaemonConnector(conn, aoServer).setLinuxServerAccountPassword(username, password);
-        } catch(IOException err) {
-            System.err.println("Unable to set linux account password for "+username+" on "+aoServer);
-            throw err;
-        } catch(SQLException err) {
-            System.err.println("Unable to set linux account password for "+username+" on "+aoServer);
-            throw err;
-        }
-
-        // Update the ao_servers table for emailmon and ftpmon
-        /*if(username.equals(LinuxAccount.EMAILMON)) {
-            conn.executeUpdate("update ao_servers set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
-            invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
-        } else if(username.equals(LinuxAccount.FTPMON)) {
-            conn.executeUpdate("update ao_servers set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
-            invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
-        }*/
     }
 
     public static void setLinuxServerAccountPredisablePassword(

@@ -1,19 +1,21 @@
-package com.aoindustries.aoserv.master;
-
 /*
  * Copyright 2001-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master;
+
 import com.aoindustries.aoserv.client.AOServer;
-import com.aoindustries.aoserv.client.IPAddress;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.NetBind;
+import com.aoindustries.aoserv.client.ServiceName;
+import com.aoindustries.aoserv.client.validator.Hostname;
+import com.aoindustries.aoserv.client.validator.InetAddress;
+import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.io.AOPool;
-import com.aoindustries.sql.DatabaseAccess;
-import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
-import java.sql.SQLException;
+import java.security.SecureRandom;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -28,6 +30,8 @@ import java.util.logging.Logger;
 final public class DaemonHandler {
 
     private static final Logger logger = LogFactory.getLogger(DaemonHandler.class);
+
+    private static final Random random = new SecureRandom();
 
     private DaemonHandler() {
     }
@@ -60,108 +64,30 @@ final public class DaemonHandler {
         return total;
     }
 
-    public static String getDaemonConnectorIP(DatabaseAccess database, int aoServer) throws IOException, SQLException {
-        String address=database.executeStringQuery("select daemon_connect_address from ao_servers where server=?", aoServer);
-        if(address!=null) return address;
-        String ip=database.executeStringQuery(
-            "select\n"
-            + "  ia.ip_address\n"
-            + "from\n"
-            + "  ao_servers ao,\n"
-            + "  net_binds nb,\n"
-            + "  ip_addresses ia\n"
-            + "where\n"
-            + "  ao.server=?\n"
-            + "  and ao.daemon_connect_bind=nb.pkey\n"
-            + "  and nb.ip_address=ia.pkey",
-            aoServer
-        );
-        if(ip==null) throw new NoSuchElementException("Unable to find daemon IP address for AOServer: "+aoServer);
-        if(ip.equals(IPAddress.WILDCARD_IP)) {
-            ip=database.executeStringQuery(
-                "select\n"
-                + "  ia.ip_address\n"
-                + "from\n"
-                + "  ao_servers ao,\n"
-                + "  net_binds nb,\n"
-                + "  ao_servers ao2,\n"
-                + "  net_devices nd,\n"
-                + "  ip_addresses ia\n"
-                + "where\n"
-                + "  ao.server=?\n"
-                + "  and ao.daemon_connect_bind=nb.pkey\n"
-                + "  and nb.server=ao2.server\n"
-                + "  and ao2.server=nd.server\n"
-                + "  and ao2.daemon_device_id=nd.device_id\n"
-                + "  and nd.pkey=ia.net_device\n"
-                + "  and not ia.is_alias\n"
-                + "limit 1",
-                aoServer
-            );
-            if(ip==null) throw new NoSuchElementException("Unable to find daemon IP address for AOServer: "+aoServer);
-        }
-        return ip;
-    }
-
-    public static int getDaemonConnectorPort(DatabaseAccess database, int aoServer) throws IOException, SQLException {
-        return database.executeIntQuery(
-            "select\n"
-            + "  nb.port\n"
-            + "from\n"
-            + "  ao_servers ao,\n"
-            + "  net_binds nb\n"
-            + "where\n"
-            + "  ao.server=?\n"
-            + "  and ao.daemon_connect_bind=nb.pkey",
-            aoServer
-        );
-    }
-
-    public static String getDaemonConnectorProtocol(DatabaseAccess database, int aoServer) throws IOException, SQLException {
-        return database.executeStringQuery(
-            "select\n"
-            + "  nb.app_protocol\n"
-            + "from\n"
-            + "  ao_servers ao,\n"
-            + "  net_binds nb\n"
-            + "where\n"
-            + "  ao.server=?\n"
-            + "  and ao.daemon_connect_bind=nb.pkey",
-            aoServer
-        );
-    }
-
-    public static int getDaemonConnectorPoolSize(DatabaseAccess database, int aoServer) throws IOException, SQLException {
-        return database.executeIntQuery(
-            "select\n"
-            + "  pool_size\n"
-            + "from\n"
-            + "  ao_servers\n"
-            + "where\n"
-            + "  server=?",
-            aoServer
-        );
-    }
-
-    public static AOServDaemonConnector getDaemonConnector(DatabaseAccess database, int aoServer) throws IOException, SQLException {
-        Integer I=Integer.valueOf(aoServer);
-        synchronized(DaemonHandler.class) {
-            AOServDaemonConnector O=connectors.get(I);
-            if(O!=null) return O;
-            AOServDaemonConnector conn=AOServDaemonConnector.getConnector(
-                getDaemonConnectorIP(database, aoServer),
-                MasterConfiguration.getLocalIp(),
-                getDaemonConnectorPort(database, aoServer),
-                getDaemonConnectorProtocol(database, aoServer),
-                MasterConfiguration.getDaemonKey(database, aoServer),
-                getDaemonConnectorPoolSize(database, aoServer),
-                AOPool.DEFAULT_MAX_CONNECTION_AGE,
-                MasterConfiguration.getSSLTruststorePath(),
-                MasterConfiguration.getSSLTruststorePassword(),
-                logger
-            );
-            connectors.put(I, conn);
-            return conn;
+    public static AOServDaemonConnector getDaemonConnector(AOServer aoServer) throws IOException {
+        try {
+            Integer I=aoServer.getKey();
+            synchronized(DaemonHandler.class) {
+                AOServDaemonConnector O=connectors.get(I);
+                if(O!=null) return O;
+                NetBind daemonConnectBind = aoServer.getDaemonConnectBind();
+                AOServDaemonConnector conn=AOServDaemonConnector.getConnector(
+                    Hostname.valueOf(aoServer.getDaemonConnectorIP()),
+                    MasterConfiguration.getLocalIp(),
+                    daemonConnectBind.getPort(),
+                    daemonConnectBind.getAppProtocol().getName(),
+                    MasterConfiguration.getDaemonKey(aoServer),
+                    aoServer.getPoolSize(),
+                    AOPool.DEFAULT_MAX_CONNECTION_AGE,
+                    MasterConfiguration.getSSLTruststorePath(),
+                    MasterConfiguration.getSSLTruststorePassword(),
+                    logger
+                );
+                connectors.put(I, conn);
+                return conn;
+            }
+        } catch(ValidationException err) {
+            throw new IOException(err);
         }
     }
 
@@ -221,11 +147,11 @@ final public class DaemonHandler {
     
     private static final Map<Integer,Long> downDaemons=new HashMap<Integer,Long>();
 
-    public static void invalidateTable(SchemaTable.TableID tableID) {
+    public static void invalidateServices(EnumSet<ServiceName> services) {
         if(
-            tableID==SchemaTable.TableID.AO_SERVERS
-            || tableID==SchemaTable.TableID.IP_ADDRESSES
-            || tableID==SchemaTable.TableID.NET_BINDS
+            services.contains(ServiceName.ao_servers)
+            || services.contains(ServiceName.ip_addresses)
+            || services.contains(ServiceName.net_binds)
         ) {
             synchronized(DaemonHandler.class) {
                 connectors.clear();
@@ -280,17 +206,15 @@ final public class DaemonHandler {
      * @param param3
      * @return
      * @throws java.io.IOException
-     * @throws java.sql.SQLException
      */
     public static AOServer.DaemonAccess grantDaemonAccess(
-        DatabaseConnection conn,
-        int aoServer,
-        String connectAddress,
+        AOServer aoServer,
+        InetAddress connectAddress,
         int daemonCommandCode,
         String param1,
         String param2,
         String param3
-    ) throws IOException, SQLException {
+    ) throws IOException {
         long key;
         synchronized(recentKeys) {
             long currentTime=System.currentTimeMillis();
@@ -313,7 +237,6 @@ final public class DaemonHandler {
             }
 
             // Generate the key
-            Random random=MasterServer.getRandom();
             while(true) {
                 key=random.nextLong();
                 Long L=Long.valueOf(key);
@@ -325,12 +248,13 @@ final public class DaemonHandler {
         }
 
         // Send the key to the daemon
-        getDaemonConnector(conn, aoServer).grantDaemonAccess(key, daemonCommandCode, param1, param2, param3);
+        getDaemonConnector(aoServer).grantDaemonAccess(key, daemonCommandCode, param1, param2, param3);
 
+        NetBind daemonConnectBind = aoServer.getDaemonConnectBind();
         return new AOServer.DaemonAccess(
-            getDaemonConnectorProtocol(conn, aoServer),
-            connectAddress!=null ? connectAddress : getDaemonConnectorIP(conn, aoServer),
-            getDaemonConnectorPort(conn, aoServer),
+            daemonConnectBind.getAppProtocol().getProtocol(),
+            Hostname.valueOf(connectAddress!=null ? connectAddress : aoServer.getDaemonConnectorIP()),
+            daemonConnectBind.getPort(),
             key
         );
     }
