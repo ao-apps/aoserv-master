@@ -1,12 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.TicketAssignment;
-import com.aoindustries.aoserv.client.TicketAssignmentService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -29,7 +28,7 @@ final class DatabaseTicketAssignmentService extends DatabaseService<Integer,Tick
 
     @Override
     protected Set<TicketAssignment> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<TicketAssignment>(),
             objectFactory,
             "select pkey, ticket, reseller, administrator from ticket_assignments"
@@ -48,7 +47,7 @@ final class DatabaseTicketAssignmentService extends DatabaseService<Integer,Tick
     protected Set<TicketAssignment> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             // Only ticket admin can see assignments
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new HashSet<TicketAssignment>(),
                 objectFactory,
                 "select\n"

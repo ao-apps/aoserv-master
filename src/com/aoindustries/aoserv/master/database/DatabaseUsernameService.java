@@ -5,18 +5,9 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.BusinessAdministrator;
-import com.aoindustries.aoserv.client.LinuxAccount;
-import com.aoindustries.aoserv.client.MySQLUser;
-import com.aoindustries.aoserv.client.PostgresUser;
-import com.aoindustries.aoserv.client.Username;
-import com.aoindustries.aoserv.client.UsernameService;
-import com.aoindustries.aoserv.client.command.SetBusinessAdministratorPasswordCommand;
-import com.aoindustries.aoserv.client.command.SetLinuxAccountPasswordCommand;
-import com.aoindustries.aoserv.client.command.SetMySQLUserPasswordCommand;
-import com.aoindustries.aoserv.client.command.SetPostgresUserPasswordCommand;
-import com.aoindustries.aoserv.client.command.SetUsernamePasswordCommand;
-import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.command.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -39,7 +30,7 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
 
     @Override
     protected Set<Username> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Username>(),
             objectFactory,
             "select * from usernames"
@@ -48,7 +39,7 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
 
     @Override
     protected Set<Username> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Username>(),
             objectFactory,
             "select distinct\n"
@@ -70,7 +61,7 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
 
     @Override
     protected Set<Username> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Username>(),
             objectFactory,
             "select\n"

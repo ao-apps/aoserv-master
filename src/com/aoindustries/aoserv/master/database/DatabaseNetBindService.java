@@ -5,15 +5,12 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.Business;
-import com.aoindustries.aoserv.client.NetBind;
-import com.aoindustries.aoserv.client.NetBindService;
-import com.aoindustries.aoserv.client.Protocol;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -29,7 +26,8 @@ final class DatabaseNetBindService extends DatabaseService<Integer,NetBind> impl
 
     @Override
     protected Set<NetBind> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<NetBind>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -48,7 +46,8 @@ final class DatabaseNetBindService extends DatabaseService<Integer,NetBind> impl
 
     @Override
     protected Set<NetBind> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<NetBind>(),
             objectFactory,
             "select\n"
             + "  nb.pkey,\n"
@@ -94,7 +93,8 @@ final class DatabaseNetBindService extends DatabaseService<Integer,NetBind> impl
 
     @Override
     protected Set<NetBind> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<NetBind>(),
             objectFactory,
             "select\n"
             + "  nb.pkey,\n"

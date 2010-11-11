@@ -5,8 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.NetDeviceID;
-import com.aoindustries.aoserv.client.NetDeviceIDService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseNetDeviceIDService extends DatabasePublicService<String,NetD
 
     @Override
     protected Set<NetDeviceID> getPublicSet(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<NetDeviceID>(),
             objectFactory,
             "select * from net_device_ids"

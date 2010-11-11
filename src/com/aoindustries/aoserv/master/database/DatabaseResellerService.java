@@ -5,9 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.Reseller;
-import com.aoindustries.aoserv.client.ResellerService;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -29,7 +28,7 @@ final class DatabaseResellerService extends DatabaseService<AccountingCode,Resel
 
     @Override
     protected Set<Reseller> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Reseller>(),
             objectFactory,
             "select * from resellers"
@@ -43,7 +42,7 @@ final class DatabaseResellerService extends DatabaseService<AccountingCode,Resel
 
     @Override
     protected Set<Reseller> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Reseller>(),
             objectFactory,
             "select\n"

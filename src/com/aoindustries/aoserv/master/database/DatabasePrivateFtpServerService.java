@@ -1,12 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.PrivateFtpServer;
-import com.aoindustries.aoserv.client.PrivateFtpServerService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
 
     @Override
     protected Set<PrivateFtpServer> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<PrivateFtpServer>(),
             objectFactory,
             "select\n"
@@ -45,7 +44,7 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
 
     @Override
     protected Set<PrivateFtpServer> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<PrivateFtpServer>(),
             objectFactory,
             "select\n"
@@ -68,7 +67,7 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
 
     @Override
     protected Set<PrivateFtpServer> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<PrivateFtpServer>(),
             objectFactory,
             "select\n"

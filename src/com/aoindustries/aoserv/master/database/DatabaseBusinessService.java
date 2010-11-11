@@ -5,9 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.Business;
-import com.aoindustries.aoserv.client.BusinessService;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -28,7 +27,7 @@ final class DatabaseBusinessService extends DatabaseService<AccountingCode,Busin
 
     @Override
     protected Set<Business> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Business>(),
             objectFactory,
             "select\n"
@@ -60,7 +59,7 @@ final class DatabaseBusinessService extends DatabaseService<AccountingCode,Busin
 
     @Override
     protected Set<Business> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Business>(),
             objectFactory,
             "select distinct\n"
@@ -99,7 +98,7 @@ final class DatabaseBusinessService extends DatabaseService<AccountingCode,Busin
 
     @Override
     protected Set<Business> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Business>(),
             objectFactory,
             "select\n"

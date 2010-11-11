@@ -5,9 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.AOServer;
-import com.aoindustries.aoserv.client.AOServerService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -28,7 +26,7 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
 
     @Override
     protected Set<AOServer> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServer>(),
             objectFactory,
             "select\n"
@@ -60,7 +58,7 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
 
     @Override
     protected Set<AOServer> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServer>(),
             objectFactory,
             "select distinct\n"
@@ -114,7 +112,7 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
 
     @Override
     protected Set<AOServer> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServer>(),
             objectFactory,
             "select distinct\n"

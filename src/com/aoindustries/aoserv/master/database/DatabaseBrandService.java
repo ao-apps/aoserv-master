@@ -1,13 +1,12 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.Brand;
-import com.aoindustries.aoserv.client.BrandService;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -28,7 +27,7 @@ final class DatabaseBrandService extends DatabaseService<AccountingCode,Brand> i
 
     @Override
     protected Set<Brand> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Brand>(),
             objectFactory,
             "select * from brands"
@@ -37,7 +36,7 @@ final class DatabaseBrandService extends DatabaseService<AccountingCode,Brand> i
 
     @Override
     protected Set<Brand> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Brand>(),
             objectFactory,
             "select\n"
@@ -92,7 +91,7 @@ final class DatabaseBrandService extends DatabaseService<AccountingCode,Brand> i
 
     @Override
     protected Set<Brand> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Brand>(),
             objectFactory,
             "select\n"

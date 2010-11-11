@@ -1,12 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.HttpdJBossVersion;
-import com.aoindustries.aoserv.client.HttpdJBossVersionService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseHttpdJBossVersionService extends DatabasePublicService<Integ
 
     @Override
     protected Set<HttpdJBossVersion> getPublicSet(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<HttpdJBossVersion>(),
             objectFactory,
             "select * from httpd_jboss_versions order by version"

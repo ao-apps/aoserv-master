@@ -5,8 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.PackageDefinitionBusiness;
-import com.aoindustries.aoserv.client.PackageDefinitionBusinessService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -29,7 +28,7 @@ final class DatabasePackageDefinitionBusinessService extends DatabaseService<Int
 
     @Override
     protected Set<PackageDefinitionBusiness> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<PackageDefinitionBusiness>(),
             objectFactory,
             "select pkey, package_definition, accounting, display, description, approved from package_definition_businesses order by pkey"
@@ -43,7 +42,7 @@ final class DatabasePackageDefinitionBusinessService extends DatabaseService<Int
 
     @Override
     protected Set<PackageDefinitionBusiness> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<PackageDefinitionBusiness>(),
             objectFactory,
             "select distinct\n"

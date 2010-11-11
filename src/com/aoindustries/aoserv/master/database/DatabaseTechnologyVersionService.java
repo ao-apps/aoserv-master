@@ -5,9 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.TechnologyVersion;
-import com.aoindustries.aoserv.client.TechnologyVersionService;
-import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
@@ -45,7 +44,7 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
 
     @Override
     protected Set<TechnologyVersion> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<TechnologyVersion>(),
             objectFactory,
             "select\n"
@@ -64,7 +63,7 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
 
     @Override
     protected Set<TechnologyVersion> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<TechnologyVersion>(),
             objectFactory,
             "select\n"
@@ -83,7 +82,7 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
 
     @Override
     protected Set<TechnologyVersion> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<TechnologyVersion>(),
             objectFactory,
             "select\n"

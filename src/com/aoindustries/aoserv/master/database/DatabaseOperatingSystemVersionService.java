@@ -1,12 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.OperatingSystemVersion;
-import com.aoindustries.aoserv.client.OperatingSystemVersionService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseOperatingSystemVersionService extends DatabasePublicService<
 
     @Override
     protected Set<OperatingSystemVersion> getPublicSet(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<OperatingSystemVersion>(),
             objectFactory,
             "select * from operating_system_versions order by pkey"

@@ -5,8 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.CreditCard;
-import com.aoindustries.aoserv.client.CreditCardService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -28,7 +27,7 @@ final class DatabaseCreditCardService extends DatabaseService<Integer,CreditCard
 
     @Override
     protected Set<CreditCard> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<CreditCard>(),
             objectFactory,
             "select\n"
@@ -79,7 +78,7 @@ final class DatabaseCreditCardService extends DatabaseService<Integer,CreditCard
 
     @Override
     protected Set<CreditCard> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<CreditCard>(),
             objectFactory,
             "select\n"

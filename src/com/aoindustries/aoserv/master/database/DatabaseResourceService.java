@@ -5,12 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.Resource;
-import com.aoindustries.aoserv.client.ResourceService;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
@@ -51,7 +47,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
 
     @Override
     protected Set<Resource> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<Resource>(),
             objectFactory,
             "select\n"
@@ -128,7 +124,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
         );
         sql.append("order by\n"
                 + "  pkey");
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<Resource>(),
             objectFactory,
             sql.toString(),
@@ -182,7 +178,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
         );
         sql.append("order by\n"
                 + "  pkey");
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<Resource>(),
             objectFactory,
             sql.toString(),

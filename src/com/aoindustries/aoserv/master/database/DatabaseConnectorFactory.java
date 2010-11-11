@@ -5,25 +5,11 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.AOServConnector;
-import com.aoindustries.aoserv.client.AOServConnectorFactory;
-import com.aoindustries.aoserv.client.AOServConnectorFactoryCache;
-import com.aoindustries.aoserv.client.AOServer;
-import com.aoindustries.aoserv.client.BusinessAdministrator;
-import com.aoindustries.aoserv.client.ServiceName;
-import com.aoindustries.aoserv.client.cache.CachedConnectorFactory;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.DomainName;
-import com.aoindustries.aoserv.client.validator.HashedPassword;
-import com.aoindustries.aoserv.client.validator.InetAddress;
-import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.client.validator.ValidationException;
-import com.aoindustries.aoserv.master.DaemonHandler;
-import com.aoindustries.security.AccountDisabledException;
-import com.aoindustries.security.AccountNotFoundException;
-import com.aoindustries.security.BadPasswordException;
-import com.aoindustries.security.IncompleteLoginException;
-import com.aoindustries.security.LoginException;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.cache.*;
+import com.aoindustries.aoserv.client.validator.*;
+import com.aoindustries.aoserv.master.*;
+import com.aoindustries.security.*;
 import com.aoindustries.sql.Database;
 import com.aoindustries.sql.DatabaseCallable;
 import com.aoindustries.sql.DatabaseConnection;
@@ -127,7 +113,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
     boolean isEnabledMasterUser(DatabaseConnection db, UserId username) throws SQLException {
         synchronized(enabledMasterUsersLock) {
             if(enabledMasterUsers==null) {
-                enabledMasterUsers=db.executeObjectSetQuery(
+                enabledMasterUsers=db.executeObjectCollectionQuery(
                     new HashSet<UserId>(),
                     userIdFactory,
                     "select\n"
@@ -155,7 +141,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
     boolean isEnabledDaemonUser(DatabaseConnection db, UserId username) throws SQLException {
         synchronized(enabledDaemonUsersLock) {
             if(enabledDaemonUsers==null) {
-                enabledDaemonUsers=db.executeObjectSetQuery(
+                enabledDaemonUsers=db.executeObjectCollectionQuery(
                     new HashSet<UserId>(),
                     userIdFactory,
                     "select\n"
@@ -182,7 +168,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
     boolean isEnabledBusinessAdministrator(DatabaseConnection db, UserId username) throws SQLException {
         synchronized(enabledBusinessAdministratorsLock) {
             if(enabledBusinessAdministrators==null) {
-                enabledBusinessAdministrators=db.executeObjectSetQuery(
+                enabledBusinessAdministrators=db.executeObjectCollectionQuery(
                     new HashSet<UserId>(),
                     userIdFactory,
                     "select username from business_administrators where disable_log is null"

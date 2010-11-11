@@ -5,12 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.AOServPermission;
-import com.aoindustries.aoserv.client.CreditCardTransaction;
-import com.aoindustries.aoserv.client.CreditCardTransactionService;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
@@ -127,7 +123,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
     @Override
     protected Set<CreditCardTransaction> getSetMaster(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new ArraySet<CreditCardTransaction>(),
                 objectFactory,
                 "select\n"
@@ -232,7 +228,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
     @Override
     protected Set<CreditCardTransaction> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new ArraySet<CreditCardTransaction>(),
                 objectFactory,
                 "select\n"

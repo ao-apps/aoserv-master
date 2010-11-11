@@ -5,11 +5,9 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.PostgresUser;
-import com.aoindustries.aoserv.client.PostgresUserService;
-import com.aoindustries.aoserv.client.command.SetPostgresUserPasswordCommand;
-import com.aoindustries.aoserv.master.DaemonHandler;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.command.*;
+import com.aoindustries.aoserv.master.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -33,7 +31,7 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
 
     @Override
     protected Set<PostgresUser> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<PostgresUser>(),
             objectFactory,
             "select\n"
@@ -52,7 +50,7 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
 
     @Override
     protected Set<PostgresUser> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<PostgresUser>(),
             objectFactory,
             "select\n"
@@ -76,7 +74,7 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
 
     @Override
     protected Set<PostgresUser> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<PostgresUser>(),
             objectFactory,
              "select\n"

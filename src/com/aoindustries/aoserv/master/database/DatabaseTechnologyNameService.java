@@ -1,12 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.TechnologyName;
-import com.aoindustries.aoserv.client.TechnologyNameService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseTechnologyNameService extends DatabasePublicService<String,T
 
     @Override
     protected Set<TechnologyName> getPublicSet(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<TechnologyName>(),
             objectFactory,
             "select * from technology_names"

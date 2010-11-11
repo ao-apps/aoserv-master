@@ -1,13 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.VirtualServer;
-import com.aoindustries.aoserv.client.VirtualServerService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -28,7 +26,7 @@ final class DatabaseVirtualServerService extends DatabaseService<Integer,Virtual
 
     @Override
     protected Set<VirtualServer> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<VirtualServer>(),
             objectFactory,
             "select * from virtual_servers order by server"
@@ -37,7 +35,7 @@ final class DatabaseVirtualServerService extends DatabaseService<Integer,Virtual
 
     @Override
     protected Set<VirtualServer> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<VirtualServer>(),
             objectFactory,
             "select distinct\n"
@@ -55,7 +53,7 @@ final class DatabaseVirtualServerService extends DatabaseService<Integer,Virtual
 
     @Override
     protected Set<VirtualServer> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<VirtualServer>(),
             objectFactory,
             "select distinct\n"

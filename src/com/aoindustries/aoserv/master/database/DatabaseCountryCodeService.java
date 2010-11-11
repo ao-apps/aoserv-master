@@ -5,8 +5,7 @@ package com.aoindustries.aoserv.master.database;
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.CountryCode;
-import com.aoindustries.aoserv.client.CountryCodeService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseCountryCodeService extends DatabasePublicService<String,Coun
 
     @Override
     protected Set<CountryCode> getPublicSet(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<CountryCode>(),
             objectFactory,
             "select * from country_codes"

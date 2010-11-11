@@ -5,9 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.ServerFarm;
-import com.aoindustries.aoserv.client.ServerFarmService;
-import com.aoindustries.aoserv.client.validator.DomainLabel;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -28,7 +27,7 @@ final class DatabaseServerFarmService extends DatabaseService<DomainLabel,Server
 
     @Override
     protected Set<ServerFarm> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<ServerFarm>(),
             objectFactory,
             "select * from server_farms"
@@ -37,7 +36,7 @@ final class DatabaseServerFarmService extends DatabaseService<DomainLabel,Server
 
     @Override
     protected Set<ServerFarm> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<ServerFarm>(),
             objectFactory,
             "select distinct\n"
@@ -62,7 +61,7 @@ final class DatabaseServerFarmService extends DatabaseService<DomainLabel,Server
 
     @Override
     protected Set<ServerFarm> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<ServerFarm>(),
             objectFactory,
             "select distinct\n"

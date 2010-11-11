@@ -5,8 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.MajordomoVersion;
-import com.aoindustries.aoserv.client.MajordomoVersionService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseMajordomoVersionService extends DatabasePublicService<String
 
     @Override
     protected Set<MajordomoVersion> getPublicSet(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<MajordomoVersion>(),
             objectFactory,
             "select\n"

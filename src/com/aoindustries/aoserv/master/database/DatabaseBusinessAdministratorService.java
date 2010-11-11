@@ -5,15 +5,9 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.BusinessAdministrator;
-import com.aoindustries.aoserv.client.BusinessAdministratorService;
-import com.aoindustries.aoserv.client.ServiceName;
-import com.aoindustries.aoserv.client.command.SetBusinessAdministratorPasswordCommand;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.Email;
-import com.aoindustries.aoserv.client.validator.HashedPassword;
-import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.command.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
@@ -70,7 +64,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
 
     @Override
     protected Set<BusinessAdministrator> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<BusinessAdministrator>(),
             objectFactory,
             "select\n"
@@ -103,7 +97,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
 
     @Override
     protected Set<BusinessAdministrator> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<BusinessAdministrator>(),
             objectFactory,
             "select distinct\n"
@@ -143,7 +137,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
 
     @Override
     protected Set<BusinessAdministrator> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<BusinessAdministrator>(),
             objectFactory,
             "select\n"

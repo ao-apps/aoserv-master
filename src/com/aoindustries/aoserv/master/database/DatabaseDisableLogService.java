@@ -5,11 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.DisableLog;
-import com.aoindustries.aoserv.client.DisableLogService;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
@@ -46,7 +43,7 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
 
     @Override
     protected Set<DisableLog> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<DisableLog>(),
             objectFactory,
             "select\n"
@@ -64,7 +61,7 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
 
     @Override
     protected Set<DisableLog> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<DisableLog>(),
             objectFactory,
             "select distinct\n"
@@ -94,7 +91,7 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
 
     @Override
     protected Set<DisableLog> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<DisableLog>(),
             objectFactory,
             "select\n"

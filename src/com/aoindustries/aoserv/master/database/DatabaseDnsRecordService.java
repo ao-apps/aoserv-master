@@ -5,10 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.DnsRecord;
-import com.aoindustries.aoserv.client.DnsRecordService;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
@@ -52,7 +50,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
 
     @Override
     protected Set<DnsRecord> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<DnsRecord>(),
             objectFactory,
             "select\n"
@@ -77,7 +75,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
     protected Set<DnsRecord> getSetDaemon(DatabaseConnection db) throws RemoteException, SQLException {
         MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
         if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new ArraySet<DnsRecord>(),
                 objectFactory,
                 "select\n"
@@ -103,7 +101,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
 
     @Override
     protected Set<DnsRecord> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<DnsRecord>(),
             objectFactory,
             "select\n"

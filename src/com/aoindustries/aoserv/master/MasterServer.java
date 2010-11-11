@@ -5,18 +5,12 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.AOServConnectorFactory;
-import com.aoindustries.aoserv.client.rmi.RmiServerConnectorFactory;
-import com.aoindustries.aoserv.client.validator.Hostname;
-import com.aoindustries.aoserv.client.validator.InetAddress;
-import com.aoindustries.aoserv.client.validator.NetPort;
-import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.master.database.DatabaseConnector;
-import com.aoindustries.aoserv.master.database.DatabaseConnectorFactory;
-import com.aoindustries.aoserv.client.trace.TraceConnector;
-import com.aoindustries.aoserv.client.trace.TraceConnectorFactory;
-import com.aoindustries.aoserv.master.threadLocale.ThreadLocaleConnector;
-import com.aoindustries.aoserv.master.threadLocale.ThreadLocaleConnectorFactory;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.rmi.*;
+import com.aoindustries.aoserv.client.validator.*;
+import com.aoindustries.aoserv.master.database.*;
+import com.aoindustries.aoserv.client.trace.*;
+import com.aoindustries.aoserv.master.threadLocale.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

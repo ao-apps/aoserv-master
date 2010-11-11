@@ -1,23 +1,12 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.AOServService;
-import com.aoindustries.aoserv.client.AOServServiceUtils;
-import com.aoindustries.aoserv.client.Business;
-import com.aoindustries.aoserv.client.IndexedSet;
-import com.aoindustries.aoserv.client.MethodColumn;
-import com.aoindustries.aoserv.client.ServiceName;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.DomainName;
-import com.aoindustries.aoserv.client.validator.Email;
-import com.aoindustries.aoserv.client.validator.InetAddress;
-import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.client.validator.ValidationException;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.security.AccountDisabledException;
 import com.aoindustries.sql.DatabaseCallable;
 import com.aoindustries.sql.DatabaseConnection;

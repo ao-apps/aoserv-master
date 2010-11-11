@@ -5,8 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.PackageDefinition;
-import com.aoindustries.aoserv.client.PackageDefinitionService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
@@ -44,7 +43,7 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
 
     @Override
     protected Set<PackageDefinition> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<PackageDefinition>(),
             objectFactory,
             "select * from package_definitions order by pkey"
@@ -53,7 +52,7 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
 
     @Override
     protected Set<PackageDefinition> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<PackageDefinition>(),
             objectFactory,
             "select distinct\n"
@@ -77,7 +76,7 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
     @Override
     protected Set<PackageDefinition> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getUsername().getBusiness().canSeePrices()) {
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new ArraySet<PackageDefinition>(),
                 objectFactory,
                 "select distinct\n"
@@ -102,7 +101,7 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
                 connector.getConnectAs()
             );
         } else {
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new ArraySet<PackageDefinition>(),
                 objectFactory,
                 "select distinct\n"

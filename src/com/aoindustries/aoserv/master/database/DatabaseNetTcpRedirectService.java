@@ -1,16 +1,16 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.NetTcpRedirect;
-import com.aoindustries.aoserv.client.NetTcpRedirectService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,15 +24,19 @@ final class DatabaseNetTcpRedirectService extends DatabaseService<Integer,NetTcp
         super(connector, Integer.class, NetTcpRedirect.class);
     }
 
+    @Override
     protected Set<NetTcpRedirect> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<NetTcpRedirect>(),
             objectFactory,
             "select * from net_tcp_redirects"
         );
     }
 
+    @Override
     protected Set<NetTcpRedirect> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<NetTcpRedirect>(),
             objectFactory,
             "select\n"
             + "  ntr.*\n"
@@ -48,8 +52,10 @@ final class DatabaseNetTcpRedirectService extends DatabaseService<Integer,NetTcp
         );
     }
 
+    @Override
     protected Set<NetTcpRedirect> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<NetTcpRedirect>(),
             objectFactory,
             "select\n"
             + "  ntr.*\n"

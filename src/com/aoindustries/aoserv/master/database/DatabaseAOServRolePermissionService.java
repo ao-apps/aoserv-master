@@ -1,12 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.AOServRolePermission;
-import com.aoindustries.aoserv.client.AOServRolePermissionService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
 
     @Override
     protected Set<AOServRolePermission> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServRolePermission>(),
             objectFactory,
             "select * from aoserv_role_permissions order by pkey"
@@ -39,7 +38,7 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
      */
     @Override
     protected Set<AOServRolePermission> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServRolePermission>(),
             objectFactory,
             "select\n"
@@ -60,7 +59,7 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
      */
     @Override
     protected Set<AOServRolePermission> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServRolePermission>(),
             objectFactory,
             // Business-based

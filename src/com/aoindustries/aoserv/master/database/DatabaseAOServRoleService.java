@@ -1,12 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.AOServRole;
-import com.aoindustries.aoserv.client.AOServRoleService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
 
     @Override
     protected Set<AOServRole> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServRole>(),
             objectFactory,
             "select * from aoserv_roles order by pkey"
@@ -39,7 +38,7 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
      */
     @Override
     protected Set<AOServRole> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServRole>(),
             objectFactory,
             "select\n"
@@ -60,7 +59,7 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
      */
     @Override
     protected Set<AOServRole> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServRole>(),
             objectFactory,
             // Business-based

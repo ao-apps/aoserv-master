@@ -5,8 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.BackupPartition;
-import com.aoindustries.aoserv.client.BackupPartitionService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
 
     @Override
     protected Set<BackupPartition> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<BackupPartition>(),
             objectFactory,
             "select * from backup_partitions order by pkey"
@@ -36,7 +35,7 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
 
     @Override
     protected Set<BackupPartition> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<BackupPartition>(),
             objectFactory,
             "select\n"
@@ -68,7 +67,7 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
 
     @Override
     protected Set<BackupPartition> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<BackupPartition>(),
             objectFactory,
             "select distinct\n"

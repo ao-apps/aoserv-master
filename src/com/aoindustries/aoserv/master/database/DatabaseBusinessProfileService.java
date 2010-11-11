@@ -5,8 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.BusinessProfile;
-import com.aoindustries.aoserv.client.BusinessProfileService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
 
     @Override
     protected Set<BusinessProfile> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<BusinessProfile>(),
             objectFactory,
             "select\n"
@@ -59,7 +58,7 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
 
     @Override
     protected Set<BusinessProfile> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<BusinessProfile>(),
             objectFactory,
             "select distinct\n"
@@ -98,7 +97,7 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
 
     @Override
     protected Set<BusinessProfile> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<BusinessProfile>(),
             objectFactory,
             "select\n"

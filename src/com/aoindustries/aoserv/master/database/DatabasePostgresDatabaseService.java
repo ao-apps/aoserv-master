@@ -5,8 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.PostgresDatabase;
-import com.aoindustries.aoserv.client.PostgresDatabaseService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
 
     @Override
     protected Set<PostgresDatabase> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<PostgresDatabase>(),
             objectFactory,
             "select\n"
@@ -48,7 +47,7 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
 
     @Override
     protected Set<PostgresDatabase> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<PostgresDatabase>(),
             objectFactory,
             "select\n"
@@ -74,7 +73,7 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
 
     @Override
     protected Set<PostgresDatabase> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<PostgresDatabase>(),
             objectFactory,
             "select\n"

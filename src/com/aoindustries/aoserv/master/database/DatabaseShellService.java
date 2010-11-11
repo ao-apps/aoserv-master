@@ -5,9 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.Shell;
-import com.aoindustries.aoserv.client.ShellService;
-import com.aoindustries.aoserv.client.validator.UnixPath;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -28,7 +27,7 @@ final class DatabaseShellService extends DatabasePublicService<UnixPath,Shell> i
 
     @Override
     protected Set<Shell> getPublicSet(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<Shell>(),
             objectFactory,
             "select * from shells"

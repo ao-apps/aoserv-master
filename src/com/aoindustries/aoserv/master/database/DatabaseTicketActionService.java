@@ -5,9 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.TicketAction;
-import com.aoindustries.aoserv.client.TicketActionService;
-import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
@@ -60,7 +59,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
 
     @Override
     protected Set<TicketAction> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<TicketAction>(),
             objectFactory,
             "select\n"
@@ -99,7 +98,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
     protected Set<TicketAction> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             // If a ticket admin, can see all ticket_actions
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new ArraySet<TicketAction>(),
                 objectFactory,
                 "select\n"
@@ -144,7 +143,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
             );
         } else {
             // Can only see non-admin types and statuses
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new ArraySet<TicketAction>(),
                 objectFactory,
                 "select\n"

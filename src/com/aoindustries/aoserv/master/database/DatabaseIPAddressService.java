@@ -1,17 +1,16 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.Business;
-import com.aoindustries.aoserv.client.IPAddress;
-import com.aoindustries.aoserv.client.IPAddressService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -25,8 +24,10 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
         super(connector, Integer.class, IPAddress.class);
     }
 
+    @Override
     protected Set<IPAddress> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<IPAddress>(),
             objectFactory,
             "select\n"
             + "  server_resource,\n"
@@ -45,8 +46,10 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
         );
     }
 
+    @Override
     protected Set<IPAddress> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<IPAddress>(),
             objectFactory,
             "select distinct\n"
             + "  ia.server_resource,\n"
@@ -88,8 +91,10 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
         );
     }
 
+    @Override
     protected Set<IPAddress> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<IPAddress>(),
             objectFactory,
             "select\n"
             + "  ia.server_resource,\n"

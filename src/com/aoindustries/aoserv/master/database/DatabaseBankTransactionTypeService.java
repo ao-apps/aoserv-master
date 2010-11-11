@@ -1,12 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.BankTransactionType;
-import com.aoindustries.aoserv.client.BankTransactionTypeService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -30,7 +29,7 @@ final class DatabaseBankTransactionTypeService extends DatabaseService<String,Ba
     @Override
     protected Set<BankTransactionType> getSetMaster(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getMasterUsers().get(connector.getConnectAs()).getCanAccessBankAccount()) {
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new HashSet<BankTransactionType>(),
                 objectFactory,
                 "select * from bank_transaction_types"

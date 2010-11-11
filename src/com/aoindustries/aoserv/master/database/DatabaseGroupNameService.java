@@ -1,18 +1,17 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.GroupName;
-import com.aoindustries.aoserv.client.GroupNameService;
-import com.aoindustries.aoserv.client.LinuxGroup;
-import com.aoindustries.aoserv.client.validator.GroupId;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -28,7 +27,8 @@ final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> 
 
     @Override
     protected Set<GroupName> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<GroupName>(),
             objectFactory,
             "select * from group_names"
         );
@@ -36,7 +36,8 @@ final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> 
 
     @Override
     protected Set<GroupName> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<GroupName>(),
             objectFactory,
             "select distinct\n"
             + "  gn.*\n"
@@ -57,7 +58,8 @@ final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> 
 
     @Override
     protected Set<GroupName> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<GroupName>(),
             objectFactory,
             "select\n"
             + "  gn.*\n"

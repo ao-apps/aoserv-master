@@ -5,9 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.BusinessServer;
-import com.aoindustries.aoserv.client.BusinessServerService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -30,7 +28,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
 
     @Override
     protected Set<BusinessServer> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<BusinessServer>(),
             objectFactory,
             "select * from business_servers order by pkey"
@@ -79,7 +77,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
         );
         sql.append("order by\n"
                 + "  pkey");
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<BusinessServer>(),
             objectFactory,
             sql.toString(),
@@ -148,7 +146,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
         );
         sql.append("order by\n"
                 + "  pkey");
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<BusinessServer>(),
             objectFactory,
             sql.toString(),

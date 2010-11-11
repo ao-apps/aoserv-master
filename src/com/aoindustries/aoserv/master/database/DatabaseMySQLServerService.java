@@ -1,16 +1,16 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.MySQLServer;
-import com.aoindustries.aoserv.client.MySQLServerService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,15 +24,19 @@ final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServ
         super(connector, Integer.class, MySQLServer.class);
     }
 
+    @Override
     protected Set<MySQLServer> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<MySQLServer>(),
             objectFactory,
             "select ao_server_resource, name, version, max_connections, net_bind from mysql_servers"
         );
     }
 
+    @Override
     protected Set<MySQLServer> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<MySQLServer>(),
             objectFactory,
             "select\n"
             + "  mys.ao_server_resource,\n"
@@ -50,8 +54,10 @@ final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServ
         );
     }
 
+    @Override
     protected Set<MySQLServer> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
+            new HashSet<MySQLServer>(),
             objectFactory,
             "select\n"
             + "  ms.ao_server_resource,\n"

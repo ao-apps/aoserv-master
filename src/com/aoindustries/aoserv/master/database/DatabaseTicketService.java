@@ -5,13 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.Ticket;
-import com.aoindustries.aoserv.client.TicketService;
-import com.aoindustries.aoserv.client.TicketStatus;
-import com.aoindustries.aoserv.client.TicketType;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
@@ -61,7 +56,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
 
     @Override
     protected Set<Ticket> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<Ticket>(),
             objectFactory,
             "select\n"
@@ -91,7 +86,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
 
     @Override
     protected Set<Ticket> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<Ticket>(),
             objectFactory,
             "select\n"
@@ -134,7 +129,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
     @Override
     protected Set<Ticket> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new ArraySet<Ticket>(),
                 objectFactory,
                 "select distinct\n"
@@ -174,7 +169,7 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
                 connector.getConnectAs()
             );
         } else {
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new ArraySet<Ticket>(),
                 objectFactory,
                 "select\n"

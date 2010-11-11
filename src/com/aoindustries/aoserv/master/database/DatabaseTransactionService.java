@@ -5,11 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.Transaction;
-import com.aoindustries.aoserv.client.TransactionService;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
@@ -55,7 +52,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
 
     @Override
     protected Set<Transaction> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<Transaction>(),
             objectFactory,
             "select\n"
@@ -87,7 +84,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
 
     @Override
     protected Set<Transaction> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<Transaction>(),
             objectFactory,
             "select\n"

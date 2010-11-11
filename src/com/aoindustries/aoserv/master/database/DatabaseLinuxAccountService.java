@@ -5,11 +5,9 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.LinuxAccount;
-import com.aoindustries.aoserv.client.LinuxAccountService;
-import com.aoindustries.aoserv.client.command.SetLinuxAccountPasswordCommand;
-import com.aoindustries.aoserv.master.DaemonHandler;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.command.*;
+import com.aoindustries.aoserv.master.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -33,7 +31,7 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
 
     @Override
     protected Set<LinuxAccount> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<LinuxAccount>(),
             objectFactory,
             "select\n"
@@ -55,7 +53,7 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
 
     @Override
     protected Set<LinuxAccount> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<LinuxAccount>(),
             objectFactory,
             "select\n"
@@ -86,7 +84,7 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
 
     @Override
     protected Set<LinuxAccount> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<LinuxAccount>(),
             objectFactory,
              "select\n"

@@ -5,8 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.TicketCategory;
-import com.aoindustries.aoserv.client.TicketCategoryService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseTicketCategoryService extends DatabasePublicService<Integer,
 
     @Override
     protected Set<TicketCategory> getPublicSet(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<TicketCategory>(),
             objectFactory,
             "select * from ticket_categories order by pkey"

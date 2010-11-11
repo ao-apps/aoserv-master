@@ -1,12 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.FileBackupSetting;
-import com.aoindustries.aoserv.client.FileBackupSettingService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -27,7 +26,7 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
 
     @Override
     protected Set<FileBackupSetting> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<FileBackupSetting>(),
             objectFactory,
             "select * from file_backup_settings order by pkey"
@@ -36,7 +35,7 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
 
     @Override
     protected Set<FileBackupSetting> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<FileBackupSetting>(),
             objectFactory,
             "select\n"
@@ -57,7 +56,7 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
 
     @Override
     protected Set<FileBackupSetting> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<FileBackupSetting>(),
             objectFactory,
             "select\n"

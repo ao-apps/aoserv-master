@@ -1,13 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2009-2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.AOServerResource;
-import com.aoindustries.aoserv.client.AOServerResourceService;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -30,7 +28,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
 
     @Override
     protected Set<AOServerResource> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServerResource>(),
             objectFactory,
             "select\n"
@@ -47,7 +45,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
 
     @Override
     protected Set<AOServerResource> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServerResource>(),
             objectFactory,
             "select\n"
@@ -114,7 +112,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
         );
         sql.append("order by\n"
                 + "  resource");
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<AOServerResource>(),
             objectFactory,
             sql.toString(),

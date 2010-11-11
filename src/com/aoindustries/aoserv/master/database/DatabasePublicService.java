@@ -5,7 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.AOServObject;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.DatabaseConnection;
 import java.sql.SQLException;
 import java.util.Set;

@@ -5,8 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.FailoverFileLog;
-import com.aoindustries.aoserv.client.FailoverFileLogService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.util.ArraySet;
@@ -42,7 +41,7 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
 
     @Override
     protected Set<FailoverFileLog> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<FailoverFileLog>(),
             objectFactory,
             "select\n"
@@ -63,7 +62,7 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
 
     @Override
     protected Set<FailoverFileLog> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<FailoverFileLog>(),
             objectFactory,
             "select\n"
@@ -91,7 +90,7 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
 
     @Override
     protected Set<FailoverFileLog> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<FailoverFileLog>(),
             objectFactory,
             "select\n"

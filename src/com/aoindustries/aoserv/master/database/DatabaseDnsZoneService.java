@@ -1,13 +1,11 @@
-package com.aoindustries.aoserv.master.database;
-
 /*
  * Copyright 2010 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.DnsZone;
-import com.aoindustries.aoserv.client.DnsZoneService;
-import com.aoindustries.aoserv.client.MasterUser;
+package com.aoindustries.aoserv.master.database;
+
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -30,7 +28,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
 
     @Override
     protected Set<DnsZone> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<DnsZone>(),
             objectFactory,
             "select\n"
@@ -51,7 +49,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
     protected Set<DnsZone> getSetDaemon(DatabaseConnection db) throws RemoteException, SQLException {
         MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
         if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
-            return db.executeObjectSetQuery(
+            return db.executeObjectCollectionQuery(
                 new ArraySet<DnsZone>(),
                 objectFactory,
                 "select\n"
@@ -73,7 +71,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
 
     @Override
     protected Set<DnsZone> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<DnsZone>(),
             objectFactory,
             "select\n"

@@ -5,9 +5,7 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.ServerResource;
-import com.aoindustries.aoserv.client.ServerResourceService;
+import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -30,7 +28,7 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
 
     @Override
     protected Set<ServerResource> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<ServerResource>(),
             objectFactory,
             "select\n"
@@ -85,7 +83,7 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
         );
         sql.append("order by\n"
                 + "  resource");
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<ServerResource>(),
             objectFactory,
             sql.toString(),
@@ -137,7 +135,7 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
         );
         sql.append("order by\n"
                 + "  resource");
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new ArraySet<ServerResource>(),
             objectFactory,
             sql.toString(),

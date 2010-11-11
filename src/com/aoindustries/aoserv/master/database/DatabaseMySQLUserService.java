@@ -5,10 +5,8 @@
  */
 package com.aoindustries.aoserv.master.database;
 
-import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.MySQLUser;
-import com.aoindustries.aoserv.client.MySQLUserService;
-import com.aoindustries.aoserv.client.command.SetMySQLUserPasswordCommand;
+import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.command.*;
 import com.aoindustries.aoserv.master.DaemonHandler;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
@@ -33,7 +31,7 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
 
     @Override
     protected Set<MySQLUser> getSetMaster(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<MySQLUser>(),
             objectFactory,
             "select\n"
@@ -81,7 +79,7 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
 
     @Override
     protected Set<MySQLUser> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<MySQLUser>(),
             objectFactory,
             "select\n"
@@ -134,7 +132,7 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
 
     @Override
     protected Set<MySQLUser> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return db.executeObjectSetQuery(
+        return db.executeObjectCollectionQuery(
             new HashSet<MySQLUser>(),
             objectFactory,
              "select\n"
