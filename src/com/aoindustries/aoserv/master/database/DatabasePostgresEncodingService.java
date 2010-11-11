@@ -11,6 +11,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,8 +25,10 @@ final class DatabasePostgresEncodingService extends DatabasePublicService<Intege
         super(connector,Integer.class,  PostgresEncoding.class);
     }
 
+    @Override
     protected Set<PostgresEncoding> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<PostgresEncoding>(),
             objectFactory,
             "select * from postgres_encodings"
         );

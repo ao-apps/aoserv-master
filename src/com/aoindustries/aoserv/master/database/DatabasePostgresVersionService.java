@@ -11,6 +11,7 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,8 +25,10 @@ final class DatabasePostgresVersionService extends DatabasePublicService<Integer
         super(connector, Integer.class, PostgresVersion.class);
     }
 
+    @Override
     protected Set<PostgresVersion> getPublicSet(DatabaseConnection db) throws SQLException {
         return db.executeObjectSetQuery(
+            new HashSet<PostgresVersion>(),
             objectFactory,
             "select * from postgres_versions"
         );
