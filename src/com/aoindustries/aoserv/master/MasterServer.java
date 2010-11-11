@@ -24,6 +24,12 @@ final public class MasterServer {
     private MasterServer() {
     }
 
+    /**
+     * Keeps a reference to factory to avoid complete garbage collection.
+     * @{link http://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no-such-object-in-table}
+     */
+    private static RmiServerConnectorFactory<?,?> factory;
+
     public static void main(String[] args) {
         // TODO: security manager
         //if(System.getSecurityManager()==null) {
@@ -77,10 +83,10 @@ final public class MasterServer {
                         System.out.print("Tracing enabled: ");
 
                         // Start the RMI server: threadLocale+trace
-                        new RmiServerConnectorFactory<TraceConnector,TraceConnectorFactory>(publicAddress, listenAddress, port, useSsl, traceFactory);
+                        factory = new RmiServerConnectorFactory<TraceConnector,TraceConnectorFactory>(publicAddress, listenAddress, port, useSsl, traceFactory);
                     } else {
                         // Start the RMI server: threadLocale
-                        new RmiServerConnectorFactory<ThreadLocaleConnector,ThreadLocaleConnectorFactory>(publicAddress, listenAddress, port, useSsl, threadLocaleFactory);
+                        factory = new RmiServerConnectorFactory<ThreadLocaleConnector,ThreadLocaleConnectorFactory>(publicAddress, listenAddress, port, useSsl, threadLocaleFactory);
                     }
                 } else {
                     // Wrap with Trace factory when enabled
@@ -89,10 +95,10 @@ final public class MasterServer {
                         System.out.print("Tracing enabled: ");
 
                         // Start the RMI server: trace
-                        new RmiServerConnectorFactory<TraceConnector,TraceConnectorFactory>(publicAddress, listenAddress, port, useSsl, traceFactory);
+                        factory = new RmiServerConnectorFactory<TraceConnector,TraceConnectorFactory>(publicAddress, listenAddress, port, useSsl, traceFactory);
                     } else {
                         // Start the RMI server: no options
-                        new RmiServerConnectorFactory<DatabaseConnector,DatabaseConnectorFactory>(publicAddress, listenAddress, port, useSsl, databaseFactory);
+                        factory = new RmiServerConnectorFactory<DatabaseConnector,DatabaseConnectorFactory>(publicAddress, listenAddress, port, useSsl, databaseFactory);
                     }
                 }
 

@@ -370,12 +370,16 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
                     @Override
                     public void run(DatabaseConnection db) {
                         try {
+                            AOServerService<?,?> rootAoServers = rootConnector.getAoServers();
+                            BusinessAdministratorService<?,?> rootBusinessAdministrators = rootConnector.getBusinessAdministrators();
+                            BusinessService<?,?> rootBusinesses = rootConnector.getBusinesses();
+                            ServerService<?,?> rootServers = rootConnector.getServers();
                             // Also send the signal to any failover parent
                             for(ServiceName service : services) {
                                 Set<Integer> affectedServers = invalidateSet.getAffectedServers(service);
                                 if(affectedServers!=null) {
                                     for(Integer server : affectedServers) {
-                                        AOServer aoServer = rootConnector.getAoServers().filterUnique(AOServer.COLUMN_SERVER, server);
+                                        AOServer aoServer = rootAoServers.filterUnique(AOServer.COLUMN_SERVER, server);
                                         if(aoServer!=null) {
                                             AOServer failoverServer = aoServer.getFailoverServer();
                                             if(failoverServer!=null) {
@@ -402,9 +406,9 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
                                             if(affectedBusinesses==null || affectedBusinesses.contains(null)) businessMatches=true;
                                             else {
                                                 businessMatches=false;
-                                                if(otherBusinessAdministrator==null) otherBusinessAdministrator = rootConnector.getBusinessAdministrators().get(otherConn.getConnectAs());
+                                                if(otherBusinessAdministrator==null) otherBusinessAdministrator = rootBusinessAdministrators.get(otherConn.getConnectAs());
                                                 for(AccountingCode affectedBusiness : affectedBusinesses) {
-                                                    if(otherBusinessAdministrator.canAccessBusiness(affectedBusiness)) {
+                                                    if(otherBusinessAdministrator.canAccessBusiness(rootBusinesses.get(affectedBusiness))) {
                                                         businessMatches=true;
                                                         break;
                                                     }
@@ -417,9 +421,9 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
                                                 if(affectedServers==null || affectedServers.contains(null)) serverMatches=true;
                                                 else {
                                                     serverMatches=false;
-                                                    if(otherBusinessAdministrator==null) otherBusinessAdministrator = rootConnector.getBusinessAdministrators().get(otherConn.getConnectAs());
+                                                    if(otherBusinessAdministrator==null) otherBusinessAdministrator = rootBusinessAdministrators.get(otherConn.getConnectAs());
                                                     for(int affectedServer : affectedServers) {
-                                                        if(otherBusinessAdministrator.canAccessServer(affectedServer)) {
+                                                        if(otherBusinessAdministrator.canAccessServer(rootServers.get(affectedServer))) {
                                                             serverMatches=true;
                                                             break;
                                                         }
