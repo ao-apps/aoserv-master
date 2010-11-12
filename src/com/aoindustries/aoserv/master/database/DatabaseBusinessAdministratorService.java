@@ -11,6 +11,7 @@ import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -26,13 +27,14 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
         @Override
         public BusinessAdministrator createObject(ResultSet result) throws SQLException {
             try {
+                Date birthday = result.getDate("birthday");
                 return new BusinessAdministrator(
                     DatabaseBusinessAdministratorService.this,
                     UserId.valueOf(result.getString("username")),
                     HashedPassword.valueOf(result.getString("password")),
                     result.getString("full_name"),
                     result.getString("title"),
-                    result.getDate("birthday"),
+                    birthday==null ? null : birthday.getTime(),
                     result.getBoolean("is_preferred"),
                     result.getBoolean("private"),
                     result.getLong("created"),

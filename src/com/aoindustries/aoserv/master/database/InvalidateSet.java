@@ -22,11 +22,33 @@ import java.util.Set;
  */
 final public class InvalidateSet {
 
+    /**
+     * Each thread has its own invalidate set because invalidations occur in parallel to database
+     * transactions, and each thread has its own connection, too.
+     */
+    private static final ThreadLocal<InvalidateSet> threadLocal = new ThreadLocal<InvalidateSet>() {
+        @Override
+        protected InvalidateSet initialValue() {
+            return new InvalidateSet();
+        }
+    };
+
+    /**
+     * Gets the thread local invalidateSet
+     */
+    public static InvalidateSet getInstance() {
+        return threadLocal.get();
+    }
+
+    private InvalidateSet() {}
+
     EnumMap<ServiceName,Set<Integer>> serverSets = new EnumMap<ServiceName, Set<Integer>>(ServiceName.class);
     EnumMap<ServiceName,Set<AccountingCode>> businessSets = new EnumMap<ServiceName, Set<AccountingCode>>(ServiceName.class);
 
+    /**
+     * Clears all sets.
+     */
     public void clear() {
-        // Clear the servers
         for(Set<Integer> serverSet : serverSets.values()) serverSet.clear();
         for(Set<AccountingCode> businessSet : businessSets.values()) businessSet.clear();
     }

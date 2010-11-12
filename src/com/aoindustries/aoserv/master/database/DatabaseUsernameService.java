@@ -83,38 +83,13 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Commands">
-    void setUsernamePassword(DatabaseConnection db, InvalidateSet invalidateSet, SetUsernamePasswordCommand command) throws RemoteException, SQLException {
+    void setUsernamePassword(DatabaseConnection db, InvalidateSet invalidateSet, SetUsernamePasswordCommand command, boolean isInteractive) throws RemoteException, SQLException {
         // Cascade to specific account types
         Username un = connector.factory.rootConnector.getUsernames().get(command.getUsername());
-        // Make sure passes other command validations
-        BusinessAdministrator ba = un.getBusinessAdministrator();
-        if(ba!=null) {
-            connector.businessAdministrators.setBusinessAdministratorPassword(
-                db,
-                invalidateSet,
-                new SetBusinessAdministratorPasswordCommand(ba, command.getPlaintext())
-            );
-        }
-        for(LinuxAccount la : un.getLinuxAccounts()) {
-            connector.linuxAccounts.setLinuxAccountPassword(
-                db,
-                invalidateSet,
-                new SetLinuxAccountPasswordCommand(la, command.getPlaintext())
-            );
-        }
-        for(MySQLUser mu : un.getMysqlUsers()) {
-            connector.mysqlUsers.setMySQLUserPassword(
-                db,
-                invalidateSet,
-                new SetMySQLUserPasswordCommand(mu, command.getPlaintext())
-            );
-        }
-        for(PostgresUser pu : un.getPostgresUsers()) {
-            connector.postgresUsers.setPostgresUserPassword(
-                db,
-                invalidateSet,
-                new SetPostgresUserPasswordCommand(pu, command.getPlaintext())
-            );
+        for(AOServObject<?,?> dependent : un.getDependentObjects()) {
+            if(dependent instanceof PasswordProtected) {
+                ((PasswordProtected)dependent).getSetPasswordCommand(command.getPlaintext()).execute(connector, isInteractive);
+            }
         }
     }
     // </editor-fold>
