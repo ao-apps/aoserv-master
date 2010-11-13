@@ -6,7 +6,6 @@
 package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.*;
-import com.aoindustries.aoserv.client.command.*;
 import com.aoindustries.aoserv.master.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
@@ -103,10 +102,10 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Commands">
-    void setPostgresUserPassword(DatabaseConnection db, InvalidateSet invalidateSet, SetPostgresUserPasswordCommand command) throws RemoteException, SQLException {
+    void setPostgresUserPassword(DatabaseConnection db, InvalidateSet invalidateSet, int postgresUser, String plaintext) throws RemoteException, SQLException {
         try {
-            PostgresUser mu = connector.factory.rootConnector.getPostgresUsers().get(command.getPostgresUser());
-            DaemonHandler.getDaemonConnector(mu.getAoServerResource().getAoServer()).setPostgresUserPassword(command.getPostgresUser(), command.getPlaintext());
+            PostgresUser mu = connector.factory.rootConnector.getPostgresUsers().get(postgresUser);
+            DaemonHandler.getDaemonConnector(mu.getAoServerResource().getAoServer()).setPostgresUserPassword(postgresUser, plaintext);
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         }

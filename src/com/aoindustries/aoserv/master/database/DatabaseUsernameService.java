@@ -6,7 +6,6 @@
 package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.*;
-import com.aoindustries.aoserv.client.command.*;
 import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
@@ -83,12 +82,12 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Commands">
-    void setUsernamePassword(DatabaseConnection db, InvalidateSet invalidateSet, SetUsernamePasswordCommand command, boolean isInteractive) throws RemoteException, SQLException {
+    void setUsernamePassword(DatabaseConnection db, InvalidateSet invalidateSet, UserId username, String plaintext, boolean isInteractive) throws RemoteException, SQLException {
         // Cascade to specific account types
-        Username un = connector.factory.rootConnector.getUsernames().get(command.getUsername());
+        Username un = connector.factory.rootConnector.getUsernames().get(username);
         for(AOServObject<?,?> dependent : un.getDependentObjects()) {
             if(dependent instanceof PasswordProtected) {
-                ((PasswordProtected)dependent).getSetPasswordCommand(command.getPlaintext()).execute(connector, isInteractive);
+                ((PasswordProtected)dependent).getSetPasswordCommand(plaintext).execute(connector, isInteractive);
             }
         }
     }

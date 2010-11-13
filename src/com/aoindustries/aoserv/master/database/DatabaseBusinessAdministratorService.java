@@ -6,7 +6,6 @@
 package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.*;
-import com.aoindustries.aoserv.client.command.*;
 import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
@@ -182,14 +181,12 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Commands">
-    void setBusinessAdministratorPassword(DatabaseConnection db, InvalidateSet invalidateSet, SetBusinessAdministratorPasswordCommand command) throws RemoteException, SQLException {
-        String plaintext = command.getPlaintext();
+    void setBusinessAdministratorPassword(DatabaseConnection db, InvalidateSet invalidateSet, UserId username, String plaintext) throws RemoteException, SQLException {
         String hashed =
             plaintext==null || plaintext.length()==0
             ? HashedPassword.NO_PASSWORD
             : HashedPassword.hash(plaintext)
         ;
-        UserId username = command.getUsername();
         AccountingCode accounting = connector.factory.rootConnector.getUsernames().get(username).getBusiness().getAccounting();
         db.executeUpdate("update business_administrators set password=? where username=?", hashed, username);
 

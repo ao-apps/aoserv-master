@@ -6,7 +6,6 @@
 package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.*;
-import com.aoindustries.aoserv.client.command.*;
 import com.aoindustries.aoserv.master.DaemonHandler;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
@@ -190,10 +189,10 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Commands">
-    void setMySQLUserPassword(DatabaseConnection db, InvalidateSet invalidateSet, SetMySQLUserPasswordCommand command) throws RemoteException, SQLException {
+    void setMySQLUserPassword(DatabaseConnection db, InvalidateSet invalidateSet, int mysqlUser, String plaintext) throws RemoteException, SQLException {
         try {
-            MySQLUser mu = connector.factory.rootConnector.getMysqlUsers().get(command.getMysqlUser());
-            DaemonHandler.getDaemonConnector(mu.getAoServerResource().getAoServer()).setMySQLUserPassword(command.getMysqlUser(), command.getPlaintext());
+            MySQLUser mu = connector.factory.rootConnector.getMysqlUsers().get(mysqlUser);
+            DaemonHandler.getDaemonConnector(mu.getAoServerResource().getAoServer()).setMySQLUserPassword(mysqlUser, plaintext);
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         }

@@ -420,13 +420,13 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     }
 
     @Override
-    public <R> CommandResult<R> executeCommand(final RemoteCommand<R> command, final boolean isInteractive) throws RemoteException {
+    public <R> CommandResult<R> executeCommand(final RemoteCommand<R> remoteCommand, final boolean isInteractive) throws RemoteException {
         try {
             // Make sure not accidentally running command on root user
             if(
                 authenticateAs.equals(factory.rootConnector.getAuthenticateAs())
                 || connectAs.equals(factory.rootConnector.getConnectAs())
-            ) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnector.executeCommand.refusingRootConnector", command.getCommandName()));
+            ) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnector.executeCommand.refusingRootConnector", remoteCommand.getCommandName()));
 
             final InvalidateSet invalidateSet = InvalidateSet.getInstance();
             try {
@@ -441,32 +441,59 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
                                 if(!factory.isEnabledBusinessAdministrator(db, connectAs)) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
 
                                 // Check permissions using root connector
-                                Set<AOServPermission.Permission> permissions = command.getCommandName().getPermissions();
+                                Set<AOServPermission.Permission> permissions = remoteCommand.getCommandName().getPermissions();
                                 BusinessAdministrator rootBa = factory.rootConnector.getBusinessAdministrators().get(connectAs);
-                                if(!rootBa.hasPermissions(permissions)) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnector.executeCommand.permissionDenied", command.getCommandName()));
+                                if(!rootBa.hasPermissions(permissions)) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnector.executeCommand.permissionDenied", remoteCommand.getCommandName()));
 
                                 // Validate command using root connector
-                                Map<String,List<String>> errors = command.validate(factory.rootConnector);
-                                if(!errors.isEmpty()) throw new CommandValidationException(command, errors);
+                                Map<String,List<String>> errors = remoteCommand.validate(factory.rootConnector);
+                                if(!errors.isEmpty()) throw new CommandValidationException(remoteCommand, errors);
 
                                 // Execute command using this connector
-                                switch(command.getCommandName()) {
-                                    case set_business_administrator_password :
-                                        businessAdministrators.setBusinessAdministratorPassword(db, invalidateSet, (SetBusinessAdministratorPasswordCommand)command);
+                                switch(remoteCommand.getCommandName()) {
+                                    // <editor-fold defaultstate="collapsed" desc="Business Administrators">
+                                    case set_business_administrator_password : {
+                                        SetBusinessAdministratorPasswordCommand command = (SetBusinessAdministratorPasswordCommand)remoteCommand;
+                                        businessAdministrators.setBusinessAdministratorPassword(db, invalidateSet, command.getUsername(), command.getPlaintext());
                                         return null;
-                                    case set_linux_account_password :
-                                        linuxAccounts.setLinuxAccountPassword(db, invalidateSet, (SetLinuxAccountPasswordCommand)command);
+                                    }
+                                    // </editor-fold>
+                                    // <editor-fold defaultstate="collapsed" desc="Businesses">
+                                    case cancel_business : {
+                                        CancelBusinessCommand command = (CancelBusinessCommand)remoteCommand;
+                                        businesses.cancelBusiness(db, invalidateSet, command.getAccounting(), command.getCancelReason());
                                         return null;
-                                    case set_mysql_user_password :
-                                        mysqlUsers.setMySQLUserPassword(db, invalidateSet, (SetMySQLUserPasswordCommand)command);
+                                    }
+                                    // </editor-fold>
+                                    // <editor-fold defaultstate="collapsed" desc="Linux Accounts">
+                                    case set_linux_account_password : {
+                                        SetLinuxAccountPasswordCommand command = (SetLinuxAccountPasswordCommand)remoteCommand;
+                                        linuxAccounts.setLinuxAccountPassword(db, invalidateSet, command.getLinuxAccount(), command.getPlaintext());
                                         return null;
-                                    case set_postgres_user_password :
-                                        postgresUsers.setPostgresUserPassword(db, invalidateSet, (SetPostgresUserPasswordCommand)command);
+                                    }
+                                    // </editor-fold>
+                                    // <editor-fold defaultstate="collapsed" desc="MySQL Users">
+                                    case set_mysql_user_password : {
+                                        SetMySQLUserPasswordCommand command = (SetMySQLUserPasswordCommand)remoteCommand;
+                                        mysqlUsers.setMySQLUserPassword(db, invalidateSet, command.getMysqlUser(), command.getPlaintext());
                                         return null;
-                                    case set_username_password :
-                                        usernames.setUsernamePassword(db, invalidateSet, (SetUsernamePasswordCommand)command, isInteractive);
+                                    }
+                                    // </editor-fold>
+                                    // <editor-fold defaultstate="collapsed" desc="Postgres Users">
+                                    case set_postgres_user_password : {
+                                        SetPostgresUserPasswordCommand command = (SetPostgresUserPasswordCommand)remoteCommand;
+                                        postgresUsers.setPostgresUserPassword(db, invalidateSet, command.getPostgresUser(), command.getPlaintext());
                                         return null;
-                                    default : throw new RemoteException("Command not implemented: " + command.getCommandName());
+                                    }
+                                    // </editor-fold>
+                                    // <editor-fold defaultstate="collapsed" desc="Usernames">
+                                    case set_username_password : {
+                                        SetUsernamePasswordCommand command = (SetUsernamePasswordCommand)remoteCommand;
+                                        usernames.setUsernamePassword(db, invalidateSet, command.getUsername(), command.getPlaintext(), isInteractive);
+                                        return null;
+                                    }
+                                    // </editor-fold>
+                                    default : throw new RemoteException("Command not implemented: " + remoteCommand.getCommandName());
                                 }
                             } catch(RemoteException err) {
                                 throw new WrappedException(err);

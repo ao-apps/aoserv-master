@@ -70,38 +70,6 @@ final public class BusinessHandler {
         }
     }
 
-    public static void cancelBusiness(
-        DatabaseConnection conn,
-        RequestSource source,
-        InvalidateList invalidateList,
-        String accounting,
-        String cancelReason
-    ) throws IOException, SQLException {
-        // Check permissions
-        checkPermission(conn, source, "cancelBusiness", AOServPermission.Permission.cancel_business);
-
-        // Check access to business
-        checkAccessBusiness(conn, source, "cancelBusiness", accounting);
-
-        if(accounting.equals(getRootBusiness())) throw new SQLException("Not allowed to cancel the root business: "+accounting);
-
-        // Business must be disabled
-        if(!isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to cancel Business, Business not disabled: "+accounting);
-
-        // Business must not already be canceled
-        if(isBusinessCanceled(conn, accounting)) throw new SQLException("Unable to cancel Business, Business already canceled: "+accounting);
-
-        // Update the database
-        conn.executeUpdate(
-            "update businesses set canceled=now(), cancel_reason=? where accounting=?",
-            cancelReason,
-            accounting
-        );
-
-        // Notify the clients
-        invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
-    }
-
     public static boolean canBusinessServer(
         DatabaseConnection conn,
         RequestSource source,

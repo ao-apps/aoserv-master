@@ -6,7 +6,6 @@
 package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.*;
-import com.aoindustries.aoserv.client.command.*;
 import com.aoindustries.aoserv.master.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
@@ -116,10 +115,10 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Commands">
-    void setLinuxAccountPassword(DatabaseConnection db, InvalidateSet invalidateSet, SetLinuxAccountPasswordCommand command) throws RemoteException, SQLException {
+    void setLinuxAccountPassword(DatabaseConnection db, InvalidateSet invalidateSet, int linuxAccount, String plaintext) throws RemoteException, SQLException {
         try {
-            LinuxAccount la = connector.factory.rootConnector.getLinuxAccounts().get(command.getLinuxAccount());
-            DaemonHandler.getDaemonConnector(la.getAoServerResource().getAoServer()).setLinuxAccountPassword(la.getUserId(), command.getPlaintext());
+            LinuxAccount la = connector.factory.rootConnector.getLinuxAccounts().get(linuxAccount);
+            DaemonHandler.getDaemonConnector(la.getAoServerResource().getAoServer()).setLinuxAccountPassword(la.getUserId(), plaintext);
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         }

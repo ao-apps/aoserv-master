@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -19,6 +20,7 @@ import java.util.Set;
  */
 final class DatabaseBusinessService extends DatabaseService<AccountingCode,Business> implements BusinessService<DatabaseConnector,DatabaseConnectorFactory> {
 
+    // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<Business> objectFactory = new AutoObjectFactory<Business>(Business.class, this);
 
     DatabaseBusinessService(DatabaseConnector connector) {
@@ -134,4 +136,30 @@ final class DatabaseBusinessService extends DatabaseService<AccountingCode,Busin
             connector.getConnectAs()
         );
     }
+    // </editor-fold>
+
+    // <editor-fold defaultstate="collapsed" desc="Commands">
+    void cancelBusiness(DatabaseConnection db, InvalidateSet invalidateSet, AccountingCode accountingCode, String reason) throws RemoteException, SQLException {
+        throw new RemoteException("TODO: Implement command");
+        /*
+        // Cascade to specific account types
+        Username un = connector.factory.rootConnector.getUsernames().get(command.getUsername());
+        for(AOServObject<?,?> dependent : un.getDependentObjects()) {
+            if(dependent instanceof PasswordProtected) {
+                ((PasswordProtected)dependent).getSetPasswordCommand(command.getPlaintext()).execute(connector, isInteractive);
+            }
+        }
+
+        // Update the database
+        conn.executeUpdate(
+            "update businesses set canceled=now(), cancel_reason=? where accounting=?",
+            cancelReason,
+            accounting
+        );
+
+        // Notify the clients
+        invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
+         */
+    }
+    // </editor-fold>
 }
