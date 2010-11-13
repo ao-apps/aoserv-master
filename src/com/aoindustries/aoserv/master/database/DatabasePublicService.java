@@ -15,7 +15,10 @@ import java.util.Set;
  *
  * @author  AO Industries, Inc.
  */
-abstract class DatabasePublicService<K extends Comparable<K>,V extends AOServObject<K,V>> extends DatabaseService<K,V> {
+abstract class DatabasePublicService<
+    K extends Comparable<K>,
+    V extends AOServObject<K,V> & Comparable<V> & DtoFactory<?>
+> extends DatabaseService<K,V> {
 
     DatabasePublicService(DatabaseConnector connector, Class<K> keyClass, Class<V> valueClass) {
         super(connector, keyClass, valueClass);

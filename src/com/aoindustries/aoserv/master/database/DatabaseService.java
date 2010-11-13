@@ -30,7 +30,10 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-abstract class DatabaseService<K extends Comparable<K>,V extends AOServObject<K,V>> implements AOServService<DatabaseConnector,DatabaseConnectorFactory,K,V> {
+abstract class DatabaseService<
+    K extends Comparable<K>,
+    V extends AOServObject<K,V> & Comparable<V> & DtoFactory<?>
+> implements AOServService<DatabaseConnector,DatabaseConnectorFactory,K,V> {
 
     // <editor-fold defaultstate="collapsed" desc="Business Tree Joins">
     /**
