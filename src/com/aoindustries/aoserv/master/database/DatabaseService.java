@@ -32,7 +32,7 @@ import java.util.Set;
  */
 abstract class DatabaseService<
     K extends Comparable<K>,
-    V extends AOServObject<K,V> & Comparable<V> & DtoFactory<?>
+    V extends AOServObject<K> & Comparable<V> & DtoFactory<?>
 > implements AOServService<DatabaseConnector,DatabaseConnectorFactory,K,V> {
 
     // <editor-fold defaultstate="collapsed" desc="Business Tree Joins">
@@ -178,11 +178,11 @@ abstract class DatabaseService<
         return domain==null ? null : DomainName.valueOf(domain);
     }
 
-    protected static void addOptionalInInteger(StringBuilder sql, String sqlPrefix, Set<? extends AOServObject<Integer,?>> set, String sqlSuffix) {
+    protected static void addOptionalInInteger(StringBuilder sql, String sqlPrefix, Set<? extends AOServObject<Integer>> set, String sqlSuffix) {
         if(!set.isEmpty()) {
             sql.append(sqlPrefix);
             boolean didOne = false;
-            for(AOServObject<Integer,?> obj : set) {
+            for(AOServObject<Integer> obj : set) {
                 if(didOne) sql.append(',');
                 else didOne = true;
                 Integer key = obj.getKey();
@@ -192,9 +192,9 @@ abstract class DatabaseService<
         }
     }
 
-    protected static void addOptionalInInteger(StringBuilder sql, String sqlPrefix, Collection<Set<? extends AOServObject<Integer,?>>> sets, String sqlSuffix) {
+    protected static void addOptionalInInteger(StringBuilder sql, String sqlPrefix, Collection<Set<? extends AOServObject<Integer>>> sets, String sqlSuffix) {
         boolean isEmpty = true;
-        for(Set<? extends AOServObject<Integer,?>> set : sets) {
+        for(Set<? extends AOServObject<Integer>> set : sets) {
             if(!set.isEmpty()) {
                 isEmpty = false;
                 break;
@@ -203,8 +203,8 @@ abstract class DatabaseService<
         if(!isEmpty) {
             sql.append(sqlPrefix);
             boolean didOne = false;
-            for(Set<? extends AOServObject<Integer,?>> set : sets) {
-                for(AOServObject<Integer,?> obj : set) {
+            for(Set<? extends AOServObject<Integer>> set : sets) {
+                for(AOServObject<Integer> obj : set) {
                     if(didOne) sql.append(',');
                     else didOne = true;
                     Integer key = obj.getKey();

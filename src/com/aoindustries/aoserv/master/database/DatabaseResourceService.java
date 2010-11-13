@@ -103,7 +103,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
             + "  and ms.server=sr.server\n"
             + "  and sr.resource=re.pkey\n"
         );
-        List<Set<? extends AOServObject<Integer,?>>> extraResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        List<Set<? extends AOServObject<Integer>>> extraResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
         connector.serverResources.addExtraServerResourcesDaemon(db, extraResources);
         addOptionalInInteger(
             sql,
@@ -156,7 +156,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
             + "  )\n"
             + "  and bu1.accounting=re.accounting\n"
         );
-        List<Set<? extends AOServObject<Integer,?>>> extraResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        List<Set<? extends AOServObject<Integer>>> extraResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
         connector.serverResources.addExtraServerResourcesBusiness(db, extraResources);
         connector.aoserverResources.addExtraAOServerResourcesBusiness(db, extraResources);
         addOptionalInInteger(

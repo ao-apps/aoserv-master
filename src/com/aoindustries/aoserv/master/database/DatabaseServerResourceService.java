@@ -46,7 +46,7 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
     /**
      * Adds the extra server resources for the current user.
      */
-    void addExtraServerResourcesDaemon(DatabaseConnection db, List<Set<? extends AOServObject<Integer,?>>> extraServerResources) throws SQLException {
+    void addExtraServerResourcesDaemon(DatabaseConnection db, List<Set<? extends AOServObject<Integer>>> extraServerResources) throws SQLException {
         extraServerResources.add(connector.ipAddresses.getSetDaemon(db));
     }
 
@@ -65,7 +65,7 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
             + "  ms.username=?\n"
             + "  and ms.server=sr.server\n"
         );
-        List<Set<? extends AOServObject<Integer,?>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        List<Set<? extends AOServObject<Integer>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
         addExtraServerResourcesDaemon(db, extraServerResources);
         addOptionalInInteger(
             sql,
@@ -94,7 +94,7 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
     /**
      * Adds the extra server resources for the current user.
      */
-    void addExtraServerResourcesBusiness(DatabaseConnection db, List<Set<? extends AOServObject<Integer,?>>> extraServerResources) throws SQLException {
+    void addExtraServerResourcesBusiness(DatabaseConnection db, List<Set<? extends AOServObject<Integer>>> extraServerResources) throws SQLException {
         extraServerResources.add(connector.ipAddresses.getSetBusiness(db));
     }
 
@@ -117,7 +117,7 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
             + UN_BU1_PARENTS_WHERE
             + "  ) and bu1.accounting=sr.accounting\n"
         );
-        List<Set<? extends AOServObject<Integer,?>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        List<Set<? extends AOServObject<Integer>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
         addExtraServerResourcesBusiness(db, extraServerResources);
         addOptionalInInteger(
             sql,

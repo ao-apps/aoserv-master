@@ -61,7 +61,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             ")\n"
         );
         // Extra server_resources
-        List<Set<? extends AOServObject<Integer,?>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        List<Set<? extends AOServObject<Integer>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
         connector.serverResources.addExtraServerResourcesDaemon(db, extraServerResources);
         addOptionalInInteger(
             sql,
@@ -115,7 +115,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             ")\n"
         );
         // Extra server_resources
-        List<Set<? extends AOServObject<Integer,?>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        List<Set<? extends AOServObject<Integer>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
         connector.serverResources.addExtraServerResourcesBusiness(db, extraServerResources);
         addOptionalInInteger(
             sql,
@@ -130,7 +130,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             ")\n"
         );
         // Extra ao_server_resources
-        List<Set<? extends AOServObject<Integer,?>>> extraAoserverResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        List<Set<? extends AOServObject<Integer>>> extraAoserverResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
         connector.aoserverResources.addExtraAOServerResourcesBusiness(db, extraAoserverResources);
         addOptionalInInteger(
             sql,

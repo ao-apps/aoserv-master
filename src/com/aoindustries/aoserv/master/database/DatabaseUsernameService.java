@@ -85,7 +85,7 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
     void setUsernamePassword(DatabaseConnection db, InvalidateSet invalidateSet, UserId username, String plaintext, boolean isInteractive) throws RemoteException, SQLException {
         // Cascade to specific account types
         Username un = connector.factory.rootConnector.getUsernames().get(username);
-        for(AOServObject<?,?> dependent : un.getDependentObjects()) {
+        for(AOServObject<?> dependent : un.getDependentObjects()) {
             if(dependent instanceof PasswordProtected) {
                 ((PasswordProtected)dependent).getSetPasswordCommand(plaintext).execute(connector, isInteractive);
             }

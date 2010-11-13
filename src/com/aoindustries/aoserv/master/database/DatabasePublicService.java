@@ -17,7 +17,7 @@ import java.util.Set;
  */
 abstract class DatabasePublicService<
     K extends Comparable<K>,
-    V extends AOServObject<K,V> & Comparable<V> & DtoFactory<?>
+    V extends AOServObject<K> & Comparable<V> & DtoFactory<?>
 > extends DatabaseService<K,V> {
 
     DatabasePublicService(DatabaseConnector connector, Class<K> keyClass, Class<V> valueClass) {

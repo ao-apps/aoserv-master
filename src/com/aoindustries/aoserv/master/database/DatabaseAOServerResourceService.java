@@ -68,7 +68,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
     /**
      * Adds the extra server resources for the current user.
      */
-    void addExtraAOServerResourcesBusiness(DatabaseConnection db, List<Set<? extends AOServObject<Integer,?>>> extraAoserverResources) throws SQLException {
+    void addExtraAOServerResourcesBusiness(DatabaseConnection db, List<Set<? extends AOServObject<Integer>>> extraAoserverResources) throws SQLException {
         extraAoserverResources.add(connector.httpdServers.getSetBusiness(db));
         extraAoserverResources.add(connector.linuxGroups.getSetBusiness(db));
         extraAoserverResources.add(connector.mysqlServers.getSetBusiness(db));
@@ -94,7 +94,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
             + UN_BU1_PARENTS_WHERE
             + "  ) and bu1.accounting=asr.accounting\n"
         );
-        List<Set<? extends AOServObject<Integer,?>>> extraAoserverResources = new ArrayList<Set<? extends AOServObject<Integer,?>>>();
+        List<Set<? extends AOServObject<Integer>>> extraAoserverResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
         addExtraAOServerResourcesBusiness(db, extraAoserverResources);
         addOptionalInInteger(
             sql,
