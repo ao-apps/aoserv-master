@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresVersionService extends DatabasePublicService<Integer,PostgresVersion> implements PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePostgresVersionService extends DatabasePublicService<Integer,PostgresVersion> implements PostgresVersionService {
 
     private final ObjectFactory<PostgresVersion> objectFactory = new AutoObjectFactory<PostgresVersion>(PostgresVersion.class, connector);
 

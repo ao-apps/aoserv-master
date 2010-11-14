@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNetDeviceIDService extends DatabasePublicService<String,NetDeviceID> implements NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseNetDeviceIDService extends DatabasePublicService<String,NetDeviceID> implements NetDeviceIDService {
 
     private final ObjectFactory<NetDeviceID> objectFactory = new AutoObjectFactory<NetDeviceID>(NetDeviceID.class, connector);
 

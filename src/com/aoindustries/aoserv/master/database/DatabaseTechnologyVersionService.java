@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTechnologyVersionService extends DatabaseService<Integer,TechnologyVersion> implements TechnologyVersionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTechnologyVersionService extends DatabaseService<Integer,TechnologyVersion> implements TechnologyVersionService {
 
     private final ObjectFactory<TechnologyVersion> objectFactory = new ObjectFactory<TechnologyVersion>() {
         @Override

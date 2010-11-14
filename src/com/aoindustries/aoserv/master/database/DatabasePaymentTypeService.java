@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePaymentTypeService extends DatabasePublicService<String,PaymentType> implements PaymentTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePaymentTypeService extends DatabasePublicService<String,PaymentType> implements PaymentTypeService {
 
     private final ObjectFactory<PaymentType> objectFactory = new AutoObjectFactory<PaymentType>(PaymentType.class, connector);
 

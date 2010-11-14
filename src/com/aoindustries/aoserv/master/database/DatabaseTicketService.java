@@ -17,7 +17,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implements TicketService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implements TicketService {
 
     private final ObjectFactory<Ticket> objectFactory = new ObjectFactory<Ticket>() {
         @Override

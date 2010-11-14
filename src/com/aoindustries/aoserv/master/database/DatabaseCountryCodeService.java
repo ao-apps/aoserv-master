@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseCountryCodeService extends DatabasePublicService<String,CountryCode> implements CountryCodeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseCountryCodeService extends DatabasePublicService<String,CountryCode> implements CountryCodeService {
 
     private final ObjectFactory<CountryCode> objectFactory = new AutoObjectFactory<CountryCode>(CountryCode.class, connector);
 

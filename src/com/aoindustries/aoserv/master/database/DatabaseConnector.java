@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author  AO Industries, Inc.
  */
-final public class DatabaseConnector implements AOServConnector<DatabaseConnector,DatabaseConnectorFactory> {
+final public class DatabaseConnector implements AOServConnector {
 
     final DatabaseConnectorFactory factory;
     Locale locale;
@@ -551,10 +551,10 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Services">
-    private final AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>> tables = new AtomicReference<Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>>>();
+    private final AtomicReference<Map<ServiceName,AOServService<?,?>>> tables = new AtomicReference<Map<ServiceName,AOServService<?,?>>>();
     @Override
-    public Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>> getServices() throws RemoteException {
-        Map<ServiceName,AOServService<DatabaseConnector,DatabaseConnectorFactory,?,?>> ts = tables.get();
+    public Map<ServiceName,AOServService<?,?>> getServices() throws RemoteException {
+        Map<ServiceName,AOServService<?,?>> ts = tables.get();
         if(ts==null) {
             ts = AOServConnectorUtils.createServiceMap(this);
             if(!tables.compareAndSet(null, ts)) ts = tables.get();
@@ -563,618 +563,618 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     }
 
     @Override
-    public AOServerDaemonHostService<DatabaseConnector,DatabaseConnectorFactory> getAoServerDaemonHosts() {
+    public AOServerDaemonHostService getAoServerDaemonHosts() {
         return aoserverDaemonHosts;
     }
 
     @Override
-    public AOServerResourceService<DatabaseConnector,DatabaseConnectorFactory> getAoServerResources() {
+    public AOServerResourceService getAoServerResources() {
         return aoserverResources;
     }
 
     @Override
-    public AOServerService<DatabaseConnector,DatabaseConnectorFactory> getAoServers() {
+    public AOServerService getAoServers() {
         return aoservers;
     }
 
     @Override
-    public AOServPermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservPermissions() {
+    public AOServPermissionService getAoservPermissions() {
         return aoservPermissions;
     }
 
     @Override
-    public AOServRoleService<DatabaseConnector,DatabaseConnectorFactory> getAoservRoles() {
+    public AOServRoleService getAoservRoles() {
         return aoservRoles;
     }
 
     @Override
-    public AOServRolePermissionService<DatabaseConnector,DatabaseConnectorFactory> getAoservRolePermissions() {
+    public AOServRolePermissionService getAoservRolePermissions() {
         return aoservRolePermissions;
     }
 
     @Override
-    public ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> getArchitectures() {
+    public ArchitectureService getArchitectures() {
         return architectures;
     }
 
     @Override
-    public BackupPartitionService<DatabaseConnector,DatabaseConnectorFactory> getBackupPartitions() {
+    public BackupPartitionService getBackupPartitions() {
         return backupPartitions;
     }
 
     @Override
-    public BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> getBackupRetentions() {
+    public BackupRetentionService getBackupRetentions() {
         return backupRetentions;
     }
 
-    // TODO: public BankAccountService<DatabaseConnector,DatabaseConnectorFactory> getBankAccounts();
+    // TODO: public BankAccountService getBankAccounts();
 
     @Override
-    public BankTransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactionTypes() {
+    public BankTransactionTypeService getBankTransactionTypes() {
         return bankTransactionTypes;
     }
 
-    // TODO: public BankTransactionService<DatabaseConnector,DatabaseConnectorFactory> getBankTransactions();
+    // TODO: public BankTransactionService getBankTransactions();
 
-    // TODO: public BankService<DatabaseConnector,DatabaseConnectorFactory> getBanks();
+    // TODO: public BankService getBanks();
 
     @Override
-    public BrandService<DatabaseConnector,DatabaseConnectorFactory> getBrands() {
+    public BrandService getBrands() {
         return brands;
     }
 
     @Override
-    public BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministrators() {
+    public BusinessAdministratorService getBusinessAdministrators() {
         return businessAdministrators;
     }
 
     @Override
-    public BusinessAdministratorRoleService<DatabaseConnector,DatabaseConnectorFactory> getBusinessAdministratorRoles() {
+    public BusinessAdministratorRoleService getBusinessAdministratorRoles() {
         return businessAdministratorRoles;
     }
 
     @Override
-    public BusinessProfileService<DatabaseConnector,DatabaseConnectorFactory> getBusinessProfiles() {
+    public BusinessProfileService getBusinessProfiles() {
         return businessProfiles;
     }
 
     @Override
-    public BusinessService<DatabaseConnector,DatabaseConnectorFactory> getBusinesses() {
+    public BusinessService getBusinesses() {
         return businesses;
     }
 
     @Override
-    public BusinessServerService<DatabaseConnector,DatabaseConnectorFactory> getBusinessServers() {
+    public BusinessServerService getBusinessServers() {
         return businessServers;
     }
 
     @Override
-    public CountryCodeService<DatabaseConnector,DatabaseConnectorFactory> getCountryCodes() {
+    public CountryCodeService getCountryCodes() {
         return countryCodes;
     }
 
     @Override
-    public CreditCardProcessorService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardProcessors() {
+    public CreditCardProcessorService getCreditCardProcessors() {
         return creditCardProcessors;
     }
 
     @Override
-    public CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> getCreditCardTransactions() {
+    public CreditCardTransactionService getCreditCardTransactions() {
         return creditCardTransactions;
     }
 
     @Override
-    public CreditCardService<DatabaseConnector,DatabaseConnectorFactory> getCreditCards() {
+    public CreditCardService getCreditCards() {
         return creditCards;
     }
 
     @Override
-    public CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> getCvsRepositories() {
+    public CvsRepositoryService getCvsRepositories() {
         return cvsRepositories;
     }
 
     @Override
-    public DisableLogService<DatabaseConnector,DatabaseConnectorFactory> getDisableLogs() {
+    public DisableLogService getDisableLogs() {
         return disableLogs;
     }
     /* TODO
-    public DistroFileTypeService<DatabaseConnector,DatabaseConnectorFactory> getDistroFileTypes();
+    public DistroFileTypeService getDistroFileTypes();
 
-    public DistroFileService<DatabaseConnector,DatabaseConnectorFactory> getDistroFiles();
+    public DistroFileService getDistroFiles();
      */
     @Override
-    public DnsRecordService<DatabaseConnector,DatabaseConnectorFactory> getDnsRecords() {
+    public DnsRecordService getDnsRecords() {
         return dnsRecords;
     }
 
     @Override
-    public DnsTldService<DatabaseConnector,DatabaseConnectorFactory> getDnsTlds() {
+    public DnsTldService getDnsTlds() {
         return dnsTlds;
     }
 
     @Override
-    public DnsTypeService<DatabaseConnector,DatabaseConnectorFactory> getDnsTypes() {
+    public DnsTypeService getDnsTypes() {
         return dnsTypes;
     }
 
     @Override
-    public DnsZoneService<DatabaseConnector,DatabaseConnectorFactory> getDnsZones() {
+    public DnsZoneService getDnsZones() {
         return dnsZones;
     }
 
-    // TODO: public EmailAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailAddresses();
+    // TODO: public EmailAddressService getEmailAddresses();
 
-    // TODO: public EmailAttachmentBlockService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentBlocks();
+    // TODO: public EmailAttachmentBlockService getEmailAttachmentBlocks();
 
     @Override
-    public EmailAttachmentTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailAttachmentTypes() {
+    public EmailAttachmentTypeService getEmailAttachmentTypes() {
         return emailAttachmentTypes;
     }
 
-    // TODO: public EmailDomainService<DatabaseConnector,DatabaseConnectorFactory> getEmailDomains();
+    // TODO: public EmailDomainService getEmailDomains();
 
-    // TODO: public EmailForwardingService<DatabaseConnector,DatabaseConnectorFactory> getEmailForwardings();
+    // TODO: public EmailForwardingService getEmailForwardings();
 
     @Override
-    public EmailInboxService<DatabaseConnector,DatabaseConnectorFactory> getEmailInboxes() {
+    public EmailInboxService getEmailInboxes() {
         return emailInboxes;
     }
     /* TODO
-    public EmailListAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailListAddresses();
+    public EmailListAddressService getEmailListAddresses();
 
-    public EmailListService<DatabaseConnector,DatabaseConnectorFactory> getEmailLists();
+    public EmailListService getEmailLists();
 
-    public EmailPipeAddressService<DatabaseConnector,DatabaseConnectorFactory> getEmailPipeAddresses();
+    public EmailPipeAddressService getEmailPipeAddresses();
 
-    public EmailPipeService<DatabaseConnector,DatabaseConnectorFactory> getEmailPipes();
+    public EmailPipeService getEmailPipes();
     */
     @Override
-    public EmailSmtpRelayTypeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpRelayTypes() {
+    public EmailSmtpRelayTypeService getEmailSmtpRelayTypes() {
         return emailSmtpRelayTypes;
     }
 
-    // TODO: public EmailSmtpRelayService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpRelays();
+    // TODO: public EmailSmtpRelayService getEmailSmtpRelays();
 
-    // TODO: public EmailSmtpSmartHostDomainService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpSmartHostDomains();
+    // TODO: public EmailSmtpSmartHostDomainService getEmailSmtpSmartHostDomains();
 
-    // TODO: public EmailSmtpSmartHostService<DatabaseConnector,DatabaseConnectorFactory> getEmailSmtpSmartHosts();
+    // TODO: public EmailSmtpSmartHostService getEmailSmtpSmartHosts();
 
     @Override
-    public EmailSpamAssassinIntegrationModeService<DatabaseConnector,DatabaseConnectorFactory> getEmailSpamAssassinIntegrationModes() {
+    public EmailSpamAssassinIntegrationModeService getEmailSpamAssassinIntegrationModes() {
         return emailSpamAssassinIntegrationModes;
     }
 
-    // TODO: public EncryptionKeyService<DatabaseConnector,DatabaseConnectorFactory> getEncryptionKeys();
+    // TODO: public EncryptionKeyService getEncryptionKeys();
 
     @Override
-    public ExpenseCategoryService<DatabaseConnector,DatabaseConnectorFactory> getExpenseCategories() {
+    public ExpenseCategoryService getExpenseCategories() {
         return expenseCategories;
     }
 
     @Override
-    public FailoverFileLogService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileLogs() {
+    public FailoverFileLogService getFailoverFileLogs() {
         return failoverFileLogs;
     }
 
     @Override
-    public FailoverFileReplicationService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileReplications() {
+    public FailoverFileReplicationService getFailoverFileReplications() {
         return failoverFileReplications;
     }
 
     @Override
-    public FailoverFileScheduleService<DatabaseConnector,DatabaseConnectorFactory> getFailoverFileSchedules() {
+    public FailoverFileScheduleService getFailoverFileSchedules() {
         return failoverFileSchedules;
     }
 
     @Override
-    public FailoverMySQLReplicationService<DatabaseConnector,DatabaseConnectorFactory> getFailoverMySQLReplications() {
+    public FailoverMySQLReplicationService getFailoverMySQLReplications() {
         return failoverMySQLReplications;
     }
 
     @Override
-    public FileBackupSettingService<DatabaseConnector,DatabaseConnectorFactory> getFileBackupSettings() {
+    public FileBackupSettingService getFileBackupSettings() {
         return fileBackupSettings;
     }
 
     @Override
-    public FtpGuestUserService<DatabaseConnector,DatabaseConnectorFactory> getFtpGuestUsers() {
+    public FtpGuestUserService getFtpGuestUsers() {
         return ftpGuestUsers;
     }
 
     @Override
-    public GroupNameService<DatabaseConnector,DatabaseConnectorFactory> getGroupNames() {
+    public GroupNameService getGroupNames() {
         return groupNames;
     }
 
-    // TODO: public HttpdBindService<DatabaseConnector,DatabaseConnectorFactory> getHttpdBinds();
+    // TODO: public HttpdBindService getHttpdBinds();
 
-    // TODO: public HttpdJBossSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossSites();
+    // TODO: public HttpdJBossSiteService getHttpdJBossSites();
 
     @Override
-    public HttpdJBossVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJBossVersions() {
+    public HttpdJBossVersionService getHttpdJBossVersions() {
         return httpdJBossVersions;
     }
 
     @Override
-    public HttpdJKCodeService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKCodes() {
+    public HttpdJKCodeService getHttpdJKCodes() {
         return httpdJKCodes;
     }
 
     @Override
-    public HttpdJKProtocolService<DatabaseConnector,DatabaseConnectorFactory> getHttpdJKProtocols() {
+    public HttpdJKProtocolService getHttpdJKProtocols() {
         return httpdJKProtocols;
     }
 
     @Override
-    public HttpdServerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdServers() {
+    public HttpdServerService getHttpdServers() {
         return httpdServers;
     }
     /* TODO
-    public HttpdSharedTomcatService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSharedTomcats();
+    public HttpdSharedTomcatService getHttpdSharedTomcats();
 
-    public HttpdSiteAuthenticatedLocationService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteAuthenticatedLocations();
+    public HttpdSiteAuthenticatedLocationService getHttpdSiteAuthenticatedLocations();
 
-    public HttpdSiteBindService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteBinds();
+    public HttpdSiteBindService getHttpdSiteBinds();
 
-    public HttpdSiteURLService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSiteURLs();
+    public HttpdSiteURLService getHttpdSiteURLs();
     */
     @Override
-    public HttpdSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdSites() {
+    public HttpdSiteService getHttpdSites() {
         return httpdSites;
     }
     /* TODO
-    public HttpdStaticSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdStaticSites();
+    public HttpdStaticSiteService getHttpdStaticSites();
 
-    public HttpdTomcatContextService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatContexts();
+    public HttpdTomcatContextService getHttpdTomcatContexts();
 
-    public HttpdTomcatDataSourceService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatDataSources();
+    public HttpdTomcatDataSourceService getHttpdTomcatDataSources();
 
-    public HttpdTomcatParameterService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatParameters();
+    public HttpdTomcatParameterService getHttpdTomcatParameters();
 
-    public HttpdTomcatSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatSites();
+    public HttpdTomcatSiteService getHttpdTomcatSites();
 
-    public HttpdTomcatSharedSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatSharedSites();
+    public HttpdTomcatSharedSiteService getHttpdTomcatSharedSites();
 
-    public HttpdTomcatStdSiteService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatStdSites();
+    public HttpdTomcatStdSiteService getHttpdTomcatStdSites();
     */
     @Override
-    public HttpdTomcatVersionService<DatabaseConnector,DatabaseConnectorFactory> getHttpdTomcatVersions() {
+    public HttpdTomcatVersionService getHttpdTomcatVersions() {
         return httpdTomcatVersions;
     }
 
-    // TODO: public HttpdWorkerService<DatabaseConnector,DatabaseConnectorFactory> getHttpdWorkers();
+    // TODO: public HttpdWorkerService getHttpdWorkers();
 
     @Override
-    public IPAddressService<DatabaseConnector,DatabaseConnectorFactory> getIpAddresses() {
+    public IPAddressService getIpAddresses() {
         return ipAddresses;
     }
 
     @Override
-    public LanguageService<DatabaseConnector,DatabaseConnectorFactory> getLanguages() {
+    public LanguageService getLanguages() {
         return languages;
     }
 
-    // TODO: public LinuxAccAddressService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccAddresses();
+    // TODO: public LinuxAccAddressService getLinuxAccAddresses();
 
     @Override
-    public LinuxAccountGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccountGroups() {
+    public LinuxAccountGroupService getLinuxAccountGroups() {
         return linuxAccountGroups;
     }
 
     @Override
-    public LinuxAccountTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccountTypes() {
+    public LinuxAccountTypeService getLinuxAccountTypes() {
         return linuxAccountTypes;
     }
 
     @Override
-    public LinuxAccountService<DatabaseConnector,DatabaseConnectorFactory> getLinuxAccounts() {
+    public LinuxAccountService getLinuxAccounts() {
         return linuxAccounts;
     }
 
     @Override
-    public LinuxGroupTypeService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroupTypes() {
+    public LinuxGroupTypeService getLinuxGroupTypes() {
         return linuxGroupTypes;
     }
 
     @Override
-    public LinuxGroupService<DatabaseConnector,DatabaseConnectorFactory> getLinuxGroups() {
+    public LinuxGroupService getLinuxGroups() {
         return linuxGroups;
     }
 
-    // TODO: public MajordomoListService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoLists();
+    // TODO: public MajordomoListService getMajordomoLists();
 
-    // TODO: public MajordomoServerService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoServers();
+    // TODO: public MajordomoServerService getMajordomoServers();
 
     @Override
-    public MajordomoVersionService<DatabaseConnector,DatabaseConnectorFactory> getMajordomoVersions() {
+    public MajordomoVersionService getMajordomoVersions() {
         return majordomoVersions;
     }
 
-    // TODO: public MasterHistoryService<DatabaseConnector,DatabaseConnectorFactory> getMasterHistory();
+    // TODO: public MasterHistoryService getMasterHistory();
 
     @Override
-    public MasterHostService<DatabaseConnector,DatabaseConnectorFactory> getMasterHosts() {
+    public MasterHostService getMasterHosts() {
         return masterHosts;
     }
 
     @Override
-    public MasterServerService<DatabaseConnector,DatabaseConnectorFactory> getMasterServers() {
+    public MasterServerService getMasterServers() {
         return masterServers;
     }
 
     @Override
-    public MasterUserService<DatabaseConnector,DatabaseConnectorFactory> getMasterUsers() {
+    public MasterUserService getMasterUsers() {
         return masterUsers;
     }
 
-    // TODO: public MonthlyChargeService<DatabaseConnector,DatabaseConnectorFactory> getMonthlyCharges();
+    // TODO: public MonthlyChargeService getMonthlyCharges();
 
     @Override
-    public MySQLDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDatabases() {
+    public MySQLDatabaseService getMysqlDatabases() {
         return mysqlDatabases;
     }
 
     @Override
-    public MySQLDBUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlDBUsers() {
+    public MySQLDBUserService getMysqlDBUsers() {
         return mysqlDBUsers;
     }
 
     @Override
-    public MySQLServerService<DatabaseConnector,DatabaseConnectorFactory> getMysqlServers() {
+    public MySQLServerService getMysqlServers() {
         return mysqlServers;
     }
 
     @Override
-    public MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> getMysqlUsers() {
+    public MySQLUserService getMysqlUsers() {
         return mysqlUsers;
     }
 
     @Override
-    public NetBindService<DatabaseConnector,DatabaseConnectorFactory> getNetBinds() {
+    public NetBindService getNetBinds() {
         return netBinds;
     }
 
     @Override
-    public NetDeviceIDService<DatabaseConnector,DatabaseConnectorFactory> getNetDeviceIDs() {
+    public NetDeviceIDService getNetDeviceIDs() {
         return netDeviceIDs;
     }
 
     @Override
-    public NetDeviceService<DatabaseConnector,DatabaseConnectorFactory> getNetDevices() {
+    public NetDeviceService getNetDevices() {
         return netDevices;
     }
 
     @Override
-    public NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> getNetProtocols() {
+    public NetProtocolService getNetProtocols() {
         return netProtocols;
     }
 
     @Override
-    public NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> getNetTcpRedirects() {
+    public NetTcpRedirectService getNetTcpRedirects() {
         return netTcpRedirects;
     }
 
-    // TODO: public NoticeLogService<DatabaseConnector,DatabaseConnectorFactory> getNoticeLogs();
+    // TODO: public NoticeLogService getNoticeLogs();
 
     @Override
-    public NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> getNoticeTypes() {
+    public NoticeTypeService getNoticeTypes() {
         return noticeTypes;
     }
 
     @Override
-    public OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystemVersions() {
+    public OperatingSystemVersionService getOperatingSystemVersions() {
         return operatingSystemVersions;
     }
 
     @Override
-    public OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> getOperatingSystems() {
+    public OperatingSystemService getOperatingSystems() {
         return operatingSystems;
     }
 
     @Override
-    public PackageCategoryService<DatabaseConnector,DatabaseConnectorFactory> getPackageCategories() {
+    public PackageCategoryService getPackageCategories() {
         return packageCategories;
     }
 
     @Override
-    public PackageDefinitionBusinessService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitionBusinesses() {
+    public PackageDefinitionBusinessService getPackageDefinitionBusinesses() {
         return packageDefinitionBusinesses;
     }
 
     @Override
-    public PackageDefinitionLimitService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitionLimits() {
+    public PackageDefinitionLimitService getPackageDefinitionLimits() {
         return packageDefinitionLimits;
     }
 
     @Override
-    public PackageDefinitionService<DatabaseConnector,DatabaseConnectorFactory> getPackageDefinitions() {
+    public PackageDefinitionService getPackageDefinitions() {
         return packageDefinitions;
     }
 
     @Override
-    public PaymentTypeService<DatabaseConnector,DatabaseConnectorFactory> getPaymentTypes() {
+    public PaymentTypeService getPaymentTypes() {
         return paymentTypes;
     }
 
-    // TODO: public PhysicalServerService<DatabaseConnector,DatabaseConnectorFactory> getPhysicalServers();
+    // TODO: public PhysicalServerService getPhysicalServers();
 
     @Override
-    public PostgresDatabaseService<DatabaseConnector,DatabaseConnectorFactory> getPostgresDatabases() {
+    public PostgresDatabaseService getPostgresDatabases() {
         return postgresDatabases;
     }
 
     @Override
-    public PostgresEncodingService<DatabaseConnector,DatabaseConnectorFactory> getPostgresEncodings() {
+    public PostgresEncodingService getPostgresEncodings() {
         return postgresEncodings;
     }
 
     @Override
-    public PostgresServerService<DatabaseConnector,DatabaseConnectorFactory> getPostgresServers() {
+    public PostgresServerService getPostgresServers() {
         return postgresServers;
     }
 
     @Override
-    public PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> getPostgresUsers() {
+    public PostgresUserService getPostgresUsers() {
         return postgresUsers;
     }
 
     @Override
-    public PostgresVersionService<DatabaseConnector,DatabaseConnectorFactory> getPostgresVersions() {
+    public PostgresVersionService getPostgresVersions() {
         return postgresVersions;
     }
 
     @Override
-    public PrivateFtpServerService<DatabaseConnector,DatabaseConnectorFactory> getPrivateFtpServers() {
+    public PrivateFtpServerService getPrivateFtpServers() {
         return privateFtpServers;
     }
 
     @Override
-    public ProcessorTypeService<DatabaseConnector,DatabaseConnectorFactory> getProcessorTypes() {
+    public ProcessorTypeService getProcessorTypes() {
         return processorTypes;
     }
 
     @Override
-    public ProtocolService<DatabaseConnector,DatabaseConnectorFactory> getProtocols() {
+    public ProtocolService getProtocols() {
         return protocols;
     }
     /* TODO
-    public RackService<DatabaseConnector,DatabaseConnectorFactory> getRacks();
+    public RackService getRacks();
     */
     @Override
-    public ResellerService<DatabaseConnector,DatabaseConnectorFactory> getResellers() {
+    public ResellerService getResellers() {
         return resellers;
     }
 
     @Override
-    public ResourceTypeService<DatabaseConnector,DatabaseConnectorFactory> getResourceTypes() {
+    public ResourceTypeService getResourceTypes() {
         return resourceTypes;
     }
 
     @Override
-    public ResourceService<DatabaseConnector,DatabaseConnectorFactory> getResources() {
+    public ResourceService getResources() {
         return resources;
     }
 
     @Override
-    public ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> getServerFarms() {
+    public ServerFarmService getServerFarms() {
         return serverFarms;
     }
 
     @Override
-    public ServerResourceService<DatabaseConnector,DatabaseConnectorFactory> getServerResources() {
+    public ServerResourceService getServerResources() {
         return serverResources;
     }
 
     @Override
-    public ServerService<DatabaseConnector,DatabaseConnectorFactory> getServers() {
+    public ServerService getServers() {
         return servers;
     }
 
     @Override
-    public ShellService<DatabaseConnector,DatabaseConnectorFactory> getShells() {
+    public ShellService getShells() {
         return shells;
     }
     /* TODO
-    public SignupRequestOptionService<DatabaseConnector,DatabaseConnectorFactory> getSignupRequestOptions();
+    public SignupRequestOptionService getSignupRequestOptions();
 
-    public SignupRequestService<DatabaseConnector,DatabaseConnectorFactory> getSignupRequests();
+    public SignupRequestService getSignupRequests();
 
-    public SpamEmailMessageService<DatabaseConnector,DatabaseConnectorFactory> getSpamEmailMessages();
+    public SpamEmailMessageService getSpamEmailMessages();
 
-    public SystemEmailAliasService<DatabaseConnector,DatabaseConnectorFactory> getSystemEmailAliases();
+    public SystemEmailAliasService getSystemEmailAliases();
     */
     @Override
-    public TechnologyService<DatabaseConnector,DatabaseConnectorFactory> getTechnologies() {
+    public TechnologyService getTechnologies() {
         return technologies;
     }
 
     @Override
-    public TechnologyClassService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyClasses() {
+    public TechnologyClassService getTechnologyClasses() {
         return technologyClasses;
     }
 
     @Override
-    public TechnologyNameService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyNames() {
+    public TechnologyNameService getTechnologyNames() {
         return technologyNames;
     }
 
     @Override
-    public TechnologyVersionService<DatabaseConnector,DatabaseConnectorFactory> getTechnologyVersions() {
+    public TechnologyVersionService getTechnologyVersions() {
         return technologyVersions;
     }
 
     @Override
-    public TicketActionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketActionTypes() {
+    public TicketActionTypeService getTicketActionTypes() {
         return ticketActionTypes;
     }
 
     @Override
-    public TicketActionService<DatabaseConnector,DatabaseConnectorFactory> getTicketActions() {
+    public TicketActionService getTicketActions() {
         return ticketActions;
     }
 
     @Override
-    public TicketAssignmentService<DatabaseConnector,DatabaseConnectorFactory> getTicketAssignments() {
+    public TicketAssignmentService getTicketAssignments() {
         return ticketAssignments;
     }
 
-    // TODO: public TicketBrandCategoryService<DatabaseConnector,DatabaseConnectorFactory> getTicketBrandCategories();
+    // TODO: public TicketBrandCategoryService getTicketBrandCategories();
 
     @Override
-    public TicketCategoryService<DatabaseConnector,DatabaseConnectorFactory> getTicketCategories() {
+    public TicketCategoryService getTicketCategories() {
         return ticketCategories;
     }
 
     @Override
-    public TicketPriorityService<DatabaseConnector,DatabaseConnectorFactory> getTicketPriorities() {
+    public TicketPriorityService getTicketPriorities() {
         return ticketPriorities;
     }
 
     @Override
-    public TicketStatusService<DatabaseConnector,DatabaseConnectorFactory> getTicketStatuses() {
+    public TicketStatusService getTicketStatuses() {
         return ticketStatuses;
     }
 
     @Override
-    public TicketTypeService<DatabaseConnector,DatabaseConnectorFactory> getTicketTypes() {
+    public TicketTypeService getTicketTypes() {
         return ticketTypes;
     }
 
     @Override
-    public TicketService<DatabaseConnector,DatabaseConnectorFactory> getTickets() {
+    public TicketService getTickets() {
         return tickets;
     }
 
     @Override
-    public TimeZoneService<DatabaseConnector,DatabaseConnectorFactory> getTimeZones() {
+    public TimeZoneService getTimeZones() {
         return timeZones;
     }
 
     @Override
-    public TransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> getTransactionTypes() {
+    public TransactionTypeService getTransactionTypes() {
         return transactionTypes;
     }
 
     @Override
-    public TransactionService<DatabaseConnector,DatabaseConnectorFactory> getTransactions() {
+    public TransactionService getTransactions() {
         return transactions;
     }
     /* TODO
-    public USStateService<DatabaseConnector,DatabaseConnectorFactory> getUsStates();
+    public USStateService getUsStates();
     */
     @Override
-    public UsernameService<DatabaseConnector,DatabaseConnectorFactory> getUsernames() {
+    public UsernameService getUsernames() {
         return usernames;
     }
     /* TODO
-    public VirtualDiskService<DatabaseConnector,DatabaseConnectorFactory> getVirtualDisks();
+    public VirtualDiskService getVirtualDisks();
      */
     @Override
-    public VirtualServerService<DatabaseConnector,DatabaseConnectorFactory> getVirtualServers() {
+    public VirtualServerService getVirtualServers() {
         return virtualServers;
     }
     /* TODO
-    public WhoisHistoryService<DatabaseConnector,DatabaseConnectorFactory> getWhoisHistory();
+    public WhoisHistoryService getWhoisHistory();
      */
     // </editor-fold>
 }

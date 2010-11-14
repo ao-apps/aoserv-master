@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseFailoverFileScheduleService extends DatabaseService<Integer,FailoverFileSchedule> implements FailoverFileScheduleService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseFailoverFileScheduleService extends DatabaseService<Integer,FailoverFileSchedule> implements FailoverFileScheduleService {
 
     private final ObjectFactory<FailoverFileSchedule> objectFactory = new AutoObjectFactory<FailoverFileSchedule>(FailoverFileSchedule.class, connector);
 

@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTransactionService extends DatabaseService<Integer,Transaction> implements TransactionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTransactionService extends DatabaseService<Integer,Transaction> implements TransactionService {
 
     private final ObjectFactory<Transaction> objectFactory = new ObjectFactory<Transaction>() {
         @Override

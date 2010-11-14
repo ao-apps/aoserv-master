@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresEncodingService extends DatabasePublicService<Integer,PostgresEncoding> implements PostgresEncodingService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePostgresEncodingService extends DatabasePublicService<Integer,PostgresEncoding> implements PostgresEncodingService {
 
     private final ObjectFactory<PostgresEncoding> objectFactory = new AutoObjectFactory<PostgresEncoding>(PostgresEncoding.class, connector);
 

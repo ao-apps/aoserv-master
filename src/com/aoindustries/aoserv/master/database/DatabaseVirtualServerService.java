@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseVirtualServerService extends DatabaseService<Integer,VirtualServer> implements VirtualServerService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseVirtualServerService extends DatabaseService<Integer,VirtualServer> implements VirtualServerService {
 
     private final ObjectFactory<VirtualServer> objectFactory = new AutoObjectFactory<VirtualServer>(VirtualServer.class, connector);
 

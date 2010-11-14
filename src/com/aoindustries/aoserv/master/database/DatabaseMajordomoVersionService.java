@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseMajordomoVersionService extends DatabasePublicService<String,MajordomoVersion> implements MajordomoVersionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseMajordomoVersionService extends DatabasePublicService<String,MajordomoVersion> implements MajordomoVersionService {
 
     private final ObjectFactory<MajordomoVersion> objectFactory = new AutoObjectFactory<MajordomoVersion>(MajordomoVersion.class, connector);
 

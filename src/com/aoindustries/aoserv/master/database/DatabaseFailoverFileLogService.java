@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseFailoverFileLogService extends DatabaseService<Integer,FailoverFileLog> implements FailoverFileLogService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseFailoverFileLogService extends DatabaseService<Integer,FailoverFileLog> implements FailoverFileLogService {
 
     private final ObjectFactory<FailoverFileLog> objectFactory = new ObjectFactory<FailoverFileLog>() {
         @Override

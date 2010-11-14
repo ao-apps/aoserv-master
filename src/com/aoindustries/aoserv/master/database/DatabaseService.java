@@ -37,7 +37,7 @@ import java.util.Set;
 abstract class DatabaseService<
     K extends Comparable<K>,
     V extends AOServObject<K>
-> implements AOServService<DatabaseConnector,DatabaseConnectorFactory,K,V> {
+> implements AOServService<K,V> {
 
     // <editor-fold defaultstate="collapsed" desc="Business Tree Joins">
     /**

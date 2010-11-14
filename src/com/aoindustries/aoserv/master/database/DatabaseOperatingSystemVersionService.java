@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseOperatingSystemVersionService extends DatabasePublicService<Integer,OperatingSystemVersion> implements OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseOperatingSystemVersionService extends DatabasePublicService<Integer,OperatingSystemVersion> implements OperatingSystemVersionService {
 
     private final ObjectFactory<OperatingSystemVersion> objectFactory = new AutoObjectFactory<OperatingSystemVersion>(OperatingSystemVersion.class, connector);
 

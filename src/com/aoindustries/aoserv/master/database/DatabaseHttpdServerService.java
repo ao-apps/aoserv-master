@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseHttpdServerService extends DatabaseService<Integer,HttpdServer> implements HttpdServerService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseHttpdServerService extends DatabaseService<Integer,HttpdServer> implements HttpdServerService {
 
     private final ObjectFactory<HttpdServer> objectFactory = new AutoObjectFactory<HttpdServer>(HttpdServer.class, connector);
 

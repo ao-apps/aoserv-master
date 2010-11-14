@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseFailoverFileReplicationService extends DatabaseService<Integer,FailoverFileReplication> implements FailoverFileReplicationService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseFailoverFileReplicationService extends DatabaseService<Integer,FailoverFileReplication> implements FailoverFileReplicationService {
 
     private final ObjectFactory<FailoverFileReplication> objectFactory = new AutoObjectFactory<FailoverFileReplication>(FailoverFileReplication.class, connector);
 

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseCreditCardTransactionService extends DatabaseService<Integer,CreditCardTransaction> implements CreditCardTransactionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseCreditCardTransactionService extends DatabaseService<Integer,CreditCardTransaction> implements CreditCardTransactionService {
 
     private final ObjectFactory<CreditCardTransaction> objectFactory = new ObjectFactory<CreditCardTransaction>() {
         @Override

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> implements DnsRecordService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> implements DnsRecordService {
 
     private final ObjectFactory<DnsRecord> objectFactory = new ObjectFactory<DnsRecord>() {
         @Override

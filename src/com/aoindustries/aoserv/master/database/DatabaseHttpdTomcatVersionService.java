@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseHttpdTomcatVersionService extends DatabasePublicService<Integer,HttpdTomcatVersion> implements HttpdTomcatVersionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseHttpdTomcatVersionService extends DatabasePublicService<Integer,HttpdTomcatVersion> implements HttpdTomcatVersionService {
 
     private final ObjectFactory<HttpdTomcatVersion> objectFactory = new AutoObjectFactory<HttpdTomcatVersion>(HttpdTomcatVersion.class, connector);
 

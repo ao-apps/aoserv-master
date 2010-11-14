@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseAOServerDaemonHostService extends DatabaseService<Integer,AOServerDaemonHost> implements AOServerDaemonHostService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseAOServerDaemonHostService extends DatabaseService<Integer,AOServerDaemonHost> implements AOServerDaemonHostService {
 
     private final ObjectFactory<AOServerDaemonHost> objectFactory = new AutoObjectFactory<AOServerDaemonHost>(AOServerDaemonHost.class, connector);
 

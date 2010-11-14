@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseEmailSmtpRelayTypeService extends DatabasePublicService<String,EmailSmtpRelayType> implements EmailSmtpRelayTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseEmailSmtpRelayTypeService extends DatabasePublicService<String,EmailSmtpRelayType> implements EmailSmtpRelayTypeService {
 
     private final ObjectFactory<EmailSmtpRelayType> objectFactory = new AutoObjectFactory<EmailSmtpRelayType>(EmailSmtpRelayType.class, connector);
 

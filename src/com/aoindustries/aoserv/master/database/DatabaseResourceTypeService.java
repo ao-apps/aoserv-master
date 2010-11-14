@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseResourceTypeService extends DatabasePublicService<String,ResourceType> implements ResourceTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseResourceTypeService extends DatabasePublicService<String,ResourceType> implements ResourceTypeService {
 
     private final ObjectFactory<ResourceType> objectFactory = new AutoObjectFactory<ResourceType>(ResourceType.class, connector);
 

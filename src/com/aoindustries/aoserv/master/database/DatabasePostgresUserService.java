@@ -18,7 +18,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresUserService extends DatabaseService<Integer,PostgresUser> implements PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePostgresUserService extends DatabaseService<Integer,PostgresUser> implements PostgresUserService {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<PostgresUser> objectFactory = new AutoObjectFactory<PostgresUser>(PostgresUser.class, connector);

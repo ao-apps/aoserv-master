@@ -39,7 +39,7 @@ import java.util.Set;
  *
  * @author  AO Industries, Inc.
  */
-final public class DatabaseConnectorFactory implements AOServConnectorFactory<DatabaseConnector,DatabaseConnectorFactory> {
+final public class DatabaseConnectorFactory implements AOServConnectorFactory {
 
     // <editor-fold defaultstate="collapsed" desc="Connector-less Data Access">
     private static final ObjectFactory<UserId> userIdFactory = new ObjectFactory<UserId>() {
@@ -235,7 +235,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
      * be used to query information.  This connector is read-only.  Also, it doesn't change the
      * ThreadLocale any so that messages are generated in the expected locale.
      */
-    final protected AOServConnector<?,?> rootConnector;
+    final protected AOServConnector rootConnector;
 
     public DatabaseConnectorFactory(Database database, UserId rootUserId, String rootPassword) throws LoginException, RemoteException {
         this.database = database;
@@ -243,7 +243,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
     }
 
     // <editor-fold defaultstate="collapsed" desc="Connector Creation">
-    private final AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory> connectors = new AOServConnectorFactoryCache<DatabaseConnector,DatabaseConnectorFactory>();
+    private final AOServConnectorFactoryCache<DatabaseConnector> connectors = new AOServConnectorFactoryCache<DatabaseConnector>();
 
     @Override
     public DatabaseConnector getConnector(Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) throws LoginException, RemoteException {
@@ -370,10 +370,10 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory<Da
                     @Override
                     public void run(DatabaseConnection db) {
                         try {
-                            AOServerService<?,?> rootAoServers = rootConnector.getAoServers();
-                            BusinessAdministratorService<?,?> rootBusinessAdministrators = rootConnector.getBusinessAdministrators();
-                            BusinessService<?,?> rootBusinesses = rootConnector.getBusinesses();
-                            ServerService<?,?> rootServers = rootConnector.getServers();
+                            AOServerService rootAoServers = rootConnector.getAoServers();
+                            BusinessAdministratorService rootBusinessAdministrators = rootConnector.getBusinessAdministrators();
+                            BusinessService rootBusinesses = rootConnector.getBusinesses();
+                            ServerService rootServers = rootConnector.getServers();
                             // Also send the signal to any failover parent
                             for(ServiceName service : services) {
                                 Set<Integer> affectedServers = invalidateSet.getAffectedServers(service);

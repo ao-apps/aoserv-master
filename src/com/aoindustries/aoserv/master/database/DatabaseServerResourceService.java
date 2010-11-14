@@ -10,7 +10,7 @@ import com.aoindustries.aoserv.client.*;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseServerResourceService extends ServerResourceService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseServerResourceService extends ServerResourceService {
 
     static final String SELECT_COLUMNS =
         DatabaseResourceService.SELECT_COLUMNS

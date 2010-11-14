@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseProtocolService extends DatabasePublicService<String,Protocol> implements ProtocolService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseProtocolService extends DatabasePublicService<String,Protocol> implements ProtocolService {
 
     private final ObjectFactory<Protocol> objectFactory = new AutoObjectFactory<Protocol>(Protocol.class, connector);
 

@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBankTransactionTypeService extends DatabaseService<String,BankTransactionType> implements BankTransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseBankTransactionTypeService extends DatabaseService<String,BankTransactionType> implements BankTransactionTypeService {
 
     private final ObjectFactory<BankTransactionType> objectFactory = new AutoObjectFactory<BankTransactionType>(BankTransactionType.class, connector);
 

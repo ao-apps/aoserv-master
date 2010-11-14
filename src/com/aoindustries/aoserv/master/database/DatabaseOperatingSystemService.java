@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseOperatingSystemService extends DatabasePublicService<String,OperatingSystem> implements OperatingSystemService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseOperatingSystemService extends DatabasePublicService<String,OperatingSystem> implements OperatingSystemService {
 
     private final ObjectFactory<OperatingSystem> objectFactory = new AutoObjectFactory<OperatingSystem>(OperatingSystem.class, connector);
 

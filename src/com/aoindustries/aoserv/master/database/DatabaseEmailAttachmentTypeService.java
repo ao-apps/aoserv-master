@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseEmailAttachmentTypeService extends DatabasePublicService<String,EmailAttachmentType> implements EmailAttachmentTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseEmailAttachmentTypeService extends DatabasePublicService<String,EmailAttachmentType> implements EmailAttachmentTypeService {
 
     private final ObjectFactory<EmailAttachmentType> objectFactory = new AutoObjectFactory<EmailAttachmentType>(EmailAttachmentType.class, connector);
 

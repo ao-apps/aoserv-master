@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseArchitectureService extends DatabasePublicService<String,Architecture> implements ArchitectureService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseArchitectureService extends DatabasePublicService<String,Architecture> implements ArchitectureService {
 
     private final ObjectFactory<Architecture> objectFactory = new AutoObjectFactory<Architecture>(Architecture.class, connector);
 

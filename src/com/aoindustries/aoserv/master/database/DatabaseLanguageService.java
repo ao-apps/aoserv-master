@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLanguageService extends DatabasePublicService<String,Language> implements LanguageService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseLanguageService extends DatabasePublicService<String,Language> implements LanguageService {
 
     private final ObjectFactory<Language> objectFactory = new AutoObjectFactory<Language>(Language.class, connector);
 

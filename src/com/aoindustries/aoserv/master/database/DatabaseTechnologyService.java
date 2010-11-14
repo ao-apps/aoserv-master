@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTechnologyService extends DatabasePublicService<Integer,Technology> implements TechnologyService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTechnologyService extends DatabasePublicService<Integer,Technology> implements TechnologyService {
 
     private final ObjectFactory<Technology> objectFactory = new AutoObjectFactory<Technology>(Technology.class, connector);
 

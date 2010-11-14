@@ -23,7 +23,7 @@ import java.util.Locale;
  */
 final public class ThreadLocaleConnectorFactory extends WrappedConnectorFactory<ThreadLocaleConnector,ThreadLocaleConnectorFactory> {
 
-    public ThreadLocaleConnectorFactory(AOServConnectorFactory<?,?> wrapped) {
+    public ThreadLocaleConnectorFactory(AOServConnectorFactory wrapped) {
         super(wrapped);
     }
 

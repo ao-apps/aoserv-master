@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTicketTypeService extends DatabasePublicService<String,TicketType> implements TicketTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTicketTypeService extends DatabasePublicService<String,TicketType> implements TicketTypeService {
 
     private final ObjectFactory<TicketType> objectFactory = new AutoObjectFactory<TicketType>(TicketType.class, connector);
 

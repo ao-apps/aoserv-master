@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseEmailSpamAssassinIntegrationModeService extends DatabasePublicService<String,EmailSpamAssassinIntegrationMode> implements EmailSpamAssassinIntegrationModeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseEmailSpamAssassinIntegrationModeService extends DatabasePublicService<String,EmailSpamAssassinIntegrationMode> implements EmailSpamAssassinIntegrationModeService {
 
     private final ObjectFactory<EmailSpamAssassinIntegrationMode> objectFactory = new AutoObjectFactory<EmailSpamAssassinIntegrationMode>(EmailSpamAssassinIntegrationMode.class, connector);
 

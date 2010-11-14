@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePackageDefinitionBusinessService extends DatabaseService<Integer,PackageDefinitionBusiness> implements PackageDefinitionBusinessService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePackageDefinitionBusinessService extends DatabaseService<Integer,PackageDefinitionBusiness> implements PackageDefinitionBusinessService {
 
     private final ObjectFactory<PackageDefinitionBusiness> objectFactory = new AutoObjectFactory<PackageDefinitionBusiness>(PackageDefinitionBusiness.class, connector);
 

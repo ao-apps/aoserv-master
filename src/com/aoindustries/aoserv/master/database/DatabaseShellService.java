@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseShellService extends DatabasePublicService<UnixPath,Shell> implements ShellService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseShellService extends DatabasePublicService<UnixPath,Shell> implements ShellService {
 
     private final ObjectFactory<Shell> objectFactory = new AutoObjectFactory<Shell>(Shell.class, connector);
 

@@ -18,7 +18,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> implements MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> implements MySQLUserService {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<MySQLUser> objectFactory = new AutoObjectFactory<MySQLUser>(MySQLUser.class, connector);

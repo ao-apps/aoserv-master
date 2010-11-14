@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseProcessorTypeService extends DatabasePublicService<String,ProcessorType> implements ProcessorTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseProcessorTypeService extends DatabasePublicService<String,ProcessorType> implements ProcessorTypeService {
 
     private final ObjectFactory<ProcessorType> objectFactory = new AutoObjectFactory<ProcessorType>(ProcessorType.class, connector);
 

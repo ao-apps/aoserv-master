@@ -28,7 +28,7 @@ final public class MasterServer {
      * Keeps a reference to factory to avoid complete garbage collection.
      * @{link http://stackoverflow.com/questions/645208/java-rmi-nosuchobjectexception-no-such-object-in-table}
      */
-    private static RmiServerConnectorFactory<?,?> factory;
+    private static AOServConnectorFactory factory;
 
     public static void main(String[] args) {
         // TODO: security manager
@@ -70,37 +70,22 @@ final public class MasterServer {
                 }
 
                 // Create the database factory
-                AOServConnectorFactory<DatabaseConnector,DatabaseConnectorFactory> databaseFactory = new DatabaseConnectorFactory(MasterDatabase.getDatabase(), rootUsername, rootPassword);
+                AOServConnectorFactory newFactory = new DatabaseConnectorFactory(MasterDatabase.getDatabase(), rootUsername, rootPassword);
 
                 // Wrap with ThreadLocale factory when enabled
                 if(MasterConfiguration.isThreadLocaleEnabled()) {
-                    ThreadLocaleConnectorFactory threadLocaleFactory = new ThreadLocaleConnectorFactory(databaseFactory);
+                    newFactory = new ThreadLocaleConnectorFactory(newFactory);
                     System.out.print("ThreadLocale enabled: ");
-
-                    // Wrap with Trace factory when enabled
-                    if(MasterConfiguration.isTraceEnabled()) {
-                        TraceConnectorFactory traceFactory = new TraceConnectorFactory(threadLocaleFactory);
-                        System.out.print("Tracing enabled: ");
-
-                        // Start the RMI server: threadLocale+trace
-                        factory = new RmiServerConnectorFactory<TraceConnector,TraceConnectorFactory>(publicAddress, listenAddress, port, useSsl, traceFactory);
-                    } else {
-                        // Start the RMI server: threadLocale
-                        factory = new RmiServerConnectorFactory<ThreadLocaleConnector,ThreadLocaleConnectorFactory>(publicAddress, listenAddress, port, useSsl, threadLocaleFactory);
-                    }
-                } else {
-                    // Wrap with Trace factory when enabled
-                    if(MasterConfiguration.isTraceEnabled()) {
-                        TraceConnectorFactory traceFactory = new TraceConnectorFactory(databaseFactory);
-                        System.out.print("Tracing enabled: ");
-
-                        // Start the RMI server: trace
-                        factory = new RmiServerConnectorFactory<TraceConnector,TraceConnectorFactory>(publicAddress, listenAddress, port, useSsl, traceFactory);
-                    } else {
-                        // Start the RMI server: no options
-                        factory = new RmiServerConnectorFactory<DatabaseConnector,DatabaseConnectorFactory>(publicAddress, listenAddress, port, useSsl, databaseFactory);
-                    }
                 }
+
+                // Wrap with Trace factory when enabled
+                if(MasterConfiguration.isTraceEnabled()) {
+                    newFactory = new TraceConnectorFactory(newFactory);
+                    System.out.print("Tracing enabled: ");
+                }
+
+                // Start the RMI server
+                factory = new RmiServerConnectorFactory(publicAddress, listenAddress, port, useSsl, newFactory);
 
                 done = true;
                 System.out.println("Done");

@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> implements GroupNameService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> implements GroupNameService {
 
     private final ObjectFactory<GroupName> objectFactory = new AutoObjectFactory<GroupName>(GroupName.class, connector);
 

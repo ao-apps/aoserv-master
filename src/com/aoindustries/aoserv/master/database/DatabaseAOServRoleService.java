@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole> implements AOServRoleService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole> implements AOServRoleService {
 
     private final ObjectFactory<AOServRole> objectFactory = new AutoObjectFactory<AOServRole>(AOServRole.class, connector);
 

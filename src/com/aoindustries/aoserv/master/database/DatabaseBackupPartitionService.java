@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBackupPartitionService extends DatabaseService<Integer,BackupPartition> implements BackupPartitionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseBackupPartitionService extends DatabaseService<Integer,BackupPartition> implements BackupPartitionService {
 
     private final ObjectFactory<BackupPartition> objectFactory = new AutoObjectFactory<BackupPartition>(BackupPartition.class, connector);
 

@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNetProtocolService extends DatabasePublicService<String,NetProtocol> implements NetProtocolService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseNetProtocolService extends DatabasePublicService<String,NetProtocol> implements NetProtocolService {
 
     private final ObjectFactory<NetProtocol> objectFactory = new AutoObjectFactory<NetProtocol>(NetProtocol.class, connector);
 

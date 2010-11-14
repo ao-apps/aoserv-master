@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNoticeTypeService extends DatabasePublicService<String,NoticeType> implements NoticeTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseNoticeTypeService extends DatabasePublicService<String,NoticeType> implements NoticeTypeService {
 
     private final ObjectFactory<NoticeType> objectFactory = new AutoObjectFactory<NoticeType>(NoticeType.class, connector);
 

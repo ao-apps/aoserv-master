@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> implements DnsZoneService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> implements DnsZoneService {
 
     private final ObjectFactory<DnsZone> objectFactory = new AutoObjectFactory<DnsZone>(DnsZone.class, connector);
 

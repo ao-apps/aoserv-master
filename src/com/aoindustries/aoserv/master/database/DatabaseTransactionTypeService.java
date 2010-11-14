@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTransactionTypeService extends DatabasePublicService<String,TransactionType> implements TransactionTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTransactionTypeService extends DatabasePublicService<String,TransactionType> implements TransactionTypeService {
 
     private final ObjectFactory<TransactionType> objectFactory = new AutoObjectFactory<TransactionType>(TransactionType.class, connector);
 

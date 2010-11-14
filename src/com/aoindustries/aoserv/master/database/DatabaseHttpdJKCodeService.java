@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseHttpdJKCodeService extends DatabasePublicService<String,HttpdJKCode> implements HttpdJKCodeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseHttpdJKCodeService extends DatabasePublicService<String,HttpdJKCode> implements HttpdJKCodeService {
 
     private final ObjectFactory<HttpdJKCode> objectFactory = new AutoObjectFactory<HttpdJKCode>(HttpdJKCode.class, connector);
 

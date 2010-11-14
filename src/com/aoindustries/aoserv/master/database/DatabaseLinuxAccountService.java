@@ -18,7 +18,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAccount> implements LinuxAccountService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAccount> implements LinuxAccountService {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<LinuxAccount> objectFactory = new AutoObjectFactory<LinuxAccount>(LinuxAccount.class, connector);

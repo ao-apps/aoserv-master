@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseExpenseCategoryService extends DatabaseService<String,ExpenseCategory> implements ExpenseCategoryService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseExpenseCategoryService extends DatabaseService<String,ExpenseCategory> implements ExpenseCategoryService {
 
     private final ObjectFactory<ExpenseCategory> objectFactory = new AutoObjectFactory<ExpenseCategory>(ExpenseCategory.class, connector);
 

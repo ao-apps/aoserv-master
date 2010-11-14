@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup> implements LinuxGroupService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup> implements LinuxGroupService {
 
     private final ObjectFactory<LinuxGroup> objectFactory = new AutoObjectFactory<LinuxGroup>(LinuxGroup.class, connector);
 

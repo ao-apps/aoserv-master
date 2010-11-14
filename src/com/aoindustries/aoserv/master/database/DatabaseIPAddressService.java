@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> implements IPAddressService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> implements IPAddressService {
 
     private final ObjectFactory<IPAddress> objectFactory = new AutoObjectFactory<IPAddress>(IPAddress.class, connector);
 

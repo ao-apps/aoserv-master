@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseFtpGuestUserService extends DatabaseService<Integer,FtpGuestUser> implements FtpGuestUserService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseFtpGuestUserService extends DatabaseService<Integer,FtpGuestUser> implements FtpGuestUserService {
 
     private final ObjectFactory<FtpGuestUser> objectFactory = new AutoObjectFactory<FtpGuestUser>(FtpGuestUser.class, connector);
 

@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePackageCategoryService extends DatabasePublicService<String,PackageCategory> implements PackageCategoryService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePackageCategoryService extends DatabasePublicService<String,PackageCategory> implements PackageCategoryService {
 
     private final ObjectFactory<PackageCategory> objectFactory = new AutoObjectFactory<PackageCategory>(PackageCategory.class, connector);
 

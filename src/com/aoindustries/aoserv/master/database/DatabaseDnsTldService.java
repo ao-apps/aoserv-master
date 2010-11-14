@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseDnsTldService extends DatabasePublicService<DomainName,DnsTld> implements DnsTldService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseDnsTldService extends DatabasePublicService<DomainName,DnsTld> implements DnsTldService {
 
     private final ObjectFactory<DnsTld> objectFactory = new AutoObjectFactory<DnsTld>(DnsTld.class, connector);
 

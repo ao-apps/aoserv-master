@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseDnsTypeService extends DatabasePublicService<String,DnsType> implements DnsTypeService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseDnsTypeService extends DatabasePublicService<String,DnsType> implements DnsTypeService {
 
     private final ObjectFactory<DnsType> objectFactory = new AutoObjectFactory<DnsType>(DnsType.class, connector);
 

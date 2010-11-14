@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNetTcpRedirectService extends DatabaseService<Integer,NetTcpRedirect> implements NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseNetTcpRedirectService extends DatabaseService<Integer,NetTcpRedirect> implements NetTcpRedirectService {
 
     private final ObjectFactory<NetTcpRedirect> objectFactory = new AutoObjectFactory<NetTcpRedirect>(NetTcpRedirect.class, connector);
 

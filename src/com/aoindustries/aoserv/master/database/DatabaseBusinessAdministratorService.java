@@ -18,7 +18,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,BusinessAdministrator> implements BusinessAdministratorService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,BusinessAdministrator> implements BusinessAdministratorService {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<BusinessAdministrator> objectFactory = new ObjectFactory<BusinessAdministrator>() {

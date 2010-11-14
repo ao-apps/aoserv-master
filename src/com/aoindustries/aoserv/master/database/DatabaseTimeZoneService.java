@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTimeZoneService extends DatabasePublicService<String,TimeZone> implements TimeZoneService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseTimeZoneService extends DatabasePublicService<String,TimeZone> implements TimeZoneService {
 
     private final ObjectFactory<TimeZone> objectFactory = new AutoObjectFactory<TimeZone>(TimeZone.class, connector);
 

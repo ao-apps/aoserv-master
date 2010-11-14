@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePackageDefinitionService extends DatabaseService<Integer,PackageDefinition> implements PackageDefinitionService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabasePackageDefinitionService extends DatabaseService<Integer,PackageDefinition> implements PackageDefinitionService {
 
     private final ObjectFactory<PackageDefinition> objectFactory = new ObjectFactory<PackageDefinition>() {
         @Override

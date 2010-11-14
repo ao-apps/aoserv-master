@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepository> implements CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepository> implements CvsRepositoryService {
 
     private final ObjectFactory<CvsRepository> objectFactory = new AutoObjectFactory<CvsRepository>(CvsRepository.class, connector);
 
