@@ -9,49 +9,49 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabasePostgresDatabaseService extends DatabaseService<Integer,PostgresDatabase> implements PostgresDatabaseService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<PostgresDatabase> objectFactory = new AutoObjectFactory<PostgresDatabase>(PostgresDatabase.class, this);
+    private final ObjectFactory<PostgresDatabase> objectFactory = new AutoObjectFactory<PostgresDatabase>(PostgresDatabase.class, connector);
 
     DatabasePostgresDatabaseService(DatabaseConnector connector) {
         super(connector, Integer.class, PostgresDatabase.class);
     }
 
     @Override
-    protected Set<PostgresDatabase> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PostgresDatabase> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<PostgresDatabase>(),
+            new ArrayList<PostgresDatabase>(),
             objectFactory,
             "select\n"
-            + "  ao_server_resource,\n"
-            + "  name,\n"
-            + "  postgres_server,\n"
-            + "  datdba,\n"
-            + "  encoding,\n"
-            + "  is_template,\n"
-            + "  allow_conn,\n"
-            + "  enable_postgis\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  pd.name,\n"
+            + "  pd.postgres_server,\n"
+            + "  pd.datdba,\n"
+            + "  pd.encoding,\n"
+            + "  pd.is_template,\n"
+            + "  pd.allow_conn,\n"
+            + "  pd.enable_postgis\n"
             + "from\n"
-            + "  postgres_databases\n"
-            + "order by\n"
-            + "  ao_server_resource"
+            + "  postgres_databases pd\n"
+            + "  inner join ao_server_resources asr on pd.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<PostgresDatabase> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PostgresDatabase> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<PostgresDatabase>(),
+            new ArrayList<PostgresDatabase>(),
             objectFactory,
             "select\n"
-            + "  pd.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  pd.name,\n"
             + "  pd.postgres_server,\n"
             + "  pd.datdba,\n"
@@ -62,22 +62,23 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
             + "from\n"
             + "  master_servers ms,\n"
             + "  postgres_databases pd\n"
+            + "  inner join ao_server_resources asr on pd.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=pd.ao_server\n"
-            + "order by\n"
-            + "  pd.ao_server_resource",
+            + "  and ms.server=pd.ao_server",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<PostgresDatabase> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PostgresDatabase> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<PostgresDatabase>(),
+            new ArrayList<PostgresDatabase>(),
             objectFactory,
             "select\n"
-            + "  pd.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  pd.name,\n"
             + "  pd.postgres_server,\n"
             + "  pd.datdba,\n"
@@ -87,18 +88,16 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
             + "  pd.enable_postgis\n"
             + "from\n"
             + "  usernames un,\n"
-            + BU1_PARENTS_JOIN
-            + "  ao_server_resources aor,\n"
-            + "  postgres_databases pd\n"
+            + BU1_PARENTS_JOIN_NO_COMMA
+            + "  inner join ao_server_resources asr on bu1.accounting=asr.accounting\n"
+            + "  inner join postgres_databases pd on asr.resource=pd.ao_server_resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
-            + "  )\n"
-            + "  and bu1.accounting=aor.accounting\n"
-            + "  and aor.resource=pd.ao_server_resource\n"
-            + "order by\n"
-            + "  pd.ao_server_resource",
+            + "  )",
             connector.getConnectAs()
         );
     }

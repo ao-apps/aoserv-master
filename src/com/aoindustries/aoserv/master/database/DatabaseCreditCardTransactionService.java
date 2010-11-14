@@ -9,12 +9,10 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -26,7 +24,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
         public CreditCardTransaction createObject(ResultSet result) throws SQLException {
             try {
                 return new CreditCardTransaction(
-                    DatabaseCreditCardTransactionService.this,
+                    connector,
                     result.getInt("pkey"),
                     result.getString("processor_id"),
                     AccountingCode.valueOf(result.getString("accounting")),
@@ -121,10 +119,10 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
     }
 
     @Override
-    protected Set<CreditCardTransaction> getSetMaster(DatabaseConnection db) throws RemoteException, SQLException {
+    protected ArrayList<CreditCardTransaction> getListMaster(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
             return db.executeObjectCollectionQuery(
-                new ArraySet<CreditCardTransaction>(),
+                new ArrayList<CreditCardTransaction>(),
                 objectFactory,
                 "select\n"
                 + "  pkey,\n"
@@ -211,25 +209,23 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
                 + "  void_provider_unique_id,\n"
                 + "  status\n"
                 + "from\n"
-                + "  credit_card_transactions\n"
-                + "order by\n"
-                + "  pkey"
+                + "  credit_card_transactions"
             );
         } else {
-            return Collections.emptySet();
+            return new ArrayList<CreditCardTransaction>(0);
         }
     }
 
     @Override
-    protected Set<CreditCardTransaction> getSetDaemon(DatabaseConnection db) {
-        return Collections.emptySet();
+    protected ArrayList<CreditCardTransaction> getListDaemon(DatabaseConnection db) {
+        return new ArrayList<CreditCardTransaction>(0);
     }
 
     @Override
-    protected Set<CreditCardTransaction> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected ArrayList<CreditCardTransaction> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
             return db.executeObjectCollectionQuery(
-                new ArraySet<CreditCardTransaction>(),
+                new ArrayList<CreditCardTransaction>(),
                 objectFactory,
                 "select\n"
                 + "  cct.pkey,\n"
@@ -324,13 +320,11 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
                 + "  and (\n"
                 + UN_BU1_PARENTS_WHERE
                 + "  )\n"
-                + "  and bu1.accounting=cct.accounting\n"
-                + "order by\n"
-                + "  cct.pkey",
+                + "  and bu1.accounting=cct.accounting",
                 connector.getConnectAs()
             );
         } else {
-            return Collections.emptySet();
+            return new ArrayList<CreditCardTransaction>(0);
         }
     }
 }

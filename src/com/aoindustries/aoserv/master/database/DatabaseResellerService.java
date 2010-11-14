@@ -11,39 +11,37 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseResellerService extends DatabaseService<AccountingCode,Reseller> implements ResellerService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<Reseller> objectFactory = new AutoObjectFactory<Reseller>(Reseller.class, this);
+    private final ObjectFactory<Reseller> objectFactory = new AutoObjectFactory<Reseller>(Reseller.class, connector);
 
     DatabaseResellerService(DatabaseConnector connector) {
         super(connector, AccountingCode.class, Reseller.class);
     }
 
     @Override
-    protected Set<Reseller> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Reseller> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<Reseller>(),
+            new ArrayList<Reseller>(),
             objectFactory,
             "select * from resellers"
         );
     }
 
     @Override
-    protected Set<Reseller> getSetDaemon(DatabaseConnection db) {
-        return Collections.emptySet();
+    protected ArrayList<Reseller> getListDaemon(DatabaseConnection db) {
+        return new ArrayList<Reseller>(0);
     }
 
     @Override
-    protected Set<Reseller> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Reseller> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<Reseller>(),
+            new ArrayList<Reseller>(),
             objectFactory,
             "select\n"
             + "  re.*\n"

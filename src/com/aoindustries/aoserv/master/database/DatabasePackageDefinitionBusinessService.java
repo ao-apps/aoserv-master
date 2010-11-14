@@ -9,41 +9,39 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabasePackageDefinitionBusinessService extends DatabaseService<Integer,PackageDefinitionBusiness> implements PackageDefinitionBusinessService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<PackageDefinitionBusiness> objectFactory = new AutoObjectFactory<PackageDefinitionBusiness>(PackageDefinitionBusiness.class, this);
+    private final ObjectFactory<PackageDefinitionBusiness> objectFactory = new AutoObjectFactory<PackageDefinitionBusiness>(PackageDefinitionBusiness.class, connector);
 
     DatabasePackageDefinitionBusinessService(DatabaseConnector connector) {
         super(connector, Integer.class, PackageDefinitionBusiness.class);
     }
 
     @Override
-    protected Set<PackageDefinitionBusiness> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PackageDefinitionBusiness> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<PackageDefinitionBusiness>(),
+            new ArrayList<PackageDefinitionBusiness>(),
             objectFactory,
-            "select pkey, package_definition, accounting, display, description, approved from package_definition_businesses order by pkey"
+            "select pkey, package_definition, accounting, display, description, approved from package_definition_businesses"
         );
     }
 
     @Override
-    protected Set<PackageDefinitionBusiness> getSetDaemon(DatabaseConnection db) {
-        return Collections.emptySet();
+    protected ArrayList<PackageDefinitionBusiness> getListDaemon(DatabaseConnection db) {
+        return new ArrayList<PackageDefinitionBusiness>(0);
     }
 
     @Override
-    protected Set<PackageDefinitionBusiness> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected ArrayList<PackageDefinitionBusiness> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<PackageDefinitionBusiness>(),
+            new ArrayList<PackageDefinitionBusiness>(),
             objectFactory,
             "select distinct\n"
             + "  pdb.pkey,\n"
@@ -61,9 +59,7 @@ final class DatabasePackageDefinitionBusinessService extends DatabaseService<Int
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=pdb.accounting\n"
-            + "order by\n"
-            + "  pdb.pkey",
+            + "  and bu1.accounting=pdb.accounting",
             connector.getConnectAs()
         );
     }

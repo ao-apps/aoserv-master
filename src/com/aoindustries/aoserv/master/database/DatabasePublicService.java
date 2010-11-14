@@ -8,7 +8,7 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.DatabaseConnection;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * A service where the table contains the same data for all users.
@@ -17,7 +17,7 @@ import java.util.Set;
  */
 abstract class DatabasePublicService<
     K extends Comparable<K>,
-    V extends AOServObject<K> & Comparable<V> & DtoFactory<?>
+    V extends AOServObject<K>
 > extends DatabaseService<K,V> {
 
     DatabasePublicService(DatabaseConnector connector, Class<K> keyClass, Class<V> valueClass) {
@@ -25,31 +25,31 @@ abstract class DatabasePublicService<
     }
 
     /**
-     * @see  #getPublicSet(DatabaseConnection)
+     * @see  #getPublicList(DatabaseConnection)
      */
     @Override
-    final protected Set<V> getSetMaster(DatabaseConnection db) throws SQLException {
-        return getPublicSet(db);
+    final protected ArrayList<V> getListMaster(DatabaseConnection db) throws SQLException {
+        return getPublicList(db);
     }
 
     /**
-     * @see  #getPublicSet(DatabaseConnection)
+     * @see  #getPublicList(DatabaseConnection)
      */
     @Override
-    final protected Set<V> getSetDaemon(DatabaseConnection db) throws SQLException {
-        return getPublicSet(db);
+    final protected ArrayList<V> getListDaemon(DatabaseConnection db) throws SQLException {
+        return getPublicList(db);
     }
 
     /**
-     * @see  #getPublicSet(DatabaseConnection)
+     * @see  #getPublicList(DatabaseConnection)
      */
     @Override
-    final protected Set<V> getSetBusiness(DatabaseConnection db) throws SQLException {
-        return getPublicSet(db);
+    final protected ArrayList<V> getListBusiness(DatabaseConnection db) throws SQLException {
+        return getPublicList(db);
     }
 
     /**
      * All accounts types use this method to retrieve the rows.
      */
-    abstract protected Set<V> getPublicSet(DatabaseConnection db) throws SQLException;
+    abstract protected ArrayList<V> getPublicList(DatabaseConnection db) throws SQLException;
 }

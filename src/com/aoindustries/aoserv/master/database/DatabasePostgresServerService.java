@@ -9,49 +9,49 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabasePostgresServerService extends DatabaseService<Integer,PostgresServer> implements PostgresServerService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<PostgresServer> objectFactory = new AutoObjectFactory<PostgresServer>(PostgresServer.class, this);
+    private final ObjectFactory<PostgresServer> objectFactory = new AutoObjectFactory<PostgresServer>(PostgresServer.class, connector);
 
     DatabasePostgresServerService(DatabaseConnector connector) {
         super(connector, Integer.class, PostgresServer.class);
     }
 
     @Override
-    protected Set<PostgresServer> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PostgresServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<PostgresServer>(),
+            new ArrayList<PostgresServer>(),
             objectFactory,
             "select\n"
-            + "  ao_server_resource,\n"
-            + "  name,\n"
-            + "  version,\n"
-            + "  max_connections,\n"
-            + "  net_bind,\n"
-            + "  sort_mem,\n"
-            + "  shared_buffers,\n"
-            + "  fsync\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  ps.name,\n"
+            + "  ps.version,\n"
+            + "  ps.max_connections,\n"
+            + "  ps.net_bind,\n"
+            + "  ps.sort_mem,\n"
+            + "  ps.shared_buffers,\n"
+            + "  ps.fsync\n"
             + "from\n"
-            + "  postgres_servers\n"
-            + "order by\n"
-            + "ao_server_resource"
+            + "  postgres_servers ps\n"
+            + "  inner join ao_server_resources asr on ps.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<PostgresServer> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PostgresServer> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<PostgresServer>(),
+            new ArrayList<PostgresServer>(),
             objectFactory,
             "select\n"
-            + "  ps.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  ps.name,\n"
             + "  ps.version,\n"
             + "  ps.max_connections,\n"
@@ -62,22 +62,23 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
             + "from\n"
             + "  master_servers ms,\n"
             + "  postgres_servers ps\n"
+            + "  inner join ao_server_resources asr on ps.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=ps.ao_server\n"
-            + "order by\n"
-            + "  ps.ao_server_resource",
+            + "  and ms.server=ps.ao_server",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<PostgresServer> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PostgresServer> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<PostgresServer>(),
+            new ArrayList<PostgresServer>(),
             objectFactory,
             "select\n"
-            + "  ps.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  ps.name,\n"
             + "  ps.version,\n"
             + "  ps.max_connections,\n"
@@ -89,12 +90,12 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
             + "  usernames un,\n"
             + "  business_servers bs,\n"
             + "  postgres_servers ps\n"
+            + "  inner join ao_server_resources asr on ps.ao_server_resource=asr.resource\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and un.accounting=bs.accounting\n"
-            + "  and bs.server=ps.ao_server\n"
-            + "order by\n"
-            + "  ps.ao_server_resource",
+            + "  and bs.server=ps.ao_server",
             connector.getConnectAs()
         );
     }

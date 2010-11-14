@@ -13,8 +13,7 @@ import java.rmi.RemoteException;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -28,7 +27,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
             try {
                 Date birthday = result.getDate("birthday");
                 return new BusinessAdministrator(
-                    DatabaseBusinessAdministratorService.this,
+                    connector,
                     UserId.valueOf(result.getString("username")),
                     HashedPassword.valueOf(result.getString("password")),
                     result.getString("full_name"),
@@ -64,9 +63,9 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
     }
 
     @Override
-    protected Set<BusinessAdministrator> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BusinessAdministrator> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<BusinessAdministrator>(),
+            new ArrayList<BusinessAdministrator>(),
             objectFactory,
             "select\n"
             + "  username,\n"
@@ -97,9 +96,9 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
     }
 
     @Override
-    protected Set<BusinessAdministrator> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BusinessAdministrator> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<BusinessAdministrator>(),
+            new ArrayList<BusinessAdministrator>(),
             objectFactory,
             "select distinct\n"
             + "  ba.username,\n"
@@ -137,9 +136,9 @@ final class DatabaseBusinessAdministratorService extends DatabaseService<UserId,
     }
 
     @Override
-    protected Set<BusinessAdministrator> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BusinessAdministrator> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<BusinessAdministrator>(),
+            new ArrayList<BusinessAdministrator>(),
             objectFactory,
             "select\n"
             + "  ba.username,\n"

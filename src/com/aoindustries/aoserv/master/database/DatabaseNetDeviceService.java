@@ -10,33 +10,32 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseNetDeviceService extends DatabaseService<Integer,NetDevice> implements NetDeviceService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<NetDevice> objectFactory = new AutoObjectFactory<NetDevice>(NetDevice.class, this);
+    private final ObjectFactory<NetDevice> objectFactory = new AutoObjectFactory<NetDevice>(NetDevice.class, connector);
 
     DatabaseNetDeviceService(DatabaseConnector connector) {
         super(connector, Integer.class, NetDevice.class);
     }
 
     @Override
-    protected Set<NetDevice> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<NetDevice> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<NetDevice>(),
+            new ArrayList<NetDevice>(),
             objectFactory,
             "select * from net_devices"
         );
     }
 
     @Override
-    protected Set<NetDevice> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<NetDevice> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<NetDevice>(),
+            new ArrayList<NetDevice>(),
             objectFactory,
             "select distinct\n"
             + "  nd.*\n"
@@ -68,9 +67,9 @@ final class DatabaseNetDeviceService extends DatabaseService<Integer,NetDevice> 
     }
 
     @Override
-    protected Set<NetDevice> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<NetDevice> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<NetDevice>(),
+            new ArrayList<NetDevice>(),
             objectFactory,
             "select distinct\n"
             + "  nd.*\n"

@@ -10,24 +10,23 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseTicketPriorityService extends DatabasePublicService<String,TicketPriority> implements TicketPriorityService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<TicketPriority> objectFactory = new AutoObjectFactory<TicketPriority>(TicketPriority.class, this);
+    private final ObjectFactory<TicketPriority> objectFactory = new AutoObjectFactory<TicketPriority>(TicketPriority.class, connector);
 
     DatabaseTicketPriorityService(DatabaseConnector connector) {
         super(connector, String.class, TicketPriority.class);
     }
 
     @Override
-    protected Set<TicketPriority> getPublicSet(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TicketPriority> getPublicList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<TicketPriority>(),
+            new ArrayList<TicketPriority>(),
             objectFactory,
             "select * from ticket_priorities"
         );

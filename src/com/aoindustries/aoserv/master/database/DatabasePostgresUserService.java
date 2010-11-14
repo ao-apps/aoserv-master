@@ -13,8 +13,7 @@ import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -22,38 +21,41 @@ import java.util.Set;
 final class DatabasePostgresUserService extends DatabaseService<Integer,PostgresUser> implements PostgresUserService<DatabaseConnector,DatabaseConnectorFactory> {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
-    private final ObjectFactory<PostgresUser> objectFactory = new AutoObjectFactory<PostgresUser>(PostgresUser.class, this);
+    private final ObjectFactory<PostgresUser> objectFactory = new AutoObjectFactory<PostgresUser>(PostgresUser.class, connector);
 
     DatabasePostgresUserService(DatabaseConnector connector) {
         super(connector, Integer.class, PostgresUser.class);
     }
 
     @Override
-    protected Set<PostgresUser> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PostgresUser> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<PostgresUser>(),
+            new ArrayList<PostgresUser>(),
             objectFactory,
             "select\n"
-            + "  ao_server_resource,\n"
-            + "  username,\n"
-            + "  postgres_server,\n"
-            + "  createdb,\n"
-            + "  trace,\n"
-            + "  super,\n"
-            + "  catupd,\n"
-            + "  predisable_password\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  pu.username,\n"
+            + "  pu.postgres_server,\n"
+            + "  pu.createdb,\n"
+            + "  pu.trace,\n"
+            + "  pu.super,\n"
+            + "  pu.catupd,\n"
+            + "  pu.predisable_password\n"
             + "from\n"
-            + "  postgres_users"
+            + "  postgres_users pu\n"
+            + "  inner join ao_server_resources asr on pu.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<PostgresUser> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PostgresUser> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<PostgresUser>(),
+            new ArrayList<PostgresUser>(),
             objectFactory,
             "select\n"
-            + "  pu.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  pu.username,\n"
             + "  pu.postgres_server,\n"
             + "  pu.createdb,\n"
@@ -64,6 +66,9 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
             + "from\n"
             + "  master_servers ms,\n"
             + "  postgres_users pu\n"
+            + "  inner join ao_server_resources asr on pu.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=pu.ao_server",
@@ -72,12 +77,12 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
     }
 
     @Override
-    protected Set<PostgresUser> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PostgresUser> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<PostgresUser>(),
+            new ArrayList<PostgresUser>(),
             objectFactory,
              "select\n"
-            + "  pu.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  pu.username,\n"
             + "  pu.postgres_server,\n"
             + "  pu.createdb,\n"
@@ -89,6 +94,9 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
             + "  usernames un1,\n"
             + BU1_PARENTS_JOIN
             + "  postgres_users pu\n"
+            + "  inner join ao_server_resources asr on pu.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  un1.username=?\n"
             + "  and (\n"
@@ -105,7 +113,7 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
     void setPostgresUserPassword(DatabaseConnection db, InvalidateSet invalidateSet, int postgresUser, String plaintext) throws RemoteException, SQLException {
         try {
             PostgresUser mu = connector.factory.rootConnector.getPostgresUsers().get(postgresUser);
-            DaemonHandler.getDaemonConnector(mu.getAoServerResource().getAoServer()).setPostgresUserPassword(postgresUser, plaintext);
+            DaemonHandler.getDaemonConnector(mu.getAoServer()).setPostgresUserPassword(postgresUser, plaintext);
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         }

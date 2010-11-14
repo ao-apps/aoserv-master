@@ -9,10 +9,9 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +23,7 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
         public DisableLog createObject(ResultSet result) throws SQLException {
             try {
                 return new DisableLog(
-                    DatabaseDisableLogService.this,
+                    connector,
                     result.getInt("pkey"),
                     result.getLong("time"),
                     AccountingCode.valueOf(result.getString("accounting")),
@@ -42,9 +41,9 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
     }
 
     @Override
-    protected Set<DisableLog> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<DisableLog> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<DisableLog>(),
+            new ArrayList<DisableLog>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -53,16 +52,14 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
             + "  disabled_by,\n"
             + "  disable_reason\n"
             + "from\n"
-            + "  disable_log\n"
-            + "order by\n"
-            + "  pkey"
+            + "  disable_log"
         );
     }
 
     @Override
-    protected Set<DisableLog> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<DisableLog> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<DisableLog>(),
+            new ArrayList<DisableLog>(),
             objectFactory,
             "select distinct\n"
             + "  dl.pkey,\n"
@@ -82,17 +79,15 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
             + "  and (\n"
             + "    ao.server=bs.server\n"
             + "    or ff.server=bs.server\n"
-            + "  ) and bs.accounting=dl.accounting\n"
-            + "order by\n"
-            + "  dl.pkey",
+            + "  ) and bs.accounting=dl.accounting",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<DisableLog> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<DisableLog> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<DisableLog>(),
+            new ArrayList<DisableLog>(),
             objectFactory,
             "select\n"
             + "  dl.pkey,\n"
@@ -109,9 +104,7 @@ final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=dl.accounting\n"
-            + "order by\n"
-            + "  dl.pkey",
+            + "  and bu1.accounting=dl.accounting",
             connector.getConnectAs()
         );
     }

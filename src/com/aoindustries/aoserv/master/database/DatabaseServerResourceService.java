@@ -6,30 +6,29 @@
 package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.*;
-import com.aoindustries.sql.AutoObjectFactory;
-import com.aoindustries.sql.DatabaseConnection;
-import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseServerResourceService extends DatabaseService<Integer,ServerResource> implements ServerResourceService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseServerResourceService extends ServerResourceService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<ServerResource> objectFactory = new AutoObjectFactory<ServerResource>(ServerResource.class, this);
+    static final String SELECT_COLUMNS =
+        DatabaseResourceService.SELECT_COLUMNS
+        + "  sr.server,\n"
+        + "  bs.pkey,\n"
+    ;
 
+    /* TODO
+    private final ObjectFactory<ServerResource> objectFactory = new AutoObjectFactory<ServerResource>(ServerResource.class, connector);
+     */
     DatabaseServerResourceService(DatabaseConnector connector) {
-        super(connector, Integer.class, ServerResource.class);
+        super(connector);
     }
-
+    /* TODO
     @Override
-    protected Set<ServerResource> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<ServerResource> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<ServerResource>(),
+            new ArrayList<ServerResource>(),
             objectFactory,
             "select\n"
             + "  sr.resource,\n"
@@ -37,21 +36,20 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
             + "  bs.pkey\n"
             + "from\n"
             + "  server_resources sr\n"
-            + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
-            + "order by\n"
-            + "  sr.resource"
+            + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server"
         );
     }
-
+    */
     /**
      * Adds the extra server resources for the current user.
      */
-    void addExtraServerResourcesDaemon(DatabaseConnection db, List<Set<? extends AOServObject<Integer>>> extraServerResources) throws SQLException {
-        extraServerResources.add(connector.ipAddresses.getSetDaemon(db));
+    /* TODO
+    void addExtraServerResourcesDaemon(DatabaseConnection db, List<List<? extends AOServObject<Integer>>> extraServerResources) throws SQLException {
+        extraServerResources.add(connector.ipAddresses.getListDaemon(db));
     }
 
     @Override
-    protected Set<ServerResource> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<ServerResource> getListDaemon(DatabaseConnection db) throws SQLException {
         StringBuilder sql = new StringBuilder(
             "select\n"
             + "  sr.resource,\n"
@@ -65,7 +63,7 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
             + "  ms.username=?\n"
             + "  and ms.server=sr.server\n"
         );
-        List<Set<? extends AOServObject<Integer>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
+        List<List<? extends AOServObject<Integer>>> extraServerResources = new ArrayList<List<? extends AOServObject<Integer>>>();
         addExtraServerResourcesDaemon(db, extraServerResources);
         addOptionalInInteger(
             sql,
@@ -81,25 +79,24 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
             extraServerResources,
             ")\n"
         );
-        sql.append("order by\n"
-                + "  resource");
         return db.executeObjectCollectionQuery(
-            new ArraySet<ServerResource>(),
+            new ArrayList<ServerResource>(),
             objectFactory,
             sql.toString(),
             connector.getConnectAs()
         );
     }
-
+    */
     /**
      * Adds the extra server resources for the current user.
      */
-    void addExtraServerResourcesBusiness(DatabaseConnection db, List<Set<? extends AOServObject<Integer>>> extraServerResources) throws SQLException {
-        extraServerResources.add(connector.ipAddresses.getSetBusiness(db));
+    /* TODO
+    void addExtraServerResourcesBusiness(DatabaseConnection db, List<List<? extends AOServObject<Integer>>> extraServerResources) throws SQLException {
+        extraServerResources.add(connector.ipAddresses.getListBusiness(db));
     }
 
     @Override
-    protected Set<ServerResource> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<ServerResource> getListBusiness(DatabaseConnection db) throws SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"
@@ -117,7 +114,7 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
             + UN_BU1_PARENTS_WHERE
             + "  ) and bu1.accounting=sr.accounting\n"
         );
-        List<Set<? extends AOServObject<Integer>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
+        List<List<? extends AOServObject<Integer>>> extraServerResources = new ArrayList<List<? extends AOServObject<Integer>>>();
         addExtraServerResourcesBusiness(db, extraServerResources);
         addOptionalInInteger(
             sql,
@@ -133,13 +130,12 @@ final class DatabaseServerResourceService extends DatabaseService<Integer,Server
             extraServerResources,
             ")\n"
         );
-        sql.append("order by\n"
-                + "  resource");
         return db.executeObjectCollectionQuery(
-            new ArraySet<ServerResource>(),
+            new ArrayList<ServerResource>(),
             objectFactory,
             sql.toString(),
             connector.getConnectAs()
         );
     }
+     */
 }

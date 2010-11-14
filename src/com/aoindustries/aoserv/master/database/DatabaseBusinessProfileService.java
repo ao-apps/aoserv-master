@@ -9,25 +9,24 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseBusinessProfileService extends DatabaseService<Integer,BusinessProfile> implements BusinessProfileService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<BusinessProfile> objectFactory = new AutoObjectFactory<BusinessProfile>(BusinessProfile.class, this);
+    private final ObjectFactory<BusinessProfile> objectFactory = new AutoObjectFactory<BusinessProfile>(BusinessProfile.class, connector);
 
     DatabaseBusinessProfileService(DatabaseConnector connector) {
         super(connector, Integer.class, BusinessProfile.class);
     }
 
     @Override
-    protected Set<BusinessProfile> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BusinessProfile> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<BusinessProfile>(),
+            new ArrayList<BusinessProfile>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -50,16 +49,14 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
             + "  technical_contact,\n"
             + "  technical_email\n"
             + "from\n"
-            + "  business_profiles\n"
-            + "order by\n"
-            + "  pkey"
+            + "  business_profiles"
         );
     }
 
     @Override
-    protected Set<BusinessProfile> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BusinessProfile> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<BusinessProfile>(),
+            new ArrayList<BusinessProfile>(),
             objectFactory,
             "select distinct\n"
             + "  bp.pkey,\n"
@@ -88,17 +85,15 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=bs.server\n"
-            + "  and bs.accounting=bp.accounting\n"
-            + "order by\n"
-            + "  bp.pkey",
+            + "  and bs.accounting=bp.accounting",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<BusinessProfile> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BusinessProfile> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<BusinessProfile>(),
+            new ArrayList<BusinessProfile>(),
             objectFactory,
             "select\n"
             + "  bp.pkey,\n"
@@ -129,9 +124,7 @@ final class DatabaseBusinessProfileService extends DatabaseService<Integer,Busin
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=bp.accounting\n"
-            + "order by\n"
-            + "  bp.pkey",
+            + "  and bu1.accounting=bp.accounting",
             connector.getConnectAs()
         );
     }

@@ -11,33 +11,32 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> implements GroupNameService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<GroupName> objectFactory = new AutoObjectFactory<GroupName>(GroupName.class, this);
+    private final ObjectFactory<GroupName> objectFactory = new AutoObjectFactory<GroupName>(GroupName.class, connector);
 
     DatabaseGroupNameService(DatabaseConnector connector) {
         super(connector, GroupId.class, GroupName.class);
     }
 
     @Override
-    protected Set<GroupName> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<GroupName> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<GroupName>(),
+            new ArrayList<GroupName>(),
             objectFactory,
             "select * from group_names"
         );
     }
 
     @Override
-    protected Set<GroupName> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<GroupName> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<GroupName>(),
+            new ArrayList<GroupName>(),
             objectFactory,
             "select distinct\n"
             + "  gn.*\n"
@@ -57,9 +56,9 @@ final class DatabaseGroupNameService extends DatabaseService<GroupId,GroupName> 
     }
 
     @Override
-    protected Set<GroupName> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<GroupName> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<GroupName>(),
+            new ArrayList<GroupName>(),
             objectFactory,
             "select\n"
             + "  gn.*\n"

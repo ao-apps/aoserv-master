@@ -10,24 +10,23 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseTicketActionTypeService extends DatabasePublicService<String,TicketActionType> implements TicketActionTypeService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<TicketActionType> objectFactory = new AutoObjectFactory<TicketActionType>(TicketActionType.class, this);
+    private final ObjectFactory<TicketActionType> objectFactory = new AutoObjectFactory<TicketActionType>(TicketActionType.class, connector);
 
     DatabaseTicketActionTypeService(DatabaseConnector connector) {
         super(connector, String.class, TicketActionType.class);
     }
 
     @Override
-    protected Set<TicketActionType> getPublicSet(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TicketActionType> getPublicList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<TicketActionType>(),
+            new ArrayList<TicketActionType>(),
             objectFactory,
             "select * from ticket_action_types"
         );

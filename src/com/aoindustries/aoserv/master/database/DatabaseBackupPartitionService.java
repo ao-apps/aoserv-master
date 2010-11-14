@@ -9,34 +9,33 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseBackupPartitionService extends DatabaseService<Integer,BackupPartition> implements BackupPartitionService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<BackupPartition> objectFactory = new AutoObjectFactory<BackupPartition>(BackupPartition.class, this);
+    private final ObjectFactory<BackupPartition> objectFactory = new AutoObjectFactory<BackupPartition>(BackupPartition.class, connector);
 
     DatabaseBackupPartitionService(DatabaseConnector connector) {
         super(connector, Integer.class, BackupPartition.class);
     }
 
     @Override
-    protected Set<BackupPartition> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BackupPartition> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<BackupPartition>(),
+            new ArrayList<BackupPartition>(),
             objectFactory,
-            "select * from backup_partitions order by pkey"
+            "select * from backup_partitions"
         );
     }
 
     @Override
-    protected Set<BackupPartition> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BackupPartition> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<BackupPartition>(),
+            new ArrayList<BackupPartition>(),
             objectFactory,
             "select\n"
             + "  bp.*\n"
@@ -58,17 +57,15 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
             + "        and bp.ao_server=bp2.ao_server\n"
             + "      limit 1\n"
             + "    ) is not null\n"
-            + "  )\n"
-            + "order by\n"
-            + "  pkey",
+            + "  )",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<BackupPartition> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BackupPartition> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<BackupPartition>(),
+            new ArrayList<BackupPartition>(),
             objectFactory,
             "select distinct\n"
             + "  bp.*\n"
@@ -92,9 +89,7 @@ final class DatabaseBackupPartitionService extends DatabaseService<Integer,Backu
             //+ "        and bp.ao_server=bp2.ao_server\n"
             //+ "      limit 1\n"
             //+ "    ) is not null\n"
-            + "  )\n"
-            + "order by\n"
-            + "  pkey",
+            + "  )",
             connector.getConnectAs()
         );
     }

@@ -9,27 +9,26 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseBackupRetentionService extends DatabasePublicService<Short,BackupRetention> implements BackupRetentionService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<BackupRetention> objectFactory = new AutoObjectFactory<BackupRetention>(BackupRetention.class, this);
+    private final ObjectFactory<BackupRetention> objectFactory = new AutoObjectFactory<BackupRetention>(BackupRetention.class, connector);
 
     DatabaseBackupRetentionService(DatabaseConnector connector) {
         super(connector, Short.class, BackupRetention.class);
     }
 
     @Override
-    protected Set<BackupRetention> getPublicSet(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BackupRetention> getPublicList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<BackupRetention>(),
+            new ArrayList<BackupRetention>(),
             objectFactory,
-            "select * from backup_retentions order by days"
+            "select * from backup_retentions"
         );
     }
 }

@@ -9,70 +9,83 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepository> implements CvsRepositoryService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<CvsRepository> objectFactory = new AutoObjectFactory<CvsRepository>(CvsRepository.class, this);
+    private final ObjectFactory<CvsRepository> objectFactory = new AutoObjectFactory<CvsRepository>(CvsRepository.class, connector);
 
     DatabaseCvsRepositoryService(DatabaseConnector connector) {
         super(connector, Integer.class, CvsRepository.class);
     }
 
     @Override
-    protected Set<CvsRepository> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<CvsRepository> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<CvsRepository>(),
+            new ArrayList<CvsRepository>(),
             objectFactory,
-            "select ao_server_resource, path, linux_account_group, mode from cvs_repositories order by ao_server_resource"
+            "select\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  cr.path,\n"
+            + "  cr.linux_account_group,\n"
+            + "  cr.mode\n"
+            + "from\n"
+            + "  cvs_repositories cr\n"
+            + "  inner join ao_server_resources asr on cr.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<CvsRepository> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<CvsRepository> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<CvsRepository>(),
+            new ArrayList<CvsRepository>(),
             objectFactory,
             "select\n"
-            + "  cr.ao_server_resource, cr.path, cr.linux_account_group, cr.mode\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  cr.path,\n"
+            + "  cr.linux_account_group,\n"
+            + "  cr.mode\n"
             + "from\n"
             + "  master_servers ms,\n"
             + "  cvs_repositories cr\n"
+            + "  inner join ao_server_resources asr on cr.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=cr.ao_server\n"
-            + "order by\n"
-            + "  cr.ao_server_resource",
+            + "  and ms.server=cr.ao_server",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<CvsRepository> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<CvsRepository> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<CvsRepository>(),
+            new ArrayList<CvsRepository>(),
             objectFactory,
             "select\n"
-            + "  cr.ao_server_resource, cr.path, cr.linux_account_group, cr.mode\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  cr.path,\n"
+            + "  cr.linux_account_group,\n"
+            + "  cr.mode\n"
             + "from\n"
             + "  usernames un1,\n"
-            + BU1_PARENTS_JOIN
-            + "  ao_server_resources asr,\n"
-            + "  cvs_repositories cr\n"
+            + BU1_PARENTS_JOIN_NO_COMMA
+            + "  inner join ao_server_resources asr on bu1.accounting=asr.accounting\n"
+            + "  inner join cvs_repositories cr on asr.resource=cr.ao_server_resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  un1.username=?\n"
             + "  and (\n"
             + UN1_BU1_PARENTS_WHERE
-            + "  )\n"
-            + "  and bu1.accounting=asr.accounting\n"
-            + "  and asr.resource=cr.ao_server_resource\n"
-            + "order by\n"
-            + "  cr.ao_server_resource",
+            + "  )",
             connector.getConnectAs()
         );
     }

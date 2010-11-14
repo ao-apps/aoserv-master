@@ -6,21 +6,22 @@
 package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.*;
-import com.aoindustries.aoserv.client.validator.*;
-import com.aoindustries.sql.DatabaseConnection;
-import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseResourceService extends DatabaseService<Integer,Resource> implements ResourceService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseResourceService extends ResourceService<DatabaseConnector,DatabaseConnectorFactory> {
 
+    static final String SELECT_COLUMNS =
+        "  re.pkey,\n"
+        + "  re.resource_type,\n"
+        + "  re.accounting,\n"
+        + "  (extract(epoch from re.created)*1000)::int8 as created,\n"
+        + "  re.created_by,\n"
+        + "  re.disable_log,\n"
+        + "  (extract(epoch from re.last_enabled)*1000)::int8 as last_enabled,\n"
+    ;
+    /* TODO
     private final ObjectFactory<Resource> objectFactory = new ObjectFactory<Resource>() {
         @Override
         public Resource createObject(ResultSet result) throws SQLException {
@@ -40,13 +41,15 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
             }
         }
     };
+    */
 
     DatabaseResourceService(DatabaseConnector connector) {
-        super(connector, Integer.class, Resource.class);
+        super(connector);
     }
 
+    /* TODO
     @Override
-    protected Set<Resource> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Resource> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArraySet<Resource>(),
             objectFactory,
@@ -66,7 +69,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
     }
 
     @Override
-    protected Set<Resource> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Resource> getListDaemon(DatabaseConnection db) throws SQLException {
         StringBuilder sql = new StringBuilder(
             // ao_server_resources
             "select\n"
@@ -134,7 +137,7 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
     }
 
     @Override
-    protected Set<Resource> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Resource> getListBusiness(DatabaseConnection db) throws SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"
@@ -185,4 +188,5 @@ final class DatabaseResourceService extends DatabaseService<Integer,Resource> im
             connector.getConnectAs()
         );
     }
+     */
 }

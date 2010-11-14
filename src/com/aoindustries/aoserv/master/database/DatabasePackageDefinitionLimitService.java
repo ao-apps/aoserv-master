@@ -8,12 +8,10 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +22,7 @@ final class DatabasePackageDefinitionLimitService extends DatabaseService<Intege
         @Override
         public PackageDefinitionLimit createObject(ResultSet result) throws SQLException {
             return new PackageDefinitionLimit(
-                DatabasePackageDefinitionLimitService.this,
+                connector,
                 result.getInt("pkey"),
                 result.getInt("package_definition"),
                 result.getString("resource_type"),
@@ -41,9 +39,9 @@ final class DatabasePackageDefinitionLimitService extends DatabaseService<Intege
     }
 
     @Override
-    protected Set<PackageDefinitionLimit> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PackageDefinitionLimit> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<PackageDefinitionLimit>(),
+            new ArrayList<PackageDefinitionLimit>(),
             objectFactory,
             "select\n"
             + "  pdl.pkey,\n"
@@ -56,15 +54,13 @@ final class DatabasePackageDefinitionLimitService extends DatabaseService<Intege
             + "  pdl.additional_transaction_type\n"
             + "from\n"
             + "  package_definition_limits pdl\n"
-            + "  inner join package_definitions pd on pdl.package_definition=pd.pkey\n"
-            + "order by\n"
-            + "  pdl.pkey"
+            + "  inner join package_definitions pd on pdl.package_definition=pd.pkey"
         );
     }
 
     @Override
-    protected Set<PackageDefinitionLimit> getSetDaemon(DatabaseConnection db) {
-        return Collections.emptySet();
+    protected ArrayList<PackageDefinitionLimit> getListDaemon(DatabaseConnection db) {
+        return new ArrayList<PackageDefinitionLimit>(0);
         /*
         return db.executeObjectCollectionQuery(
             objectFactory,
@@ -93,10 +89,10 @@ final class DatabasePackageDefinitionLimitService extends DatabaseService<Intege
     }
 
     @Override
-    protected Set<PackageDefinitionLimit> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected ArrayList<PackageDefinitionLimit> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getUsername().getBusiness().canSeePrices()) {
             return db.executeObjectCollectionQuery(
-                new ArraySet<PackageDefinitionLimit>(),
+                new ArrayList<PackageDefinitionLimit>(),
                 objectFactory,
                 "select distinct\n"
                 + "  pdl.pkey,\n"
@@ -122,14 +118,12 @@ final class DatabasePackageDefinitionLimitService extends DatabaseService<Intege
                 + "  and (\n"
                 + "    bu1.package_definition=pd.pkey\n"
                 + "    or pdb.package_definition=pd.pkey\n"
-                + "  )\n"
-                + "order by\n"
-                + "  pdl.pkey",
+                + "  )",
                 connector.getConnectAs()
             );
         } else {
             return db.executeObjectCollectionQuery(
-                new ArraySet<PackageDefinitionLimit>(),
+                new ArrayList<PackageDefinitionLimit>(),
                 objectFactory,
                 "select distinct\n"
                 + "  pdl.pkey,\n"
@@ -155,9 +149,7 @@ final class DatabasePackageDefinitionLimitService extends DatabaseService<Intege
                 + "  and (\n"
                 + "    bu1.package_definition=pd.pkey\n"
                 + "    or pdb.package_definition=pd.pkey\n"
-                + "  )\n"
-                + "order by\n"
-                + "  pdl.pkey",
+                + "  )",
                 connector.getConnectAs()
             );
         }

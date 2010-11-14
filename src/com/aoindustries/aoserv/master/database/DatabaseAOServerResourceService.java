@@ -6,47 +6,46 @@
 package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.*;
-import com.aoindustries.sql.AutoObjectFactory;
-import com.aoindustries.sql.DatabaseConnection;
-import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOServerResource> implements AOServerResourceService<DatabaseConnector,DatabaseConnectorFactory> {
+final class DatabaseAOServerResourceService extends AOServerResourceService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<AOServerResource> objectFactory = new AutoObjectFactory<AOServerResource>(AOServerResource.class, this);
+    static final String SELECT_COLUMNS =
+        DatabaseResourceService.SELECT_COLUMNS
+        + "  asr.ao_server,\n"
+        + "  bs.pkey,\n"
+    ;
 
+    /* TODO
+    private final ObjectFactory<AOServerResource> objectFactory = new AutoObjectFactory<AOServerResource>(AOServerResource.class, connector);
+     */
     DatabaseAOServerResourceService(DatabaseConnector connector) {
-        super(connector, Integer.class, AOServerResource.class);
+        super(connector);
     }
 
+    /* TODO
     @Override
-    protected Set<AOServerResource> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServerResource> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServerResource>(),
+            new ArrayList<AOServerResource>(),
             objectFactory,
             "select\n"
-            + "  asr.resource,\n"
+            + DatabaseResourceService.SELECT_COLUMNS
             + "  asr.ao_server,\n"
             + "  bs.pkey\n"
             + "from\n"
             + "  ao_server_resources asr\n"
             + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
-            + "order by\n"
-            + "  asr.resource"
+            + "  inner join resources re on asr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<AOServerResource> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServerResource> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServerResource>(),
+            new ArrayList<AOServerResource>(),
             objectFactory,
             "select\n"
             + "  asr.resource,\n"
@@ -58,25 +57,24 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
             + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=asr.ao_server\n"
-            + "order by\n"
-            + "  asr.resource",
+            + "  and ms.server=asr.ao_server",
             connector.getConnectAs()
         );
     }
-
+    */
     /**
      * Adds the extra server resources for the current user.
      */
-    void addExtraAOServerResourcesBusiness(DatabaseConnection db, List<Set<? extends AOServObject<Integer>>> extraAoserverResources) throws SQLException {
-        extraAoserverResources.add(connector.httpdServers.getSetBusiness(db));
-        extraAoserverResources.add(connector.linuxGroups.getSetBusiness(db));
-        extraAoserverResources.add(connector.mysqlServers.getSetBusiness(db));
-        extraAoserverResources.add(connector.postgresServers.getSetBusiness(db));
+    /* TODO
+    void addExtraAOServerResourcesBusiness(DatabaseConnection db, List<List<? extends AOServObject<Integer>>> extraAoserverResources) throws SQLException {
+        extraAoserverResources.add(connector.httpdServers.getListBusiness(db));
+        extraAoserverResources.add(connector.linuxGroups.getListBusiness(db));
+        extraAoserverResources.add(connector.mysqlServers.getListBusiness(db));
+        extraAoserverResources.add(connector.postgresServers.getListBusiness(db));
     }
 
     @Override
-    protected Set<AOServerResource> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServerResource> getListBusiness(DatabaseConnection db) throws SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"
@@ -94,7 +92,7 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
             + UN_BU1_PARENTS_WHERE
             + "  ) and bu1.accounting=asr.accounting\n"
         );
-        List<Set<? extends AOServObject<Integer>>> extraAoserverResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
+        List<List<? extends AOServObject<Integer>>> extraAoserverResources = new ArrayList<List<? extends AOServObject<Integer>>>();
         addExtraAOServerResourcesBusiness(db, extraAoserverResources);
         addOptionalInInteger(
             sql,
@@ -110,13 +108,12 @@ final class DatabaseAOServerResourceService extends DatabaseService<Integer,AOSe
             extraAoserverResources,
             ")\n"
         );
-        sql.append("order by\n"
-                + "  resource");
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServerResource>(),
+            new ArrayList<AOServerResource>(),
             objectFactory,
             sql.toString(),
             connector.getConnectAs()
         );
     }
+     */
 }

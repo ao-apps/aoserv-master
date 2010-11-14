@@ -12,8 +12,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -21,16 +20,16 @@ import java.util.Set;
 final class DatabaseBusinessService extends DatabaseService<AccountingCode,Business> implements BusinessService<DatabaseConnector,DatabaseConnectorFactory> {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
-    private final ObjectFactory<Business> objectFactory = new AutoObjectFactory<Business>(Business.class, this);
+    private final ObjectFactory<Business> objectFactory = new AutoObjectFactory<Business>(Business.class, connector);
 
     DatabaseBusinessService(DatabaseConnector connector) {
         super(connector, AccountingCode.class, Business.class);
     }
 
     @Override
-    protected Set<Business> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Business> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<Business>(),
+            new ArrayList<Business>(),
             objectFactory,
             "select\n"
             + "  accounting,\n"
@@ -60,9 +59,9 @@ final class DatabaseBusinessService extends DatabaseService<AccountingCode,Busin
     }
 
     @Override
-    protected Set<Business> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Business> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<Business>(),
+            new ArrayList<Business>(),
             objectFactory,
             "select distinct\n"
             + "  bu.accounting,\n"
@@ -99,9 +98,9 @@ final class DatabaseBusinessService extends DatabaseService<AccountingCode,Busin
     }
 
     @Override
-    protected Set<Business> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Business> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<Business>(),
+            new ArrayList<Business>(),
             objectFactory,
             "select\n"
             + "  bu1.accounting,\n"

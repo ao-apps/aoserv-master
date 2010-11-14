@@ -9,34 +9,32 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
+import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseBusinessServerService extends DatabaseService<Integer,BusinessServer> implements BusinessServerService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<BusinessServer> objectFactory = new AutoObjectFactory<BusinessServer>(BusinessServer.class, this);
+    private final ObjectFactory<BusinessServer> objectFactory = new AutoObjectFactory<BusinessServer>(BusinessServer.class, connector);
 
     DatabaseBusinessServerService(DatabaseConnector connector) {
         super(connector, Integer.class, BusinessServer.class);
     }
 
     @Override
-    protected Set<BusinessServer> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BusinessServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<BusinessServer>(),
+            new ArrayList<BusinessServer>(),
             objectFactory,
-            "select * from business_servers order by pkey"
+            "select * from business_servers"
         );
     }
 
     @Override
-    protected Set<BusinessServer> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BusinessServer> getListDaemon(DatabaseConnection db) throws SQLException, RemoteException {
         StringBuilder sql = new StringBuilder(
             "select distinct\n"
             + "  bs.*\n"
@@ -57,12 +55,10 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             + "  inner join business_servers bs on nb.business_server=bs.pkey\n"
             + "where\n"
             + "  nb.pkey in (",
-            connector.netBinds.getSetDaemon(db),
+            connector.netBinds.getListDaemon(db),
             ")\n"
         );
         // Extra server_resources
-        List<Set<? extends AOServObject<Integer>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
-        connector.serverResources.addExtraServerResourcesDaemon(db, extraServerResources);
         addOptionalInInteger(
             sql,
             "union select\n"
@@ -72,13 +68,11 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
             + "where\n"
             + "  sr.resource in (",
-            extraServerResources,
+            connector.serverResources.getSet(),
             ")\n"
         );
-        sql.append("order by\n"
-                + "  pkey");
         return db.executeObjectCollectionQuery(
-            new ArraySet<BusinessServer>(),
+            new ArrayList<BusinessServer>(),
             objectFactory,
             sql.toString(),
             connector.getConnectAs()
@@ -86,7 +80,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
     }
 
     @Override
-    protected Set<BusinessServer> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BusinessServer> getListBusiness(DatabaseConnection db) throws SQLException, RemoteException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"
@@ -111,12 +105,10 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             + "  inner join business_servers bs on nb.business_server=bs.pkey\n"
             + "where\n"
             + "  nb.pkey in (",
-            connector.netBinds.getSetBusiness(db),
+            connector.netBinds.getListBusiness(db),
             ")\n"
         );
         // Extra server_resources
-        List<Set<? extends AOServObject<Integer>>> extraServerResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
-        connector.serverResources.addExtraServerResourcesBusiness(db, extraServerResources);
         addOptionalInInteger(
             sql,
             "union select\n"
@@ -126,12 +118,10 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
             + "where\n"
             + "  sr.resource in (",
-            extraServerResources,
+            connector.serverResources.getSet(),
             ")\n"
         );
         // Extra ao_server_resources
-        List<Set<? extends AOServObject<Integer>>> extraAoserverResources = new ArrayList<Set<? extends AOServObject<Integer>>>();
-        connector.aoserverResources.addExtraAOServerResourcesBusiness(db, extraAoserverResources);
         addOptionalInInteger(
             sql,
             "union select\n"
@@ -141,13 +131,11 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
             + "where\n"
             + "  asr.resource in (",
-            extraAoserverResources,
+            connector.aoserverResources.getSet(),
             ")\n"
         );
-        sql.append("order by\n"
-                + "  pkey");
         return db.executeObjectCollectionQuery(
-            new ArraySet<BusinessServer>(),
+            new ArrayList<BusinessServer>(),
             objectFactory,
             sql.toString(),
             connector.getConnectAs()

@@ -9,26 +9,24 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseCreditCardService extends DatabaseService<Integer,CreditCard> implements CreditCardService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<CreditCard> objectFactory = new AutoObjectFactory<CreditCard>(CreditCard.class, this);
+    private final ObjectFactory<CreditCard> objectFactory = new AutoObjectFactory<CreditCard>(CreditCard.class, connector);
 
     DatabaseCreditCardService(DatabaseConnector connector) {
         super(connector, Integer.class, CreditCard.class);
     }
 
     @Override
-    protected Set<CreditCard> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<CreditCard> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<CreditCard>(),
+            new ArrayList<CreditCard>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -65,21 +63,19 @@ final class DatabaseCreditCardService extends DatabaseService<Integer,CreditCard
             + "  encryption_expiration_from,\n"
             + "  encryption_expiration_recipient\n"
             + "from\n"
-            + "  credit_cards\n"
-            + "order by\n"
-            + "  pkey"
+            + "  credit_cards"
         );
     }
 
     @Override
-    protected Set<CreditCard> getSetDaemon(DatabaseConnection db) {
-        return Collections.emptySet();
+    protected ArrayList<CreditCard> getListDaemon(DatabaseConnection db) {
+        return new ArrayList<CreditCard>(0);
     }
 
     @Override
-    protected Set<CreditCard> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<CreditCard> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<CreditCard>(),
+            new ArrayList<CreditCard>(),
             objectFactory,
             "select\n"
             + "  cc.pkey,\n"
@@ -124,9 +120,7 @@ final class DatabaseCreditCardService extends DatabaseService<Integer,CreditCard
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=cc.accounting\n"
-            + "order by\n"
-            + "  pkey",
+            + "  and bu1.accounting=cc.accounting",
             connector.getConnectAs()
         );
     }

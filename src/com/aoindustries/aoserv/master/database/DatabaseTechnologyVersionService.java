@@ -9,10 +9,9 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +23,7 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
         public TechnologyVersion createObject(ResultSet result) throws SQLException {
             try {
                 return new TechnologyVersion(
-                    DatabaseTechnologyVersionService.this,
+                    connector,
                     result.getInt("pkey"),
                     result.getString("name"),
                     result.getString("version"),
@@ -43,9 +42,9 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
     }
 
     @Override
-    protected Set<TechnologyVersion> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TechnologyVersion> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<TechnologyVersion>(),
+            new ArrayList<TechnologyVersion>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -55,16 +54,14 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
             + "  owner,\n"
             + "  operating_system_version\n"
             + "from\n"
-            + "  technology_versions\n"
-            + "order by\n"
-            + "  pkey"
+            + "  technology_versions"
         );
     }
 
     @Override
-    protected Set<TechnologyVersion> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TechnologyVersion> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<TechnologyVersion>(),
+            new ArrayList<TechnologyVersion>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -74,16 +71,14 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
             + "  null as owner,\n"
             + "  operating_system_version\n"
             + "from\n"
-            + "  technology_versions\n"
-            + "order by\n"
-            + "  pkey"
+            + "  technology_versions"
         );
     }
 
     @Override
-    protected Set<TechnologyVersion> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TechnologyVersion> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<TechnologyVersion>(),
+            new ArrayList<TechnologyVersion>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -93,9 +88,7 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
             + "  null as owner,\n"
             + "  operating_system_version\n"
             + "from\n"
-            + "  technology_versions\n"
-            + "order by\n"
-            + "  pkey"
+            + "  technology_versions"
         );
     }
 }

@@ -10,48 +10,53 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup> implements LinuxGroupService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<LinuxGroup> objectFactory = new AutoObjectFactory<LinuxGroup>(LinuxGroup.class, this);
+    private final ObjectFactory<LinuxGroup> objectFactory = new AutoObjectFactory<LinuxGroup>(LinuxGroup.class, connector);
 
     DatabaseLinuxGroupService(DatabaseConnector connector) {
         super(connector, Integer.class, LinuxGroup.class);
     }
 
     @Override
-    protected Set<LinuxGroup> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<LinuxGroup> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<LinuxGroup>(),
+            new ArrayList<LinuxGroup>(),
             objectFactory,
             "select\n"
-            + "  ao_server_resource,\n"
-            + "  linux_group_type,\n"
-            + "  group_name,\n"
-            + "  gid\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  lg.linux_group_type,\n"
+            + "  lg.group_name,\n"
+            + "  lg.gid\n"
             + "from\n"
-            + "  linux_groups"
+            + "  linux_groups lg\n"
+            + "  inner join ao_server_resources asr on lg.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<LinuxGroup> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<LinuxGroup> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<LinuxGroup>(),
+            new ArrayList<LinuxGroup>(),
             objectFactory,
             "select\n"
-            + "  lg.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  lg.linux_group_type,\n"
             + "  lg.group_name,\n"
             + "  lg.gid\n"
             + "from\n"
             + "  master_servers ms,\n"
             + "  linux_groups lg\n"
+            + "  inner join ao_server_resources asr on lg.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=lg.ao_server",
@@ -60,13 +65,13 @@ final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup
     }
 
     @Override
-    protected Set<LinuxGroup> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<LinuxGroup> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<LinuxGroup>(),
+            new ArrayList<LinuxGroup>(),
             objectFactory,
             // Owns group
              "select\n"
-            + "  lg.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  lg.linux_group_type,\n"
             + "  lg.group_name,\n"
             + "  lg.gid\n"
@@ -74,6 +79,9 @@ final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup
             + "  usernames un1,\n"
             + BU1_PARENTS_JOIN
             + "  linux_groups lg\n"
+            + "  inner join ao_server_resources asr on lg.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  un1.username=?\n"
             + "  and (\n"
@@ -82,7 +90,7 @@ final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup
             + "  and bu1.accounting=lg.accounting\n"
             // Has access to server, include mailonly group
             + "union select\n"
-            + "  lg.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  lg.linux_group_type,\n"
             + "  lg.group_name,\n"
             + "  lg.gid\n"
@@ -90,6 +98,8 @@ final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup
             + "  usernames un\n"
             + "  inner join business_servers bs on un.accounting=bs.accounting\n"
             + "  inner join linux_groups lg on bs.server=lg.ao_server\n"
+            + "  inner join ao_server_resources asr on lg.ao_server_resource=asr.resource\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and lg.group_name=?",

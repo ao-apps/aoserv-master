@@ -9,34 +9,33 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseVirtualServerService extends DatabaseService<Integer,VirtualServer> implements VirtualServerService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<VirtualServer> objectFactory = new AutoObjectFactory<VirtualServer>(VirtualServer.class, this);
+    private final ObjectFactory<VirtualServer> objectFactory = new AutoObjectFactory<VirtualServer>(VirtualServer.class, connector);
 
     DatabaseVirtualServerService(DatabaseConnector connector) {
         super(connector, Integer.class, VirtualServer.class);
     }
 
     @Override
-    protected Set<VirtualServer> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<VirtualServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<VirtualServer>(),
+            new ArrayList<VirtualServer>(),
             objectFactory,
-            "select * from virtual_servers order by server"
+            "select * from virtual_servers"
         );
     }
 
     @Override
-    protected Set<VirtualServer> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<VirtualServer> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<VirtualServer>(),
+            new ArrayList<VirtualServer>(),
             objectFactory,
             "select distinct\n"
             + "  vs.*\n"
@@ -44,17 +43,15 @@ final class DatabaseVirtualServerService extends DatabaseService<Integer,Virtual
             + "  master_servers ms\n"
             + "  inner join virtual_servers vs on ms.server=vs.server\n"
             + "where\n"
-            + "  ms.username=?\n"
-            + "order by\n"
-            + "  vs.server",
+            + "  ms.username=?",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<VirtualServer> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<VirtualServer> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<VirtualServer>(),
+            new ArrayList<VirtualServer>(),
             objectFactory,
             "select distinct\n"
             + "  vs.server,\n"
@@ -95,9 +92,7 @@ final class DatabaseVirtualServerService extends DatabaseService<Integer,Virtual
             + "    bs.server=vs.server\n"
             // Allow servers it replicates to
             //+ "    or bp.ao_server=vs.server\n"
-            + "  )\n"
-            + "order by\n"
-            + "  vs.server",
+            + "  )",
             AOServObject.FILTERED,
             connector.getConnectAs()
         );

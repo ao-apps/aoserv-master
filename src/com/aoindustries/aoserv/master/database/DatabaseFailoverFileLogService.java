@@ -8,10 +8,9 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -22,7 +21,7 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
         @Override
         public FailoverFileLog createObject(ResultSet result) throws SQLException {
             return new FailoverFileLog(
-                DatabaseFailoverFileLogService.this,
+                connector,
                 result.getInt("pkey"),
                 result.getInt("replication"),
                 result.getLong("start_time"),
@@ -40,9 +39,9 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
     }
 
     @Override
-    protected Set<FailoverFileLog> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverFileLog> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<FailoverFileLog>(),
+            new ArrayList<FailoverFileLog>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -54,16 +53,14 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
             + "  bytes,\n"
             + "  is_successful\n"
             + "from\n"
-            + "  failover_file_log\n"
-            + "order by\n"
-            + "  pkey"
+            + "  failover_file_log"
         );
     }
 
     @Override
-    protected Set<FailoverFileLog> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverFileLog> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<FailoverFileLog>(),
+            new ArrayList<FailoverFileLog>(),
             objectFactory,
             "select\n"
             + "  ffl.pkey,\n"
@@ -81,17 +78,15 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=ffr.server\n"
-            + "  and ffr.pkey=ffl.replication\n"
-            + "order by\n"
-            + "  pkey",
+            + "  and ffr.pkey=ffl.replication",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<FailoverFileLog> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverFileLog> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<FailoverFileLog>(),
+            new ArrayList<FailoverFileLog>(),
             objectFactory,
             "select\n"
             + "  ffl.pkey,\n"
@@ -111,9 +106,7 @@ final class DatabaseFailoverFileLogService extends DatabaseService<Integer,Failo
             + "  un.username=?\n"
             + "  and un.accounting=bs.accounting\n"
             + "  and bs.server=ffr.server\n"
-            + "  and ffr.pkey=ffl.replication\n"
-            + "order by\n"
-            + "  pkey",
+            + "  and ffr.pkey=ffl.replication",
             connector.getConnectAs()
         );
     }

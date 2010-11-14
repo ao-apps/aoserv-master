@@ -9,11 +9,9 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -25,7 +23,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
         public Transaction createObject(ResultSet result) throws SQLException {
             try {
                 return new Transaction(
-                    DatabaseTransactionService.this,
+                    connector,
                     result.getInt("transid"),
                     result.getLong("time"),
                     AccountingCode.valueOf(result.getString("accounting")),
@@ -51,9 +49,9 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
     }
 
     @Override
-    protected Set<Transaction> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Transaction> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<Transaction>(),
+            new ArrayList<Transaction>(),
             objectFactory,
             "select\n"
             + "  transid,\n"
@@ -71,21 +69,19 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
             + "  credit_card_transaction,\n"
             + "  status\n"
             + "from\n"
-            + "  transactions\n"
-            + "order by\n"
-            + "  transid"
+            + "  transactions"
         );
     }
 
     @Override
-    protected Set<Transaction> getSetDaemon(DatabaseConnection db) {
-        return Collections.emptySet();
+    protected ArrayList<Transaction> getListDaemon(DatabaseConnection db) {
+        return new ArrayList<Transaction>(0);
     }
 
     @Override
-    protected Set<Transaction> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Transaction> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<Transaction>(),
+            new ArrayList<Transaction>(),
             objectFactory,
             "select\n"
             + "  tr.transid,\n"
@@ -111,9 +107,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
             + "  and (\n"
             + UN1_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=tr.accounting\n"
-            + "order by\n"
-            + "  tr.transid",
+            + "  and bu1.accounting=tr.accounting",
             connector.getConnectAs()
         );
     }

@@ -10,33 +10,32 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseNetTcpRedirectService extends DatabaseService<Integer,NetTcpRedirect> implements NetTcpRedirectService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<NetTcpRedirect> objectFactory = new AutoObjectFactory<NetTcpRedirect>(NetTcpRedirect.class, this);
+    private final ObjectFactory<NetTcpRedirect> objectFactory = new AutoObjectFactory<NetTcpRedirect>(NetTcpRedirect.class, connector);
 
     DatabaseNetTcpRedirectService(DatabaseConnector connector) {
         super(connector, Integer.class, NetTcpRedirect.class);
     }
 
     @Override
-    protected Set<NetTcpRedirect> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<NetTcpRedirect> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<NetTcpRedirect>(),
+            new ArrayList<NetTcpRedirect>(),
             objectFactory,
             "select * from net_tcp_redirects"
         );
     }
 
     @Override
-    protected Set<NetTcpRedirect> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<NetTcpRedirect> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<NetTcpRedirect>(),
+            new ArrayList<NetTcpRedirect>(),
             objectFactory,
             "select\n"
             + "  ntr.*\n"
@@ -53,9 +52,9 @@ final class DatabaseNetTcpRedirectService extends DatabaseService<Integer,NetTcp
     }
 
     @Override
-    protected Set<NetTcpRedirect> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<NetTcpRedirect> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<NetTcpRedirect>(),
+            new ArrayList<NetTcpRedirect>(),
             objectFactory,
             "select\n"
             + "  ntr.*\n"

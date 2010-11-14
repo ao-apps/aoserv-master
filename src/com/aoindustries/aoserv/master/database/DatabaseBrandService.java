@@ -11,33 +11,32 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseBrandService extends DatabaseService<AccountingCode,Brand> implements BrandService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<Brand> objectFactory = new AutoObjectFactory<Brand>(Brand.class, this);
+    private final ObjectFactory<Brand> objectFactory = new AutoObjectFactory<Brand>(Brand.class, connector);
 
     DatabaseBrandService(DatabaseConnector connector) {
         super(connector, AccountingCode.class, Brand.class);
     }
 
     @Override
-    protected Set<Brand> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Brand> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<Brand>(),
+            new ArrayList<Brand>(),
             objectFactory,
             "select * from brands"
         );
     }
 
     @Override
-    protected Set<Brand> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Brand> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<Brand>(),
+            new ArrayList<Brand>(),
             objectFactory,
             "select\n"
             + "  br.accounting,\n"
@@ -90,9 +89,9 @@ final class DatabaseBrandService extends DatabaseService<AccountingCode,Brand> i
     }
 
     @Override
-    protected Set<Brand> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Brand> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<Brand>(),
+            new ArrayList<Brand>(),
             objectFactory,
             "select\n"
             + "  br.*\n"

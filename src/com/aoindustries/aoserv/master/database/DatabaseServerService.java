@@ -9,34 +9,33 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseServerService extends DatabaseService<Integer,Server> implements ServerService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<Server> objectFactory = new AutoObjectFactory<Server>(Server.class, this);
+    private final ObjectFactory<Server> objectFactory = new AutoObjectFactory<Server>(Server.class, connector);
 
     DatabaseServerService(DatabaseConnector connector) {
         super(connector, Integer.class, Server.class);
     }
 
     @Override
-    protected Set<Server> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Server> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<Server>(),
+            new ArrayList<Server>(),
             objectFactory,
-            "select * from servers order by pkey"
+            "select * from servers"
         );
     }
 
     @Override
-    protected Set<Server> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Server> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<Server>(),
+            new ArrayList<Server>(),
             objectFactory,
             "select distinct\n"
             + "  se.*\n"
@@ -62,17 +61,15 @@ final class DatabaseServerService extends DatabaseService<Integer,Server> implem
             + "    or fs.server=se.pkey\n"
             // Allow servers it replicates to
             + "    or bp.ao_server=se.pkey\n"
-            + "  )\n"
-            + "order by\n"
-            + "  se.pkey",
+            + "  )",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<Server> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Server> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<Server>(),
+            new ArrayList<Server>(),
             objectFactory,
             "select distinct\n"
             + "  se.*\n"
@@ -90,9 +87,7 @@ final class DatabaseServerService extends DatabaseService<Integer,Server> implem
             + "    bs.server=se.pkey\n"
             // Allow servers it replicates to
             //+ "    or bp.ao_server=se.pkey\n"
-            + "  )\n"
-            + "order by\n"
-            + "  se.pkey",
+            + "  )",
             connector.getConnectAs()
         );
     }

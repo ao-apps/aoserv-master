@@ -9,27 +9,26 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,AOServRolePermission> implements AOServRolePermissionService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<AOServRolePermission> objectFactory = new AutoObjectFactory<AOServRolePermission>(AOServRolePermission.class, this);
+    private final ObjectFactory<AOServRolePermission> objectFactory = new AutoObjectFactory<AOServRolePermission>(AOServRolePermission.class, connector);
 
     DatabaseAOServRolePermissionService(DatabaseConnector connector) {
         super(connector, Integer.class, AOServRolePermission.class);
     }
 
     @Override
-    protected Set<AOServRolePermission> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServRolePermission> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServRolePermission>(),
+            new ArrayList<AOServRolePermission>(),
             objectFactory,
-            "select * from aoserv_role_permissions order by pkey"
+            "select * from aoserv_role_permissions"
         );
     }
 
@@ -37,9 +36,9 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
      * Can only see their own roles.
      */
     @Override
-    protected Set<AOServRolePermission> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServRolePermission> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServRolePermission>(),
+            new ArrayList<AOServRolePermission>(),
             objectFactory,
             "select\n"
             + "  arp.*\n"
@@ -47,9 +46,7 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
             + "  business_administrator_roles bar\n"
             + "  inner join aoserv_role_permissions arp on bar.role=arp.role\n"
             + "where\n"
-            + "  bar.username=?\n"
-            + "order by\n"
-            + "  arp.pkey",
+            + "  bar.username=?",
             connector.getConnectAs()
         );
     }
@@ -58,9 +55,9 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
      * Can see the roles owned by the business tree and their own roles.
      */
     @Override
-    protected Set<AOServRolePermission> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServRolePermission> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServRolePermission>(),
+            new ArrayList<AOServRolePermission>(),
             objectFactory,
             // Business-based
             "select\n"
@@ -93,9 +90,7 @@ final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,
             + "  )\n"
             + "  and bu1.accounting=ba.accounting\n"
             + "  and ba.username=bar.username\n"
-            + "  and bar.role=arp.role\n"
-            + "order by\n"
-            + "  pkey",
+            + "  and bar.role=arp.role",
             connector.getConnectAs(),
             connector.getConnectAs()
         );

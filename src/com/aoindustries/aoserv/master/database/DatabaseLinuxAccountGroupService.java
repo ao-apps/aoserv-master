@@ -9,34 +9,33 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseLinuxAccountGroupService extends DatabaseService<Integer,LinuxAccountGroup> implements LinuxAccountGroupService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<LinuxAccountGroup> objectFactory = new AutoObjectFactory<LinuxAccountGroup>(LinuxAccountGroup.class, this);
+    private final ObjectFactory<LinuxAccountGroup> objectFactory = new AutoObjectFactory<LinuxAccountGroup>(LinuxAccountGroup.class, connector);
 
     DatabaseLinuxAccountGroupService(DatabaseConnector connector) {
         super(connector, Integer.class, LinuxAccountGroup.class);
     }
 
     @Override
-    protected Set<LinuxAccountGroup> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<LinuxAccountGroup> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<LinuxAccountGroup>(),
+            new ArrayList<LinuxAccountGroup>(),
             objectFactory,
-            "select pkey, linux_account, linux_group, is_primary from linux_account_groups order by pkey"
+            "select pkey, linux_account, linux_group, is_primary from linux_account_groups"
         );
     }
 
     @Override
-    protected Set<LinuxAccountGroup> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<LinuxAccountGroup> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<LinuxAccountGroup>(),
+            new ArrayList<LinuxAccountGroup>(),
             objectFactory,
             "select\n"
             + "  lag.pkey,\n"
@@ -52,17 +51,15 @@ final class DatabaseLinuxAccountGroupService extends DatabaseService<Integer,Lin
             + "  and (\n"
             + "    ms.server=lag.ao_server\n"
             + "    or ff.server=lag.ao_server\n"
-            + "  )\n"
-            + "order by\n"
-            + "  lag.pkey",
+            + "  )",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<LinuxAccountGroup> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<LinuxAccountGroup> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<LinuxAccountGroup>(),
+            new ArrayList<LinuxAccountGroup>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -99,9 +96,7 @@ final class DatabaseLinuxAccountGroupService extends DatabaseService<Integer,Lin
             + UN1_BU1_PARENTS_WHERE
             + "      )\n"
             + "      and bu1.accounting=lg.accounting\n"
-            + "  )\n"
-            + "order by\n"
-            + "  pkey",
+            + "  )",
             connector.getConnectAs(),
             connector.getConnectAs()
         );

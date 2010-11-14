@@ -10,49 +10,51 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> implements IPAddressService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<IPAddress> objectFactory = new AutoObjectFactory<IPAddress>(IPAddress.class, this);
+    private final ObjectFactory<IPAddress> objectFactory = new AutoObjectFactory<IPAddress>(IPAddress.class, connector);
 
     DatabaseIPAddressService(DatabaseConnector connector) {
         super(connector, Integer.class, IPAddress.class);
     }
 
     @Override
-    protected Set<IPAddress> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<IPAddress> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<IPAddress>(),
+            new ArrayList<IPAddress>(),
             objectFactory,
             "select\n"
-            + "  server_resource,\n"
-            + "  ip_address,\n"
-            + "  net_device,\n"
-            + "  is_alias,\n"
-            + "  hostname,\n"
-            + "  available,\n"
-            + "  is_overflow,\n"
-            + "  is_dhcp,\n"
-            + "  ping_monitor_enabled,\n"
-            + "  external_ip_address,\n"
-            + "  netmask\n"
+            + DatabaseServerResourceService.SELECT_COLUMNS
+            + "  ia.ip_address,\n"
+            + "  ia.net_device,\n"
+            + "  ia.is_alias,\n"
+            + "  ia.hostname,\n"
+            + "  ia.available,\n"
+            + "  ia.is_overflow,\n"
+            + "  ia.is_dhcp,\n"
+            + "  ia.ping_monitor_enabled,\n"
+            + "  ia.external_ip_address,\n"
+            + "  ia.netmask\n"
             + "from\n"
-            + "  ip_addresses"
+            + "  ip_addresses ia\n"
+            + "  inner join server_resources sr on ia.server_resource=sr.resource\n"
+            + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
+            + "  inner join resources re on sr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<IPAddress> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<IPAddress> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<IPAddress>(),
+            new ArrayList<IPAddress>(),
             objectFactory,
             "select distinct\n"
-            + "  ia.server_resource,\n"
+            + DatabaseServerResourceService.SELECT_COLUMNS
             + "  ia.ip_address,\n"
             + "  ia.net_device,\n"
             + "  ia.is_alias,\n"
@@ -68,6 +70,9 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
             + "  left join ao_servers ff on ms.server=ff.failover_server,\n"
             + "  net_devices nd\n"
             + "  right outer join ip_addresses ia on nd.pkey=ia.net_device\n"
+            + "  inner join server_resources sr on ia.server_resource=sr.resource\n"
+            + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
+            + "  inner join resources re on sr.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?\n"
             + "  and (\n"
@@ -92,12 +97,12 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
     }
 
     @Override
-    protected Set<IPAddress> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<IPAddress> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<IPAddress>(),
+            new ArrayList<IPAddress>(),
             objectFactory,
             "select\n"
-            + "  ia.server_resource,\n"
+            + DatabaseServerResourceService.SELECT_COLUMNS
             + "  ia.ip_address,\n"
             + "  ia.net_device,\n"
             + "  ia.is_alias,\n"
@@ -110,6 +115,9 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
             + "  ia.netmask\n"
             + "from\n"
             + "  ip_addresses ia\n"
+            + "  inner join server_resources sr on ia.server_resource=sr.resource\n"
+            + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
+            + "  inner join resources re on sr.resource=re.pkey\n"
             + "where\n"
             + "  ia.server_resource in (\n"
             + "    select\n"

@@ -10,24 +10,23 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseTimeZoneService extends DatabasePublicService<String,TimeZone> implements TimeZoneService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<TimeZone> objectFactory = new AutoObjectFactory<TimeZone>(TimeZone.class, this);
+    private final ObjectFactory<TimeZone> objectFactory = new AutoObjectFactory<TimeZone>(TimeZone.class, connector);
 
     DatabaseTimeZoneService(DatabaseConnector connector) {
         super(connector, String.class, TimeZone.class);
     }
 
     @Override
-    protected Set<TimeZone> getPublicSet(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TimeZone> getPublicList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<TimeZone>(),
+            new ArrayList<TimeZone>(),
             objectFactory,
             "select * from time_zones"
         );

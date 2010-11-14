@@ -10,33 +10,32 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseFailoverFileReplicationService extends DatabaseService<Integer,FailoverFileReplication> implements FailoverFileReplicationService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<FailoverFileReplication> objectFactory = new AutoObjectFactory<FailoverFileReplication>(FailoverFileReplication.class, this);
+    private final ObjectFactory<FailoverFileReplication> objectFactory = new AutoObjectFactory<FailoverFileReplication>(FailoverFileReplication.class, connector);
 
     DatabaseFailoverFileReplicationService(DatabaseConnector connector) {
         super(connector, Integer.class, FailoverFileReplication.class);
     }
 
     @Override
-    protected Set<FailoverFileReplication> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverFileReplication> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FailoverFileReplication>(),
+            new ArrayList<FailoverFileReplication>(),
             objectFactory,
             "select * from failover_file_replications"
         );
     }
 
     @Override
-    protected Set<FailoverFileReplication> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverFileReplication> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FailoverFileReplication>(),
+            new ArrayList<FailoverFileReplication>(),
             objectFactory,
             "select\n"
             + "  ffr.*\n"
@@ -51,9 +50,9 @@ final class DatabaseFailoverFileReplicationService extends DatabaseService<Integ
     }
 
     @Override
-    protected Set<FailoverFileReplication> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverFileReplication> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FailoverFileReplication>(),
+            new ArrayList<FailoverFileReplication>(),
             objectFactory,
             "select\n"
             + "  ffr.*\n"

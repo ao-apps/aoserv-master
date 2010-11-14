@@ -10,45 +10,47 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabasePrivateFtpServerService extends DatabaseService<Integer,PrivateFtpServer> implements PrivateFtpServerService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<PrivateFtpServer> objectFactory = new AutoObjectFactory<PrivateFtpServer>(PrivateFtpServer.class, this);
+    private final ObjectFactory<PrivateFtpServer> objectFactory = new AutoObjectFactory<PrivateFtpServer>(PrivateFtpServer.class, connector);
 
     DatabasePrivateFtpServerService(DatabaseConnector connector) {
         super(connector, Integer.class, PrivateFtpServer.class);
     }
 
     @Override
-    protected Set<PrivateFtpServer> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PrivateFtpServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<PrivateFtpServer>(),
+            new ArrayList<PrivateFtpServer>(),
             objectFactory,
             "select\n"
-            + "  ao_server_resource,\n"
-            + "  net_bind,\n"
-            + "  logfile,\n"
-            + "  hostname,\n"
-            + "  email,\n"
-            + "  linux_account_group,\n"
-            + "  allow_anonymous\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  pfs.net_bind,\n"
+            + "  pfs.logfile,\n"
+            + "  pfs.hostname,\n"
+            + "  pfs.email,\n"
+            + "  pfs.linux_account_group,\n"
+            + "  pfs.allow_anonymous\n"
             + "from\n"
-            + "  private_ftp_servers"
+            + "  private_ftp_servers pfs\n"
+            + "  inner join ao_server_resources asr on pfs.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<PrivateFtpServer> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PrivateFtpServer> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<PrivateFtpServer>(),
+            new ArrayList<PrivateFtpServer>(),
             objectFactory,
             "select\n"
-            + "  pfs.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  pfs.net_bind,\n"
             + "  pfs.logfile,\n"
             + "  pfs.hostname,\n"
@@ -58,6 +60,9 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
             + "from\n"
             + "  master_servers ms,\n"
             + "  private_ftp_servers pfs\n"
+            + "  inner join ao_server_resources asr on pfs.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=pfs.ao_server",
@@ -66,12 +71,12 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
     }
 
     @Override
-    protected Set<PrivateFtpServer> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PrivateFtpServer> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<PrivateFtpServer>(),
+            new ArrayList<PrivateFtpServer>(),
             objectFactory,
             "select\n"
-            + "  pfs.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  pfs.net_bind,\n"
             + "  pfs.logfile,\n"
             + "  pfs.hostname,\n"
@@ -83,6 +88,9 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
             + BU1_PARENTS_JOIN
             + "  net_binds nb,\n"
             + "  private_ftp_servers pfs\n"
+            + "  inner join ao_server_resources asr on pfs.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and (\n"

@@ -11,25 +11,23 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseTicketAssignmentService extends DatabaseService<Integer,TicketAssignment> implements TicketAssignmentService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<TicketAssignment> objectFactory = new AutoObjectFactory<TicketAssignment>(TicketAssignment.class, this);
+    private final ObjectFactory<TicketAssignment> objectFactory = new AutoObjectFactory<TicketAssignment>(TicketAssignment.class, connector);
 
     DatabaseTicketAssignmentService(DatabaseConnector connector) {
         super(connector, Integer.class, TicketAssignment.class);
     }
 
     @Override
-    protected Set<TicketAssignment> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TicketAssignment> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<TicketAssignment>(),
+            new ArrayList<TicketAssignment>(),
             objectFactory,
             "select pkey, ticket, reseller, administrator from ticket_assignments"
         );
@@ -39,16 +37,16 @@ final class DatabaseTicketAssignmentService extends DatabaseService<Integer,Tick
      * Daemons do not get any ticket assignment data.
      */
     @Override
-    protected Set<TicketAssignment> getSetDaemon(DatabaseConnection db) {
-        return Collections.emptySet();
+    protected ArrayList<TicketAssignment> getListDaemon(DatabaseConnection db) {
+        return new ArrayList<TicketAssignment>(0);
     }
 
     @Override
-    protected Set<TicketAssignment> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected ArrayList<TicketAssignment> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             // Only ticket admin can see assignments
             return db.executeObjectCollectionQuery(
-                new HashSet<TicketAssignment>(),
+                new ArrayList<TicketAssignment>(),
                 objectFactory,
                 "select\n"
                 + "  ta.pkey,\n"
@@ -75,7 +73,7 @@ final class DatabaseTicketAssignmentService extends DatabaseService<Integer,Tick
             );
         } else {
             // Non-admins don't get any assignment details
-            return Collections.emptySet();
+            return new ArrayList<TicketAssignment>(0);
         }
     }
 }

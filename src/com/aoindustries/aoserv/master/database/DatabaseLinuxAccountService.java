@@ -13,8 +13,7 @@ import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -22,41 +21,44 @@ import java.util.Set;
 final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAccount> implements LinuxAccountService<DatabaseConnector,DatabaseConnectorFactory> {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
-    private final ObjectFactory<LinuxAccount> objectFactory = new AutoObjectFactory<LinuxAccount>(LinuxAccount.class, this);
+    private final ObjectFactory<LinuxAccount> objectFactory = new AutoObjectFactory<LinuxAccount>(LinuxAccount.class, connector);
 
     DatabaseLinuxAccountService(DatabaseConnector connector) {
         super(connector, Integer.class, LinuxAccount.class);
     }
 
     @Override
-    protected Set<LinuxAccount> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<LinuxAccount> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<LinuxAccount>(),
+            new ArrayList<LinuxAccount>(),
             objectFactory,
             "select\n"
-            + "  ao_server_resource,\n"
-            + "  linux_account_type,\n"
-            + "  username,\n"
-            + "  uid,\n"
-            + "  home,\n"
-            + "  name,\n"
-            + "  office_location,\n"
-            + "  office_phone,\n"
-            + "  home_phone,\n"
-            + "  shell,\n"
-            + "  predisable_password\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  la.linux_account_type,\n"
+            + "  la.username,\n"
+            + "  la.uid,\n"
+            + "  la.home,\n"
+            + "  la.name,\n"
+            + "  la.office_location,\n"
+            + "  la.office_phone,\n"
+            + "  la.home_phone,\n"
+            + "  la.shell,\n"
+            + "  la.predisable_password\n"
             + "from\n"
-            + "  linux_accounts"
+            + "  linux_accounts la\n"
+            + "  inner join ao_server_resources asr on la.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<LinuxAccount> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<LinuxAccount> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<LinuxAccount>(),
+            new ArrayList<LinuxAccount>(),
             objectFactory,
             "select\n"
-            + "  la.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  la.linux_account_type,\n"
             + "  la.username,\n"
             + "  la.uid,\n"
@@ -71,6 +73,9 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
             + "  master_servers ms\n"
             + "  left join ao_servers ff on ms.server=ff.failover_server,\n"
             + "  linux_accounts la\n"
+            + "  inner join ao_server_resources asr on la.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?\n"
             + "  and (\n"
@@ -82,12 +87,12 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
     }
 
     @Override
-    protected Set<LinuxAccount> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<LinuxAccount> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<LinuxAccount>(),
+            new ArrayList<LinuxAccount>(),
             objectFactory,
              "select\n"
-            + "  la.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  la.linux_account_type,\n"
             + "  la.username,\n"
             + "  la.uid,\n"
@@ -102,6 +107,9 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
             + "  usernames un1,\n"
             + BU1_PARENTS_JOIN
             + "  linux_accounts la\n"
+            + "  inner join ao_server_resources asr on la.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  un1.username=?\n"
             + "  and (\n"
@@ -118,7 +126,7 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
     void setLinuxAccountPassword(DatabaseConnection db, InvalidateSet invalidateSet, int linuxAccount, String plaintext) throws RemoteException, SQLException {
         try {
             LinuxAccount la = connector.factory.rootConnector.getLinuxAccounts().get(linuxAccount);
-            DaemonHandler.getDaemonConnector(la.getAoServerResource().getAoServer()).setLinuxAccountPassword(la.getUserId(), plaintext);
+            DaemonHandler.getDaemonConnector(la.getAoServer()).setLinuxAccountPassword(la.getUserId(), plaintext);
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         }

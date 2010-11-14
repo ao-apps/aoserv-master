@@ -9,12 +9,10 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -26,8 +24,14 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
         public DnsRecord createObject(ResultSet result) throws SQLException {
             try {
                 return new DnsRecord(
-                    DatabaseDnsRecordService.this,
-                    result.getInt("resource"),
+                    connector,
+                    result.getInt("pkey"),
+                    result.getString("resource_type"),
+                    AccountingCode.valueOf(result.getString("accounting")),
+                    result.getLong("created"),
+                    UserId.valueOf(result.getString("created_by")),
+                    (Integer)result.getObject("disable_log"),
+                    result.getLong("last_enabled"),
                     result.getInt("zone"),
                     result.getString("domain"),
                     result.getString("type"),
@@ -49,63 +53,61 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
     }
 
     @Override
-    protected Set<DnsRecord> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<DnsRecord> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<DnsRecord>(),
+            new ArrayList<DnsRecord>(),
             objectFactory,
             "select\n"
-            + "  resource,\n"
-            + "  zone,\n"
-            + "  domain,\n"
-            + "  type,\n"
-            + "  mx_priority,\n"
-            + "  data_ip_address,\n"
-            + "  data_domain_name,\n"
-            + "  data_text,\n"
-            + "  dhcp_address,\n"
-            + "  ttl\n"
+            + DatabaseResourceService.SELECT_COLUMNS
+            + "  dr.zone,\n"
+            + "  dr.domain,\n"
+            + "  dr.type,\n"
+            + "  dr.mx_priority,\n"
+            + "  dr.data_ip_address,\n"
+            + "  dr.data_domain_name,\n"
+            + "  dr.data_text,\n"
+            + "  dr.dhcp_address,\n"
+            + "  dr.ttl\n"
             + "from\n"
-            + "  dns_records\n"
-            + "order by\n"
-            + "  resource"
+            + "  dns_records dr\n"
+            + "  inner join resources re on dr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<DnsRecord> getSetDaemon(DatabaseConnection db) throws RemoteException, SQLException {
+    protected ArrayList<DnsRecord> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException {
         MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
         if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
             return db.executeObjectCollectionQuery(
-                new ArraySet<DnsRecord>(),
+                new ArrayList<DnsRecord>(),
                 objectFactory,
                 "select\n"
-                + "  resource,\n"
-                + "  zone,\n"
-                + "  domain,\n"
-                + "  type,\n"
-                + "  mx_priority,\n"
-                + "  data_ip_address,\n"
-                + "  data_domain_name,\n"
-                + "  data_text,\n"
-                + "  dhcp_address,\n"
-                + "  ttl\n"
+                + DatabaseResourceService.SELECT_COLUMNS
+                + "  dr.zone,\n"
+                + "  dr.domain,\n"
+                + "  dr.type,\n"
+                + "  dr.mx_priority,\n"
+                + "  dr.data_ip_address,\n"
+                + "  dr.data_domain_name,\n"
+                + "  dr.data_text,\n"
+                + "  dr.dhcp_address,\n"
+                + "  dr.ttl\n"
                 + "from\n"
-                + "  dns_records\n"
-                + "order by\n"
-                + "  resource"
+                + "  dns_records dr\n"
+                + "  inner join resources re on dr.resource=re.pkey"
             );
         } else {
-            return Collections.emptySet();
+            return new ArrayList<DnsRecord>(0);
         }
     }
 
     @Override
-    protected Set<DnsRecord> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<DnsRecord> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<DnsRecord>(),
+            new ArrayList<DnsRecord>(),
             objectFactory,
             "select\n"
-            + "  dr.resource,\n"
+            + DatabaseResourceService.SELECT_COLUMNS
             + "  dr.zone,\n"
             + "  dr.domain,\n"
             + "  dr.type,\n"
@@ -119,14 +121,13 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN
             + "  dns_records dr\n"
+            + "  inner join resources re on dr.resource=re.pkey\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=dr.accounting\n"
-            + "order by\n"
-            + "  dr.resource",
+            + "  and bu1.accounting=dr.accounting",
             connector.getConnectAs()
         );
     }

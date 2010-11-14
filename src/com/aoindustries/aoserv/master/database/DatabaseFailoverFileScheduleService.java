@@ -10,33 +10,32 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseFailoverFileScheduleService extends DatabaseService<Integer,FailoverFileSchedule> implements FailoverFileScheduleService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<FailoverFileSchedule> objectFactory = new AutoObjectFactory<FailoverFileSchedule>(FailoverFileSchedule.class, this);
+    private final ObjectFactory<FailoverFileSchedule> objectFactory = new AutoObjectFactory<FailoverFileSchedule>(FailoverFileSchedule.class, connector);
 
     DatabaseFailoverFileScheduleService(DatabaseConnector connector) {
         super(connector, Integer.class, FailoverFileSchedule.class);
     }
 
     @Override
-    protected Set<FailoverFileSchedule> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverFileSchedule> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FailoverFileSchedule>(),
+            new ArrayList<FailoverFileSchedule>(),
             objectFactory,
             "select * from failover_file_schedule"
         );
     }
 
     @Override
-    protected Set<FailoverFileSchedule> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverFileSchedule> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FailoverFileSchedule>(),
+            new ArrayList<FailoverFileSchedule>(),
             objectFactory,
             "select\n"
             + "  ffs.*\n"
@@ -53,9 +52,9 @@ final class DatabaseFailoverFileScheduleService extends DatabaseService<Integer,
     }
 
     @Override
-    protected Set<FailoverFileSchedule> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverFileSchedule> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FailoverFileSchedule>(),
+            new ArrayList<FailoverFileSchedule>(),
             objectFactory,
             "select\n"
             + "  ffs.*\n"

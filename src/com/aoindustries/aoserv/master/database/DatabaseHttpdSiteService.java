@@ -10,45 +10,47 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseHttpdSiteService extends DatabaseService<Integer,HttpdSite> implements HttpdSiteService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<HttpdSite> objectFactory = new AutoObjectFactory<HttpdSite>(HttpdSite.class, this);
+    private final ObjectFactory<HttpdSite> objectFactory = new AutoObjectFactory<HttpdSite>(HttpdSite.class, connector);
 
     DatabaseHttpdSiteService(DatabaseConnector connector) {
         super(connector, Integer.class, HttpdSite.class);
     }
 
     @Override
-    protected Set<HttpdSite> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<HttpdSite> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<HttpdSite>(),
+            new ArrayList<HttpdSite>(),
             objectFactory,
             "select\n"
-            + "  ao_server_resource,\n"
-            + "  site_name,\n"
-            + "  list_first,\n"
-            + "  linux_account_group,\n"
-            + "  server_admin,\n"
-            + "  is_manual_config,\n"
-            + "  awstats_skip_files\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  hs.site_name,\n"
+            + "  hs.list_first,\n"
+            + "  hs.linux_account_group,\n"
+            + "  hs.server_admin,\n"
+            + "  hs.is_manual_config,\n"
+            + "  hs.awstats_skip_files\n"
             + "from\n"
-            + "  httpd_sites"
+            + "  httpd_sites hs\n"
+            + "  inner join ao_server_resources asr on hs.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<HttpdSite> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<HttpdSite> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<HttpdSite>(),
+            new ArrayList<HttpdSite>(),
             objectFactory,
             "select\n"
-            + "  hs.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  hs.site_name,\n"
             + "  hs.list_first,\n"
             + "  hs.linux_account_group,\n"
@@ -58,6 +60,9 @@ final class DatabaseHttpdSiteService extends DatabaseService<Integer,HttpdSite> 
             + "from\n"
             + "  master_servers ms,\n"
             + "  httpd_sites hs\n"
+            + "  inner join ao_server_resources asr on hs.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=hs.ao_server",
@@ -66,12 +71,12 @@ final class DatabaseHttpdSiteService extends DatabaseService<Integer,HttpdSite> 
     }
 
     @Override
-    protected Set<HttpdSite> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<HttpdSite> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<HttpdSite>(),
+            new ArrayList<HttpdSite>(),
             objectFactory,
             "select\n"
-            + "  hs.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  hs.site_name,\n"
             + "  hs.list_first,\n"
             + "  hs.linux_account_group,\n"
@@ -82,6 +87,9 @@ final class DatabaseHttpdSiteService extends DatabaseService<Integer,HttpdSite> 
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN
             + "  httpd_sites hs\n"
+            + "  inner join ao_server_resources asr on hs.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and (\n"

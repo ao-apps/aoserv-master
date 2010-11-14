@@ -9,27 +9,26 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseTicketCategoryService extends DatabasePublicService<Integer,TicketCategory> implements TicketCategoryService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<TicketCategory> objectFactory = new AutoObjectFactory<TicketCategory>(TicketCategory.class, this);
+    private final ObjectFactory<TicketCategory> objectFactory = new AutoObjectFactory<TicketCategory>(TicketCategory.class, connector);
 
     DatabaseTicketCategoryService(DatabaseConnector connector) {
         super(connector, Integer.class, TicketCategory.class);
     }
 
     @Override
-    protected Set<TicketCategory> getPublicSet(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TicketCategory> getPublicList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<TicketCategory>(),
+            new ArrayList<TicketCategory>(),
             objectFactory,
-            "select * from ticket_categories order by pkey"
+            "select * from ticket_categories"
         );
     }
 }

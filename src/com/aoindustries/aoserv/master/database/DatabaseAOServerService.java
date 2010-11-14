@@ -9,25 +9,24 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> implements AOServerService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<AOServer> objectFactory = new AutoObjectFactory<AOServer>(AOServer.class, this);
+    private final ObjectFactory<AOServer> objectFactory = new AutoObjectFactory<AOServer>(AOServer.class, connector);
 
     DatabaseAOServerService(DatabaseConnector connector) {
         super(connector, Integer.class, AOServer.class);
     }
 
     @Override
-    protected Set<AOServer> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServer>(),
+            new ArrayList<AOServer>(),
             objectFactory,
             "select\n"
             + "  server,\n"
@@ -50,16 +49,14 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
             + "  monitoring_load_high,\n"
             + "  monitoring_load_critical\n"
             + "from\n"
-            + "  ao_servers\n"
-            + "order by\n"
-            + "  server"
+            + "  ao_servers"
         );
     }
 
     @Override
-    protected Set<AOServer> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServer> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServer>(),
+            new ArrayList<AOServer>(),
             objectFactory,
             "select distinct\n"
             + "  ao2.server,\n"
@@ -103,17 +100,15 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
             + "    or fs.server=ao2.server\n"
             // Allow servers it replicates to
             + "    or bp.ao_server=ao2.server\n"
-            + "  )\n"
-            + "order by\n"
-            + "  server",
+            + "  )",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<AOServer> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServer> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServer>(),
+            new ArrayList<AOServer>(),
             objectFactory,
             "select distinct\n"
             + "  ao.server,\n"
@@ -149,9 +144,7 @@ final class DatabaseAOServerService extends DatabaseService<Integer,AOServer> im
             + "    bs.server=ao.server\n"
             // Allow servers it replicates to
             //+ "    or bp.ao_server=ao.server\n"
-            + "  )\n"
-            + "order by\n"
-            + "  server",
+            + "  )",
             AOServObject.FILTERED,
             connector.getConnectAs()
         );

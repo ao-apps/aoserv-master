@@ -10,24 +10,23 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseMySQLDBUserService extends DatabaseService<Integer,MySQLDBUser> implements MySQLDBUserService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<MySQLDBUser> objectFactory = new AutoObjectFactory<MySQLDBUser>(MySQLDBUser.class, this);
+    private final ObjectFactory<MySQLDBUser> objectFactory = new AutoObjectFactory<MySQLDBUser>(MySQLDBUser.class, connector);
 
     DatabaseMySQLDBUserService(DatabaseConnector connector) {
         super(connector, Integer.class, MySQLDBUser.class);
     }
 
     @Override
-    protected Set<MySQLDBUser> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<MySQLDBUser> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<MySQLDBUser>(),
+            new ArrayList<MySQLDBUser>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -58,9 +57,9 @@ final class DatabaseMySQLDBUserService extends DatabaseService<Integer,MySQLDBUs
     }
 
     @Override
-    protected Set<MySQLDBUser> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<MySQLDBUser> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<MySQLDBUser>(),
+            new ArrayList<MySQLDBUser>(),
             objectFactory,
             "select\n"
             + "  mdu.pkey,\n"
@@ -98,9 +97,9 @@ final class DatabaseMySQLDBUserService extends DatabaseService<Integer,MySQLDBUs
     }
 
     @Override
-    protected Set<MySQLDBUser> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<MySQLDBUser> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<MySQLDBUser>(),
+            new ArrayList<MySQLDBUser>(),
             objectFactory,
             "select\n"
             + "  mdu.pkey,\n"
@@ -128,15 +127,15 @@ final class DatabaseMySQLDBUserService extends DatabaseService<Integer,MySQLDBUs
             + "from\n"
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN
-            + "  ao_server_resources aor,\n"
+            + "  ao_server_resources asr,\n"
             + "  mysql_db_users mdu\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=aor.accounting\n"
-            + "  and aor.resource=mdu.mysql_database",
+            + "  and bu1.accounting=asr.accounting\n"
+            + "  and asr.resource=mdu.mysql_database",
             connector.getConnectAs()
         );
     }

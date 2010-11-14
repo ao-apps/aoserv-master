@@ -13,8 +13,7 @@ import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -22,67 +21,70 @@ import java.util.Set;
 final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> implements MySQLUserService<DatabaseConnector,DatabaseConnectorFactory> {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
-    private final ObjectFactory<MySQLUser> objectFactory = new AutoObjectFactory<MySQLUser>(MySQLUser.class, this);
+    private final ObjectFactory<MySQLUser> objectFactory = new AutoObjectFactory<MySQLUser>(MySQLUser.class, connector);
 
     DatabaseMySQLUserService(DatabaseConnector connector) {
         super(connector, Integer.class, MySQLUser.class);
     }
 
     @Override
-    protected Set<MySQLUser> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<MySQLUser> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<MySQLUser>(),
+            new ArrayList<MySQLUser>(),
             objectFactory,
             "select\n"
-            + "  ao_server_resource,\n"
-            + "  username,\n"
-            + "  mysql_server,\n"
-            + "  host,\n"
-            + "  select_priv,\n"
-            + "  insert_priv,\n"
-            + "  update_priv,\n"
-            + "  delete_priv,\n"
-            + "  create_priv,\n"
-            + "  drop_priv,\n"
-            + "  reload_priv,\n"
-            + "  shutdown_priv,\n"
-            + "  process_priv,\n"
-            + "  file_priv,\n"
-            + "  grant_priv,\n"
-            + "  references_priv,\n"
-            + "  index_priv,\n"
-            + "  alter_priv,\n"
-            + "  show_db_priv,\n"
-            + "  super_priv,\n"
-            + "  create_tmp_table_priv,\n"
-            + "  lock_tables_priv,\n"
-            + "  execute_priv,\n"
-            + "  repl_slave_priv,\n"
-            + "  repl_client_priv,\n"
-            + "  create_view_priv,\n"
-            + "  show_view_priv,\n"
-            + "  create_routine_priv,\n"
-            + "  alter_routine_priv,\n"
-            + "  create_user_priv,\n"
-            + "  event_priv,\n"
-            + "  trigger_priv,\n"
-            + "  predisable_password,\n"
-            + "  max_questions,\n"
-            + "  max_updates\n,"
-            + "  max_connections,\n"
-            + "  max_user_connections\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  mu.username,\n"
+            + "  mu.mysql_server,\n"
+            + "  mu.host,\n"
+            + "  mu.select_priv,\n"
+            + "  mu.insert_priv,\n"
+            + "  mu.update_priv,\n"
+            + "  mu.delete_priv,\n"
+            + "  mu.create_priv,\n"
+            + "  mu.drop_priv,\n"
+            + "  mu.reload_priv,\n"
+            + "  mu.shutdown_priv,\n"
+            + "  mu.process_priv,\n"
+            + "  mu.file_priv,\n"
+            + "  mu.grant_priv,\n"
+            + "  mu.references_priv,\n"
+            + "  mu.index_priv,\n"
+            + "  mu.alter_priv,\n"
+            + "  mu.show_db_priv,\n"
+            + "  mu.super_priv,\n"
+            + "  mu.create_tmp_table_priv,\n"
+            + "  mu.lock_tables_priv,\n"
+            + "  mu.execute_priv,\n"
+            + "  mu.repl_slave_priv,\n"
+            + "  mu.repl_client_priv,\n"
+            + "  mu.create_view_priv,\n"
+            + "  mu.show_view_priv,\n"
+            + "  mu.create_routine_priv,\n"
+            + "  mu.alter_routine_priv,\n"
+            + "  mu.create_user_priv,\n"
+            + "  mu.event_priv,\n"
+            + "  mu.trigger_priv,\n"
+            + "  mu.predisable_password,\n"
+            + "  mu.max_questions,\n"
+            + "  mu.max_updates\n,"
+            + "  mu.max_connections,\n"
+            + "  mu.max_user_connections\n"
             + "from\n"
-            + "  mysql_users"
+            + "  mysql_users mu\n"
+            + "  inner join ao_server_resources asr on mu.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<MySQLUser> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<MySQLUser> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<MySQLUser>(),
+            new ArrayList<MySQLUser>(),
             objectFactory,
             "select\n"
-            + "  mu.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  mu.username,\n"
             + "  mu.mysql_server,\n"
             + "  mu.host,\n"
@@ -122,6 +124,9 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
             + "from\n"
             + "  master_servers ms,\n"
             + "  mysql_users mu\n"
+            + "  inner join ao_server_resources asr on mu.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=mu.ao_server",
@@ -130,12 +135,12 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
     }
 
     @Override
-    protected Set<MySQLUser> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<MySQLUser> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<MySQLUser>(),
+            new ArrayList<MySQLUser>(),
             objectFactory,
              "select\n"
-            + "  mu.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  mu.username,\n"
             + "  mu.mysql_server,\n"
             + "  mu.host,\n"
@@ -176,6 +181,9 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
             + "  usernames un1,\n"
             + BU1_PARENTS_JOIN
             + "  mysql_users mu\n"
+            + "  inner join ao_server_resources asr on mu.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  un1.username=?\n"
             + "  and (\n"
@@ -192,7 +200,7 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
     void setMySQLUserPassword(DatabaseConnection db, InvalidateSet invalidateSet, int mysqlUser, String plaintext) throws RemoteException, SQLException {
         try {
             MySQLUser mu = connector.factory.rootConnector.getMysqlUsers().get(mysqlUser);
-            DaemonHandler.getDaemonConnector(mu.getAoServerResource().getAoServer()).setMySQLUserPassword(mysqlUser, plaintext);
+            DaemonHandler.getDaemonConnector(mu.getAoServer()).setMySQLUserPassword(mysqlUser, plaintext);
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         }

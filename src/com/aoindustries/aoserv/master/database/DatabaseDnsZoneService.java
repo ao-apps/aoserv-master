@@ -9,73 +9,69 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> implements DnsZoneService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<DnsZone> objectFactory = new AutoObjectFactory<DnsZone>(DnsZone.class, this);
+    private final ObjectFactory<DnsZone> objectFactory = new AutoObjectFactory<DnsZone>(DnsZone.class, connector);
 
     DatabaseDnsZoneService(DatabaseConnector connector) {
         super(connector, Integer.class, DnsZone.class);
     }
 
     @Override
-    protected Set<DnsZone> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<DnsZone> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<DnsZone>(),
+            new ArrayList<DnsZone>(),
             objectFactory,
             "select\n"
-            + "  resource,\n"
-            + "  zone,\n"
-            + "  file,\n"
-            + "  hostmaster,\n"
-            + "  serial,\n"
-            + "  ttl\n"
+            + DatabaseResourceService.SELECT_COLUMNS
+            + "  dz.zone,\n"
+            + "  dz.file,\n"
+            + "  dz.hostmaster,\n"
+            + "  dz.serial,\n"
+            + "  dz.ttl\n"
             + "from\n"
-            + "  dns_zones\n"
-            + "order by\n"
-            + "  resource"
+            + "  dns_zones dz\n"
+            + "  inner join resources re on dz.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<DnsZone> getSetDaemon(DatabaseConnection db) throws RemoteException, SQLException {
+    protected ArrayList<DnsZone> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException {
         MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
         if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
             return db.executeObjectCollectionQuery(
-                new ArraySet<DnsZone>(),
+                new ArrayList<DnsZone>(),
                 objectFactory,
                 "select\n"
-                + "  resource,\n"
-                + "  zone,\n"
-                + "  file,\n"
-                + "  hostmaster,\n"
-                + "  serial,\n"
-                + "  ttl\n"
+                + DatabaseResourceService.SELECT_COLUMNS
+                + "  dz.zone,\n"
+                + "  dz.file,\n"
+                + "  dz.hostmaster,\n"
+                + "  dz.serial,\n"
+                + "  dz.ttl\n"
                 + "from\n"
-                + "  dns_zones\n"
-                + "order by\n"
-                + "  resource"
+                + "  dns_zones dz\n"
+                + "  inner join resources re on dz.resource=re.pkey"
             );
         } else {
-            return Collections.emptySet();
+            return new ArrayList<DnsZone>(0);
         }
     }
 
     @Override
-    protected Set<DnsZone> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<DnsZone> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<DnsZone>(),
+            new ArrayList<DnsZone>(),
             objectFactory,
             "select\n"
-            + "  dz.resource,\n"
+            + DatabaseResourceService.SELECT_COLUMNS
             + "  dz.zone,\n"
             + "  dz.file,\n"
             + "  dz.hostmaster,\n"
@@ -85,14 +81,13 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN
             + "  dns_zones dz\n"
+            + "  inner join resources re on dz.resource=re.pkey\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
-            + "  and bu1.accounting=dz.accounting\n"
-            + "order by\n"
-            + "  dz.resource",
+            + "  and bu1.accounting=dz.accounting",
             connector.getConnectAs()
         );
     }

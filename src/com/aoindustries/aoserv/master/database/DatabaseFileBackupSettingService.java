@@ -9,34 +9,33 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseFileBackupSettingService extends DatabaseService<Integer,FileBackupSetting> implements FileBackupSettingService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<FileBackupSetting> objectFactory = new AutoObjectFactory<FileBackupSetting>(FileBackupSetting.class, this);
+    private final ObjectFactory<FileBackupSetting> objectFactory = new AutoObjectFactory<FileBackupSetting>(FileBackupSetting.class, connector);
 
     DatabaseFileBackupSettingService(DatabaseConnector connector) {
         super(connector, Integer.class, FileBackupSetting.class);
     }
 
     @Override
-    protected Set<FileBackupSetting> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FileBackupSetting> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<FileBackupSetting>(),
+            new ArrayList<FileBackupSetting>(),
             objectFactory,
-            "select * from file_backup_settings order by pkey"
+            "select * from file_backup_settings"
         );
     }
 
     @Override
-    protected Set<FileBackupSetting> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FileBackupSetting> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<FileBackupSetting>(),
+            new ArrayList<FileBackupSetting>(),
             objectFactory,
             "select\n"
             + "  fbs.*\n"
@@ -47,17 +46,15 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=ffr.server\n"
-            + "  and ffr.pkey=fbs.replication\n"
-            + "order by\n"
-            + "  fbs.pkey",
+            + "  and ffr.pkey=fbs.replication",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<FileBackupSetting> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FileBackupSetting> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<FileBackupSetting>(),
+            new ArrayList<FileBackupSetting>(),
             objectFactory,
             "select\n"
             + "  fbs.*\n"
@@ -74,9 +71,7 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
             + "  )\n"
             + "  and bu1.accounting=se.accounting\n"
             + "  and se.pkey=ffr.server\n"
-            + "  and ffr.pkey=fbs.replication\n"
-            + "order by\n"
-            + "  fbs.pkey",
+            + "  and ffr.pkey=fbs.replication",
             connector.getConnectAs()
         );
     }

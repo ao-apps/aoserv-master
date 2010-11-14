@@ -9,27 +9,26 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole> implements AOServRoleService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<AOServRole> objectFactory = new AutoObjectFactory<AOServRole>(AOServRole.class, this);
+    private final ObjectFactory<AOServRole> objectFactory = new AutoObjectFactory<AOServRole>(AOServRole.class, connector);
 
     DatabaseAOServRoleService(DatabaseConnector connector) {
         super(connector, Integer.class, AOServRole.class);
     }
 
     @Override
-    protected Set<AOServRole> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServRole> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServRole>(),
+            new ArrayList<AOServRole>(),
             objectFactory,
-            "select * from aoserv_roles order by pkey"
+            "select * from aoserv_roles"
         );
     }
 
@@ -37,9 +36,9 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
      * Can only see their own roles.
      */
     @Override
-    protected Set<AOServRole> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServRole> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServRole>(),
+            new ArrayList<AOServRole>(),
             objectFactory,
             "select\n"
             + "  ar.*\n"
@@ -47,9 +46,7 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
             + "  business_administrator_roles bar\n"
             + "  inner join aoserv_roles ar on bar.role=ar.pkey\n"
             + "where\n"
-            + "  bar.username=?\n"
-            + "order by\n"
-            + "  ar.pkey",
+            + "  bar.username=?",
             connector.getConnectAs()
         );
     }
@@ -58,9 +55,9 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
      * Can see the roles owned by the business tree and their own roles.
      */
     @Override
-    protected Set<AOServRole> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServRole> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServRole>(),
+            new ArrayList<AOServRole>(),
             objectFactory,
             // Business-based
             "select\n"
@@ -92,9 +89,7 @@ final class DatabaseAOServRoleService extends DatabaseService<Integer,AOServRole
             + "  )\n"
             + "  and bu1.accounting=ba.accounting\n"
             + "  and ba.username=bar.username\n"
-            + "  and bar.role=ar.pkey\n"
-            + "order by\n"
-            + "  pkey",
+            + "  and bar.role=ar.pkey",
             connector.getConnectAs(),
             connector.getConnectAs()
         );

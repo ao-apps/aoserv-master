@@ -10,36 +10,45 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServer> implements MySQLServerService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<MySQLServer> objectFactory = new AutoObjectFactory<MySQLServer>(MySQLServer.class, this);
+    private final ObjectFactory<MySQLServer> objectFactory = new AutoObjectFactory<MySQLServer>(MySQLServer.class, connector);
 
     DatabaseMySQLServerService(DatabaseConnector connector) {
         super(connector, Integer.class, MySQLServer.class);
     }
 
     @Override
-    protected Set<MySQLServer> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<MySQLServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<MySQLServer>(),
+            new ArrayList<MySQLServer>(),
             objectFactory,
-            "select ao_server_resource, name, version, max_connections, net_bind from mysql_servers"
+            "select\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + "  ms.name,\n"
+            + "  ms.version,\n"
+            + "  ms.max_connections,\n"
+            + "  ms.net_bind\n"
+            + "from\n"
+            + "  mysql_servers ms\n"
+            + "  inner join ao_server_resources asr on ms.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey"
         );
     }
 
     @Override
-    protected Set<MySQLServer> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<MySQLServer> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<MySQLServer>(),
+            new ArrayList<MySQLServer>(),
             objectFactory,
             "select\n"
-            + "  mys.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  mys.name,\n"
             + "  mys.version,\n"
             + "  mys.max_connections,\n"
@@ -47,6 +56,9 @@ final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServ
             + "from\n"
             + "  master_servers ms,\n"
             + "  mysql_servers mys\n"
+            + "  inner join ao_server_resources asr on mys.ao_server_resource=asr.resource\n"
+            + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=mys.ao_server",
@@ -55,12 +67,12 @@ final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServ
     }
 
     @Override
-    protected Set<MySQLServer> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<MySQLServer> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<MySQLServer>(),
+            new ArrayList<MySQLServer>(),
             objectFactory,
             "select\n"
-            + "  ms.ao_server_resource,\n"
+            + DatabaseAOServerResourceService.SELECT_COLUMNS
             + "  ms.name,\n"
             + "  ms.version,\n"
             + "  ms.max_connections,\n"
@@ -69,6 +81,8 @@ final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServ
             + "  usernames un,\n"
             + "  business_servers bs,\n"
             + "  mysql_servers ms\n"
+            + "  inner join ao_server_resources asr on ms.ao_server_resource=asr.resource\n"
+            + "  inner join resources re on asr.resource=re.pkey\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and un.accounting=bs.accounting\n"

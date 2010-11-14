@@ -8,11 +8,10 @@ package com.aoindustries.aoserv.master.database;
 import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -23,7 +22,7 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
         @Override
         public PackageDefinition createObject(ResultSet result) throws SQLException {
             return new PackageDefinition(
-                DatabasePackageDefinitionService.this,
+                connector,
                 result.getInt("pkey"),
                 result.getString("category"),
                 result.getString("name"),
@@ -42,18 +41,18 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
     }
 
     @Override
-    protected Set<PackageDefinition> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PackageDefinition> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<PackageDefinition>(),
+            new ArrayList<PackageDefinition>(),
             objectFactory,
-            "select * from package_definitions order by pkey"
+            "select * from package_definitions"
         );
     }
 
     @Override
-    protected Set<PackageDefinition> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PackageDefinition> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<PackageDefinition>(),
+            new ArrayList<PackageDefinition>(),
             objectFactory,
             "select distinct\n"
             + "  pd.*\n"
@@ -66,18 +65,16 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
             + "  ms.username=?\n"
             + "  and ms.server=bs.server\n"
             + "  and bs.accounting=bu.accounting\n"
-            + "  and bu.package_definition=pd.pkey\n"
-            + "order by\n"
-            + "  pd.pkey",
+            + "  and bu.package_definition=pd.pkey",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<PackageDefinition> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected ArrayList<PackageDefinition> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getUsername().getBusiness().canSeePrices()) {
             return db.executeObjectCollectionQuery(
-                new ArraySet<PackageDefinition>(),
+                new ArrayList<PackageDefinition>(),
                 objectFactory,
                 "select distinct\n"
                 + "  pd.*\n"
@@ -95,14 +92,12 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
                 + "  and (\n"
                 + "    bu1.package_definition=pd.pkey\n"
                 + "    or pdb.package_definition=pd.pkey\n"
-                + "  )\n"
-                + "order by\n"
-                + "  pd.pkey",
+                + "  )",
                 connector.getConnectAs()
             );
         } else {
             return db.executeObjectCollectionQuery(
-                new ArraySet<PackageDefinition>(),
+                new ArrayList<PackageDefinition>(),
                 objectFactory,
                 "select distinct\n"
                 + "  pd.pkey,\n"
@@ -129,9 +124,7 @@ final class DatabasePackageDefinitionService extends DatabaseService<Integer,Pac
                 + "  and (\n"
                 + "    bu1.package_definition=pd.pkey\n"
                 + "    or pdb.package_definition=pd.pkey\n"
-                + "  )\n"
-                + "order by\n"
-                + "  pd.pkey",
+                + "  )",
                 connector.getConnectAs()
             );
         }

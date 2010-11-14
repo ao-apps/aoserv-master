@@ -11,33 +11,32 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseServerFarmService extends DatabaseService<DomainLabel,ServerFarm> implements ServerFarmService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<ServerFarm> objectFactory = new AutoObjectFactory<ServerFarm>(ServerFarm.class, this);
+    private final ObjectFactory<ServerFarm> objectFactory = new AutoObjectFactory<ServerFarm>(ServerFarm.class, connector);
 
     DatabaseServerFarmService(DatabaseConnector connector) {
         super(connector, DomainLabel.class, ServerFarm.class);
     }
 
     @Override
-    protected Set<ServerFarm> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<ServerFarm> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<ServerFarm>(),
+            new ArrayList<ServerFarm>(),
             objectFactory,
             "select * from server_farms"
         );
     }
 
     @Override
-    protected Set<ServerFarm> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<ServerFarm> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<ServerFarm>(),
+            new ArrayList<ServerFarm>(),
             objectFactory,
             "select distinct\n"
             + "  sf.*\n"
@@ -60,9 +59,9 @@ final class DatabaseServerFarmService extends DatabaseService<DomainLabel,Server
     }
 
     @Override
-    protected Set<ServerFarm> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<ServerFarm> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<ServerFarm>(),
+            new ArrayList<ServerFarm>(),
             objectFactory,
             "select distinct\n"
             + "  sf.*\n"

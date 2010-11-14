@@ -9,35 +9,33 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseAOServerDaemonHostService extends DatabaseService<Integer,AOServerDaemonHost> implements AOServerDaemonHostService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<AOServerDaemonHost> objectFactory = new AutoObjectFactory<AOServerDaemonHost>(AOServerDaemonHost.class, this);
+    private final ObjectFactory<AOServerDaemonHost> objectFactory = new AutoObjectFactory<AOServerDaemonHost>(AOServerDaemonHost.class, connector);
 
     DatabaseAOServerDaemonHostService(DatabaseConnector connector) {
         super(connector, Integer.class, AOServerDaemonHost.class);
     }
 
     @Override
-    protected Set<AOServerDaemonHost> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServerDaemonHost> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServerDaemonHost>(),
+            new ArrayList<AOServerDaemonHost>(),
             objectFactory,
-            "select * from ao_server_daemon_hosts order by pkey"
+            "select * from ao_server_daemon_hosts"
         );
     }
 
     @Override
-    protected Set<AOServerDaemonHost> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServerDaemonHost> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<AOServerDaemonHost>(),
+            new ArrayList<AOServerDaemonHost>(),
             objectFactory,
             "select\n"
             + "  sdh.*\n"
@@ -46,15 +44,13 @@ final class DatabaseAOServerDaemonHostService extends DatabaseService<Integer,AO
             + "  ao_server_daemon_hosts sdh\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=sdh.ao_server\n"
-            + "order by\n"
-            + "  pkey",
+            + "  and ms.server=sdh.ao_server",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected Set<AOServerDaemonHost> getSetBusiness(DatabaseConnection db) {
-        return Collections.emptySet();
+    protected ArrayList<AOServerDaemonHost> getListBusiness(DatabaseConnection db) {
+        return new ArrayList<AOServerDaemonHost>(0);
     }
 }

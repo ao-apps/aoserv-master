@@ -390,6 +390,11 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
     }
 
     @Override
+    public boolean isAoServObjectConnectorSettable() {
+        return true;
+    }
+
+    @Override
     public Locale getLocale() {
         return locale;
     }
@@ -433,7 +438,6 @@ final public class DatabaseConnector implements AOServConnector<DatabaseConnecto
                 R result = factory.database.executeTransaction(
                     new DatabaseCallable<R>() {
                         @Override
-                        @SuppressWarnings("unchecked")
                         public R call(DatabaseConnection db) throws SQLException {
                             try {
                                 // Make sure current user is enabled

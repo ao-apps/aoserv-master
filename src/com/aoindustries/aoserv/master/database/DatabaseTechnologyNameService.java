@@ -10,24 +10,23 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseTechnologyNameService extends DatabasePublicService<String,TechnologyName> implements TechnologyNameService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<TechnologyName> objectFactory = new AutoObjectFactory<TechnologyName>(TechnologyName.class, this);
+    private final ObjectFactory<TechnologyName> objectFactory = new AutoObjectFactory<TechnologyName>(TechnologyName.class, connector);
 
     DatabaseTechnologyNameService(DatabaseConnector connector) {
         super(connector, String.class, TechnologyName.class);
     }
 
     @Override
-    protected Set<TechnologyName> getPublicSet(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TechnologyName> getPublicList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<TechnologyName>(),
+            new ArrayList<TechnologyName>(),
             objectFactory,
             "select * from technology_names"
         );

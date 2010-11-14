@@ -9,12 +9,10 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
@@ -26,7 +24,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
         public TicketAction createObject(ResultSet result) throws SQLException {
             try {
                 return new TicketAction(
-                    DatabaseTicketActionService.this,
+                    connector,
                     result.getInt("pkey"),
                     result.getInt("ticket"),
                     getUserId(result.getString("administrator")),
@@ -58,9 +56,9 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
     }
 
     @Override
-    protected Set<TicketAction> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TicketAction> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<TicketAction>(),
+            new ArrayList<TicketAction>(),
             objectFactory,
             "select\n"
             + "  pkey,\n"
@@ -83,23 +81,21 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
             + "  from_address,\n"
             + "  summary\n"
             + "from\n"
-            + "  ticket_actions\n"
-            + "order by\n"
-            + "  pkey"
+            + "  ticket_actions"
         );
     }
 
     @Override
-    protected Set<TicketAction> getSetDaemon(DatabaseConnection db) {
-        return Collections.emptySet();
+    protected ArrayList<TicketAction> getListDaemon(DatabaseConnection db) {
+        return new ArrayList<TicketAction>(0);
     }
 
     @Override
-    protected Set<TicketAction> getSetBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected ArrayList<TicketAction> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
             // If a ticket admin, can see all ticket_actions
             return db.executeObjectCollectionQuery(
-                new ArraySet<TicketAction>(),
+                new ArrayList<TicketAction>(),
                 objectFactory,
                 "select\n"
                 + "  ta.pkey,\n"
@@ -136,15 +132,13 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
                 + "    or bu1.accounting=ti.brand\n" // Has access to brand
                 + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
                 + "  )\n"
-                + "  and ti.ticket_id=ta.ticket\n"
-                + "order by\n"
-                + "  ta.pkey",
+                + "  and ti.ticket_id=ta.ticket",
                 connector.getConnectAs()
             );
         } else {
             // Can only see non-admin types and statuses
             return db.executeObjectCollectionQuery(
-                new ArraySet<TicketAction>(),
+                new ArrayList<TicketAction>(),
                 objectFactory,
                 "select\n"
                 + "  ta.pkey,\n"
@@ -181,9 +175,7 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
                 + "  and ti.status not in ('junk', 'deleted')\n"
                 + "  and ti.ticket_id=ta.ticket\n"
                 + "  and ta.action_type=tat.type\n"
-                + "  and not tat.visible_admin_only\n"
-                + "order by\n"
-                + "  ta.pkey",
+                + "  and not tat.visible_admin_only",
                 connector.getConnectAs()
             );
         }

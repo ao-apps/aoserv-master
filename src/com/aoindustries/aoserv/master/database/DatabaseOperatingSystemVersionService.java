@@ -9,27 +9,26 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import com.aoindustries.util.ArraySet;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseOperatingSystemVersionService extends DatabasePublicService<Integer,OperatingSystemVersion> implements OperatingSystemVersionService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<OperatingSystemVersion> objectFactory = new AutoObjectFactory<OperatingSystemVersion>(OperatingSystemVersion.class, this);
+    private final ObjectFactory<OperatingSystemVersion> objectFactory = new AutoObjectFactory<OperatingSystemVersion>(OperatingSystemVersion.class, connector);
 
     DatabaseOperatingSystemVersionService(DatabaseConnector connector) {
         super(connector, Integer.class, OperatingSystemVersion.class);
     }
 
     @Override
-    protected Set<OperatingSystemVersion> getPublicSet(DatabaseConnection db) throws SQLException {
+    protected ArrayList<OperatingSystemVersion> getPublicList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArraySet<OperatingSystemVersion>(),
+            new ArrayList<OperatingSystemVersion>(),
             objectFactory,
-            "select * from operating_system_versions order by pkey"
+            "select * from operating_system_versions"
         );
     }
 }

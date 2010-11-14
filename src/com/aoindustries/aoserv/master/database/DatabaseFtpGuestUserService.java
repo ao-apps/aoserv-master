@@ -10,33 +10,32 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseFtpGuestUserService extends DatabaseService<Integer,FtpGuestUser> implements FtpGuestUserService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<FtpGuestUser> objectFactory = new AutoObjectFactory<FtpGuestUser>(FtpGuestUser.class, this);
+    private final ObjectFactory<FtpGuestUser> objectFactory = new AutoObjectFactory<FtpGuestUser>(FtpGuestUser.class, connector);
 
     DatabaseFtpGuestUserService(DatabaseConnector connector) {
         super(connector, Integer.class, FtpGuestUser.class);
     }
 
     @Override
-    protected Set<FtpGuestUser> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FtpGuestUser> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FtpGuestUser>(),
+            new ArrayList<FtpGuestUser>(),
             objectFactory,
             "select linux_account from ftp_guest_users"
         );
     }
 
     @Override
-    protected Set<FtpGuestUser> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FtpGuestUser> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FtpGuestUser>(),
+            new ArrayList<FtpGuestUser>(),
             objectFactory,
             "select\n"
             + "  fgu.linux_account\n"
@@ -53,9 +52,9 @@ final class DatabaseFtpGuestUserService extends DatabaseService<Integer,FtpGuest
     }
 
     @Override
-    protected Set<FtpGuestUser> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FtpGuestUser> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FtpGuestUser>(),
+            new ArrayList<FtpGuestUser>(),
             objectFactory,
             "select\n"
             + "  fgu.linux_account\n"

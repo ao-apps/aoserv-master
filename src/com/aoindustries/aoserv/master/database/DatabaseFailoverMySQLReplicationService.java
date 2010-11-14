@@ -10,33 +10,32 @@ import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
 final class DatabaseFailoverMySQLReplicationService extends DatabaseService<Integer,FailoverMySQLReplication> implements FailoverMySQLReplicationService<DatabaseConnector,DatabaseConnectorFactory> {
 
-    private final ObjectFactory<FailoverMySQLReplication> objectFactory = new AutoObjectFactory<FailoverMySQLReplication>(FailoverMySQLReplication.class, this);
+    private final ObjectFactory<FailoverMySQLReplication> objectFactory = new AutoObjectFactory<FailoverMySQLReplication>(FailoverMySQLReplication.class, connector);
 
     DatabaseFailoverMySQLReplicationService(DatabaseConnector connector) {
         super(connector, Integer.class, FailoverMySQLReplication.class);
     }
 
     @Override
-    protected Set<FailoverMySQLReplication> getSetMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverMySQLReplication> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FailoverMySQLReplication>(),
+            new ArrayList<FailoverMySQLReplication>(),
             objectFactory,
             "select * from failover_mysql_replications"
         );
     }
 
     @Override
-    protected Set<FailoverMySQLReplication> getSetDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverMySQLReplication> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FailoverMySQLReplication>(),
+            new ArrayList<FailoverMySQLReplication>(),
             objectFactory,
             "select\n"
             + "  fmr.*\n"
@@ -61,9 +60,9 @@ final class DatabaseFailoverMySQLReplicationService extends DatabaseService<Inte
     }
 
     @Override
-    protected Set<FailoverMySQLReplication> getSetBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<FailoverMySQLReplication> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new HashSet<FailoverMySQLReplication>(),
+            new ArrayList<FailoverMySQLReplication>(),
             objectFactory,
             "select distinct\n"
             + "  fmr.*\n"
