@@ -6,6 +6,7 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.*;
+import com.aoindustries.aoserv.client.cache.CachedConnectorFactory;
 import com.aoindustries.aoserv.client.rmi.*;
 import com.aoindustries.aoserv.client.validator.*;
 import com.aoindustries.aoserv.master.database.*;
@@ -83,6 +84,8 @@ final public class MasterServer {
                     newFactory = new TraceConnectorFactory(newFactory);
                     System.out.print("Tracing enabled: ");
                 }
+
+                //newFactory = new CachedConnectorFactory(newFactory);
 
                 // Start the RMI server
                 factory = new RmiServerConnectorFactory(publicAddress, listenAddress, port, useSsl, newFactory);
