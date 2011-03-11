@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An implementation of <code>AOServConnector</code> that operates directly on
@@ -31,13 +30,9 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author  AO Industries, Inc.
  */
-final public class DatabaseConnector implements AOServConnector {
+final public class DatabaseConnector extends AbstractConnector {
 
     final DatabaseConnectorFactory factory;
-    Locale locale;
-    final UserId connectAs;
-    private final UserId authenticateAs;
-    private final String password;
     final DatabaseAOServerDaemonHostService aoserverDaemonHosts;
     final DatabaseAOServerResourceService aoserverResources;
     final DatabaseAOServerService aoservers;
@@ -199,12 +194,9 @@ final public class DatabaseConnector implements AOServConnector {
     DatabaseVirtualServerService virtualServers;
     // TODO: final DatabaseWhoisHistoryService whoisHistories;
 
-    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password) {
+    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) {
+        super(locale, connectAs, authenticateAs, password, daemonServer);
         this.factory = factory;
-        this.locale = locale;
-        this.connectAs = connectAs;
-        this.authenticateAs = authenticateAs;
-        this.password = password;
         aoserverDaemonHosts = new DatabaseAOServerDaemonHostService(this);
         aoserverResources = new DatabaseAOServerResourceService(this);
         aoservers = new DatabaseAOServerService(this);
@@ -378,9 +370,9 @@ final public class DatabaseConnector implements AOServConnector {
      * Determines the type of account logged-in based on the connectAs value.  This controls filtering and access.
      */
     AccountType getAccountType(DatabaseConnection db) throws SQLException {
-        if(factory.isEnabledMasterUser(db, connectAs)) return AccountType.MASTER;
-        if(factory.isEnabledDaemonUser(db, connectAs)) return AccountType.DAEMON;
-        if(factory.isEnabledBusinessAdministrator(db, connectAs)) return AccountType.BUSINESS;
+        if(factory.isEnabledMasterUser(db, getConnectAs())) return AccountType.MASTER;
+        if(factory.isEnabledDaemonUser(db, getConnectAs())) return AccountType.DAEMON;
+        if(factory.isEnabledBusinessAdministrator(db, getConnectAs())) return AccountType.BUSINESS;
         return AccountType.DISABLED;
     }
 
@@ -390,47 +382,12 @@ final public class DatabaseConnector implements AOServConnector {
     }
 
     @Override
-    public boolean isAoServObjectConnectorSettable() {
-        return true;
-    }
-
-    @Override
-    public Locale getLocale() {
-        return locale;
-    }
-
-    @Override
-    public void setLocale(Locale locale) {
-        this.locale = locale;
-    }
-
-    @Override
-    public UserId getConnectAs() {
-        return connectAs;
-    }
-
-    @Override
-    public BusinessAdministrator getThisBusinessAdministrator() throws RemoteException {
-        return getBusinessAdministrators().get(connectAs);
-    }
-
-    @Override
-    public UserId getAuthenticateAs() {
-        return authenticateAs;
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
-    @Override
     public <R> CommandResult<R> executeCommand(final RemoteCommand<R> remoteCommand, final boolean isInteractive) throws RemoteException {
         try {
             // Make sure not accidentally running command on root user
             if(
-                authenticateAs.equals(factory.rootConnector.getAuthenticateAs())
-                || connectAs.equals(factory.rootConnector.getConnectAs())
+                getAuthenticateAs().equals(factory.rootConnector.getAuthenticateAs())
+                || getConnectAs().equals(factory.rootConnector.getConnectAs())
             ) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnector.executeCommand.refusingRootConnector", remoteCommand.getCommandName()));
 
             final InvalidateSet invalidateSet = InvalidateSet.getInstance();
@@ -441,12 +398,12 @@ final public class DatabaseConnector implements AOServConnector {
                         public R call(DatabaseConnection db) throws SQLException {
                             try {
                                 // Make sure current user is enabled
-                                if(!factory.isEnabledBusinessAdministrator(db, authenticateAs)) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
-                                if(!factory.isEnabledBusinessAdministrator(db, connectAs)) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
+                                if(!factory.isEnabledBusinessAdministrator(db, getAuthenticateAs())) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
+                                if(!factory.isEnabledBusinessAdministrator(db, getConnectAs())) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
 
                                 // Check permissions using root connector
                                 Set<AOServPermission.Permission> permissions = remoteCommand.getCommandName().getPermissions();
-                                BusinessAdministrator rootBa = factory.rootConnector.getBusinessAdministrators().get(connectAs);
+                                BusinessAdministrator rootBa = factory.rootConnector.getBusinessAdministrators().get(getConnectAs());
                                 if(!rootBa.hasPermissions(permissions)) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnector.executeCommand.permissionDenied", remoteCommand.getCommandName()));
 
                                 // Validate command using root connector
@@ -551,17 +508,6 @@ final public class DatabaseConnector implements AOServConnector {
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Services">
-    private final AtomicReference<Map<ServiceName,AOServService<?,?>>> tables = new AtomicReference<Map<ServiceName,AOServService<?,?>>>();
-    @Override
-    public Map<ServiceName,AOServService<?,?>> getServices() throws RemoteException {
-        Map<ServiceName,AOServService<?,?>> ts = tables.get();
-        if(ts==null) {
-            ts = AOServConnectorUtils.createServiceMap(this);
-            if(!tables.compareAndSet(null, ts)) ts = tables.get();
-        }
-        return ts;
-    }
-
     @Override
     public AOServerDaemonHostService getAoServerDaemonHosts() {
         return aoserverDaemonHosts;

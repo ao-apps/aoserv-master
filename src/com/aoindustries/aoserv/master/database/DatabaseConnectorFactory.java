@@ -329,7 +329,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
 
             // Let them in
             synchronized(connectors) {
-                DatabaseConnector connector = new DatabaseConnector(this, locale, connectAs, authenticateAs, password);
+                DatabaseConnector connector = new DatabaseConnector(this, locale, connectAs, authenticateAs, password, daemonServer);
                 connectors.put(
                     connectAs,
                     authenticateAs,

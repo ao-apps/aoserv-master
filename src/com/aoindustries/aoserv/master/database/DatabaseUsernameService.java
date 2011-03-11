@@ -53,7 +53,7 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
             + "    ms.server=bs.server\n"
             + "    or ff.server=bs.server\n"
             + "  ) and bs.accounting=un.accounting",
-            connector.connectAs
+            connector.getConnectAs()
         );
     }
 
@@ -75,7 +75,7 @@ final class DatabaseUsernameService extends DatabaseService<UserId,Username> imp
             + UN1_BU1_PARENTS_OR_WHERE
             + "  )\n"
             + "  and bu1.accounting=un2.accounting",
-            connector.connectAs
+            connector.getConnectAs()
         );
     }
     // </editor-fold>

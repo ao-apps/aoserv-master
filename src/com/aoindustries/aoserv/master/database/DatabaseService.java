@@ -11,7 +11,6 @@ import com.aoindustries.security.AccountDisabledException;
 import com.aoindustries.sql.DatabaseCallable;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.table.IndexType;
-import com.aoindustries.table.Table;
 import com.aoindustries.util.ArraySet;
 import com.aoindustries.util.HashCodeComparator;
 import com.aoindustries.util.WrappedException;
@@ -27,7 +26,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Currency;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -37,7 +35,7 @@ import java.util.Set;
 abstract class DatabaseService<
     K extends Comparable<K>,
     V extends AOServObject<K>
-> implements AOServService<K,V> {
+> extends AbstractService<K,V> {
 
     // <editor-fold defaultstate="collapsed" desc="Business Tree Joins">
     /**
@@ -224,20 +222,10 @@ abstract class DatabaseService<
     // </editor-fold>
 
     final DatabaseConnector connector;
-    final ServiceName serviceName;
-    final AOServServiceUtils.AnnotationTable<K,V> table;
-    final Map<K,V> map;
 
     DatabaseService(DatabaseConnector connector, Class<K> keyClass, Class<V> valueClass) {
+        super(keyClass, valueClass);
         this.connector = connector;
-        serviceName = AOServServiceUtils.findServiceNameByAnnotation(getClass());
-        table = new AOServServiceUtils.AnnotationTable<K,V>(this, valueClass);
-        map = new AOServServiceUtils.ServiceMap<K,V>(this, keyClass, valueClass);
-    }
-
-    @Override
-    final public String toString() {
-        return serviceName.toString();
     }
 
     @Override
@@ -262,7 +250,7 @@ abstract class DatabaseService<
                 }
             );
             Collections.sort(list, HashCodeComparator.getInstance());
-            return IndexedSet.wrap(serviceName, new ArraySet<V>(list));
+            return IndexedSet.wrap(getServiceName(), new ArraySet<V>(list));
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;
@@ -300,21 +288,6 @@ abstract class DatabaseService<
      */
     abstract protected ArrayList<V> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException;
     // </editor-fold>
-
-    @Override
-    final public ServiceName getServiceName() {
-        return serviceName;
-    }
-
-    @Override
-    final public Table<MethodColumn,V> getTable() {
-        return table;
-    }
-
-    @Override
-    final public Map<K,V> getMap() {
-        return map;
-    }
 
     // <editor-fold defaultstate="collapsed" desc="isEmpty">
     @Override
@@ -473,7 +446,7 @@ abstract class DatabaseService<
 
     private V get(K key, ArrayList<V> list) throws NoSuchElementException {
         for(V obj : list) if(obj.getKey().equals(key)) return obj;
-        throw new NoSuchElementException("service="+serviceName+", key="+key);
+        throw new NoSuchElementException("service="+getServiceName()+", key="+key);
     }
 
     /**
@@ -549,7 +522,7 @@ abstract class DatabaseService<
             for(V obj : list) {
                 if(value.equals(method.invoke(obj))) {
                     if(!assertsEnabled) return obj;
-                    assert foundObj==null : "Duplicate value in unique column "+serviceName+"."+columnName+": "+value;
+                    assert foundObj==null : "Duplicate value in unique column "+getServiceName()+"."+columnName+": "+value;
                     foundObj = obj;
                 }
             }
@@ -606,7 +579,7 @@ abstract class DatabaseService<
                 }
             );
             Collections.sort(list, HashCodeComparator.getInstance());
-            return IndexedSet.wrap(serviceName, new ArraySet<V>(list));
+            return IndexedSet.wrap(getServiceName(), new ArraySet<V>(list));
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;
@@ -639,7 +612,7 @@ abstract class DatabaseService<
             for(V obj : list) {
                 Object retVal = method.invoke(obj);
                 if(retVal!=null) {
-                    if(assertsEnabled && !seenValues.add(retVal)) throw new AssertionError("Duplicate value in unique column "+serviceName+"."+columnName+": "+retVal);
+                    if(assertsEnabled && !seenValues.add(retVal)) throw new AssertionError("Duplicate value in unique column "+getServiceName()+"."+columnName+": "+retVal);
                     if(values.contains(retVal)) results.add(obj);
                 }
             }
@@ -696,7 +669,7 @@ abstract class DatabaseService<
                 }
             );
             Collections.sort(list, HashCodeComparator.getInstance());
-            return IndexedSet.wrap(serviceName, new ArraySet<V>(list));
+            return IndexedSet.wrap(getServiceName(), new ArraySet<V>(list));
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;
@@ -779,7 +752,7 @@ abstract class DatabaseService<
                 }
             );
             Collections.sort(list, HashCodeComparator.getInstance());
-            return IndexedSet.wrap(serviceName, new ArraySet<V>(list));
+            return IndexedSet.wrap(getServiceName(), new ArraySet<V>(list));
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;
