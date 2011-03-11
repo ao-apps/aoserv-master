@@ -11,8 +11,6 @@ import com.aoindustries.security.AccountDisabledException;
 import com.aoindustries.sql.DatabaseCallable;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.table.IndexType;
-import com.aoindustries.util.ArraySet;
-import com.aoindustries.util.HashCodeComparator;
 import com.aoindustries.util.WrappedException;
 import com.aoindustries.util.i18n.Money;
 import java.lang.reflect.InvocationTargetException;
@@ -23,7 +21,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Currency;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
@@ -249,8 +246,7 @@ abstract class DatabaseService<
                     }
                 }
             );
-            Collections.sort(list, HashCodeComparator.getInstance());
-            return IndexedSet.wrap(getServiceName(), new ArraySet<V>(list));
+            return IndexedSet.wrap(getServiceName(), list);
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;
@@ -578,8 +574,7 @@ abstract class DatabaseService<
                     }
                 }
             );
-            Collections.sort(list, HashCodeComparator.getInstance());
-            return IndexedSet.wrap(getServiceName(), new ArraySet<V>(list));
+            return IndexedSet.wrap(getServiceName(), list);
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;
@@ -668,8 +663,7 @@ abstract class DatabaseService<
                     }
                 }
             );
-            Collections.sort(list, HashCodeComparator.getInstance());
-            return IndexedSet.wrap(getServiceName(), new ArraySet<V>(list));
+            return IndexedSet.wrap(getServiceName(), list);
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;
@@ -751,8 +745,7 @@ abstract class DatabaseService<
                     }
                 }
             );
-            Collections.sort(list, HashCodeComparator.getInstance());
-            return IndexedSet.wrap(getServiceName(), new ArraySet<V>(list));
+            return IndexedSet.wrap(getServiceName(), list);
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;

@@ -239,7 +239,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
 
     public DatabaseConnectorFactory(Database database, UserId rootUserId, String rootPassword) throws LoginException, RemoteException {
         this.database = database;
-        this.rootConnector = new CachedConnectorFactory(this).newConnector(Locale.getDefault(), rootUserId, rootUserId, rootPassword, null);
+        this.rootConnector = new CachedConnectorFactory(this).getConnector(Locale.getDefault(), rootUserId, rootUserId, rootPassword, null);
     }
 
     // <editor-fold defaultstate="collapsed" desc="Connector Creation">
@@ -264,8 +264,8 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
         }
     }
 
-    @Override
-    public DatabaseConnector newConnector(final Locale locale, final UserId connectAs, final UserId authenticateAs, final String password, final DomainName daemonServer) throws LoginException, RemoteException {
+    //@Override
+    private DatabaseConnector newConnector(final Locale locale, final UserId connectAs, final UserId authenticateAs, final String password, final DomainName daemonServer) throws LoginException, RemoteException {
         try {
             return database.executeTransaction(
                 new DatabaseCallable<DatabaseConnector>() {
