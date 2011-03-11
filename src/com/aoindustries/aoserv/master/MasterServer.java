@@ -20,6 +20,8 @@ import java.util.logging.Logger;
  */
 final public class MasterServer {
 
+    private static final boolean CACHE_ALL = true;
+
     private static final Logger logger = LogFactory.getLogger(MasterServer.class);
 
     private MasterServer() {
@@ -85,7 +87,7 @@ final public class MasterServer {
                     System.out.print("Tracing enabled: ");
                 }
 
-                //newFactory = new CachedConnectorFactory(newFactory);
+                if(CACHE_ALL) newFactory = new CachedConnectorFactory(newFactory);
 
                 // Start the RMI server
                 factory = new RmiServerConnectorFactory(publicAddress, listenAddress, port, useSsl, newFactory);
