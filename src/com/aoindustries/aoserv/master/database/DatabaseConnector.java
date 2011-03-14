@@ -34,7 +34,6 @@ final public class DatabaseConnector extends AbstractConnector {
 
     final DatabaseConnectorFactory factory;
     final DatabaseAOServerDaemonHostService aoserverDaemonHosts;
-    final DatabaseAOServerResourceService aoserverResources;
     final DatabaseAOServerService aoservers;
     final DatabaseAOServPermissionService aoservPermissions;
     final DatabaseAOServRoleService aoservRoles;
@@ -42,6 +41,7 @@ final public class DatabaseConnector extends AbstractConnector {
     final DatabaseArchitectureService architectures;
     final DatabaseBackupPartitionService backupPartitions;
     final DatabaseBackupRetentionService backupRetentions;
+    final DatabaseBackupServerService backupServers;
     // TODO: final DatabaseBankAccountService bankAccounts;
     final DatabaseBankTransactionTypeService bankTransactionTypes;
     // TODO: final DatabaseBankTransactionService bankTransactions;
@@ -147,7 +147,7 @@ final public class DatabaseConnector extends AbstractConnector {
     final DatabasePackageDefinitionLimitService packageDefinitionLimits;
     final DatabasePackageDefinitionService packageDefinitions;
     final DatabasePaymentTypeService paymentTypes;
-    // TODO: final DatabasePhysicalServerService physicalServers;
+    final DatabasePhysicalServerService physicalServers;
     final DatabasePostgresDatabaseService postgresDatabases;
     final DatabasePostgresEncodingService postgresEncodings;
     final DatabasePostgresServerService postgresServers;
@@ -156,15 +156,10 @@ final public class DatabaseConnector extends AbstractConnector {
     final DatabasePrivateFtpServerService privateFtpServers;
     final DatabaseProcessorTypeService processorTypes;
     final DatabaseProtocolService protocols;
-    /* TODO
     final DatabaseRackService racks;
-     */
     final DatabaseResellerService resellers;
     final DatabaseResourceTypeService resourceTypes;
-    final DatabaseResourceService resources;
     final DatabaseServerFarmService serverFarms;
-    final DatabaseServerResourceService serverResources;
-    final DatabaseServerService servers;
     final DatabaseShellService shells;
     /* TODO
     final DatabaseSignupRequestOptionService signupRequestOptions;
@@ -197,8 +192,8 @@ final public class DatabaseConnector extends AbstractConnector {
     DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) {
         super(locale, connectAs, authenticateAs, password, daemonServer);
         this.factory = factory;
+        // TODO: Move to where declared
         aoserverDaemonHosts = new DatabaseAOServerDaemonHostService(this);
-        aoserverResources = new DatabaseAOServerResourceService(this);
         aoservers = new DatabaseAOServerService(this);
         aoservPermissions = new DatabaseAOServPermissionService(this);
         aoservRoles = new DatabaseAOServRoleService(this);
@@ -206,6 +201,7 @@ final public class DatabaseConnector extends AbstractConnector {
         architectures = new DatabaseArchitectureService(this);
         backupPartitions = new DatabaseBackupPartitionService(this);
         backupRetentions = new DatabaseBackupRetentionService(this);
+        backupServers = new DatabaseBackupServerService(this);
         // TODO: bankAccounts = new DatabaseBankAccountService(this);
         bankTransactionTypes = new DatabaseBankTransactionTypeService(this);
         // TODO: bankTransactions = new DatabaseBankTransactionService(this);
@@ -311,7 +307,7 @@ final public class DatabaseConnector extends AbstractConnector {
         packageDefinitionLimits = new DatabasePackageDefinitionLimitService(this);
         packageDefinitions = new DatabasePackageDefinitionService(this);
         paymentTypes = new DatabasePaymentTypeService(this);
-        // TODO: physicalServers = new DatabasePhysicalServerService(this);
+        physicalServers = new DatabasePhysicalServerService(this);
         postgresDatabases = new DatabasePostgresDatabaseService(this);
         postgresEncodings = new DatabasePostgresEncodingService(this);
         postgresServers = new DatabasePostgresServerService(this);
@@ -320,15 +316,10 @@ final public class DatabaseConnector extends AbstractConnector {
         privateFtpServers = new DatabasePrivateFtpServerService(this);
         processorTypes = new DatabaseProcessorTypeService(this);
         protocols = new DatabaseProtocolService(this);
-        /* TODO
         racks = new DatabaseRackService(this);
-         */
         resellers = new DatabaseResellerService(this);
         resourceTypes = new DatabaseResourceTypeService(this);
-        resources = new DatabaseResourceService(this);
         serverFarms = new DatabaseServerFarmService(this);
-        serverResources = new DatabaseServerResourceService(this);
-        servers = new DatabaseServerService(this);
         shells = new DatabaseShellService(this);
         /* TODO
         signupRequestOptions = new DatabaseSignupRequestOptionService(this);
@@ -514,11 +505,6 @@ final public class DatabaseConnector extends AbstractConnector {
     }
 
     @Override
-    public AOServerResourceService getAoServerResources() {
-        return aoserverResources;
-    }
-
-    @Override
     public AOServerService getAoServers() {
         return aoservers;
     }
@@ -551,6 +537,11 @@ final public class DatabaseConnector extends AbstractConnector {
     @Override
     public BackupRetentionService getBackupRetentions() {
         return backupRetentions;
+    }
+
+    @Override
+    public BackupServerService getBackupServers() {
+        return backupServers;
     }
 
     // TODO: public BankAccountService getBankAccounts();
@@ -942,7 +933,10 @@ final public class DatabaseConnector extends AbstractConnector {
         return paymentTypes;
     }
 
-    // TODO: public PhysicalServerService getPhysicalServers();
+    @Override
+    public PhysicalServerService getPhysicalServers() {
+        return physicalServers;
+    }
 
     @Override
     public PostgresDatabaseService getPostgresDatabases() {
@@ -983,9 +977,12 @@ final public class DatabaseConnector extends AbstractConnector {
     public ProtocolService getProtocols() {
         return protocols;
     }
-    /* TODO
-    public RackService getRacks();
-    */
+
+    @Override
+    public RackService getRacks() {
+        return racks;
+    }
+
     @Override
     public ResellerService getResellers() {
         return resellers;
@@ -997,23 +994,8 @@ final public class DatabaseConnector extends AbstractConnector {
     }
 
     @Override
-    public ResourceService getResources() {
-        return resources;
-    }
-
-    @Override
     public ServerFarmService getServerFarms() {
         return serverFarms;
-    }
-
-    @Override
-    public ServerResourceService getServerResources() {
-        return serverResources;
-    }
-
-    @Override
-    public ServerService getServers() {
-        return servers;
     }
 
     @Override

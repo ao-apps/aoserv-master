@@ -15,12 +15,12 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseHttpdSiteService extends DatabaseService<Integer,HttpdSite> implements HttpdSiteService {
+final class DatabaseHttpdSiteService extends DatabaseAOServerResourceService<HttpdSite> implements HttpdSiteService {
 
     private final ObjectFactory<HttpdSite> objectFactory = new AutoObjectFactory<HttpdSite>(HttpdSite.class, connector);
 
     DatabaseHttpdSiteService(DatabaseConnector connector) {
-        super(connector, Integer.class, HttpdSite.class);
+        super(connector, HttpdSite.class);
     }
 
     @Override
@@ -29,7 +29,7 @@ final class DatabaseHttpdSiteService extends DatabaseService<Integer,HttpdSite> 
             new ArrayList<HttpdSite>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  hs.site_name,\n"
             + "  hs.list_first,\n"
             + "  hs.linux_account_group,\n"
@@ -50,7 +50,7 @@ final class DatabaseHttpdSiteService extends DatabaseService<Integer,HttpdSite> 
             new ArrayList<HttpdSite>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  hs.site_name,\n"
             + "  hs.list_first,\n"
             + "  hs.linux_account_group,\n"
@@ -76,7 +76,7 @@ final class DatabaseHttpdSiteService extends DatabaseService<Integer,HttpdSite> 
             new ArrayList<HttpdSite>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  hs.site_name,\n"
             + "  hs.list_first,\n"
             + "  hs.linux_account_group,\n"

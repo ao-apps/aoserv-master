@@ -15,12 +15,12 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseHttpdServerService extends DatabaseService<Integer,HttpdServer> implements HttpdServerService {
+final class DatabaseHttpdServerService extends DatabaseAOServerResourceService<HttpdServer> implements HttpdServerService {
 
     private final ObjectFactory<HttpdServer> objectFactory = new AutoObjectFactory<HttpdServer>(HttpdServer.class, connector);
 
     DatabaseHttpdServerService(DatabaseConnector connector) {
-        super(connector, Integer.class, HttpdServer.class);
+        super(connector, HttpdServer.class);
     }
 
     @Override
@@ -29,7 +29,7 @@ final class DatabaseHttpdServerService extends DatabaseService<Integer,HttpdServ
             new ArrayList<HttpdServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  hs.number,\n"
             + "  hs.max_binds,\n"
             + "  hs.linux_account_group,\n"
@@ -52,7 +52,7 @@ final class DatabaseHttpdServerService extends DatabaseService<Integer,HttpdServ
             new ArrayList<HttpdServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  hs.number,\n"
             + "  hs.max_binds,\n"
             + "  hs.linux_account_group,\n"
@@ -80,7 +80,7 @@ final class DatabaseHttpdServerService extends DatabaseService<Integer,HttpdServ
             new ArrayList<HttpdServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  hs.number,\n"
             + "  hs.max_binds,\n"
             + "  hs.linux_account_group,\n"

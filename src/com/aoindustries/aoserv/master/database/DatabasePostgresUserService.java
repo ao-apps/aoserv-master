@@ -18,13 +18,13 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresUserService extends DatabaseService<Integer,PostgresUser> implements PostgresUserService {
+final class DatabasePostgresUserService extends DatabaseAOServerResourceService<PostgresUser> implements PostgresUserService {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<PostgresUser> objectFactory = new AutoObjectFactory<PostgresUser>(PostgresUser.class, connector);
 
     DatabasePostgresUserService(DatabaseConnector connector) {
-        super(connector, Integer.class, PostgresUser.class);
+        super(connector, PostgresUser.class);
     }
 
     @Override
@@ -33,7 +33,7 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
             new ArrayList<PostgresUser>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  pu.username,\n"
             + "  pu.postgres_server,\n"
             + "  pu.createdb,\n"
@@ -55,7 +55,7 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
             new ArrayList<PostgresUser>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  pu.username,\n"
             + "  pu.postgres_server,\n"
             + "  pu.createdb,\n"
@@ -82,7 +82,7 @@ final class DatabasePostgresUserService extends DatabaseService<Integer,Postgres
             new ArrayList<PostgresUser>(),
             objectFactory,
              "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  pu.username,\n"
             + "  pu.postgres_server,\n"
             + "  pu.createdb,\n"

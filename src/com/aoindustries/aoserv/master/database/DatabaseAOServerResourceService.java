@@ -10,19 +10,19 @@ import com.aoindustries.aoserv.client.*;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseAOServerResourceService extends AOServerResourceService {
+abstract class DatabaseAOServerResourceService<V extends AOServerResource> extends DatabaseResourceService<V> {
 
-    static final String SELECT_COLUMNS =
-        DatabaseResourceService.SELECT_COLUMNS
+    static final String AOSERVER_RESOURCE_SELECT_COLUMNS =
+        RESOURCE_SELECT_COLUMNS + ",\n"
         + "  asr.ao_server,\n"
-        + "  bs.pkey,\n"
+        + "  bs.pkey"
     ;
 
     /* TODO
     private final ObjectFactory<AOServerResource> objectFactory = new AutoObjectFactory<AOServerResource>(AOServerResource.class, connector);
      */
-    DatabaseAOServerResourceService(DatabaseConnector connector) {
-        super(connector);
+    DatabaseAOServerResourceService(DatabaseConnector connector, Class<V> valueClass) {
+        super(connector, valueClass);
     }
 
     /* TODO

@@ -18,13 +18,13 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> implements MySQLUserService {
+final class DatabaseMySQLUserService extends DatabaseAOServerResourceService<MySQLUser> implements MySQLUserService {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<MySQLUser> objectFactory = new AutoObjectFactory<MySQLUser>(MySQLUser.class, connector);
 
     DatabaseMySQLUserService(DatabaseConnector connector) {
-        super(connector, Integer.class, MySQLUser.class);
+        super(connector, MySQLUser.class);
     }
 
     @Override
@@ -33,7 +33,7 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
             new ArrayList<MySQLUser>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  mu.username,\n"
             + "  mu.mysql_server,\n"
             + "  mu.host,\n"
@@ -84,7 +84,7 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
             new ArrayList<MySQLUser>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  mu.username,\n"
             + "  mu.mysql_server,\n"
             + "  mu.host,\n"
@@ -140,7 +140,7 @@ final class DatabaseMySQLUserService extends DatabaseService<Integer,MySQLUser> 
             new ArrayList<MySQLUser>(),
             objectFactory,
              "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  mu.username,\n"
             + "  mu.mysql_server,\n"
             + "  mu.host,\n"

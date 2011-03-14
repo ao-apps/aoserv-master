@@ -10,16 +10,16 @@ import com.aoindustries.aoserv.client.*;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseResourceService extends ResourceService {
+abstract class DatabaseResourceService<V extends Resource> extends DatabaseService<Integer,V> {
 
-    static final String SELECT_COLUMNS =
+    static final String RESOURCE_SELECT_COLUMNS =
         "  re.pkey,\n"
         + "  re.resource_type,\n"
         + "  re.accounting,\n"
         + "  (extract(epoch from re.created)*1000)::int8 as created,\n"
         + "  re.created_by,\n"
         + "  re.disable_log,\n"
-        + "  (extract(epoch from re.last_enabled)*1000)::int8 as last_enabled,\n"
+        + "  (extract(epoch from re.last_enabled)*1000)::int8 as last_enabled"
     ;
     /* TODO
     private final ObjectFactory<Resource> objectFactory = new ObjectFactory<Resource>() {
@@ -43,8 +43,8 @@ final class DatabaseResourceService extends ResourceService {
     };
     */
 
-    DatabaseResourceService(DatabaseConnector connector) {
-        super(connector);
+    DatabaseResourceService(DatabaseConnector connector, Class<V> valueClass) {
+        super(connector, Integer.class, valueClass);
     }
 
     /* TODO

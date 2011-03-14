@@ -15,12 +15,12 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseMySQLDatabaseService extends DatabaseService<Integer,MySQLDatabase> implements MySQLDatabaseService {
+final class DatabaseMySQLDatabaseService extends DatabaseAOServerResourceService<MySQLDatabase> implements MySQLDatabaseService {
 
     private final ObjectFactory<MySQLDatabase> objectFactory = new AutoObjectFactory<MySQLDatabase>(MySQLDatabase.class, connector);
 
     DatabaseMySQLDatabaseService(DatabaseConnector connector) {
-        super(connector, Integer.class, MySQLDatabase.class);
+        super(connector, MySQLDatabase.class);
     }
 
     @Override
@@ -29,7 +29,7 @@ final class DatabaseMySQLDatabaseService extends DatabaseService<Integer,MySQLDa
             new ArrayList<MySQLDatabase>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  md.name,\n"
             + "  md.mysql_server\n"
             + "from\n"
@@ -46,7 +46,7 @@ final class DatabaseMySQLDatabaseService extends DatabaseService<Integer,MySQLDa
             new ArrayList<MySQLDatabase>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  md.name,\n"
             + "  md.mysql_server\n"
             + "from\n"
@@ -68,7 +68,7 @@ final class DatabaseMySQLDatabaseService extends DatabaseService<Integer,MySQLDa
             new ArrayList<MySQLDatabase>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  md.name,\n"
             + "  md.mysql_server\n"
             + "from\n"

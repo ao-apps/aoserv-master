@@ -17,7 +17,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> implements DnsRecordService {
+final class DatabaseDnsRecordService extends DatabaseResourceService<DnsRecord> implements DnsRecordService {
 
     private final ObjectFactory<DnsRecord> objectFactory = new ObjectFactory<DnsRecord>() {
         @Override
@@ -49,7 +49,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
     };
 
     DatabaseDnsRecordService(DatabaseConnector connector) {
-        super(connector, Integer.class, DnsRecord.class);
+        super(connector, DnsRecord.class);
     }
 
     @Override
@@ -58,7 +58,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
             new ArrayList<DnsRecord>(),
             objectFactory,
             "select\n"
-            + DatabaseResourceService.SELECT_COLUMNS
+            + RESOURCE_SELECT_COLUMNS + ",\n"
             + "  dr.zone,\n"
             + "  dr.domain,\n"
             + "  dr.type,\n"
@@ -82,7 +82,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
                 new ArrayList<DnsRecord>(),
                 objectFactory,
                 "select\n"
-                + DatabaseResourceService.SELECT_COLUMNS
+                + RESOURCE_SELECT_COLUMNS + ",\n"
                 + "  dr.zone,\n"
                 + "  dr.domain,\n"
                 + "  dr.type,\n"
@@ -107,7 +107,7 @@ final class DatabaseDnsRecordService extends DatabaseService<Integer,DnsRecord> 
             new ArrayList<DnsRecord>(),
             objectFactory,
             "select\n"
-            + DatabaseResourceService.SELECT_COLUMNS
+            + RESOURCE_SELECT_COLUMNS + ",\n"
             + "  dr.zone,\n"
             + "  dr.domain,\n"
             + "  dr.type,\n"

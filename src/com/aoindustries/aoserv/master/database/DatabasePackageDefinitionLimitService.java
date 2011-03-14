@@ -90,7 +90,7 @@ final class DatabasePackageDefinitionLimitService extends DatabaseService<Intege
 
     @Override
     protected ArrayList<PackageDefinitionLimit> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
-        if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getUsername().getBusiness().canSeePrices()) {
+        if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getUsername().getBusiness().getCanSeePrices()) {
             return db.executeObjectCollectionQuery(
                 new ArrayList<PackageDefinitionLimit>(),
                 objectFactory,

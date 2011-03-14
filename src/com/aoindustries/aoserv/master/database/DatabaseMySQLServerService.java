@@ -15,12 +15,12 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServer> implements MySQLServerService {
+final class DatabaseMySQLServerService extends DatabaseAOServerResourceService<MySQLServer> implements MySQLServerService {
 
     private final ObjectFactory<MySQLServer> objectFactory = new AutoObjectFactory<MySQLServer>(MySQLServer.class, connector);
 
     DatabaseMySQLServerService(DatabaseConnector connector) {
-        super(connector, Integer.class, MySQLServer.class);
+        super(connector, MySQLServer.class);
     }
 
     @Override
@@ -29,7 +29,7 @@ final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServ
             new ArrayList<MySQLServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  ms.name,\n"
             + "  ms.version,\n"
             + "  ms.max_connections,\n"
@@ -48,7 +48,7 @@ final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServ
             new ArrayList<MySQLServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  mys.name,\n"
             + "  mys.version,\n"
             + "  mys.max_connections,\n"
@@ -72,7 +72,7 @@ final class DatabaseMySQLServerService extends DatabaseService<Integer,MySQLServ
             new ArrayList<MySQLServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  ms.name,\n"
             + "  ms.version,\n"
             + "  ms.max_connections,\n"

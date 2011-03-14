@@ -16,12 +16,21 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> implements DnsZoneService {
+final class DatabaseDnsZoneService extends DatabaseResourceService<DnsZone> implements DnsZoneService {
+
+    private static final String SELECT_COLUMNS =
+        RESOURCE_SELECT_COLUMNS + ",\n"
+        + "  dz.zone,\n"
+        + "  dz.file,\n"
+        + "  dz.hostmaster,\n"
+        + "  dz.serial,\n"
+        + "  dz.ttl"
+    ;
 
     private final ObjectFactory<DnsZone> objectFactory = new AutoObjectFactory<DnsZone>(DnsZone.class, connector);
 
     DatabaseDnsZoneService(DatabaseConnector connector) {
-        super(connector, Integer.class, DnsZone.class);
+        super(connector, DnsZone.class);
     }
 
     @Override
@@ -30,12 +39,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
             new ArrayList<DnsZone>(),
             objectFactory,
             "select\n"
-            + DatabaseResourceService.SELECT_COLUMNS
-            + "  dz.zone,\n"
-            + "  dz.file,\n"
-            + "  dz.hostmaster,\n"
-            + "  dz.serial,\n"
-            + "  dz.ttl\n"
+            + SELECT_COLUMNS + "\n"
             + "from\n"
             + "  dns_zones dz\n"
             + "  inner join resources re on dz.resource=re.pkey"
@@ -50,12 +54,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
                 new ArrayList<DnsZone>(),
                 objectFactory,
                 "select\n"
-                + DatabaseResourceService.SELECT_COLUMNS
-                + "  dz.zone,\n"
-                + "  dz.file,\n"
-                + "  dz.hostmaster,\n"
-                + "  dz.serial,\n"
-                + "  dz.ttl\n"
+                + SELECT_COLUMNS + "\n"
                 + "from\n"
                 + "  dns_zones dz\n"
                 + "  inner join resources re on dz.resource=re.pkey"
@@ -71,12 +70,7 @@ final class DatabaseDnsZoneService extends DatabaseService<Integer,DnsZone> impl
             new ArrayList<DnsZone>(),
             objectFactory,
             "select\n"
-            + DatabaseResourceService.SELECT_COLUMNS
-            + "  dz.zone,\n"
-            + "  dz.file,\n"
-            + "  dz.hostmaster,\n"
-            + "  dz.serial,\n"
-            + "  dz.ttl\n"
+            + SELECT_COLUMNS + "\n"
             + "from\n"
             + "  usernames un,\n"
             + BU1_PARENTS_JOIN

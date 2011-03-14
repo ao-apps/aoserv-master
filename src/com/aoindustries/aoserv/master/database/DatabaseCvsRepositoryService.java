@@ -15,12 +15,12 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepository> implements CvsRepositoryService {
+final class DatabaseCvsRepositoryService extends DatabaseAOServerResourceService<CvsRepository> implements CvsRepositoryService {
 
     private final ObjectFactory<CvsRepository> objectFactory = new AutoObjectFactory<CvsRepository>(CvsRepository.class, connector);
 
     DatabaseCvsRepositoryService(DatabaseConnector connector) {
-        super(connector, Integer.class, CvsRepository.class);
+        super(connector, CvsRepository.class);
     }
 
     @Override
@@ -29,7 +29,7 @@ final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepo
             new ArrayList<CvsRepository>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  cr.path,\n"
             + "  cr.linux_account_group,\n"
             + "  cr.mode\n"
@@ -47,7 +47,7 @@ final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepo
             new ArrayList<CvsRepository>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  cr.path,\n"
             + "  cr.linux_account_group,\n"
             + "  cr.mode\n"
@@ -70,7 +70,7 @@ final class DatabaseCvsRepositoryService extends DatabaseService<Integer,CvsRepo
             new ArrayList<CvsRepository>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  cr.path,\n"
             + "  cr.linux_account_group,\n"
             + "  cr.mode\n"

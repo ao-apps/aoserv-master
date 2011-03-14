@@ -68,7 +68,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
             + "where\n"
             + "  sr.resource in (",
-            connector.serverResources.getSet(),
+            connector.getServerResources().getSet(),
             ")\n"
         );
         return db.executeObjectCollectionQuery(
@@ -118,7 +118,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             + "  inner join business_servers bs on sr.accounting=bs.accounting and sr.server=bs.server\n"
             + "where\n"
             + "  sr.resource in (",
-            connector.serverResources.getSet(),
+            connector.getServerResources().getSet(),
             ")\n"
         );
         // Extra ao_server_resources
@@ -131,7 +131,7 @@ final class DatabaseBusinessServerService extends DatabaseService<Integer,Busine
             + "  inner join business_servers bs on asr.accounting=bs.accounting and asr.ao_server=bs.server\n"
             + "where\n"
             + "  asr.resource in (",
-            connector.aoserverResources.getSet(),
+            connector.getAoServerResources().getSet(),
             ")\n"
         );
         return db.executeObjectCollectionQuery(

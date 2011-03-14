@@ -70,7 +70,7 @@ final class DatabaseFileBackupSettingService extends DatabaseService<Integer,Fil
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=se.accounting\n"
-            + "  and se.pkey=ffr.server\n"
+            + "  and se.resource=ffr.server\n"
             + "  and ffr.pkey=fbs.replication",
             connector.getConnectAs()
         );

@@ -15,12 +15,12 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePrivateFtpServerService extends DatabaseService<Integer,PrivateFtpServer> implements PrivateFtpServerService {
+final class DatabasePrivateFtpServerService extends DatabaseAOServerResourceService<PrivateFtpServer> implements PrivateFtpServerService {
 
     private final ObjectFactory<PrivateFtpServer> objectFactory = new AutoObjectFactory<PrivateFtpServer>(PrivateFtpServer.class, connector);
 
     DatabasePrivateFtpServerService(DatabaseConnector connector) {
-        super(connector, Integer.class, PrivateFtpServer.class);
+        super(connector, PrivateFtpServer.class);
     }
 
     @Override
@@ -29,7 +29,7 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
             new ArrayList<PrivateFtpServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  pfs.net_bind,\n"
             + "  pfs.logfile,\n"
             + "  pfs.hostname,\n"
@@ -50,7 +50,7 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
             new ArrayList<PrivateFtpServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  pfs.net_bind,\n"
             + "  pfs.logfile,\n"
             + "  pfs.hostname,\n"
@@ -76,7 +76,7 @@ final class DatabasePrivateFtpServerService extends DatabaseService<Integer,Priv
             new ArrayList<PrivateFtpServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  pfs.net_bind,\n"
             + "  pfs.logfile,\n"
             + "  pfs.hostname,\n"

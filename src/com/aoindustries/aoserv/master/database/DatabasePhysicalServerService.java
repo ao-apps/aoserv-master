@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 by AO Industries, Inc.,
+ * Copyright 2011 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -15,56 +15,47 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseVirtualServerService extends DatabaseServerService<VirtualServer> implements VirtualServerService {
+final class DatabasePhysicalServerService extends DatabaseServerService<PhysicalServer> implements PhysicalServerService {
 
-    private static final String SELECT_COLUMNS_COMMON =
+    private static final String SELECT_COLUMNS =
         SERVER_SELECT_COLUMNS + ",\n"
-            + "  vs.primary_ram,\n"
-            + "  vs.primary_ram_target,\n"
-            + "  vs.secondary_ram,\n"
-            + "  vs.secondary_ram_target,\n"
-            + "  vs.minimum_processor_type,\n"
-            + "  vs.minimum_processor_architecture,\n"
-            + "  vs.minimum_processor_speed,\n"
-            + "  vs.minimum_processor_speed_target,\n"
-            + "  vs.processor_cores,\n"
-            + "  vs.processor_cores_target,\n"
-            + "  vs.processor_weight,\n"
-            + "  vs.processor_weight_target,\n"
-            + "  vs.primary_physical_server_locked,\n"
-            + "  vs.secondary_physical_server_locked,\n"
-            + "  vs.requires_hvm"
+        + "  ps.rack,\n"
+        + "  ps.rack_units,\n"
+        + "  ps.ram,\n"
+        + "  ps.processor_type,\n"
+        + "  ps.processor_speed,\n"
+        + "  ps.processor_cores,\n"
+        + "  ps.max_power,\n"
+        + "  ps.supports_hvm"
     ;
 
-    private final ObjectFactory<VirtualServer> objectFactory = new AutoObjectFactory<VirtualServer>(VirtualServer.class, connector);
+    private final ObjectFactory<PhysicalServer> objectFactory = new AutoObjectFactory<PhysicalServer>(PhysicalServer.class, connector);
 
-    DatabaseVirtualServerService(DatabaseConnector connector) {
-        super(connector, VirtualServer.class);
+    DatabasePhysicalServerService(DatabaseConnector connector) {
+        super(connector, PhysicalServer.class);
     }
 
     @Override
-    protected ArrayList<VirtualServer> getListMaster(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PhysicalServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArrayList<VirtualServer>(),
+            new ArrayList<PhysicalServer>(),
             objectFactory,
             "select\n"
-            + SELECT_COLUMNS_COMMON + ",\n"
-            + "  vs.vnc_password\n"
+            + SELECT_COLUMNS + "\n"
             + "from\n"
-            + "  virtual_servers vs\n"
-            + "  inner join servers se on vs.resource=se.resource\n"
+            + "  physical_servers ps\n"
+            + "  inner join servers se on ps.resource=se.resource\n"
             + "  inner join resources re on se.resource=re.pkey"
         );
     }
 
     @Override
-    protected ArrayList<VirtualServer> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PhysicalServer> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArrayList<VirtualServer>(),
+            new ArrayList<PhysicalServer>(),
             objectFactory,
             "select distinct\n"
-            + SELECT_COLUMNS_COMMON + ",\n"
-            + "  vs.vnc_password\n"
+            + SELECT_COLUMNS + "\n"
             + "from\n"
             + "  master_servers ms\n"
             + "  left join ao_servers ao on ms.server=ao.server\n"
@@ -76,7 +67,7 @@ final class DatabaseVirtualServerService extends DatabaseServerService<VirtualSe
             + "  left join failover_file_replications ffr on ms.server=ffr.server\n"
             + "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
             + "  servers se,\n"
-            + "  virtual_servers vs,\n"
+            + "  physical_servers ps,\n"
             + "  resources re\n"
             + "where\n"
             + "  ms.username=?\n"
@@ -89,27 +80,19 @@ final class DatabaseVirtualServerService extends DatabaseServerService<VirtualSe
             + "    or fs.server=se.resource\n"
             // Allow servers it replicates to
             + "    or bp.ao_server=se.resource\n"
-            + "  ) and se.resource=vs.resource\n"
-            + "  and vs.resource=re.pkey",
+            + "  ) and se.resource=ps.resource\n"
+            + "  and ps.resource=re.pkey",
             connector.getConnectAs()
         );
     }
 
     @Override
-    protected ArrayList<VirtualServer> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PhysicalServer> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArrayList<VirtualServer>(),
+            new ArrayList<PhysicalServer>(),
             objectFactory,
             "select distinct\n"
-            + SELECT_COLUMNS_COMMON + ",\n"
-            + "  case\n"
-            + "    when vs.vnc_password is null then null\n"
-            // Only provide the password when the user can connect to VNC console
-            + "    when (\n"
-            + "      select bs2.pkey from business_servers bs2 where bs2.accounting=bs.accounting and bs2.server=vs.resource and bs2.can_vnc_console limit 1\n"
-            + "    ) is not null then vs.vnc_password\n"
-            + "    else ?\n"
-            + "  end\n"
+            + SELECT_COLUMNS + "\n"
             + "from\n"
             + "  usernames un,\n"
             + "  business_servers bs,\n"
@@ -117,7 +100,7 @@ final class DatabaseVirtualServerService extends DatabaseServerService<VirtualSe
             //+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
             //+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
             + "  servers se,\n"
-            + "  virtual_servers vs,\n"
+            + "  physical_servers ps,\n"
             + "  resources re\n"
             + "where\n"
             + "  un.username=?\n"
@@ -126,9 +109,8 @@ final class DatabaseVirtualServerService extends DatabaseServerService<VirtualSe
             + "    bs.server=se.resource\n"
             // Allow servers it replicates to
             //+ "    or bp.ao_server=se.resource\n"
-            + "  ) and se.resource=vs.resource\n"
-            + "  and vs.resource=re.pkey",
-            AOServObject.FILTERED,
+            + "  ) and se.resource=ps.resource\n"
+            + "  and ps.resource=re.pkey",
             connector.getConnectAs()
         );
     }

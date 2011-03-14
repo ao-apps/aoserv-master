@@ -18,13 +18,13 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAccount> implements LinuxAccountService {
+final class DatabaseLinuxAccountService extends DatabaseAOServerResourceService<LinuxAccount> implements LinuxAccountService {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<LinuxAccount> objectFactory = new AutoObjectFactory<LinuxAccount>(LinuxAccount.class, connector);
 
     DatabaseLinuxAccountService(DatabaseConnector connector) {
-        super(connector, Integer.class, LinuxAccount.class);
+        super(connector, LinuxAccount.class);
     }
 
     @Override
@@ -33,7 +33,7 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
             new ArrayList<LinuxAccount>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  la.linux_account_type,\n"
             + "  la.username,\n"
             + "  la.uid,\n"
@@ -58,7 +58,7 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
             new ArrayList<LinuxAccount>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  la.linux_account_type,\n"
             + "  la.username,\n"
             + "  la.uid,\n"
@@ -92,7 +92,7 @@ final class DatabaseLinuxAccountService extends DatabaseService<Integer,LinuxAcc
             new ArrayList<LinuxAccount>(),
             objectFactory,
              "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  la.linux_account_type,\n"
             + "  la.username,\n"
             + "  la.uid,\n"

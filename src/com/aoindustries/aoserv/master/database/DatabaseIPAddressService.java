@@ -15,12 +15,12 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> implements IPAddressService {
+final class DatabaseIPAddressService extends DatabaseServerResourceService<IPAddress> implements IPAddressService {
 
     private final ObjectFactory<IPAddress> objectFactory = new AutoObjectFactory<IPAddress>(IPAddress.class, connector);
 
     DatabaseIPAddressService(DatabaseConnector connector) {
-        super(connector, Integer.class, IPAddress.class);
+        super(connector, IPAddress.class);
     }
 
     @Override
@@ -29,7 +29,7 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
             new ArrayList<IPAddress>(),
             objectFactory,
             "select\n"
-            + DatabaseServerResourceService.SELECT_COLUMNS
+            + SERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  ia.ip_address,\n"
             + "  ia.net_device,\n"
             + "  ia.is_alias,\n"
@@ -54,7 +54,7 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
             new ArrayList<IPAddress>(),
             objectFactory,
             "select distinct\n"
-            + DatabaseServerResourceService.SELECT_COLUMNS
+            + SERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  ia.ip_address,\n"
             + "  ia.net_device,\n"
             + "  ia.is_alias,\n"
@@ -102,7 +102,7 @@ final class DatabaseIPAddressService extends DatabaseService<Integer,IPAddress> 
             new ArrayList<IPAddress>(),
             objectFactory,
             "select\n"
-            + DatabaseServerResourceService.SELECT_COLUMNS
+            + SERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  ia.ip_address,\n"
             + "  ia.net_device,\n"
             + "  ia.is_alias,\n"

@@ -64,7 +64,7 @@ final class DatabaseNetBindService extends DatabaseService<Integer,NetBind> impl
             + "  net_binds nb\n"
             + "where\n"
             + "  ms.username=?\n"
-            + "  and ms.server=se.pkey\n"
+            + "  and ms.server=se.resource\n"
             + "  and (\n"
             + "    ms.server=nb.server\n"
             + "    or (\n"

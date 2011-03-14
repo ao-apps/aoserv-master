@@ -15,12 +15,12 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresServerService extends DatabaseService<Integer,PostgresServer> implements PostgresServerService {
+final class DatabasePostgresServerService extends DatabaseAOServerResourceService<PostgresServer> implements PostgresServerService {
 
     private final ObjectFactory<PostgresServer> objectFactory = new AutoObjectFactory<PostgresServer>(PostgresServer.class, connector);
 
     DatabasePostgresServerService(DatabaseConnector connector) {
-        super(connector, Integer.class, PostgresServer.class);
+        super(connector, PostgresServer.class);
     }
 
     @Override
@@ -29,7 +29,7 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
             new ArrayList<PostgresServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  ps.name,\n"
             + "  ps.version,\n"
             + "  ps.max_connections,\n"
@@ -51,7 +51,7 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
             new ArrayList<PostgresServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  ps.name,\n"
             + "  ps.version,\n"
             + "  ps.max_connections,\n"
@@ -78,7 +78,7 @@ final class DatabasePostgresServerService extends DatabaseService<Integer,Postgr
             new ArrayList<PostgresServer>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  ps.name,\n"
             + "  ps.version,\n"
             + "  ps.max_connections,\n"

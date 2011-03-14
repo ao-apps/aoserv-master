@@ -15,12 +15,12 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup> implements LinuxGroupService {
+final class DatabaseLinuxGroupService extends DatabaseAOServerResourceService<LinuxGroup> implements LinuxGroupService {
 
     private final ObjectFactory<LinuxGroup> objectFactory = new AutoObjectFactory<LinuxGroup>(LinuxGroup.class, connector);
 
     DatabaseLinuxGroupService(DatabaseConnector connector) {
-        super(connector, Integer.class, LinuxGroup.class);
+        super(connector, LinuxGroup.class);
     }
 
     @Override
@@ -29,7 +29,7 @@ final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup
             new ArrayList<LinuxGroup>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  lg.linux_group_type,\n"
             + "  lg.group_name,\n"
             + "  lg.gid\n"
@@ -47,7 +47,7 @@ final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup
             new ArrayList<LinuxGroup>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  lg.linux_group_type,\n"
             + "  lg.group_name,\n"
             + "  lg.gid\n"
@@ -71,7 +71,7 @@ final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup
             objectFactory,
             // Owns group
              "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  lg.linux_group_type,\n"
             + "  lg.group_name,\n"
             + "  lg.gid\n"
@@ -90,7 +90,7 @@ final class DatabaseLinuxGroupService extends DatabaseService<Integer,LinuxGroup
             + "  and bu1.accounting=lg.accounting\n"
             // Has access to server, include mailonly group
             + "union select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  lg.linux_group_type,\n"
             + "  lg.group_name,\n"
             + "  lg.gid\n"

@@ -15,12 +15,12 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresDatabaseService extends DatabaseService<Integer,PostgresDatabase> implements PostgresDatabaseService {
+final class DatabasePostgresDatabaseService extends DatabaseAOServerResourceService<PostgresDatabase> implements PostgresDatabaseService {
 
     private final ObjectFactory<PostgresDatabase> objectFactory = new AutoObjectFactory<PostgresDatabase>(PostgresDatabase.class, connector);
 
     DatabasePostgresDatabaseService(DatabaseConnector connector) {
-        super(connector, Integer.class, PostgresDatabase.class);
+        super(connector, PostgresDatabase.class);
     }
 
     @Override
@@ -29,7 +29,7 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
             new ArrayList<PostgresDatabase>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  pd.name,\n"
             + "  pd.postgres_server,\n"
             + "  pd.datdba,\n"
@@ -51,7 +51,7 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
             new ArrayList<PostgresDatabase>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  pd.name,\n"
             + "  pd.postgres_server,\n"
             + "  pd.datdba,\n"
@@ -78,7 +78,7 @@ final class DatabasePostgresDatabaseService extends DatabaseService<Integer,Post
             new ArrayList<PostgresDatabase>(),
             objectFactory,
             "select\n"
-            + DatabaseAOServerResourceService.SELECT_COLUMNS
+            + AOSERVER_RESOURCE_SELECT_COLUMNS + ",\n"
             + "  pd.name,\n"
             + "  pd.postgres_server,\n"
             + "  pd.datdba,\n"

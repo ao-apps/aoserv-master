@@ -6,23 +6,28 @@
 package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.*;
-import com.aoindustries.sql.AutoObjectFactory;
-import com.aoindustries.sql.DatabaseConnection;
-import com.aoindustries.sql.ObjectFactory;
-import java.sql.SQLException;
-import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseServerService extends DatabaseService<Integer,Server> implements ServerService {
+abstract class DatabaseServerService<V extends Server> extends DatabaseResourceService<V> {
 
-    private final ObjectFactory<Server> objectFactory = new AutoObjectFactory<Server>(Server.class, connector);
+    static final String SERVER_SELECT_COLUMNS =
+        RESOURCE_SELECT_COLUMNS + ",\n"
+        + "  se.farm,\n"
+        + "  se.description,\n"
+        + "  se.operating_system_version,\n"
+        + "  se.name,\n"
+        + "  se.monitoring_enabled"
+    ;
 
-    DatabaseServerService(DatabaseConnector connector) {
-        super(connector, Integer.class, Server.class);
+    //private final ObjectFactory<Server> objectFactory = new AutoObjectFactory<Server>(Server.class, connector);
+
+    DatabaseServerService(DatabaseConnector connector, Class<V> valueClass) {
+        super(connector, valueClass);
     }
 
+    /*
     @Override
     protected ArrayList<Server> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
@@ -54,13 +59,13 @@ final class DatabaseServerService extends DatabaseService<Integer,Server> implem
             + "  ms.username=?\n"
             + "  and (\n"
             // Allow direct access
-            + "    ms.server=se.pkey\n"
+            + "    ms.server=se.resource\n"
             // Allow its failover parent
-            + "    or ff.server=se.pkey\n"
+            + "    or ff.server=se.resource\n"
             // Allow its failover children
-            + "    or fs.server=se.pkey\n"
+            + "    or fs.server=se.resource\n"
             // Allow servers it replicates to
-            + "    or bp.ao_server=se.pkey\n"
+            + "    or bp.ao_server=se.resource\n"
             + "  )",
             connector.getConnectAs()
         );
@@ -84,11 +89,12 @@ final class DatabaseServerService extends DatabaseService<Integer,Server> implem
             + "  un.username=?\n"
             + "  and un.accounting=bs.accounting\n"
             + "  and (\n"
-            + "    bs.server=se.pkey\n"
+            + "    bs.server=se.resource\n"
             // Allow servers it replicates to
-            //+ "    or bp.ao_server=se.pkey\n"
+            //+ "    or bp.ao_server=se.resource\n"
             + "  )",
             connector.getConnectAs()
         );
     }
+     */
 }
