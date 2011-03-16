@@ -17,7 +17,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBusinessService extends DatabaseService<AccountingCode,Business> implements BusinessService {
+final class DatabaseBusinessService extends DatabaseAccountTypeService<AccountingCode,Business> implements BusinessService {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<Business> objectFactory = new AutoObjectFactory<Business>(Business.class, connector);

@@ -9,14 +9,13 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.AutoObjectFactory;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
-import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBankTransactionTypeService extends DatabaseService<String,BankTransactionType> implements BankTransactionTypeService {
+final class DatabaseBankTransactionTypeService extends DatabaseBankAccountingService<String,BankTransactionType> implements BankTransactionTypeService {
 
     private final ObjectFactory<BankTransactionType> objectFactory = new AutoObjectFactory<BankTransactionType>(BankTransactionType.class, connector);
 
@@ -25,25 +24,11 @@ final class DatabaseBankTransactionTypeService extends DatabaseService<String,Ba
     }
 
     @Override
-    protected ArrayList<BankTransactionType> getListMaster(DatabaseConnection db) throws RemoteException, SQLException {
-        if(connector.factory.rootConnector.getMasterUsers().get(connector.getConnectAs()).getCanAccessBankAccount()) {
-            return db.executeObjectCollectionQuery(
-                new ArrayList<BankTransactionType>(),
-                objectFactory,
-                "select * from bank_transaction_types"
-            );
-        } else {
-            return new ArrayList<BankTransactionType>(0);
-        }
-    }
-
-    @Override
-    protected ArrayList<BankTransactionType> getListDaemon(DatabaseConnection db) {
-        return new ArrayList<BankTransactionType>(0);
-    }
-
-    @Override
-    protected ArrayList<BankTransactionType> getListBusiness(DatabaseConnection db) {
-        return new ArrayList<BankTransactionType>(0);
+    protected ArrayList<BankTransactionType> getListBankAccounting(DatabaseConnection db) throws SQLException {
+        return db.executeObjectCollectionQuery(
+            new ArrayList<BankTransactionType>(),
+            objectFactory,
+            "select * from bank_transaction_types"
+        );
     }
 }

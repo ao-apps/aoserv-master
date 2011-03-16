@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseFailoverMySQLReplicationService extends DatabaseService<Integer,FailoverMySQLReplication> implements FailoverMySQLReplicationService {
+final class DatabaseFailoverMySQLReplicationService extends DatabaseAccountTypeService<Integer,FailoverMySQLReplication> implements FailoverMySQLReplicationService {
 
     private final ObjectFactory<FailoverMySQLReplication> objectFactory = new AutoObjectFactory<FailoverMySQLReplication>(FailoverMySQLReplication.class, connector);
 

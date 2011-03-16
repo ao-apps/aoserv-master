@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseCountryCodeService extends DatabasePublicService<String,CountryCode> implements CountryCodeService {
+final class DatabaseCountryCodeService extends DatabaseService<String,CountryCode> implements CountryCodeService {
 
     private final ObjectFactory<CountryCode> objectFactory = new AutoObjectFactory<CountryCode>(CountryCode.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseCountryCodeService extends DatabasePublicService<String,Coun
     }
 
     @Override
-    protected ArrayList<CountryCode> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<CountryCode> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<CountryCode>(),
             objectFactory,

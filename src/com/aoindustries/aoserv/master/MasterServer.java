@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  */
 final public class MasterServer {
 
-    private static final boolean CACHE_ALL = false;
+    private static final boolean CACHE_ALL = true; // TODO: Turn back off - this is for benchmarking RMI only.
 
     private static final Logger logger = LogFactory.getLogger(MasterServer.class);
 

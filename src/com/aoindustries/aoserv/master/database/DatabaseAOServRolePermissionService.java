@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseAOServRolePermissionService extends DatabaseService<Integer,AOServRolePermission> implements AOServRolePermissionService {
+final class DatabaseAOServRolePermissionService extends DatabaseAccountTypeService<Integer,AOServRolePermission> implements AOServRolePermissionService {
 
     private final ObjectFactory<AOServRolePermission> objectFactory = new AutoObjectFactory<AOServRolePermission>(AOServRolePermission.class, connector);
 

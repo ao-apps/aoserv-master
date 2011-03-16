@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTransactionService extends DatabaseService<Integer,Transaction> implements TransactionService {
+final class DatabaseTransactionService extends DatabaseAccountTypeService<Integer,Transaction> implements TransactionService {
 
     private final ObjectFactory<Transaction> objectFactory = new ObjectFactory<Transaction>() {
         @Override
@@ -30,7 +30,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
                     AccountingCode.valueOf(result.getString("source_accounting")),
                     UserId.valueOf(result.getString("username")),
                     result.getString("type"),
-                    result.getBigDecimal("quantity"),
+                    result.getLong("quantity"),
                     getMoney(result, "currency", "rate"),
                     result.getString("payment_type"),
                     result.getString("payment_info"),
@@ -60,7 +60,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
             + "  source_accounting,\n"
             + "  username,\n"
             + "  type,\n"
-            + "  quantity,\n"
+            + "  (quantity*1000)::int8 as quantity,\n"
             + "  currency,\n"
             + "  rate,\n"
             + "  payment_type,\n"
@@ -90,7 +90,7 @@ final class DatabaseTransactionService extends DatabaseService<Integer,Transacti
             + "  tr.source_accounting,\n"
             + "  tr.username,\n"
             + "  tr.type,\n"
-            + "  tr.quantity,\n"
+            + "  (tr.quantity*1000)::int8 as quantity,\n"
             + "  tr.currency,\n"
             + "  tr.rate,\n"
             + "  tr.payment_type,\n"

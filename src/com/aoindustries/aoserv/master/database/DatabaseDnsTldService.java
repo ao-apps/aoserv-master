@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseDnsTldService extends DatabasePublicService<DomainName,DnsTld> implements DnsTldService {
+final class DatabaseDnsTldService extends DatabaseService<DomainName,DnsTld> implements DnsTldService {
 
     private final ObjectFactory<DnsTld> objectFactory = new AutoObjectFactory<DnsTld>(DnsTld.class, connector);
 
@@ -25,7 +25,7 @@ final class DatabaseDnsTldService extends DatabasePublicService<DomainName,DnsTl
     }
 
     @Override
-    protected ArrayList<DnsTld> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<DnsTld> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<DnsTld>(),
             objectFactory,

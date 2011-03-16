@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePackageDefinitionLimitService extends DatabaseService<Integer,PackageDefinitionLimit> implements PackageDefinitionLimitService {
+final class DatabasePackageDefinitionLimitService extends DatabaseAccountTypeService<Integer,PackageDefinitionLimit> implements PackageDefinitionLimitService {
 
     private final ObjectFactory<PackageDefinitionLimit> objectFactory = new ObjectFactory<PackageDefinitionLimit>() {
         @Override

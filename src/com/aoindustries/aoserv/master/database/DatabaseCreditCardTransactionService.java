@@ -17,7 +17,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseCreditCardTransactionService extends DatabaseService<Integer,CreditCardTransaction> implements CreditCardTransactionService {
+final class DatabaseCreditCardTransactionService extends DatabaseAccountTypeService<Integer,CreditCardTransaction> implements CreditCardTransactionService {
 
     private final ObjectFactory<CreditCardTransaction> objectFactory = new ObjectFactory<CreditCardTransaction>() {
         @Override
@@ -47,7 +47,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
                     result.getString("shipping_postal_code"),
                     result.getString("shipping_country_code"),
                     result.getBoolean("email_customer"),
-                    getEmail(result.getString("merchant_email")),
+                    Email.valueOf(result.getString("merchant_email")),
                     result.getString("invoice_number"),
                     result.getString("purchase_order_number"),
                     result.getString("description"),
@@ -60,7 +60,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
                     result.getString("credit_card_first_name"),
                     result.getString("credit_card_last_name"),
                     result.getString("credit_card_company_name"),
-                    getEmail(result.getString("credit_card_email")),
+                    Email.valueOf(result.getString("credit_card_email")),
                     result.getString("credit_card_phone"),
                     result.getString("credit_card_fax"),
                     result.getString("credit_card_customer_tax_id"),
@@ -91,7 +91,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
                     result.getString("authorization_avs_result"),
                     result.getString("authorization_approval_code"),
                     (Long)result.getObject("capture_time"),
-                    getUserId(result.getString("capture_username")),
+                    UserId.valueOf(result.getString("capture_username")),
                     result.getString("capture_principal_name"),
                     result.getString("capture_communication_result"),
                     result.getString("capture_provider_error_code"),
@@ -99,7 +99,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseService<Integer
                     result.getString("capture_provider_error_message"),
                     result.getString("capture_provider_unique_id"),
                     (Long)result.getObject("void_time"),
-                    getUserId(result.getString("void_username")),
+                    UserId.valueOf(result.getString("void_username")),
                     result.getString("void_principal_name"),
                     result.getString("void_communication_result"),
                     result.getString("void_provider_error_code"),

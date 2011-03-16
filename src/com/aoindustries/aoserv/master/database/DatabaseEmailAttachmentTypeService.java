@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseEmailAttachmentTypeService extends DatabasePublicService<String,EmailAttachmentType> implements EmailAttachmentTypeService {
+final class DatabaseEmailAttachmentTypeService extends DatabaseService<String,EmailAttachmentType> implements EmailAttachmentTypeService {
 
     private final ObjectFactory<EmailAttachmentType> objectFactory = new AutoObjectFactory<EmailAttachmentType>(EmailAttachmentType.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseEmailAttachmentTypeService extends DatabasePublicService<Str
     }
 
     @Override
-    protected ArrayList<EmailAttachmentType> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<EmailAttachmentType> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<EmailAttachmentType>(),
             objectFactory,

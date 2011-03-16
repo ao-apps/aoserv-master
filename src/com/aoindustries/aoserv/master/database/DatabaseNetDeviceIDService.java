@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNetDeviceIDService extends DatabasePublicService<String,NetDeviceID> implements NetDeviceIDService {
+final class DatabaseNetDeviceIDService extends DatabaseService<String,NetDeviceID> implements NetDeviceIDService {
 
     private final ObjectFactory<NetDeviceID> objectFactory = new AutoObjectFactory<NetDeviceID>(NetDeviceID.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseNetDeviceIDService extends DatabasePublicService<String,NetD
     }
 
     @Override
-    protected ArrayList<NetDeviceID> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<NetDeviceID> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<NetDeviceID>(),
             objectFactory,

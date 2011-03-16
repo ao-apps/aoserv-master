@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseResellerService extends DatabaseService<AccountingCode,Reseller> implements ResellerService {
+final class DatabaseResellerService extends DatabaseAccountTypeService<AccountingCode,Reseller> implements ResellerService {
 
     private final ObjectFactory<Reseller> objectFactory = new AutoObjectFactory<Reseller>(Reseller.class, connector);
 

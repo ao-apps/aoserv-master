@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLanguageService extends DatabasePublicService<String,Language> implements LanguageService {
+final class DatabaseLanguageService extends DatabaseService<String,Language> implements LanguageService {
 
     private final ObjectFactory<Language> objectFactory = new AutoObjectFactory<Language>(Language.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseLanguageService extends DatabasePublicService<String,Languag
     }
 
     @Override
-    protected ArrayList<Language> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Language> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Language>(),
             objectFactory,

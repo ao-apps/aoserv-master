@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLinuxAccountTypeService extends DatabasePublicService<String,LinuxAccountType> implements LinuxAccountTypeService {
+final class DatabaseLinuxAccountTypeService extends DatabaseService<String,LinuxAccountType> implements LinuxAccountTypeService {
 
     private final ObjectFactory<LinuxAccountType> objectFactory = new AutoObjectFactory<LinuxAccountType>(LinuxAccountType.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseLinuxAccountTypeService extends DatabasePublicService<String
     }
 
     @Override
-    protected ArrayList<LinuxAccountType> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<LinuxAccountType> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<LinuxAccountType>(),
             objectFactory,

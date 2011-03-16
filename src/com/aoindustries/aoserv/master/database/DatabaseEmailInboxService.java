@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseEmailInboxService extends DatabaseService<Integer,EmailInbox> implements EmailInboxService {
+final class DatabaseEmailInboxService extends DatabaseAccountTypeService<Integer,EmailInbox> implements EmailInboxService {
 
     private final ObjectFactory<EmailInbox> objectFactory = new AutoObjectFactory<EmailInbox>(EmailInbox.class, connector);
 

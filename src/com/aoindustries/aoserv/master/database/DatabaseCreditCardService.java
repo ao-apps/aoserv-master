@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseCreditCardService extends DatabaseService<Integer,CreditCard> implements CreditCardService {
+final class DatabaseCreditCardService extends DatabaseAccountTypeService<Integer,CreditCard> implements CreditCardService {
 
     private final ObjectFactory<CreditCard> objectFactory = new AutoObjectFactory<CreditCard>(CreditCard.class, connector);
 

@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseLinuxGroupTypeService extends DatabasePublicService<String,LinuxGroupType> implements LinuxGroupTypeService {
+final class DatabaseLinuxGroupTypeService extends DatabaseService<String,LinuxGroupType> implements LinuxGroupTypeService {
 
     private final ObjectFactory<LinuxGroupType> objectFactory = new AutoObjectFactory<LinuxGroupType>(LinuxGroupType.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseLinuxGroupTypeService extends DatabasePublicService<String,L
     }
 
     @Override
-    protected ArrayList<LinuxGroupType> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<LinuxGroupType> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<LinuxGroupType>(),
             objectFactory,

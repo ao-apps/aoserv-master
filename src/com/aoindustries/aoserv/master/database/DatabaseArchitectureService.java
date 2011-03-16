@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseArchitectureService extends DatabasePublicService<String,Architecture> implements ArchitectureService {
+final class DatabaseArchitectureService extends DatabaseService<String,Architecture> implements ArchitectureService {
 
     private final ObjectFactory<Architecture> objectFactory = new AutoObjectFactory<Architecture>(Architecture.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseArchitectureService extends DatabasePublicService<String,Arc
     }
 
     @Override
-    protected ArrayList<Architecture> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Architecture> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Architecture>(),
             objectFactory,

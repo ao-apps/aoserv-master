@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBusinessAdministratorRoleService extends DatabaseService<Integer,BusinessAdministratorRole> implements BusinessAdministratorRoleService {
+final class DatabaseBusinessAdministratorRoleService extends DatabaseAccountTypeService<Integer,BusinessAdministratorRole> implements BusinessAdministratorRoleService {
 
     private final ObjectFactory<BusinessAdministratorRole> objectFactory = new AutoObjectFactory<BusinessAdministratorRole>(BusinessAdministratorRole.class, connector);
 

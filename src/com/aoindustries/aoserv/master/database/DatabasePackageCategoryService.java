@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePackageCategoryService extends DatabasePublicService<String,PackageCategory> implements PackageCategoryService {
+final class DatabasePackageCategoryService extends DatabaseService<String,PackageCategory> implements PackageCategoryService {
 
     private final ObjectFactory<PackageCategory> objectFactory = new AutoObjectFactory<PackageCategory>(PackageCategory.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabasePackageCategoryService extends DatabasePublicService<String,
     }
 
     @Override
-    protected ArrayList<PackageCategory> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PackageCategory> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PackageCategory>(),
             objectFactory,

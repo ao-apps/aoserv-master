@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseDisableLogService extends DatabaseService<Integer,DisableLog> implements DisableLogService {
+final class DatabaseDisableLogService extends DatabaseAccountTypeService<Integer,DisableLog> implements DisableLogService {
 
     private final ObjectFactory<DisableLog> objectFactory = new ObjectFactory<DisableLog>() {
         @Override

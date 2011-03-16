@@ -33,321 +33,10 @@ import java.util.Set;
 final public class DatabaseConnector extends AbstractConnector {
 
     final DatabaseConnectorFactory factory;
-    final DatabaseAOServerDaemonHostService aoserverDaemonHosts;
-    final DatabaseAOServerService aoservers;
-    final DatabaseAOServPermissionService aoservPermissions;
-    final DatabaseAOServRoleService aoservRoles;
-    final DatabaseAOServRolePermissionService aoservRolePermissions;
-    final DatabaseArchitectureService architectures;
-    final DatabaseBackupPartitionService backupPartitions;
-    final DatabaseBackupRetentionService backupRetentions;
-    final DatabaseBackupServerService backupServers;
-    // TODO: final DatabaseBankAccountService bankAccounts;
-    final DatabaseBankTransactionTypeService bankTransactionTypes;
-    // TODO: final DatabaseBankTransactionService bankTransactions;
-    // TODO: final DatabaseBankService banks;
-    final DatabaseBrandService brands;
-    final DatabaseBusinessAdministratorService businessAdministrators;
-    final DatabaseBusinessAdministratorRoleService businessAdministratorRoles;
-    final DatabaseBusinessProfileService businessProfiles;
-    final DatabaseBusinessService businesses;
-    final DatabaseBusinessServerService businessServers;
-    final DatabaseCountryCodeService countryCodes;
-    final DatabaseCreditCardProcessorService creditCardProcessors;
-    final DatabaseCreditCardTransactionService creditCardTransactions;
-    final DatabaseCreditCardService creditCards;
-    final DatabaseCvsRepositoryService cvsRepositories;
-    final DatabaseDisableLogService disableLogs;
-    /* TODO
-    final DatabaseDistroFileTypeService distroFileTypes;
-    final DatabaseDistroFileService distroFiles;
-     */
-    final DatabaseDnsRecordService dnsRecords;
-    final DatabaseDnsTldService dnsTlds;
-    final DatabaseDnsTypeService dnsTypes;
-    final DatabaseDnsZoneService dnsZones;
-    // TODO: final DatabaseEmailAddressService emailAddresss;
-    // TODO: final DatabaseEmailAttachmentBlockService emailAttachmentBlocks;
-    final DatabaseEmailAttachmentTypeService emailAttachmentTypes;
-    // TODO: final DatabaseEmailDomainService emailDomains;
-    // TODO: final DatabaseEmailForwardingService emailForwardings;
-    final DatabaseEmailInboxService emailInboxes;
-    /* TODO
-    final DatabaseEmailListAddressService emailListAddresss;
-    final DatabaseEmailListService emailLists;
-    final DatabaseEmailPipeAddressService emailPipeAddresss;
-    final DatabaseEmailPipeService emailPipes;
-     */
-    final DatabaseEmailSmtpRelayTypeService emailSmtpRelayTypes;
-    // TODO: final DatabaseEmailSmtpRelayService emailSmtpRelays;
-    // TODO: final DatabaseEmailSmtpSmartHostDomainService emailSmtpSmartHostDomains;
-    // TODO: final DatabaseEmailSmtpSmartHostService emailSmtpSmartHosts;
-    final DatabaseEmailSpamAssassinIntegrationModeService emailSpamAssassinIntegrationModes;
-    // TODO: final DatabaseEncryptionKeyService encryptionKeys;
-    final DatabaseExpenseCategoryService expenseCategories;
-    final DatabaseFailoverFileLogService failoverFileLogs;
-    final DatabaseFailoverFileReplicationService failoverFileReplications;
-    final DatabaseFailoverFileScheduleService failoverFileSchedules;
-    final DatabaseFailoverMySQLReplicationService failoverMySQLReplications;
-    final DatabaseFileBackupSettingService fileBackupSettings;
-    final DatabaseFtpGuestUserService ftpGuestUsers;
-    final DatabaseGroupNameService groupNames;
-    // TODO: final DatabaseHttpdBindService httpdBinds;
-    // TODO: final DatabaseHttpdJBossSiteService httpdJBossSites;
-    final DatabaseHttpdJBossVersionService httpdJBossVersions;
-    final DatabaseHttpdJKCodeService httpdJKCodes;
-    final DatabaseHttpdJKProtocolService httpdJKProtocols;
-    final DatabaseHttpdServerService httpdServers;
-    /* TODO
-    final DatabaseHttpdSharedTomcatService httpdSharedTomcats;
-    final DatabaseHttpdSiteAuthenticatedLocationService httpdSiteAuthenticatedLocations;
-    final DatabaseHttpdSiteBindService httpdSiteBinds;
-    final DatabaseHttpdSiteURLService httpdSiteURLs;
-     */
-    final DatabaseHttpdSiteService httpdSites;
-    // TODO: final DatabaseHttpdStaticSiteService httpdStaticSites;
-    // TODO: final DatabaseHttpdTomcatContextService httpdTomcatContexts;
-    // TODO: final DatabaseHttpdTomcatDataSourceService httpdTomcatDataSources;
-    // TODO: final DatabaseHttpdTomcatParameterService httpdTomcatParameters;
-    // TODO: final DatabaseHttpdTomcatSiteService httpdTomcatSites;
-    // TODO: final DatabaseHttpdTomcatSharedSiteService httpdTomcatSharedSites;
-    // TODO: final DatabaseHttpdTomcatStdSiteService httpdTomcatStdSites;
-    final DatabaseHttpdTomcatVersionService httpdTomcatVersions;
-    // TODO: final DatabaseHttpdWorkerService httpdWorkers;
-    final DatabaseIPAddressService ipAddresses;
-    final DatabaseLanguageService languages;
-    // TODO: final DatabaseLinuxAccAddressService linuxAccAddresss;
-    final DatabaseLinuxAccountGroupService linuxAccountGroups;
-    final DatabaseLinuxAccountTypeService linuxAccountTypes;
-    final DatabaseLinuxAccountService linuxAccounts;
-    final DatabaseLinuxGroupTypeService linuxGroupTypes;
-    final DatabaseLinuxGroupService linuxGroups;
-    // TODO: final DatabaseMajordomoListService majordomoLists;
-    // TODO: final DatabaseMajordomoServerService majordomoServers;
-    final DatabaseMajordomoVersionService majordomoVersions;
-    final DatabaseMasterHostService masterHosts;
-    final DatabaseMasterServerService masterServers;
-    final DatabaseMasterUserService masterUsers;
-    // TODO: final DatabaseMonthlyChargeService monthlyCharges;
-    final DatabaseMySQLDatabaseService mysqlDatabases;
-    final DatabaseMySQLDBUserService mysqlDBUsers;
-    final DatabaseMySQLServerService mysqlServers;
-    final DatabaseMySQLUserService mysqlUsers;
-    final DatabaseNetBindService netBinds;
-    final DatabaseNetDeviceIDService netDeviceIDs;
-    final DatabaseNetDeviceService netDevices;
-    final DatabaseNetProtocolService netProtocols;
-    final DatabaseNetTcpRedirectService netTcpRedirects;
-    // TODO: final DatabaseNoticeLogService noticeLogs;
-    final DatabaseNoticeTypeService noticeTypes;
-    final DatabaseOperatingSystemVersionService operatingSystemVersions;
-    final DatabaseOperatingSystemService operatingSystems;
-    final DatabasePackageCategoryService packageCategories;
-    final DatabasePackageDefinitionBusinessService packageDefinitionBusinesses;
-    final DatabasePackageDefinitionLimitService packageDefinitionLimits;
-    final DatabasePackageDefinitionService packageDefinitions;
-    final DatabasePaymentTypeService paymentTypes;
-    final DatabasePhysicalServerService physicalServers;
-    final DatabasePostgresDatabaseService postgresDatabases;
-    final DatabasePostgresEncodingService postgresEncodings;
-    final DatabasePostgresServerService postgresServers;
-    final DatabasePostgresUserService postgresUsers;
-    final DatabasePostgresVersionService postgresVersions;
-    final DatabasePrivateFtpServerService privateFtpServers;
-    final DatabaseProcessorTypeService processorTypes;
-    final DatabaseProtocolService protocols;
-    final DatabaseRackService racks;
-    final DatabaseResellerService resellers;
-    final DatabaseResourceTypeService resourceTypes;
-    final DatabaseServerFarmService serverFarms;
-    final DatabaseShellService shells;
-    /* TODO
-    final DatabaseSignupRequestOptionService signupRequestOptions;
-    final DatabaseSignupRequestService signupRequests;
-    final DatabaseSpamEmailMessageService spamEmailMessages;
-    final DatabaseSystemEmailAliasService systemEmailAliass;
-     */
-    final DatabaseTechnologyService technologies;
-    final DatabaseTechnologyClassService technologyClasses;
-    final DatabaseTechnologyNameService technologyNames;
-    final DatabaseTechnologyVersionService technologyVersions;
-    final DatabaseTicketActionTypeService ticketActionTypes;
-    final DatabaseTicketActionService ticketActions;
-    final DatabaseTicketAssignmentService ticketAssignments;
-    // TODO: final DatabaseTicketBrandCategoryService ticketBrandCategories;
-    final DatabaseTicketCategoryService ticketCategories;
-    final DatabaseTicketPriorityService ticketPriorities;
-    final DatabaseTicketStatusService ticketStatuses;
-    final DatabaseTicketTypeService ticketTypes;
-    final DatabaseTicketService tickets;
-    final DatabaseTimeZoneService timeZones;
-    final DatabaseTransactionTypeService transactionTypes;
-    final DatabaseTransactionService transactions;
-    // TODO: final DatabaseUSStateService usStates;
-    final DatabaseUsernameService usernames;
-    // TODO: final DatabaseVirtualDiskService virtualDisks;
-    DatabaseVirtualServerService virtualServers;
-    // TODO: final DatabaseWhoisHistoryService whoisHistories;
 
     DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) {
         super(locale, connectAs, authenticateAs, password, daemonServer);
         this.factory = factory;
-        // TODO: Move to where declared
-        aoserverDaemonHosts = new DatabaseAOServerDaemonHostService(this);
-        aoservers = new DatabaseAOServerService(this);
-        aoservPermissions = new DatabaseAOServPermissionService(this);
-        aoservRoles = new DatabaseAOServRoleService(this);
-        aoservRolePermissions = new DatabaseAOServRolePermissionService(this);
-        architectures = new DatabaseArchitectureService(this);
-        backupPartitions = new DatabaseBackupPartitionService(this);
-        backupRetentions = new DatabaseBackupRetentionService(this);
-        backupServers = new DatabaseBackupServerService(this);
-        // TODO: bankAccounts = new DatabaseBankAccountService(this);
-        bankTransactionTypes = new DatabaseBankTransactionTypeService(this);
-        // TODO: bankTransactions = new DatabaseBankTransactionService(this);
-        // TODO: banks = new DatabaseBankService(this);
-        brands = new DatabaseBrandService(this);
-        businessAdministrators = new DatabaseBusinessAdministratorService(this);
-        businessAdministratorRoles = new DatabaseBusinessAdministratorRoleService(this);
-        businessProfiles = new DatabaseBusinessProfileService(this);
-        businesses = new DatabaseBusinessService(this);
-        businessServers = new DatabaseBusinessServerService(this);
-        countryCodes = new DatabaseCountryCodeService(this);
-        creditCardProcessors = new DatabaseCreditCardProcessorService(this);
-        creditCardTransactions = new DatabaseCreditCardTransactionService(this);
-        creditCards = new DatabaseCreditCardService(this);
-        cvsRepositories = new DatabaseCvsRepositoryService(this);
-        disableLogs = new DatabaseDisableLogService(this);
-        /* TODO
-        distroFileTypes = new DatabaseDistroFileTypeService(this);
-        distroFiles = new DatabaseDistroFileService(this);
-         */
-        dnsRecords = new DatabaseDnsRecordService(this);
-        dnsTlds = new DatabaseDnsTldService(this);
-        dnsTypes = new DatabaseDnsTypeService(this);
-        dnsZones = new DatabaseDnsZoneService(this);
-        // TODO: emailAddresss = new DatabaseEmailAddressService(this);
-        // TODO: emailAttachmentBlocks = new DatabaseEmailAttachmentBlockService(this);
-        emailAttachmentTypes = new DatabaseEmailAttachmentTypeService(this);
-        // TODO: emailDomains = new DatabaseEmailDomainService(this);
-        // TODO: emailForwardings = new DatabaseEmailForwardingService(this);
-        emailInboxes = new DatabaseEmailInboxService(this);
-        /* TODO
-        emailListAddresss = new DatabaseEmailListAddressService(this);
-        emailLists = new DatabaseEmailListService(this);
-        emailPipeAddresss = new DatabaseEmailPipeAddressService(this);
-        emailPipes = new DatabaseEmailPipeService(this);
-         */
-        emailSmtpRelayTypes = new DatabaseEmailSmtpRelayTypeService(this);
-        // TODO: emailSmtpRelays = new DatabaseEmailSmtpRelayService(this);
-        // TODO: emailSmtpSmartHostDomains = new DatabaseEmailSmtpSmartHostDomainService(this);
-        // TODO: emailSmtpSmartHosts = new DatabaseEmailSmtpSmartHostService(this);
-        emailSpamAssassinIntegrationModes = new DatabaseEmailSpamAssassinIntegrationModeService(this);
-        // TODO: encryptionKeys = new DatabaseEncryptionKeyService(this);
-        expenseCategories = new DatabaseExpenseCategoryService(this);
-        failoverFileLogs = new DatabaseFailoverFileLogService(this);
-        failoverFileReplications = new DatabaseFailoverFileReplicationService(this);
-        failoverFileSchedules = new DatabaseFailoverFileScheduleService(this);
-        failoverMySQLReplications = new DatabaseFailoverMySQLReplicationService(this);
-        fileBackupSettings = new DatabaseFileBackupSettingService(this);
-        ftpGuestUsers = new DatabaseFtpGuestUserService(this);
-        groupNames = new DatabaseGroupNameService(this);
-        // TODO: httpdBinds = new DatabaseHttpdBindService(this);
-        // TODO: httpdJBossSites = new DatabaseHttpdJBossSiteService(this);
-        httpdJBossVersions = new DatabaseHttpdJBossVersionService(this);
-        httpdJKCodes = new DatabaseHttpdJKCodeService(this);
-        httpdJKProtocols = new DatabaseHttpdJKProtocolService(this);
-        httpdServers = new DatabaseHttpdServerService(this);
-        /* TODO
-        httpdSharedTomcats = new DatabaseHttpdSharedTomcatService(this);
-        httpdSiteAuthenticatedLocations = new DatabaseHttpdSiteAuthenticatedLocationService(this);
-        httpdSiteBinds = new DatabaseHttpdSiteBindService(this);
-        httpdSiteURLs = new DatabaseHttpdSiteURLService(this);
-         */
-        httpdSites = new DatabaseHttpdSiteService(this);
-        // TODO: httpdStaticSites = new DatabaseHttpdStaticSiteService(this);
-        // TODO: httpdTomcatContexts = new DatabaseHttpdTomcatContextService(this);
-        // TODO: httpdTomcatDataSources = new DatabaseHttpdTomcatDataSourceService(this);
-        // TODO: httpdTomcatParameters = new DatabaseHttpdTomcatParameterService(this);
-        // TODO: httpdTomcatSites = new DatabaseHttpdTomcatSiteService(this);
-        // TODO: httpdTomcatSharedSites = new DatabaseHttpdTomcatSharedSiteService(this);
-        // TODO: httpdTomcatStdSites = new DatabaseHttpdTomcatStdSiteService(this);
-        httpdTomcatVersions = new DatabaseHttpdTomcatVersionService(this);
-        // TODO: httpdWorkers = new DatabaseHttpdWorkerService(this);
-        ipAddresses = new DatabaseIPAddressService(this);
-        languages = new DatabaseLanguageService(this);
-        // TODO: linuxAccAddresss = new DatabaseLinuxAccAddressService(this);
-        linuxAccountGroups = new DatabaseLinuxAccountGroupService(this);
-        linuxAccountTypes = new DatabaseLinuxAccountTypeService(this);
-        linuxAccounts = new DatabaseLinuxAccountService(this);
-        linuxGroupTypes = new DatabaseLinuxGroupTypeService(this);
-        linuxGroups = new DatabaseLinuxGroupService(this);
-        // TODO: majordomoLists = new DatabaseMajordomoListService(this);
-        // TODO: majordomoServers = new DatabaseMajordomoServerService(this);
-        majordomoVersions = new DatabaseMajordomoVersionService(this);
-        masterHosts = new DatabaseMasterHostService(this);
-        masterServers = new DatabaseMasterServerService(this);
-        masterUsers = new DatabaseMasterUserService(this);
-        // TODO: monthlyCharges = new DatabaseMonthlyChargeService(this);
-        mysqlDatabases = new DatabaseMySQLDatabaseService(this);
-        mysqlDBUsers = new DatabaseMySQLDBUserService(this);
-        mysqlServers = new DatabaseMySQLServerService(this);
-        mysqlUsers = new DatabaseMySQLUserService(this);
-        netBinds = new DatabaseNetBindService(this);
-        netDeviceIDs = new DatabaseNetDeviceIDService(this);
-        netDevices = new DatabaseNetDeviceService(this);
-        netProtocols = new DatabaseNetProtocolService(this);
-        netTcpRedirects = new DatabaseNetTcpRedirectService(this);
-        // TODO: noticeLogs = new DatabaseNoticeLogService(this);
-        noticeTypes = new DatabaseNoticeTypeService(this);
-        operatingSystemVersions = new DatabaseOperatingSystemVersionService(this);
-        operatingSystems = new DatabaseOperatingSystemService(this);
-        packageCategories = new DatabasePackageCategoryService(this);
-        packageDefinitionBusinesses = new DatabasePackageDefinitionBusinessService(this);
-        packageDefinitionLimits = new DatabasePackageDefinitionLimitService(this);
-        packageDefinitions = new DatabasePackageDefinitionService(this);
-        paymentTypes = new DatabasePaymentTypeService(this);
-        physicalServers = new DatabasePhysicalServerService(this);
-        postgresDatabases = new DatabasePostgresDatabaseService(this);
-        postgresEncodings = new DatabasePostgresEncodingService(this);
-        postgresServers = new DatabasePostgresServerService(this);
-        postgresUsers = new DatabasePostgresUserService(this);
-        postgresVersions = new DatabasePostgresVersionService(this);
-        privateFtpServers = new DatabasePrivateFtpServerService(this);
-        processorTypes = new DatabaseProcessorTypeService(this);
-        protocols = new DatabaseProtocolService(this);
-        racks = new DatabaseRackService(this);
-        resellers = new DatabaseResellerService(this);
-        resourceTypes = new DatabaseResourceTypeService(this);
-        serverFarms = new DatabaseServerFarmService(this);
-        shells = new DatabaseShellService(this);
-        /* TODO
-        signupRequestOptions = new DatabaseSignupRequestOptionService(this);
-        signupRequests = new DatabaseSignupRequestService(this);
-        spamEmailMessages = new DatabaseSpamEmailMessageService(this);
-        systemEmailAliass = new DatabaseSystemEmailAliasService(this);
-         */
-        technologies = new DatabaseTechnologyService(this);
-        technologyClasses = new DatabaseTechnologyClassService(this);
-        technologyNames = new DatabaseTechnologyNameService(this);
-        technologyVersions = new DatabaseTechnologyVersionService(this);
-        ticketActionTypes = new DatabaseTicketActionTypeService(this);
-        ticketActions = new DatabaseTicketActionService(this);
-        ticketAssignments = new DatabaseTicketAssignmentService(this);
-        // TODO: ticketBrandCategories = new DatabaseTicketBrandCategoryService(this);
-        ticketCategories = new DatabaseTicketCategoryService(this);
-        ticketPriorities = new DatabaseTicketPriorityService(this);
-        ticketStatuses = new DatabaseTicketStatusService(this);
-        ticketTypes = new DatabaseTicketTypeService(this);
-        tickets = new DatabaseTicketService(this);
-        timeZones = new DatabaseTimeZoneService(this);
-        transactionTypes = new DatabaseTransactionTypeService(this);
-        transactions = new DatabaseTransactionService(this);
-        // TODO: usStates = new DatabaseUSStateService(this);
-        usernames = new DatabaseUsernameService(this);
-        // TODO: virtualDisks = new DatabaseVirtualDiskService(this);
-        virtualServers = new DatabaseVirtualServerService(this);
-        // TODO: whoisHistories = new DatabaseWhoisHistoryService(this);
     }
 
     enum AccountType {
@@ -361,9 +50,10 @@ final public class DatabaseConnector extends AbstractConnector {
      * Determines the type of account logged-in based on the connectAs value.  This controls filtering and access.
      */
     AccountType getAccountType(DatabaseConnection db) throws SQLException {
-        if(factory.isEnabledMasterUser(db, getConnectAs())) return AccountType.MASTER;
-        if(factory.isEnabledDaemonUser(db, getConnectAs())) return AccountType.DAEMON;
-        if(factory.isEnabledBusinessAdministrator(db, getConnectAs())) return AccountType.BUSINESS;
+        UserId connectAs = getConnectAs();
+        if(factory.isEnabledMasterUser(db, connectAs)) return AccountType.MASTER;
+        if(factory.isEnabledDaemonUser(db, connectAs)) return AccountType.DAEMON;
+        if(factory.isEnabledBusinessAdministrator(db, connectAs)) return AccountType.BUSINESS;
         return AccountType.DISABLED;
     }
 
@@ -499,609 +189,766 @@ final public class DatabaseConnector extends AbstractConnector {
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Services">
+    final DatabaseAOServerDaemonHostService aoserverDaemonHosts = new DatabaseAOServerDaemonHostService(this);
     @Override
     public AOServerDaemonHostService getAoServerDaemonHosts() {
         return aoserverDaemonHosts;
     }
 
+    final DatabaseAOServerService aoservers = new DatabaseAOServerService(this);
     @Override
     public AOServerService getAoServers() {
         return aoservers;
     }
 
+    final DatabaseAOServPermissionService aoservPermissions = new DatabaseAOServPermissionService(this);
     @Override
     public AOServPermissionService getAoservPermissions() {
         return aoservPermissions;
     }
 
+    final DatabaseAOServRoleService aoservRoles = new DatabaseAOServRoleService(this);
     @Override
     public AOServRoleService getAoservRoles() {
         return aoservRoles;
     }
 
+    final DatabaseAOServRolePermissionService aoservRolePermissions = new DatabaseAOServRolePermissionService(this);
     @Override
     public AOServRolePermissionService getAoservRolePermissions() {
         return aoservRolePermissions;
     }
 
+    final DatabaseArchitectureService architectures = new DatabaseArchitectureService(this);
     @Override
     public ArchitectureService getArchitectures() {
         return architectures;
     }
 
+    final DatabaseBackupPartitionService backupPartitions = new DatabaseBackupPartitionService(this);
     @Override
     public BackupPartitionService getBackupPartitions() {
         return backupPartitions;
     }
 
+    final DatabaseBackupRetentionService backupRetentions = new DatabaseBackupRetentionService(this);
     @Override
     public BackupRetentionService getBackupRetentions() {
         return backupRetentions;
     }
 
+    final DatabaseBackupServerService backupServers = new DatabaseBackupServerService(this);
     @Override
     public BackupServerService getBackupServers() {
         return backupServers;
     }
 
-    // TODO: public BankAccountService getBankAccounts();
+    final DatabaseBankAccountService bankAccounts = new DatabaseBankAccountService(this);
+    @Override
+    public BankAccountService getBankAccounts() {
+        return bankAccounts;
+    }
 
+    final DatabaseBankTransactionTypeService bankTransactionTypes = new DatabaseBankTransactionTypeService(this);
     @Override
     public BankTransactionTypeService getBankTransactionTypes() {
         return bankTransactionTypes;
     }
 
-    // TODO: public BankTransactionService getBankTransactions();
+    final DatabaseBankTransactionService bankTransactions = new DatabaseBankTransactionService(this);
+    @Override
+    public BankTransactionService getBankTransactions() {
+        return bankTransactions;
+    }
 
-    // TODO: public BankService getBanks();
+    final DatabaseBankService banks = new DatabaseBankService(this);
+    @Override
+    public BankService getBanks() {
+        return banks;
+    }
 
+    final DatabaseBrandService brands = new DatabaseBrandService(this);
     @Override
     public BrandService getBrands() {
         return brands;
     }
 
+    final DatabaseBusinessAdministratorService businessAdministrators = new DatabaseBusinessAdministratorService(this);
     @Override
     public BusinessAdministratorService getBusinessAdministrators() {
         return businessAdministrators;
     }
 
+    final DatabaseBusinessAdministratorRoleService businessAdministratorRoles = new DatabaseBusinessAdministratorRoleService(this);
     @Override
     public BusinessAdministratorRoleService getBusinessAdministratorRoles() {
         return businessAdministratorRoles;
     }
 
+    final DatabaseBusinessProfileService businessProfiles = new DatabaseBusinessProfileService(this);
     @Override
     public BusinessProfileService getBusinessProfiles() {
         return businessProfiles;
     }
 
+    final DatabaseBusinessService businesses = new DatabaseBusinessService(this);
     @Override
     public BusinessService getBusinesses() {
         return businesses;
     }
 
+    final DatabaseBusinessServerService businessServers = new DatabaseBusinessServerService(this);
     @Override
     public BusinessServerService getBusinessServers() {
         return businessServers;
     }
 
+    final DatabaseCountryCodeService countryCodes = new DatabaseCountryCodeService(this);
     @Override
     public CountryCodeService getCountryCodes() {
         return countryCodes;
     }
 
+    final DatabaseCreditCardProcessorService creditCardProcessors = new DatabaseCreditCardProcessorService(this);
     @Override
     public CreditCardProcessorService getCreditCardProcessors() {
         return creditCardProcessors;
     }
 
+    final DatabaseCreditCardTransactionService creditCardTransactions = new DatabaseCreditCardTransactionService(this);
     @Override
     public CreditCardTransactionService getCreditCardTransactions() {
         return creditCardTransactions;
     }
 
+    final DatabaseCreditCardService creditCards = new DatabaseCreditCardService(this);
     @Override
     public CreditCardService getCreditCards() {
         return creditCards;
     }
 
+    final DatabaseCvsRepositoryService cvsRepositories = new DatabaseCvsRepositoryService(this);
     @Override
     public CvsRepositoryService getCvsRepositories() {
         return cvsRepositories;
     }
 
+    final DatabaseDisableLogService disableLogs = new DatabaseDisableLogService(this);
     @Override
     public DisableLogService getDisableLogs() {
         return disableLogs;
     }
     /* TODO
+    final DatabaseDistroFileTypeService distroFileTypes = new Database;
     public DistroFileTypeService getDistroFileTypes();
 
+    final DatabaseDistroFileService distroFiles = new Database;
     public DistroFileService getDistroFiles();
      */
+
+    final DatabaseDnsRecordService dnsRecords = new DatabaseDnsRecordService(this);
     @Override
     public DnsRecordService getDnsRecords() {
         return dnsRecords;
     }
 
+    final DatabaseDnsTldService dnsTlds = new DatabaseDnsTldService(this);
     @Override
     public DnsTldService getDnsTlds() {
         return dnsTlds;
     }
 
+    final DatabaseDnsTypeService dnsTypes = new DatabaseDnsTypeService(this);
     @Override
     public DnsTypeService getDnsTypes() {
         return dnsTypes;
     }
 
+    final DatabaseDnsZoneService dnsZones = new DatabaseDnsZoneService(this);
     @Override
     public DnsZoneService getDnsZones() {
         return dnsZones;
     }
 
+    // TODO: final DatabaseEmailAddressService emailAddresss = new Database;
     // TODO: public EmailAddressService getEmailAddresses();
 
+    // TODO: final DatabaseEmailAttachmentBlockService emailAttachmentBlocks = new Database;
     // TODO: public EmailAttachmentBlockService getEmailAttachmentBlocks();
 
+    final DatabaseEmailAttachmentTypeService emailAttachmentTypes = new DatabaseEmailAttachmentTypeService(this);
     @Override
     public EmailAttachmentTypeService getEmailAttachmentTypes() {
         return emailAttachmentTypes;
     }
 
+    // TODO: final DatabaseEmailDomainService emailDomains = new Database;
     // TODO: public EmailDomainService getEmailDomains();
 
+    // TODO: final DatabaseEmailForwardingService emailForwardings = new Database;
     // TODO: public EmailForwardingService getEmailForwardings();
 
+    final DatabaseEmailInboxService emailInboxes = new DatabaseEmailInboxService(this);
     @Override
     public EmailInboxService getEmailInboxes() {
         return emailInboxes;
     }
     /* TODO
+    final DatabaseEmailListAddressService emailListAddresss = new Database;
     public EmailListAddressService getEmailListAddresses();
 
+    final DatabaseEmailListService emailLists = new Database;
     public EmailListService getEmailLists();
 
+    final DatabaseEmailPipeAddressService emailPipeAddresss = new Database;
     public EmailPipeAddressService getEmailPipeAddresses();
 
+    final DatabaseEmailPipeService emailPipes = new Database;
     public EmailPipeService getEmailPipes();
     */
+
+    final DatabaseEmailSmtpRelayTypeService emailSmtpRelayTypes = new DatabaseEmailSmtpRelayTypeService(this);
     @Override
     public EmailSmtpRelayTypeService getEmailSmtpRelayTypes() {
         return emailSmtpRelayTypes;
     }
 
+    // TODO: final DatabaseEmailSmtpRelayService emailSmtpRelays = new Database;
     // TODO: public EmailSmtpRelayService getEmailSmtpRelays();
 
+    // TODO: final DatabaseEmailSmtpSmartHostDomainService emailSmtpSmartHostDomains = new Database;
     // TODO: public EmailSmtpSmartHostDomainService getEmailSmtpSmartHostDomains();
 
+    // TODO: final DatabaseEmailSmtpSmartHostService emailSmtpSmartHosts = new Database;
     // TODO: public EmailSmtpSmartHostService getEmailSmtpSmartHosts();
 
+    final DatabaseEmailSpamAssassinIntegrationModeService emailSpamAssassinIntegrationModes = new DatabaseEmailSpamAssassinIntegrationModeService(this);
     @Override
     public EmailSpamAssassinIntegrationModeService getEmailSpamAssassinIntegrationModes() {
         return emailSpamAssassinIntegrationModes;
     }
 
+    // TODO: final DatabaseEncryptionKeyService encryptionKeys = new Database;
     // TODO: public EncryptionKeyService getEncryptionKeys();
 
+    final DatabaseExpenseCategoryService expenseCategories = new DatabaseExpenseCategoryService(this);
     @Override
     public ExpenseCategoryService getExpenseCategories() {
         return expenseCategories;
     }
 
+    final DatabaseFailoverFileLogService failoverFileLogs = new DatabaseFailoverFileLogService(this);
     @Override
     public FailoverFileLogService getFailoverFileLogs() {
         return failoverFileLogs;
     }
 
+    final DatabaseFailoverFileReplicationService failoverFileReplications = new DatabaseFailoverFileReplicationService(this);
     @Override
     public FailoverFileReplicationService getFailoverFileReplications() {
         return failoverFileReplications;
     }
 
+    final DatabaseFailoverFileScheduleService failoverFileSchedules = new DatabaseFailoverFileScheduleService(this);
     @Override
     public FailoverFileScheduleService getFailoverFileSchedules() {
         return failoverFileSchedules;
     }
 
+    final DatabaseFailoverMySQLReplicationService failoverMySQLReplications = new DatabaseFailoverMySQLReplicationService(this);
     @Override
     public FailoverMySQLReplicationService getFailoverMySQLReplications() {
         return failoverMySQLReplications;
     }
 
+    final DatabaseFileBackupSettingService fileBackupSettings = new DatabaseFileBackupSettingService(this);
     @Override
     public FileBackupSettingService getFileBackupSettings() {
         return fileBackupSettings;
     }
 
+    final DatabaseFtpGuestUserService ftpGuestUsers = new DatabaseFtpGuestUserService(this);
     @Override
     public FtpGuestUserService getFtpGuestUsers() {
         return ftpGuestUsers;
     }
 
+    final DatabaseGroupNameService groupNames = new DatabaseGroupNameService(this);
     @Override
     public GroupNameService getGroupNames() {
         return groupNames;
     }
 
+    // TODO: final DatabaseHttpdBindService httpdBinds = new Database;
     // TODO: public HttpdBindService getHttpdBinds();
 
+    // TODO: final DatabaseHttpdJBossSiteService httpdJBossSites = new Database;
     // TODO: public HttpdJBossSiteService getHttpdJBossSites();
 
+    final DatabaseHttpdJBossVersionService httpdJBossVersions = new DatabaseHttpdJBossVersionService(this);
     @Override
     public HttpdJBossVersionService getHttpdJBossVersions() {
         return httpdJBossVersions;
     }
 
+    final DatabaseHttpdJKCodeService httpdJKCodes = new DatabaseHttpdJKCodeService(this);
     @Override
     public HttpdJKCodeService getHttpdJKCodes() {
         return httpdJKCodes;
     }
 
+    final DatabaseHttpdJKProtocolService httpdJKProtocols = new DatabaseHttpdJKProtocolService(this);
     @Override
     public HttpdJKProtocolService getHttpdJKProtocols() {
         return httpdJKProtocols;
     }
 
+    final DatabaseHttpdServerService httpdServers = new DatabaseHttpdServerService(this);
     @Override
     public HttpdServerService getHttpdServers() {
         return httpdServers;
     }
     /* TODO
+    final DatabaseHttpdSharedTomcatService httpdSharedTomcats = new Database;
     public HttpdSharedTomcatService getHttpdSharedTomcats();
 
+    final DatabaseHttpdSiteAuthenticatedLocationService httpdSiteAuthenticatedLocations = new Database;
     public HttpdSiteAuthenticatedLocationService getHttpdSiteAuthenticatedLocations();
 
+    final DatabaseHttpdSiteBindService httpdSiteBinds = new Database;
     public HttpdSiteBindService getHttpdSiteBinds();
 
+    final DatabaseHttpdSiteURLService httpdSiteURLs = new Database;
     public HttpdSiteURLService getHttpdSiteURLs();
     */
+
+    final DatabaseHttpdSiteService httpdSites = new DatabaseHttpdSiteService(this);
     @Override
     public HttpdSiteService getHttpdSites() {
         return httpdSites;
     }
     /* TODO
+    // TODO: final DatabaseHttpdStaticSiteService httpdStaticSites = new Database;
     public HttpdStaticSiteService getHttpdStaticSites();
 
+    // TODO: final DatabaseHttpdTomcatContextService httpdTomcatContexts = new Database;
     public HttpdTomcatContextService getHttpdTomcatContexts();
 
+    // TODO: final DatabaseHttpdTomcatDataSourceService httpdTomcatDataSources = new Database;
     public HttpdTomcatDataSourceService getHttpdTomcatDataSources();
 
+    // TODO: final DatabaseHttpdTomcatParameterService httpdTomcatParameters = new Database;
     public HttpdTomcatParameterService getHttpdTomcatParameters();
 
+    // TODO: final DatabaseHttpdTomcatSiteService httpdTomcatSites = new Database;
     public HttpdTomcatSiteService getHttpdTomcatSites();
 
+    // TODO: final DatabaseHttpdTomcatSharedSiteService httpdTomcatSharedSites = new Database;
     public HttpdTomcatSharedSiteService getHttpdTomcatSharedSites();
 
+    // TODO: final DatabaseHttpdTomcatStdSiteService httpdTomcatStdSites = new Database;
     public HttpdTomcatStdSiteService getHttpdTomcatStdSites();
     */
+    final DatabaseHttpdTomcatVersionService httpdTomcatVersions = new DatabaseHttpdTomcatVersionService(this);
     @Override
     public HttpdTomcatVersionService getHttpdTomcatVersions() {
         return httpdTomcatVersions;
     }
 
+    // TODO: final DatabaseHttpdWorkerService httpdWorkers = new Database;
     // TODO: public HttpdWorkerService getHttpdWorkers();
 
+    final DatabaseIPAddressService ipAddresses = new DatabaseIPAddressService(this);
     @Override
     public IPAddressService getIpAddresses() {
         return ipAddresses;
     }
 
+    final DatabaseLanguageService languages = new DatabaseLanguageService(this);
     @Override
     public LanguageService getLanguages() {
         return languages;
     }
 
+    // TODO: final DatabaseLinuxAccAddressService linuxAccAddresss = new Database;
     // TODO: public LinuxAccAddressService getLinuxAccAddresses();
 
+    final DatabaseLinuxAccountGroupService linuxAccountGroups = new DatabaseLinuxAccountGroupService(this);
     @Override
     public LinuxAccountGroupService getLinuxAccountGroups() {
         return linuxAccountGroups;
     }
 
+    final DatabaseLinuxAccountTypeService linuxAccountTypes = new DatabaseLinuxAccountTypeService(this);
     @Override
     public LinuxAccountTypeService getLinuxAccountTypes() {
         return linuxAccountTypes;
     }
 
+    final DatabaseLinuxAccountService linuxAccounts = new DatabaseLinuxAccountService(this);
     @Override
     public LinuxAccountService getLinuxAccounts() {
         return linuxAccounts;
     }
 
+    final DatabaseLinuxGroupTypeService linuxGroupTypes = new DatabaseLinuxGroupTypeService(this);
     @Override
     public LinuxGroupTypeService getLinuxGroupTypes() {
         return linuxGroupTypes;
     }
 
+    final DatabaseLinuxGroupService linuxGroups = new DatabaseLinuxGroupService(this);
     @Override
     public LinuxGroupService getLinuxGroups() {
         return linuxGroups;
     }
 
+    // TODO: final DatabaseMajordomoListService majordomoLists = new Database;
     // TODO: public MajordomoListService getMajordomoLists();
 
+    // TODO: final DatabaseMajordomoServerService majordomoServers = new Database;
     // TODO: public MajordomoServerService getMajordomoServers();
 
+    final DatabaseMajordomoVersionService majordomoVersions = new DatabaseMajordomoVersionService(this);
     @Override
     public MajordomoVersionService getMajordomoVersions() {
         return majordomoVersions;
     }
 
-    // TODO: public MasterHistoryService getMasterHistory();
-
+    final DatabaseMasterHostService masterHosts = new DatabaseMasterHostService(this);
     @Override
     public MasterHostService getMasterHosts() {
         return masterHosts;
     }
 
+    final DatabaseMasterServerService masterServers = new DatabaseMasterServerService(this);
     @Override
     public MasterServerService getMasterServers() {
         return masterServers;
     }
 
+    final DatabaseMasterUserService masterUsers = new DatabaseMasterUserService(this);
     @Override
     public MasterUserService getMasterUsers() {
         return masterUsers;
     }
 
+    // TODO: final DatabaseMonthlyChargeService monthlyCharges = new Database;
     // TODO: public MonthlyChargeService getMonthlyCharges();
 
+    final DatabaseMySQLDatabaseService mysqlDatabases = new DatabaseMySQLDatabaseService(this);
     @Override
     public MySQLDatabaseService getMysqlDatabases() {
         return mysqlDatabases;
     }
 
+    final DatabaseMySQLDBUserService mysqlDBUsers = new DatabaseMySQLDBUserService(this);
     @Override
     public MySQLDBUserService getMysqlDBUsers() {
         return mysqlDBUsers;
     }
 
+    final DatabaseMySQLServerService mysqlServers = new DatabaseMySQLServerService(this);
     @Override
     public MySQLServerService getMysqlServers() {
         return mysqlServers;
     }
 
+    final DatabaseMySQLUserService mysqlUsers = new DatabaseMySQLUserService(this);
     @Override
     public MySQLUserService getMysqlUsers() {
         return mysqlUsers;
     }
 
+    final DatabaseNetBindService netBinds = new DatabaseNetBindService(this);
     @Override
     public NetBindService getNetBinds() {
         return netBinds;
     }
 
+    final DatabaseNetDeviceIDService netDeviceIDs = new DatabaseNetDeviceIDService(this);
     @Override
     public NetDeviceIDService getNetDeviceIDs() {
         return netDeviceIDs;
     }
 
+    final DatabaseNetDeviceService netDevices = new DatabaseNetDeviceService(this);
     @Override
     public NetDeviceService getNetDevices() {
         return netDevices;
     }
 
+    final DatabaseNetProtocolService netProtocols = new DatabaseNetProtocolService(this);
     @Override
     public NetProtocolService getNetProtocols() {
         return netProtocols;
     }
 
+    final DatabaseNetTcpRedirectService netTcpRedirects = new DatabaseNetTcpRedirectService(this);
     @Override
     public NetTcpRedirectService getNetTcpRedirects() {
         return netTcpRedirects;
     }
 
+    // TODO: final DatabaseNoticeLogService noticeLogs = new Database;
     // TODO: public NoticeLogService getNoticeLogs();
 
+    final DatabaseNoticeTypeService noticeTypes = new DatabaseNoticeTypeService(this);
     @Override
     public NoticeTypeService getNoticeTypes() {
         return noticeTypes;
     }
 
+    final DatabaseOperatingSystemVersionService operatingSystemVersions = new DatabaseOperatingSystemVersionService(this);
     @Override
     public OperatingSystemVersionService getOperatingSystemVersions() {
         return operatingSystemVersions;
     }
 
+    final DatabaseOperatingSystemService operatingSystems = new DatabaseOperatingSystemService(this);
     @Override
     public OperatingSystemService getOperatingSystems() {
         return operatingSystems;
     }
 
+    final DatabasePackageCategoryService packageCategories = new DatabasePackageCategoryService(this);
     @Override
     public PackageCategoryService getPackageCategories() {
         return packageCategories;
     }
 
+    final DatabasePackageDefinitionBusinessService packageDefinitionBusinesses = new DatabasePackageDefinitionBusinessService(this);
     @Override
     public PackageDefinitionBusinessService getPackageDefinitionBusinesses() {
         return packageDefinitionBusinesses;
     }
 
+    final DatabasePackageDefinitionLimitService packageDefinitionLimits = new DatabasePackageDefinitionLimitService(this);
     @Override
     public PackageDefinitionLimitService getPackageDefinitionLimits() {
         return packageDefinitionLimits;
     }
 
+    final DatabasePackageDefinitionService packageDefinitions = new DatabasePackageDefinitionService(this);
     @Override
     public PackageDefinitionService getPackageDefinitions() {
         return packageDefinitions;
     }
 
+    final DatabasePaymentTypeService paymentTypes = new DatabasePaymentTypeService(this);
     @Override
     public PaymentTypeService getPaymentTypes() {
         return paymentTypes;
     }
 
+    final DatabasePhysicalServerService physicalServers = new DatabasePhysicalServerService(this);
     @Override
     public PhysicalServerService getPhysicalServers() {
         return physicalServers;
     }
 
+    final DatabasePostgresDatabaseService postgresDatabases = new DatabasePostgresDatabaseService(this);
     @Override
     public PostgresDatabaseService getPostgresDatabases() {
         return postgresDatabases;
     }
 
+    final DatabasePostgresEncodingService postgresEncodings = new DatabasePostgresEncodingService(this);
     @Override
     public PostgresEncodingService getPostgresEncodings() {
         return postgresEncodings;
     }
 
+    final DatabasePostgresServerService postgresServers = new DatabasePostgresServerService(this);
     @Override
     public PostgresServerService getPostgresServers() {
         return postgresServers;
     }
 
+    final DatabasePostgresUserService postgresUsers = new DatabasePostgresUserService(this);
     @Override
     public PostgresUserService getPostgresUsers() {
         return postgresUsers;
     }
 
+    final DatabasePostgresVersionService postgresVersions = new DatabasePostgresVersionService(this);
     @Override
     public PostgresVersionService getPostgresVersions() {
         return postgresVersions;
     }
 
+    final DatabasePrivateFtpServerService privateFtpServers = new DatabasePrivateFtpServerService(this);
     @Override
     public PrivateFtpServerService getPrivateFtpServers() {
         return privateFtpServers;
     }
 
+    final DatabaseProcessorTypeService processorTypes = new DatabaseProcessorTypeService(this);
     @Override
     public ProcessorTypeService getProcessorTypes() {
         return processorTypes;
     }
 
+    final DatabaseProtocolService protocols = new DatabaseProtocolService(this);
     @Override
     public ProtocolService getProtocols() {
         return protocols;
     }
 
+    final DatabaseRackService racks = new DatabaseRackService(this);
     @Override
     public RackService getRacks() {
         return racks;
     }
 
+    final DatabaseResellerService resellers = new DatabaseResellerService(this);
     @Override
     public ResellerService getResellers() {
         return resellers;
     }
 
+    final DatabaseResourceTypeService resourceTypes = new DatabaseResourceTypeService(this);
     @Override
     public ResourceTypeService getResourceTypes() {
         return resourceTypes;
     }
 
+    final DatabaseServerFarmService serverFarms = new DatabaseServerFarmService(this);
     @Override
     public ServerFarmService getServerFarms() {
         return serverFarms;
     }
 
+    final DatabaseShellService shells = new DatabaseShellService(this);
     @Override
     public ShellService getShells() {
         return shells;
     }
     /* TODO
+    final DatabaseSignupRequestOptionService signupRequestOptions = new Database;
     public SignupRequestOptionService getSignupRequestOptions();
 
+    final DatabaseSignupRequestService signupRequests = new Database;
     public SignupRequestService getSignupRequests();
 
+    final DatabaseSpamEmailMessageService spamEmailMessages = new Database;
     public SpamEmailMessageService getSpamEmailMessages();
 
+    final DatabaseSystemEmailAliasService systemEmailAliass = new Database;
     public SystemEmailAliasService getSystemEmailAliases();
     */
+    final DatabaseTechnologyService technologies = new DatabaseTechnologyService(this);
     @Override
     public TechnologyService getTechnologies() {
         return technologies;
     }
 
+    final DatabaseTechnologyClassService technologyClasses = new DatabaseTechnologyClassService(this);
     @Override
     public TechnologyClassService getTechnologyClasses() {
         return technologyClasses;
     }
 
+    final DatabaseTechnologyNameService technologyNames = new DatabaseTechnologyNameService(this);
     @Override
     public TechnologyNameService getTechnologyNames() {
         return technologyNames;
     }
 
+    final DatabaseTechnologyVersionService technologyVersions = new DatabaseTechnologyVersionService(this);
     @Override
     public TechnologyVersionService getTechnologyVersions() {
         return technologyVersions;
     }
 
+    final DatabaseTicketActionTypeService ticketActionTypes = new DatabaseTicketActionTypeService(this);
     @Override
     public TicketActionTypeService getTicketActionTypes() {
         return ticketActionTypes;
     }
 
+    final DatabaseTicketActionService ticketActions = new DatabaseTicketActionService(this);
     @Override
     public TicketActionService getTicketActions() {
         return ticketActions;
     }
 
+    final DatabaseTicketAssignmentService ticketAssignments = new DatabaseTicketAssignmentService(this);
     @Override
     public TicketAssignmentService getTicketAssignments() {
         return ticketAssignments;
     }
 
+    // TODO: final DatabaseTicketBrandCategoryService ticketBrandCategories = new Database;
     // TODO: public TicketBrandCategoryService getTicketBrandCategories();
 
+    final DatabaseTicketCategoryService ticketCategories = new DatabaseTicketCategoryService(this);
     @Override
     public TicketCategoryService getTicketCategories() {
         return ticketCategories;
     }
 
+    final DatabaseTicketPriorityService ticketPriorities = new DatabaseTicketPriorityService(this);
     @Override
     public TicketPriorityService getTicketPriorities() {
         return ticketPriorities;
     }
 
+    final DatabaseTicketStatusService ticketStatuses = new DatabaseTicketStatusService(this);
     @Override
     public TicketStatusService getTicketStatuses() {
         return ticketStatuses;
     }
 
+    final DatabaseTicketTypeService ticketTypes = new DatabaseTicketTypeService(this);
     @Override
     public TicketTypeService getTicketTypes() {
         return ticketTypes;
     }
 
+    final DatabaseTicketService tickets = new DatabaseTicketService(this);
     @Override
     public TicketService getTickets() {
         return tickets;
     }
 
+    final DatabaseTimeZoneService timeZones = new DatabaseTimeZoneService(this);
     @Override
     public TimeZoneService getTimeZones() {
         return timeZones;
     }
 
+    final DatabaseTransactionTypeService transactionTypes = new DatabaseTransactionTypeService(this);
     @Override
     public TransactionTypeService getTransactionTypes() {
         return transactionTypes;
     }
 
+    final DatabaseTransactionService transactions = new DatabaseTransactionService(this);
     @Override
     public TransactionService getTransactions() {
         return transactions;
     }
     /* TODO
+    // TODO: final DatabaseUSStateService usStates = new Database;
     public USStateService getUsStates();
     */
+    final DatabaseUsernameService usernames = new DatabaseUsernameService(this);
     @Override
     public UsernameService getUsernames() {
         return usernames;
     }
     /* TODO
+    // TODO: final DatabaseVirtualDiskService virtualDisks = new Database;
     public VirtualDiskService getVirtualDisks();
      */
+    DatabaseVirtualServerService virtualServers = new DatabaseVirtualServerService(this);
     @Override
     public VirtualServerService getVirtualServers() {
         return virtualServers;
     }
     /* TODO
+    // TODO: final DatabaseWhoisHistoryService whoisHistories = new Database;
     public WhoisHistoryService getWhoisHistory();
      */
     // </editor-fold>

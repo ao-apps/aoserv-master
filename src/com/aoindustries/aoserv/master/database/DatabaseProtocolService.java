@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseProtocolService extends DatabasePublicService<String,Protocol> implements ProtocolService {
+final class DatabaseProtocolService extends DatabaseService<String,Protocol> implements ProtocolService {
 
     private final ObjectFactory<Protocol> objectFactory = new AutoObjectFactory<Protocol>(Protocol.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseProtocolService extends DatabasePublicService<String,Protoco
     }
 
     @Override
-    protected ArrayList<Protocol> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Protocol> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Protocol>(),
             objectFactory,

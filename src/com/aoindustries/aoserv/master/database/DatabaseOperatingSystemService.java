@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseOperatingSystemService extends DatabasePublicService<String,OperatingSystem> implements OperatingSystemService {
+final class DatabaseOperatingSystemService extends DatabaseService<String,OperatingSystem> implements OperatingSystemService {
 
     private final ObjectFactory<OperatingSystem> objectFactory = new AutoObjectFactory<OperatingSystem>(OperatingSystem.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseOperatingSystemService extends DatabasePublicService<String,
     }
 
     @Override
-    protected ArrayList<OperatingSystem> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<OperatingSystem> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<OperatingSystem>(),
             objectFactory,

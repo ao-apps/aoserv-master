@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNetBindService extends DatabaseService<Integer,NetBind> implements NetBindService {
+final class DatabaseNetBindService extends DatabaseAccountTypeService<Integer,NetBind> implements NetBindService {
 
     private final ObjectFactory<NetBind> objectFactory = new AutoObjectFactory<NetBind>(NetBind.class, connector);
 

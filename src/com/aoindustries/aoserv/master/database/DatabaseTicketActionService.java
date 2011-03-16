@@ -17,7 +17,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAction> implements TicketActionService {
+final class DatabaseTicketActionService extends DatabaseAccountTypeService<Integer,TicketAction> implements TicketActionService {
 
     private final ObjectFactory<TicketAction> objectFactory = new ObjectFactory<TicketAction>() {
         @Override
@@ -27,22 +27,22 @@ final class DatabaseTicketActionService extends DatabaseService<Integer,TicketAc
                     connector,
                     result.getInt("pkey"),
                     result.getInt("ticket"),
-                    getUserId(result.getString("administrator")),
+                    UserId.valueOf(result.getString("administrator")),
                     result.getLong("time"),
                     result.getString("action_type"),
-                    getAccountingCode(result.getString("old_accounting")),
-                    getAccountingCode(result.getString("new_accounting")),
+                    AccountingCode.valueOf(result.getString("old_accounting")),
+                    AccountingCode.valueOf(result.getString("new_accounting")),
                     result.getString("old_priority"),
                     result.getString("new_priority"),
                     result.getString("old_type"),
                     result.getString("new_type"),
                     result.getString("old_status"),
                     result.getString("new_status"),
-                    getUserId(result.getString("old_assigned_to")),
-                    getUserId(result.getString("new_assigned_to")),
+                    UserId.valueOf(result.getString("old_assigned_to")),
+                    UserId.valueOf(result.getString("new_assigned_to")),
                     (Integer)result.getObject("old_category"),
                     (Integer)result.getObject("new_category"),
-                    getEmail(result.getString("from_address")),
+                    Email.valueOf(result.getString("from_address")),
                     result.getString("summary")
                 );
             } catch(ValidationException err) {

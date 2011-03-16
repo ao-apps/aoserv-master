@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseHttpdTomcatVersionService extends DatabasePublicService<Integer,HttpdTomcatVersion> implements HttpdTomcatVersionService {
+final class DatabaseHttpdTomcatVersionService extends DatabaseService<Integer,HttpdTomcatVersion> implements HttpdTomcatVersionService {
 
     private final ObjectFactory<HttpdTomcatVersion> objectFactory = new AutoObjectFactory<HttpdTomcatVersion>(HttpdTomcatVersion.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseHttpdTomcatVersionService extends DatabasePublicService<Inte
     }
 
     @Override
-    protected ArrayList<HttpdTomcatVersion> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<HttpdTomcatVersion> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<HttpdTomcatVersion>(),
             objectFactory,

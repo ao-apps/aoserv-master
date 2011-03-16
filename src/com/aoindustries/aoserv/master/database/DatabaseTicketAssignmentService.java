@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTicketAssignmentService extends DatabaseService<Integer,TicketAssignment> implements TicketAssignmentService {
+final class DatabaseTicketAssignmentService extends DatabaseAccountTypeService<Integer,TicketAssignment> implements TicketAssignmentService {
 
     private final ObjectFactory<TicketAssignment> objectFactory = new AutoObjectFactory<TicketAssignment>(TicketAssignment.class, connector);
 

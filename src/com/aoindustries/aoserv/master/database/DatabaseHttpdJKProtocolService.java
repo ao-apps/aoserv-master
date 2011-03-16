@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseHttpdJKProtocolService extends DatabasePublicService<String,HttpdJKProtocol> implements HttpdJKProtocolService {
+final class DatabaseHttpdJKProtocolService extends DatabaseService<String,HttpdJKProtocol> implements HttpdJKProtocolService {
 
     private final ObjectFactory<HttpdJKProtocol> objectFactory = new AutoObjectFactory<HttpdJKProtocol>(HttpdJKProtocol.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseHttpdJKProtocolService extends DatabasePublicService<String,
     }
 
     @Override
-    protected ArrayList<HttpdJKProtocol> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<HttpdJKProtocol> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<HttpdJKProtocol>(),
             objectFactory,

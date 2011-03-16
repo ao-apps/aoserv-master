@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBackupRetentionService extends DatabasePublicService<Short,BackupRetention> implements BackupRetentionService {
+final class DatabaseBackupRetentionService extends DatabaseService<Short,BackupRetention> implements BackupRetentionService {
 
     private final ObjectFactory<BackupRetention> objectFactory = new AutoObjectFactory<BackupRetention>(BackupRetention.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseBackupRetentionService extends DatabasePublicService<Short,B
     }
 
     @Override
-    protected ArrayList<BackupRetention> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BackupRetention> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<BackupRetention>(),
             objectFactory,

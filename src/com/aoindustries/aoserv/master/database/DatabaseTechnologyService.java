@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTechnologyService extends DatabasePublicService<Integer,Technology> implements TechnologyService {
+final class DatabaseTechnologyService extends DatabaseService<Integer,Technology> implements TechnologyService {
 
     private final ObjectFactory<Technology> objectFactory = new AutoObjectFactory<Technology>(Technology.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseTechnologyService extends DatabasePublicService<Integer,Tech
     }
 
     @Override
-    protected ArrayList<Technology> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Technology> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Technology>(),
             objectFactory,

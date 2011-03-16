@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseBrandService extends DatabaseService<AccountingCode,Brand> implements BrandService {
+final class DatabaseBrandService extends DatabaseAccountTypeService<AccountingCode,Brand> implements BrandService {
 
     private final ObjectFactory<Brand> objectFactory = new AutoObjectFactory<Brand>(Brand.class, connector);
 

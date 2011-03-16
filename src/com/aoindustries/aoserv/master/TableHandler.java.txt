@@ -219,51 +219,6 @@ final public class TableHandler {
                     source.getProtocolVersion().getVersion()
                 );
                 break;
-            case BANK_ACCOUNTS :
-                if(BankAccountHandler.isBankAccounting(conn, source)) {
-                    MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new BankAccount(),
-                        "select * from bank_accounts"
-                    );
-                } else {
-                    List<BankAccount> emptyList = Collections.emptyList();
-                    MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                }
-                break;
-            case BANK_TRANSACTIONS :
-                if(BankAccountHandler.isBankAccounting(conn, source)) {
-                    MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new BankTransaction(),
-                        "select * from bank_transactions"
-                    );
-                } else {
-                    List<BankTransaction> emptyList = Collections.emptyList();
-                    MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                }
-                break;
-            case BANKS :
-                if(BankAccountHandler.isBankAccounting(conn, source)) {
-                    MasterServer.writeObjects(
-                        conn,
-                        source,
-                        out,
-                        provideProgress,
-                        new Bank(),
-                        "select * from banks"
-                    );
-                } else {
-                    List<Bank> emptyList = Collections.emptyList();
-                    MasterServer.writeObjects(source, out, provideProgress, emptyList);
-                }
-                break;
             case BUSINESS_ADMINISTRATOR_PERMISSIONS :
                 if(masterUser!=null) {
                     if(masterServers.length==0) MasterServer.writeObjects(

@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseMySQLDBUserService extends DatabaseService<Integer,MySQLDBUser> implements MySQLDBUserService {
+final class DatabaseMySQLDBUserService extends DatabaseAccountTypeService<Integer,MySQLDBUser> implements MySQLDBUserService {
 
     private final ObjectFactory<MySQLDBUser> objectFactory = new AutoObjectFactory<MySQLDBUser>(MySQLDBUser.class, connector);
 

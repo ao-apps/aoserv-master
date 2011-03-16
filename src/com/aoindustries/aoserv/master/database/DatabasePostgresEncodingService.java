@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresEncodingService extends DatabasePublicService<Integer,PostgresEncoding> implements PostgresEncodingService {
+final class DatabasePostgresEncodingService extends DatabaseService<Integer,PostgresEncoding> implements PostgresEncodingService {
 
     private final ObjectFactory<PostgresEncoding> objectFactory = new AutoObjectFactory<PostgresEncoding>(PostgresEncoding.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabasePostgresEncodingService extends DatabasePublicService<Intege
     }
 
     @Override
-    protected ArrayList<PostgresEncoding> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PostgresEncoding> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PostgresEncoding>(),
             objectFactory,

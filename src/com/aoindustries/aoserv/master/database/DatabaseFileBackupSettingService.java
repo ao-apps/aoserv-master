@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseFileBackupSettingService extends DatabaseService<Integer,FileBackupSetting> implements FileBackupSettingService {
+final class DatabaseFileBackupSettingService extends DatabaseAccountTypeService<Integer,FileBackupSetting> implements FileBackupSettingService {
 
     private final ObjectFactory<FileBackupSetting> objectFactory = new AutoObjectFactory<FileBackupSetting>(FileBackupSetting.class, connector);
 

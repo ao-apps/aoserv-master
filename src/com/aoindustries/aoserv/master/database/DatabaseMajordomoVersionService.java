@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseMajordomoVersionService extends DatabasePublicService<String,MajordomoVersion> implements MajordomoVersionService {
+final class DatabaseMajordomoVersionService extends DatabaseService<String,MajordomoVersion> implements MajordomoVersionService {
 
     private final ObjectFactory<MajordomoVersion> objectFactory = new AutoObjectFactory<MajordomoVersion>(MajordomoVersion.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseMajordomoVersionService extends DatabasePublicService<String
     }
 
     @Override
-    protected ArrayList<MajordomoVersion> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<MajordomoVersion> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<MajordomoVersion>(),
             objectFactory,

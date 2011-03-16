@@ -7,7 +7,6 @@ package com.aoindustries.aoserv.master.database;
 
 import com.aoindustries.aoserv.client.*;
 import com.aoindustries.aoserv.client.validator.*;
-import com.aoindustries.security.AccountDisabledException;
 import com.aoindustries.sql.DatabaseCallable;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.table.IndexType;
@@ -34,102 +33,7 @@ abstract class DatabaseService<
     V extends AOServObject<K>
 > extends AbstractService<K,V> {
 
-    // <editor-fold defaultstate="collapsed" desc="Business Tree Joins">
-    /**
-     * The joins used for the business tree.
-     */
-    static final String
-        BU1_PARENTS_JOIN=
-              "  businesses bu1\n"
-            + "  left join businesses bu2 on bu1.parent=bu2.accounting\n"
-            + "  left join businesses bu3 on bu2.parent=bu3.accounting\n"
-            + "  left join businesses bu4 on bu3.parent=bu4.accounting\n"
-            + "  left join businesses bu5 on bu4.parent=bu5.accounting\n"
-            + "  left join businesses bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting,\n",
-        BU1_PARENTS_JOIN_NO_COMMA=
-              "  businesses bu1\n"
-            + "  left join businesses bu2 on bu1.parent=bu2.accounting\n"
-            + "  left join businesses bu3 on bu2.parent=bu3.accounting\n"
-            + "  left join businesses bu4 on bu3.parent=bu4.accounting\n"
-            + "  left join businesses bu5 on bu4.parent=bu5.accounting\n"
-            + "  left join businesses bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting\n",
-        BU2_PARENTS_JOIN=
-              "      businesses bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+"\n"
-            + "      left join businesses bu8 on bu7.parent=bu8.accounting\n"
-            + "      left join businesses bu9 on bu8.parent=bu9.accounting\n"
-            + "      left join businesses bu10 on bu9.parent=bu10.accounting\n"
-            + "      left join businesses bu11 on bu10.parent=bu11.accounting\n"
-            + "      left join businesses bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+" on bu11.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".accounting,\n"
-    ;
-
-    /**
-     * The where clauses that accompany the joins.
-     */
-    static final String
-        UN_BU1_PARENTS_WHERE=
-              "    un.accounting=bu1.accounting\n"
-            + "    or un.accounting=bu1.parent\n"
-            + "    or un.accounting=bu2.parent\n"
-            + "    or un.accounting=bu3.parent\n"
-            + "    or un.accounting=bu4.parent\n"
-            + "    or un.accounting=bu5.parent\n"
-            + "    or un.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
-        UN1_BU1_PARENTS_OR_WHERE=
-              "    or un1.accounting=bu1.accounting\n"
-            + "    or un1.accounting=bu1.parent\n"
-            + "    or un1.accounting=bu2.parent\n"
-            + "    or un1.accounting=bu3.parent\n"
-            + "    or un1.accounting=bu4.parent\n"
-            + "    or un1.accounting=bu5.parent\n"
-            + "    or un1.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
-        UN1_BU1_PARENTS_WHERE=
-              "    un1.accounting=bu1.accounting\n"
-            + "    or un1.accounting=bu1.parent\n"
-            + "    or un1.accounting=bu2.parent\n"
-            + "    or un1.accounting=bu3.parent\n"
-            + "    or un1.accounting=bu4.parent\n"
-            + "    or un1.accounting=bu5.parent\n"
-            + "    or un1.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
-        UN2_BU2_PARENTS_OR_WHERE=
-              "        or un2.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
-            + "        or un2.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
-            + "        or un2.accounting=bu8.parent\n"
-            + "        or un2.accounting=bu9.parent\n"
-            + "        or un2.accounting=bu10.parent\n"
-            + "        or un2.accounting=bu11.parent\n"
-            + "        or un2.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n",
-        UN3_BU2_PARENTS_WHERE=
-              "        un3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
-            + "        or un3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
-            + "        or un3.accounting=bu8.parent\n"
-            + "        or un3.accounting=bu9.parent\n"
-            + "        or un3.accounting=bu10.parent\n"
-            + "        or un3.accounting=bu11.parent\n"
-            + "        or un3.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n"
-    ;
-    // </editor-fold>
-
     // <editor-fold defaultstate="collapsed" desc="Utilities">
-    /**
-     * Gets the int value or <code>-1</code> if <code>null</code>.
-     */
-    /* TODO: used?
-    protected static int getNullableInt(ResultSet result, int pos) throws SQLException {
-        int i = result.getInt(pos);
-        return result.wasNull() ? -1 : i;
-    }
-     */
-
-    /**
-     * Gets the float value or <code>Float.NaN</code> if <code>null</code>.
-     */
-    /* TODO: used?
-    protected static float getNullableFloat(ResultSet result, int pos) throws SQLException {
-        float f = result.getInt(pos);
-        return result.wasNull() ? Float.NaN : f;
-    }
-     */
-
     /**
      * Gets a Money type from two columns of a <code>ResultSet</code>.  Supports
      * <code>null</code>.  If value is non-null then currency must also be non-null.
@@ -140,41 +44,6 @@ abstract class DatabaseService<
         String currencyCode = result.getString(currencyColumnLabel);
         if(currencyCode==null) throw new SQLException(currencyColumnLabel+"==null && "+valueColumnLabel+"!=null");
         return new Money(Currency.getInstance(currencyCode), value);
-    }
-
-    /**
-     * Null-safe conversion from String to AccountingCode.
-     */
-    protected static AccountingCode getAccountingCode(String accounting) throws ValidationException {
-        return accounting==null ? null : AccountingCode.valueOf(accounting);
-    }
-
-    /**
-     * Null-safe conversion from String to Email.
-     */
-    protected static Email getEmail(String email) throws ValidationException {
-        return email==null ? null : Email.valueOf(email);
-    }
-
-    /**
-     * Null-safe conversion from String to UserId.
-     */
-    protected static UserId getUserId(String userid) throws ValidationException {
-        return userid==null ? null : UserId.valueOf(userid);
-    }
-
-    /**
-     * Null-safe conversion from String to InetAddress.
-     */
-    protected static InetAddress getInetAddress(String address) throws ValidationException {
-        return address==null ? null : InetAddress.valueOf(address);
-    }
-
-    /**
-     * Null-safe conversion from String to DomainName.
-     */
-    protected static DomainName getDomainName(String domain) throws ValidationException {
-        return domain==null ? null : DomainName.valueOf(domain);
     }
 
     protected static void addOptionalInInteger(StringBuilder sql, String sqlPrefix, Collection<? extends AOServObject<Integer>> objs, String sqlSuffix) {
@@ -256,33 +125,7 @@ abstract class DatabaseService<
         }
     }
 
-    final protected ArrayList<V> getList(DatabaseConnection db) throws RemoteException, SQLException {
-        switch(connector.getAccountType(db)) {
-            case MASTER : return getListMaster(db);
-            case DAEMON : return getListDaemon(db);
-            case BUSINESS : return getListBusiness(db);
-            case DISABLED : throw new SQLException(new AccountDisabledException());
-            default : throw new AssertionError();
-        }
-    }
-
-    /**
-     * Gets the unfiltered set.
-     * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
-     */
-    abstract protected ArrayList<V> getListMaster(DatabaseConnection db) throws RemoteException, SQLException;
-
-    /**
-     * Gets the set filtered by server access.
-     * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
-     */
-    abstract protected ArrayList<V> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException;
-
-    /**
-     * Gets the sets filtered by business access.
-     * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
-     */
-    abstract protected ArrayList<V> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException;
+    abstract protected ArrayList<V> getList(DatabaseConnection db) throws RemoteException, SQLException;
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="isEmpty">
@@ -310,38 +153,14 @@ abstract class DatabaseService<
         }
     }
 
-    final protected boolean isEmpty(DatabaseConnection db) throws RemoteException, SQLException {
-        switch(connector.getAccountType(db)) {
-            case MASTER : return isEmptyMaster(db);
-            case DAEMON : return isEmptyDaemon(db);
-            case BUSINESS : return isEmptyBusiness(db);
-            case DISABLED : throw new SQLException(new AccountDisabledException());
-            default : throw new AssertionError();
-        }
-    }
-
     /**
-     * Implemented as a call to <code>getSizeMaster</code>.
+     * Implemented as a call to <code>getSize</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
+     *
+     * @see  #getSize(com.aoindustries.sql.DatabaseConnection)
      */
-    protected boolean isEmptyMaster(DatabaseConnection db) throws RemoteException, SQLException {
-        return getSizeMaster(db)==0;
-    }
-
-    /**
-     * Implemented as a call to <code>getSizeDaemon</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected boolean isEmptyDaemon(DatabaseConnection db) throws RemoteException, SQLException {
-        return getSizeDaemon(db)==0;
-    }
-
-    /**
-     * Implemented as a call to <code>getSizeBusiness</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected boolean isEmptyBusiness(DatabaseConnection db) throws RemoteException, SQLException {
-        return getSizeBusiness(db)==0;
+    protected boolean isEmpty(DatabaseConnection db) throws RemoteException, SQLException {
+        return getSize(db)==0;
     }
     // </editor-fold>
 
@@ -370,38 +189,14 @@ abstract class DatabaseService<
         }
     }
 
-    final protected int getSize(DatabaseConnection db) throws RemoteException, SQLException {
-        switch(connector.getAccountType(db)) {
-            case MASTER : return getSizeMaster(db);
-            case DAEMON : return getSizeDaemon(db);
-            case BUSINESS : return getSizeBusiness(db);
-            case DISABLED : throw new SQLException(new AccountDisabledException());
-            default : throw new AssertionError();
-        }
-    }
-
     /**
-     * Implemented as a call to <code>getListMaster</code>.
+     * Implemented as a call to <code>getList</code>.
      * Subclasses should only provide more efficient implementations when required for performance reasons.
+     *
+     * @see  #getList(db)
      */
-    protected int getSizeMaster(DatabaseConnection db) throws RemoteException, SQLException {
-        return getListMaster(db).size();
-    }
-
-    /**
-     * Implemented as a call to <code>getListDaemon</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected int getSizeDaemon(DatabaseConnection db) throws RemoteException, SQLException {
-        return getListDaemon(db).size();
-    }
-
-    /**
-     * Implemented as a call to <code>getListBusiness</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected int getSizeBusiness(DatabaseConnection db) throws RemoteException, SQLException {
-        return getListBusiness(db).size();
+    protected int getSize(DatabaseConnection db) throws RemoteException, SQLException {
+        return getList(db).size();
     }
     // </editor-fold>
 
@@ -430,43 +225,16 @@ abstract class DatabaseService<
         }
     }
 
-    final protected V get(DatabaseConnection db, K key) throws RemoteException, SQLException, NoSuchElementException {
-        switch(connector.getAccountType(db)) {
-            case MASTER : return getMaster(db, key);
-            case DAEMON : return getDaemon(db, key);
-            case BUSINESS : return getBusiness(db, key);
-            case DISABLED : throw new SQLException(new AccountDisabledException());
-            default : throw new AssertionError();
-        }
-    }
-
-    private V get(K key, ArrayList<V> list) throws NoSuchElementException {
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getList</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     *
+     * @see #getList(db)
+     */
+    protected V get(DatabaseConnection db, K key) throws RemoteException, SQLException, NoSuchElementException {
+        ArrayList<V> list = getList(db);
         for(V obj : list) if(obj.getKey().equals(key)) return obj;
         throw new NoSuchElementException("service="+getServiceName()+", key="+key);
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListMaster</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected V getMaster(DatabaseConnection db, K key) throws RemoteException, SQLException, NoSuchElementException {
-        return get(key, getListMaster(db));
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListDaemon</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected V getDaemon(DatabaseConnection db, K key) throws RemoteException, SQLException, NoSuchElementException {
-        return get(key, getListDaemon(db));
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListBusiness</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected V getBusiness(DatabaseConnection db, K key) throws RemoteException, SQLException, NoSuchElementException {
-        return get(key, getListBusiness(db));
     }
     // </editor-fold>
 
@@ -495,17 +263,15 @@ abstract class DatabaseService<
         }
     }
 
-    final protected V filterUnique(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
-        switch(connector.getAccountType(db)) {
-            case MASTER : return filterUniqueMaster(db, column, value);
-            case DAEMON : return filterUniqueDaemon(db, column, value);
-            case BUSINESS : return filterUniqueBusiness(db, column, value);
-            case DISABLED : throw new SQLException(new AccountDisabledException());
-            default : throw new AssertionError();
-        }
-    }
-
-    private V filterUnique(MethodColumn column, Object value, ArrayList<V> list) throws SQLException {
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getList</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     *
+     * @see #getList(db)
+     */
+    protected V filterUnique(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
+        if(value==null) return null;
+        ArrayList<V> list = getList(db);
         IndexType indexType = column.getIndexType();
         if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column neither primary key nor unique: "+column);
         Method method = column.getMethod();
@@ -527,33 +293,6 @@ abstract class DatabaseService<
         } catch(InvocationTargetException err) {
             throw new SQLException(err);
         }
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListMaster</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected V filterUniqueMaster(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
-        if(value==null) return null;
-        return filterUnique(column, value, getListMaster(db));
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListDaemon</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected V filterUniqueDaemon(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
-        if(value==null) return null;
-        return filterUnique(column, value, getListDaemon(db));
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListBusiness</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected V filterUniqueBusiness(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
-        if(value==null) return null;
-        return filterUnique(column, value, getListBusiness(db));
     }
     // </editor-fold>
 
@@ -583,17 +322,15 @@ abstract class DatabaseService<
         }
     }
 
-    final protected ArrayList<V> filterUniqueSet(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
-        switch(connector.getAccountType(db)) {
-            case MASTER : return filterUniqueSetMaster(db, column, values);
-            case DAEMON : return filterUniqueSetDaemon(db, column, values);
-            case BUSINESS : return filterUniqueSetBusiness(db, column, values);
-            case DISABLED : throw new SQLException(new AccountDisabledException());
-            default : throw new AssertionError();
-        }
-    }
-
-    private ArrayList<V> filterUniqueSet(MethodColumn column, Set<?> values, ArrayList<V> list) throws SQLException {
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getList</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     *
+     * @see  #getList(db)
+     */
+    protected ArrayList<V> filterUniqueSet(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
+        if(values==null || values.isEmpty()) return new ArrayList<V>(0);
+        ArrayList<V> list = getList(db);
         IndexType indexType = column.getIndexType();
         if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column neither primary key nor unique: "+column);
         Method method = column.getMethod();
@@ -615,33 +352,6 @@ abstract class DatabaseService<
         } catch(InvocationTargetException err) {
             throw new SQLException(err);
         }
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListMaster</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected ArrayList<V> filterUniqueSetMaster(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
-        if(values==null || values.isEmpty()) return new ArrayList<V>(0);
-        return filterUniqueSet(column, values, getListMaster(db));
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListDaemon</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected ArrayList<V> filterUniqueSetDaemon(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
-        if(values==null || values.isEmpty()) return new ArrayList<V>(0);
-        return filterUniqueSet(column, values, getListDaemon(db));
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListBusiness</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected ArrayList<V> filterUniqueSetBusiness(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
-        if(values==null || values.isEmpty()) return new ArrayList<V>(0);
-        return filterUniqueSet(column, values, getListBusiness(db));
     }
     // </editor-fold>
 
@@ -671,17 +381,15 @@ abstract class DatabaseService<
         }
     }
 
-    final protected ArrayList<V> filterIndexed(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
-        switch(connector.getAccountType(db)) {
-            case MASTER : return filterIndexedMaster(db, column, value);
-            case DAEMON : return filterIndexedDaemon(db, column, value);
-            case BUSINESS : return filterIndexedBusiness(db, column, value);
-            case DISABLED : throw new SQLException(new AccountDisabledException());
-            default : throw new AssertionError();
-        }
-    }
-
-    private ArrayList<V> filterIndexed(MethodColumn column, Object value, ArrayList<V> list) throws SQLException {
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getList</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     *
+     * @see  #getList(db)
+     */
+    protected ArrayList<V> filterIndexed(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
+        if(value==null) return new ArrayList<V>(0);
+        ArrayList<V> list = getList(db);
         if(column.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+column);
         Method method = column.getMethod();
         assert AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType()) : "value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName();
@@ -696,33 +404,6 @@ abstract class DatabaseService<
         } catch(InvocationTargetException err) {
             throw new SQLException(err);
         }
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListMaster</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected ArrayList<V> filterIndexedMaster(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
-        if(value==null) return new ArrayList<V>(0);
-        return filterIndexed(column, value, getListMaster(db));
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListDaemon</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected ArrayList<V> filterIndexedDaemon(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
-        if(value==null) return new ArrayList<V>(0);
-        return filterIndexed(column, value, getListDaemon(db));
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListBusiness</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected ArrayList<V> filterIndexedBusiness(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
-        if(value==null) return new ArrayList<V>(0);
-        return filterIndexed(column, value, getListBusiness(db));
     }
     // </editor-fold>
 
@@ -752,17 +433,15 @@ abstract class DatabaseService<
         }
     }
 
-    final protected ArrayList<V> filterIndexedSet(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
-        switch(connector.getAccountType(db)) {
-            case MASTER : return filterIndexedSetMaster(db, column, values);
-            case DAEMON : return filterIndexedSetDaemon(db, column, values);
-            case BUSINESS : return filterIndexedSetBusiness(db, column, values);
-            case DISABLED : throw new SQLException(new AccountDisabledException());
-            default : throw new AssertionError();
-        }
-    }
-
-    private ArrayList<V> filterIndexedSet(MethodColumn column, Set<?> values, ArrayList<V> list) throws SQLException {
+    /**
+     * Implemented as a sequential scan of all objects returned by <code>getList</code>.
+     * Subclasses should only provide more efficient implementations when required for performance reasons.
+     *
+     * @see  #getList(db)
+     */
+    protected ArrayList<V> filterIndexedSet(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
+        if(values==null || values.isEmpty()) return new ArrayList<V>(0);
+        ArrayList<V> list = getList(db);
         if(column.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+column);
         Method method = column.getMethod();
         try {
@@ -777,33 +456,6 @@ abstract class DatabaseService<
         } catch(InvocationTargetException err) {
             throw new SQLException(err);
         }
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListMaster</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected ArrayList<V> filterIndexedSetMaster(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
-        if(values==null || values.isEmpty()) return new ArrayList<V>(0);
-        return filterIndexedSet(column, values, getListMaster(db));
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListDaemon</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected ArrayList<V> filterIndexedSetDaemon(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
-        if(values==null || values.isEmpty()) return new ArrayList<V>(0);
-        return filterIndexedSet(column, values, getListDaemon(db));
-    }
-
-    /**
-     * Implemented as a sequential scan of all objects returned by <code>getListBusiness</code>.
-     * Subclasses should only provide more efficient implementations when required for performance reasons.
-     */
-    protected ArrayList<V> filterIndexedSetBusiness(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
-        if(values==null || values.isEmpty()) return new ArrayList<V>(0);
-        return filterIndexedSet(column, values, getListBusiness(db));
     }
     // </editor-fold>
 }

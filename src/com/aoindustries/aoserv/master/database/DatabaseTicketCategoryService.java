@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTicketCategoryService extends DatabasePublicService<Integer,TicketCategory> implements TicketCategoryService {
+final class DatabaseTicketCategoryService extends DatabaseService<Integer,TicketCategory> implements TicketCategoryService {
 
     private final ObjectFactory<TicketCategory> objectFactory = new AutoObjectFactory<TicketCategory>(TicketCategory.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseTicketCategoryService extends DatabasePublicService<Integer,
     }
 
     @Override
-    protected ArrayList<TicketCategory> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TicketCategory> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<TicketCategory>(),
             objectFactory,

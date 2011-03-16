@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePaymentTypeService extends DatabasePublicService<String,PaymentType> implements PaymentTypeService {
+final class DatabasePaymentTypeService extends DatabaseService<String,PaymentType> implements PaymentTypeService {
 
     private final ObjectFactory<PaymentType> objectFactory = new AutoObjectFactory<PaymentType>(PaymentType.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabasePaymentTypeService extends DatabasePublicService<String,Paym
     }
 
     @Override
-    protected ArrayList<PaymentType> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PaymentType> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PaymentType>(),
             objectFactory,

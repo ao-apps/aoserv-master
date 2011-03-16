@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTimeZoneService extends DatabasePublicService<String,TimeZone> implements TimeZoneService {
+final class DatabaseTimeZoneService extends DatabaseService<String,TimeZone> implements TimeZoneService {
 
     private final ObjectFactory<TimeZone> objectFactory = new AutoObjectFactory<TimeZone>(TimeZone.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseTimeZoneService extends DatabasePublicService<String,TimeZon
     }
 
     @Override
-    protected ArrayList<TimeZone> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<TimeZone> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<TimeZone>(),
             objectFactory,

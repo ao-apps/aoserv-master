@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseResourceTypeService extends DatabasePublicService<String,ResourceType> implements ResourceTypeService {
+final class DatabaseResourceTypeService extends DatabaseService<String,ResourceType> implements ResourceTypeService {
 
     private final ObjectFactory<ResourceType> objectFactory = new AutoObjectFactory<ResourceType>(ResourceType.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseResourceTypeService extends DatabasePublicService<String,Res
     }
 
     @Override
-    protected ArrayList<ResourceType> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<ResourceType> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<ResourceType>(),
             objectFactory,

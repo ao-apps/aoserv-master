@@ -17,7 +17,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implements TicketService {
+final class DatabaseTicketService extends DatabaseAccountTypeService<Integer,Ticket> implements TicketService {
 
     private final ObjectFactory<Ticket> objectFactory = new ObjectFactory<Ticket>() {
         @Override
@@ -28,12 +28,12 @@ final class DatabaseTicketService extends DatabaseService<Integer,Ticket> implem
                     result.getInt("ticket_id"),
                     AccountingCode.valueOf(result.getString("brand")),
                     AccountingCode.valueOf(result.getString("reseller")),
-                    getAccountingCode(result.getString("accounting")),
+                    AccountingCode.valueOf(result.getString("accounting")),
                     result.getString("language"),
                     UserId.valueOf(result.getString("created_by")),
                     (Integer)result.getObject("category"),
                     result.getString("ticket_type"),
-                    getEmail(result.getString("from_address")),
+                    Email.valueOf(result.getString("from_address")),
                     result.getString("summary"),
                     result.getLong("open_date"),
                     result.getString("client_priority"),

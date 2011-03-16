@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabasePostgresVersionService extends DatabasePublicService<Integer,PostgresVersion> implements PostgresVersionService {
+final class DatabasePostgresVersionService extends DatabaseService<Integer,PostgresVersion> implements PostgresVersionService {
 
     private final ObjectFactory<PostgresVersion> objectFactory = new AutoObjectFactory<PostgresVersion>(PostgresVersion.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabasePostgresVersionService extends DatabasePublicService<Integer
     }
 
     @Override
-    protected ArrayList<PostgresVersion> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<PostgresVersion> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PostgresVersion>(),
             objectFactory,

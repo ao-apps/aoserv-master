@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseProcessorTypeService extends DatabasePublicService<String,ProcessorType> implements ProcessorTypeService {
+final class DatabaseProcessorTypeService extends DatabaseService<String,ProcessorType> implements ProcessorTypeService {
 
     private final ObjectFactory<ProcessorType> objectFactory = new AutoObjectFactory<ProcessorType>(ProcessorType.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseProcessorTypeService extends DatabasePublicService<String,Pr
     }
 
     @Override
-    protected ArrayList<ProcessorType> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<ProcessorType> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<ProcessorType>(),
             objectFactory,

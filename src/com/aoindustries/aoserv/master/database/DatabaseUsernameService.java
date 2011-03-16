@@ -17,7 +17,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseUsernameService extends DatabaseService<UserId,Username> implements UsernameService {
+final class DatabaseUsernameService extends DatabaseAccountTypeService<UserId,Username> implements UsernameService {
 
     // <editor-fold defaultstate="collapsed" desc="Data Access">
     private final ObjectFactory<Username> objectFactory = new AutoObjectFactory<Username>(Username.class, connector);

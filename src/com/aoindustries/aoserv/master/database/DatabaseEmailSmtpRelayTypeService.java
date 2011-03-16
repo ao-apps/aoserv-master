@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseEmailSmtpRelayTypeService extends DatabasePublicService<String,EmailSmtpRelayType> implements EmailSmtpRelayTypeService {
+final class DatabaseEmailSmtpRelayTypeService extends DatabaseService<String,EmailSmtpRelayType> implements EmailSmtpRelayTypeService {
 
     private final ObjectFactory<EmailSmtpRelayType> objectFactory = new AutoObjectFactory<EmailSmtpRelayType>(EmailSmtpRelayType.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseEmailSmtpRelayTypeService extends DatabasePublicService<Stri
     }
 
     @Override
-    protected ArrayList<EmailSmtpRelayType> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<EmailSmtpRelayType> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<EmailSmtpRelayType>(),
             objectFactory,

@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNoticeTypeService extends DatabasePublicService<String,NoticeType> implements NoticeTypeService {
+final class DatabaseNoticeTypeService extends DatabaseService<String,NoticeType> implements NoticeTypeService {
 
     private final ObjectFactory<NoticeType> objectFactory = new AutoObjectFactory<NoticeType>(NoticeType.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseNoticeTypeService extends DatabasePublicService<String,Notic
     }
 
     @Override
-    protected ArrayList<NoticeType> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<NoticeType> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<NoticeType>(),
             objectFactory,

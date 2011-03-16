@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseAOServPermissionService extends DatabasePublicService<String,AOServPermission> implements AOServPermissionService {
+final class DatabaseAOServPermissionService extends DatabaseService<String,AOServPermission> implements AOServPermissionService {
 
     private final ObjectFactory<AOServPermission> objectFactory = new AutoObjectFactory<AOServPermission>(AOServPermission.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseAOServPermissionService extends DatabasePublicService<String
     }
 
     @Override
-    protected ArrayList<AOServPermission> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<AOServPermission> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<AOServPermission>(),
             objectFactory,

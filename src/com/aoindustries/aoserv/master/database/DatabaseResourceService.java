@@ -10,7 +10,7 @@ import com.aoindustries.aoserv.client.*;
 /**
  * @author  AO Industries, Inc.
  */
-abstract class DatabaseResourceService<V extends Resource> extends DatabaseService<Integer,V> {
+abstract class DatabaseResourceService<V extends Resource> extends DatabaseAccountTypeService<Integer,V> {
 
     static final String RESOURCE_SELECT_COLUMNS =
         "  re.pkey,\n"

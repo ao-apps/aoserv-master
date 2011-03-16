@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseTechnologyVersionService extends DatabaseService<Integer,TechnologyVersion> implements TechnologyVersionService {
+final class DatabaseTechnologyVersionService extends DatabaseAccountTypeService<Integer,TechnologyVersion> implements TechnologyVersionService {
 
     private final ObjectFactory<TechnologyVersion> objectFactory = new ObjectFactory<TechnologyVersion>() {
         @Override
@@ -28,7 +28,7 @@ final class DatabaseTechnologyVersionService extends DatabaseService<Integer,Tec
                     result.getString("name"),
                     result.getString("version"),
                     result.getLong("updated"),
-                    getUserId(result.getString("owner")),
+                    UserId.valueOf(result.getString("owner")),
                     result.getInt("operating_system_version")
                 );
             } catch(ValidationException err) {

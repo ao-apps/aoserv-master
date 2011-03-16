@@ -36,8 +36,8 @@ final class DatabaseDnsRecordService extends DatabaseResourceService<DnsRecord> 
                     result.getString("domain"),
                     result.getString("type"),
                     (Integer)result.getObject("mx_priority"),
-                    getInetAddress(result.getString("data_ip_address")),
-                    getDomainName(result.getString("data_domain_name")),
+                    InetAddress.valueOf(result.getString("data_ip_address")),
+                    DomainName.valueOf(result.getString("data_domain_name")),
                     result.getString("data_text"),
                     (Integer)result.getObject("dhcp_address"),
                     (Integer)result.getObject("ttl")

@@ -15,20 +15,20 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseHttpdJKCodeService extends DatabaseService<String,HttpdJKCode> implements HttpdJKCodeService {
+final class DatabaseBankAccountService extends DatabaseBankAccountingService<String,BankAccount> implements BankAccountService {
 
-    private final ObjectFactory<HttpdJKCode> objectFactory = new AutoObjectFactory<HttpdJKCode>(HttpdJKCode.class, connector);
+    private final ObjectFactory<BankAccount> objectFactory = new AutoObjectFactory<BankAccount>(BankAccount.class, connector);
 
-    DatabaseHttpdJKCodeService(DatabaseConnector connector) {
-        super(connector, String.class, HttpdJKCode.class);
+    DatabaseBankAccountService(DatabaseConnector connector) {
+        super(connector, String.class, BankAccount.class);
     }
 
     @Override
-    protected ArrayList<HttpdJKCode> getList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<BankAccount> getListBankAccounting(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
-            new ArrayList<HttpdJKCode>(),
+            new ArrayList<BankAccount>(),
             objectFactory,
-            "select * from httpd_jk_codes"
+            "select * from bank_accounts"
         );
     }
 }

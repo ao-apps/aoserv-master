@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseOperatingSystemVersionService extends DatabasePublicService<Integer,OperatingSystemVersion> implements OperatingSystemVersionService {
+final class DatabaseOperatingSystemVersionService extends DatabaseService<Integer,OperatingSystemVersion> implements OperatingSystemVersionService {
 
     private final ObjectFactory<OperatingSystemVersion> objectFactory = new AutoObjectFactory<OperatingSystemVersion>(OperatingSystemVersion.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseOperatingSystemVersionService extends DatabasePublicService<
     }
 
     @Override
-    protected ArrayList<OperatingSystemVersion> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<OperatingSystemVersion> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<OperatingSystemVersion>(),
             objectFactory,

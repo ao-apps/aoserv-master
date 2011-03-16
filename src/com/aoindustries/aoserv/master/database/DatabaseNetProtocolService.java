@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseNetProtocolService extends DatabasePublicService<String,NetProtocol> implements NetProtocolService {
+final class DatabaseNetProtocolService extends DatabaseService<String,NetProtocol> implements NetProtocolService {
 
     private final ObjectFactory<NetProtocol> objectFactory = new AutoObjectFactory<NetProtocol>(NetProtocol.class, connector);
 
@@ -24,7 +24,7 @@ final class DatabaseNetProtocolService extends DatabasePublicService<String,NetP
     }
 
     @Override
-    protected ArrayList<NetProtocol> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<NetProtocol> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<NetProtocol>(),
             objectFactory,

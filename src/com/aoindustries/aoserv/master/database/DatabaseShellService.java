@@ -16,7 +16,7 @@ import java.util.ArrayList;
 /**
  * @author  AO Industries, Inc.
  */
-final class DatabaseShellService extends DatabasePublicService<UnixPath,Shell> implements ShellService {
+final class DatabaseShellService extends DatabaseService<UnixPath,Shell> implements ShellService {
 
     private final ObjectFactory<Shell> objectFactory = new AutoObjectFactory<Shell>(Shell.class, connector);
 
@@ -25,7 +25,7 @@ final class DatabaseShellService extends DatabasePublicService<UnixPath,Shell> i
     }
 
     @Override
-    protected ArrayList<Shell> getPublicList(DatabaseConnection db) throws SQLException {
+    protected ArrayList<Shell> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Shell>(),
             objectFactory,
