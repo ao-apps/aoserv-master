@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabasePostgresServerService extends DatabaseAOServerResourceServic
     }
 
     @Override
-    protected ArrayList<PostgresServer> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<PostgresServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PostgresServer>(),
             objectFactory,
@@ -46,7 +47,7 @@ final class DatabasePostgresServerService extends DatabaseAOServerResourceServic
     }
 
     @Override
-    protected ArrayList<PostgresServer> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<PostgresServer> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PostgresServer>(),
             objectFactory,
@@ -73,7 +74,7 @@ final class DatabasePostgresServerService extends DatabaseAOServerResourceServic
     }
 
     @Override
-    protected ArrayList<PostgresServer> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<PostgresServer> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PostgresServer>(),
             objectFactory,

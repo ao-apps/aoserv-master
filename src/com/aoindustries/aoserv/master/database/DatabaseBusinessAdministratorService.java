@@ -14,6 +14,7 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -63,7 +64,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseAccountTypeServ
     }
 
     @Override
-    protected ArrayList<BusinessAdministrator> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<BusinessAdministrator> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<BusinessAdministrator>(),
             objectFactory,
@@ -96,7 +97,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseAccountTypeServ
     }
 
     @Override
-    protected ArrayList<BusinessAdministrator> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<BusinessAdministrator> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<BusinessAdministrator>(),
             objectFactory,
@@ -136,7 +137,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseAccountTypeServ
     }
 
     @Override
-    protected ArrayList<BusinessAdministrator> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<BusinessAdministrator> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<BusinessAdministrator>(),
             objectFactory,

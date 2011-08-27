@@ -12,6 +12,7 @@ import com.aoindustries.sql.ObjectFactory;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -41,7 +42,7 @@ final class DatabaseDisableLogService extends DatabaseAccountTypeService<Integer
     }
 
     @Override
-    protected ArrayList<DisableLog> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<DisableLog> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<DisableLog>(),
             objectFactory,
@@ -57,7 +58,7 @@ final class DatabaseDisableLogService extends DatabaseAccountTypeService<Integer
     }
 
     @Override
-    protected ArrayList<DisableLog> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<DisableLog> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<DisableLog>(),
             objectFactory,
@@ -85,7 +86,7 @@ final class DatabaseDisableLogService extends DatabaseAccountTypeService<Integer
     }
 
     @Override
-    protected ArrayList<DisableLog> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<DisableLog> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<DisableLog>(),
             objectFactory,

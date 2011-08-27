@@ -13,6 +13,8 @@ import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -119,7 +121,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseAccountTypeServ
     }
 
     @Override
-    protected ArrayList<CreditCardTransaction> getListMaster(DatabaseConnection db) throws RemoteException, SQLException {
+    protected List<CreditCardTransaction> getListMaster(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
             return db.executeObjectCollectionQuery(
                 new ArrayList<CreditCardTransaction>(),
@@ -212,17 +214,17 @@ final class DatabaseCreditCardTransactionService extends DatabaseAccountTypeServ
                 + "  credit_card_transactions"
             );
         } else {
-            return new ArrayList<CreditCardTransaction>(0);
+            return Collections.emptyList();
         }
     }
 
     @Override
-    protected ArrayList<CreditCardTransaction> getListDaemon(DatabaseConnection db) {
-        return new ArrayList<CreditCardTransaction>(0);
+    protected List<CreditCardTransaction> getListDaemon(DatabaseConnection db) {
+        return Collections.emptyList();
     }
 
     @Override
-    protected ArrayList<CreditCardTransaction> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected List<CreditCardTransaction> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
             return db.executeObjectCollectionQuery(
                 new ArrayList<CreditCardTransaction>(),
@@ -324,7 +326,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseAccountTypeServ
                 connector.getSwitchUser()
             );
         } else {
-            return new ArrayList<CreditCardTransaction>(0);
+            return Collections.emptyList();
         }
     }
 }

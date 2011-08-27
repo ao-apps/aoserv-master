@@ -26,7 +26,7 @@ abstract class DatabaseServerResourceService<V extends ServerResource> extends D
     }
     /* TODO
     @Override
-    protected ArrayList<ServerResource> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<ServerResource> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<ServerResource>(),
             objectFactory,
@@ -49,7 +49,7 @@ abstract class DatabaseServerResourceService<V extends ServerResource> extends D
     }
 
     @Override
-    protected ArrayList<ServerResource> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<ServerResource> getListDaemon(DatabaseConnection db) throws SQLException {
         StringBuilder sql = new StringBuilder(
             "select\n"
             + "  sr.resource,\n"
@@ -96,7 +96,7 @@ abstract class DatabaseServerResourceService<V extends ServerResource> extends D
     }
 
     @Override
-    protected ArrayList<ServerResource> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<ServerResource> getListBusiness(DatabaseConnection db) throws SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"

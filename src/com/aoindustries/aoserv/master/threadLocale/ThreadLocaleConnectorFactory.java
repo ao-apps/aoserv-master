@@ -28,11 +28,11 @@ final public class ThreadLocaleConnectorFactory extends WrappedConnectorFactory<
     }
 
     @Override
-    protected ThreadLocaleConnector newWrappedConnector(Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) throws LoginException, RemoteException {
+    protected ThreadLocaleConnector newWrappedConnector(Locale locale, UserId username, String password, UserId switchUser, DomainName daemonServer, boolean readOnly) throws LoginException, RemoteException {
         Locale oldLocale = ThreadLocale.get();
         try {
             ThreadLocale.set(locale);
-            return new ThreadLocaleConnector(this, locale, connectAs, authenticateAs, password, daemonServer);
+            return new ThreadLocaleConnector(this, locale, username, password, switchUser, daemonServer, readOnly);
         } finally {
             ThreadLocale.set(oldLocale);
         }

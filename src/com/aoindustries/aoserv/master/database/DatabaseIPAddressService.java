@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseIPAddressService extends DatabaseServerResourceService<IPAdd
     }
 
     @Override
-    protected ArrayList<IPAddress> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<IPAddress> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<IPAddress>(),
             objectFactory,
@@ -49,7 +50,7 @@ final class DatabaseIPAddressService extends DatabaseServerResourceService<IPAdd
     }
 
     @Override
-    protected ArrayList<IPAddress> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<IPAddress> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<IPAddress>(),
             objectFactory,
@@ -97,7 +98,7 @@ final class DatabaseIPAddressService extends DatabaseServerResourceService<IPAdd
     }
 
     @Override
-    protected ArrayList<IPAddress> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<IPAddress> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<IPAddress>(),
             objectFactory,

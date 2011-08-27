@@ -12,6 +12,8 @@ import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -25,7 +27,7 @@ final class DatabaseTicketAssignmentService extends DatabaseAccountTypeService<I
     }
 
     @Override
-    protected ArrayList<TicketAssignment> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<TicketAssignment> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<TicketAssignment>(),
             objectFactory,
@@ -37,12 +39,12 @@ final class DatabaseTicketAssignmentService extends DatabaseAccountTypeService<I
      * Daemons do not get any ticket assignment data.
      */
     @Override
-    protected ArrayList<TicketAssignment> getListDaemon(DatabaseConnection db) {
-        return new ArrayList<TicketAssignment>(0);
+    protected List<TicketAssignment> getListDaemon(DatabaseConnection db) {
+        return Collections.emptyList();
     }
 
     @Override
-    protected ArrayList<TicketAssignment> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected List<TicketAssignment> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.isTicketAdmin()) {
             // Only ticket admin can see assignments
             return db.executeObjectCollectionQuery(
@@ -73,7 +75,7 @@ final class DatabaseTicketAssignmentService extends DatabaseAccountTypeService<I
             );
         } else {
             // Non-admins don't get any assignment details
-            return new ArrayList<TicketAssignment>(0);
+            return Collections.emptyList();
         }
     }
 }

@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseOperatingSystemService extends DatabaseService<String,Operat
     }
 
     @Override
-    protected ArrayList<OperatingSystem> getList(DatabaseConnection db) throws SQLException {
+    protected List<OperatingSystem> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<OperatingSystem>(),
             objectFactory,

@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseAOServRoleService extends DatabaseAccountTypeService<Integer
     }
 
     @Override
-    protected ArrayList<AOServRole> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<AOServRole> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<AOServRole>(),
             objectFactory,
@@ -36,7 +37,7 @@ final class DatabaseAOServRoleService extends DatabaseAccountTypeService<Integer
      * Can only see their own roles.
      */
     @Override
-    protected ArrayList<AOServRole> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<AOServRole> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<AOServRole>(),
             objectFactory,
@@ -55,7 +56,7 @@ final class DatabaseAOServRoleService extends DatabaseAccountTypeService<Integer
      * Can see the roles owned by the business tree and their own roles.
      */
     @Override
-    protected ArrayList<AOServRole> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<AOServRole> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<AOServRole>(),
             objectFactory,

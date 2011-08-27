@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Currency;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -48,7 +49,7 @@ final class DatabaseBankTransactionService extends DatabaseBankAccountingService
     }
 
     @Override
-    protected ArrayList<BankTransaction> getListBankAccounting(DatabaseConnection db) throws SQLException {
+    protected List<BankTransaction> getListBankAccounting(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<BankTransaction>(),
             objectFactory,

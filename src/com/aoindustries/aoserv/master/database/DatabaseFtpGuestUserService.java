@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseFtpGuestUserService extends DatabaseAccountTypeService<Integ
     }
 
     @Override
-    protected ArrayList<FtpGuestUser> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<FtpGuestUser> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FtpGuestUser>(),
             objectFactory,
@@ -33,7 +34,7 @@ final class DatabaseFtpGuestUserService extends DatabaseAccountTypeService<Integ
     }
 
     @Override
-    protected ArrayList<FtpGuestUser> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<FtpGuestUser> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FtpGuestUser>(),
             objectFactory,
@@ -52,7 +53,7 @@ final class DatabaseFtpGuestUserService extends DatabaseAccountTypeService<Integ
     }
 
     @Override
-    protected ArrayList<FtpGuestUser> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<FtpGuestUser> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FtpGuestUser>(),
             objectFactory,

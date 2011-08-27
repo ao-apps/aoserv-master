@@ -12,6 +12,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -25,7 +26,7 @@ final class DatabaseBrandService extends DatabaseAccountTypeService<AccountingCo
     }
 
     @Override
-    protected ArrayList<Brand> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<Brand> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Brand>(),
             objectFactory,
@@ -34,7 +35,7 @@ final class DatabaseBrandService extends DatabaseAccountTypeService<AccountingCo
     }
 
     @Override
-    protected ArrayList<Brand> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<Brand> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Brand>(),
             objectFactory,
@@ -89,7 +90,7 @@ final class DatabaseBrandService extends DatabaseAccountTypeService<AccountingCo
     }
 
     @Override
-    protected ArrayList<Brand> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<Brand> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Brand>(),
             objectFactory,

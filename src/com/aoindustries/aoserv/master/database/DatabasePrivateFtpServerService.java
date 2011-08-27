@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabasePrivateFtpServerService extends DatabaseAOServerResourceServ
     }
 
     @Override
-    protected ArrayList<PrivateFtpServer> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<PrivateFtpServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PrivateFtpServer>(),
             objectFactory,
@@ -45,7 +46,7 @@ final class DatabasePrivateFtpServerService extends DatabaseAOServerResourceServ
     }
 
     @Override
-    protected ArrayList<PrivateFtpServer> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<PrivateFtpServer> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PrivateFtpServer>(),
             objectFactory,
@@ -71,7 +72,7 @@ final class DatabasePrivateFtpServerService extends DatabaseAOServerResourceServ
     }
 
     @Override
-    protected ArrayList<PrivateFtpServer> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<PrivateFtpServer> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PrivateFtpServer>(),
             objectFactory,

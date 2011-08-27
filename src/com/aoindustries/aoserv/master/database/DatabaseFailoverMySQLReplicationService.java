@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseFailoverMySQLReplicationService extends DatabaseAccountTypeS
     }
 
     @Override
-    protected ArrayList<FailoverMySQLReplication> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<FailoverMySQLReplication> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FailoverMySQLReplication>(),
             objectFactory,
@@ -33,7 +34,7 @@ final class DatabaseFailoverMySQLReplicationService extends DatabaseAccountTypeS
     }
 
     @Override
-    protected ArrayList<FailoverMySQLReplication> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<FailoverMySQLReplication> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FailoverMySQLReplication>(),
             objectFactory,
@@ -60,7 +61,7 @@ final class DatabaseFailoverMySQLReplicationService extends DatabaseAccountTypeS
     }
 
     @Override
-    protected ArrayList<FailoverMySQLReplication> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<FailoverMySQLReplication> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FailoverMySQLReplication>(),
             objectFactory,

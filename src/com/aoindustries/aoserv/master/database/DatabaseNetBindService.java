@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseNetBindService extends DatabaseAccountTypeService<Integer,Ne
     }
 
     @Override
-    protected ArrayList<NetBind> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<NetBind> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<NetBind>(),
             objectFactory,
@@ -44,7 +45,7 @@ final class DatabaseNetBindService extends DatabaseAccountTypeService<Integer,Ne
     }
 
     @Override
-    protected ArrayList<NetBind> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<NetBind> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<NetBind>(),
             objectFactory,
@@ -91,7 +92,7 @@ final class DatabaseNetBindService extends DatabaseAccountTypeService<Integer,Ne
     }
 
     @Override
-    protected ArrayList<NetBind> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<NetBind> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<NetBind>(),
             objectFactory,

@@ -11,6 +11,8 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +26,7 @@ final class DatabaseCreditCardService extends DatabaseAccountTypeService<Integer
     }
 
     @Override
-    protected ArrayList<CreditCard> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<CreditCard> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<CreditCard>(),
             objectFactory,
@@ -68,12 +70,12 @@ final class DatabaseCreditCardService extends DatabaseAccountTypeService<Integer
     }
 
     @Override
-    protected ArrayList<CreditCard> getListDaemon(DatabaseConnection db) {
-        return new ArrayList<CreditCard>(0);
+    protected List<CreditCard> getListDaemon(DatabaseConnection db) {
+        return Collections.emptyList();
     }
 
     @Override
-    protected ArrayList<CreditCard> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<CreditCard> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<CreditCard>(),
             objectFactory,

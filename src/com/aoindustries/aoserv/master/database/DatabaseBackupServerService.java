@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseBackupServerService extends DatabaseServerService<BackupServ
     }
 
     @Override
-    protected ArrayList<BackupServer> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<BackupServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<BackupServer>(),
             objectFactory,
@@ -38,7 +39,7 @@ final class DatabaseBackupServerService extends DatabaseServerService<BackupServ
     }
 
     @Override
-    protected ArrayList<BackupServer> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<BackupServer> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<BackupServer>(),
             objectFactory,
@@ -56,7 +57,7 @@ final class DatabaseBackupServerService extends DatabaseServerService<BackupServ
     }
 
     @Override
-    protected ArrayList<BackupServer> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<BackupServer> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<BackupServer>(),
             objectFactory,

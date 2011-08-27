@@ -29,7 +29,7 @@ abstract class DatabaseServerService<V extends Server> extends DatabaseResourceS
 
     /*
     @Override
-    protected ArrayList<Server> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<Server> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Server>(),
             objectFactory,
@@ -38,7 +38,7 @@ abstract class DatabaseServerService<V extends Server> extends DatabaseResourceS
     }
 
     @Override
-    protected ArrayList<Server> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<Server> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Server>(),
             objectFactory,
@@ -72,7 +72,7 @@ abstract class DatabaseServerService<V extends Server> extends DatabaseResourceS
     }
 
     @Override
-    protected ArrayList<Server> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<Server> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Server>(),
             objectFactory,

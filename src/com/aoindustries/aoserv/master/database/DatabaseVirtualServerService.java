@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -43,7 +44,7 @@ final class DatabaseVirtualServerService extends DatabaseServerService<VirtualSe
     }
 
     @Override
-    protected ArrayList<VirtualServer> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<VirtualServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<VirtualServer>(),
             objectFactory,
@@ -58,7 +59,7 @@ final class DatabaseVirtualServerService extends DatabaseServerService<VirtualSe
     }
 
     @Override
-    protected ArrayList<VirtualServer> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<VirtualServer> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<VirtualServer>(),
             objectFactory,
@@ -96,7 +97,7 @@ final class DatabaseVirtualServerService extends DatabaseServerService<VirtualSe
     }
 
     @Override
-    protected ArrayList<VirtualServer> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<VirtualServer> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<VirtualServer>(),
             objectFactory,

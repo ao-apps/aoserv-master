@@ -10,7 +10,7 @@ import com.aoindustries.security.AccountDisabledException;
 import com.aoindustries.sql.DatabaseConnection;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Provides different implementations based on account type.  Also checks
@@ -103,7 +103,7 @@ abstract class DatabaseAccountTypeService<
     }
 
     @Override
-    final protected ArrayList<V> getList(DatabaseConnection db) throws RemoteException, SQLException {
+    final protected List<V> getList(DatabaseConnection db) throws RemoteException, SQLException {
         switch(connector.getAccountType(db)) {
             case MASTER : return getListMaster(db);
             case DAEMON : return getListDaemon(db);
@@ -117,17 +117,17 @@ abstract class DatabaseAccountTypeService<
      * Gets the unfiltered set.
      * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
      */
-    abstract protected ArrayList<V> getListMaster(DatabaseConnection db) throws RemoteException, SQLException;
+    abstract protected List<V> getListMaster(DatabaseConnection db) throws RemoteException, SQLException;
 
     /**
      * Gets the set filtered by server access.
      * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
      */
-    abstract protected ArrayList<V> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException;
+    abstract protected List<V> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException;
 
     /**
      * Gets the sets filtered by business access.
      * The return value will be automatically wrapped in AOServServiceUtils.unmodifiableSet.
      */
-    abstract protected ArrayList<V> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException;
+    abstract protected List<V> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException;
 }

@@ -13,6 +13,8 @@ import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -53,7 +55,7 @@ final class DatabaseDnsRecordService extends DatabaseResourceService<DnsRecord> 
     }
 
     @Override
-    protected ArrayList<DnsRecord> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<DnsRecord> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<DnsRecord>(),
             objectFactory,
@@ -75,7 +77,7 @@ final class DatabaseDnsRecordService extends DatabaseResourceService<DnsRecord> 
     }
 
     @Override
-    protected ArrayList<DnsRecord> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException {
+    protected List<DnsRecord> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException {
         MasterUser rootMu = connector.factory.getRootConnector().getBusinessAdministrators().get(connector.getSwitchUser()).getMasterUser();
         if(rootMu!=null && rootMu.isActive() && rootMu.isDnsAdmin()) {
             return db.executeObjectCollectionQuery(
@@ -97,12 +99,12 @@ final class DatabaseDnsRecordService extends DatabaseResourceService<DnsRecord> 
                 + "  inner join resources re on dr.resource=re.pkey"
             );
         } else {
-            return new ArrayList<DnsRecord>(0);
+            return Collections.emptyList();
         }
     }
 
     @Override
-    protected ArrayList<DnsRecord> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<DnsRecord> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<DnsRecord>(),
             objectFactory,

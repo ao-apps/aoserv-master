@@ -12,6 +12,7 @@ import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -32,7 +33,7 @@ final class DatabaseRackService extends DatabaseResourceService<Rack> implements
     }
 
     @Override
-    protected ArrayList<Rack> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<Rack> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Rack>(),
             objectFactory,
@@ -45,7 +46,7 @@ final class DatabaseRackService extends DatabaseResourceService<Rack> implements
     }
 
     @Override
-    protected ArrayList<Rack> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException {
+    protected List<Rack> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Rack>(),
             objectFactory,
@@ -63,7 +64,7 @@ final class DatabaseRackService extends DatabaseResourceService<Rack> implements
     }
 
     @Override
-    protected ArrayList<Rack> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<Rack> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Rack>(),
             objectFactory,

@@ -17,6 +17,7 @@ import com.aoindustries.sql.DatabaseRunnable;
 import com.aoindustries.sql.ObjectFactory;
 import com.aoindustries.sql.ResultSetHandler;
 import com.aoindustries.util.WrappedException;
+import com.aoindustries.util.i18n.ThreadLocale;
 import java.rmi.RemoteException;
 import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
@@ -47,10 +48,8 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
         public UserId createObject(ResultSet result) throws SQLException {
             try {
                 return UserId.valueOf(result.getString(1)).intern();
-            } catch(ValidationException ex) {
-                SQLException sqlEx = new SQLException(ex.getMessage());
-                sqlEx.initCause(ex);
-                throw sqlEx;
+            } catch(ValidationException e) {
+                throw new SQLException(e);
             }
         }
     };
@@ -84,10 +83,8 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
                                     }
                                     sv.add(ho);
                                 }
-                            } catch(ValidationException ex) {
-                                SQLException sqlEx = new SQLException(ex.getMessage());
-                                sqlEx.initCause(ex);
-                                throw sqlEx;
+                            } catch(ValidationException e) {
+                                throw new SQLException(e);
                             }
                         }
                     },
@@ -178,7 +175,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
         }
     }
 
-    boolean canSwitchUser(DatabaseConnection db, UserId authenticatedAs, UserId connectAs) throws SQLException {
+    boolean canSwitchUser(DatabaseConnection db, UserId username, UserId switchUser) throws SQLException {
         return db.executeBooleanQuery(
             "select\n"
             // Must have can_switch_users enabled
@@ -190,11 +187,11 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
             + "    (select accounting from usernames where username=?),\n"
             + "    (select accounting from usernames where username=?)\n"
             + "  )",
-            authenticatedAs.toString(),
-            authenticatedAs.toString(),
-            connectAs.toString(),
-            authenticatedAs.toString(),
-            connectAs.toString()
+            username.toString(),
+            username.toString(),
+            switchUser.toString(),
+            username.toString(),
+            switchUser.toString()
         );
     }
     
@@ -229,35 +226,59 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
     }
     // </editor-fold>
 
+    // <editor-fold defaultstate="collapsed" desc="Root Connector">
+    final UserId rootUserId;
+    final String rootPassword;
+
     /**
-     * An unrestricted, shared, cached database connector is available for use by any of the
+     * An unrestricted, shared, cached, read-only database connector is available for use by any of the
      * individual user connectors.  This should be used sparingly and carefully, and should only
      * be used to query information.  This connector is read-only.  Also, it doesn't change the
      * ThreadLocale any so that messages are generated in the expected locale.
      */
-    final protected AOServConnector rootConnector;
+    final private CachedConnectorFactory rootConnectorFactory;
+
+    /**
+     * Gets the root connector for the current thread locale.
+     */
+    AOServConnector getRootConnector() throws RemoteException {
+        return getRootConnector(ThreadLocale.get());
+    }
+
+    /**
+     * Gets the root connector for the provided locale.
+     */
+    AOServConnector getRootConnector(Locale locale) throws RemoteException {
+        try {
+            return rootConnectorFactory.getConnector(locale, rootUserId, rootPassword, rootUserId, null, true);
+        } catch(LoginException e) {
+            throw new RemoteException(e.getMessage(), e);
+        }
+    }
+    // </editor-fold>
 
     public DatabaseConnectorFactory(Database database, UserId rootUserId, String rootPassword) throws LoginException, RemoteException {
         this.database = database;
-        this.rootConnector = new CachedConnectorFactory(this).getConnector(Locale.getDefault(), rootUserId, rootUserId, rootPassword, null);
+        this.rootUserId = rootUserId;
+        this.rootPassword = rootPassword;
+        this.rootConnectorFactory = new CachedConnectorFactory(this);
     }
 
     // <editor-fold defaultstate="collapsed" desc="Connector Creation">
     private final AOServConnectorFactoryCache<DatabaseConnector> connectors = new AOServConnectorFactoryCache<DatabaseConnector>();
 
     @Override
-    public DatabaseConnector getConnector(Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) throws LoginException, RemoteException {
+    public DatabaseConnector getConnector(Locale locale, UserId username, String password, UserId switchUser, DomainName daemonServer, boolean readOnly) throws LoginException, RemoteException {
         synchronized(connectors) {
-            DatabaseConnector connector = connectors.get(connectAs, authenticateAs, password, daemonServer);
-            if(connector!=null) {
-                connector.setLocale(locale);
-            } else {
+            DatabaseConnector connector = connectors.get(locale, username, password, switchUser, daemonServer, readOnly);
+            if(connector==null) {
                 connector = newConnector(
                     locale,
-                    connectAs,
-                    authenticateAs,
+                    username,
                     password,
-                    daemonServer
+                    switchUser,
+                    daemonServer,
+                    readOnly
                 );
             }
             return connector;
@@ -265,14 +286,14 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
     }
 
     //@Override
-    private DatabaseConnector newConnector(final Locale locale, final UserId connectAs, final UserId authenticateAs, final String password, final DomainName daemonServer) throws LoginException, RemoteException {
+    private DatabaseConnector newConnector(final Locale locale, final UserId username, final String password, final UserId switchUser, final DomainName daemonServer, final boolean readOnly) throws LoginException, RemoteException {
         try {
             return database.executeTransaction(
                 new DatabaseCallable<DatabaseConnector>() {
                     @Override
                     public DatabaseConnector call(DatabaseConnection db) throws SQLException {
                         try {
-                            return newConnector(db, locale, connectAs, authenticateAs, password, daemonServer);
+                            return newConnector(db, locale, username, password, switchUser, daemonServer, readOnly);
                         } catch(RemoteException err) {
                             throw new WrappedException(err);
                         } catch(LoginException err) {
@@ -291,25 +312,25 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
         }
     }
 
-    protected DatabaseConnector newConnector(DatabaseConnection db, Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) throws RemoteException, LoginException, SQLException {
+    private DatabaseConnector newConnector(DatabaseConnection db, Locale locale, UserId username, String password, UserId switchUser, DomainName daemonServer, boolean readOnly) throws RemoteException, LoginException, SQLException {
         try {
             // Handle the authentication
-            if(connectAs==null)      throw new IncompleteLoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.connectAs.empty"));
-            if(authenticateAs==null) throw new IncompleteLoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.authenticateAs.null"));
+            if(username==null)       throw new IncompleteLoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.username.null"));
             if(password==null)       throw new IncompleteLoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.password.null"));
             if(password.length()==0) throw new IncompleteLoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.password.empty"));
+            if(switchUser==null)     throw new IncompleteLoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.switchUser.empty"));
 
             String correctCrypted = db.executeStringQuery(
                 Connection.TRANSACTION_READ_COMMITTED,
                 true,
                 false,
                 "select password from business_administrators where username=?",
-                authenticateAs
+                username
             );
             if(correctCrypted==null) throw new AccountNotFoundException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountNotFound"));
             if(!HashedPassword.valueOf(correctCrypted).passwordMatches(password)) throw new BadPasswordException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.badPassword"));
 
-            if(!isEnabledBusinessAdministrator(db, authenticateAs)) throw new AccountDisabledException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
+            if(!isEnabledBusinessAdministrator(db, username)) throw new AccountDisabledException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
 
             InetAddress remoteHost;
             try {
@@ -317,24 +338,26 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
             } catch(ServerNotActiveException err) {
                 remoteHost = InetAddress.LOOPBACK;
             }
-            if(!isHostAllowed(db, authenticateAs, remoteHost)) throw new LoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.hostNotAllowed", remoteHost, authenticateAs));
+            if(!isHostAllowed(db, username, remoteHost)) throw new LoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.hostNotAllowed", remoteHost, username));
 
-            // If connectAs is not authenticateAs, must be authenticated with switch user permissions
+            // If switchUser is not equal to username, must be authenticated with switch user permissions
             if(
-                !connectAs.equals(authenticateAs)
-                && !canSwitchUser(db, authenticateAs, connectAs)
+                !switchUser.equals(username)
+                && !canSwitchUser(db, username, switchUser)
             ) {
-                throw new LoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.switchUserNotAllowed", authenticateAs, connectAs));
+                throw new LoginException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.switchUserNotAllowed", username, switchUser));
             }
 
             // Let them in
             synchronized(connectors) {
-                DatabaseConnector connector = new DatabaseConnector(this, locale, connectAs, authenticateAs, password, daemonServer);
+                DatabaseConnector connector = new DatabaseConnector(this, locale, username, password, switchUser, daemonServer, readOnly);
                 connectors.put(
-                    connectAs,
-                    authenticateAs,
+                    locale,
+                    username,
                     password,
+                    switchUser,
                     daemonServer,
+                    readOnly,
                     connector
                 );
                 return connector;
@@ -370,6 +393,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
                     @Override
                     public void run(DatabaseConnection db) {
                         try {
+                            AOServConnector rootConnector = getRootConnector();
                             AOServerService rootAoServers = rootConnector.getAoServers();
                             BusinessAdministratorService rootBusinessAdministrators = rootConnector.getBusinessAdministrators();
                             BusinessService rootBusinesses = rootConnector.getBusinesses();
@@ -406,7 +430,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
                                             if(affectedBusinesses==null || affectedBusinesses.contains(null)) businessMatches=true;
                                             else {
                                                 businessMatches=false;
-                                                if(otherBusinessAdministrator==null) otherBusinessAdministrator = rootBusinessAdministrators.get(otherConn.getConnectAs());
+                                                if(otherBusinessAdministrator==null) otherBusinessAdministrator = rootBusinessAdministrators.get(otherConn.getSwitchUser());
                                                 for(AccountingCode affectedBusiness : affectedBusinesses) {
                                                     if(otherBusinessAdministrator.canAccessBusiness(rootBusinesses.get(affectedBusiness))) {
                                                         businessMatches=true;
@@ -421,7 +445,7 @@ final public class DatabaseConnectorFactory implements AOServConnectorFactory {
                                                 if(affectedServers==null || affectedServers.contains(null)) serverMatches=true;
                                                 else {
                                                     serverMatches=false;
-                                                    if(otherBusinessAdministrator==null) otherBusinessAdministrator = rootBusinessAdministrators.get(otherConn.getConnectAs());
+                                                    if(otherBusinessAdministrator==null) otherBusinessAdministrator = rootBusinessAdministrators.get(otherConn.getSwitchUser());
                                                     for(int affectedServer : affectedServers) {
                                                         if(otherBusinessAdministrator.canAccessServer(rootServers.get(affectedServer))) {
                                                             serverMatches=true;

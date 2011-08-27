@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseCvsRepositoryService extends DatabaseAOServerResourceService
     }
 
     @Override
-    protected ArrayList<CvsRepository> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<CvsRepository> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<CvsRepository>(),
             objectFactory,
@@ -42,7 +43,7 @@ final class DatabaseCvsRepositoryService extends DatabaseAOServerResourceService
     }
 
     @Override
-    protected ArrayList<CvsRepository> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<CvsRepository> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<CvsRepository>(),
             objectFactory,
@@ -65,7 +66,7 @@ final class DatabaseCvsRepositoryService extends DatabaseAOServerResourceService
     }
 
     @Override
-    protected ArrayList<CvsRepository> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<CvsRepository> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<CvsRepository>(),
             objectFactory,

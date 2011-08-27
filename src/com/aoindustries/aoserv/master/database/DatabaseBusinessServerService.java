@@ -12,6 +12,7 @@ import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -25,7 +26,7 @@ final class DatabaseBusinessServerService extends DatabaseAccountTypeService<Int
     }
 
     @Override
-    protected ArrayList<BusinessServer> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<BusinessServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<BusinessServer>(),
             objectFactory,
@@ -34,7 +35,7 @@ final class DatabaseBusinessServerService extends DatabaseAccountTypeService<Int
     }
 
     @Override
-    protected ArrayList<BusinessServer> getListDaemon(DatabaseConnection db) throws SQLException, RemoteException {
+    protected List<BusinessServer> getListDaemon(DatabaseConnection db) throws SQLException, RemoteException {
         StringBuilder sql = new StringBuilder(
             "select distinct\n"
             + "  bs.*\n"
@@ -80,7 +81,7 @@ final class DatabaseBusinessServerService extends DatabaseAccountTypeService<Int
     }
 
     @Override
-    protected ArrayList<BusinessServer> getListBusiness(DatabaseConnection db) throws SQLException, RemoteException {
+    protected List<BusinessServer> getListBusiness(DatabaseConnection db) throws SQLException, RemoteException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"

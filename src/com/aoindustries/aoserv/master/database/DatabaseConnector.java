@@ -111,13 +111,11 @@ final public class DatabaseConnector extends AbstractConnector {
                                 if(!factory.isEnabledBusinessAdministrator(db, getSwitchUser())) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
 
                                 // Check permissions using root connector
-                                Set<AOServPermission.Permission> permissions = remoteCommand.getCommandName().getPermissions();
-                                AOServConnector rootConnector = factory.getRootConnector();
-                                BusinessAdministrator rootBa = rootConnector.getBusinessAdministrators().get(getSwitchUser());
-                                if(!rootBa.hasPermissions(permissions)) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnector.executeCommand.permissionDenied", remoteCommand.getCommandName()));
+                                AOServConnector rootConn = factory.getRootConnector();
+                                BusinessAdministrator rootUser = rootConn.getBusinessAdministrators().get(getSwitchUser());
 
-                                // Validate command using root connector
-                                Map<String,List<String>> errors = remoteCommand.validate(rootBa);
+                                // Check command using root connector
+                                Map<String,List<String>> errors = remoteCommand.checkExecute(DatabaseConnector.this, rootConn, rootUser);
                                 if(!errors.isEmpty()) throw new CommandValidationException(remoteCommand, errors);
 
                                 // Execute command using this connector

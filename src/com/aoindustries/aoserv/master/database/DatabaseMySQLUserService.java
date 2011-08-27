@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -28,7 +29,7 @@ final class DatabaseMySQLUserService extends DatabaseAOServerResourceService<MyS
     }
 
     @Override
-    protected ArrayList<MySQLUser> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<MySQLUser> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<MySQLUser>(),
             objectFactory,
@@ -79,7 +80,7 @@ final class DatabaseMySQLUserService extends DatabaseAOServerResourceService<MyS
     }
 
     @Override
-    protected ArrayList<MySQLUser> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<MySQLUser> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<MySQLUser>(),
             objectFactory,
@@ -135,7 +136,7 @@ final class DatabaseMySQLUserService extends DatabaseAOServerResourceService<MyS
     }
 
     @Override
-    protected ArrayList<MySQLUser> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<MySQLUser> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<MySQLUser>(),
             objectFactory,

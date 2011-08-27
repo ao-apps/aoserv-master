@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseLinuxAccountTypeService extends DatabaseService<String,Linux
     }
 
     @Override
-    protected ArrayList<LinuxAccountType> getList(DatabaseConnection db) throws SQLException {
+    protected List<LinuxAccountType> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<LinuxAccountType>(),
             objectFactory,

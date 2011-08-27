@@ -12,6 +12,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -25,7 +26,7 @@ final class DatabaseShellService extends DatabaseService<UnixPath,Shell> impleme
     }
 
     @Override
-    protected ArrayList<Shell> getList(DatabaseConnection db) throws SQLException {
+    protected List<Shell> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Shell>(),
             objectFactory,

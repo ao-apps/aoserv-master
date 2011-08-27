@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseNetDeviceIDService extends DatabaseService<String,NetDeviceI
     }
 
     @Override
-    protected ArrayList<NetDeviceID> getList(DatabaseConnection db) throws SQLException {
+    protected List<NetDeviceID> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<NetDeviceID>(),
             objectFactory,

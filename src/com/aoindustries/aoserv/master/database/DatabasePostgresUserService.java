@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -28,7 +29,7 @@ final class DatabasePostgresUserService extends DatabaseAOServerResourceService<
     }
 
     @Override
-    protected ArrayList<PostgresUser> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<PostgresUser> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PostgresUser>(),
             objectFactory,
@@ -50,7 +51,7 @@ final class DatabasePostgresUserService extends DatabaseAOServerResourceService<
     }
 
     @Override
-    protected ArrayList<PostgresUser> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<PostgresUser> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PostgresUser>(),
             objectFactory,
@@ -77,7 +78,7 @@ final class DatabasePostgresUserService extends DatabaseAOServerResourceService<
     }
 
     @Override
-    protected ArrayList<PostgresUser> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<PostgresUser> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PostgresUser>(),
             objectFactory,

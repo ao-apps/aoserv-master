@@ -27,7 +27,7 @@ abstract class DatabaseAOServerResourceService<V extends AOServerResource> exten
 
     /* TODO
     @Override
-    protected ArrayList<AOServerResource> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<AOServerResource> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<AOServerResource>(),
             objectFactory,
@@ -43,7 +43,7 @@ abstract class DatabaseAOServerResourceService<V extends AOServerResource> exten
     }
 
     @Override
-    protected ArrayList<AOServerResource> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<AOServerResource> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<AOServerResource>(),
             objectFactory,
@@ -74,7 +74,7 @@ abstract class DatabaseAOServerResourceService<V extends AOServerResource> exten
     }
 
     @Override
-    protected ArrayList<AOServerResource> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<AOServerResource> getListBusiness(DatabaseConnection db) throws SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"

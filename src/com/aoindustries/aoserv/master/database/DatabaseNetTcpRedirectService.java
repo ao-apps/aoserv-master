@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseNetTcpRedirectService extends DatabaseAccountTypeService<Int
     }
 
     @Override
-    protected ArrayList<NetTcpRedirect> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<NetTcpRedirect> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<NetTcpRedirect>(),
             objectFactory,
@@ -33,7 +34,7 @@ final class DatabaseNetTcpRedirectService extends DatabaseAccountTypeService<Int
     }
 
     @Override
-    protected ArrayList<NetTcpRedirect> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<NetTcpRedirect> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<NetTcpRedirect>(),
             objectFactory,
@@ -52,7 +53,7 @@ final class DatabaseNetTcpRedirectService extends DatabaseAccountTypeService<Int
     }
 
     @Override
-    protected ArrayList<NetTcpRedirect> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<NetTcpRedirect> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<NetTcpRedirect>(),
             objectFactory,

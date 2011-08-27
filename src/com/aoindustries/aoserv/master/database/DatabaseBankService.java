@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseBankService extends DatabaseBankAccountingService<String,Ban
     }
 
     @Override
-    protected ArrayList<Bank> getListBankAccounting(DatabaseConnection db) throws SQLException {
+    protected List<Bank> getListBankAccounting(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Bank>(),
             objectFactory,

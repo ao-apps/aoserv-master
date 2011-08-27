@@ -12,6 +12,8 @@ import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -25,7 +27,7 @@ final class DatabasePackageDefinitionBusinessService extends DatabaseAccountType
     }
 
     @Override
-    protected ArrayList<PackageDefinitionBusiness> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<PackageDefinitionBusiness> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PackageDefinitionBusiness>(),
             objectFactory,
@@ -34,12 +36,12 @@ final class DatabasePackageDefinitionBusinessService extends DatabaseAccountType
     }
 
     @Override
-    protected ArrayList<PackageDefinitionBusiness> getListDaemon(DatabaseConnection db) {
-        return new ArrayList<PackageDefinitionBusiness>(0);
+    protected List<PackageDefinitionBusiness> getListDaemon(DatabaseConnection db) {
+        return Collections.emptyList();
     }
 
     @Override
-    protected ArrayList<PackageDefinitionBusiness> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected List<PackageDefinitionBusiness> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PackageDefinitionBusiness>(),
             objectFactory,

@@ -13,6 +13,8 @@ import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -56,7 +58,7 @@ final class DatabaseTicketActionService extends DatabaseAccountTypeService<Integ
     }
 
     @Override
-    protected ArrayList<TicketAction> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<TicketAction> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<TicketAction>(),
             objectFactory,
@@ -86,12 +88,12 @@ final class DatabaseTicketActionService extends DatabaseAccountTypeService<Integ
     }
 
     @Override
-    protected ArrayList<TicketAction> getListDaemon(DatabaseConnection db) {
-        return new ArrayList<TicketAction>(0);
+    protected List<TicketAction> getListDaemon(DatabaseConnection db) {
+        return Collections.emptyList();
     }
 
     @Override
-    protected ArrayList<TicketAction> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected List<TicketAction> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.isTicketAdmin()) {
             // If a ticket admin, can see all ticket_actions
             return db.executeObjectCollectionQuery(

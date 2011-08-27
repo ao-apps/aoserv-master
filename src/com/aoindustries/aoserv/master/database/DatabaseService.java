@@ -19,8 +19,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Currency;
 import java.util.HashSet;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -102,10 +104,10 @@ abstract class DatabaseService<
     @Override
     final public IndexedSet<V> getSet() throws RemoteException {
         try {
-            ArrayList<V> list = connector.factory.database.executeTransaction(
-                new DatabaseCallable<ArrayList<V>>() {
+            List<V> list = connector.factory.database.executeTransaction(
+                new DatabaseCallable<List<V>>() {
                     @Override
-                    public ArrayList<V> call(DatabaseConnection db) throws SQLException {
+                    public List<V> call(DatabaseConnection db) throws SQLException {
                         try {
                             return getList(db);
                         } catch(RemoteException err) {
@@ -114,7 +116,7 @@ abstract class DatabaseService<
                     }
                 }
             );
-            return IndexedSet.wrap(getServiceName(), list);
+            return IndexedSet.wrap(getServiceName(), valueClass, list);
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;
@@ -124,7 +126,7 @@ abstract class DatabaseService<
         }
     }
 
-    abstract protected ArrayList<V> getList(DatabaseConnection db) throws RemoteException, SQLException;
+    abstract protected List<V> getList(DatabaseConnection db) throws RemoteException, SQLException;
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="isEmpty">
@@ -231,8 +233,7 @@ abstract class DatabaseService<
      * @see #getList(db)
      */
     protected V get(DatabaseConnection db, K key) throws RemoteException, SQLException, NoSuchElementException {
-        ArrayList<V> list = getList(db);
-        for(V obj : list) if(obj.getKey().equals(key)) return obj;
+        for(V obj : getList(db)) if(obj.getKey().equals(key)) return obj;
         throw new NoSuchElementException("service="+getServiceName()+", key="+key);
     }
     // </editor-fold>
@@ -270,7 +271,7 @@ abstract class DatabaseService<
      */
     protected V filterUnique(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
         if(value==null) return null;
-        ArrayList<V> list = getList(db);
+        List<V> list = getList(db);
         IndexType indexType = column.getIndexType();
         if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column neither primary key nor unique: "+column);
         Method method = column.getMethod();
@@ -299,10 +300,10 @@ abstract class DatabaseService<
     @Override
     final public IndexedSet<V> filterUniqueSet(final MethodColumn column, final Set<?> values) throws RemoteException {
         try {
-            ArrayList<V> list = connector.factory.database.executeTransaction(
-                new DatabaseCallable<ArrayList<V>>() {
+            List<V> list = connector.factory.database.executeTransaction(
+                new DatabaseCallable<List<V>>() {
                     @Override
-                    public ArrayList<V> call(DatabaseConnection db) throws SQLException {
+                    public List<V> call(DatabaseConnection db) throws SQLException {
                         try {
                             return filterUniqueSet(db, column, values);
                         } catch(RemoteException err) {
@@ -311,7 +312,7 @@ abstract class DatabaseService<
                     }
                 }
             );
-            return IndexedSet.wrap(getServiceName(), list);
+            return IndexedSet.wrap(getServiceName(), valueClass, list);
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;
@@ -327,9 +328,9 @@ abstract class DatabaseService<
      *
      * @see  #getList(db)
      */
-    protected ArrayList<V> filterUniqueSet(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
-        if(values==null || values.isEmpty()) return new ArrayList<V>(0);
-        ArrayList<V> list = getList(db);
+    protected List<V> filterUniqueSet(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
+        if(values==null || values.isEmpty()) return Collections.emptyList();
+        List<V> list = getList(db);
         IndexType indexType = column.getIndexType();
         if(indexType!=IndexType.PRIMARY_KEY && indexType!=IndexType.UNIQUE) throw new IllegalArgumentException("Column neither primary key nor unique: "+column);
         Method method = column.getMethod();
@@ -337,7 +338,7 @@ abstract class DatabaseService<
             boolean assertsEnabled = false;
             assert assertsEnabled = true; // Intentional side effect!!!
             Set<Object> seenValues = assertsEnabled ? new HashSet<Object>(list.size()*4/3+1) : null;
-            ArrayList<V> results = new ArrayList<V>(list.size());
+            List<V> results = new ArrayList<V>(Math.min(list.size(), values.size()));
             for(V obj : list) {
                 Object retVal = method.invoke(obj);
                 if(retVal!=null) {
@@ -358,10 +359,10 @@ abstract class DatabaseService<
     @Override
     final public IndexedSet<V> filterIndexed(final MethodColumn column, final Object value) throws RemoteException {
         try {
-            ArrayList<V> list = connector.factory.database.executeTransaction(
-                new DatabaseCallable<ArrayList<V>>() {
+            List<V> list = connector.factory.database.executeTransaction(
+                new DatabaseCallable<List<V>>() {
                     @Override
-                    public ArrayList<V> call(DatabaseConnection db) throws SQLException {
+                    public List<V> call(DatabaseConnection db) throws SQLException {
                         try {
                             return filterIndexed(db, column, value);
                         } catch(RemoteException err) {
@@ -370,7 +371,7 @@ abstract class DatabaseService<
                     }
                 }
             );
-            return IndexedSet.wrap(getServiceName(), list);
+            return IndexedSet.wrap(getServiceName(), valueClass, list);
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;
@@ -386,14 +387,14 @@ abstract class DatabaseService<
      *
      * @see  #getList(db)
      */
-    protected ArrayList<V> filterIndexed(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
-        if(value==null) return new ArrayList<V>(0);
-        ArrayList<V> list = getList(db);
+    protected List<V> filterIndexed(DatabaseConnection db, MethodColumn column, Object value) throws RemoteException, SQLException {
+        if(value==null) return Collections.emptyList();
+        List<V> list = getList(db);
         if(column.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+column);
         Method method = column.getMethod();
         assert AOServServiceUtils.classesMatch(value.getClass(), method.getReturnType()) : "value class and return type mismatch: "+value.getClass().getName()+"!="+method.getReturnType().getName();
         try {
-            ArrayList<V> results = new ArrayList<V>(list.size());
+            List<V> results = new ArrayList<V>(list.size());
             for(V obj : list) {
                 if(value.equals(method.invoke(obj))) results.add(obj);
             }
@@ -410,10 +411,10 @@ abstract class DatabaseService<
     @Override
     final public IndexedSet<V> filterIndexedSet(final MethodColumn column, final Set<?> values) throws RemoteException, RemoteException {
         try {
-            ArrayList<V> list = connector.factory.database.executeTransaction(
-                new DatabaseCallable<ArrayList<V>>() {
+            List<V> list = connector.factory.database.executeTransaction(
+                new DatabaseCallable<List<V>>() {
                     @Override
-                    public ArrayList<V> call(DatabaseConnection db) throws SQLException {
+                    public List<V> call(DatabaseConnection db) throws SQLException {
                         try {
                             return filterIndexedSet(db, column, values);
                         } catch(RemoteException err) {
@@ -422,7 +423,7 @@ abstract class DatabaseService<
                     }
                 }
             );
-            return IndexedSet.wrap(getServiceName(), list);
+            return IndexedSet.wrap(getServiceName(), valueClass, list);
         } catch(WrappedException err) {
             Throwable cause = err.getCause();
             if(cause instanceof RemoteException) throw (RemoteException)cause;
@@ -438,13 +439,13 @@ abstract class DatabaseService<
      *
      * @see  #getList(db)
      */
-    protected ArrayList<V> filterIndexedSet(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
-        if(values==null || values.isEmpty()) return new ArrayList<V>(0);
-        ArrayList<V> list = getList(db);
+    protected List<V> filterIndexedSet(DatabaseConnection db, MethodColumn column, Set<?> values) throws RemoteException, SQLException {
+        if(values==null || values.isEmpty()) return Collections.emptyList();
+        List<V> list = getList(db);
         if(column.getIndexType()!=IndexType.INDEXED) throw new IllegalArgumentException("Column not indexed: "+column);
         Method method = column.getMethod();
         try {
-            ArrayList<V> results = new ArrayList<V>();
+            List<V> results = new ArrayList<V>(list.size());
             for(V obj : list) {
                 Object retVal = method.invoke(obj);
                 if(retVal!=null && values.contains(retVal)) results.add(obj);

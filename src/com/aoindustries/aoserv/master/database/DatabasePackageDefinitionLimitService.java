@@ -12,6 +12,8 @@ import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -39,7 +41,7 @@ final class DatabasePackageDefinitionLimitService extends DatabaseAccountTypeSer
     }
 
     @Override
-    protected ArrayList<PackageDefinitionLimit> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<PackageDefinitionLimit> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PackageDefinitionLimit>(),
             objectFactory,
@@ -59,8 +61,8 @@ final class DatabasePackageDefinitionLimitService extends DatabaseAccountTypeSer
     }
 
     @Override
-    protected ArrayList<PackageDefinitionLimit> getListDaemon(DatabaseConnection db) {
-        return new ArrayList<PackageDefinitionLimit>(0);
+    protected List<PackageDefinitionLimit> getListDaemon(DatabaseConnection db) {
+        return Collections.emptyList();
         /*
         return db.executeObjectCollectionQuery(
             objectFactory,
@@ -89,7 +91,7 @@ final class DatabasePackageDefinitionLimitService extends DatabaseAccountTypeSer
     }
 
     @Override
-    protected ArrayList<PackageDefinitionLimit> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected List<PackageDefinitionLimit> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.getCanSeePrices()) {
             return db.executeObjectCollectionQuery(
                 new ArrayList<PackageDefinitionLimit>(),

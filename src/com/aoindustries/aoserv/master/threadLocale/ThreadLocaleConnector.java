@@ -21,8 +21,8 @@ import java.util.concurrent.Callable;
  */
 final public class ThreadLocaleConnector extends WrappedConnector<ThreadLocaleConnector,ThreadLocaleConnectorFactory> {
 
-    ThreadLocaleConnector(ThreadLocaleConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) throws RemoteException, LoginException {
-        super(factory, locale, connectAs, authenticateAs, password, daemonServer);
+    ThreadLocaleConnector(ThreadLocaleConnectorFactory factory, Locale locale, UserId username, String password, UserId switchUser, DomainName daemonServer, boolean readOnly) throws RemoteException, LoginException {
+        super(factory, locale, username, password, switchUser, daemonServer, readOnly);
     }
 
     @Override

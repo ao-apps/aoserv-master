@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseFailoverFileScheduleService extends DatabaseAccountTypeServi
     }
 
     @Override
-    protected ArrayList<FailoverFileSchedule> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<FailoverFileSchedule> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FailoverFileSchedule>(),
             objectFactory,
@@ -33,7 +34,7 @@ final class DatabaseFailoverFileScheduleService extends DatabaseAccountTypeServi
     }
 
     @Override
-    protected ArrayList<FailoverFileSchedule> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<FailoverFileSchedule> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FailoverFileSchedule>(),
             objectFactory,
@@ -52,7 +53,7 @@ final class DatabaseFailoverFileScheduleService extends DatabaseAccountTypeServi
     }
 
     @Override
-    protected ArrayList<FailoverFileSchedule> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<FailoverFileSchedule> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FailoverFileSchedule>(),
             objectFactory,

@@ -12,6 +12,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -25,7 +26,7 @@ final class DatabaseDnsTldService extends DatabaseService<DomainName,DnsTld> imp
     }
 
     @Override
-    protected ArrayList<DnsTld> getList(DatabaseConnection db) throws SQLException {
+    protected List<DnsTld> getList(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<DnsTld>(),
             objectFactory,

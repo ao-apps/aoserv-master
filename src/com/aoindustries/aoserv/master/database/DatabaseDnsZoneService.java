@@ -12,6 +12,8 @@ import com.aoindustries.sql.ObjectFactory;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -34,7 +36,7 @@ final class DatabaseDnsZoneService extends DatabaseResourceService<DnsZone> impl
     }
 
     @Override
-    protected ArrayList<DnsZone> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<DnsZone> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<DnsZone>(),
             objectFactory,
@@ -47,7 +49,7 @@ final class DatabaseDnsZoneService extends DatabaseResourceService<DnsZone> impl
     }
 
     @Override
-    protected ArrayList<DnsZone> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException {
+    protected List<DnsZone> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException {
         MasterUser rootMu = connector.factory.getRootConnector().getBusinessAdministrators().get(connector.getSwitchUser()).getMasterUser();
         if(rootMu!=null && rootMu.isActive() && rootMu.isDnsAdmin()) {
             return db.executeObjectCollectionQuery(
@@ -60,12 +62,12 @@ final class DatabaseDnsZoneService extends DatabaseResourceService<DnsZone> impl
                 + "  inner join resources re on dz.resource=re.pkey"
             );
         } else {
-            return new ArrayList<DnsZone>(0);
+            return Collections.emptyList();
         }
     }
 
     @Override
-    protected ArrayList<DnsZone> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<DnsZone> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<DnsZone>(),
             objectFactory,

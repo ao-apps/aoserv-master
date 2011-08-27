@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseLinuxGroupService extends DatabaseAOServerResourceService<Li
     }
 
     @Override
-    protected ArrayList<LinuxGroup> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<LinuxGroup> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<LinuxGroup>(),
             objectFactory,
@@ -42,7 +43,7 @@ final class DatabaseLinuxGroupService extends DatabaseAOServerResourceService<Li
     }
 
     @Override
-    protected ArrayList<LinuxGroup> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<LinuxGroup> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<LinuxGroup>(),
             objectFactory,
@@ -65,7 +66,7 @@ final class DatabaseLinuxGroupService extends DatabaseAOServerResourceService<Li
     }
 
     @Override
-    protected ArrayList<LinuxGroup> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<LinuxGroup> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<LinuxGroup>(),
             objectFactory,

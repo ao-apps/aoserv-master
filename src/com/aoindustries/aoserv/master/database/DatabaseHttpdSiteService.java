@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -24,7 +25,7 @@ final class DatabaseHttpdSiteService extends DatabaseAOServerResourceService<Htt
     }
 
     @Override
-    protected ArrayList<HttpdSite> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<HttpdSite> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<HttpdSite>(),
             objectFactory,
@@ -45,7 +46,7 @@ final class DatabaseHttpdSiteService extends DatabaseAOServerResourceService<Htt
     }
 
     @Override
-    protected ArrayList<HttpdSite> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<HttpdSite> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<HttpdSite>(),
             objectFactory,
@@ -71,7 +72,7 @@ final class DatabaseHttpdSiteService extends DatabaseAOServerResourceService<Htt
     }
 
     @Override
-    protected ArrayList<HttpdSite> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<HttpdSite> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<HttpdSite>(),
             objectFactory,

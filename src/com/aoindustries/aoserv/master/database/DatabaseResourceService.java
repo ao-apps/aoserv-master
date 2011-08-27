@@ -49,7 +49,7 @@ abstract class DatabaseResourceService<V extends Resource> extends DatabaseAccou
 
     /* TODO
     @Override
-    protected ArrayList<Resource> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<Resource> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArraySet<Resource>(),
             objectFactory,
@@ -69,7 +69,7 @@ abstract class DatabaseResourceService<V extends Resource> extends DatabaseAccou
     }
 
     @Override
-    protected ArrayList<Resource> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<Resource> getListDaemon(DatabaseConnection db) throws SQLException {
         StringBuilder sql = new StringBuilder(
             // ao_server_resources
             "select\n"
@@ -137,7 +137,7 @@ abstract class DatabaseResourceService<V extends Resource> extends DatabaseAccou
     }
 
     @Override
-    protected ArrayList<Resource> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<Resource> getListBusiness(DatabaseConnection db) throws SQLException {
         // owns the resource
         StringBuilder sql = new StringBuilder(
             "select\n"

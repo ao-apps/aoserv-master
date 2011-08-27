@@ -11,6 +11,7 @@ import com.aoindustries.sql.ObjectFactory;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -39,7 +40,7 @@ final class DatabaseFailoverFileLogService extends DatabaseAccountTypeService<In
     }
 
     @Override
-    protected ArrayList<FailoverFileLog> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<FailoverFileLog> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FailoverFileLog>(),
             objectFactory,
@@ -58,7 +59,7 @@ final class DatabaseFailoverFileLogService extends DatabaseAccountTypeService<In
     }
 
     @Override
-    protected ArrayList<FailoverFileLog> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<FailoverFileLog> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FailoverFileLog>(),
             objectFactory,
@@ -84,7 +85,7 @@ final class DatabaseFailoverFileLogService extends DatabaseAccountTypeService<In
     }
 
     @Override
-    protected ArrayList<FailoverFileLog> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<FailoverFileLog> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<FailoverFileLog>(),
             objectFactory,

@@ -13,6 +13,7 @@ import java.rmi.RemoteException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -54,7 +55,7 @@ final class DatabaseTicketService extends DatabaseAccountTypeService<Integer,Tic
     }
 
     @Override
-    protected ArrayList<Ticket> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<Ticket> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Ticket>(),
             objectFactory,
@@ -82,7 +83,7 @@ final class DatabaseTicketService extends DatabaseAccountTypeService<Integer,Tic
     }
 
     @Override
-    protected ArrayList<Ticket> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<Ticket> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<Ticket>(),
             objectFactory,
@@ -122,7 +123,7 @@ final class DatabaseTicketService extends DatabaseAccountTypeService<Integer,Tic
     }
 
     @Override
-    protected ArrayList<Ticket> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
+    protected List<Ticket> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
         if(connector.isTicketAdmin()) {
             return db.executeObjectCollectionQuery(
                 new ArrayList<Ticket>(),

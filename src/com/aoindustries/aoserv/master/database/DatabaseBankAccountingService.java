@@ -9,7 +9,8 @@ import com.aoindustries.aoserv.client.*;
 import com.aoindustries.sql.DatabaseConnection;
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A service that only provides rows to master users who have access to bank accounting.
@@ -29,11 +30,11 @@ abstract class DatabaseBankAccountingService<
      * @see  #getPublicList(DatabaseConnection)
      */
     @Override
-    final protected ArrayList<V> getListMaster(DatabaseConnection db) throws SQLException, RemoteException {
+    final protected List<V> getListMaster(DatabaseConnection db) throws SQLException, RemoteException {
         if(connector.factory.getRootConnector().getMasterUsers().get(connector.getSwitchUser()).getCanAccessBankAccount()) {
             return getListBankAccounting(db);
         } else {
-            return new ArrayList<V>(0);
+            return Collections.emptyList();
         }
     }
 
@@ -41,20 +42,20 @@ abstract class DatabaseBankAccountingService<
      * @see  #getPublicList(DatabaseConnection)
      */
     @Override
-    final protected ArrayList<V> getListDaemon(DatabaseConnection db) {
-        return new ArrayList<V>(0);
+    final protected List<V> getListDaemon(DatabaseConnection db) {
+        return Collections.emptyList();
     }
 
     /**
      * @see  #getPublicList(DatabaseConnection)
      */
     @Override
-    final protected ArrayList<V> getListBusiness(DatabaseConnection db) {
-        return new ArrayList<V>(0);
+    final protected List<V> getListBusiness(DatabaseConnection db) {
+        return Collections.emptyList();
     }
 
     /**
      * Called only for those who are master users with bank accounting.
      */
-    abstract protected ArrayList<V> getListBankAccounting(DatabaseConnection db) throws SQLException;
+    abstract protected List<V> getListBankAccounting(DatabaseConnection db) throws SQLException;
 }

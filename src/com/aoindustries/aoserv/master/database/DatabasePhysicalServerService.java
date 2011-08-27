@@ -11,6 +11,7 @@ import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -36,7 +37,7 @@ final class DatabasePhysicalServerService extends DatabaseServerService<Physical
     }
 
     @Override
-    protected ArrayList<PhysicalServer> getListMaster(DatabaseConnection db) throws SQLException {
+    protected List<PhysicalServer> getListMaster(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PhysicalServer>(),
             objectFactory,
@@ -50,7 +51,7 @@ final class DatabasePhysicalServerService extends DatabaseServerService<Physical
     }
 
     @Override
-    protected ArrayList<PhysicalServer> getListDaemon(DatabaseConnection db) throws SQLException {
+    protected List<PhysicalServer> getListDaemon(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PhysicalServer>(),
             objectFactory,
@@ -87,7 +88,7 @@ final class DatabasePhysicalServerService extends DatabaseServerService<Physical
     }
 
     @Override
-    protected ArrayList<PhysicalServer> getListBusiness(DatabaseConnection db) throws SQLException {
+    protected List<PhysicalServer> getListBusiness(DatabaseConnection db) throws SQLException {
         return db.executeObjectCollectionQuery(
             new ArrayList<PhysicalServer>(),
             objectFactory,
