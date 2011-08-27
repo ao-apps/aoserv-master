@@ -79,7 +79,7 @@ final class DatabaseFailoverFileLogService extends DatabaseAccountTypeService<In
             + "  ms.username=?\n"
             + "  and ms.server=ffr.server\n"
             + "  and ffr.pkey=ffl.replication",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -107,7 +107,7 @@ final class DatabaseFailoverFileLogService extends DatabaseAccountTypeService<In
             + "  and un.accounting=bs.accounting\n"
             + "  and bs.server=ffr.server\n"
             + "  and ffr.pkey=ffl.replication",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

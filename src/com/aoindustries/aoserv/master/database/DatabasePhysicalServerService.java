@@ -82,7 +82,7 @@ final class DatabasePhysicalServerService extends DatabaseServerService<Physical
             + "    or bp.ao_server=se.resource\n"
             + "  ) and se.resource=ps.resource\n"
             + "  and ps.resource=re.pkey",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -111,7 +111,7 @@ final class DatabasePhysicalServerService extends DatabaseServerService<Physical
             //+ "    or bp.ao_server=se.resource\n"
             + "  ) and se.resource=ps.resource\n"
             + "  and ps.resource=re.pkey",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

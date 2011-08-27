@@ -62,7 +62,7 @@ final class DatabaseNetDeviceService extends DatabaseAccountTypeService<Integer,
             + "      limit 1\n"
             + "    ) is not null\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -88,7 +88,7 @@ final class DatabaseNetDeviceService extends DatabaseAccountTypeService<Integer,
             + "    bs.server=nd.server\n"
             //+ "    or (bp.ao_server=nd.ao_server and nd.device_id=bpao.daemon_device_id)\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

@@ -30,7 +30,7 @@ abstract class DatabaseBankAccountingService<
      */
     @Override
     final protected ArrayList<V> getListMaster(DatabaseConnection db) throws SQLException, RemoteException {
-        if(connector.factory.rootConnector.getMasterUsers().get(connector.getConnectAs()).getCanAccessBankAccount()) {
+        if(connector.factory.getRootConnector().getMasterUsers().get(connector.getSwitchUser()).getCanAccessBankAccount()) {
             return getListBankAccounting(db);
         } else {
             return new ArrayList<V>(0);

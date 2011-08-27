@@ -54,7 +54,7 @@ final class DatabaseResellerService extends DatabaseAccountTypeService<Accountin
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  ) and bu1.accounting=re.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

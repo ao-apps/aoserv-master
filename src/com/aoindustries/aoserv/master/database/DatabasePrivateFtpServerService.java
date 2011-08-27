@@ -66,7 +66,7 @@ final class DatabasePrivateFtpServerService extends DatabaseAOServerResourceServ
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=pfs.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -97,7 +97,7 @@ final class DatabasePrivateFtpServerService extends DatabaseAOServerResourceServ
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=pfs.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

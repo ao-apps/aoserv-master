@@ -58,7 +58,7 @@ abstract class DatabaseAOServerResourceService<V extends AOServerResource> exten
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=asr.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
     */
@@ -112,7 +112,7 @@ abstract class DatabaseAOServerResourceService<V extends AOServerResource> exten
             new ArrayList<AOServerResource>(),
             objectFactory,
             sql.toString(),
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
      */

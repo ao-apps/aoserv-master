@@ -47,7 +47,7 @@ final class DatabaseFailoverFileScheduleService extends DatabaseAccountTypeServi
             + "  ms.username=?\n"
             + "  and ms.server=ffr.server\n"
             + "  and ffr.pkey=ffs.replication",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -68,7 +68,7 @@ final class DatabaseFailoverFileScheduleService extends DatabaseAccountTypeServi
             + "  and un.accounting=bs.accounting\n"
             + "  and bs.server=ffr.server\n"
             + "  and ffr.pkey=ffs.replication",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

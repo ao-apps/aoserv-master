@@ -92,7 +92,7 @@ final class DatabaseMySQLDBUserService extends DatabaseAccountTypeService<Intege
             + "  ms.username=?\n"
             + "  and ms.server=mys.ao_server\n"
             + "  and mys.ao_server_resource=mdu.mysql_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -136,7 +136,7 @@ final class DatabaseMySQLDBUserService extends DatabaseAccountTypeService<Intege
             + "  )\n"
             + "  and bu1.accounting=asr.accounting\n"
             + "  and asr.resource=mdu.mysql_database",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

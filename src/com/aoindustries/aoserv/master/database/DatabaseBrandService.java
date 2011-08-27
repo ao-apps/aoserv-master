@@ -84,7 +84,7 @@ final class DatabaseBrandService extends DatabaseAccountTypeService<AccountingCo
             + "where\n"
             + "  un.username=?\n"
             + "  and un.accounting=br.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -104,7 +104,7 @@ final class DatabaseBrandService extends DatabaseAccountTypeService<AccountingCo
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  ) and bu1.accounting=br.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

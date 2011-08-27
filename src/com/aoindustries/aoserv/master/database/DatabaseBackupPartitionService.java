@@ -58,7 +58,7 @@ final class DatabaseBackupPartitionService extends DatabaseAccountTypeService<In
             + "      limit 1\n"
             + "    ) is not null\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -90,7 +90,7 @@ final class DatabaseBackupPartitionService extends DatabaseAccountTypeService<In
             //+ "      limit 1\n"
             //+ "    ) is not null\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

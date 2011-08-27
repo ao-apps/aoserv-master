@@ -55,7 +55,7 @@ final class DatabaseFailoverMySQLReplicationService extends DatabaseAccountTypeS
             + "      and ffr.pkey=fmr.replication\n"
             + "    )\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -84,7 +84,7 @@ final class DatabaseFailoverMySQLReplicationService extends DatabaseAccountTypeS
             + "      and ffr.pkey=fmr.replication\n"
             + "    )\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

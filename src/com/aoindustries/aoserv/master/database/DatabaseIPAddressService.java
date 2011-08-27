@@ -92,7 +92,7 @@ final class DatabaseIPAddressService extends DatabaseServerResourceService<IPAdd
             + "      limit 1\n"
             + "    ) is not null\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -186,10 +186,10 @@ final class DatabaseIPAddressService extends DatabaseServerResourceService<IPAdd
             + "      and ao6.server=nd6.ao_server and ao6.daemon_device_id=nd6.device_id\n"
             + "      and nd6.pkey=ia6.net_device and not ia6.is_alias\n"*/
             + "  )",
-            connector.getConnectAs(),
-            connector.getConnectAs(),
-            connector.getConnectAs()//,
-            //connector.getConnectAs()
+            connector.getSwitchUser(),
+            connector.getSwitchUser(),
+            connector.getSwitchUser()//,
+            //connector.getSwitchUser()
         );
     }
 }

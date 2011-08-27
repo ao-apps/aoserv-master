@@ -83,7 +83,7 @@ abstract class DatabaseServerResourceService<V extends ServerResource> extends D
             new ArrayList<ServerResource>(),
             objectFactory,
             sql.toString(),
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
     */
@@ -134,7 +134,7 @@ abstract class DatabaseServerResourceService<V extends ServerResource> extends D
             new ArrayList<ServerResource>(),
             objectFactory,
             sql.toString(),
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
      */

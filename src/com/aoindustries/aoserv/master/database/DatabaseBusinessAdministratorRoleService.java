@@ -46,7 +46,7 @@ final class DatabaseBusinessAdministratorRoleService extends DatabaseAccountType
             + "  business_administrator_roles\n"
             + "where\n"
             + "  username=?",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -70,7 +70,7 @@ final class DatabaseBusinessAdministratorRoleService extends DatabaseAccountType
             + "  )\n"
             + "  and bu1.accounting=ba.accounting\n"
             + "  and ba.username=bar.username",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

@@ -68,7 +68,7 @@ final class DatabasePostgresDatabaseService extends DatabaseAOServerResourceServ
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=pd.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -98,7 +98,7 @@ final class DatabasePostgresDatabaseService extends DatabaseAOServerResourceServ
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

@@ -75,7 +75,7 @@ final class DatabaseBusinessServerService extends DatabaseAccountTypeService<Int
             new ArrayList<BusinessServer>(),
             objectFactory,
             sql.toString(),
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -138,7 +138,7 @@ final class DatabaseBusinessServerService extends DatabaseAccountTypeService<Int
             new ArrayList<BusinessServer>(),
             objectFactory,
             sql.toString(),
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

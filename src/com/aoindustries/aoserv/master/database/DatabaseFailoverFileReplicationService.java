@@ -45,7 +45,7 @@ final class DatabaseFailoverFileReplicationService extends DatabaseAccountTypeSe
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=ffr.server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -64,7 +64,7 @@ final class DatabaseFailoverFileReplicationService extends DatabaseAccountTypeSe
             + "  un.username=?\n"
             + "  and un.accounting=bs.accounting\n"
             + "  and bs.server=ffr.server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

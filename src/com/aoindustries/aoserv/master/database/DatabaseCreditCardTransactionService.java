@@ -120,7 +120,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseAccountTypeServ
 
     @Override
     protected ArrayList<CreditCardTransaction> getListMaster(DatabaseConnection db) throws RemoteException, SQLException {
-        if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
+        if(connector.hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
             return db.executeObjectCollectionQuery(
                 new ArrayList<CreditCardTransaction>(),
                 objectFactory,
@@ -223,7 +223,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseAccountTypeServ
 
     @Override
     protected ArrayList<CreditCardTransaction> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
-        if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
+        if(connector.hasPermission(AOServPermission.Permission.get_credit_card_transactions)) {
             return db.executeObjectCollectionQuery(
                 new ArrayList<CreditCardTransaction>(),
                 objectFactory,
@@ -321,7 +321,7 @@ final class DatabaseCreditCardTransactionService extends DatabaseAccountTypeServ
                 + UN_BU1_PARENTS_WHERE
                 + "  )\n"
                 + "  and bu1.accounting=cct.accounting",
-                connector.getConnectAs()
+                connector.getSwitchUser()
             );
         } else {
             return new ArrayList<CreditCardTransaction>(0);

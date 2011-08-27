@@ -131,8 +131,8 @@ abstract class DatabaseResourceService<V extends Resource> extends DatabaseAccou
             new ArraySet<Resource>(),
             objectFactory,
             sql.toString(),
-            connector.getConnectAs(),
-            connector.getConnectAs()
+            connector.getSwitchUser(),
+            connector.getSwitchUser()
         );
     }
 
@@ -185,7 +185,7 @@ abstract class DatabaseResourceService<V extends Resource> extends DatabaseAccou
             new ArraySet<Resource>(),
             objectFactory,
             sql.toString(),
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
      */

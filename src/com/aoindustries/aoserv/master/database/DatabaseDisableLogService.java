@@ -80,7 +80,7 @@ final class DatabaseDisableLogService extends DatabaseAccountTypeService<Integer
             + "    ao.server=bs.server\n"
             + "    or ff.server=bs.server\n"
             + "  ) and bs.accounting=dl.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -105,7 +105,7 @@ final class DatabaseDisableLogService extends DatabaseAccountTypeService<Integer
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=dl.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

@@ -84,7 +84,7 @@ final class DatabaseNetBindService extends DatabaseAccountTypeService<Integer,Ne
             + "    ) is not null\n"
             + "  )",
             AOServObject.FILTERED,
-            connector.getConnectAs(),
+            connector.getSwitchUser(),
             Protocol.AOSERV_DAEMON,
             Protocol.AOSERV_DAEMON_SSL
         );
@@ -183,10 +183,10 @@ final class DatabaseNetBindService extends DatabaseAccountTypeService<Integer,Ne
             + "      )\n"*/
             + "  )",
             AOServObject.FILTERED,
-            connector.getConnectAs(),
-            connector.getConnectAs(),
-            connector.getConnectAs(),
-            connector.getConnectAs()//,
+            connector.getSwitchUser(),
+            connector.getSwitchUser(),
+            connector.getSwitchUser(),
+            connector.getSwitchUser()//,
             //username
         );
     }

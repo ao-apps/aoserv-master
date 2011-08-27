@@ -82,7 +82,7 @@ final class DatabaseLinuxAccountService extends DatabaseAOServerResourceService<
             + "    ms.server=la.ao_server\n"
             + "    or ff.server=la.ao_server\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -117,7 +117,7 @@ final class DatabaseLinuxAccountService extends DatabaseAOServerResourceService<
             + "  )\n"
             + "  and bu1.accounting=la.accounting",
             AOServObject.FILTERED,
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
     // </editor-fold>
@@ -125,8 +125,8 @@ final class DatabaseLinuxAccountService extends DatabaseAOServerResourceService<
     // <editor-fold defaultstate="collapsed" desc="Commands">
     void setLinuxAccountPassword(DatabaseConnection db, InvalidateSet invalidateSet, int linuxAccount, String plaintext) throws RemoteException, SQLException {
         try {
-            LinuxAccount la = connector.factory.rootConnector.getLinuxAccounts().get(linuxAccount);
-            DaemonHandler.getDaemonConnector(la.getAoServer()).setLinuxAccountPassword(la.getUserId(), plaintext);
+            LinuxAccount rootLinuxAccount = connector.factory.getRootConnector().getLinuxAccounts().get(linuxAccount);
+            DaemonHandler.getDaemonConnector(rootLinuxAccount.getAoServer()).setLinuxAccountPassword(rootLinuxAccount.getUserId(), plaintext);
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         }

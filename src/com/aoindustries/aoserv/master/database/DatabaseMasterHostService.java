@@ -49,7 +49,7 @@ final class DatabaseMasterHostService extends DatabaseAccountTypeService<Integer
             + "  and ms.server=bs.server\n"
             + "  and bs.accounting=un.accounting\n"
             + "  and un.username=mh.username",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -73,7 +73,7 @@ final class DatabaseMasterHostService extends DatabaseAccountTypeService<Integer
             + "  )\n"
             + "  and bu1.accounting=un2.accounting\n"
             + "  and un2.username=mh.username",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

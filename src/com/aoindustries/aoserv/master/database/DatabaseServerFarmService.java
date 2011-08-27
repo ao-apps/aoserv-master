@@ -65,7 +65,7 @@ final class DatabaseServerFarmService extends DatabaseResourceService<ServerFarm
             + "    se.farm=sf.name\n"
             + "    or fs.farm=sf.name\n"
             + "  ) and sf.resource=re.pkey",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -91,7 +91,7 @@ final class DatabaseServerFarmService extends DatabaseResourceService<ServerFarm
             + "      and se.farm=sf.name\n"
             + "    ) or un.accounting=re.accounting\n"
             + "  ) and sf.resource=re.pkey",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

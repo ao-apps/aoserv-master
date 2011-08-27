@@ -47,7 +47,7 @@ final class DatabaseAOServRolePermissionService extends DatabaseAccountTypeServi
             + "  inner join aoserv_role_permissions arp on bar.role=arp.role\n"
             + "where\n"
             + "  bar.username=?",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -91,8 +91,8 @@ final class DatabaseAOServRolePermissionService extends DatabaseAccountTypeServi
             + "  and bu1.accounting=ba.accounting\n"
             + "  and ba.username=bar.username\n"
             + "  and bar.role=arp.role",
-            connector.getConnectAs(),
-            connector.getConnectAs()
+            connector.getSwitchUser(),
+            connector.getSwitchUser()
         );
     }
 }

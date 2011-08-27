@@ -66,7 +66,7 @@ final class DatabaseHttpdSiteService extends DatabaseAOServerResourceService<Htt
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=hs.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -96,7 +96,7 @@ final class DatabaseHttpdSiteService extends DatabaseAOServerResourceService<Htt
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=hs.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

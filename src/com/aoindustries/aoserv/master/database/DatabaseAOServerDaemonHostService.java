@@ -45,7 +45,7 @@ final class DatabaseAOServerDaemonHostService extends DatabaseAccountTypeService
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=sdh.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 

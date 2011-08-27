@@ -68,7 +68,7 @@ final class DatabasePostgresServerService extends DatabaseAOServerResourceServic
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=ps.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -96,7 +96,7 @@ final class DatabasePostgresServerService extends DatabaseAOServerResourceServic
             + "  un.username=?\n"
             + "  and un.accounting=bs.accounting\n"
             + "  and bs.server=ps.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

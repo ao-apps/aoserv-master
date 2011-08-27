@@ -130,7 +130,7 @@ final class DatabaseMySQLUserService extends DatabaseAOServerResourceService<MyS
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=mu.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -191,7 +191,7 @@ final class DatabaseMySQLUserService extends DatabaseAOServerResourceService<MyS
             + "  )\n"
             + "  and bu1.accounting=mu.accounting",
             AOServObject.FILTERED,
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
     // </editor-fold>
@@ -199,8 +199,8 @@ final class DatabaseMySQLUserService extends DatabaseAOServerResourceService<MyS
     // <editor-fold defaultstate="collapsed" desc="Commands">
     void setMySQLUserPassword(DatabaseConnection db, InvalidateSet invalidateSet, int mysqlUser, String plaintext) throws RemoteException, SQLException {
         try {
-            MySQLUser mu = connector.factory.rootConnector.getMysqlUsers().get(mysqlUser);
-            DaemonHandler.getDaemonConnector(mu.getAoServer()).setMySQLUserPassword(mysqlUser, plaintext);
+            MySQLUser rootMu = connector.factory.getRootConnector().getMysqlUsers().get(mysqlUser);
+            DaemonHandler.getDaemonConnector(rootMu.getAoServer()).setMySQLUserPassword(mysqlUser, plaintext);
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         }

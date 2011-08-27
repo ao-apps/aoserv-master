@@ -62,7 +62,7 @@ final class DatabaseMySQLServerService extends DatabaseAOServerResourceService<M
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=mys.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -87,7 +87,7 @@ final class DatabaseMySQLServerService extends DatabaseAOServerResourceService<M
             + "  un.username=?\n"
             + "  and un.accounting=bs.accounting\n"
             + "  and bs.server=ms.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

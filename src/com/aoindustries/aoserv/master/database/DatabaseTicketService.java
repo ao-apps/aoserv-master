@@ -113,7 +113,7 @@ final class DatabaseTicketService extends DatabaseAccountTypeService<Integer,Tic
             + "  and un.accounting=ti.accounting\n"
             + "  and ti.status in (?,?,?)\n"
             + "  and ti.ticket_type=?",
-            connector.getConnectAs(),
+            connector.getSwitchUser(),
             TicketStatus.OPEN,
             TicketStatus.HOLD,
             TicketStatus.BOUNCED,
@@ -123,7 +123,7 @@ final class DatabaseTicketService extends DatabaseAccountTypeService<Integer,Tic
 
     @Override
     protected ArrayList<Ticket> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
-        if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
+        if(connector.isTicketAdmin()) {
             return db.executeObjectCollectionQuery(
                 new ArrayList<Ticket>(),
                 objectFactory,
@@ -159,7 +159,7 @@ final class DatabaseTicketService extends DatabaseAccountTypeService<Integer,Tic
                 + "    or bu1.accounting=ti.brand\n" // Has access to brand
                 + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
                 + "  )",
-                connector.getConnectAs()
+                connector.getSwitchUser()
             );
         } else {
             return db.executeObjectCollectionQuery(
@@ -194,7 +194,7 @@ final class DatabaseTicketService extends DatabaseAccountTypeService<Integer,Tic
                 + "  )\n"
                 + "  and bu1.accounting=ti.accounting\n"
                 + "  and ti.status not in ('junk', 'deleted')",
-                connector.getConnectAs()
+                connector.getSwitchUser()
             );
         }
     }

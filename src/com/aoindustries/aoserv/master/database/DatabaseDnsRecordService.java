@@ -76,8 +76,8 @@ final class DatabaseDnsRecordService extends DatabaseResourceService<DnsRecord> 
 
     @Override
     protected ArrayList<DnsRecord> getListDaemon(DatabaseConnection db) throws RemoteException, SQLException {
-        MasterUser mu = connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getMasterUser();
-        if(mu!=null && mu.isActive() && mu.isDnsAdmin()) {
+        MasterUser rootMu = connector.factory.getRootConnector().getBusinessAdministrators().get(connector.getSwitchUser()).getMasterUser();
+        if(rootMu!=null && rootMu.isActive() && rootMu.isDnsAdmin()) {
             return db.executeObjectCollectionQuery(
                 new ArrayList<DnsRecord>(),
                 objectFactory,
@@ -128,7 +128,7 @@ final class DatabaseDnsRecordService extends DatabaseResourceService<DnsRecord> 
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=dr.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

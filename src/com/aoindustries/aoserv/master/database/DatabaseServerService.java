@@ -67,7 +67,7 @@ abstract class DatabaseServerService<V extends Server> extends DatabaseResourceS
             // Allow servers it replicates to
             + "    or bp.ao_server=se.resource\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -93,7 +93,7 @@ abstract class DatabaseServerService<V extends Server> extends DatabaseResourceS
             // Allow servers it replicates to
             //+ "    or bp.ao_server=se.resource\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
      */

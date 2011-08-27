@@ -51,7 +51,7 @@ final class DatabaseGroupNameService extends DatabaseAccountTypeService<GroupId,
             + "    ms.server=bs.server\n"
             + "    or ff.server=bs.server\n"
             + "  ) and bs.accounting=gn.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -77,7 +77,7 @@ final class DatabaseGroupNameService extends DatabaseAccountTypeService<GroupId,
             + "  group_names gn\n"
             + "where\n"
             + "  gn.group_name=?",
-            connector.getConnectAs(),
+            connector.getSwitchUser(),
             LinuxGroup.MAILONLY
         );
     }

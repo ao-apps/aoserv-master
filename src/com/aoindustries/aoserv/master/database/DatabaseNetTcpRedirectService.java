@@ -47,7 +47,7 @@ final class DatabaseNetTcpRedirectService extends DatabaseAccountTypeService<Int
             + "  ms.username=?\n"
             + "  and ms.server=nb.server\n"
             + "  and nb.pkey=ntr.net_bind",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -70,7 +70,7 @@ final class DatabaseNetTcpRedirectService extends DatabaseAccountTypeService<Int
             + "  )\n"
             + "  and bu1.accounting=nb.accounting\n"
             + "  and nb.pkey=ntr.net_bind",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

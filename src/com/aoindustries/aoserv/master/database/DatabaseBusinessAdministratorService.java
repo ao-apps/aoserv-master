@@ -131,7 +131,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseAccountTypeServ
             + "  ms.username=?\n"
             + "  and ms.server=bs.server\n"
             + "  and bs.accounting=ba.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -174,7 +174,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseAccountTypeServ
             + UN1_BU1_PARENTS_OR_WHERE
             + "  )\n"
             + "  and bu1.accounting=ba.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
     // </editor-fold>
@@ -186,7 +186,7 @@ final class DatabaseBusinessAdministratorService extends DatabaseAccountTypeServ
             ? HashedPassword.NO_PASSWORD
             : HashedPassword.hash(plaintext)
         ;
-        AccountingCode accounting = connector.factory.rootConnector.getUsernames().get(username).getBusiness().getAccounting();
+        AccountingCode accounting = connector.factory.getRootConnector().getUsernames().get(username).getBusiness().getAccounting();
         db.executeUpdate("update business_administrators set password=? where username=?", hashed, username);
 
         // Notify all clients of the update

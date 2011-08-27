@@ -60,7 +60,7 @@ final class DatabaseLinuxGroupService extends DatabaseAOServerResourceService<Li
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=lg.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -103,8 +103,8 @@ final class DatabaseLinuxGroupService extends DatabaseAOServerResourceService<Li
             + "where\n"
             + "  un.username=?\n"
             + "  and lg.group_name=?",
-            connector.getConnectAs(),
-            connector.getConnectAs(),
+            connector.getSwitchUser(),
+            connector.getSwitchUser(),
             LinuxGroup.MAILONLY
         );
     }

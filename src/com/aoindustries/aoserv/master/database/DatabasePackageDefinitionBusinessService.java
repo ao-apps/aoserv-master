@@ -60,7 +60,7 @@ final class DatabasePackageDefinitionBusinessService extends DatabaseAccountType
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=pdb.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

@@ -70,7 +70,7 @@ final class DatabaseEmailInboxService extends DatabaseAccountTypeService<Integer
             + "  ms.username=?\n"
             + "  and ms.server=la.ao_server\n"
             + "  and la.ao_server_resource=ei.linux_account",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -103,7 +103,7 @@ final class DatabaseEmailInboxService extends DatabaseAccountTypeService<Integer
             + "  )\n"
             + "  and bu1.accounting=la.accounting\n"
             + "  and la.ao_server_resource=ei.linux_account",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

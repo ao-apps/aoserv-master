@@ -93,7 +93,7 @@ final class DatabaseBusinessService extends DatabaseAccountTypeService<Accountin
             + "  ms.username=?\n"
             + "  and ms.server=bs.server\n"
             + "  and bs.accounting=bu.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -132,7 +132,7 @@ final class DatabaseBusinessService extends DatabaseAccountTypeService<Accountin
             + "  and (\n"
             + UN_BU1_PARENTS_WHERE
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
     // </editor-fold>

@@ -91,7 +91,7 @@ final class DatabaseVirtualServerService extends DatabaseServerService<VirtualSe
             + "    or bp.ao_server=se.resource\n"
             + "  ) and se.resource=vs.resource\n"
             + "  and vs.resource=re.pkey",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -129,7 +129,7 @@ final class DatabaseVirtualServerService extends DatabaseServerService<VirtualSe
             + "  ) and se.resource=vs.resource\n"
             + "  and vs.resource=re.pkey",
             AOServObject.FILTERED,
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

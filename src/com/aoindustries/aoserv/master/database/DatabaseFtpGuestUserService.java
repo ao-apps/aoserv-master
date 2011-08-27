@@ -47,7 +47,7 @@ final class DatabaseFtpGuestUserService extends DatabaseAccountTypeService<Integ
             + "  ms.username=?\n"
             + "  and ms.server=la.ao_server\n"
             + "  and la.ao_server_resource=fgu.linux_account",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -70,7 +70,7 @@ final class DatabaseFtpGuestUserService extends DatabaseAccountTypeService<Integ
             + "  )\n"
             + "  and bu1.accounting=la.accounting\n"
             + "  and la.ao_server_resource=fgu.linux_account",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

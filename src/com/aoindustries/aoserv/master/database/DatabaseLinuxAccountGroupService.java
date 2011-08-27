@@ -52,7 +52,7 @@ final class DatabaseLinuxAccountGroupService extends DatabaseAccountTypeService<
             + "    ms.server=lag.ao_server\n"
             + "    or ff.server=lag.ao_server\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -97,8 +97,8 @@ final class DatabaseLinuxAccountGroupService extends DatabaseAccountTypeService<
             + "      )\n"
             + "      and bu1.accounting=lg.accounting\n"
             + "  )",
-            connector.getConnectAs(),
-            connector.getConnectAs()
+            connector.getSwitchUser(),
+            connector.getSwitchUser()
         );
     }
 }

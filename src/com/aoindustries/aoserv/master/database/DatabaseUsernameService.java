@@ -53,7 +53,7 @@ final class DatabaseUsernameService extends DatabaseAccountTypeService<UserId,Us
             + "    ms.server=bs.server\n"
             + "    or ff.server=bs.server\n"
             + "  ) and bs.accounting=un.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -75,7 +75,7 @@ final class DatabaseUsernameService extends DatabaseAccountTypeService<UserId,Us
             + UN1_BU1_PARENTS_OR_WHERE
             + "  )\n"
             + "  and bu1.accounting=un2.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
     // </editor-fold>
@@ -83,10 +83,10 @@ final class DatabaseUsernameService extends DatabaseAccountTypeService<UserId,Us
     // <editor-fold defaultstate="collapsed" desc="Commands">
     void setUsernamePassword(DatabaseConnection db, InvalidateSet invalidateSet, UserId username, String plaintext, boolean isInteractive) throws RemoteException, SQLException {
         // Cascade to specific account types
-        Username un = connector.factory.rootConnector.getUsernames().get(username);
-        for(AOServObject<?> dependent : un.getDependentObjects()) {
-            if(dependent instanceof PasswordProtected) {
-                ((PasswordProtected)dependent).getSetPasswordCommand(plaintext).execute(connector, isInteractive);
+        Username rootUn = connector.factory.getRootConnector().getUsernames().get(username);
+        for(AOServObject<?> rootDependent : rootUn.getDependentObjects()) {
+            if(rootDependent instanceof PasswordProtected) {
+                ((PasswordProtected)rootDependent).getSetPasswordCommand(plaintext).execute(connector, isInteractive);
             }
         }
     }

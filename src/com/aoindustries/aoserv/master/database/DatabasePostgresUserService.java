@@ -72,7 +72,7 @@ final class DatabasePostgresUserService extends DatabaseAOServerResourceService<
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=pu.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -104,7 +104,7 @@ final class DatabasePostgresUserService extends DatabaseAOServerResourceService<
             + "  )\n"
             + "  and bu1.accounting=pu.accounting",
             AOServObject.FILTERED,
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
     // </editor-fold>
@@ -112,8 +112,8 @@ final class DatabasePostgresUserService extends DatabaseAOServerResourceService<
     // <editor-fold defaultstate="collapsed" desc="Commands">
     void setPostgresUserPassword(DatabaseConnection db, InvalidateSet invalidateSet, int postgresUser, String plaintext) throws RemoteException, SQLException {
         try {
-            PostgresUser mu = connector.factory.rootConnector.getPostgresUsers().get(postgresUser);
-            DaemonHandler.getDaemonConnector(mu.getAoServer()).setPostgresUserPassword(postgresUser, plaintext);
+            PostgresUser rootPu = connector.factory.getRootConnector().getPostgresUsers().get(postgresUser);
+            DaemonHandler.getDaemonConnector(rootPu.getAoServer()).setPostgresUserPassword(postgresUser, plaintext);
         } catch(IOException err) {
             throw new RemoteException(err.getMessage(), err);
         }

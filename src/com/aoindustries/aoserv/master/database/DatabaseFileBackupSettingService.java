@@ -47,7 +47,7 @@ final class DatabaseFileBackupSettingService extends DatabaseAccountTypeService<
             + "  ms.username=?\n"
             + "  and ms.server=ffr.server\n"
             + "  and ffr.pkey=fbs.replication",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -72,7 +72,7 @@ final class DatabaseFileBackupSettingService extends DatabaseAccountTypeService<
             + "  and bu1.accounting=se.accounting\n"
             + "  and se.resource=ffr.server\n"
             + "  and ffr.pkey=fbs.replication",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

@@ -45,7 +45,7 @@ final class DatabaseMasterServerService extends DatabaseAccountTypeService<Integ
             + "where\n"
             + "  ms1.username=?\n"
             + "  and ms1.server=ms2.server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -69,7 +69,7 @@ final class DatabaseMasterServerService extends DatabaseAccountTypeService<Integ
             + "  )\n"
             + "  and bu1.accounting=un2.accounting\n"
             + "  and un2.username=ms.username",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

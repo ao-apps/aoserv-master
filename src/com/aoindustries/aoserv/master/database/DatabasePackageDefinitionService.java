@@ -66,13 +66,13 @@ final class DatabasePackageDefinitionService extends DatabaseAccountTypeService<
             + "  and ms.server=bs.server\n"
             + "  and bs.accounting=bu.accounting\n"
             + "  and bu.package_definition=pd.pkey",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
     @Override
     protected ArrayList<PackageDefinition> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
-        if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).getUsername().getBusiness().getCanSeePrices()) {
+        if(connector.getCanSeePrices()) {
             return db.executeObjectCollectionQuery(
                 new ArrayList<PackageDefinition>(),
                 objectFactory,
@@ -93,7 +93,7 @@ final class DatabasePackageDefinitionService extends DatabaseAccountTypeService<
                 + "    bu1.package_definition=pd.pkey\n"
                 + "    or pdb.package_definition=pd.pkey\n"
                 + "  )",
-                connector.getConnectAs()
+                connector.getSwitchUser()
             );
         } else {
             return db.executeObjectCollectionQuery(
@@ -125,7 +125,7 @@ final class DatabasePackageDefinitionService extends DatabaseAccountTypeService<
                 + "    bu1.package_definition=pd.pkey\n"
                 + "    or pdb.package_definition=pd.pkey\n"
                 + "  )",
-                connector.getConnectAs()
+                connector.getSwitchUser()
             );
         }
     }

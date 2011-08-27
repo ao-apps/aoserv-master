@@ -34,11 +34,12 @@ final public class DatabaseConnector extends AbstractConnector {
 
     final DatabaseConnectorFactory factory;
 
-    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId connectAs, UserId authenticateAs, String password, DomainName daemonServer) {
-        super(locale, connectAs, authenticateAs, password, daemonServer);
+    DatabaseConnector(DatabaseConnectorFactory factory, Locale locale, UserId username, String password, UserId switchUser, DomainName daemonServer, boolean readOnly) {
+        super(locale, username, password, switchUser, daemonServer, readOnly);
         this.factory = factory;
     }
 
+    // <editor-fold defaultstate="collapsed" desc="Security">
     enum AccountType {
         MASTER,
         DAEMON,
@@ -47,15 +48,42 @@ final public class DatabaseConnector extends AbstractConnector {
     };
 
     /**
-     * Determines the type of account logged-in based on the connectAs value.  This controls filtering and access.
+     * Determines the type of account logged-in based on the switchUser value.  This controls filtering and access.
      */
     AccountType getAccountType(DatabaseConnection db) throws SQLException {
-        UserId connectAs = getConnectAs();
-        if(factory.isEnabledMasterUser(db, connectAs)) return AccountType.MASTER;
-        if(factory.isEnabledDaemonUser(db, connectAs)) return AccountType.DAEMON;
-        if(factory.isEnabledBusinessAdministrator(db, connectAs)) return AccountType.BUSINESS;
+        UserId switchUser = getSwitchUser();
+        if(factory.isEnabledMasterUser(db, switchUser)) return AccountType.MASTER;
+        if(factory.isEnabledDaemonUser(db, switchUser)) return AccountType.DAEMON;
+        if(factory.isEnabledBusinessAdministrator(db, switchUser)) return AccountType.BUSINESS;
         return AccountType.DISABLED;
     }
+
+    /**
+     * Determines if the logged-in user has the specified permission.  This is based on the switchUser value
+     * of this connection, but checked with the root connector for performance.
+     *
+     * @see BusinessAdministrator#hasPermission(com.aoindustries.aoserv.client.AOServPermission.Permission)
+     */
+    boolean hasPermission(AOServPermission.Permission permission) throws RemoteException {
+        return factory.getRootConnector().getBusinessAdministrators().get(getSwitchUser()).hasPermission(permission);
+    }
+
+    /**
+     * Determines if the logged-in user is a ticket admin.  This is based on the switchUser value
+     * of this connection, but checked with the root connector for performance.
+     */
+    boolean isTicketAdmin() throws RemoteException {
+        return factory.getRootConnector().getBusinessAdministrators().get(getSwitchUser()).isTicketAdmin();
+    }
+
+    /**
+     * Determines if the logged-in user can see prices.  This is based on the switchUser value
+     * of this connection, but checked with the root connector for performance.
+     */
+    boolean getCanSeePrices() throws RemoteException {
+        return factory.getRootConnector().getBusinessAdministrators().get(getSwitchUser()).getUsername().getBusiness().getCanSeePrices();
+    }
+    // </editor-fold>
 
     @Override
     public DatabaseConnectorFactory getFactory() {
@@ -63,12 +91,12 @@ final public class DatabaseConnector extends AbstractConnector {
     }
 
     @Override
-    public <R> CommandResult<R> executeCommand(final RemoteCommand<R> remoteCommand, final boolean isInteractive) throws RemoteException {
+    public <R> CommandResult<R> execute(final RemoteCommand<R> remoteCommand, final boolean isInteractive) throws RemoteException {
         try {
             // Make sure not accidentally running command on root user
             if(
-                getAuthenticateAs().equals(factory.rootConnector.getAuthenticateAs())
-                || getConnectAs().equals(factory.rootConnector.getConnectAs())
+                getUsername().equals(factory.rootUserId)
+                || getSwitchUser().equals(factory.rootUserId)
             ) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnector.executeCommand.refusingRootConnector", remoteCommand.getCommandName()));
 
             final InvalidateSet invalidateSet = InvalidateSet.getInstance();
@@ -79,16 +107,17 @@ final public class DatabaseConnector extends AbstractConnector {
                         public R call(DatabaseConnection db) throws SQLException {
                             try {
                                 // Make sure current user is enabled
-                                if(!factory.isEnabledBusinessAdministrator(db, getAuthenticateAs())) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
-                                if(!factory.isEnabledBusinessAdministrator(db, getConnectAs())) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
+                                if(!factory.isEnabledBusinessAdministrator(db, getUsername())) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
+                                if(!factory.isEnabledBusinessAdministrator(db, getSwitchUser())) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnectorFactory.createConnector.accountDisabled"));
 
                                 // Check permissions using root connector
                                 Set<AOServPermission.Permission> permissions = remoteCommand.getCommandName().getPermissions();
-                                BusinessAdministrator rootBa = factory.rootConnector.getBusinessAdministrators().get(getConnectAs());
+                                AOServConnector rootConnector = factory.getRootConnector();
+                                BusinessAdministrator rootBa = rootConnector.getBusinessAdministrators().get(getSwitchUser());
                                 if(!rootBa.hasPermissions(permissions)) throw new RemoteException(ApplicationResources.accessor.getMessage("DatabaseConnector.executeCommand.permissionDenied", remoteCommand.getCommandName()));
 
                                 // Validate command using root connector
-                                Map<String,List<String>> errors = remoteCommand.validate(factory.rootConnector);
+                                Map<String,List<String>> errors = remoteCommand.validate(rootBa);
                                 if(!errors.isEmpty()) throw new CommandValidationException(remoteCommand, errors);
 
                                 // Execute command using this connector

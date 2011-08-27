@@ -47,7 +47,7 @@ final class DatabaseAOServRoleService extends DatabaseAccountTypeService<Integer
             + "  inner join aoserv_roles ar on bar.role=ar.pkey\n"
             + "where\n"
             + "  bar.username=?",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -90,8 +90,8 @@ final class DatabaseAOServRoleService extends DatabaseAccountTypeService<Integer
             + "  and bu1.accounting=ba.accounting\n"
             + "  and ba.username=bar.username\n"
             + "  and bar.role=ar.pkey",
-            connector.getConnectAs(),
-            connector.getConnectAs()
+            connector.getSwitchUser(),
+            connector.getSwitchUser()
         );
     }
 }

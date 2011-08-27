@@ -121,7 +121,7 @@ final class DatabaseCreditCardService extends DatabaseAccountTypeService<Integer
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=cc.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

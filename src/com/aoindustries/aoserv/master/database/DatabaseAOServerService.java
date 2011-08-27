@@ -101,7 +101,7 @@ final class DatabaseAOServerService extends DatabaseAccountTypeService<Integer,A
             // Allow servers it replicates to
             + "    or bp.ao_server=ao2.server\n"
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -146,7 +146,7 @@ final class DatabaseAOServerService extends DatabaseAccountTypeService<Integer,A
             //+ "    or bp.ao_server=ao.server\n"
             + "  )",
             AOServObject.FILTERED,
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

@@ -108,7 +108,7 @@ final class DatabaseTransactionService extends DatabaseAccountTypeService<Intege
             + UN1_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=tr.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

@@ -86,7 +86,7 @@ final class DatabaseBusinessProfileService extends DatabaseAccountTypeService<In
             + "  ms.username=?\n"
             + "  and ms.server=bs.server\n"
             + "  and bs.accounting=bp.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -125,7 +125,7 @@ final class DatabaseBusinessProfileService extends DatabaseAccountTypeService<In
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=bp.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

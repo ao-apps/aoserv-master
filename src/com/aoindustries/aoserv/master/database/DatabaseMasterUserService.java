@@ -50,7 +50,7 @@ final class DatabaseMasterUserService extends DatabaseAccountTypeService<UserId,
             + "  and ms.server=bs.server\n"
             + "  and bs.accounting=un.accounting\n"
             + "  and un.username=mu.username",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -74,7 +74,7 @@ final class DatabaseMasterUserService extends DatabaseAccountTypeService<UserId,
             + "  )\n"
             + "  and bu1.accounting=un2.accounting\n"
             + "  and un2.username=mu.username",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

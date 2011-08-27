@@ -92,7 +92,7 @@ final class DatabaseTicketActionService extends DatabaseAccountTypeService<Integ
 
     @Override
     protected ArrayList<TicketAction> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
-        if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
+        if(connector.isTicketAdmin()) {
             // If a ticket admin, can see all ticket_actions
             return db.executeObjectCollectionQuery(
                 new ArrayList<TicketAction>(),
@@ -133,7 +133,7 @@ final class DatabaseTicketActionService extends DatabaseAccountTypeService<Integ
                 + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
                 + "  )\n"
                 + "  and ti.ticket_id=ta.ticket",
-                connector.getConnectAs()
+                connector.getSwitchUser()
             );
         } else {
             // Can only see non-admin types and statuses
@@ -176,7 +176,7 @@ final class DatabaseTicketActionService extends DatabaseAccountTypeService<Integ
                 + "  and ti.ticket_id=ta.ticket\n"
                 + "  and ta.action_type=tat.type\n"
                 + "  and not tat.visible_admin_only",
-                connector.getConnectAs()
+                connector.getSwitchUser()
             );
         }
     }

@@ -54,7 +54,7 @@ final class DatabaseCreditCardProcessorService extends DatabaseAccountTypeServic
             + UN_BU1_PARENTS_WHERE
             + "  )\n"
             + "  and bu1.accounting=ccp.accounting",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

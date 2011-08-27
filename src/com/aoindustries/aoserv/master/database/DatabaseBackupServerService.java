@@ -51,7 +51,7 @@ final class DatabaseBackupServerService extends DatabaseServerService<BackupServ
             + "  inner join resources re on se.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -72,7 +72,7 @@ final class DatabaseBackupServerService extends DatabaseServerService<BackupServ
             + "  un.username=?\n"
             + "  and un.accounting=bs2.accounting\n"
             + "  and bs2.server=bs.resource",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

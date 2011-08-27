@@ -43,7 +43,7 @@ final class DatabaseTicketAssignmentService extends DatabaseAccountTypeService<I
 
     @Override
     protected ArrayList<TicketAssignment> getListBusiness(DatabaseConnection db) throws RemoteException, SQLException {
-        if(connector.factory.rootConnector.getBusinessAdministrators().get(connector.getConnectAs()).isTicketAdmin()) {
+        if(connector.isTicketAdmin()) {
             // Only ticket admin can see assignments
             return db.executeObjectCollectionQuery(
                 new ArrayList<TicketAssignment>(),
@@ -69,7 +69,7 @@ final class DatabaseTicketAssignmentService extends DatabaseAccountTypeService<I
                 + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
                 + "  )\n"
                 + "  and ti.pkey=ta.ticket",
-                connector.getConnectAs()
+                connector.getSwitchUser()
             );
         } else {
             // Non-admins don't get any assignment details

@@ -58,7 +58,7 @@ final class DatabaseRackService extends DatabaseResourceService<Rack> implements
             + "  inner join resources re on ra.resource=re.pkey\n"
             + "where\n"
             + "  ms.username=?",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -87,7 +87,7 @@ final class DatabaseRackService extends DatabaseResourceService<Rack> implements
             //+ "    or bp.ao_server=ps.resource\n"
             + "  ) and ps.rack=ra.resource\n"
             + " and ra.resource=re.pkey",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

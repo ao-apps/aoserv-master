@@ -60,7 +60,7 @@ final class DatabaseCvsRepositoryService extends DatabaseAOServerResourceService
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=cr.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -86,7 +86,7 @@ final class DatabaseCvsRepositoryService extends DatabaseAOServerResourceService
             + "  and (\n"
             + UN1_BU1_PARENTS_WHERE
             + "  )",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }

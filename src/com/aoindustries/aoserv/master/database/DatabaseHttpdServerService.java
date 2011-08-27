@@ -70,7 +70,7 @@ final class DatabaseHttpdServerService extends DatabaseAOServerResourceService<H
             + "where\n"
             + "  ms.username=?\n"
             + "  and ms.server=hs.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 
@@ -99,7 +99,7 @@ final class DatabaseHttpdServerService extends DatabaseAOServerResourceService<H
             + "  un.username=?\n"
             + "  and un.accounting=bs.accounting\n"
             + "  and bs.server=hs.ao_server",
-            connector.getConnectAs()
+            connector.getSwitchUser()
         );
     }
 }
