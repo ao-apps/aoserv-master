@@ -4553,6 +4553,23 @@ public abstract class MasterServer {
                                             sendInvalidateList = false;
                                         }
                                         break;
+                                    case GET_UPS_STATUS :
+                                        {
+                                            int aoServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                AOSHCommand.GET_UPS_STATUS,
+                                                Integer.valueOf(aoServer)
+                                            );
+                                            String status = AOServerHandler.getUpsStatus(
+                                                conn,
+                                                source,
+                                                aoServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=status;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     case GET_OBJECT :
                                         {
                                             int clientTableID=in.readCompressedInt();
