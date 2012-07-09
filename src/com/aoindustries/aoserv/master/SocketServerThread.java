@@ -127,11 +127,13 @@ final public class SocketServerThread extends Thread implements RequestSource {
         }
     }
 
-    final public long getConnectorID() {
+    @Override
+    public long getConnectorID() {
         return process.getConnectorID();
     }
 
-    final public AOServProtocol.Version getProtocolVersion() {
+    @Override
+    public AOServProtocol.Version getProtocolVersion() {
         return protocolVersion;
     }
 
@@ -198,6 +200,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 long existingID=in.readLong();
 
                 switch(protocolVersion) {
+                    case VERSION_1_64 :
                     case VERSION_1_63 :
                     case VERSION_1_62 :
                     case VERSION_1_61 :

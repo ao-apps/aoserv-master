@@ -6030,28 +6030,6 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
-                                    case REQUEST_VNC_CONSOLE_DAEMON_ACCESS :
-                                        {
-                                            int virtualServer=in.readCompressedInt();
-                                            process.setCommand(
-                                                "request_vnc_console_daemon_access",
-                                                Integer.valueOf(virtualServer)
-                                            );
-                                            AOServer.DaemonAccess daemonAccess = ServerHandler.requestVncConsoleDaemonAccess(
-                                                conn,
-                                                source,
-                                                virtualServer
-                                            );
-                                            resp1=AOServProtocol.DONE;
-                                            resp2String = daemonAccess.getProtocol();
-                                            resp3String = daemonAccess.getHost();
-                                            resp4Int = daemonAccess.getPort();
-                                            hasResp4Int = true;
-                                            resp5Long = daemonAccess.getKey();
-                                            hasResp5Long=true;
-                                            sendInvalidateList=false;
-                                        }
-                                        break;
                                     case RESTART_APACHE :
                                         {
                                             int aoServer=in.readCompressedInt();
@@ -8243,6 +8221,150 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                             break;
                                         }
+                                    // <editor-fold desc="Virtual Servers">
+                                    case REQUEST_VNC_CONSOLE_DAEMON_ACCESS :
+                                        {
+                                            int virtualServer=in.readCompressedInt();
+                                            process.setCommand(
+                                                "request_vnc_console_daemon_access",
+                                                Integer.valueOf(virtualServer)
+                                            );
+                                            AOServer.DaemonAccess daemonAccess = VirtualServerHandler.requestVncConsoleDaemonAccess(
+                                                conn,
+                                                source,
+                                                virtualServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String = daemonAccess.getProtocol();
+                                            resp3String = daemonAccess.getHost();
+                                            resp4Int = daemonAccess.getPort();
+                                            hasResp4Int = true;
+                                            resp5Long = daemonAccess.getKey();
+                                            hasResp5Long=true;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case CREATE_VIRTUAL_SERVER :
+                                        {
+                                            int virtualServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                AOSHCommand.CREATE_VIRTUAL_SERVER,
+                                                Integer.valueOf(virtualServer)
+                                            );
+                                            String output = VirtualServerHandler.createVirtualServer(
+                                                conn,
+                                                source,
+                                                virtualServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=output;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case REBOOT_VIRTUAL_SERVER :
+                                        {
+                                            int virtualServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                AOSHCommand.REBOOT_VIRTUAL_SERVER,
+                                                Integer.valueOf(virtualServer)
+                                            );
+                                            String output = VirtualServerHandler.rebootVirtualServer(
+                                                conn,
+                                                source,
+                                                virtualServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=output;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case SHUTDOWN_VIRTUAL_SERVER :
+                                        {
+                                            int virtualServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                AOSHCommand.SHUTDOWN_VIRTUAL_SERVER,
+                                                Integer.valueOf(virtualServer)
+                                            );
+                                            String output = VirtualServerHandler.shutdownVirtualServer(
+                                                conn,
+                                                source,
+                                                virtualServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=output;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case DESTROY_VIRTUAL_SERVER :
+                                        {
+                                            int virtualServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                AOSHCommand.DESTROY_VIRTUAL_SERVER,
+                                                Integer.valueOf(virtualServer)
+                                            );
+                                            String output = VirtualServerHandler.destroyVirtualServer(
+                                                conn,
+                                                source,
+                                                virtualServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=output;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case PAUSE_VIRTUAL_SERVER :
+                                        {
+                                            int virtualServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                AOSHCommand.PAUSE_VIRTUAL_SERVER,
+                                                Integer.valueOf(virtualServer)
+                                            );
+                                            String output = VirtualServerHandler.pauseVirtualServer(
+                                                conn,
+                                                source,
+                                                virtualServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=output;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case UNPAUSE_VIRTUAL_SERVER :
+                                        {
+                                            int virtualServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                AOSHCommand.UNPAUSE_VIRTUAL_SERVER,
+                                                Integer.valueOf(virtualServer)
+                                            );
+                                            String output = VirtualServerHandler.unpauseVirtualServer(
+                                                conn,
+                                                source,
+                                                virtualServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=output;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_VIRTUAL_SERVER_STATUS :
+                                        {
+                                            int virtualServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                AOSHCommand.GET_VIRTUAL_SERVER_STATUS,
+                                                Integer.valueOf(virtualServer)
+                                            );
+                                            int status = VirtualServerHandler.getVirtualServerStatus(
+                                                conn,
+                                                source,
+                                                virtualServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2Int = status;
+                                            hasResp2Int=true;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    // </editor-fold>
                                     default :
                                         keepOpen = false;
                                         throw new IOException("Unknown task code: " + taskCode);
