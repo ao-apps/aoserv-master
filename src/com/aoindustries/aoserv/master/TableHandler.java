@@ -85,6 +85,12 @@ import com.aoindustries.aoserv.client.HttpdTomcatStdSite;
 import com.aoindustries.aoserv.client.HttpdTomcatVersion;
 import com.aoindustries.aoserv.client.HttpdWorker;
 import com.aoindustries.aoserv.client.IPAddress;
+import com.aoindustries.aoserv.client.IpReputationLimiter;
+import com.aoindustries.aoserv.client.IpReputationLimiterLimit;
+import com.aoindustries.aoserv.client.IpReputationLimiterSet;
+import com.aoindustries.aoserv.client.IpReputationSet;
+import com.aoindustries.aoserv.client.IpReputationSetHost;
+import com.aoindustries.aoserv.client.IpReputationSetNetwork;
 import com.aoindustries.aoserv.client.Language;
 import com.aoindustries.aoserv.client.LinuxAccAddress;
 import com.aoindustries.aoserv.client.LinuxAccount;
@@ -3463,6 +3469,7 @@ final public class TableHandler {
                     "select * from httpd_tomcat_versions"
                 );
                 break;
+            // <editor-fold defaultstate="collapsed" desc="Httpd Workers">
             case HTTPD_WORKERS :
                 if(masterUser!=null) {
                     if(masterServers.length==0) MasterServer.writeObjects(
@@ -3517,6 +3524,8 @@ final public class TableHandler {
                     username
                 );
                 break;
+            // </editor-fold>
+            // <editor-fold defaultstate="collapsed" desc="IP Addresses">
             case IP_ADDRESSES :
                 if(masterUser!=null) {
                     if(masterServers.length==0) MasterServer.writeObjects(
@@ -3659,6 +3668,422 @@ final public class TableHandler {
                     );
                 }
                 break;
+            // </editor-fold>
+            // <editor-fold defaultstate="collapsed" desc="IP Reputation Limiter Limits">
+            case IP_REPUTATION_LIMITER_LIMITS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) {
+                        // Admin may access all limiters
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationLimiterLimit(),
+                            "select * from ip_reputation_limiter_limits"
+                        );
+                    } else if(masterUser.isRouter()) {
+                        // Router may access all limiters in the same server farm
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationLimiterLimit(),
+                            "select distinct\n"
+                            + "  irll.*\n"
+                            + "from\n"
+                            + "  master_servers ms\n"
+                            + "  inner join servers se on ms.server=se.pkey\n"                            // Find all servers can access
+                            + "  inner join servers se2 on se.farm=se2.farm\n"                            // Find all servers in the same farm
+                            + "  inner join net_devices nd on se2.pkey=nd.server\n"                       // Find all net_devices in the same farm
+                            + "  inner join ip_reputation_limiters irl on nd.pkey=irl.net_device\n"       // Find all limiters in the same farm
+                            + "  inner join ip_reputation_limiter_limits irll on irl.pkey=irll.limiter\n" // Find all limiters limits in the same farm
+                            + "where\n"
+                            + "  ms.username=?",
+                            username
+                        );
+                    } else {
+                        // Non-router daemon may not access any reputation limiters
+                        List<IpReputationLimiterLimit> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                } else {
+                    // Regular user may access the limiters for servers they have direct access to
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new IpReputationLimiterLimit(),
+                        "select\n"
+                        + "  irll.*\n"
+                        + "from\n"
+                        + "  usernames un\n"
+                        + "  inner join packages                     pk   on un.package    = pk.name\n"
+                        + "  inner join business_servers             bs   on pk.accounting = bs.accounting\n"
+                        + "  inner join net_devices                  nd   on bs.server     = nd.server\n"
+                        + "  inner join ip_reputation_limiters       irl  on nd.pkey       = irl.net_device\n"
+                        + "  inner join ip_reputation_limiter_limits irll on irl.pkey      = irll.limiter\n"
+                        + "where\n"
+                        + "  un.username=?",
+                        username
+                    );
+                }
+                break;
+            // </editor-fold>
+            // <editor-fold defaultstate="collapsed" desc="IP Reputation Limiter Sets">
+            case IP_REPUTATION_LIMITER_SETS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) {
+                        // Admin may access all limiters
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationLimiterSet(),
+                            "select * from ip_reputation_limiter_sets"
+                        );
+                    } else if(masterUser.isRouter()) {
+                        // Router may access all limiters in the same server farm
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationLimiterSet(),
+                            "select distinct\n"
+                            + "  irls.*\n"
+                            + "from\n"
+                            + "  master_servers ms\n"
+                            + "  inner join servers se on ms.server=se.pkey\n"                          // Find all servers can access
+                            + "  inner join servers se2 on se.farm=se2.farm\n"                          // Find all servers in the same farm
+                            + "  inner join net_devices nd on se2.pkey=nd.server\n"                     // Find all net_devices in the same farm
+                            + "  inner join ip_reputation_limiters irl on nd.pkey=irl.net_device\n"     // Find all limiters in the same farm
+                            + "  inner join ip_reputation_limiter_sets irls on irl.pkey=irls.limiter\n" // Find all limiters sets in the same farm
+                            + "where\n"
+                            + "  ms.username=?",
+                            username
+                        );
+                    } else {
+                        // Non-router daemon may not access any reputation limiters
+                        List<IpReputationLimiterSet> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                } else {
+                    // Regular user may access the limiters for servers they have direct access to
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new IpReputationLimiterSet(),
+                        "select\n"
+                        + "  irls.*\n"
+                        + "from\n"
+                        + "  usernames un\n"
+                        + "  inner join packages                   pk   on un.package    = pk.name\n"
+                        + "  inner join business_servers           bs   on pk.accounting = bs.accounting\n"
+                        + "  inner join net_devices                nd   on bs.server     = nd.server\n"
+                        + "  inner join ip_reputation_limiters     irl  on nd.pkey       = irl.net_device\n"
+                        + "  inner join ip_reputation_limiter_sets irls on irl.pkey      = irls.limiter\n"
+                        + "where\n"
+                        + "  un.username=?",
+                        username
+                    );
+                }
+                break;
+            // </editor-fold>
+            // <editor-fold defaultstate="collapsed" desc="IP Reputation Limiters">
+            case IP_REPUTATION_LIMITERS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) {
+                        // Admin may access all limiters
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationLimiter(),
+                            "select * from ip_reputation_limiters"
+                        );
+                    } else if(masterUser.isRouter()) {
+                        // Router may access all limiters in the same server farm
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationLimiter(),
+                            "select distinct\n"
+                            + "  irl.*\n"
+                            + "from\n"
+                            + "  master_servers ms\n"
+                            + "  inner join servers se on ms.server=se.pkey\n"                      // Find all servers can access
+                            + "  inner join servers se2 on se.farm=se2.farm\n"                      // Find all servers in the same farm
+                            + "  inner join net_devices nd on se2.pkey=nd.server\n"                 // Find all net_devices in the same farm
+                            + "  inner join ip_reputation_limiters irl on nd.pkey=irl.net_device\n" // Find all limiters in the same farm
+                            + "where\n"
+                            + "  ms.username=?",
+                            username
+                        );
+                    } else {
+                        // Non-router daemon may not access any reputation limiters
+                        List<IpReputationLimiter> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                } else {
+                    // Regular user may access the limiters for servers they have direct access to
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new IpReputationLimiter(),
+                        "select\n"
+                        + "  irl.*\n"
+                        + "from\n"
+                        + "  usernames un\n"
+                        + "  inner join packages               pk  on un.package    = pk.name\n"
+                        + "  inner join business_servers       bs  on pk.accounting = bs.accounting\n"
+                        + "  inner join net_devices            nd  on bs.server     = nd.server\n"
+                        + "  inner join ip_reputation_limiters irl on nd.pkey       = irl.net_device\n"
+                        + "where\n"
+                        + "  un.username=?",
+                        username
+                    );
+                }
+                break;
+            // </editor-fold>
+            // <editor-fold defaultstate="collapsed" desc="IP Reputation Set Hosts">
+            case IP_REPUTATION_SET_HOSTS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) {
+                        // Admin may access all sets
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationSetHost(),
+                            "select * from ip_reputation_set_hosts"
+                        );
+                    } else if(masterUser.isRouter()) {
+                        // Router may access all sets used by any limiters in the same server farm
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationSetHost(),
+                            "select distinct\n"
+                            + "  irsh.*\n"
+                            + "from\n"
+                            + "  master_servers ms\n"
+                            + "  inner join servers                    se   on ms.server     = se.pkey\n"        // Find all servers can access
+                            + "  inner join servers                    se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+                            + "  inner join net_devices                nd   on se2.pkey      = nd.server\n"      // Find all net_devices in the same farm
+                            + "  inner join ip_reputation_limiters     irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
+                            + "  inner join ip_reputation_limiter_sets irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
+                            + "  inner join ip_reputation_sets         irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
+                            + "  inner join ip_reputation_set_hosts    irsh on irs.pkey      = irsh.\"set\"\n"   // Find all hosts belonging to these sets
+                            + "where\n"
+                            + "  ms.username=?",
+                            username
+                        );
+                    } else {
+                        // Non-router daemon may not access any reputation sets
+                        List<IpReputationSetHost> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                } else {
+                    // Regular user may only access the hosts for their own or subaccount sets
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new IpReputationSetHost(),
+                        "select\n"
+                        + "  irsh.*\n"
+                        + "from\n"
+                        + "  usernames un,\n"
+                        + "  packages pk,\n"
+                        + BU1_PARENTS_JOIN
+                        + "  ip_reputation_sets irs,\n"
+                        + "  ip_reputation_set_hosts irsh\n"
+                        + "where\n"
+                        + "  un.username=?\n"
+                        + "  and un.package=pk.name\n"
+                        + "  and (\n"
+                        + PK_BU1_PARENTS_WHERE
+                        + "  )\n"
+                        + "  and bu1.accounting=irs.accounting\n"
+                        + "  and irs.pkey=irsh.\"set\"",
+                        username
+                    );
+                }
+                break;
+            // </editor-fold>
+            // <editor-fold defaultstate="collapsed" desc="IP Reputation Set Networks">
+            case IP_REPUTATION_SET_NETWORKS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) {
+                        // Admin may access all sets
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationSetNetwork(),
+                            "select * from ip_reputation_set_networks"
+                        );
+                    } else if(masterUser.isRouter()) {
+                        // Router may access all sets used by any limiters in the same server farm
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationSetNetwork(),
+                            "select distinct\n"
+                            + "  irsn.*\n"
+                            + "from\n"
+                            + "  master_servers ms\n"
+                            + "  inner join servers                    se   on ms.server     = se.pkey\n"        // Find all servers can access
+                            + "  inner join servers                    se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+                            + "  inner join net_devices                nd   on se2.pkey      = nd.server\n"      // Find all net_devices in the same farm
+                            + "  inner join ip_reputation_limiters     irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
+                            + "  inner join ip_reputation_limiter_sets irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
+                            + "  inner join ip_reputation_sets         irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
+                            + "  inner join ip_reputation_set_networks irsn on irs.pkey      = irsn.\"set\"\n"   // Find all networks belonging to these sets
+                            + "where\n"
+                            + "  ms.username=?",
+                            username
+                        );
+                    } else {
+                        // Non-router daemon may not access any reputation sets
+                        List<IpReputationSetNetwork> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                } else {
+                    // Regular user may only access the networks for their own or subaccount sets
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new IpReputationSetNetwork(),
+                        "select\n"
+                        + "  irsn.*\n"
+                        + "from\n"
+                        + "  usernames un,\n"
+                        + "  packages pk,\n"
+                        + BU1_PARENTS_JOIN
+                        + "  ip_reputation_sets irs,\n"
+                        + "  ip_reputation_set_networks irsn\n"
+                        + "where\n"
+                        + "  un.username=?\n"
+                        + "  and un.package=pk.name\n"
+                        + "  and (\n"
+                        + PK_BU1_PARENTS_WHERE
+                        + "  )\n"
+                        + "  and bu1.accounting=irs.accounting\n"
+                        + "  and irs.pkey=irsn.\"set\"",
+                        username
+                    );
+                }
+                break;
+            // </editor-fold>
+            // <editor-fold defaultstate="collapsed" desc="IP Reputation Sets">
+            case IP_REPUTATION_SETS :
+                if(masterUser!=null) {
+                    if(masterServers.length==0) {
+                        // Admin may access all sets
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationSet(),
+                            "select * from ip_reputation_sets"
+                        );
+                    } else if(masterUser.isRouter()) {
+                        // Router may access all sets used by any limiters in the same server farm
+                        MasterServer.writeObjects(
+                            conn,
+                            source,
+                            out,
+                            provideProgress,
+                            new IpReputationSet(),
+                            "select distinct\n"
+                            + "  irs.*\n"
+                            + "from\n"
+                            + "  master_servers ms\n"
+                            + "  inner join servers                    se   on ms.server     = se.pkey\n"        // Find all servers can access
+                            + "  inner join servers                    se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+                            + "  inner join net_devices                nd   on se2.pkey      = nd.server\n"      // Find all net_devices in the same farm
+                            + "  inner join ip_reputation_limiters     irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
+                            + "  inner join ip_reputation_limiter_sets irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
+                            + "  inner join ip_reputation_sets         irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
+                            + "where\n"
+                            + "  ms.username=?",
+                            username
+                        );
+                    } else {
+                        // Non-router daemon may not access any reputation sets
+                        List<IpReputationSet> emptyList = Collections.emptyList();
+                        MasterServer.writeObjects(source, out, provideProgress, emptyList);
+                    }
+                } else {
+                    // Regular user may access their own or subaccount sets, as well as any parent account
+                    // set that allows subaccount use.
+                    MasterServer.writeObjects(
+                        conn,
+                        source,
+                        out,
+                        provideProgress,
+                        new IpReputationSet(),
+                        "select\n"
+                        + "  irs.*\n"
+                        + "from\n"
+                        + "  ip_reputation_sets irs\n"
+                        + "where\n"
+                        // Allow own and any subaccount
+                        + "  irs.pkey in (\n"
+                        + "    select\n"
+                        + "      irs2.pkey\n"
+                        + "    from\n"
+                        + "      usernames un,\n"
+                        + "      packages pk,\n"
+                        + BU1_PARENTS_JOIN
+                        + "      ip_reputation_sets irs2\n"
+                        + "    where\n"
+                        + "      un.username=?\n"
+                        + "      and un.package=pk.name\n"
+                        + "      and (\n"
+                        + PK_BU1_PARENTS_WHERE
+                        + "      )\n"
+                        + "      and bu1.accounting=irs2.accounting\n"
+                        + "  )\n"
+                        // Allow any parent business that allow_subaccount_user
+                        + "  or irs.pkey in (\n"
+                        + "    select\n"
+                        + "      irs3.pkey\n"
+                        + "    from\n"
+                        + "      ip_reputation_sets irs3\n"
+                        + "    where\n"
+                        + "      irs3.allow_subaccount_use\n"
+                        + "      and is_business_or_parent(irs3.accounting, ?)\n"
+                        + "  )",
+                        username,
+                        UsernameHandler.getBusinessForUsername(conn, username)
+                    );
+                }
+                break;
+            // </editor-fold>
+            // <editor-fold defaultstate="collapsed" desc="Languages">
             case LANGUAGES :
                 MasterServer.writeObjects(
                     conn,
@@ -3669,6 +4094,7 @@ final public class TableHandler {
                     "select * from languages"
                 );
                 break;
+            // </editor-fold>
             case LINUX_ACC_ADDRESSES :
                 if(masterUser!=null) {
                     if(masterServers.length==0) MasterServer.writeObjects(

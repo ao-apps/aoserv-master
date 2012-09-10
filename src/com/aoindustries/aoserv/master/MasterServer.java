@@ -13,6 +13,9 @@ import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.DNSRecord;
 import com.aoindustries.aoserv.client.DNSZoneTable;
 import com.aoindustries.aoserv.client.InboxAttributes;
+import com.aoindustries.aoserv.client.IpReputationSet.AddReputation;
+import com.aoindustries.aoserv.client.IpReputationSet.ConfidenceType;
+import com.aoindustries.aoserv.client.IpReputationSet.ReputationType;
 import com.aoindustries.aoserv.client.Language;
 import com.aoindustries.aoserv.client.MasterHistory;
 import com.aoindustries.aoserv.client.MasterProcess;
@@ -6722,6 +6725,39 @@ public abstract class MasterServer {
                                             sendInvalidateList=true;
                                         }
                                         break;
+                                    case ADD_IP_REPUTATION :
+                                        {
+                                            int ipReputationSet = in.readCompressedInt();
+                                            int size = in.readCompressedInt();
+                                            AddReputation[] addReputations = new AddReputation[size];
+                                            for(int i=0; i<size; i++) {
+                                                int            host           = in.readInt();
+                                                ConfidenceType confidence     = ConfidenceType.fromChar(in.readChar());
+                                                ReputationType reputationType = ReputationType.fromChar(in.readChar());
+                                                short          score          = in.readShort();
+                                                addReputations[i] = new AddReputation(
+                                                    host,
+                                                    confidence,
+                                                    reputationType,
+                                                    score
+                                                );
+                                            }
+                                            process.setCommand(
+                                                AOSHCommand.ADD_IP_REPUTATION,
+                                                ipReputationSet,
+                                                size
+                                            );
+                                            IpReputationSetHandler.addIpReputation(
+                                                conn,
+                                                source,
+                                                invalidateList,
+                                                ipReputationSet,
+                                                addReputations
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            sendInvalidateList=true;
+                                        }
+                                        break;
                                     case SET_LAST_DISTRO_TIME :
                                         {
                                             process.setPriority(Thread.MIN_PRIORITY+1);
@@ -8989,7 +9025,7 @@ public abstract class MasterServer {
         }
     }
 
-    public static MasterUser getMasterUser(DatabaseConnection conn, String username) throws IOException, SQLException {
+    public static Map<String,MasterUser> getMasterUsers(DatabaseConnection conn) throws IOException, SQLException {
         synchronized(masterUsersLock) {
             if(masterUsers==null) {
                 Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
@@ -9001,13 +9037,17 @@ public abstract class MasterServer {
                         mu.init(results);
                         table.put(results.getString(1), mu);
                     }
-                    masterUsers=table;
+                    masterUsers = Collections.unmodifiableMap(table);
                 } finally {
                     stmt.close();
                 }
             }
-            return masterUsers.get(username);
+            return masterUsers;
         }
+    }
+
+    public static MasterUser getMasterUser(DatabaseConnection conn, String username) throws IOException, SQLException {
+        return getMasterUsers(conn).get(username);
     }
 
     /**
