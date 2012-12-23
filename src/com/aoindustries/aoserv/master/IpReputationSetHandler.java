@@ -217,6 +217,10 @@ final public class IpReputationSetHandler {
 
             // Lock for update
             lockForUpdate(conn);
+
+            // Flag as rep added
+            conn.executeUpdate("UPDATE ip_reputation_sets SET last_reputation_added=now() WHERE pkey=?", ipReputationSet);
+
             for(IpReputationSet.AddReputation addRep : addReputations) {
                 int host = addRep.getHost();
                 IpReputationSet.ConfidenceType confidence = addRep.getConfidence();
