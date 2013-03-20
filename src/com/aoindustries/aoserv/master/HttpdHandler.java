@@ -13,10 +13,10 @@ import com.aoindustries.aoserv.client.HttpdSiteAuthenticatedLocation;
 import com.aoindustries.aoserv.client.HttpdTomcatContext;
 import com.aoindustries.aoserv.client.HttpdTomcatVersion;
 import com.aoindustries.aoserv.client.LinuxAccount;
-import com.aoindustries.aoserv.client.LinuxAccountTable;
 import com.aoindustries.aoserv.client.LinuxGroup;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.NetProtocol;
+import com.aoindustries.aoserv.client.PasswordGenerator;
 import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.io.CompressedDataOutputStream;
@@ -989,7 +989,7 @@ final public class HttpdHandler {
                     "insert into httpd_tomcat_std_sites values(?,?,?)",
                     httpdSitePKey,
                     shutdownPort,
-                    LinuxAccountTable.generatePassword(MasterServer.getRandom())
+                    PasswordGenerator.generatePassword(MasterServer.getRandom())
                 );
             } else conn.executeUpdate("insert into httpd_tomcat_std_sites values(?,null,null)", httpdSitePKey);
             invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES, accounting, aoServer, false);
@@ -1152,7 +1152,7 @@ final public class HttpdHandler {
                 isOverflow,
                 httpdWorkerPKey,
                 shutdownBindPKey,
-                LinuxAccountTable.generatePassword(MasterServer.getRandom())
+                PasswordGenerator.generatePassword(MasterServer.getRandom())
             );
         } else {
             conn.executeUpdate(

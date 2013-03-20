@@ -16,6 +16,8 @@ import com.aoindustries.aoserv.client.NoticeLog;
 import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.Username;
+import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
@@ -1388,31 +1390,35 @@ final public class BusinessHandler {
         String username,
         String plaintext
     ) throws IOException, SQLException {
-        // An administrator may always reset their own passwords
-        if(!username.equals(source.getUsername())) checkPermission(conn, source, "setBusinessAdministratorPassword", AOServPermission.Permission.set_business_administrator_password);
+        try {
+            // An administrator may always reset their own passwords
+            if(!username.equals(source.getUsername())) checkPermission(conn, source, "setBusinessAdministratorPassword", AOServPermission.Permission.set_business_administrator_password);
 
-        UsernameHandler.checkAccessUsername(conn, source, "setBusinessAdministratorPassword", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set password for BusinessAdministrator named '"+LinuxAccount.MAIL+'\'');
+            UsernameHandler.checkAccessUsername(conn, source, "setBusinessAdministratorPassword", username);
+            if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set password for BusinessAdministrator named '"+LinuxAccount.MAIL+'\'');
 
-        if(isBusinessAdministratorDisabled(conn, username)) throw new SQLException("Unable to set password, BusinessAdministrator disabled: "+username);
+            if(isBusinessAdministratorDisabled(conn, username)) throw new SQLException("Unable to set password, BusinessAdministrator disabled: "+username);
 
-        if(plaintext!=null && plaintext.length()>0) {
-            // Perform the password check here, too.
-            PasswordChecker.Result[] results=BusinessAdministrator.checkPassword(username, plaintext);
-            if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
+            if(plaintext!=null && plaintext.length()>0) {
+                // Perform the password check here, too.
+                List<PasswordChecker.Result> results=BusinessAdministrator.checkPassword(UserId.valueOf(username), plaintext);
+                if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
+            }
+
+            String encrypted =
+                plaintext==null || plaintext.length()==0
+                ? BusinessAdministrator.NO_PASSWORD
+                : BusinessAdministrator.hash(plaintext)
+            ;
+
+            String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+            conn.executeUpdate("update business_administrators set password=? where username=?", encrypted, username);
+
+            // Notify all clients of the update
+            invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
+        } catch(ValidationException err) {
+            throw new SQLException(err.getMessage(), err);
         }
-
-        String encrypted =
-            plaintext==null || plaintext.length()==0
-            ? BusinessAdministrator.NO_PASSWORD
-            : BusinessAdministrator.hash(plaintext)
-        ;
-
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
-        conn.executeUpdate("update business_administrators set password=? where username=?", encrypted, username);
-
-        // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
     }
     
     /**

@@ -362,6 +362,7 @@ public abstract class MasterServer {
                 if(!done) {
                     // These commands automatically have the try/catch and the database connection releasing
                     // And a finally block to reset thread priority
+                    boolean logIOException = true;
                     Thread currentThread=Thread.currentThread();
                     try {
                         InvalidateList invalidateList=new InvalidateList();
@@ -4500,6 +4501,8 @@ public abstract class MasterServer {
                                                 appProtocol,
                                                 monitoringParameters
                                             );
+                                            // Do not log any IO exception
+                                            logIOException = false;
                                             String result = AOServerHandler.checkPort(
                                                 conn,
                                                 source,
@@ -4510,6 +4513,7 @@ public abstract class MasterServer {
                                                 appProtocol,
                                                 monitoringParameters
                                             );
+                                            logIOException = true;
                                             resp1=AOServProtocol.DONE;
                                             resp2String=result;
                                             sendInvalidateList=false;
@@ -8483,7 +8487,7 @@ public abstract class MasterServer {
                         out.writeByte(AOServProtocol.SQL_EXCEPTION);
                         out.writeUTF(message==null?"":message);
                     } catch(IOException err) {
-                        logger.log(Level.SEVERE, null, err);
+                        if(logIOException) logger.log(Level.SEVERE, null, err);
                         String message=err.getMessage();
                         out.writeByte(AOServProtocol.IO_EXCEPTION);
                         out.writeUTF(message==null?"":message);
