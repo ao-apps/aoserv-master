@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master;
-
 /*
- * Copyright 2001-2011 by AO Industries, Inc.,
+ * Copyright 2001-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master;
+
 import com.aoindustries.sql.Database;
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 /**
  * @author  AO Industries, Inc.
  */
-final class MasterDatabase extends Database {
+public final class MasterDatabase extends Database {
 
     /**
      * This logger doesn't use ticket logger because it might create a loop
@@ -40,18 +40,10 @@ final class MasterDatabase extends Database {
         );
     }
     
-    static MasterDatabase getDatabase() throws IOException {
+    public static MasterDatabase getDatabase() throws IOException {
         synchronized(MasterDatabase.class) {
             if(masterDatabase==null) masterDatabase=new MasterDatabase();
             return masterDatabase;
         }
     }
-
-    /**
-     * TODO: Refuse to provide read-write connection to any read-only connector.
-     */
-    /*@Override
-    public Connection getConnection(int isolationLevel, boolean readOnly, int maxConnections) throws SQLException {
-        return super.getConnection(isolationLevel, readOnly, maxConnections);
-    }*/
 }

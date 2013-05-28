@@ -1,12 +1,20 @@
 /*
- * Copyright 2009-2011 by AO Industries, Inc.,
+ * Copyright 2009-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.Language;
+import com.aoindustries.aoserv.client.TicketPriority;
+import com.aoindustries.aoserv.client.TicketStatus;
+import com.aoindustries.aoserv.client.TicketType;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.logging.QueuedHandler;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Formatter;
@@ -59,8 +67,7 @@ final public class TicketLoggingHandler extends QueuedHandler {
 
     protected void doCustomLogging(Formatter formatter, LogRecord record, String fullReport) {
         try {
-            /* TODO
-            String rootAccounting = BusinessHandler.getRootBusiness();
+            AccountingCode rootAccounting = BusinessHandler.getRootBusiness();
             Level level = record.getLevel();
             // Generate the summary from level, prefix classname, method
             StringBuilder tempSB = new StringBuilder();
@@ -173,7 +180,6 @@ final public class TicketLoggingHandler extends QueuedHandler {
                 conn.releaseConnection();
             }
             if(invalidateList!=null) MasterServer.invalidateTables(invalidateList, null);
-             */
         } catch(Exception err) {
             ErrorPrinter.printStackTraces(err);
         }
