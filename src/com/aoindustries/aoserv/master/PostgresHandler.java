@@ -1,19 +1,30 @@
-package com.aoindustries.aoserv.master;
-
 /*
- * Copyright 2001-2009 by AO Industries, Inc.,
+ * Copyright 2001-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.aoserv.client.*;
+package com.aoindustries.aoserv.master;
+
+import com.aoindustries.aoserv.client.AOServPermission;
+import com.aoindustries.aoserv.client.LinuxAccount;
+import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.PasswordChecker;
+import com.aoindustries.aoserv.client.PostgresDatabaseTable;
+import com.aoindustries.aoserv.client.PostgresUser;
+import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.PostgresUserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
-import com.aoindustries.io.*;
+import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.sql.DatabaseConnection;
-import com.aoindustries.util.*;
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import com.aoindustries.util.IntList;
+import com.aoindustries.util.SortedArrayList;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The <code>PostgresHandler</code> handles all the accesses to the PostgreSQL tables.
@@ -112,7 +123,7 @@ final public class PostgresHandler {
         if(datdbaUsername.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add PostgresDatabase with datdba of '"+LinuxAccount.MAIL+'\'');
         if(isPostgresServerUserDisabled(conn, datdba)) throw new SQLException("Unable to add PostgresDatabase, PostgresServerUser disabled: "+datdba);
         // Look up the accounting code
-        String accounting=UsernameHandler.getBusinessForUsername(conn, datdbaUsername);
+        AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, datdbaUsername);
         // Encoding must exist for this version of the database
         if(
             !conn.executeBooleanQuery(
@@ -577,7 +588,7 @@ final public class PostgresHandler {
         int pkey
     ) throws IOException, SQLException {
         // Remove the database entry
-        String accounting=getBusinessForPostgresDatabase(conn, pkey);
+        AccountingCode accounting = getBusinessForPostgresDatabase(conn, pkey);
         int aoServer=getAOServerForPostgresDatabase(conn, pkey);
         conn.executeUpdate("delete from postgres_databases where pkey=?", pkey);
 
@@ -607,7 +618,7 @@ final public class PostgresHandler {
 
         // Get the details for later use
         int aoServer=getAOServerForPostgresServerUser(conn, pkey);
-        String accounting=getBusinessForPostgresServerUser(conn, pkey);
+        AccountingCode accounting = getBusinessForPostgresServerUser(conn, pkey);
 
         // Make sure that this is not the DBA for any databases
         int count=conn.executeIntQuery("select count(*) from postgres_databases where datdba=?", pkey);
@@ -649,7 +660,7 @@ final public class PostgresHandler {
         String username
     ) throws IOException, SQLException {
         if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("Not allowed to remove PostgresUser named '"+PostgresUser.POSTGRES+'\'');
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
         // Remove the postgres_server_user
         IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgres_server_users psu, postgres_servers ps where psu.username=? and psu.postgres_server=ps.pkey", username);
@@ -769,8 +780,9 @@ final public class PostgresHandler {
         DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresUserRebuild();
     }
 
-    public static String getBusinessForPostgresDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery(
+    public static AccountingCode getBusinessForPostgresDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
             "select\n"
             + "  pk.accounting\n"
             + "from\n"
@@ -805,8 +817,12 @@ final public class PostgresHandler {
         );
     }
 
-    public static String getBusinessForPostgresServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from postgres_server_users psu, usernames un, packages pk where psu.username=un.username and un.package=pk.name and psu.pkey=?", pkey);
+    public static AccountingCode getBusinessForPostgresServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
+            "select pk.accounting from postgres_server_users psu, usernames un, packages pk where psu.username=un.username and un.package=pk.name and psu.pkey=?",
+            pkey
+        );
     }
 
     public static int getAOServerForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {

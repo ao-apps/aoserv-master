@@ -1,17 +1,16 @@
-package com.aoindustries.aoserv.master;
-
 /*
- * Copyright 2003-2009 by AO Industries, Inc.,
+ * Copyright 2003-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master;
+
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
@@ -32,7 +31,7 @@ final public class AOServerHandler {
     }
 
     public static IntList getAOServers(DatabaseConnection conn) throws IOException, SQLException {
-        return conn.executeIntListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select server from ao_servers");
+        return conn.executeIntListQuery("select server from ao_servers");
     }
 
     private static final Map<Integer,Object> mrtgLocks = new HashMap<Integer,Object>();

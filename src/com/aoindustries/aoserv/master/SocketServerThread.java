@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 by AO Industries, Inc.,
+ * Copyright 2001-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -7,6 +7,8 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.MasterProcess;
+import com.aoindustries.aoserv.client.validator.InetAddress;
+import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.sql.DatabaseConnection;
@@ -76,18 +78,24 @@ final public class SocketServerThread extends Thread implements RequestSource {
      * Creates a new, running <code>AOServServerThread</code>.
      */
     public SocketServerThread(TCPServer server, Socket socket) throws IOException, SQLException {
-        this.server = server;
-        this.socket = socket;
-        this.in=new CompressedDataInputStream(new BufferedInputStream(socket.getInputStream()));
-        this.out=new CompressedDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-        String host=socket.getInetAddress().getHostAddress();
-        process=MasterProcessManager.createProcess(
-            host,
-            server.getProtocol(),
-            server.isSecure()
-        );
-        isClosed=false;
-        start();
+        try {
+            this.server = server;
+            this.socket = socket;
+            this.in=new CompressedDataInputStream(new BufferedInputStream(socket.getInputStream()));
+            this.out=new CompressedDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+            InetAddress host=InetAddress.valueOf(socket.getInetAddress().getHostAddress());
+            process=MasterProcessManager.createProcess(
+                host,
+                server.getProtocol(),
+                server.isSecure()
+            );
+            isClosed=false;
+            start();
+        } catch(ValidationException e) {
+            IOException exc = new IOException(e.getLocalizedMessage());
+            exc.initCause(e);
+            throw exc;
+        }
     }
 
     private final LinkedList<InvalidateCacheEntry> invalidateLists=new LinkedList<InvalidateCacheEntry>();
@@ -200,6 +208,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 long existingID=in.readLong();
 
                 switch(protocolVersion) {
+                    case VERSION_1_69 :
                     case VERSION_1_68 :
                     case VERSION_1_67 :
                     case VERSION_1_66 :

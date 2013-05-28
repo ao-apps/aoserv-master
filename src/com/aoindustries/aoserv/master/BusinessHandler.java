@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 by AO Industries, Inc.,
+ * Copyright 2001-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -16,8 +16,11 @@ import com.aoindustries.aoserv.client.NoticeLog;
 import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.Username;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.HashedPassword;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.sql.DatabaseAccess.Null;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
@@ -26,6 +29,7 @@ import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -56,11 +60,11 @@ final public class BusinessHandler {
     private static Map<String,BusinessAdministrator> businessAdministrators;
 
     private static final Object usernameBusinessesLock=new Object();
-    private static Map<String,List<String>> usernameBusinesses;
+    private static Map<String,List<AccountingCode>> usernameBusinesses;
     private final static Map<String,Boolean> disabledBusinessAdministrators=new HashMap<String,Boolean>();
-    private final static Map<String,Boolean> disabledBusinesses=new HashMap<String,Boolean>();
+    private final static Map<AccountingCode,Boolean> disabledBusinesses=new HashMap<AccountingCode,Boolean>();
 
-    public static boolean canAccessBusiness(DatabaseConnection conn, RequestSource source, String accounting) throws IOException, SQLException {
+    public static boolean canAccessBusiness(DatabaseConnection conn, RequestSource source, AccountingCode accounting) throws IOException, SQLException {
         //String username=source.getUsername();
         return
             getAllowedBusinesses(conn, source)
@@ -74,8 +78,8 @@ final public class BusinessHandler {
         String username=source.getUsername();
         String disabledBy=getDisableLogDisabledBy(conn, pkey);
         if(enabling) {
-            String baAccounting=UsernameHandler.getBusinessForUsername(conn, username);
-            String dlAccounting=UsernameHandler.getBusinessForUsername(conn, disabledBy);
+            AccountingCode baAccounting=UsernameHandler.getBusinessForUsername(conn, username);
+            AccountingCode dlAccounting=UsernameHandler.getBusinessForUsername(conn, disabledBy);
             return isBusinessOrParent(conn, baAccounting, dlAccounting);
         } else {
             return username.equals(disabledBy);
@@ -86,7 +90,7 @@ final public class BusinessHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String accounting,
+        AccountingCode accounting,
         String cancelReason
     ) throws IOException, SQLException {
         // Check permissions
@@ -121,9 +125,6 @@ final public class BusinessHandler {
         String column
     ) throws IOException, SQLException {
         return conn.executeBooleanQuery(
-            Connection.TRANSACTION_READ_COMMITTED,
-            true,
-            true,
             "select\n"
             + "  bs."+column+"\n"
             + "from\n"
@@ -140,7 +141,7 @@ final public class BusinessHandler {
         );
     }
 
-    public static void checkAccessBusiness(DatabaseConnection conn, RequestSource source, String action, String accounting) throws IOException, SQLException {
+    public static void checkAccessBusiness(DatabaseConnection conn, RequestSource source, String action, AccountingCode accounting) throws IOException, SQLException {
         if(!canAccessBusiness(conn, source, accounting)) {
             String message=
             "business_administrator.username="
@@ -168,7 +169,7 @@ final public class BusinessHandler {
         }
     }
 
-    public static void checkAddBusiness(DatabaseConnection conn, RequestSource source, String action, String parent, int server) throws IOException, SQLException {
+    public static void checkAddBusiness(DatabaseConnection conn, RequestSource source, String action, AccountingCode parent, int server) throws IOException, SQLException {
         boolean canAdd = conn.executeBooleanQuery("select can_add_businesses from businesses where accounting=?", UsernameHandler.getBusinessForUsername(conn, source.getUsername()));
         if(canAdd) {
             MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
@@ -234,61 +235,69 @@ final public class BusinessHandler {
         }
     }
 
-    public static List<String> getAllowedBusinesses(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-	    synchronized(usernameBusinessesLock) {
+    public static List<AccountingCode> getAllowedBusinesses(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+        synchronized(usernameBusinessesLock) {
             String username=source.getUsername();
-            if(usernameBusinesses==null) usernameBusinesses=new HashMap<String,List<String>>();
-            List<String> SV=usernameBusinesses.get(username);
+            if(usernameBusinesses==null) usernameBusinesses=new HashMap<String,List<AccountingCode>>();
+            List<AccountingCode> SV=usernameBusinesses.get(username);
             if(SV==null) {
-                List<String> V;
-                        MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
-                        if(mu!=null) {
-                            if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
-                                V=conn.executeStringListQuery(
-                                    "select distinct\n"
-                                    + "  bu.accounting\n"
-                                    + "from\n"
-                                    + "  master_servers ms,\n"
-                                    + "  business_servers bs,\n"
-                                    + "  businesses bu\n"
-                                    + "where\n"
-                                    + "  ms.username=?\n"
-                                    + "  and ms.server=bs.server\n"
-                                    + "  and bs.accounting=bu.accounting",
-                                    username
-                                );
-                            } else {
-                                V=conn.executeStringListQuery("select accounting from businesses");
-                            }
-                        } else {
-                            V=conn.executeStringListQuery(
-                                "select\n"
-                                + "  bu1.accounting\n"
-                                + "from\n"
-                                + "  usernames un,\n"
-                                + "  packages pk,\n"
-                                + TableHandler.BU1_PARENTS_JOIN_NO_COMMA
-                                + "where\n"
-                                + "  un.username=?\n"
-                                + "  and un.package=pk.name\n"
-                                + "  and (\n"
-                                + TableHandler.PK_BU1_PARENTS_WHERE
-                                + "  )",
-                                username
-                            );
-                        }
+                List<AccountingCode> V;
+                MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+                if(mu!=null) {
+                    if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+                        V=conn.executeObjectCollectionQuery(
+                            new ArrayList<AccountingCode>(),
+                            ObjectFactories.accountingCodeFactory,
+                            "select distinct\n"
+                            + "  bu.accounting\n"
+                            + "from\n"
+                            + "  master_servers ms,\n"
+                            + "  business_servers bs,\n"
+                            + "  businesses bu\n"
+                            + "where\n"
+                            + "  ms.username=?\n"
+                            + "  and ms.server=bs.server\n"
+                            + "  and bs.accounting=bu.accounting",
+                            username
+                        );
+                    } else {
+                        V=conn.executeObjectCollectionQuery(
+                            new ArrayList<AccountingCode>(),
+                            ObjectFactories.accountingCodeFactory,
+                            "select accounting from businesses"
+                        );
+                    }
+                } else {
+                    V=conn.executeObjectCollectionQuery(
+                        new ArrayList<AccountingCode>(),
+                        ObjectFactories.accountingCodeFactory,
+                        "select\n"
+                        + "  bu1.accounting\n"
+                        + "from\n"
+                        + "  usernames un,\n"
+                        + "  packages pk,\n"
+                        + TableHandler.BU1_PARENTS_JOIN_NO_COMMA
+                        + "where\n"
+                        + "  un.username=?\n"
+                        + "  and un.package=pk.name\n"
+                        + "  and (\n"
+                        + TableHandler.PK_BU1_PARENTS_WHERE
+                        + "  )",
+                        username
+                    );
+                }
 
                 int size=V.size();
-                SV=new SortedArrayList<String>();
+                SV=new SortedArrayList<AccountingCode>();
                 for(int c=0;c<size;c++) SV.add(V.get(c));
                 usernameBusinesses.put(username, SV);
             }
             return SV;
-	    }
+        }
     }
     
-    public static String getBusinessForDisableLog(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select accounting from disable_log where pkey=?", pkey);
+    public static AccountingCode getBusinessForDisableLog(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeObjectQuery(ObjectFactories.accountingCodeFactory, "select accounting from disable_log where pkey=?", pkey);
     }
 
     /**
@@ -298,17 +307,15 @@ final public class BusinessHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String accounting,
+        AccountingCode accounting,
         String contractVersion,
         int defaultServer,
-        String parent,
+        AccountingCode parent,
         boolean can_add_backup_servers,
         boolean can_add_businesses,
         boolean can_see_prices,
         boolean billParent
     ) throws IOException, SQLException {
-        if(!Business.isValidAccounting(accounting)) throw new SQLException("Invalid accounting code: "+accounting);
-
         checkAddBusiness(conn, source, "addBusiness", parent, defaultServer);
 
         if(isBusinessDisabled(conn, parent)) throw new SQLException("Unable to add Business '"+accounting+"', parent is disabled: "+parent);
@@ -390,7 +397,7 @@ final public class BusinessHandler {
         String username,
         String name,
         String title,
-        long birthday,
+        Date birthday,
         boolean isPrivate,
         String workPhone,
         String homePhone,
@@ -413,28 +420,26 @@ final public class BusinessHandler {
 
         String supportCode = enableEmailSupport ? generateSupportCode(conn) : null;
         PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
-            "insert into business_administrators values(?,?,?,?,?,false,?,now(),?,?,?,?,?,?,?,?,?,?,?,null,true,?)"
+            "insert into business_administrators values(?,null,?,?,?,false,?,now(),?,?,?,?,?,?,?,?,?,?,?,null,true,?)"
         );
         try {
             pstmt.setString(1, username);
-            pstmt.setString(2, BusinessAdministrator.NO_PASSWORD);
-            pstmt.setString(3, name);
-            pstmt.setString(4, title);
-            if(birthday==-1) pstmt.setNull(5, Types.TIMESTAMP);
-            else pstmt.setTimestamp(5, new Timestamp(birthday));
-            pstmt.setBoolean(6, isPrivate);
-            pstmt.setString(7, workPhone);
-            pstmt.setString(8, homePhone);
-            pstmt.setString(9, cellPhone);
-            pstmt.setString(10, fax);
-            pstmt.setString(11, email);
-            pstmt.setString(12, address1);
-            pstmt.setString(13, address2);
-            pstmt.setString(14, city);
-            pstmt.setString(15, state);
-            pstmt.setString(16, country);
-            pstmt.setString(17, zip);
-            pstmt.setString(18, supportCode);
+            pstmt.setString(2, name);
+            pstmt.setString(3, title);
+            pstmt.setDate(4, birthday);
+            pstmt.setBoolean(5, isPrivate);
+            pstmt.setString(6, workPhone);
+            pstmt.setString(7, homePhone);
+            pstmt.setString(8, cellPhone);
+            pstmt.setString(9, fax);
+            pstmt.setString(10, email);
+            pstmt.setString(11, address1);
+            pstmt.setString(12, address2);
+            pstmt.setString(13, city);
+            pstmt.setString(14, state);
+            pstmt.setString(15, country);
+            pstmt.setString(16, zip);
+            pstmt.setString(17, supportCode);
             pstmt.executeUpdate();
         } catch(SQLException err) {
             System.err.println("Error from query: "+pstmt.toString());
@@ -450,7 +455,7 @@ final public class BusinessHandler {
             source.getUsername()
         );
 
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
 
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
@@ -459,9 +464,6 @@ final public class BusinessHandler {
     
     public static String convertUSState(DatabaseConnection conn, String state) throws IOException, SQLException {
         String newState = conn.executeStringQuery(
-            Connection.TRANSACTION_READ_COMMITTED,
-            true,
-            true,
             "select coalesce((select code from us_states where upper(name)=upper(?) or code=upper(?)),'')",
             state,
             state
@@ -483,7 +485,7 @@ final public class BusinessHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String accounting,
+        AccountingCode accounting,
         String name,
         boolean isPrivate,
         String phone,
@@ -505,12 +507,12 @@ final public class BusinessHandler {
         if (country.equals(CountryCode.US)) state=convertUSState(conn, state);
 
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('business_profiles_pkey_seq')");
-        int priority=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select coalesce(max(priority)+1, 1) from business_profiles where accounting=?", accounting);
+        int priority=conn.executeIntQuery("select coalesce(max(priority)+1, 1) from business_profiles where accounting=?", accounting);
 
         PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into business_profiles values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         try {
             pstmt.setInt(1, pkey);
-            pstmt.setString(2, accounting);
+            pstmt.setString(2, accounting.toString());
             pstmt.setInt(3, priority);
             pstmt.setString(4, name);
             pstmt.setBoolean(5, isPrivate);
@@ -544,7 +546,7 @@ final public class BusinessHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String accounting,
+        AccountingCode accounting,
         int server
     ) throws IOException, SQLException {
         // Must be allowed to access the Business
@@ -560,7 +562,7 @@ final public class BusinessHandler {
     public static int addBusinessServer(
         DatabaseConnection conn,
         InvalidateList invalidateList,
-        String accounting,
+        AccountingCode accounting,
         int server
     ) throws IOException, SQLException {
         if(isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add BusinessServer, Business disabled: "+accounting);
@@ -571,9 +573,6 @@ final public class BusinessHandler {
         if(
             !accounting.equals(getRootBusiness())
             && conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -591,7 +590,7 @@ final public class BusinessHandler {
             )
         ) throw new SQLException("Unable to add business_server, parent does not have access to server.  accounting="+accounting+", server="+server);
 
-        boolean hasDefault=conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select (select pkey from business_servers where accounting=? and is_default limit 1) is not null", accounting);
+        boolean hasDefault=conn.executeBooleanQuery("select (select pkey from business_servers where accounting=? and is_default limit 1) is not null", accounting);
 
         conn.executeUpdate(
             "insert into business_servers values(?,?,?,?,false,false,false,false,false,false,false)",
@@ -615,7 +614,7 @@ final public class BusinessHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String accounting,
+        AccountingCode accounting,
         String disableReason
     ) throws IOException, SQLException {
         checkAccessBusiness(conn, source, "addDisableLog", accounting);
@@ -648,7 +647,7 @@ final public class BusinessHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String accounting,
+        AccountingCode accounting,
         String billingContact,
         String emailAddress,
         int balance,
@@ -678,7 +677,7 @@ final public class BusinessHandler {
             + ")"
         );
         try {
-            pstmt.setString(1, accounting);
+            pstmt.setString(1, accounting.toString());
             pstmt.setString(2, billingContact);
             pstmt.setString(3, emailAddress);
             pstmt.setString(4, SQLUtility.getDecimal(balance));
@@ -699,7 +698,7 @@ final public class BusinessHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
-        String accounting
+        AccountingCode accounting
     ) throws IOException, SQLException {
         if(isBusinessDisabled(conn, accounting)) throw new SQLException("Business is already disabled: "+accounting);
         if(accounting.equals(getRootBusiness())) throw new SQLException("Not allowed to disable the root business: "+accounting);
@@ -741,7 +740,7 @@ final public class BusinessHandler {
         );
 
         // Notify all clients of the update
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
         invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, getServersForBusiness(conn, accounting), false);
     }
 
@@ -749,7 +748,7 @@ final public class BusinessHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String accounting
+        AccountingCode accounting
     ) throws IOException, SQLException {
         checkAccessBusiness(conn, source, "enableBusiness", accounting);
 
@@ -815,34 +814,43 @@ final public class BusinessHandler {
         throw new SQLException("Failed to generate support code after thousands of attempts");
     }
 
-    public static String generateAccountingCode(
+    public static AccountingCode generateAccountingCode(
         DatabaseConnection conn,
-        String template
+        AccountingCode template
     ) throws IOException, SQLException {
-        // Load the entire list of accounting codes
-        List<String> codes=conn.executeStringListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select accounting from businesses");
-        int size=codes.size();
+        try {
+            // Load the entire list of accounting codes
+            List<AccountingCode> codes=conn.executeObjectCollectionQuery(
+                new ArrayList<AccountingCode>(),
+                ObjectFactories.accountingCodeFactory,
+                "select accounting from businesses"
+            );
+            int size=codes.size();
 
-        // Sort them
-        List<String> sorted=new SortedArrayList<String>(size);
-        for(int c=0;c<size;c++) sorted.add(codes.get(c));
+            // Sort them
+            List<AccountingCode> sorted=new SortedArrayList<AccountingCode>(size);
+            for(int c=0;c<size;c++) sorted.add(codes.get(c));
 
-        // Find one that is not used
-        String goodOne=null;
-        for(int c=1;c<Integer.MAX_VALUE;c++) {
-            String accounting=template+c;
-            if(!Business.isValidAccounting(accounting)) throw new SQLException("Invalid accounting code: "+accounting);
-            if(!sorted.contains(accounting)) {
-                goodOne=accounting;
-                break;
+            // Find one that is not used
+            AccountingCode goodOne=null;
+            for(int c=1;c<Integer.MAX_VALUE;c++) {
+                AccountingCode accounting=AccountingCode.valueOf(template.toString()+c);
+                if(!sorted.contains(accounting)) {
+                    goodOne=accounting;
+                    break;
+                }
             }
+
+            // If could not find one, report and error
+            if(goodOne==null) throw new SQLException("Unable to find available accounting code for template: "+template);
+
+            // Write the one we found
+            return goodOne;
+        } catch(ValidationException e) {
+            SQLException exc = new SQLException(e.getLocalizedMessage());
+            exc.initCause(e);
+            throw exc;
         }
-
-        // If could not find one, report and error
-        if(goodOne==null) throw new SQLException("Unable to find available accounting code for template: "+template);
-
-        // Write the one we found
-        return goodOne;
     }
 
     /**
@@ -850,10 +858,14 @@ final public class BusinessHandler {
      * 
      * @return  the depth between 1 and Business.MAXIMUM_BUSINESS_TREE_DEPTH, inclusive.
      */
-    public static int getDepthInBusinessTree(DatabaseConnection conn, String accounting) throws IOException, SQLException {
+    public static int getDepthInBusinessTree(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
         int depth=0;
         while(accounting!=null) {
-            String parent=conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select parent from businesses where accounting=?", accounting);
+            AccountingCode parent=conn.executeObjectQuery(
+                ObjectFactories.accountingCodeFactory,
+                "select parent from businesses where accounting=?",
+                accounting
+            );
             depth++;
             accounting=parent;
         }
@@ -862,40 +874,40 @@ final public class BusinessHandler {
     }
 
     public static String getDisableLogDisabledBy(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select disabled_by from disable_log where pkey=?", pkey);
+        return conn.executeStringQuery("select disabled_by from disable_log where pkey=?", pkey);
     }
 
-    public static int getDisableLogForBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
-        return conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select coalesce(disable_log, -1) from businesses where accounting=?", accounting);
+    public static int getDisableLogForBusiness(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
+        return conn.executeIntQuery("select coalesce(disable_log, -1) from businesses where accounting=?", accounting);
     }
 
     final private static Map<String,Integer> businessAdministratorDisableLogs=new HashMap<String,Integer>();
     public static int getDisableLogForBusinessAdministrator(DatabaseConnection conn, String username) throws IOException, SQLException {
         synchronized(businessAdministratorDisableLogs) {
             if(businessAdministratorDisableLogs.containsKey(username)) return businessAdministratorDisableLogs.get(username).intValue();
-            int disableLog=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select coalesce(disable_log, -1) from business_administrators where username=?", username);
+            int disableLog=conn.executeIntQuery("select coalesce(disable_log, -1) from business_administrators where username=?", username);
             businessAdministratorDisableLogs.put(username, Integer.valueOf(disableLog));
             return disableLog;
         }
     }
 
-    public static List<String> getPackagesForBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
-        return conn.executeStringListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select name from packages where accounting=?", accounting);
+    public static List<String> getPackagesForBusiness(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
+        return conn.executeStringListQuery("select name from packages where accounting=?", accounting);
     }
 
-    public static IntList getServersForBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
-        return conn.executeIntListQuery(Connection.TRANSACTION_READ_COMMITTED, true, "select server from business_servers where accounting=?", accounting);
+    public static IntList getServersForBusiness(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
+        return conn.executeIntListQuery("select server from business_servers where accounting=?", accounting);
     }
 
-    public static String getRootBusiness() throws IOException {
+    public static AccountingCode getRootBusiness() throws IOException {
         return MasterConfiguration.getRootBusiness();
     }
 
     public static boolean isAccountingAvailable(
         DatabaseConnection conn,
-        String accounting
+        AccountingCode accounting
     ) throws IOException, SQLException {
-        return conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select count(*) from businesses where accounting=?", accounting)==0;
+        return conn.executeIntQuery("select count(*) from businesses where accounting=?", accounting)==0;
     }
 
     public static boolean isBusinessAdministratorPasswordSet(
@@ -904,11 +916,7 @@ final public class BusinessHandler {
         String username
     ) throws IOException, SQLException {
         UsernameHandler.checkAccessUsername(conn, source, "isBusinessAdministratorPasswordSet", username);
-        return !BusinessAdministrator.NO_PASSWORD.equals(
-            conn
-                .executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select password from business_administrators where username=?", username)
-                .trim()
-        );
+        return conn.executeBooleanQuery("select password is not null from business_administrators where username=?", username);
     }
 
     public static void removeBusinessAdministrator(
@@ -930,7 +938,7 @@ final public class BusinessHandler {
     ) throws IOException, SQLException {
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove Username named '"+LinuxAccount.MAIL+'\'');
 
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
 
         conn.executeUpdate("delete from business_administrator_permissions where username=?", username);
         conn.executeUpdate("delete from business_administrators where username=?", username);
@@ -948,16 +956,20 @@ final public class BusinessHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        String accounting=conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select accounting from business_servers where pkey=?", pkey);
-        int server=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select server from business_servers where pkey=?", pkey);
+        AccountingCode accounting = conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
+            "select accounting from business_servers where pkey=?",
+            pkey
+        );
+        int server=conn.executeIntQuery("select server from business_servers where pkey=?", pkey);
 
         // Must be allowed to access this Business
         checkAccessBusiness(conn, source, "removeBusinessServer", accounting);
 
         // Do not remove the default unless it is the only one left
         if(
-            conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select is_default from business_servers where pkey=?", pkey)
-            && conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select count(*) from business_servers where accounting=?", accounting)>1
+            conn.executeBooleanQuery("select is_default from business_servers where pkey=?", pkey)
+            && conn.executeIntQuery("select count(*) from business_servers where accounting=?", accounting)>1
         ) {
             throw new SQLException("Cannot remove the default business_server unless it is the last business_server for a business: "+pkey);
         }
@@ -977,15 +989,16 @@ final public class BusinessHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        String accounting=conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select accounting from business_servers where pkey=?", pkey);
-        int server=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select server from business_servers where pkey=?", pkey);
+        AccountingCode accounting = conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
+            "select accounting from business_servers where pkey=?",
+            pkey
+        );
+        int server=conn.executeIntQuery("select server from business_servers where pkey=?", pkey);
 
         // No children should be able to access the server
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1010,9 +1023,6 @@ final public class BusinessHandler {
         // email_pipes
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1035,9 +1045,6 @@ final public class BusinessHandler {
         // httpd_sites
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1060,9 +1067,6 @@ final public class BusinessHandler {
         // ip_addresses
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1087,9 +1091,6 @@ final public class BusinessHandler {
         // linux_server_accounts
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1114,9 +1115,6 @@ final public class BusinessHandler {
         // linux_server_groups
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1141,9 +1139,6 @@ final public class BusinessHandler {
         // mysql_databases
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1168,9 +1163,6 @@ final public class BusinessHandler {
         // mysql_server_users
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1197,9 +1189,6 @@ final public class BusinessHandler {
         // net_binds
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1222,9 +1211,6 @@ final public class BusinessHandler {
         // postgres_databases
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1252,9 +1238,6 @@ final public class BusinessHandler {
         // postgres_server_users
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1280,9 +1263,6 @@ final public class BusinessHandler {
         // email_domains
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1305,9 +1285,6 @@ final public class BusinessHandler {
         // email_smtp_relays
         if(
             conn.executeBooleanQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
-                true,
                 "select\n"
                 + "  (\n"
                 + "    select\n"
@@ -1347,7 +1324,7 @@ final public class BusinessHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        String accounting=getBusinessForDisableLog(conn, pkey);
+        AccountingCode accounting=getBusinessForDisableLog(conn, pkey);
 
         conn.executeUpdate("delete from disable_log where pkey=?", pkey);
 
@@ -1359,16 +1336,15 @@ final public class BusinessHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String oldAccounting,
-        String newAccounting
+        AccountingCode oldAccounting,
+        AccountingCode newAccounting
     ) throws IOException, SQLException {
         checkAccessBusiness(conn, source, "setBusinessAccounting", oldAccounting);
-        if(!Business.isValidAccounting(newAccounting)) throw new SQLException("Invalid accounting code: "+newAccounting);
 
         conn.executeUpdate("update businesses set accounting=? where accounting=?", newAccounting, oldAccounting);
 
         // Notify all clients of the update
-        Collection<String> accts=InvalidateList.getCollection(oldAccounting, newAccounting);
+        Collection<AccountingCode> accts=InvalidateList.getCollection(oldAccounting, newAccounting);
         invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accts, InvalidateList.allServers, false);
         invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_PROFILES, accts, InvalidateList.allServers, false);
         invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accts, InvalidateList.allServers, false);
@@ -1407,11 +1383,11 @@ final public class BusinessHandler {
 
             String encrypted =
                 plaintext==null || plaintext.length()==0
-                ? BusinessAdministrator.NO_PASSWORD
-                : BusinessAdministrator.hash(plaintext)
+                ? null
+                : HashedPassword.hash(plaintext)
             ;
 
-            String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+            AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
             conn.executeUpdate("update business_administrators set password=? where username=?", encrypted, username);
 
             // Notify all clients of the update
@@ -1431,7 +1407,7 @@ final public class BusinessHandler {
         String username,
         String name,
         String title,
-        long birthday,
+        Date birthday,
         boolean isPrivate,
         String workPhone,
         String homePhone,
@@ -1452,12 +1428,12 @@ final public class BusinessHandler {
 
         if (country!=null && country.equals(CountryCode.US)) state=convertUSState(conn, state);
 
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
         conn.executeUpdate(
             "update business_administrators set name=?, title=?, birthday=?, private=?, work_phone=?, home_phone=?, cell_phone=?, fax=?, email=?, address1=?, address2=?, city=?, state=?, country=?, zip=? where username=?",
             name,
             title,
-            birthday==-1?null:SQLUtility.getDate(birthday),
+            birthday==null?Null.DATE:birthday,
             isPrivate,
             workPhone,
             homePhone,
@@ -1486,7 +1462,11 @@ final public class BusinessHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        String accounting=conn.executeStringQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select accounting from business_servers where pkey=?", pkey);
+        AccountingCode accounting = conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
+            "select accounting from business_servers where pkey=?",
+            pkey
+        );
 
         checkAccessBusiness(conn, source, "setDefaultBusinessServer", accounting);
 
@@ -1559,11 +1539,9 @@ final public class BusinessHandler {
         }
     }
 
-    public static String getParentBusiness(DatabaseConnection conn, String accounting) throws IOException, SQLException {
-        return conn.executeStringQuery(
-            Connection.TRANSACTION_READ_COMMITTED,
-            true,
-            true,
+    public static AccountingCode getParentBusiness(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
             "select parent from businesses where accounting=?",
             accounting
         );
@@ -1571,9 +1549,6 @@ final public class BusinessHandler {
 
     public static String getTechnicalEmail(DatabaseConnection conn, String accountingCode) throws IOException, SQLException {
         return conn.executeStringQuery(
-            Connection.TRANSACTION_READ_COMMITTED,
-            true,
-            true,
             "select technical_email from business_profiles where accounting=? order by priority desc limit 1",
             accountingCode
         );
@@ -1596,45 +1571,42 @@ final public class BusinessHandler {
         return isDisabled;
     }
 
-    public static boolean isBusinessDisabled(DatabaseConnection conn, String accounting) throws IOException, SQLException {
-	    synchronized(disabledBusinesses) {
+    public static boolean isBusinessDisabled(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
+        synchronized(disabledBusinesses) {
             Boolean O=disabledBusinesses.get(accounting);
             if(O!=null) return O.booleanValue();
             boolean isDisabled=getDisableLogForBusiness(conn, accounting)!=-1;
             disabledBusinesses.put(accounting, isDisabled);
             return isDisabled;
-	    }
+        }
     }
 
-    public static boolean isBusinessCanceled(DatabaseConnection conn, String accounting) throws IOException, SQLException {
-        return conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select canceled is not null from businesses where accounting=?", accounting);
+    public static boolean isBusinessCanceled(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
+        return conn.executeBooleanQuery("select canceled is not null from businesses where accounting=?", accounting);
     }
 
-    public static boolean isBusinessBillParent(DatabaseConnection conn, String accounting) throws IOException, SQLException {
-        return conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select bill_parent from businesses where accounting=?", accounting);
+    public static boolean isBusinessBillParent(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
+        return conn.executeBooleanQuery("select bill_parent from businesses where accounting=?", accounting);
     }
 
     public static boolean canSeePrices(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
         return canSeePrices(conn, UsernameHandler.getBusinessForUsername(conn, source.getUsername()));
     }
 
-    public static boolean canSeePrices(DatabaseConnection conn, String accounting) throws IOException, SQLException {
-        return conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select can_see_prices from businesses where accounting=?", accounting);
+    public static boolean canSeePrices(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
+        return conn.executeBooleanQuery("select can_see_prices from businesses where accounting=?", accounting);
     }
 
-    public static boolean isBusinessOrParent(DatabaseConnection conn, String parentAccounting, String accounting) throws IOException, SQLException {
-        return conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select is_business_or_parent(?,?)", parentAccounting, accounting);
+    public static boolean isBusinessOrParent(DatabaseConnection conn, AccountingCode parentAccounting, AccountingCode accounting) throws IOException, SQLException {
+        return conn.executeBooleanQuery("select is_business_or_parent(?,?)", parentAccounting, accounting);
     }
 
     public static boolean canSwitchUser(DatabaseConnection conn, String authenticatedAs, String connectAs) throws IOException, SQLException {
-        String authAccounting=UsernameHandler.getBusinessForUsername(conn, authenticatedAs);
-        String connectAccounting=UsernameHandler.getBusinessForUsername(conn, connectAs);
+        AccountingCode authAccounting=UsernameHandler.getBusinessForUsername(conn, authenticatedAs);
+        AccountingCode connectAccounting=UsernameHandler.getBusinessForUsername(conn, connectAs);
         // Cannot switch within same business
         if(authAccounting.equals(connectAccounting)) return false;
         return conn.executeBooleanQuery(
-            Connection.TRANSACTION_READ_COMMITTED,
-            true,
-            true,
             "select\n"
             + "  (select can_switch_users from business_administrators where username=?)\n"
             + "  and is_business_or_parent(?,?)",
@@ -1649,16 +1621,16 @@ final public class BusinessHandler {
      *
      * @return  a <code>HashMap</code> of <code>ArrayList</code>
      */
-    public static Map<String,List<String>> getBusinessContacts(DatabaseConnection conn) throws IOException, SQLException {
+    public static Map<AccountingCode,List<String>> getBusinessContacts(DatabaseConnection conn) throws IOException, SQLException {
         // Load the list of businesses and their contacts
-        Map<String,List<String>> businessContacts=new HashMap<String,List<String>>();
+        Map<AccountingCode,List<String>> businessContacts=new HashMap<AccountingCode,List<String>>();
         List<String> foundAddresses=new SortedArrayList<String>();
         PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select bp.accounting, bp.billing_email, bp.technical_email from business_profiles bp, businesses bu where bp.accounting=bu.accounting and bu.canceled is null order by bp.accounting, bp.priority desc");
         try {
             ResultSet results=pstmt.executeQuery();
             try {
                 while(results.next()) {
-                    String accounting=results.getString(1);
+                    AccountingCode accounting=AccountingCode.valueOf(results.getString(1));
                     if(!businessContacts.containsKey(accounting)) {
                         List<String> uniqueAddresses=new ArrayList<String>();
                         foundAddresses.clear();
@@ -1683,6 +1655,10 @@ final public class BusinessHandler {
                         businessContacts.put(accounting, uniqueAddresses);
                     }
                 }
+            } catch(ValidationException e) {
+                SQLException exc = new SQLException(e.getLocalizedMessage());
+                exc.initCause(e);
+                throw exc;
             } finally {
                 results.close();
             }
@@ -1707,20 +1683,20 @@ final public class BusinessHandler {
      *   <li>Follow the bill_parents up to top billing level</li>
      * </ol>
      */
-    public static String getBusinessFromEmailAddresses(DatabaseConnection conn, List<String> addresses) throws IOException, SQLException {
+    public static AccountingCode getBusinessFromEmailAddresses(DatabaseConnection conn, List<String> addresses) throws IOException, SQLException {
         // Load the list of businesses and their contacts
-        Map<String,List<String>> businessContacts=getBusinessContacts(conn);
+        Map<AccountingCode,List<String>> businessContacts=getBusinessContacts(conn);
 
         // The cumulative weights are added up here, per business
-        Map<String,Integer> businessWeights=new HashMap<String,Integer>();
+        Map<AccountingCode,Integer> businessWeights=new HashMap<AccountingCode,Integer>();
 
         // Go through all addresses
         for(int c=0;c<addresses.size();c++) {
             String address=addresses.get(c).toLowerCase();
             // Look for billing and technical contact matches, 10 points each
-            Iterator<String> I=businessContacts.keySet().iterator();
+            Iterator<AccountingCode> I=businessContacts.keySet().iterator();
             while(I.hasNext()) {
-                String accounting=I.next();
+                AccountingCode accounting=I.next();
                 List<String> list=businessContacts.get(accounting);
                 for(int d=0;d<list.size();d++) {
                     String contact=list.get(d);
@@ -1734,9 +1710,9 @@ final public class BusinessHandler {
                 String domain=address.substring(pos+1);
                 if(domain.length()>0) {
                     // Look for matches in email_domains, 5 points each
-                    List<String> domains=conn.executeStringListQuery(
-                        Connection.TRANSACTION_READ_COMMITTED,
-                        true,
+                    List<AccountingCode> domains=conn.executeObjectCollectionQuery(
+                        new ArrayList<AccountingCode>(),
+                        ObjectFactories.accountingCodeFactory,
                         "select\n"
                         + "  pk.accounting\n"
                         + "from\n"
@@ -1748,13 +1724,13 @@ final public class BusinessHandler {
                         domain
                     );
                     for(int d=0;d<domains.size();d++) {
-                        String accounting=domains.get(d);
+                        AccountingCode accounting=domains.get(d);
                         addWeight(businessWeights, accounting, 5);
                     }
                     // Look for matches in httpd_site_urls, 1 point each
-                    List<String> sites=conn.executeStringListQuery(
-                        Connection.TRANSACTION_READ_COMMITTED,
-                        true,
+                    List<AccountingCode> sites=conn.executeObjectCollectionQuery(
+                        new ArrayList<AccountingCode>(),
+                        ObjectFactories.accountingCodeFactory,
                         "select\n"
                         + "  pk.accounting\n"
                         + "from\n"
@@ -1770,13 +1746,13 @@ final public class BusinessHandler {
                         domain
                     );
                     for(int d=0;d<sites.size();d++) {
-                        String accounting=sites.get(d);
+                        AccountingCode accounting=sites.get(d);
                         addWeight(businessWeights, accounting, 1);
                     }
                     // Look for matches in dns_zones, 1 point each
-                    List<String> zones=conn.executeStringListQuery(
-                        Connection.TRANSACTION_READ_COMMITTED,
-                        true,
+                    List<AccountingCode> zones=conn.executeObjectCollectionQuery(
+                        new ArrayList<AccountingCode>(),
+                        ObjectFactories.accountingCodeFactory,
                         "select\n"
                         + "  pk.accounting\n"
                         + "from\n"
@@ -1788,7 +1764,7 @@ final public class BusinessHandler {
                         domain
                     );
                     for(int d=0;d<zones.size();d++) {
-                        String accounting=zones.get(d);
+                        AccountingCode accounting=zones.get(d);
                         addWeight(businessWeights, accounting, 1);
                     }
                 }
@@ -1796,11 +1772,11 @@ final public class BusinessHandler {
         }
 
         // Find the highest weight
-        Iterator<String> I=businessWeights.keySet().iterator();
+        Iterator<AccountingCode> I=businessWeights.keySet().iterator();
         int highest=0;
-        String highestAccounting=null;
+        AccountingCode highestAccounting=null;
         while(I.hasNext()) {
-            String accounting=I.next();
+            AccountingCode accounting=I.next();
             int weight=businessWeights.get(accounting).intValue();
             if(weight>highest) {
                 highest=weight;
@@ -1826,17 +1802,14 @@ final public class BusinessHandler {
         return highestAccounting;
     }
 
-    private static void addWeight(Map<String,Integer> businessWeights, String accounting, int weight) {
+    private static void addWeight(Map<AccountingCode,Integer> businessWeights, AccountingCode accounting, int weight) {
         Integer I=businessWeights.get(accounting);
         int previous=I==null ? 0 : I.intValue();
         businessWeights.put(accounting, Integer.valueOf(previous + weight));
     }
 
-    public static boolean canBusinessAccessServer(DatabaseConnection conn, String accounting, int server) throws IOException, SQLException {
+    public static boolean canBusinessAccessServer(DatabaseConnection conn, AccountingCode accounting, int server) throws IOException, SQLException {
         return conn.executeBooleanQuery(
-            Connection.TRANSACTION_READ_COMMITTED,
-            true,
-            true,
             "select\n"
             + "  (\n"
             + "    select\n"
@@ -1854,7 +1827,7 @@ final public class BusinessHandler {
         );
     }
     
-    public static void checkBusinessAccessServer(DatabaseConnection conn, RequestSource source, String action, String accounting, int server) throws IOException, SQLException {
+    public static void checkBusinessAccessServer(DatabaseConnection conn, RequestSource source, String action, AccountingCode accounting, int server) throws IOException, SQLException {
         if(!canBusinessAccessServer(conn, accounting, server)) {
             String message=
             "accounting="

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 by AO Industries, Inc.,
+ * Copyright 2012-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.IpReputationSetHost;
 import com.aoindustries.aoserv.client.IpReputationSetNetwork;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.ObjectFactory;
 import java.io.IOException;
@@ -32,8 +33,12 @@ final public class IpReputationSetHandler {
     private IpReputationSetHandler() {
     }
 
-    public static String getBusinessForIpReputationSet(DatabaseConnection conn, int ipReputationSet) throws IOException, SQLException {
-        return conn.executeStringQuery("select accounting from ip_reputation_sets where pkey=?", ipReputationSet);
+    public static AccountingCode getBusinessForIpReputationSet(DatabaseConnection conn, int ipReputationSet) throws IOException, SQLException {
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
+            "select accounting from ip_reputation_sets where pkey=?",
+            ipReputationSet
+        );
     }
 
     public static void checkAccessIpReputationSet(DatabaseConnection conn, RequestSource source, String action, int ipReputationSet) throws IOException, SQLException {
@@ -198,7 +203,7 @@ final public class IpReputationSetHandler {
         IpReputationSet.AddReputation[] addReputations
     ) throws IOException, SQLException {
         // Can't add reputation to a disabled business
-        String accounting = getBusinessForIpReputationSet(conn, ipReputationSet);
+        AccountingCode accounting = getBusinessForIpReputationSet(conn, ipReputationSet);
         if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add IP reputation, business disabled: "+accounting);
 
         if(addReputations.length>0) {

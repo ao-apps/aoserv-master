@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master;
-
 /*
- * Copyright 2001-2009 by AO Industries, Inc.,
+ * Copyright 2001-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master;
+
 import com.aoindustries.aoserv.client.AOServPermission;
 import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.FailoverMySQLReplication;
@@ -17,6 +17,7 @@ import com.aoindustries.aoserv.client.MySQLServerUser;
 import com.aoindustries.aoserv.client.MySQLUser;
 import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.MySQLUserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.io.CompressedDataOutputStream;
@@ -26,6 +27,7 @@ import com.aoindustries.util.SortedArrayList;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -146,7 +148,7 @@ final public class MySQLHandler {
         PackageHandler.checkAccessPackage(conn, source, "addMySQLDatabase", packageName);
 
         // Find the accouting code
-        String accounting=PackageHandler.getBusinessForPackage(conn, packageName);
+        AccountingCode accounting=PackageHandler.getBusinessForPackage(conn, packageName);
         // This sub-account must have access to the server
         BusinessHandler.checkBusinessAccessServer(conn, source, "addMySQLDatabase", accounting, aoServer);
 
@@ -285,7 +287,7 @@ final public class MySQLHandler {
         );
 
         // Notify all clients of the update
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.MYSQL_SERVER_USERS,
@@ -632,7 +634,9 @@ final public class MySQLHandler {
         if(dbName.equals(MySQLDatabase.MYSQL)) throw new SQLException("Not allowed to remove the database named '"+MySQLDatabase.MYSQL+'\'');
 
         // Remove the mysql_db_user entries
-        List<String> dbUserAccounts=conn.executeStringListQuery(
+        List<AccountingCode> dbUserAccounts=conn.executeObjectCollectionQuery(
+            new ArrayList<AccountingCode>(),
+            ObjectFactories.accountingCodeFactory,
             "select\n"
             + "  pk.accounting\n"
             + "from\n"
@@ -652,7 +656,7 @@ final public class MySQLHandler {
         if(dbUserAccounts.size()>0) conn.executeUpdate("delete from mysql_db_users where mysql_database=?", pkey);
 
         // Remove the database entry
-        String accounting=getBusinessForMySQLDatabase(conn, pkey);
+        AccountingCode accounting = getBusinessForMySQLDatabase(conn, pkey);
         int mysqlServer=getMySQLServerForMySQLDatabase(conn, pkey);
         int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
         conn.executeUpdate("delete from mysql_databases where pkey=?", pkey);
@@ -686,7 +690,7 @@ final public class MySQLHandler {
         checkAccessMySQLDBUser(conn, source, "removeMySQLDBUser", pkey);
 
         // Remove the mysql_db_user
-        String accounting=getBusinessForMySQLDBUser(conn, pkey);
+        AccountingCode accounting = getBusinessForMySQLDBUser(conn, pkey);
         int mysqlServer=getMySQLServerForMySQLDBUser(conn, pkey);
         int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
         conn.executeUpdate("delete from mysql_db_users where pkey=?", pkey);
@@ -719,7 +723,7 @@ final public class MySQLHandler {
         if(dbUsersExist) conn.executeUpdate("delete from mysql_db_users where mysql_server_user=?", pkey);
 
         // Remove the mysql_server_user
-        String accounting=getBusinessForMySQLServerUser(conn, pkey);
+        AccountingCode accounting = getBusinessForMySQLServerUser(conn, pkey);
         int mysqlServer=getMySQLServerForMySQLServerUser(conn, pkey);
         int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
         conn.executeUpdate("delete from mysql_server_users where pkey=?", pkey);
@@ -765,7 +769,7 @@ final public class MySQLHandler {
     ) throws IOException, SQLException {
         if(username.equals(MySQLUser.ROOT)) throw new SQLException("Not allowed to remove MySQLUser for user '"+MySQLUser.ROOT+'\'');
 
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
         // Remove the mysql_db_user
         IntList dbUserServers=conn.executeIntListQuery(
@@ -947,12 +951,17 @@ final public class MySQLHandler {
         DaemonHandler.getDaemonConnector(conn, aoServer).waitForMySQLUserRebuild();
     }
 
-    public static String getBusinessForMySQLDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from mysql_databases md, packages pk where md.package=pk.name and md.pkey=?", pkey);
+    public static AccountingCode getBusinessForMySQLDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
+            "select pk.accounting from mysql_databases md, packages pk where md.package=pk.name and md.pkey=?",
+            pkey
+        );
     }
 
-    public static String getBusinessForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery(
+    public static AccountingCode getBusinessForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
             "select\n"
             + "  pk.accounting\n"
             + "from\n"
@@ -969,8 +978,9 @@ final public class MySQLHandler {
         );
     }
 
-    public static String getBusinessForMySQLServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery(
+    public static AccountingCode getBusinessForMySQLServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
             "select\n"
             + "  pk.accounting\n"
             + "from\n"

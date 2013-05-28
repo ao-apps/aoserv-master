@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master;
-
 /*
- * Copyright 2001-2009 by AO Industries, Inc.,
+ * Copyright 2001-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master;
+
 import com.aoindustries.aoserv.client.AOServPermission;
 import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.EmailSpamAssassinIntegrationMode;
@@ -18,6 +18,8 @@ import com.aoindustries.aoserv.client.LinuxServerAccount;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.Gecos;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.io.unix.UnixFile;
@@ -28,6 +30,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -163,21 +166,16 @@ final public class LinuxAccountHandler {
         InvalidateList invalidateList,
         String username,
         String primary_group,
-        String name,
-        String office_location,
-        String office_phone,
-        String home_phone,
+        Gecos name,
+        Gecos office_location,
+        Gecos office_phone,
+        Gecos home_phone,
         String type,
         String shell,
         boolean skipSecurityChecks
     ) throws IOException, SQLException {
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add LinuxAccount named '"+LinuxAccount.MAIL+'\'');
         if(!LinuxAccount.isValidUsername(username)) throw new SQLException("Invalid LinuxAccount username: "+username);
-        String validity;
-        if((validity=LinuxAccount.checkGECOS(name, "full name"))!=null) throw new SQLException(validity);
-        if((validity=LinuxAccount.checkGECOS(office_location, "location"))!=null) throw new SQLException(validity);
-        if((validity=LinuxAccount.checkGECOS(office_phone, "office phone"))!=null) throw new SQLException(validity);
-        if((validity=LinuxAccount.checkGECOS(home_phone, "home phone"))!=null) throw new SQLException(validity);
 
         // Make sure the shell is allowed for the type of account being added
         if(!LinuxAccountType.isAllowedShell(type, shell)) throw new SQLException("shell='"+shell+"' not allowed for type='"+type+'\'');
@@ -407,7 +405,7 @@ final public class LinuxAccountHandler {
             EmailSpamAssassinIntegrationMode.DEFAULT_SPAMASSASSIN_INTEGRATION_MODE
         );
         // Notify all clients of the update
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
@@ -454,7 +452,7 @@ final public class LinuxAccountHandler {
             || groupName.equals(LinuxGroup.MAIL)
             || groupName.equals(LinuxGroup.MAILONLY)
         ) throw new SQLException("Not allowed to add LinuxServerGroup for group '"+groupName+'\'');
-        String accounting=getBusinessForLinuxGroup(conn, groupName);
+        AccountingCode accounting = getBusinessForLinuxGroup(conn, groupName);
         if(!skipSecurityChecks) {
             checkAccessLinuxGroup(conn, source, "addLinuxServerGroup", groupName);
             ServerHandler.checkAccessServer(conn, source, "addLinuxServerGroup", aoServer);
@@ -594,8 +592,8 @@ final public class LinuxAccountHandler {
         String enc_password=DaemonHandler.getDaemonConnector(conn, from_server).getEncryptedLinuxAccountPassword(from_username);
         DaemonHandler.getDaemonConnector(conn, to_server).setEncryptedLinuxAccountPassword(to_username, enc_password);
 
-        String from_accounting=UsernameHandler.getBusinessForUsername(conn, from_username);
-        String to_accounting=UsernameHandler.getBusinessForUsername(conn, to_username);
+        //AccountingCode from_accounting=UsernameHandler.getBusinessForUsername(conn, from_username);
+        //AccountingCode to_accounting=UsernameHandler.getBusinessForUsername(conn, to_username);
     }
 
     public static void disableLinuxAccount(
@@ -939,7 +937,7 @@ final public class LinuxAccountHandler {
         // Delete from the database
         conn.executeUpdate("delete from linux_accounts where username=?", username);
 
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
         if(ftpModified) invalidateList.addTable(conn, SchemaTable.TableID.FTP_GUEST_USERS, accounting, aoServers, false);
         if(groupAccountModified) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accounting, aoServers, false);
@@ -972,7 +970,7 @@ final public class LinuxAccountHandler {
         int primaryCount=conn.executeIntQuery("select count(*) from linux_group_accounts where group_name=? and is_primary", name);
         if(primaryCount>0) throw new SQLException("linux_group.name="+name+" is the primary group for "+primaryCount+" Linux "+(primaryCount==1?"account":"accounts"));
         // Get the values for later use
-        String accounting=getBusinessForLinuxGroup(conn, name);
+        AccountingCode accounting = getBusinessForLinuxGroup(conn, name);
         IntList aoServers=getAOServersForLinuxGroup(conn, name);
         for(int c=0;c<aoServers.size();c++) {
             int aoServer=aoServers.getInt(c);
@@ -1036,7 +1034,7 @@ final public class LinuxAccountHandler {
         if (useCount>0) throw new SQLException("linux_group_account("+pkey+") has been used by "+useCount+" httpd_tomcat_shared_sites.");
 
         // Get the values for later use
-        List<String> accountings=getBusinessesForLinuxGroupAccount(conn, pkey);
+        List<AccountingCode> accountings=getBusinessesForLinuxGroupAccount(conn, pkey);
         IntList aoServers=getAOServersForLinuxGroupAccount(conn, pkey);
         // Delete the group relations for this group
         conn.executeUpdate("delete from linux_group_accounts where pkey=?", pkey);
@@ -1103,7 +1101,7 @@ final public class LinuxAccountHandler {
         );
         if(pkey!=-1) {
             // Get the values for later use
-            List<String> accountings=getBusinessesForLinuxGroupAccount(conn, pkey);
+            List<AccountingCode> accountings=getBusinessesForLinuxGroupAccount(conn, pkey);
             IntList aoServers=getAOServersForLinuxGroupAccount(conn, pkey);
             conn.executeUpdate("delete from linux_group_accounts where pkey=?", pkey);
 
@@ -1166,7 +1164,7 @@ final public class LinuxAccountHandler {
             }
         }
 
-        String accounting=getBusinessForLinuxServerAccount(conn, account);
+        AccountingCode accounting = getBusinessForLinuxServerAccount(conn, account);
 
         // Delete the attachment blocks
         conn.executeUpdate("delete from email_attachment_blocks where linux_server_account=?", account);
@@ -1207,7 +1205,7 @@ final public class LinuxAccountHandler {
         ) throw new SQLException("Not allowed to remove LinuxServerGroup for group '"+groupName+"'");
 
         // Get the server this group is on
-        String accounting=getBusinessForLinuxServerGroup(conn, group);
+        AccountingCode accounting = getBusinessForLinuxServerGroup(conn, group);
         int aoServer=getAOServerForLinuxServerGroup(conn, group);
         // Must not be the primary group for any LinuxServerAccount on the same server
         int primaryCount=conn.executeIntQuery(
@@ -1261,7 +1259,7 @@ final public class LinuxAccountHandler {
             if(fromLSA!=pkey) throw new SQLException("((linux_acc_address.pkey="+from+").linux_server_account="+fromLSA+")!=((linux_server_account.pkey="+pkey+").username="+username+")");
         }
 
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
         int aoServer=getAOServerForLinuxServerAccount(conn, pkey);
         String path;
         if(content==null && !enabled) path=null;
@@ -1366,15 +1364,13 @@ final public class LinuxAccountHandler {
         RequestSource source,
         InvalidateList invalidateList,
         String username,
-        String phone
+        Gecos phone
     ) throws IOException, SQLException {
         checkAccessLinuxAccount(conn, source, "setLinuxAccountHomePhone", username);
         if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set home phone number, LinuxAccount disabled: "+username);
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set home phone number for user '"+LinuxAccount.MAIL+'\'');
-        String validity=LinuxAccount.checkGECOS(phone, "home phone");
-        if(validity!=null) throw new SQLException(validity);
 
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
         IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
         conn.executeUpdate("update linux_accounts set home_phone=? where username=?", phone, username);
@@ -1388,16 +1384,13 @@ final public class LinuxAccountHandler {
         RequestSource source,
         InvalidateList invalidateList,
         String username,
-        String name
+        Gecos name
     ) throws IOException, SQLException {
-        String validity=LinuxAccount.checkGECOS(name, "full name");
-        if(validity!=null) throw new SQLException(validity);
-
         checkAccessLinuxAccount(conn, source, "setLinuxAccountName", username);
         if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set full name, LinuxAccount disabled: "+username);
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set LinuxAccountName for user '"+LinuxAccount.MAIL+'\'');
 
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
         IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
         conn.executeUpdate("update linux_accounts set name=? where username=?", name, username);
@@ -1411,15 +1404,13 @@ final public class LinuxAccountHandler {
         RequestSource source,
         InvalidateList invalidateList,
         String username,
-        String location
+        Gecos location
     ) throws IOException, SQLException {
         checkAccessLinuxAccount(conn, source, "setLinuxAccountOfficeLocation", username);
         if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set office location, LinuxAccount disabled: "+username);
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set office location for user '"+LinuxAccount.MAIL+'\'');
-        String validity=LinuxAccount.checkGECOS(location, "location");
-        if(validity!=null) throw new SQLException(validity);
 
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
         IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
         conn.executeUpdate("update linux_accounts set office_location=? where username=?", location, username);
@@ -1433,15 +1424,13 @@ final public class LinuxAccountHandler {
         RequestSource source,
         InvalidateList invalidateList,
         String username,
-        String phone
+        Gecos phone
     ) throws IOException, SQLException {
         checkAccessLinuxAccount(conn, source, "setLinuxAccountOfficePhone", username);
         if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set office phone number, LinuxAccount disabled: "+username);
         if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set office phone number for user '"+LinuxAccount.MAIL+'\'');
-        String validity=LinuxAccount.checkGECOS(phone, "office phone");
-        if(validity!=null) throw new SQLException(validity);
 
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
         IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
         conn.executeUpdate("update linux_accounts set office_phone=? where username=?", phone, username);
@@ -1463,7 +1452,7 @@ final public class LinuxAccountHandler {
         String type=getTypeForLinuxAccount(conn, username);
         if(!LinuxAccountType.isAllowedShell(type, shell)) throw new SQLException("Shell '"+shell+"' not allowed for Linux accounts with the type '"+type+'\'');
 
-        String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+        AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
         IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
         conn.executeUpdate("update linux_accounts set shell=? where username=?", shell, username);
@@ -1497,7 +1486,7 @@ final public class LinuxAccountHandler {
                 if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
             }
 
-            String accounting=UsernameHandler.getBusinessForUsername(conn, username);
+            AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
             int aoServer=getAOServerForLinuxServerAccount(conn, pkey);
             try {
                 DaemonHandler.getDaemonConnector(conn, aoServer).setLinuxServerAccountPassword(username, password);
@@ -1792,12 +1781,18 @@ final public class LinuxAccountHandler {
         }
     }
 
-    public static String getBusinessForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
-        return conn.executeStringQuery("select pk.accounting from linux_groups lg, packages pk where lg.package=pk.name and lg.name=?", name);
+    public static AccountingCode getBusinessForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
+            "select pk.accounting from linux_groups lg, packages pk where lg.package=pk.name and lg.name=?",
+            name
+        );
     }
 
-    public static List<String> getBusinessesForLinuxGroupAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringListQuery(
+    public static List<AccountingCode> getBusinessesForLinuxGroupAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeObjectCollectionQuery(
+            new ArrayList<AccountingCode>(),
+            ObjectFactories.accountingCodeFactory,
            "select\n"
             + "  pk1.accounting\n"
             + "from\n"
@@ -1823,8 +1818,9 @@ final public class LinuxAccountHandler {
         );
     }
 
-    public static String getBusinessForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery(
+    public static AccountingCode getBusinessForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
             "select\n"
             + "  pk.accounting\n"
             + "from\n"
@@ -1839,8 +1835,9 @@ final public class LinuxAccountHandler {
         );
     }
 
-    public static String getBusinessForLinuxServerGroup(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery(
+    public static AccountingCode getBusinessForLinuxServerGroup(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
             "select\n"
             + "  pk.accounting\n"
             + "from\n"

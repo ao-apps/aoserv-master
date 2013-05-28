@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 by AO Industries, Inc.,
+ * Copyright 2001-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -173,6 +173,7 @@ import com.aoindustries.aoserv.client.VirtualServer;
 import com.aoindustries.aoserv.client.WhoisHistory;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.profiler.MethodProfile;
 import com.aoindustries.profiler.Profiler;
 import com.aoindustries.sql.DatabaseAccess;
@@ -496,9 +497,6 @@ final public class TableHandler {
                             return 0;
                         } else {
                             return conn.executeIntQuery(
-                                Connection.TRANSACTION_READ_COMMITTED,
-                                true,
-                                true,
                                 "select count(*) from distro_files"
                             );
                         }
@@ -513,7 +511,7 @@ final public class TableHandler {
                             sql.append(osVersions.getInt(c));
                         }
                         sql.append(')');
-                        return conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, sql.toString());
+                        return conn.executeIntQuery(sql.toString());
                     }
                 } else return 0;
             case TICKETS :
@@ -988,10 +986,10 @@ final public class TableHandler {
                             + "  br.nameserver3,\n"
                             + "  br.nameserver4,\n"
                             + "  br.smtp_linux_server_account,\n"
-                            + "  '"+AOServProtocol.FILTERED+"'::text,\n" // smtp_host
+                            + "  null::text,\n" // smtp_host
                             + "  '"+AOServProtocol.FILTERED+"'::text,\n" // smtp_password
                             + "  br.imap_linux_server_account,\n"
-                            + "  '"+AOServProtocol.FILTERED+"'::text,\n" // imap_host
+                            + "  null::text,\n" // imap_host
                             + "  '"+AOServProtocol.FILTERED+"'::text,\n" // imap_password
                             + "  br.support_email_address,\n"
                             + "  br.support_email_display,\n"
@@ -1073,7 +1071,7 @@ final public class TableHandler {
                         new BusinessAdministrator(),
                         "select distinct\n"
                         + "  ba.username,\n"
-                        + "  '"+BusinessAdministrator.NO_PASSWORD+"'::text,\n"
+                        + "  null::text,\n"
                         + "  ba.name,\n"
                         + "  ba.title,\n"
                         + "  ba.birthday,\n"
@@ -1117,7 +1115,7 @@ final public class TableHandler {
                         new BusinessAdministrator(),
                         "select\n"
                         + "  ba.username,\n"
-                        + "  '"+BusinessAdministrator.NO_PASSWORD+"'::text,\n"
+                        + "  null::text,\n"
                         + "  ba.name,\n"
                         + "  ba.title,\n"
                         + "  ba.birthday,\n"
@@ -4746,7 +4744,7 @@ final public class TableHandler {
                                     mp.getLevel(),
                                     mp.getProfiledClassName(),
                                     mp.getMethodName(),
-                                    param1==null?null:param1.toString(),
+                                    ObjectUtils.toString(param1),
                                     mp.getUseCount(),
                                     mp.getTotalTime(),
                                     mp.getMinTime(),
@@ -6491,7 +6489,20 @@ final public class TableHandler {
                     out,
                     provideProgress,
                     new SchemaType(),
-                    "select * from schema_types order by num"
+                    "select\n"
+                    + "  st.*\n"
+                    + "from\n"
+                    + "  aoserv_protocols client_ap,\n"
+                    + "  schema_types st\n"
+                    + "  inner join aoserv_protocols since_version on st.since_version=since_version.version\n"
+                    + "  left join aoserv_protocols last_version on st.last_version=last_version.version\n"
+                    + "where\n"
+                    + "  client_ap.version=?\n"
+                    + "  and client_ap.created>=since_version.created\n"
+                    + "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
+                    + "order by\n"
+                    + "  st.num",
+                    source.getProtocolVersion().getVersion()
                 );
                 break;
             case EMAIL_DOMAINS :
@@ -7835,8 +7846,6 @@ final public class TableHandler {
         Map<Integer,Integer> tableIDs=fromClientTableIDs.get(version);
         if(tableIDs==null) {
             IntList clientTables=conn.executeIntListQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
                 "select\n"
                 + "  st.table_id\n"
                 + "from\n"
@@ -7873,8 +7882,6 @@ final public class TableHandler {
         Map<Integer,Integer> clientTableIDs=toClientTableIDs.get(version);
         if(clientTableIDs==null) {
             IntList clientTables=conn.executeIntListQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
                 "select\n"
                 + "  st.table_id\n"
                 + "from\n"
@@ -7949,8 +7956,6 @@ final public class TableHandler {
         Map<String,Integer> columns=tables.get(tableID);
         if(columns==null) {
             List<String> clientColumns=conn.executeStringListQuery(
-                Connection.TRANSACTION_READ_COMMITTED,
-                true,
                 "select\n"
                 + "  sc.column_name\n"
                 + "from\n"
@@ -8002,8 +8007,6 @@ final public class TableHandler {
     
     public static IntList getOperatingSystemVersions(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
         return conn.executeIntListQuery(
-            Connection.TRANSACTION_READ_COMMITTED,
-            true,
             "select distinct\n"
             + "  se.operating_system_version\n"
             + "from\n"

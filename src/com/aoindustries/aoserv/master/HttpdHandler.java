@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 by AO Industries, Inc.,
+ * Copyright 2001-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -19,6 +19,8 @@ import com.aoindustries.aoserv.client.NetProtocol;
 import com.aoindustries.aoserv.client.PasswordGenerator;
 import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.DomainName;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.sql.DatabaseConnection;
@@ -41,6 +43,12 @@ import java.util.Map;
  * @author  AO Industries, Inc.
  */
 final public class HttpdHandler {
+
+    /**
+     * Make no instances.
+     */
+    private HttpdHandler() {
+    }
 
     /**
      * The first port number that may be used for automatic port allocations.
@@ -771,12 +779,12 @@ final public class HttpdHandler {
 
         PackageHandler.checkPackageAccessServer(conn, source, methodName, packageName, aoServer);
 
-        String accounting=PackageHandler.getBusinessForPackage(conn, packageName);
+        AccountingCode accounting = PackageHandler.getBusinessForPackage(conn, packageName);
 
         int httpPort = 80;
         int httpdSitePKey;
 
-        List<String> tlds=DNSHandler.getDNSTLDs(conn);
+        List<DomainName> tlds=DNSHandler.getDNSTLDs(conn);
         String testURL = siteName+"."+ServerHandler.getHostnameForAOServer(conn, aoServer);
         DNSHandler.addDNSRecord(
             conn,
@@ -1835,11 +1843,12 @@ final public class HttpdHandler {
         );
     }
 
-    public static String getBusinessForHttpdSharedTomcat(
+    public static AccountingCode getBusinessForHttpdSharedTomcat(
         DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
-        return conn.executeStringQuery(
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
             "select\n"
             + "  pk.accounting\n"
             + "from\n"
@@ -1856,11 +1865,12 @@ final public class HttpdHandler {
         );
     }
 
-    public static String getBusinessForHttpdSite(
+    public static AccountingCode getBusinessForHttpdSite(
         DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
-        return conn.executeStringQuery(
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
             "select\n"
             + "  pk.accounting\n"
             + "from\n"
@@ -1873,11 +1883,12 @@ final public class HttpdHandler {
         );
     }
 
-    public static String getBusinessForHttpdServer(
+    public static AccountingCode getBusinessForHttpdServer(
         DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
-        return conn.executeStringQuery(
+        return conn.executeObjectQuery(
+            ObjectFactories.accountingCodeFactory,
             "select\n"
             + "  pk.accounting\n"
             + "from\n"
@@ -2327,7 +2338,7 @@ final public class HttpdHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        String accounting=getBusinessForHttpdSharedTomcat(conn, pkey);
+        AccountingCode accounting = getBusinessForHttpdSharedTomcat(conn, pkey);
         int aoServer=getAOServerForHttpdSharedTomcat(conn, pkey);
 
         int tomcat4Worker=conn.executeIntQuery("select coalesce(tomcat4_worker, -1) from httpd_shared_tomcats where pkey=?", pkey);
@@ -2394,7 +2405,7 @@ final public class HttpdHandler {
         InvalidateList invalidateList,
         int httpdSitePKey
     ) throws IOException, SQLException {
-        String accounting=getBusinessForHttpdSite(conn, httpdSitePKey);
+        AccountingCode accounting = getBusinessForHttpdSite(conn, httpdSitePKey);
         int aoServer=getAOServerForHttpdSite(conn, httpdSitePKey);
         String siteName=conn.executeStringQuery("select site_name from httpd_sites where pkey=?", httpdSitePKey);
 
@@ -2426,7 +2437,7 @@ final public class HttpdHandler {
         // httpd_site_binds
         IntList httpdSiteBinds=conn.executeIntListQuery("select pkey from httpd_site_binds where httpd_site=?", httpdSitePKey);
         if(httpdSiteBinds.size()>0) {
-            List<String> tlds=DNSHandler.getDNSTLDs(conn);
+            List<DomainName> tlds=DNSHandler.getDNSTLDs(conn);
             SortedIntArrayList httpdBinds=new SortedIntArrayList();
             for(int c=0;c<httpdSiteBinds.size();c++) {
                 int httpdSiteBind=httpdSiteBinds.getInt(c);
@@ -2600,7 +2611,7 @@ final public class HttpdHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        String accounting = getBusinessForHttpdServer(conn, pkey);
+        AccountingCode accounting = getBusinessForHttpdServer(conn, pkey);
         int aoServer = getAOServerForHttpdServer(conn, pkey);
 
         // httpd_sites
@@ -2617,7 +2628,7 @@ final public class HttpdHandler {
         int httpd_site=conn.executeIntQuery("select httpd_site from httpd_site_authenticated_locations where pkey=?", pkey);
         checkAccessHttpdSite(conn, source, "removeHttpdSiteAuthenticatedLocation", httpd_site);
 
-        String accounting=getBusinessForHttpdSite(conn, httpd_site);
+        AccountingCode accounting = getBusinessForHttpdSite(conn, httpd_site);
         int aoServer=getAOServerForHttpdSite(conn, httpd_site);
 
         conn.executeUpdate("delete from httpd_site_authenticated_locations where pkey=?", pkey);
@@ -2673,7 +2684,7 @@ final public class HttpdHandler {
         String path=conn.executeStringQuery("select path from httpd_tomcat_contexts where pkey=?", pkey);
         if(path.length()==0) throw new SQLException("Not allowed to remove the default context: "+pkey);
 
-        String accounting=getBusinessForHttpdSite(conn, tomcat_site);
+        AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
         int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
         if(conn.executeUpdate("delete from httpd_tomcat_data_sources where tomcat_context=?", pkey)>0) {
@@ -2716,7 +2727,7 @@ final public class HttpdHandler {
         int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
         checkAccessHttpdSite(conn, source, "removeHttpdTomcatDataSource", tomcat_site);
 
-        String accounting=getBusinessForHttpdSite(conn, tomcat_site);
+        AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
         int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
         conn.executeUpdate("delete from httpd_tomcat_data_sources where pkey=?", pkey);
@@ -2739,7 +2750,7 @@ final public class HttpdHandler {
         int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
         checkAccessHttpdSite(conn, source, "removeHttpdTomcatParameter", tomcat_site);
 
-        String accounting=getBusinessForHttpdSite(conn, tomcat_site);
+        AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
         int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
         conn.executeUpdate("delete from httpd_tomcat_parameters where pkey=?", pkey);
@@ -2771,7 +2782,7 @@ final public class HttpdHandler {
         int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
         checkAccessHttpdSite(conn, source, "updateHttpdTomcatDataSource", tomcat_site);
 
-        String accounting=getBusinessForHttpdSite(conn, tomcat_site);
+        AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
         int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
         conn.executeUpdate(
@@ -2810,7 +2821,7 @@ final public class HttpdHandler {
         int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
         checkAccessHttpdSite(conn, source, "updateHttpdTomcatParameter", tomcat_site);
 
-        String accounting=getBusinessForHttpdSite(conn, tomcat_site);
+        AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
         int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
         conn.executeUpdate(

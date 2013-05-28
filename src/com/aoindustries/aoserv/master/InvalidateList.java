@@ -1,14 +1,16 @@
 /*
- * Copyright 2001-2012 by AO Industries, Inc.,
+ * Copyright 2001-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.sql.DatabaseAccess;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntCollection;
+import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -16,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -25,7 +26,7 @@ import java.util.logging.Logger;
 /**
  * In the request lifecycle, table invalidations occur after the database connection has been committed
  * and released.  This ensures that all data is available for the processes that react to the table
- * updates.  For effeciency, each server and accounting code will only be notified once per table per
+ * updates.  For efficiency, each server and accounting code will only be notified once per table per
  * request.
  *
  * @author  AO Industries, Inc.
@@ -47,26 +48,16 @@ final public class InvalidateList {
     /**
      * Indicates that all servers or businesses should receive the invalidate signal.
      */
-    private static final String ALL_BUSINESSES="*** ALL ***";
-    private static final int ALL_SERVERS = Integer.MIN_VALUE;
-    public static final Collection<String> allBusinesses=Collections.unmodifiableCollection(new ArrayList<String>());
-    public static final IntCollection allServers=new IntArrayList();
+    public static final List<AccountingCode> allBusinesses=Collections.unmodifiableList(new ArrayList<AccountingCode>());
+    public static final IntList allServers=new IntArrayList();
 
-    private Map<SchemaTable.TableID,List<Integer>> serverLists=new EnumMap<SchemaTable.TableID,List<Integer>>(SchemaTable.TableID.class);
-    private Map<SchemaTable.TableID,List<String>> businessLists=new EnumMap<SchemaTable.TableID,List<String>>(SchemaTable.TableID.class);
-
-    public void clear() {
-        // Clear the servers
-        Iterator<List<Integer>> sLists = serverLists.values().iterator();
-        while(sLists.hasNext()) sLists.next().clear();
-        Iterator<List<String>> bLists = businessLists.values().iterator();
-        while(bLists.hasNext()) bLists.next().clear();
-    }
+    private final Map<SchemaTable.TableID,List<Integer>> serverLists=new EnumMap<SchemaTable.TableID,List<Integer>>(SchemaTable.TableID.class);
+    private final Map<SchemaTable.TableID,List<AccountingCode>> businessLists=new EnumMap<SchemaTable.TableID,List<AccountingCode>>(SchemaTable.TableID.class);
 
     public void addTable(
         DatabaseAccess conn,
         SchemaTable.TableID tableID,
-        String business,
+        AccountingCode business,
         int server,
         boolean recurse
     ) throws IOException, SQLException {
@@ -82,7 +73,7 @@ final public class InvalidateList {
     public void addTable(
         DatabaseAccess conn,
         SchemaTable.TableID tableID,
-        Collection<String> businesses,
+        Collection<AccountingCode> businesses,
         int server,
         boolean recurse
     ) throws IOException, SQLException {
@@ -98,7 +89,7 @@ final public class InvalidateList {
     public void addTable(
         DatabaseAccess conn,
         SchemaTable.TableID tableID,
-        String business,
+        AccountingCode business,
         IntCollection servers,
         boolean recurse
     ) throws IOException, SQLException {
@@ -114,7 +105,7 @@ final public class InvalidateList {
     public void addTable(
         DatabaseAccess conn,
         SchemaTable.TableID tableID,
-        Collection<String> businesses,
+        Collection<AccountingCode> businesses,
         IntCollection servers,
         boolean recurse
     ) throws IOException, SQLException {
@@ -122,40 +113,26 @@ final public class InvalidateList {
 
         // Add to the business lists
         {
-            List<String> SV=businessLists.get(tableID);
-            if(SV==null) {
-                SV=new SortedArrayList<String>();
-                businessLists.put(tableID, SV);
-            }
-            if(!SV.contains(ALL_BUSINESSES)) {
-                if(businesses==null || businesses==allBusinesses) {
-                    SV.clear();
-                    SV.add(ALL_BUSINESSES);
-                } else {
-                    for(String accounting : businesses) {
-                        if(accounting==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: accounting is null"));
-                        else if(!SV.contains(accounting)) SV.add(accounting);
-                    }
+            if(businesses==null || businesses==allBusinesses) businessLists.put(tableID, allBusinesses);
+            else {
+                List<AccountingCode> SV=businessLists.get(tableID);
+                if(SV==null) businessLists.put(tableID, SV=new SortedArrayList<AccountingCode>());
+                for(AccountingCode accounting : businesses) {
+                    if(accounting==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: accounting is null"));
+                    else if(!SV.contains(accounting)) SV.add(accounting);
                 }
             }
         }
 
         // Add to the server lists
         {
-            List<Integer> SV=serverLists.get(tableID);
-            if(SV==null) {
-                SV=new SortedArrayList<Integer>();
-                serverLists.put(tableID, SV);
-            }
-            if(!SV.contains(ALL_SERVERS)) {
-                if(servers==null || servers==allServers) {
-                    SV.clear();
-                    SV.add(ALL_SERVERS);
-                } else {
-                    for(Integer pkey : servers) {
-                        if(pkey==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: pkey is null"));
-                        else if(!SV.contains(pkey)) SV.add(pkey);
-                    }
+            if(servers==null || servers==allServers) serverLists.put(tableID, allServers);
+            else {
+                List<Integer> SV=serverLists.get(tableID);
+                if(SV==null) serverLists.put(tableID, SV=new SortedArrayList<Integer>());
+                for(Integer pkey : servers) {
+                    if(pkey==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: pkey is null"));
+                    else if(!SV.contains(pkey)) SV.add(pkey);
                 }
             }
         }
@@ -250,12 +227,10 @@ final public class InvalidateList {
         }
     }
 
-    public List<String> getAffectedBusinesses(SchemaTable.TableID tableID) {
-        List<String> SV=businessLists.get(tableID);
+    public List<AccountingCode> getAffectedBusinesses(SchemaTable.TableID tableID) {
+        List<AccountingCode> SV=businessLists.get(tableID);
         if(SV!=null || serverLists.containsKey(tableID)) {
-            if(SV==null) return new SortedArrayList<String>();
-            if(SV.isEmpty()) return SV;
-            if(SV.contains(ALL_BUSINESSES)) return new SortedArrayList<String>();
+            if(SV==null) return allBusinesses;
             return SV;
         } else return null;
     }
@@ -263,9 +238,7 @@ final public class InvalidateList {
     public List<Integer> getAffectedServers(SchemaTable.TableID tableID) {
         List<Integer> SV=serverLists.get(tableID);
         if(SV!=null || businessLists.containsKey(tableID)) {
-            if(SV==null) return new SortedArrayList<Integer>();
-            if(SV.isEmpty()) return SV;
-            if(SV.contains(ALL_SERVERS)) return new SortedArrayList<Integer>();
+            if(SV==null) return allServers;
             return SV;
         } else return null;
     }
@@ -295,9 +268,9 @@ final public class InvalidateList {
         return serverLists.containsKey(tableID) || businessLists.containsKey(tableID);
     }
     
-    public static Collection<String> getCollection(String ... params) {
+    public static Collection<AccountingCode> getCollection(AccountingCode ... params) {
         if(params.length==0) return Collections.emptyList();
-        Collection<String> coll = new ArrayList<String>(params.length);
+        Collection<AccountingCode> coll = new ArrayList<AccountingCode>(params.length);
         Collections.addAll(coll, params);
         return coll;
     }
