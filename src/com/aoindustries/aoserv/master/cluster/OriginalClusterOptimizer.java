@@ -1,12 +1,12 @@
+package com.aoindustries.aoserv.master.cluster;
+
 /*
- * Copyright 2007-2011 by AO Industries, Inc.,
+ * Copyright 2007-2009 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-package com.aoindustries.aoserv.master.cluster;
-
+import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.util.StringUtility;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -108,7 +108,6 @@ public final class OriginalClusterOptimizer {
          * from biggest to smallest causes the tightest fit of big virtual servers into the smallest possible server.  This
          * results in the smallest skip/map ratio (and hopefully quicker finding of optimal layouts).
          */
-        @Override
         public int compareTo(Server other) {
             if(ram<other.ram) return -1;
             if(ram>other.ram) return 1;
@@ -174,7 +173,6 @@ public final class OriginalClusterOptimizer {
         /**
          * Sorts from biggest to smallest.
          */
-        @Override
         public int compareTo(VirtualServer other) {
             if(minimumPrimaryRam<other.minimumPrimaryRam) return 1;
             if(minimumPrimaryRam>other.minimumPrimaryRam) return -1;
@@ -939,7 +937,7 @@ public final class OriginalClusterOptimizer {
                     System.out.print(selectedSecondaries[d]);
                 }
                 System.out.print(" Mapped "+mapped+", skipped "+skipped);
-                if(mapped!=0) System.out.print(", skip/map ratio: "+BigDecimal.valueOf(skipped*100/mapped, 3));
+                if(mapped!=0) System.out.print(", skip/map ratio: "+SQLUtility.getDecimal(skipped*100/mapped));
                 if(timeSince>0) System.out.print(", "+(callCounter*1000/timeSince)+" calls/sec");
                 System.out.println();
                 /*
