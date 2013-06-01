@@ -11,10 +11,9 @@ import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.io.AOPool;
 import com.aoindustries.profiler.Profiler;
 import com.aoindustries.sql.DatabaseAccess;
+import com.aoindustries.util.PropertiesUtils;
 import com.aoindustries.util.StringUtility;
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,21 +33,12 @@ public final class MasterConfiguration {
     
     private static String getProperty(String name) throws IOException {
         synchronized (MasterConfiguration.class) {
-            if (props == null) {
-                Properties newProps = new Properties();
-                InputStream in = new BufferedInputStream(MasterConfiguration.class.getResourceAsStream("aoserv-master.properties"));
-                try {
-                    newProps.load(in);
-                } finally {
-                    in.close();
-                }
-                props = newProps;
-            }
+            if (props == null) props = PropertiesUtils.loadFromResource(MasterConfiguration.class, "aoserv-master.properties");
+	        return props.getProperty(name);
         }
-        return props.getProperty(name);
     }
-    
-    public static String getSSLKeystorePassword() throws IOException {
+
+	public static String getSSLKeystorePassword() throws IOException {
         return getProperty("aoserv.master.ssl.keystore.password");
     }
 
