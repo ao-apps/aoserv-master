@@ -79,7 +79,7 @@ final public class NetBindHandler {
         int pkey;
         synchronized(netBindLock) {
             if(ipString.equals(IPAddress.WILDCARD_IP)) {
-                // Wildcard must be unique to system, with the port completely free
+                // Wildcard must be unique to AOServ system, with the port completely free
                 if(
                     conn.executeBooleanQuery(
                         "select\n"
@@ -89,20 +89,23 @@ final public class NetBindHandler {
                         + "    from\n"
                         + "      net_binds nb,\n"
                         + "      servers se\n"
+						+ "      left outer join ao_servers ao on se.pkey=ao.server\n"
                         + "    where\n"
                         + "      nb.server=se.pkey\n"
                         //+ "      and se.farm=?\n"
                         + "      and nb.port=?\n"
                         + "      and nb.net_protocol=?\n"
+						+ "      and (se.pkey=? or ao.server is not null)\n" // Per-server unique for unmanaged, per-AOServ unique for managed
                         + "    limit 1\n"
                         + "  ) is not null",
                         //farm,
                         port,
-                        netProtocol
+                        netProtocol,
+						server
                     )
                 ) throw new SQLException("NetBind already in use: "+server+"->"+ipAddress+":"+port+" ("+netProtocol+')');
             } else if(ipString.equals(IPAddress.LOOPBACK_IP)) {
-                // Loopback must be unique per system and not have wildcard
+                // Loopback must be unique to AOServ system and not have wildcard
                 if(
                     conn.executeBooleanQuery(
                         "select\n"
@@ -111,7 +114,8 @@ final public class NetBindHandler {
                         + "      nb.pkey\n"
                         + "    from\n"
                         + "      net_binds nb,\n"
-                        + "      servers se,\n"
+                        + "      servers se\n"
+						+ "      left outer join ao_servers ao on se.pkey=ao.server,\n"
                         + "      ip_addresses ia\n"
                         + "    where\n"
                         + "      nb.server=se.pkey\n"
@@ -122,11 +126,13 @@ final public class NetBindHandler {
                         + "        or ia.ip_address='"+IPAddress.LOOPBACK_IP+"'\n"
                         + "      ) and nb.port=?\n"
                         + "      and nb.net_protocol=?\n"
+						+ "      and (se.pkey=? or ao.server is not null)\n" // Per-server unique for unmanaged, per-AOServ unique for managed
                         + "    limit 1\n"
                         + "  ) is not null",
                         //farm,
                         port,
-                        netProtocol
+                        netProtocol,
+						server
                     )
                 ) throw new SQLException("NetBind already in use: "+server+"->"+ipAddress+":"+port+" ("+netProtocol+')');
             } else {
@@ -139,7 +145,8 @@ final public class NetBindHandler {
                         + "      nb.pkey\n"
                         + "    from\n"
                         + "      net_binds nb,\n"
-                        + "      servers se,\n"
+                        + "      servers se\n"
+						+ "      left outer join ao_servers ao on se.pkey=ao.server,\n"
                         + "      ip_addresses ia\n"
                         + "    where\n"
                         + "      nb.server=se.pkey\n"
@@ -150,12 +157,14 @@ final public class NetBindHandler {
                         + "        or nb.ip_address=?\n"
                         + "      ) and nb.port=?\n"
                         + "      and nb.net_protocol=?\n"
+						+ "      and (se.pkey=? or ao.server is not null)\n" // Per-server unique for unmanaged, per-AOServ unique for managed
                         + "    limit 1\n"
                         + "  ) is not null",
                         //farm,
                         ipAddress,
                         port,
-                        netProtocol
+                        netProtocol,
+						server
                     )
                 ) throw new SQLException("NetBind already in use: "+server+"->"+ipAddress+":"+port+" ("+netProtocol+')');
             }
