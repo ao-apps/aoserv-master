@@ -431,8 +431,8 @@ final public class TableHandler {
 	/**
 	 * Caches row counts for each table on a per-username basis.
 	 */
-	private static final Map<String,int[]> rowCountsPerUsername=new HashMap<String,int[]>();
-	private static final Map<String,long[]> expireTimesPerUsername=new HashMap<String,long[]>();
+	private static final Map<String,int[]> rowCountsPerUsername=new HashMap<>();
+	private static final Map<String,long[]> expireTimesPerUsername=new HashMap<>();
 
 	private static final int MAX_ROW_COUNT_CACHE_AGE=60*60*1000;
 
@@ -1559,7 +1559,7 @@ final public class TableHandler {
 				break;
 			case DAEMON_PROFILE :
 				{
-					List<DaemonProfile> objs=new ArrayList<DaemonProfile>();
+					List<DaemonProfile> objs=new ArrayList<>();
 					if(masterUser!=null && masterServers.length==0) {
 						// Get a list of all the servers
 						IntList aoServers=AOServerHandler.getAOServers(conn);
@@ -4741,7 +4741,7 @@ final public class TableHandler {
 				break;
 			case MASTER_SERVER_PROFILE :
 				{
-					List<MasterServerProfile> objs=new ArrayList<MasterServerProfile>();
+					List<MasterServerProfile> objs=new ArrayList<>();
 					if(Profiler.getProfilerLevel()>Profiler.NONE) {
 						// Get all the methods
 						List<MethodProfile> profs=Profiler.getMethodProfiles();
@@ -6348,7 +6348,7 @@ final public class TableHandler {
 				break;
 			case SCHEMA_COLUMNS :
 				{
-					List<SchemaColumn> clientColumns=new ArrayList<SchemaColumn>();
+					List<SchemaColumn> clientColumns=new ArrayList<>();
 					PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
 						"select\n"
 						+ "  sc.*\n"
@@ -6439,7 +6439,7 @@ final public class TableHandler {
 				break;
 			case SCHEMA_TABLES :
 				{
-					List<SchemaTable> clientTables=new ArrayList<SchemaTable>();
+					List<SchemaTable> clientTables=new ArrayList<>();
 					PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
 						"select\n"
 						+ "  st.*\n"
@@ -7830,7 +7830,7 @@ final public class TableHandler {
 		return mu!=null && mu.canInvalidateTables();
 	}
 
-	final private static Map<SchemaTable.TableID,String> tableNames=new EnumMap<SchemaTable.TableID,String>(SchemaTable.TableID.class);
+	final private static Map<SchemaTable.TableID,String> tableNames=new EnumMap<>(SchemaTable.TableID.class);
 
 	public static String getTableName(DatabaseAccess conn, SchemaTable.TableID tableID) throws IOException, SQLException {
 		synchronized(tableNames) {
@@ -7844,7 +7844,7 @@ final public class TableHandler {
 		}
 	}
 
-	final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> fromClientTableIDs=new EnumMap<AOServProtocol.Version,Map<Integer,Integer>>(AOServProtocol.Version.class);
+	final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> fromClientTableIDs=new EnumMap<>(AOServProtocol.Version.class);
 
 	/**
 	 * Converts a specific AOServProtocol version table ID to the number used in the database storage.
@@ -7873,7 +7873,7 @@ final public class TableHandler {
 				version.getVersion()
 			);
 			int numTables=clientTables.size();
-			tableIDs=new HashMap<Integer,Integer>(numTables);
+			tableIDs=new HashMap<>(numTables);
 			for(int c=0;c<numTables;c++) {
 				tableIDs.put(c, clientTables.getInt(c));
 			}
@@ -7883,7 +7883,7 @@ final public class TableHandler {
 		return I==null?-1:I.intValue();
 	}
 
-	final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> toClientTableIDs=new EnumMap<AOServProtocol.Version,Map<Integer,Integer>>(AOServProtocol.Version.class);
+	final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> toClientTableIDs=new EnumMap<>(AOServProtocol.Version.class);
 
 	public static int convertDBTableIDToClientTableID(
 		DatabaseConnection conn,
@@ -7909,7 +7909,7 @@ final public class TableHandler {
 				version.getVersion()
 			);
 			int numTables=clientTables.size();
-			clientTableIDs=new HashMap<Integer,Integer>(numTables);
+			clientTableIDs=new HashMap<>(numTables);
 			for(int c=0;c<numTables;c++) {
 				clientTableIDs.put(clientTables.getInt(c), c);
 			}
@@ -7950,7 +7950,7 @@ final public class TableHandler {
 		return convertDBTableIDToClientTableID(conn, source.getProtocolVersion(), dbTableID);
 	}
 
-	final private static EnumMap<AOServProtocol.Version,Map<SchemaTable.TableID,Map<String,Integer>>> clientColumnIndexes=new EnumMap<AOServProtocol.Version,Map<SchemaTable.TableID,Map<String,Integer>>>(AOServProtocol.Version.class);
+	final private static EnumMap<AOServProtocol.Version,Map<SchemaTable.TableID,Map<String,Integer>>> clientColumnIndexes=new EnumMap<>(AOServProtocol.Version.class);
 
 	public static int getClientColumnIndex(
 		DatabaseConnection conn,
@@ -7961,7 +7961,7 @@ final public class TableHandler {
 		// Get the list of resolved tables for the requested version
 		AOServProtocol.Version version = source.getProtocolVersion();
 		Map<SchemaTable.TableID,Map<String,Integer>> tables=clientColumnIndexes.get(version);
-		if(tables==null) clientColumnIndexes.put(version, tables=new EnumMap<SchemaTable.TableID,Map<String,Integer>>(SchemaTable.TableID.class));
+		if(tables==null) clientColumnIndexes.put(version, tables=new EnumMap<>(SchemaTable.TableID.class));
 
 		// Find the list of columns for this table
 		Map<String,Integer> columns=tables.get(tableID);
@@ -7983,7 +7983,7 @@ final public class TableHandler {
 				version.getVersion()
 			);
 			int numColumns=clientColumns.size();
-			columns=new HashMap<String,Integer>(numColumns);
+			columns=new HashMap<>(numColumns);
 			for(int c=0;c<numColumns;c++) {
 				columns.put(clientColumns.get(c), Integer.valueOf(c));
 			}
