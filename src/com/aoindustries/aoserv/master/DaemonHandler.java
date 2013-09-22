@@ -39,7 +39,7 @@ final public class DaemonHandler {
      */
     public static final int DAEMON_RETRY_DELAY=5*1000; // Used to be 60*1000
 
-    private static final Map<Integer,AOServDaemonConnector> connectors=new HashMap<Integer,AOServDaemonConnector>();
+    private static final Map<Integer,AOServDaemonConnector> connectors=new HashMap<>();
 
     public static int getDaemonConcurrency() {
         int total=0;
@@ -226,7 +226,7 @@ final public class DaemonHandler {
         return total;
     }
     
-    private static final Map<Integer,Long> downDaemons=new HashMap<Integer,Long>();
+    private static final Map<Integer,Long> downDaemons=new HashMap<>();
 
     public static void invalidateTable(SchemaTable.TableID tableID) {
         if(
@@ -274,7 +274,7 @@ final public class DaemonHandler {
         }
     }
     
-    private final static Map<Long,Long> recentKeys=new HashMap<Long,Long>();
+    private final static Map<Long,Long> recentKeys=new HashMap<>();
     private static long lastKeyCleanTime=-1;
 
     /**

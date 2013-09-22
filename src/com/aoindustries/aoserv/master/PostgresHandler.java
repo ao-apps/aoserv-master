@@ -33,8 +33,8 @@ import java.util.Map;
  */
 final public class PostgresHandler {
 
-    private final static Map<Integer,Boolean> disabledPostgresServerUsers=new HashMap<Integer,Boolean>();
-    private final static Map<String,Boolean> disabledPostgresUsers=new HashMap<String,Boolean>();
+    private final static Map<Integer,Boolean> disabledPostgresServerUsers=new HashMap<>();
+    private final static Map<String,Boolean> disabledPostgresUsers=new HashMap<>();
 
     public static void checkAccessPostgresDatabase(DatabaseConnection conn, RequestSource source, String action, int postgres_database) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
@@ -401,7 +401,7 @@ final public class PostgresHandler {
         int size=names.size();
 
         // Sort them
-        List<String> sorted=new SortedArrayList<String>(size);
+        List<String> sorted=new SortedArrayList<>(size);
         sorted.addAll(names);
 
         // Find one that is not used

@@ -157,6 +157,7 @@ final public class SignupHandler {
     private static boolean cronDaemonAdded = false;
 
     private static final Schedule schedule = new Schedule() {
+		@Override
         public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
             return minute==32 && hour==6;
         }
@@ -168,18 +169,22 @@ final public class SignupHandler {
                 System.out.print("Starting SignupHandler: ");
                 CronDaemon.addCronJob(
                     new CronJob() {
+						@Override
                         public Schedule getCronJobSchedule() {
                             return schedule;
                         }
 
+						@Override
                         public CronJobScheduleMode getCronJobScheduleMode() {
                             return CronJobScheduleMode.SKIP;
                         }
 
+						@Override
                         public String getCronJobName() {
                             return "Remove completed signups";
                         }
 
+						@Override
                         public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
                             try {
                                 InvalidateList invalidateList = new InvalidateList();
@@ -208,6 +213,7 @@ final public class SignupHandler {
                             }
                         }
 
+						@Override
                         public int getCronJobThreadPriority() {
                             return Thread.NORM_PRIORITY-2;
                         }

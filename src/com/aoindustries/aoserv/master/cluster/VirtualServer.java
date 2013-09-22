@@ -1,11 +1,10 @@
-package com.aoindustries.aoserv.master.cluster;
-
 /*
- * Copyright 2007-2009 by AO Industries, Inc.,
+ * Copyright 2007-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-import com.aoindustries.util.StringUtility;
+package com.aoindustries.aoserv.master.cluster;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,7 +18,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
      * TODO: Load this directly from the database.
      */
     static VirtualServer[] getVirtualServers() {
-        List<VirtualServer> virtualServers = new ArrayList<VirtualServer>();
+        List<VirtualServer> virtualServers = new ArrayList<>();
         virtualServers.add(
             new VirtualServer(
                 "ao1.kc.aoindustries.com",
@@ -648,6 +647,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
     /**
      * Sorts from biggest to smallest.
      */
+	@Override
     public int compareTo(VirtualServer other) {
         /*
         return -realCompareTo(other);
@@ -702,6 +702,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
         return 0;
     }
     
+	@Override
     public boolean equals(Object O) {
         return O!=null && (O instanceof VirtualServer) && equals((VirtualServer)O);
     }

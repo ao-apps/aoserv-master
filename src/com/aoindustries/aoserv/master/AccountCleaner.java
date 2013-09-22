@@ -71,6 +71,7 @@ final public class AccountCleaner implements CronJob {
         /**
          * Runs at 5:25 am daily.
          */
+		@Override
         public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
             return
                 minute==25
@@ -79,22 +80,27 @@ final public class AccountCleaner implements CronJob {
         }
     };
 
+	@Override
     public Schedule getCronJobSchedule() {
         return schedule;
     }
 
+	@Override
     public CronJobScheduleMode getCronJobScheduleMode() {
         return CronJobScheduleMode.SKIP;
     }
 
+	@Override
     public String getCronJobName() {
         return "AccountCleaner";
     }
 
+	@Override
     public int getCronJobThreadPriority() {
         return Thread.NORM_PRIORITY-1;
     }
 
+	@Override
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         try {
             ProcessTimer timer=new ProcessTimer(

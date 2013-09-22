@@ -236,6 +236,7 @@ final public class IpReputationSetHandler {
                     true,
                     false,
                     new ObjectFactory<IpReputationSetHost>() {
+						@Override
                         public IpReputationSetHost createObject(ResultSet result) throws SQLException {
                             IpReputationSetHost obj = new IpReputationSetHost();
                             obj.init(result);
@@ -325,6 +326,7 @@ final public class IpReputationSetHandler {
                         true,
                         false,
                         new ObjectFactory<IpReputationSetNetwork>() {
+							@Override
                             public IpReputationSetNetwork createObject(ResultSet result) throws SQLException {
                                 IpReputationSetNetwork obj = new IpReputationSetNetwork();
                                 obj.init(result);

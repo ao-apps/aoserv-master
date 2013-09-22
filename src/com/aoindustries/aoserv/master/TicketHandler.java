@@ -1679,6 +1679,7 @@ final public class TicketHandler /*implements Runnable*/ {
     private static boolean cronDaemonAdded = false;
 
     private static final Schedule schedule = new Schedule() {
+		@Override
         public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
             // Will now run once every four hours
             return minute==25 && (hour&3)==3; // && hour==7
@@ -1691,18 +1692,22 @@ final public class TicketHandler /*implements Runnable*/ {
                 System.out.print("Starting TicketHandler: ");
                 CronDaemon.addCronJob(
                     new CronJob() {
+						@Override
                         public Schedule getCronJobSchedule() {
                             return schedule;
                         }
 
+						@Override
                         public CronJobScheduleMode getCronJobScheduleMode() {
                             return CronJobScheduleMode.SKIP;
                         }
 
+						@Override
                         public String getCronJobName() {
                             return "Clean log tickets";
                         }
 
+						@Override
                         public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
                             try {
                                 InvalidateList invalidateList = new InvalidateList();
@@ -1757,6 +1762,7 @@ final public class TicketHandler /*implements Runnable*/ {
                             }
                         }
 
+						@Override
                         public int getCronJobThreadPriority() {
                             return Thread.NORM_PRIORITY-2;
                         }

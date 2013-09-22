@@ -36,7 +36,7 @@ final public class PackageHandler {
     private PackageHandler() {
     }
 
-    private final static Map<String,Boolean> disabledPackages=new HashMap<String,Boolean>();
+    private final static Map<String,Boolean> disabledPackages=new HashMap<>();
 
     public static boolean canPackageAccessServer(DatabaseConnection conn, RequestSource source, String packageName, int server) throws IOException, SQLException {
         return conn.executeBooleanQuery(
@@ -525,7 +525,7 @@ final public class PackageHandler {
         int size=names.size();
 
         // Sort them
-        List<String> sorted=new SortedArrayList<String>(size);
+        List<String> sorted=new SortedArrayList<>(size);
         for(int c=0;c<size;c++) sorted.add(names.get(c));
 
         // Find one that is not used
@@ -720,7 +720,7 @@ final public class PackageHandler {
         return getBusinessForPackage(database, getPKeyForPackage(database, packageName));
     }
 
-    private static final Map<Integer,AccountingCode> packageBusinesses=new HashMap<Integer,AccountingCode>();
+    private static final Map<Integer,AccountingCode> packageBusinesses=new HashMap<>();
     public static AccountingCode getBusinessForPackage(DatabaseAccess database, int pkey) throws IOException, SQLException {
         Integer I=Integer.valueOf(pkey);
         synchronized(packageBusinesses) {
@@ -736,7 +736,7 @@ final public class PackageHandler {
         }
     }
 
-    private static final Map<Integer,String> packageNames=new HashMap<Integer,String>();
+    private static final Map<Integer,String> packageNames=new HashMap<>();
     public static String getNameForPackage(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         Integer I=Integer.valueOf(pkey);
         synchronized(packageNames) {
@@ -748,7 +748,7 @@ final public class PackageHandler {
         }
     }
 
-    private static final Map<String,Integer> packagePKeys=new HashMap<String,Integer>();
+    private static final Map<String,Integer> packagePKeys=new HashMap<>();
     public static int getPKeyForPackage(DatabaseAccess database, String name) throws IOException, SQLException {
         synchronized(packagePKeys) {
             Integer O=packagePKeys.get(name);

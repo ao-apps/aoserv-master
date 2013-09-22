@@ -47,9 +47,9 @@ final public class EmailHandler {
     private EmailHandler() {
     }
 
-    private final static Map<Integer,Boolean> disabledEmailLists=new HashMap<Integer,Boolean>();
-    private final static Map<Integer,Boolean> disabledEmailPipes=new HashMap<Integer,Boolean>();
-    private final static Map<Integer,Boolean> disabledEmailSmtpRelays=new HashMap<Integer,Boolean>();
+    private final static Map<Integer,Boolean> disabledEmailLists=new HashMap<>();
+    private final static Map<Integer,Boolean> disabledEmailPipes=new HashMap<>();
+    private final static Map<Integer,Boolean> disabledEmailSmtpRelays=new HashMap<>();
 
     public static boolean canAccessEmailDomain(DatabaseConnection conn, RequestSource source, int domain) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
@@ -569,7 +569,7 @@ final public class EmailHandler {
      * Only report each error at most once per 12 hours per package.
      */
     private static final long SMTP_STAT_REPORT_INTERVAL=12L*60*60*1000;
-    private static final Map<String,Long> smtpStatLastReports=new HashMap<String,Long>();
+    private static final Map<String,Long> smtpStatLastReports=new HashMap<>();
 
     public static int addSpamEmailMessage(
         DatabaseConnection conn,

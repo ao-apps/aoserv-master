@@ -82,6 +82,7 @@ final public class DNSHandler implements CronJob {
         /**
          * Runs at 6:12 am on the 1st, 7th, 13th, 19th, and 25th
          */
+		@Override
         public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
             return
                 minute==12
@@ -97,22 +98,27 @@ final public class DNSHandler implements CronJob {
         }
     };
 
+	@Override
     public Schedule getCronJobSchedule() {
         return schedule;
     }
 
+	@Override
     public CronJobScheduleMode getCronJobScheduleMode() {
         return CronJobScheduleMode.SKIP;
     }
 
+	@Override
     public String getCronJobName() {
         return "DNSHandler";
     }
 
+	@Override
     public int getCronJobThreadPriority() {
         return Thread.NORM_PRIORITY-1;
     }
 
+	@Override
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         try {
             ProcessTimer timer=new ProcessTimer(
@@ -186,7 +192,7 @@ final public class DNSHandler implements CronJob {
                         Set<AccountingAndZone> topLevelZones = getBusinessesAndTopLevelZones(conn);
 
                         // Perform the whois lookups once per unique zone
-                        Map<String,String> whoisOutputs = new HashMap<String,String>(topLevelZones.size()*4/3+1);
+                        Map<String,String> whoisOutputs = new HashMap<>(topLevelZones.size()*4/3+1);
                         for(AccountingAndZone aaz : topLevelZones) {
                             String zone = aaz.getZone();
                             if(!whoisOutputs.containsKey(zone)) {
@@ -311,7 +317,7 @@ final public class DNSHandler implements CronJob {
                 try {
                     ResultSet results = stmt.executeQuery(sql);
                     try {
-                        Set<AccountingAndZone> aazs = new HashSet<AccountingAndZone>();
+                        Set<AccountingAndZone> aazs = new HashSet<>();
                         while(results.next()) {
                             String accounting = results.getString(1);
                             String zone = results.getString(2);
@@ -856,7 +862,7 @@ final public class DNSHandler implements CronJob {
         IntList pkeys=conn.executeIntListQuery("select pkey from dns_records where dhcp_address=?", ipAddress);
 
         // Build a list of affected zones
-        List<String> zones=new SortedArrayList<String>();
+        List<String> zones=new SortedArrayList<>();
 
         for(int c=0;c<pkeys.size();c++) {
             int pkey=pkeys.getInt(c);

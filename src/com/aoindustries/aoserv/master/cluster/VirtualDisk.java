@@ -1,10 +1,9 @@
-package com.aoindustries.aoserv.master.cluster;
-
 /*
- * Copyright 2007-2009 by AO Industries, Inc.,
+ * Copyright 2007-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.cluster;
 
 /**
  * @author  AO Industries, Inc.
@@ -37,6 +36,7 @@ public final class VirtualDisk {
         this.secondaryWeight = secondaryWeight;
     }
 
+	@Override
     public boolean equals(Object O) {
         return O!=null && (O instanceof VirtualDisk) && equals((VirtualDisk)O);
     }

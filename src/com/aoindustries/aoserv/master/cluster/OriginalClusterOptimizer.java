@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.cluster;
-
 /*
- * Copyright 2007-2009 by AO Industries, Inc.,
+ * Copyright 2007-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.cluster;
+
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.util.StringUtility;
 import java.util.ArrayList;
@@ -108,6 +108,7 @@ public final class OriginalClusterOptimizer {
          * from biggest to smallest causes the tightest fit of big virtual servers into the smallest possible server.  This
          * results in the smallest skip/map ratio (and hopefully quicker finding of optimal layouts).
          */
+		@Override
         public int compareTo(Server other) {
             if(ram<other.ram) return -1;
             if(ram>other.ram) return 1;
@@ -173,6 +174,7 @@ public final class OriginalClusterOptimizer {
         /**
          * Sorts from biggest to smallest.
          */
+		@Override
         public int compareTo(VirtualServer other) {
             if(minimumPrimaryRam<other.minimumPrimaryRam) return 1;
             if(minimumPrimaryRam>other.minimumPrimaryRam) return -1;
@@ -184,7 +186,7 @@ public final class OriginalClusterOptimizer {
      * Need to load this directly from the servers.
      */
     private static List<Server> getServers() {
-        List<Server> servers = new ArrayList<Server>();
+        List<Server> servers = new ArrayList<>();
         servers.add(
             new Server(
                 "gw1.fc.aoindustries.com",
@@ -397,7 +399,7 @@ public final class OriginalClusterOptimizer {
      * TODO: Load this directly from the database.
      */
     private static List<VirtualServer> getVirtualServers() {
-        List<VirtualServer> virtualServers = new ArrayList<VirtualServer>();
+        List<VirtualServer> virtualServers = new ArrayList<>();
         virtualServers.add(
             new VirtualServer(
                 "ao1.kc.aoindustries.com",

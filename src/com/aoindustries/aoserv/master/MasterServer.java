@@ -38,6 +38,7 @@ import com.aoindustries.io.FifoFileOutputStream;
 import com.aoindustries.profiler.Profiler;
 import com.aoindustries.sql.AOConnectionPool;
 import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.sql.NoRowException;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.BufferManager;
@@ -107,7 +108,7 @@ public abstract class MasterServer {
      * The central list of all objects that are notified of
      * cache updates.
      */
-    private static final List<RequestSource> cacheListeners=new ArrayList<RequestSource>();
+    private static final List<RequestSource> cacheListeners=new ArrayList<>();
 
     /**
      * The address that this server will bind to.
@@ -398,7 +399,6 @@ public abstract class MasterServer {
                         boolean hasResp2InboxAttributes=false;
 
                         long[] resp2LongArray=null;
-                        boolean hasResp2LongArray=false;
 
                         String resp3String=null;
 
@@ -1733,8 +1733,8 @@ public abstract class MasterServer {
                                             case LINUX_ACC_ADDRESSES :
                                                 {
                                                     if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_31)<0) {
-                                                        in.readCompressedInt(); // address
-                                                        in.readUTF().trim(); // username
+                                                        int address = in.readCompressedInt();
+                                                        String username = in.readUTF().trim();
                                                         throw new IOException(AOSHCommand.ADD_LINUX_ACC_ADDRESS+" call not supported for AOServProtocol < "+AOServProtocol.Version.VERSION_1_31+", please upgrade AOServ Client.");
                                                     }
                                                     int address=in.readCompressedInt();
@@ -2381,7 +2381,7 @@ public abstract class MasterServer {
                                                     String ciphertext = in.readUTF();
                                                     // options
                                                     int numOptions = in.readCompressedInt();
-                                                    Map<String,String> options = new HashMap<String,String>(numOptions * 4 / 3 + 1);
+                                                    Map<String,String> options = new HashMap<>(numOptions * 4 / 3 + 1);
                                                     for(int c=0;c<numOptions;c++) {
                                                         String name = in.readUTF();
                                                         String value = in.readBoolean() ? in.readUTF() : null;
@@ -4113,7 +4113,6 @@ public abstract class MasterServer {
                                                 pkey,
                                                 folderNames
                                             );
-                                            hasResp2LongArray=true;
                                             resp1=AOServProtocol.DONE;
                                             sendInvalidateList=false;
                                         }
@@ -4281,7 +4280,7 @@ public abstract class MasterServer {
                                                 mysqlSlave = -1;
                                             }
                                             int numTables = in.readCompressedInt();
-                                            List<String> tableNames = new ArrayList<String>(numTables);
+                                            List<String> tableNames = new ArrayList<>(numTables);
                                             for(int c=0;c<numTables;c++) {
                                                 tableNames.add(in.readUTF());
                                             }
@@ -4638,7 +4637,7 @@ public abstract class MasterServer {
                                             SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
                                             int count;
                                             if(tableID==null) {
-                                                logger.warning("Client table not supported: #"+clientTableID+", returning 0 from get_row_count");
+                                                logger.log(Level.WARNING, "Client table not supported: #{0}, returning 0 from get_row_count", clientTableID);
                                                 count = 0;
                                             } else {
                                                 process.setCommand(
@@ -4686,7 +4685,7 @@ public abstract class MasterServer {
                                             int clientTableID=in.readCompressedInt();
                                             SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
                                             if(tableID==null) {
-                                                writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());                                                
+                                                writeObjects(source, out, provideProgress, new ArrayList<AOServObject<?,?>>());
                                             } else {
                                                 if(
                                                     tableID==SchemaTable.TableID.DISTRO_FILES
@@ -6414,9 +6413,9 @@ public abstract class MasterServer {
                                         {
                                             int replication = in.readCompressedInt();
                                             int size = in.readCompressedInt();
-                                            List<String> paths = new ArrayList<String>(size);
-                                            List<Boolean> backupEnableds = new ArrayList<Boolean>(size);
-                                            List<Boolean> requireds = new ArrayList<Boolean>(size);
+                                            List<String> paths = new ArrayList<>(size);
+                                            List<Boolean> backupEnableds = new ArrayList<>(size);
+                                            List<Boolean> requireds = new ArrayList<>(size);
                                             for(int c=0;c<size;c++) {
                                                 paths.add(in.readUTF());
                                                 backupEnableds.add(in.readBoolean());
@@ -7895,8 +7894,8 @@ public abstract class MasterServer {
                                         {
                                             int replication = in.readCompressedInt();
                                             int size = in.readCompressedInt();
-                                            List<Short> hours = new ArrayList<Short>(size);
-                                            List<Short> minutes = new ArrayList<Short>(size);
+                                            List<Short> hours = new ArrayList<>(size);
+                                            List<Short> minutes = new ArrayList<>(size);
                                             for(int c=0;c<size;c++) {
                                                 hours.add(in.readShort());
                                                 minutes.add(in.readShort());
@@ -8425,19 +8424,7 @@ public abstract class MasterServer {
                                         if(invalidateList.isInvalid(tableID)) clientInvalidateList.add(TableHandler.convertToClientTableID(conn, source, tableID));
                                     }
                                 }
-                            } catch(RuntimeException err) {
-                                if(conn.rollback()) {
-                                    connRolledBack=true;
-                                    invalidateList=null;
-                                }
-                                throw err;
-                            } catch(ValidationException err) {
-                                if(conn.rollback()) {
-                                    connRolledBack=true;
-                                    invalidateList=null;
-                                }
-                                throw err;
-                            } catch(IOException err) {
+                            } catch(RuntimeException | ValidationException | IOException err) {
                                 if(conn.rollback()) {
                                     connRolledBack=true;
                                     invalidateList=null;
@@ -8456,7 +8443,7 @@ public abstract class MasterServer {
                             conn.releaseConnection();
                         }
                         // Invalidate the affected tables
-                        if(invalidateList!=null) invalidateTables(invalidateList, source);
+                        invalidateTables(invalidateList, source);
 
                         // Write the response codes
                         // response 1
@@ -8472,7 +8459,7 @@ public abstract class MasterServer {
                         else if(hasResp2InboxAttributes) {
                             out.writeBoolean(resp2InboxAttributes!=null);
                             if(resp2InboxAttributes!=null) resp2InboxAttributes.write(out, source.getProtocolVersion());
-                        } else if(hasResp2LongArray) {
+                        } else if(resp2LongArray!=null) {
                             for(int c=0;c<resp2LongArray.length;c++) out.writeLong(resp2LongArray[c]);
                         }
                         // response 3
@@ -8485,6 +8472,7 @@ public abstract class MasterServer {
 
                         // Write the invalidate list
                         if(sendInvalidateList) {
+							assert clientInvalidateList!=null;
                             int numTables=clientInvalidateList.size();
                             for(int c=0;c<numTables;c++) {
                                 int tableID=clientInvalidateList.getInt(c);
@@ -8548,7 +8536,7 @@ public abstract class MasterServer {
         IntList tableList=new IntArrayList();
         final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
         // Grab a copy of cacheListeners to help avoid deadlock
-        List<RequestSource> listenerCopy=new ArrayList<RequestSource>(cacheListeners.size());
+        List<RequestSource> listenerCopy=new ArrayList<>(cacheListeners.size());
         synchronized(cacheListeners) {
             listenerCopy.addAll(cacheListeners);
         }
@@ -8673,9 +8661,16 @@ public abstract class MasterServer {
 
                 for(String bind : binds) {
                     for(int port : ports) {
-                        if(TCPServer.PROTOCOL.equals(protocol)) new TCPServer(bind, port);
-                        else if(SSLServer.PROTOCOL.equals(protocol)) new SSLServer(bind, port);
-                        else throw new IllegalArgumentException("Unknown protocol: "+protocol);
+						switch (protocol) {
+							case TCPServer.PROTOCOL_TCP:
+								new TCPServer(bind, port).start();
+								break;
+							case SSLServer.PROTOCOL_SSL:
+								new SSLServer(bind, port).start();
+								break;
+							default:
+								throw new IllegalArgumentException("Unknown protocol: "+protocol);
+						}
                     }
                 }
             }
@@ -8687,7 +8682,7 @@ public abstract class MasterServer {
             FailoverHandler.start();
             SignupHandler.start();
             TicketHandler.start();
-        } catch (Exception err) {
+        } catch (IOException | IllegalArgumentException err) {
             logger.log(Level.SEVERE, null, err);
         }
     }
@@ -8708,7 +8703,7 @@ public abstract class MasterServer {
     /**
      * Writes all rows of a results set.
      */
-    public static <T extends AOServObject> void writeObjects(
+    public static <T extends AOServObject<?,?>> void writeObjects(
         RequestSource source,
         CompressedDataOutputStream out,
         boolean provideProgress,
@@ -8740,7 +8735,7 @@ public abstract class MasterServer {
     /**
      * Writes all rows of a results set.
      */
-    public static void writeObjects(RequestSource source, CompressedDataOutputStream out, boolean provideProgress, List<? extends AOServObject> objs) throws IOException {
+    public static void writeObjects(RequestSource source, CompressedDataOutputStream out, boolean provideProgress, List<? extends AOServObject<?,?>> objs) throws IOException {
         AOServProtocol.Version version=source.getProtocolVersion();
 
         int size=objs.size();
@@ -8757,7 +8752,12 @@ public abstract class MasterServer {
     /**
      * Writes all rows of a results set.
      */
-    public static void writeObjectsSynced(RequestSource source, CompressedDataOutputStream out, boolean provideProgress, List<? extends AOServObject> objs) throws IOException {
+    public static void writeObjectsSynced(
+		RequestSource source,
+		CompressedDataOutputStream out,
+		boolean provideProgress,
+		List<? extends AOServObject<?,?>> objs
+	) throws IOException {
         AOServProtocol.Version version=source.getProtocolVersion();
 
         int size=objs.size();
@@ -8767,7 +8767,7 @@ public abstract class MasterServer {
         }
         for(int c=0;c<size;c++) {
             out.writeByte(AOServProtocol.NEXT);
-            AOServObject obj=objs.get(c);
+            AOServObject<?,?> obj=objs.get(c);
             synchronized(obj) {
                 obj.write(out, version);
             }
@@ -8858,7 +8858,7 @@ public abstract class MasterServer {
             MasterHistory[] history=masterHistory;
             if(history!=null) {
                 int historyLen=history.length;
-                objs = new ArrayList<MasterHistory>(historyLen);
+                objs = new ArrayList<>(historyLen);
                 int startPos=masterHistoryStart;
                 for(int c=0;c<historyLen;c++) {
                     MasterHistory mh=history[(c+startPos)%historyLen];
@@ -8892,7 +8892,7 @@ public abstract class MasterServer {
     public static void writeStats(RequestSource source, CompressedDataOutputStream out, boolean provideProgress) throws IOException {
         try {
             // Create the list of objects first
-            List<MasterServerStat> objs=new ArrayList<MasterServerStat>();
+            List<MasterServerStat> objs=new ArrayList<>();
             addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getByteBufferCreates()), "Number of byte[] buffers created");
             addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_USES, Long.toString(BufferManager.getByteBufferUses()), "Total number of byte[] buffers allocated");
 
@@ -8936,7 +8936,7 @@ public abstract class MasterServer {
             addStat(objs, MasterServerStat.METHOD_PROFILE_LEVEL, Integer.toString(Profiler.getProfilerLevel()), "Current method profiling level");
             addStat(objs, MasterServerStat.METHOD_USES, Long.toString(Profiler.getMethodUses()), "Number of virtual machine methods invoked");
 
-            addStat(objs, MasterServerStat.PROTOCOL_VERSION, StringUtility.buildList(AOServProtocol.Version.values()), "Supported AOServProtocol version numbers");
+            addStat(objs, MasterServerStat.PROTOCOL_VERSION, StringUtility.join(AOServProtocol.Version.values(), ", "), "Supported AOServProtocol version numbers");
 
             addStat(objs, MasterServerStat.REQUEST_CONCURRENCY, Integer.toString(getRequestConcurrency()), "Current number of client requests being processed");
             addStat(objs, MasterServerStat.REQUEST_CONNECTIONS, Long.toString(getRequestConnections()), "Number of connections received from clients");
@@ -9018,25 +9018,27 @@ public abstract class MasterServer {
 
     public static com.aoindustries.aoserv.client.MasterServer[] getMasterServers(DatabaseConnection conn, String username) throws IOException, SQLException {
         synchronized(masterServersLock) {
-            if(masterServers==null) masterServers=new HashMap<String,com.aoindustries.aoserv.client.MasterServer[]>();
+            if(masterServers==null) masterServers=new HashMap<>();
             com.aoindustries.aoserv.client.MasterServer[] mss=masterServers.get(username);
             if(mss!=null) return mss;
-            PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master_users mu, master_servers ms where mu.is_active and mu.username=? and mu.username=ms.username");
-            try {
-                List<com.aoindustries.aoserv.client.MasterServer> v=new ArrayList<com.aoindustries.aoserv.client.MasterServer>();
-                pstmt.setString(1, username);
-                ResultSet results=pstmt.executeQuery();
-                while(results.next()) {
-                    com.aoindustries.aoserv.client.MasterServer ms=new com.aoindustries.aoserv.client.MasterServer();
-                    ms.init(results);
-                    v.add(ms);
-                }
-                mss=new com.aoindustries.aoserv.client.MasterServer[v.size()];
-                v.toArray(mss);
-                masterServers.put(username, mss);
-                return mss;
-            } finally {
-                pstmt.close();
+            try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master_users mu, master_servers ms where mu.is_active and mu.username=? and mu.username=ms.username")) {
+				try {
+					List<com.aoindustries.aoserv.client.MasterServer> v=new ArrayList<>();
+					pstmt.setString(1, username);
+					try (ResultSet results = pstmt.executeQuery()) {
+						while(results.next()) {
+							com.aoindustries.aoserv.client.MasterServer ms=new com.aoindustries.aoserv.client.MasterServer();
+							ms.init(results);
+							v.add(ms);
+						}
+					}
+					mss=new com.aoindustries.aoserv.client.MasterServer[v.size()];
+					v.toArray(mss);
+					masterServers.put(username, mss);
+					return mss;
+				} catch(SQLException e) {
+					throw new WrappedSQLException(e, pstmt);
+				}
             }
         }
     }
@@ -9044,9 +9046,8 @@ public abstract class MasterServer {
     public static Map<String,MasterUser> getMasterUsers(DatabaseConnection conn) throws IOException, SQLException {
         synchronized(masterUsersLock) {
             if(masterUsers==null) {
-                Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
-                try {
-                    Map<String,MasterUser> table=new HashMap<String,MasterUser>();
+                try (Statement stmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement()) {
+                    Map<String,MasterUser> table=new HashMap<>();
                     ResultSet results=stmt.executeQuery("select * from master_users where is_active");
                     while(results.next()) {
                         MasterUser mu=new MasterUser();
@@ -9054,8 +9055,6 @@ public abstract class MasterServer {
                         table.put(results.getString(1), mu);
                     }
                     masterUsers = Collections.unmodifiableMap(table);
-                } finally {
-                    stmt.close();
                 }
             }
             return masterUsers;
@@ -9073,20 +9072,17 @@ public abstract class MasterServer {
         Map<String,List<String>> myMasterHosts;
         synchronized(masterHostsLock) {
             if(masterHosts==null) {
-                Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
-                try {
-                    Map<String,List<String>> table=new HashMap<String,List<String>>();
+                try (Statement stmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement()) {
+                    Map<String,List<String>> table=new HashMap<>();
                     ResultSet results=stmt.executeQuery("select mh.username, mh.host from master_hosts mh, master_users mu where mh.username=mu.username and mu.is_active");
                     while(results.next()) {
                         String un=results.getString(1);
                         String ho=results.getString(2);
                         List<String> sv=table.get(un);
-                        if(sv==null) table.put(un, sv=new SortedArrayList<String>());
+                        if(sv==null) table.put(un, sv=new SortedArrayList<>());
                         sv.add(ho);
                     }
                     masterHosts = table;
-                } finally {
-                    stmt.close();
                 }
             }
             myMasterHosts = masterHosts;
@@ -9115,28 +9111,23 @@ public abstract class MasterServer {
         String sql,
         int param1,
         String param2,
-        AOServObject obj
+        AOServObject<?,?> obj
     ) throws IOException, SQLException {
         AOServProtocol.Version version = source.getProtocolVersion();
-
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
-        try {
-            pstmt.setInt(1, param1);
-            pstmt.setString(2, param2);
-            ResultSet results=pstmt.executeQuery();
-            try {
-                if(results.next()) {
-                    obj.init(results);
-                    out.writeByte(AOServProtocol.NEXT);
-                    obj.write(out, version);
-                } else out.writeByte(AOServProtocol.DONE);
-            } finally {
-                results.close();
-            }
-        } catch(SQLException err) {
-            throw new WrappedSQLException(err, pstmt);
-        } finally {
-            pstmt.close();
+        try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
+			try {
+				pstmt.setInt(1, param1);
+				pstmt.setString(2, param2);
+				try (ResultSet results = pstmt.executeQuery()) {
+					if(results.next()) {
+						obj.init(results);
+						out.writeByte(AOServProtocol.NEXT);
+						obj.write(out, version);
+					} else out.writeByte(AOServProtocol.DONE);
+				}
+			} catch(SQLException err) {
+				throw new WrappedSQLException(err, pstmt);
+			}
         }
     }
 
@@ -9146,27 +9137,22 @@ public abstract class MasterServer {
         CompressedDataOutputStream out,
         String sql,
         int param1,
-        AOServObject obj
+        AOServObject<?,?> obj
     ) throws IOException, SQLException {
         AOServProtocol.Version version=source.getProtocolVersion();
-
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
-        try {
-            pstmt.setInt(1, param1);
-            ResultSet results=pstmt.executeQuery();
-            try {
-                if(results.next()) {
-                    obj.init(results);
-                    out.writeByte(AOServProtocol.NEXT);
-                    obj.write(out, version);
-                } else out.writeByte(AOServProtocol.DONE);
-            } finally {
-                results.close();
-            }
-        } catch(SQLException err) {
-            throw new WrappedSQLException(err, pstmt);
-        } finally {
-            pstmt.close();
+        try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
+			try {
+				pstmt.setInt(1, param1);
+				try (ResultSet results = pstmt.executeQuery()) {
+					if(results.next()) {
+						obj.init(results);
+						out.writeByte(AOServProtocol.NEXT);
+						obj.write(out, version);
+					} else out.writeByte(AOServProtocol.DONE);
+				}
+			} catch(SQLException err) {
+				throw new WrappedSQLException(err, pstmt);
+			}
         }
     }
 
@@ -9177,28 +9163,23 @@ public abstract class MasterServer {
         String sql,
         String param1,
         int param2,
-        AOServObject obj
+        AOServObject<?,?> obj
     ) throws IOException, SQLException {
         AOServProtocol.Version version=source.getProtocolVersion();
-
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
-        try {
-            pstmt.setString(1, param1);
-            pstmt.setInt(2, param2);
-            ResultSet results=pstmt.executeQuery();
-            try {
-                if(results.next()) {
-                    obj.init(results);
-                    out.writeByte(AOServProtocol.NEXT);
-                    obj.write(out, version);
-                } else out.writeByte(AOServProtocol.DONE);
-            } finally {
-                results.close();
-            }
-        } catch(SQLException err) {
-            throw new WrappedSQLException(err, pstmt);
-        } finally {
-            pstmt.close();
+        try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
+			try {
+				pstmt.setString(1, param1);
+				pstmt.setInt(2, param2);
+				try (ResultSet results = pstmt.executeQuery()) {
+					if(results.next()) {
+						obj.init(results);
+						out.writeByte(AOServProtocol.NEXT);
+						obj.write(out, version);
+					} else out.writeByte(AOServProtocol.DONE);
+				}
+			} catch(SQLException err) {
+				throw new WrappedSQLException(err, pstmt);
+			}
         }
     }
 
@@ -9212,31 +9193,26 @@ public abstract class MasterServer {
         String param3,
         String param4,
         String param5,
-        AOServObject obj
+        AOServObject<?,?> obj
     ) throws IOException, SQLException {
         AOServProtocol.Version version=source.getProtocolVersion();
-
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
-        try {
-            pstmt.setInt(1, param1);
-            pstmt.setString(2, param2);
-            pstmt.setString(3, param3);
-            pstmt.setString(4, param4);
-            pstmt.setString(5, param5);
-            ResultSet results=pstmt.executeQuery();
-            try {
-                if(results.next()) {
-                    obj.init(results);
-                    out.writeByte(AOServProtocol.NEXT);
-                    obj.write(out, version);
-                } else out.writeByte(AOServProtocol.DONE);
-            } finally {
-                results.close();
-            }
-        } catch(SQLException err) {
-            throw new WrappedSQLException(err, pstmt);
-        } finally {
-            pstmt.close();
+        try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
+			try {
+				pstmt.setInt(1, param1);
+				pstmt.setString(2, param2);
+				pstmt.setString(3, param3);
+				pstmt.setString(4, param4);
+				pstmt.setString(5, param5);
+				try (ResultSet results = pstmt.executeQuery()) {
+					if(results.next()) {
+						obj.init(results);
+						out.writeByte(AOServProtocol.NEXT);
+						obj.write(out, version);
+					} else out.writeByte(AOServProtocol.DONE);
+				}
+			} catch(SQLException err) {
+				throw new WrappedSQLException(err, pstmt);
+			}
         }
     }
 
@@ -9253,32 +9229,28 @@ public abstract class MasterServer {
         int param6,
         String param7,
         int param8,
-        AOServObject obj
+        AOServObject<?,?> obj
     ) throws IOException, SQLException {
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
-        try {
-            pstmt.setString(1, param1);
-            pstmt.setInt(2, param2);
-            pstmt.setString(3, param3);
-            pstmt.setInt(4, param4);
-            pstmt.setString(5, param5);
-            pstmt.setInt(6, param6);
-            pstmt.setString(7, param7);
-            pstmt.setInt(8, param8);
-            ResultSet results=pstmt.executeQuery();
-            try {
-                if(results.next()) {
-                    obj.init(results);
-                    out.writeByte(AOServProtocol.NEXT);
-                    obj.write(out, source.getProtocolVersion());
-                } else out.writeByte(AOServProtocol.DONE);
-            } finally {
-                results.close();
-            }
-        } catch(SQLException err) {
-            throw new WrappedSQLException(err, pstmt);
-        } finally {
-            pstmt.close();
+        try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
+			try {
+				pstmt.setString(1, param1);
+				pstmt.setInt(2, param2);
+				pstmt.setString(3, param3);
+				pstmt.setInt(4, param4);
+				pstmt.setString(5, param5);
+				pstmt.setInt(6, param6);
+				pstmt.setString(7, param7);
+				pstmt.setInt(8, param8);
+				try (ResultSet results = pstmt.executeQuery()) {
+					if(results.next()) {
+						obj.init(results);
+						out.writeByte(AOServProtocol.NEXT);
+						obj.write(out, source.getProtocolVersion());
+					} else out.writeByte(AOServProtocol.DONE);
+				}
+			} catch(SQLException err) {
+				throw new WrappedSQLException(err, pstmt);
+			}
         }
     }
 
@@ -9286,22 +9258,20 @@ public abstract class MasterServer {
         DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out,
-        AOServObject obj,
+        AOServObject<?,?> obj,
         String sql,
         Object ... params
     ) throws IOException, SQLException {
         AOServProtocol.Version version=source.getProtocolVersion();
 
         Connection dbConn=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false);
-
-        PreparedStatement pstmt=dbConn.prepareStatement("declare fetch_objects cursor for "+sql);
-        try {
-            DatabaseConnection.setParams(pstmt, params);
-            pstmt.executeUpdate();
-        } catch(SQLException err) {
-            throw new WrappedSQLException(err, pstmt);
-        } finally {
-            pstmt.close();
+        try (PreparedStatement pstmt = dbConn.prepareStatement("declare fetch_objects cursor for "+sql)) {
+			try {
+				DatabaseConnection.setParams(dbConn, pstmt, params);
+				pstmt.executeUpdate();
+			} catch(SQLException err) {
+				throw new WrappedSQLException(err, pstmt);
+			}
         }
 
         String sqlString="fetch "+TableHandler.RESULT_SET_BATCH_SIZE+" from fetch_objects";
@@ -9309,16 +9279,13 @@ public abstract class MasterServer {
         try {
             while(true) {
                 int batchSize=0;
-                ResultSet results=stmt.executeQuery(sqlString);
-                try {
+                try (ResultSet results = stmt.executeQuery(sqlString)) {
                     while(results.next()) {
                         obj.init(results);
                         out.writeByte(AOServProtocol.NEXT);
                         obj.write(out, version);
                         batchSize++;
                     }
-                } finally {
-                    results.close();
                 }
                 if(batchSize<TableHandler.RESULT_SET_BATCH_SIZE) break;
             }
@@ -9335,25 +9302,22 @@ public abstract class MasterServer {
         RequestSource source,
         CompressedDataOutputStream out,
         boolean provideProgress,
-        AOServObject obj,
+        AOServObject<?,?> obj,
         String sql,
         Object ... params
     ) throws IOException, SQLException {
         if(!provideProgress) fetchObjects(conn, source, out, obj, sql, params);
         else {
-            PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
-            try {
-                DatabaseConnection.setParams(pstmt, params);
-                ResultSet results = pstmt.executeQuery();
-                try {
-                    writeObjects(source, out, provideProgress, obj, results);
-                } finally {
-                    results.close();
-                }
-            } catch(SQLException err) {
-                throw new WrappedSQLException(err, pstmt);
-            } finally {
-                pstmt.close();
+			Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
+            try (PreparedStatement pstmt = dbConn.prepareStatement(sql)) {
+				try {
+					DatabaseConnection.setParams(dbConn, pstmt, params);
+					try (ResultSet results = pstmt.executeQuery()) {
+						writeObjects(source, out, provideProgress, obj, results);
+					}
+				} catch(SQLException err) {
+					throw new WrappedSQLException(err, pstmt);
+				}
             }
         }
     }
@@ -9368,22 +9332,18 @@ public abstract class MasterServer {
         String param1
     ) throws IOException, SQLException {
         BusinessHandler.checkAccessBusiness(conn, source, action, accounting);
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
-        try {
-            pstmt.setString(1, param1);
-            ResultSet results=pstmt.executeQuery();
-            try {
-                if(results.next()) {
-                    out.writeByte(AOServProtocol.DONE);
-                    out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
-                } else throw new SQLException("No row returned.");
-            } finally {
-                results.close();
-            }
-        } catch(SQLException err) {
-            throw new WrappedSQLException(err, pstmt);
-        } finally {
-            pstmt.close();
+        try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
+			try {
+				pstmt.setString(1, param1);
+				try (ResultSet results = pstmt.executeQuery()) {
+					if(results.next()) {
+						out.writeByte(AOServProtocol.DONE);
+						out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
+					} else throw new NoRowException();
+				}
+			} catch(SQLException err) {
+				throw new WrappedSQLException(err, pstmt);
+			}
         }
     }
 
@@ -9398,23 +9358,19 @@ public abstract class MasterServer {
         Timestamp param2
     ) throws IOException, SQLException {
         BusinessHandler.checkAccessBusiness(conn, source, action, accounting);
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql);
-        try {
-            pstmt.setString(1, param1);
-            pstmt.setTimestamp(2, param2);
-            ResultSet results=pstmt.executeQuery();
-            try {
-                if(results.next()) {
-                    out.writeByte(AOServProtocol.DONE);
-                    out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
-                } else throw new SQLException("No row returned.");
-            } finally {
-                results.close();
-            }
-        } catch(SQLException err) {
-            throw new WrappedSQLException(err, pstmt);
-        } finally {
-            pstmt.close();
+        try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
+			try {
+				pstmt.setString(1, param1);
+				pstmt.setTimestamp(2, param2);
+				try (ResultSet results = pstmt.executeQuery()) {
+					if(results.next()) {
+						out.writeByte(AOServProtocol.DONE);
+						out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
+					} else throw new NoRowException();
+				}
+			} catch(SQLException err) {
+				throw new WrappedSQLException(err, pstmt);
+			}
         }
     }
 

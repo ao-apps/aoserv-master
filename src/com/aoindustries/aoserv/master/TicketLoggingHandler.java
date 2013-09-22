@@ -30,7 +30,7 @@ import java.util.logging.LogRecord;
  */
 final public class TicketLoggingHandler extends QueuedHandler {
 
-    private static final List<TicketLoggingHandler> handlers = new ArrayList<TicketLoggingHandler>();
+    private static final List<TicketLoggingHandler> handlers = new ArrayList<>();
 
     /**
      * Only one TicketLoggingHandler will be created per unique summaryPrefix and category.
@@ -61,10 +61,12 @@ final public class TicketLoggingHandler extends QueuedHandler {
         this.category = category;
     }
 
+	@Override
     protected boolean useCustomLogging(LogRecord record) {
         return record.getLevel().intValue()>Level.FINE.intValue();
     }
 
+	@Override
     protected void doCustomLogging(Formatter formatter, LogRecord record, String fullReport) {
         try {
             AccountingCode rootAccounting = BusinessHandler.getRootBusiness();

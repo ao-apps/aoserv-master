@@ -27,7 +27,7 @@ final public class MasterProcessManager {
     private MasterProcessManager() {
     }
 
-    private static final List<MasterProcess> processes=new ArrayList<MasterProcess>();
+    private static final List<MasterProcess> processes=new ArrayList<>();
 
     private static long nextPID=1;
 
@@ -72,11 +72,11 @@ final public class MasterProcessManager {
         MasterUser masterUser,
         com.aoindustries.aoserv.client.MasterServer[] masterServers
     ) throws IOException, SQLException {
-        List<MasterProcess> processesCopy=new ArrayList<MasterProcess>(processes.size());
+        List<MasterProcess> processesCopy=new ArrayList<>(processes.size());
         synchronized(MasterProcessManager.class) {
             processesCopy.addAll(processes);
         }
-        List<MasterProcess> objs=new ArrayList<MasterProcess>();
+        List<MasterProcess> objs=new ArrayList<>();
         Iterator<MasterProcess> I=processesCopy.iterator();
         while(I.hasNext()) {
             MasterProcess process=I.next();

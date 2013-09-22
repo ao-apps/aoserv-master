@@ -25,7 +25,7 @@ import java.util.Map;
  */
 final public class CvsHandler {
 
-    private final static Map<Integer,Boolean> disabledCvsRepositories=new HashMap<Integer,Boolean>();
+    private final static Map<Integer,Boolean> disabledCvsRepositories=new HashMap<>();
 
     public static int addCvsRepository(
         DatabaseConnection conn,

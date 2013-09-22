@@ -1,10 +1,10 @@
-package com.aoindustries.aoserv.master.cluster;
-
 /*
- * Copyright 2007-2009 by AO Industries, Inc.,
+ * Copyright 2007-2013 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
+package com.aoindustries.aoserv.master.cluster;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,7 +18,7 @@ public final class Server implements Comparable<Server> {
      * Need to load this directly from the servers.
      */
     static Server[] getServers() {
-        List<Server> servers = new ArrayList<Server>();
+        List<Server> servers = new ArrayList<>();
         servers.add(
             new Server(
                 "gw1.fc.aoindustries.com",
@@ -277,6 +277,7 @@ public final class Server implements Comparable<Server> {
      * from biggest to smallest causes the tightest fit of big virtual servers into the smallest possible server.  This
      * results in the smallest skip/map ratio (and hopefully quicker finding of optimal layouts).
      */
+	@Override
     public int compareTo(Server other) {
         /*
         return -realCompareTo(other);

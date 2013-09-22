@@ -51,8 +51,8 @@ final public class InvalidateList {
     public static final List<AccountingCode> allBusinesses=Collections.unmodifiableList(new ArrayList<AccountingCode>());
     public static final IntList allServers=new IntArrayList();
 
-    private final Map<SchemaTable.TableID,List<Integer>> serverLists=new EnumMap<SchemaTable.TableID,List<Integer>>(SchemaTable.TableID.class);
-    private final Map<SchemaTable.TableID,List<AccountingCode>> businessLists=new EnumMap<SchemaTable.TableID,List<AccountingCode>>(SchemaTable.TableID.class);
+    private final Map<SchemaTable.TableID,List<Integer>> serverLists=new EnumMap<>(SchemaTable.TableID.class);
+    private final Map<SchemaTable.TableID,List<AccountingCode>> businessLists=new EnumMap<>(SchemaTable.TableID.class);
 
     public void addTable(
         DatabaseAccess conn,
@@ -116,7 +116,7 @@ final public class InvalidateList {
             if(businesses==null || businesses==allBusinesses) businessLists.put(tableID, allBusinesses);
             else {
                 List<AccountingCode> SV=businessLists.get(tableID);
-                if(SV==null) businessLists.put(tableID, SV=new SortedArrayList<AccountingCode>());
+                if(SV==null) businessLists.put(tableID, SV=new SortedArrayList<>());
                 for(AccountingCode accounting : businesses) {
                     if(accounting==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: accounting is null"));
                     else if(!SV.contains(accounting)) SV.add(accounting);
@@ -129,7 +129,7 @@ final public class InvalidateList {
             if(servers==null || servers==allServers) serverLists.put(tableID, allServers);
             else {
                 List<Integer> SV=serverLists.get(tableID);
-                if(SV==null) serverLists.put(tableID, SV=new SortedArrayList<Integer>());
+                if(SV==null) serverLists.put(tableID, SV=new SortedArrayList<>());
                 for(Integer pkey : servers) {
                     if(pkey==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: pkey is null"));
                     else if(!SV.contains(pkey)) SV.add(pkey);
@@ -270,7 +270,7 @@ final public class InvalidateList {
     
     public static Collection<AccountingCode> getCollection(AccountingCode ... params) {
         if(params.length==0) return Collections.emptyList();
-        Collection<AccountingCode> coll = new ArrayList<AccountingCode>(params.length);
+        Collection<AccountingCode> coll = new ArrayList<>(params.length);
         Collections.addAll(coll, params);
         return coll;
     }

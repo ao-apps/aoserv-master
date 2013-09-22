@@ -28,6 +28,7 @@ final public class ObjectFactories {
     }
 
     public static final ObjectFactory<AccountingCode> accountingCodeFactory = new ObjectFactory<AccountingCode>() {
+		@Override
         public AccountingCode createObject(ResultSet result) throws SQLException {
             try {
                 return AccountingCode.valueOf(result.getString(1));
@@ -40,6 +41,7 @@ final public class ObjectFactories {
     };
 
     public static final ObjectFactory<DomainName> domainNameFactory = new ObjectFactory<DomainName>() {
+		@Override
         public DomainName createObject(ResultSet result) throws SQLException {
             try {
                 return DomainName.valueOf(result.getString(1));
@@ -52,6 +54,7 @@ final public class ObjectFactories {
     };
 
     public static final ObjectFactory<HostAddress> hostAddressFactory = new ObjectFactory<HostAddress>() {
+		@Override
         public HostAddress createObject(ResultSet result) throws SQLException {
             try {
                 return HostAddress.valueOf(result.getString(1));
@@ -64,6 +67,7 @@ final public class ObjectFactories {
     };
 
     public static final ObjectFactory<InetAddress> inetAddresFactory = new ObjectFactory<InetAddress>() {
+		@Override
         public InetAddress createObject(ResultSet result) throws SQLException {
             try {
                 return InetAddress.valueOf(result.getString(1));

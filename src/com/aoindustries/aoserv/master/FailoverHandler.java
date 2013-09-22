@@ -287,6 +287,7 @@ final public class FailoverHandler implements CronJob {
         /**
          * Runs at 1:20 am daily.
          */
+		@Override
         public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
             return
                 minute==45
@@ -295,18 +296,22 @@ final public class FailoverHandler implements CronJob {
         }
     };
 
+	@Override
     public Schedule getCronJobSchedule() {
         return schedule;
     }
 
+	@Override
     public CronJobScheduleMode getCronJobScheduleMode() {
         return CronJobScheduleMode.SKIP;
     }
 
+	@Override
     public String getCronJobName() {
         return "FailoverHandler";
     }
 
+	@Override
     public int getCronJobThreadPriority() {
         return Thread.NORM_PRIORITY-1;
     }
@@ -327,6 +332,7 @@ final public class FailoverHandler implements CronJob {
     private FailoverHandler() {
     }
 
+	@Override
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         try {
             MasterDatabase.getDatabase().executeUpdate("delete from failover_file_log where end_time <= (now()-'1 year'::interval)");

@@ -29,7 +29,7 @@ public class TCPServer extends MasterServer implements Runnable {
     /**
      * The protocol of this server.
      */
-    static final String PROTOCOL="tcp";
+    static final String PROTOCOL_TCP="tcp";
     
     /**
      * The thread that is listening.
@@ -39,13 +39,18 @@ public class TCPServer extends MasterServer implements Runnable {
     /**
      * Creates a new, running <code>AOServServer</code>.
      */
-    public TCPServer(String serverBind, int serverPort) {
+    TCPServer(String serverBind, int serverPort) {
         super(serverBind, serverPort);
-        (thread=new Thread(this, getClass().getName()+"?address="+serverBind+"&port="+serverPort)).start();
     }
-    
+
+	void start() {
+		if(thread==null) throw new IllegalStateException();
+        (thread=new Thread(this, getClass().getName()+"?address="+serverBind+"&port="+serverPort)).start();
+	}
+
+	@Override
     public String getProtocol() {
-        return PROTOCOL;
+        return PROTOCOL_TCP;
     }
 
     /**
@@ -70,6 +75,7 @@ public class TCPServer extends MasterServer implements Runnable {
         ;
     }
 
+	@Override
     public void run() {
         while (true) {
             try {
@@ -77,8 +83,7 @@ public class TCPServer extends MasterServer implements Runnable {
                 synchronized(System.out) {
                     System.out.println("Accepting TCP connections on "+address.getHostAddress()+':'+serverPort);
                 }
-                ServerSocket SS = new ServerSocket(serverPort, 50, address);
-                try {
+                try (ServerSocket SS = new ServerSocket(serverPort, 50, address)) {
                     while (true) {
                         Socket socket=SS.accept();
                         incConnectionCount();
@@ -86,15 +91,13 @@ public class TCPServer extends MasterServer implements Runnable {
                             socket.setKeepAlive(true);
                             socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
                             //socket.setTcpNoDelay(true);
-                            new SocketServerThread(this, socket);
+                            new SocketServerThread(this, socket).start();
                         } catch(ThreadDeath TD) {
                             throw TD;
                         } catch(Throwable T) {
                             logger.log(Level.SEVERE, "serverPort="+serverPort+". address="+address, T);
                         }
                     }
-                } finally {
-                    SS.close();
                 }
             } catch (ThreadDeath TD) {
                 throw TD;

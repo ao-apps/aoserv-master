@@ -61,8 +61,8 @@ final public class BusinessHandler {
 
     private static final Object usernameBusinessesLock=new Object();
     private static Map<String,List<AccountingCode>> usernameBusinesses;
-    private final static Map<String,Boolean> disabledBusinessAdministrators=new HashMap<String,Boolean>();
-    private final static Map<AccountingCode,Boolean> disabledBusinesses=new HashMap<AccountingCode,Boolean>();
+    private final static Map<String,Boolean> disabledBusinessAdministrators=new HashMap<>();
+    private final static Map<AccountingCode,Boolean> disabledBusinesses=new HashMap<>();
 
     public static boolean canAccessBusiness(DatabaseConnection conn, RequestSource source, AccountingCode accounting) throws IOException, SQLException {
         //String username=source.getUsername();
@@ -205,12 +205,12 @@ final public class BusinessHandler {
             if(cachedPermissions==null) {
         Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
         try {
-        Map<String,Set<String>> newCache = new HashMap<String,Set<String>>();
+        Map<String,Set<String>> newCache = new HashMap<>();
         ResultSet results=stmt.executeQuery("select username, permission from business_administrator_permissions");
         while(results.next()) {
                         String username = results.getString(1);
                         Set<String> permissions = newCache.get(username);
-                        if(permissions==null) newCache.put(username, permissions = new HashSet<String>());
+                        if(permissions==null) newCache.put(username, permissions = new HashSet<>());
                         permissions.add(results.getString(2));
         }
         cachedPermissions = newCache;
@@ -238,7 +238,7 @@ final public class BusinessHandler {
     public static List<AccountingCode> getAllowedBusinesses(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
         synchronized(usernameBusinessesLock) {
             String username=source.getUsername();
-            if(usernameBusinesses==null) usernameBusinesses=new HashMap<String,List<AccountingCode>>();
+            if(usernameBusinesses==null) usernameBusinesses=new HashMap<>();
             List<AccountingCode> SV=usernameBusinesses.get(username);
             if(SV==null) {
                 List<AccountingCode> V;
@@ -288,7 +288,7 @@ final public class BusinessHandler {
                 }
 
                 int size=V.size();
-                SV=new SortedArrayList<AccountingCode>();
+                SV=new SortedArrayList<>();
                 for(int c=0;c<size;c++) SV.add(V.get(c));
                 usernameBusinesses.put(username, SV);
             }
@@ -828,7 +828,7 @@ final public class BusinessHandler {
             int size=codes.size();
 
             // Sort them
-            List<AccountingCode> sorted=new SortedArrayList<AccountingCode>(size);
+            List<AccountingCode> sorted=new SortedArrayList<>(size);
             for(int c=0;c<size;c++) sorted.add(codes.get(c));
 
             // Find one that is not used
@@ -881,7 +881,7 @@ final public class BusinessHandler {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from businesses where accounting=?", accounting);
     }
 
-    final private static Map<String,Integer> businessAdministratorDisableLogs=new HashMap<String,Integer>();
+    final private static Map<String,Integer> businessAdministratorDisableLogs=new HashMap<>();
     public static int getDisableLogForBusinessAdministrator(DatabaseConnection conn, String username) throws IOException, SQLException {
         synchronized(businessAdministratorDisableLogs) {
             if(businessAdministratorDisableLogs.containsKey(username)) return businessAdministratorDisableLogs.get(username).intValue();
@@ -1498,7 +1498,7 @@ final public class BusinessHandler {
             if(businessAdministrators==null) {
                 Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
                 try {
-                    Map<String,BusinessAdministrator> table=new HashMap<String,BusinessAdministrator>();
+                    Map<String,BusinessAdministrator> table=new HashMap<>();
                     ResultSet results=stmt.executeQuery("select * from business_administrators");
                     while(results.next()) {
                         BusinessAdministrator ba=new BusinessAdministrator();
@@ -1623,8 +1623,8 @@ final public class BusinessHandler {
      */
     public static Map<AccountingCode,List<String>> getBusinessContacts(DatabaseConnection conn) throws IOException, SQLException {
         // Load the list of businesses and their contacts
-        Map<AccountingCode,List<String>> businessContacts=new HashMap<AccountingCode,List<String>>();
-        List<String> foundAddresses=new SortedArrayList<String>();
+        Map<AccountingCode,List<String>> businessContacts=new HashMap<>();
+        List<String> foundAddresses=new SortedArrayList<>();
         PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select bp.accounting, bp.billing_email, bp.technical_email from business_profiles bp, businesses bu where bp.accounting=bu.accounting and bu.canceled is null order by bp.accounting, bp.priority desc");
         try {
             ResultSet results=pstmt.executeQuery();
@@ -1632,7 +1632,7 @@ final public class BusinessHandler {
                 while(results.next()) {
                     AccountingCode accounting=AccountingCode.valueOf(results.getString(1));
                     if(!businessContacts.containsKey(accounting)) {
-                        List<String> uniqueAddresses=new ArrayList<String>();
+                        List<String> uniqueAddresses=new ArrayList<>();
                         foundAddresses.clear();
                         // billing contacts
                         List<String> addresses=StringUtility.splitStringCommaSpace(results.getString(2));
@@ -1688,7 +1688,7 @@ final public class BusinessHandler {
         Map<AccountingCode,List<String>> businessContacts=getBusinessContacts(conn);
 
         // The cumulative weights are added up here, per business
-        Map<AccountingCode,Integer> businessWeights=new HashMap<AccountingCode,Integer>();
+        Map<AccountingCode,Integer> businessWeights=new HashMap<>();
 
         // Go through all addresses
         for(int c=0;c<addresses.size();c++) {

@@ -1257,7 +1257,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                     boolean connRolledBack=false;
                     try {
                         // Find the accounting code, credit_card pkey, and account balances of all businesses that have a credit card set for automatic payments (and is active)
-                        List<AutomaticPayment> automaticPayments = new ArrayList<AutomaticPayment>();
+                        List<AutomaticPayment> automaticPayments = new ArrayList<>();
                         PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
                             "select\n"
                             + "  bu.accounting,\n"

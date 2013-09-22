@@ -6974,7 +6974,7 @@ final public class TableHandler {
 					provideProgress,
 					new SpamEmailMessage(),
 					"select * from spam_email_messages"
-				); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());
+				); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject<?,?>>());
 				break;
 			case SYSTEM_EMAIL_ALIASES :
 				if(masterUser!=null) {
@@ -7537,7 +7537,7 @@ final public class TableHandler {
 						provideProgress,
 						new Transaction(),
 						"select * from transactions"
-					); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());
+					); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject<?,?>>());
 				} else MasterServer.writeObjects(
 					conn,
 					source,

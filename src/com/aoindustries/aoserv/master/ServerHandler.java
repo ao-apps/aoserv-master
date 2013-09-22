@@ -199,7 +199,7 @@ final public class ServerHandler {
     static List<Integer> getAllowedServers(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
 	    synchronized(ServerHandler.class) {
             String username=source.getUsername();
-            if(usernameServers==null) usernameServers=new HashMap<String,List<Integer>>();
+            if(usernameServers==null) usernameServers=new HashMap<>();
             List<Integer> SV=usernameServers.get(username);
             if(SV==null) {
                 SV=new SortedIntArrayList();
@@ -245,7 +245,7 @@ final public class ServerHandler {
         );
     }
 
-    final private static Map<Integer,Integer> failoverServers=new HashMap<Integer,Integer>();
+    final private static Map<Integer,Integer> failoverServers=new HashMap<>();
     public static int getFailoverServer(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
         synchronized(failoverServers) {
             if(failoverServers.containsKey(aoServer)) return failoverServers.get(aoServer).intValue();
@@ -268,7 +268,7 @@ final public class ServerHandler {
         }
     }
 
-    final private static Map<Integer,String> farmsForServers=new HashMap<Integer,String>();
+    final private static Map<Integer,String> farmsForServers=new HashMap<>();
     public static String getFarmForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
         Integer I=Integer.valueOf(server);
         synchronized(farmsForServers) {
@@ -281,7 +281,7 @@ final public class ServerHandler {
         }
     }
 
-    final private static Map<Integer,String> hostnamesForAOServers=new HashMap<Integer,String>();
+    final private static Map<Integer,String> hostnamesForAOServers=new HashMap<>();
     public static String getHostnameForAOServer(DatabaseAccess database, int aoServer) throws IOException, SQLException {
         Integer I=Integer.valueOf(aoServer);
         synchronized(hostnamesForAOServers) {
@@ -301,7 +301,7 @@ final public class ServerHandler {
         return conn.executeIntQuery("select coalesce((select operating_system_version from servers where pkey=?), -1)", server);
     }
 
-    final private static Map<String,Integer> serversForAOServers=new HashMap<String,Integer>();
+    final private static Map<String,Integer> serversForAOServers=new HashMap<>();
     public static int getServerForAOServerHostname(DatabaseConnection conn, String aoServerHostname) throws IOException, SQLException {
         synchronized(serversForAOServers) {
             Integer I=serversForAOServers.get(aoServerHostname);
@@ -333,7 +333,7 @@ final public class ServerHandler {
         );
     }
 
-    final private static Map<Integer,Boolean> aoServers=new HashMap<Integer,Boolean>();
+    final private static Map<Integer,Boolean> aoServers=new HashMap<>();
     public static boolean isAOServer(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         Integer I=Integer.valueOf(pkey);
         synchronized(aoServers) {
@@ -382,12 +382,12 @@ final public class ServerHandler {
     /**
      * HashMap(server)->HashMap(Long(id))->RequestSource
      */
-    private static final Map<Integer,Map<Long,RequestSource>> invalidateSyncEntries=new HashMap<Integer,Map<Long,RequestSource>>();
+    private static final Map<Integer,Map<Long,RequestSource>> invalidateSyncEntries=new HashMap<>();
 
     /**
      * HashMap(Server)->Long(lastID)
      */
-    private static final Map<Integer,Long> lastIDs=new HashMap<Integer,Long>();
+    private static final Map<Integer,Long> lastIDs=new HashMap<>();
 
     public static Long addInvalidateSyncEntry(int server, RequestSource source) {
         Integer S=Integer.valueOf(server);
@@ -400,7 +400,7 @@ final public class ServerHandler {
             lastIDs.put(S, idLong);
 
             Map<Long,RequestSource> ids=invalidateSyncEntries.get(S);
-            if(ids==null) invalidateSyncEntries.put(S, ids=new HashMap<Long,RequestSource>());
+            if(ids==null) invalidateSyncEntries.put(S, ids=new HashMap<>());
             ids.put(idLong, source);
 
             return idLong;

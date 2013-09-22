@@ -75,6 +75,7 @@ final public class ReportGenerator implements CronJob {
         /**
          * Runs at <code>BackupReport.BACKUP_REPORT_HOUR</code>:<code>BackupReport.BACKUP_REPORT_MINUTE</code> am daily.
          */
+		@Override
         public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
             return
                 minute==BackupReport.BACKUP_REPORT_MINUTE
@@ -83,22 +84,27 @@ final public class ReportGenerator implements CronJob {
         }
     };
 
+	@Override
     public Schedule getCronJobSchedule() {
         return schedule;
     }
 
+	@Override
     public CronJobScheduleMode getCronJobScheduleMode() {
         return CronJobScheduleMode.SKIP;
     }
 
+	@Override
     public String getCronJobName() {
         return "ReportGenerator";
     }
 
+	@Override
     public int getCronJobThreadPriority() {
         return Thread.NORM_PRIORITY-2;
     }
 
+	@Override
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         try {
             ProcessTimer timer=new ProcessTimer(
@@ -140,7 +146,7 @@ final public class ReportGenerator implements CronJob {
                             )
                         ) {
                             // HashMap keyed on server, containing HashMaps keyed on package, containing TempBackupReport objects
-                            Map<Integer,Map<Integer,TempBackupReport>> stats=new HashMap<Integer,Map<Integer,TempBackupReport>>();
+                            Map<Integer,Map<Integer,TempBackupReport>> stats=new HashMap<>();
 
                             /* TODO: Implement as calls to the aoserv daemons to get the quota reports
                             String sqlString=null;

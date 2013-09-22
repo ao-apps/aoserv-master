@@ -34,7 +34,7 @@ final public class AOServerHandler {
         return conn.executeIntListQuery("select server from ao_servers");
     }
 
-    private static final Map<Integer,Object> mrtgLocks = new HashMap<Integer,Object>();
+    private static final Map<Integer,Object> mrtgLocks = new HashMap<>();
 
     public static void getMrtgFile(
         DatabaseConnection conn,

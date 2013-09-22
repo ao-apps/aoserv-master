@@ -31,18 +31,18 @@ public class SSLServer extends TCPServer {
     /**
      * The protocol of this server.
      */
-    static final String PROTOCOL="ssl";
+    static final String PROTOCOL_SSL="ssl";
     
     /**
      * Creates a new, running <code>AOServServer</code>.
      */
-    public SSLServer(String serverBind, int serverPort) {
+    SSLServer(String serverBind, int serverPort) {
         super(serverBind, serverPort);
     }
 
     @Override
     public String getProtocol() {
-        return PROTOCOL;
+        return PROTOCOL_SSL;
     }
 
     /**
@@ -76,9 +76,7 @@ public class SSLServer extends TCPServer {
                 synchronized(System.out) {
                     System.out.println("Accepting SSL connections on "+address.getHostAddress()+':'+serverPort);
                 }
-                SSLServerSocket SS=(SSLServerSocket)factory.createServerSocket(serverPort, 50, address);
-
-                try {
+                try (SSLServerSocket SS = (SSLServerSocket)factory.createServerSocket(serverPort, 50, address)) {
                     while (true) {
                         Socket socket=SS.accept();
                         incConnectionCount();
@@ -86,15 +84,13 @@ public class SSLServer extends TCPServer {
                             socket.setKeepAlive(true);
                             socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
                             //socket.setTcpNoDelay(true);
-                            new SocketServerThread(this, socket);
+                            new SocketServerThread(this, socket).start();
                         } catch(ThreadDeath TD) {
                             throw TD;
                         } catch(Throwable T) {
                             logger.log(Level.SEVERE, "serverPort="+serverPort+", address="+address, T);
                         }
                     }
-                } finally {
-                    SS.close();
                 }
             } catch (ThreadDeath TD) {
                 throw TD;

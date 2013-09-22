@@ -57,6 +57,7 @@ final public class ClusterHandler implements CronJob {
                 // Run immediately to populate mapping on start-up
                 MasterServer.executorService.submit(
                     new Runnable() {
+						@Override
                         public void run() {
                             updateMappings();
                         }
@@ -73,27 +74,33 @@ final public class ClusterHandler implements CronJob {
         /**
          * Runs every five minutes on 2, 7, ...
          */
+		@Override
         public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
             return (minute%5)==2;
         }
     };
 
+	@Override
     public Schedule getCronJobSchedule() {
         return schedule;
     }
 
+	@Override
     public CronJobScheduleMode getCronJobScheduleMode() {
         return CronJobScheduleMode.SKIP;
     }
 
+	@Override
     public String getCronJobName() {
         return "ClusterHandler";
     }
 
+	@Override
     public int getCronJobThreadPriority() {
         return Thread.NORM_PRIORITY+1;
     }
 
+	@Override
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         updateMappings();
     }
@@ -163,18 +170,19 @@ final public class ClusterHandler implements CronJob {
                     // Query the servers in parallel
                     final MasterDatabase database = MasterDatabase.getDatabase();
                     IntList xenPhysicalServers = ServerHandler.getEnabledXenPhysicalServers(database);
-                    Map<Integer,Future<Set<Integer>>> futures = new HashMap<Integer,Future<Set<Integer>>>(xenPhysicalServers.size()*4/3+1);
+                    Map<Integer,Future<Set<Integer>>> futures = new HashMap<>(xenPhysicalServers.size()*4/3+1);
                     for(final Integer xenPhysicalServer : xenPhysicalServers) {
                         futures.put(
                             xenPhysicalServer,
                             MasterServer.executorService.submit(
                                 new Callable<Set<Integer>>() {
+									@Override
                                     public Set<Integer> call() throws Exception {
                                         // Try up to ten times
                                         for(int c=0;c<10;c++) {
                                             try {
                                                 List<AOServer.DrbdReport> drbdReports = AOServer.parseDrbdReport(DaemonHandler.getDaemonConnector(database, xenPhysicalServer).getDrbdReport());
-                                                Set<Integer> primaryMapping = new HashSet<Integer>(drbdReports.size()*4/3+1);
+                                                Set<Integer> primaryMapping = new HashSet<>(drbdReports.size()*4/3+1);
                                                 for(AOServer.DrbdReport drbdReport : drbdReports) {
                                                     if(
                                                         drbdReport.getLocalRole()==AOServer.DrbdReport.Role.Primary
@@ -210,7 +218,7 @@ final public class ClusterHandler implements CronJob {
                             )
                         );
                     }
-                    Map<Integer,Set<Integer>> newPrimaryMappings = new HashMap<Integer,Set<Integer>>(futures.size()*4/3+1);
+                    Map<Integer,Set<Integer>> newPrimaryMappings = new HashMap<>(futures.size()*4/3+1);
                     for(Map.Entry<Integer,Future<Set<Integer>>> future : futures.entrySet()) {
                         Integer xenPhysicalServer = future.getKey();
                         try {

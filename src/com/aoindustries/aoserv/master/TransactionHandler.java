@@ -251,7 +251,7 @@ final public class TransactionHandler {
                 "select * from transactions where type='"+TransactionType.PAYMENT+"' and payment_confirmed='W'"
             );
         } else {
-            MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());
+            MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject<?,?>>());
         }
     }
 
@@ -277,7 +277,7 @@ final public class TransactionHandler {
                 new Transaction(),
                 "select * from transactions where accounting=?",
                 accounting
-            ); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());
+            ); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject<?,?>>());
         } else MasterServer.writeObjects(
             conn,
             source,
@@ -351,7 +351,7 @@ final public class TransactionHandler {
                 whereDone=false;
                 useUsername=false;
             } else {
-                MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject>());
+                MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject<?,?>>());
                 return;
             }
         } else {

@@ -55,9 +55,9 @@ final public class HttpdHandler {
      */
     public static final int MINIMUM_AUTO_PORT_NUMBER = 16384;
 
-    private final static Map<Integer,Boolean> disabledHttpdSharedTomcats=new HashMap<Integer,Boolean>();
-    private final static Map<Integer,Boolean> disabledHttpdSiteBinds=new HashMap<Integer,Boolean>();
-    private final static Map<Integer,Boolean> disabledHttpdSites=new HashMap<Integer,Boolean>();
+    private final static Map<Integer,Boolean> disabledHttpdSharedTomcats=new HashMap<>();
+    private final static Map<Integer,Boolean> disabledHttpdSiteBinds=new HashMap<>();
+    private final static Map<Integer,Boolean> disabledHttpdSites=new HashMap<>();
 
     public static int addHttpdWorker(
         DatabaseConnection conn,
@@ -736,6 +736,7 @@ final public class HttpdHandler {
             tomcatVersionStr.startsWith(HttpdTomcatVersion.VERSION_4_1_PREFIX)
             || tomcatVersionStr.startsWith(HttpdTomcatVersion.VERSION_5_5_PREFIX)
             || tomcatVersionStr.startsWith(HttpdTomcatVersion.VERSION_6_0_PREFIX)
+            || tomcatVersionStr.startsWith(HttpdTomcatVersion.VERSION_7_0_PREFIX)
         ;
         if(ipAddress!=-1) {
             IPAddressHandler.checkAccessIPAddress(conn, source, methodName, ipAddress);
@@ -1093,6 +1094,7 @@ final public class HttpdHandler {
             versionStr.startsWith(HttpdTomcatVersion.VERSION_4_1_PREFIX)
             || versionStr.startsWith(HttpdTomcatVersion.VERSION_5_5_PREFIX)
             || versionStr.startsWith(HttpdTomcatVersion.VERSION_6_0_PREFIX)
+            || versionStr.startsWith(HttpdTomcatVersion.VERSION_7_0_PREFIX)
         ;
 
         int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_shared_tomcats_pkey_seq')");
@@ -1692,7 +1694,7 @@ final public class HttpdHandler {
         int size=names.size();
 
         // Sort them
-        List<String> sorted=new SortedArrayList<String>(size);
+        List<String> sorted=new SortedArrayList<>(size);
         sorted.addAll(names);
 
         // Find one that is not used
@@ -1729,7 +1731,7 @@ final public class HttpdHandler {
         int size=names.size();
 
         // Sort them
-        List<String> sorted=new SortedArrayList<String>(size);
+        List<String> sorted=new SortedArrayList<>(size);
         sorted.addAll(names);
 
         // Find one that is not used

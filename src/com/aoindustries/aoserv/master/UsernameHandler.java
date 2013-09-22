@@ -27,8 +27,8 @@ final public class UsernameHandler {
     private UsernameHandler() {
     }
 
-    private final static Map<String,Boolean> disabledUsernames=new HashMap<String,Boolean>();
-    private final static Map<String,AccountingCode> usernameBusinesses=new HashMap<String,AccountingCode>();
+    private final static Map<String,Boolean> disabledUsernames=new HashMap<>();
+    private final static Map<String,AccountingCode> usernameBusinesses=new HashMap<>();
 
     public static boolean canAccessUsername(DatabaseConnection conn, RequestSource source, String username) throws IOException, SQLException {
         return PackageHandler.canAccessPackage(conn, source, getPackageForUsername(conn, username));

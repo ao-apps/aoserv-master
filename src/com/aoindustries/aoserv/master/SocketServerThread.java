@@ -90,15 +90,12 @@ final public class SocketServerThread extends Thread implements RequestSource {
                 server.isSecure()
             );
             isClosed=false;
-            start();
         } catch(ValidationException e) {
-            IOException exc = new IOException(e.getLocalizedMessage());
-            exc.initCause(e);
-            throw exc;
+            throw new IOException(e);
         }
     }
 
-    private final LinkedList<InvalidateCacheEntry> invalidateLists=new LinkedList<InvalidateCacheEntry>();
+    private final LinkedList<InvalidateCacheEntry> invalidateLists=new LinkedList<>();
 
     /**
      * Invalidates the listed tables.  Also, if this connector represents a daemon,
@@ -107,6 +104,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
      * IDEA: Could reduce signals under high load by combining entries that are not synchronous.
      *       Could even combine synchronous ones as long as all sync entries were acknowledged in the proper order.
      */
+	@Override
     public void cachesInvalidated(IntList tableList) throws IOException {
         if(tableList!=null && tableList.size()>0) {
             synchronized(this) { // Must use "this" lock because wait is performed on this object externally
@@ -124,10 +122,12 @@ final public class SocketServerThread extends Thread implements RequestSource {
         }
     }
 
+	@Override
     public int getDaemonServer() {
         return process.getDaemonServer();
     }
 
+	@Override
     public InvalidateCacheEntry getNextInvalidatedTables() {
         synchronized(this) {
             if(invalidateLists.isEmpty()) return null;
@@ -149,14 +149,17 @@ final public class SocketServerThread extends Thread implements RequestSource {
      * Logs a security message to <code>System.err</code>.
      * Also sends email messages to <code>aoserv.server.
      */
+	@Override
     public String getSecurityMessageHeader() {
         return "IP="+socket.getInetAddress().getHostAddress()+" EffUsr="+process.getEffectiveUser()+" AuthUsr="+process.getAuthenticatedUser();
     }
 
+	@Override
     public String getUsername() {
         return process.getEffectiveUser();
     }
 
+	@Override
     public boolean isSecure() throws UnknownHostException {
         return server.isSecure();
     }
@@ -172,10 +175,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                     DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
                     try {
                         process.setDeamonServer(ServerHandler.getServerForAOServerHostname(conn, daemonServerHostname));
-                    } catch(RuntimeException err) {
-                        conn.rollback();
-                        throw err;
-                    } catch(IOException err) {
+                    } catch(RuntimeException | IOException err) {
                         conn.rollback();
                         throw err;
                     } catch(SQLException err) {
@@ -315,10 +315,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                         try {
                             try {
                                 message=MasterServer.authenticate(conn, socket.getInetAddress().getHostAddress(), process.getEffectiveUser(), process.getAuthenticatedUser(), password);
-                            } catch(RuntimeException err) {
-                                conn.rollback();
-                                throw err;
-                            } catch(IOException err) {
+                            } catch(RuntimeException | IOException err) {
                                 conn.rollback();
                                 throw err;
                             } catch(SQLException err) {
@@ -363,10 +360,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                                                 }
                                             }
                                         }
-                                    } catch(RuntimeException err) {
-                                        conn.rollback();
-                                        throw err;
-                                    } catch(IOException err) {
+                                    } catch(RuntimeException | IOException err) {
                                         conn.rollback();
                                         throw err;
                                     } catch(SQLException err) {
@@ -386,10 +380,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 
                                     try {
                                         MasterServer.updateAOServProtocolLastUsed(conn, protocolVersion);
-                                    } catch(RuntimeException err) {
-                                        conn.rollback();
-                                        throw err;
-                                    } catch(IOException err) {
+                                    } catch(RuntimeException | IOException err) {
                                         conn.rollback();
                                         throw err;
                                     } catch(SQLException err) {
@@ -404,10 +395,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                                     }
                                 }
                             }
-                        } catch(RuntimeException err) {
-                            conn.rollback();
-                            throw err;
-                        } catch(IOException err) {
+                        } catch(RuntimeException | IOException err) {
                             conn.rollback();
                             throw err;
                         } catch(SQLException err) {
@@ -425,7 +413,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
                             "Client ("+socket.getInetAddress().getHostAddress()+":"+socket.getPort()+") requesting AOServ Protocol version "
                             +protocolVersion
                             +", server ("+socket.getLocalAddress().getHostAddress()+":"+socket.getLocalPort()+") supporting versions "
-                            +StringUtility.buildList(AOServProtocol.Version.values())
+                            +StringUtility.join(AOServProtocol.Version.values(), ", ")
                             +".  Please upgrade the client code to match the server."
                         );
                         out.flush();
@@ -477,6 +465,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
         }
     }
     
+	@Override
     public boolean isClosed() {
         return isClosed;
     }

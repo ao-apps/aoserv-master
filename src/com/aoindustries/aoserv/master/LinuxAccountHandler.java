@@ -45,8 +45,8 @@ final public class LinuxAccountHandler {
     private LinuxAccountHandler() {
     }
 
-    private final static Map<String,Boolean> disabledLinuxAccounts=new HashMap<String,Boolean>();
-    private final static Map<Integer,Boolean> disabledLinuxServerAccounts=new HashMap<Integer,Boolean>();
+    private final static Map<String,Boolean> disabledLinuxAccounts=new HashMap<>();
+    private final static Map<Integer,Boolean> disabledLinuxServerAccounts=new HashMap<>();
 
     public static void checkAccessLinuxAccount(DatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());

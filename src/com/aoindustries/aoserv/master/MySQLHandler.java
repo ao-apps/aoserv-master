@@ -42,8 +42,8 @@ final public class MySQLHandler {
     private MySQLHandler() {
     }
 
-    private final static Map<Integer,Boolean> disabledMySQLServerUsers=new HashMap<Integer,Boolean>();
-    private final static Map<String,Boolean> disabledMySQLUsers=new HashMap<String,Boolean>();
+    private final static Map<Integer,Boolean> disabledMySQLServerUsers=new HashMap<>();
+    private final static Map<String,Boolean> disabledMySQLUsers=new HashMap<>();
 
     public static void checkAccessMySQLDatabase(DatabaseConnection conn, RequestSource source, String action, int mysql_database) throws IOException, SQLException {
         MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
@@ -474,7 +474,7 @@ final public class MySQLHandler {
         int size=names.size();
 
         // Sort them
-        List<String> sorted=new SortedArrayList<String>(size);
+        List<String> sorted=new SortedArrayList<>(size);
         sorted.addAll(names);
 
         // Find one that is not used
