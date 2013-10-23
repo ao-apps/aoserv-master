@@ -44,7 +44,7 @@ public class TCPServer extends MasterServer implements Runnable {
     }
 
 	void start() {
-		if(thread==null) throw new IllegalStateException();
+		if(thread!=null) throw new IllegalStateException();
         (thread=new Thread(this, getClass().getName()+"?address="+serverBind+"&port="+serverPort)).start();
 	}
 
