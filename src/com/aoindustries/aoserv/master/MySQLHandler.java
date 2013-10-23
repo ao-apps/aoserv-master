@@ -1032,7 +1032,7 @@ final public class MySQLHandler {
     }
 
     public static int getMySQLServerUserForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeIntQuery("select mysql_user from mysql_db_users where pkey=?", pkey);
+        return conn.executeIntQuery("select mysql_server_user from mysql_db_users where pkey=?", pkey);
     }
 
     public static int getMySQLServerForMySQLServerUser(DatabaseConnection conn, int mysql_server_user) throws IOException, SQLException {
