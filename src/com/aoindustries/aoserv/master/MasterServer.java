@@ -4369,14 +4369,14 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
-                                    case GET_AO_SERVER_MD_MISMATCH_CNT_REPORT :
+                                    case GET_AO_SERVER_MD_MISMATCH_REPORT :
                                         {
                                             int aoServer = in.readCompressedInt();
                                             process.setCommand(
-                                                "get_ao_server_md_mismatch_cnt_report",
+                                                "get_ao_server_md_mismatch_report",
                                                 Integer.valueOf(aoServer)
                                             );
-                                            String report = AOServerHandler.getMdMismatchCntReport(
+                                            String report = AOServerHandler.getMdMismatchReport(
                                                 conn,
                                                 source,
                                                 aoServer

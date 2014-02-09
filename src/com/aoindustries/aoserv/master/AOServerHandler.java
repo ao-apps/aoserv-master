@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 by AO Industries, Inc.,
+ * Copyright 2003-2014 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -72,9 +72,7 @@ final public class AOServerHandler {
                     DaemonHandler.getDaemonConnector(conn, aoServer).getMrtgFile(filename, out);
                 } catch(IOException err) {
                     DaemonHandler.flagDaemonAsDown(aoServer);
-                    IOException newErr = new IOException("Server Unavailable");
-                    newErr.initCause(err);
-                    throw newErr;
+                    throw new IOException("Server Unavailable", err);
                 }
             } else throw new IOException("Server Unavailable");
         } finally {
@@ -225,13 +223,17 @@ final public class AOServerHandler {
         return DaemonHandler.getDaemonConnector(conn, aoServer).getUpsStatus();
     }
 
-    public static String getMdRaidReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
-        ServerHandler.checkAccessServer(conn, source, "getMdRaidReport", aoServer);
-
-        return DaemonHandler.getDaemonConnector(conn, aoServer).getMdRaidReport();
+    public static String getMdStatReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        ServerHandler.checkAccessServer(conn, source, "getMdStatReport", aoServer);
+        return DaemonHandler.getDaemonConnector(conn, aoServer).getMdStatReport();
     }
 
-    public static String getDrbdReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+    public static String getMdMismatchCntReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        ServerHandler.checkAccessServer(conn, source, "getMdMismatchCntReport", aoServer);
+        return DaemonHandler.getDaemonConnector(conn, aoServer).getMdMismatchCntReport();
+    }
+
+	public static String getDrbdReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
         ServerHandler.checkAccessServer(conn, source, "getDrbdReport", aoServer);
 
         return DaemonHandler.getDaemonConnector(conn, aoServer).getDrbdReport();
