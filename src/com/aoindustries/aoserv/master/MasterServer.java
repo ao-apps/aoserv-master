@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 by AO Industries, Inc.,
+ * Copyright 2000-2014 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -126,13 +126,13 @@ public abstract class MasterServer {
     private static final Object lastIDLock = new Object();
     private static long lastID=-1;
 
-    private static AtomicInteger concurrency = new AtomicInteger();
+    private static final AtomicInteger concurrency = new AtomicInteger();
 
-    private static AtomicInteger maxConcurrency = new AtomicInteger();
+    private static final AtomicInteger maxConcurrency = new AtomicInteger();
 
-    private static AtomicLong requestCount = new AtomicLong();
+    private static final AtomicLong requestCount = new AtomicLong();
 
-    private static AtomicLong totalTime = new AtomicLong();
+    private static final AtomicLong totalTime = new AtomicLong();
 
     /**
      * Creates a new, running <code>AOServServer</code>.
@@ -4352,14 +4352,31 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
-                                    case GET_AO_SERVER_MD_RAID_REPORT :
+                                    case GET_AO_SERVER_MD_STAT_REPORT :
                                         {
                                             int aoServer = in.readCompressedInt();
                                             process.setCommand(
-                                                "get_ao_server_md_raid_report",
+                                                "get_ao_server_md_stat_report",
                                                 Integer.valueOf(aoServer)
                                             );
-                                            String report = AOServerHandler.getMdRaidReport(
+                                            String report = AOServerHandler.getMdStatReport(
+                                                conn,
+                                                source,
+                                                aoServer
+                                            );
+                                            resp1=AOServProtocol.DONE;
+                                            resp2String=report;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_AO_SERVER_MD_MISMATCH_CNT_REPORT :
+                                        {
+                                            int aoServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                "get_ao_server_md_mismatch_cnt_report",
+                                                Integer.valueOf(aoServer)
+                                            );
+                                            String report = AOServerHandler.getMdMismatchCntReport(
                                                 conn,
                                                 source,
                                                 aoServer
