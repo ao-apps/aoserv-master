@@ -228,9 +228,9 @@ final public class AOServerHandler {
         return DaemonHandler.getDaemonConnector(conn, aoServer).getMdStatReport();
     }
 
-    public static String getMdMismatchCntReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
-        ServerHandler.checkAccessServer(conn, source, "getMdMismatchCntReport", aoServer);
-        return DaemonHandler.getDaemonConnector(conn, aoServer).getMdMismatchCntReport();
+    public static String getMdMismatchReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
+        ServerHandler.checkAccessServer(conn, source, "getMdMismatchReport", aoServer);
+        return DaemonHandler.getDaemonConnector(conn, aoServer).getMdMismatchReport();
     }
 
 	public static String getDrbdReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
