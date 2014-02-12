@@ -196,7 +196,7 @@ final public class VirtualServerHandler {
         return DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).getVirtualServerStatus(ServerHandler.getNameForServer(conn, virtualServer));
     }
 
-	public static void verifyVirtualDisk(
+	public static long verifyVirtualDisk(
         DatabaseConnection conn,
         RequestSource source,
         int virtualDisk
@@ -213,7 +213,7 @@ final public class VirtualServerHandler {
 		String device = getDeviceForVirtualDisk(conn, virtualDisk);
         // Find current location of server
         int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
-        // Begin verification
+        // Begin verification, getting Unix time in seconds
         long lastVerified = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).verifyVirtualDisk(
 			virtualServerName,
 			device
@@ -225,5 +225,7 @@ final public class VirtualServerHandler {
 			device,
 			lastVerified
 		);
+		// Return as Java timestamp
+		return lastVerified * 1000;
     }
 }

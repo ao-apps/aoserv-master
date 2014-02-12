@@ -8318,12 +8318,14 @@ public abstract class MasterServer {
                                                 AOSHCommand.VERIFY_VIRTUAL_DISK,
                                                 Integer.valueOf(virtualDisk)
                                             );
-                                            VirtualServerHandler.verifyVirtualDisk(
+                                            long lastVerified = VirtualServerHandler.verifyVirtualDisk(
                                                 conn,
                                                 source,
                                                 virtualDisk
                                             );
                                             resp1=AOServProtocol.DONE;
+											resp2Long = lastVerified;
+                                            hasResp2Long=true;
                                             sendInvalidateList=false;
                                         }
                                         break;
