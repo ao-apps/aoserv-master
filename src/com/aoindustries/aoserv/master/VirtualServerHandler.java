@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 by AO Industries, Inc.,
+ * Copyright 2012, 2013, 2014 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -11,7 +11,6 @@ import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
 import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.logging.Logger;
 
 /**
  * The <code>ServerHandler</code> handles all the accesses to the Server tables.
@@ -20,7 +19,7 @@ import java.util.logging.Logger;
  */
 final public class VirtualServerHandler {
 
-    private static final Logger logger = LogFactory.getLogger(VirtualServerHandler.class);
+    // private static final Logger logger = LogFactory.getLogger(VirtualServerHandler.class);
 
     private VirtualServerHandler() {
     }
@@ -45,7 +44,15 @@ final public class VirtualServerHandler {
     }
      */
 
-    public static AOServer.DaemonAccess requestVncConsoleDaemonAccess(
+    public static int getVirtualServerForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
+        return conn.executeIntQuery("select virtual_server from virtual_disks where pkey=?", virtualDisk);
+    }
+
+    public static String getDeviceForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
+        return conn.executeStringQuery("select device from virtual_disks where pkey=?", virtualDisk);
+    }
+
+	public static AOServer.DaemonAccess requestVncConsoleDaemonAccess(
         DatabaseConnection conn,
         RequestSource source,
         int virtualServer
@@ -187,5 +194,36 @@ final public class VirtualServerHandler {
         int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
         // Grant access to the Xen outer server
         return DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).getVirtualServerStatus(ServerHandler.getNameForServer(conn, virtualServer));
+    }
+
+	public static void verifyVirtualDisk(
+        DatabaseConnection conn,
+        RequestSource source,
+        int virtualDisk
+    ) throws IOException, SQLException {
+		int virtualServer = getVirtualServerForVirtualDisk(conn, virtualDisk);
+        // The user must have proper permissions
+        BusinessHandler.checkPermission(conn, source, "verifyVirtualDisk", AOServPermission.Permission.control_virtual_server);
+        // The business must have proper access
+        boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
+        if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
+        // TODO: Must not be a disabled server
+		// Lookup values
+		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		String device = getDeviceForVirtualDisk(conn, virtualDisk);
+        // Find current location of server
+        int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
+        // Begin verification
+        long lastVerified = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).verifyVirtualDisk(
+			virtualServerName,
+			device
+		);
+		// Update the verification time on the secondary
+        int secondaryPhysicalServer = ClusterHandler.getSecondaryPhysicalServer(virtualServer);
+        DaemonHandler.getDaemonConnector(conn, secondaryPhysicalServer).updateVirtualDiskLastVerified(
+			virtualServerName,
+			device,
+			lastVerified
+		);
     }
 }

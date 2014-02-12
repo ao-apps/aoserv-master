@@ -4553,6 +4553,8 @@ public abstract class MasterServer {
                                                 sourceIp,
                                                 connectIp
                                             );
+                                            // Do not log any IO exception
+											logIOException = false;
                                             String result = AOServerHandler.checkSmtpBlacklist(
                                                 conn,
                                                 source,
@@ -4560,6 +4562,7 @@ public abstract class MasterServer {
                                                 sourceIp,
                                                 connectIp
                                             );
+                                            logIOException = true;
                                             resp1=AOServProtocol.DONE;
                                             resp2String=result;
                                             sendInvalidateList=false;

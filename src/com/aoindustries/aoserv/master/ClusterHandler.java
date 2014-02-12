@@ -372,7 +372,7 @@ final public class ClusterHandler implements CronJob {
                         try {
 							Tuple3<Set<Integer>,Set<Integer>,Set<Integer>> retVal = future.getValue().get(30, TimeUnit.SECONDS);
                             newPrimaryMappings.put(xenPhysicalServer, retVal.getElement1());
-                            newSecondaryMappings.put(xenPhysicalServer, retVal.getElement1());
+                            newSecondaryMappings.put(xenPhysicalServer, retVal.getElement2());
                             newAutoMappings.put(xenPhysicalServer, retVal.getElement3());
                         } catch(ThreadDeath TD) {
                             throw TD;
