@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 by AO Industries, Inc.,
+ * Copyright 2000-2013, 2014 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -8305,6 +8305,22 @@ public abstract class MasterServer {
                                             hasResp4Int = true;
                                             resp5Long = daemonAccess.getKey();
                                             hasResp5Long=true;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case VERIFY_VIRTUAL_DISK :
+                                        {
+                                            int virtualDisk = in.readCompressedInt();
+                                            process.setCommand(
+                                                AOSHCommand.VERIFY_VIRTUAL_DISK,
+                                                Integer.valueOf(virtualDisk)
+                                            );
+                                            VirtualServerHandler.verifyVirtualDisk(
+                                                conn,
+                                                source,
+                                                virtualDisk
+                                            );
+                                            resp1=AOServProtocol.DONE;
                                             sendInvalidateList=false;
                                         }
                                         break;

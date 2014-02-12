@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 by AO Industries, Inc.,
+ * Copyright 2009-2013, 2014 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -13,11 +13,12 @@ import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.util.IntList;
-import com.aoindustries.util.Tuple2;
+import com.aoindustries.util.Tuple3;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -137,17 +138,25 @@ final public class ClusterHandler implements CronJob {
     private static Map<Integer,Set<Integer>> primaryMappings = Collections.emptyMap();
 
 	/**
+	 * The set of virtual servers that have secondary DRBD roles on a per physical
+	 * server basis.
+	 */
+    private static Map<Integer,Set<Integer>> secondaryMappings = Collections.emptyMap();
+
+	/**
 	 * The set of virtual servers that have Xen auto start links on a per physical
 	 * server basis.
 	 */
     private static Map<Integer,Set<Integer>> autoMappings = Collections.emptyMap();
 
-	private static void setPrimaryMappings(
+	private static void setMappings(
 		Map<Integer,Set<Integer>> newPrimaryMappings,
+		Map<Integer,Set<Integer>> newSecondaryMappings,
 		Map<Integer,Set<Integer>> newAutoMappings
 	) {
 		synchronized(mappingsLock) {
 			primaryMappings = newPrimaryMappings;
+			secondaryMappings = newSecondaryMappings;
 			autoMappings = newAutoMappings;
 		}
 	}
@@ -183,7 +192,73 @@ final public class ClusterHandler implements CronJob {
         return physicalServer;
     }
 
-    private static final Object updateMappingsLock = new Object();
+	/**
+     * Gets the pkey of the physical server that is currently the secondary for
+	 * the virtual server.  If there are two secondaries (Secondary/Secondary role),
+	 * will use the physical server that does not have Xen auto start configured.
+     */
+    public static int getSecondaryPhysicalServer(int virtualServer) throws ClusterException {
+        Integer virtualServerInt = Integer.valueOf(virtualServer);
+        synchronized(mappingsLock) {
+			// Find the set of all physical servers that have this as secondary
+			Set<Integer> physicalServers = new HashSet<>();
+            for(Map.Entry<Integer,Set<Integer>> entry : secondaryMappings.entrySet()) {
+                if(entry.getValue().contains(virtualServerInt)) {
+					physicalServers.add(entry.getKey());
+                }
+            }
+			// None found
+			if(physicalServers.isEmpty()) {
+		        throw new ClusterException("Virtual server secondary not found on any physical server");
+			}
+			// If there is only one secondary, use it if not auto
+			else if(physicalServers.size()==1) {
+				Integer physicalServer1 = physicalServers.iterator().next();
+				Set<Integer> autoMappings1 = autoMappings.get(physicalServer1);
+				boolean auto = autoMappings1!=null && autoMappings1.contains(virtualServer);
+				if(auto) {
+					throw new ClusterException("Virtual server secondary only found on physical server with auto start link: " + physicalServer1);
+				}
+				return physicalServer1;
+			}
+			// If two, choose the one that is not auto-start
+			else if(physicalServers.size()==2) {
+				Iterator<Integer> iter = physicalServers.iterator();
+				Integer physicalServer1 = iter.next();
+				Integer physicalServer2 = iter.next();
+				// Get the auto mappings for each
+				Set<Integer> autoMappings1 = autoMappings.get(physicalServer1);
+				Set<Integer> autoMappings2 = autoMappings.get(physicalServer2);
+				// Find if has on auto
+				boolean auto1 = autoMappings1!=null && autoMappings1.contains(virtualServer);
+				boolean auto2 = autoMappings2!=null && autoMappings2.contains(virtualServer);
+				// Resolve based on auto mappings
+				if(auto1) {
+					if(auto2) {
+						// auto1 && auto2
+						throw new ClusterException("Virtual server auto start link found on both physical servers: " + physicalServer1 + " and " + physicalServer2);
+					} else {
+						// auto1 && !auto2
+						return physicalServer2;
+					}
+				} else {
+					if(auto2) {
+						// !auto1 && auto2
+						return physicalServer1;
+					} else {
+						// !auto1 && !auto2
+						throw new ClusterException("Virtual server auto start link not found on either physical server: " + physicalServer1 + " or " + physicalServer2);
+					}
+				}
+			}
+			// Error if more than two
+			else {
+		        throw new ClusterException("Virtual server secondary found on more than two physical servers: " + physicalServers);
+			}
+        }
+    }
+
+	private static final Object updateMappingsLock = new Object();
     private static void updateMappings() {
         synchronized(updateMappingsLock) {
             try {
@@ -203,22 +278,25 @@ final public class ClusterHandler implements CronJob {
                     // Query the servers in parallel
                     final MasterDatabase database = MasterDatabase.getDatabase();
                     IntList xenPhysicalServers = ServerHandler.getEnabledXenPhysicalServers(database);
-                    Map<Integer,Future<Tuple2<Set<Integer>,Set<Integer>>>> futures = new HashMap<>(xenPhysicalServers.size()*4/3+1);
+                    Map<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> futures = new HashMap<>(xenPhysicalServers.size()*4/3+1);
                     for(final Integer xenPhysicalServer : xenPhysicalServers) {
                         futures.put(
                             xenPhysicalServer,
                             MasterServer.executorService.submit(
-                                new Callable<Tuple2<Set<Integer>,Set<Integer>>>() {
+                                new Callable<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>() {
 									@Override
-                                    public Tuple2<Set<Integer>,Set<Integer>> call() throws Exception {
+                                    public Tuple3<Set<Integer>,Set<Integer>,Set<Integer>> call() throws Exception {
                                         // Try up to ten times
                                         for(int c=0;c<10;c++) {
                                             try {
+												final int rootPackagePkey = PackageHandler.getPKeyForPackage(database, BusinessHandler.getRootBusiness().toString());
 												AOServDaemonConnector daemonConn = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
 												// Get the DRBD states
                                                 List<AOServer.DrbdReport> drbdReports = AOServer.parseDrbdReport(daemonConn.getDrbdReport());
                                                 Set<Integer> primaryMapping = new HashSet<>(drbdReports.size()*4/3+1);
+                                                Set<Integer> secondaryMapping = new HashSet<>(drbdReports.size()*4/3+1);
                                                 for(AOServer.DrbdReport drbdReport : drbdReports) {
+													// Look for primary mappings
                                                     if(
                                                         drbdReport.getLocalRole()==AOServer.DrbdReport.Role.Primary
                                                         && (
@@ -230,7 +308,24 @@ final public class ClusterHandler implements CronJob {
                                                         primaryMapping.add(
                                                             ServerHandler.getServerForPackageAndName(
                                                                 database,
-                                                                PackageHandler.getPKeyForPackage(database, BusinessHandler.getRootBusiness().toString()),
+                                                                rootPackagePkey,
+                                                                drbdReport.getResourceHostname()
+                                                            )
+                                                        );
+                                                    }
+													// Look for secondary mappings
+                                                    if(
+                                                        drbdReport.getLocalRole()==AOServer.DrbdReport.Role.Secondary
+                                                        && (
+                                                            drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Unconfigured
+                                                            || drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Primary
+                                                            || drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Unknown
+                                                        )
+                                                    ) {
+                                                        secondaryMapping.add(
+                                                            ServerHandler.getServerForPackageAndName(
+                                                                database,
+                                                                rootPackagePkey,
                                                                 drbdReport.getResourceHostname()
                                                             )
                                                         );
@@ -238,8 +333,21 @@ final public class ClusterHandler implements CronJob {
                                                 }
 												// Get the auto-start list
                                                 Set<String> autoStartList = daemonConn.getXenAutoStartLinks();
-												// TODO
-                                                return new Tuple2<>(primaryMapping, null);
+                                                Set<Integer> autoMapping = new HashSet<>(autoStartList.size()*4/3+1);
+												for(String serverName : autoStartList) {
+													autoMapping.add(
+														ServerHandler.getServerForPackageAndName(
+															database,
+															rootPackagePkey,
+															serverName
+														)
+													);
+												}
+                                                return new Tuple3<>(
+													primaryMapping,
+													secondaryMapping,
+													autoMapping
+												);
                                             } catch(Exception exception) {
                                                 if(c==9) throw exception;
                                                 LogFactory.getLogger(ClusterHandler.class).log(Level.SEVERE, null, exception);
@@ -257,21 +365,24 @@ final public class ClusterHandler implements CronJob {
                         );
                     }
                     Map<Integer,Set<Integer>> newPrimaryMappings = new HashMap<>(futures.size()*4/3+1);
+                    Map<Integer,Set<Integer>> newSecondaryMappings = new HashMap<>(futures.size()*4/3+1);
                     Map<Integer,Set<Integer>> newAutoMappings = new HashMap<>(futures.size()*4/3+1);
-                    for(Map.Entry<Integer,Future<Tuple2<Set<Integer>,Set<Integer>>>> future : futures.entrySet()) {
+                    for(Map.Entry<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> future : futures.entrySet()) {
                         Integer xenPhysicalServer = future.getKey();
                         try {
-							Tuple2<Set<Integer>,Set<Integer>> retVal = future.getValue().get(30, TimeUnit.SECONDS);
+							Tuple3<Set<Integer>,Set<Integer>,Set<Integer>> retVal = future.getValue().get(30, TimeUnit.SECONDS);
                             newPrimaryMappings.put(xenPhysicalServer, retVal.getElement1());
-                            newAutoMappings.put(xenPhysicalServer, retVal.getElement2());
+                            newSecondaryMappings.put(xenPhysicalServer, retVal.getElement1());
+                            newAutoMappings.put(xenPhysicalServer, retVal.getElement3());
                         } catch(ThreadDeath TD) {
                             throw TD;
                         } catch(Throwable T) {
                             logger.log(Level.SEVERE, "xenPhysicalServer="+xenPhysicalServer, T);
                         }
                     }
-					setPrimaryMappings(
+					setMappings(
 						newPrimaryMappings,
+						newSecondaryMappings,
 						newAutoMappings
 					);
                 } finally {
