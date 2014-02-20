@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -169,8 +169,8 @@ final public class IPAddressHandler {
         DomainName hostname
     ) throws IOException, SQLException {
         // Can't set the hostname on a disabled package
-        String packageName=getPackageForIPAddress(conn, ipAddress);
-        if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to set hostname for an IP address, package disabled: "+packageName);
+        //String packageName=getPackageForIPAddress(conn, ipAddress);
+        //if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to set hostname for an IP address, package disabled: "+packageName);
 
         String ip=getIPStringForIPAddress(conn, ipAddress);
         if(
