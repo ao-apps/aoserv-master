@@ -998,20 +998,36 @@ public abstract class MasterServer {
                                                 break;
                                             case DNS_RECORDS :
                                                 {
-                                                    String zone=in.readUTF();
-                                                    String domain=in.readUTF().trim();
-                                                    String type=in.readUTF();
-                                                    int mx_priority=in.readCompressedInt();
-                                                    String destination=in.readUTF().trim();
-                                                    int ttl=in.readCompressedInt();
+                                                    String zone        = in.readUTF();
+                                                    String domain      = in.readUTF().trim();
+                                                    String type        = in.readUTF();
+                                                    int priority       = in.readCompressedInt();
+                                                    int weight;
+													int port;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_72)>=0) {
+	                                                    weight         = in.readCompressedInt();
+	                                                    port           = in.readCompressedInt();
+                                                    } else {
+	                                                    weight         = DNSRecord.NO_WEIGHT;
+	                                                    port           = DNSRecord.NO_PORT;
+                                                    }
+                                                    String destination = in.readUTF().trim();
+                                                    int ttl;
+                                                    if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_127)>=0) {
+	                                                    ttl            = in.readCompressedInt();
+                                                    } else {
+	                                                    ttl            = DNSRecord.NO_TTL;
+                                                    }
                                                     process.setCommand(
                                                         AOSHCommand.ADD_DNS_RECORD,
                                                         zone,
                                                         domain,
                                                         type,
-                                                        mx_priority==DNSRecord.NO_MX_PRIORITY?null:Integer.valueOf(mx_priority),
+                                                        priority==DNSRecord.NO_PRIORITY ? null : Integer.valueOf(priority),
+                                                        weight==DNSRecord.NO_WEIGHT ? null : Integer.valueOf(weight),
+                                                        port==DNSRecord.NO_PORT ? null : Integer.valueOf(port),
                                                         destination,
-                                                        ttl==DNSRecord.NO_TTL?null:Integer.valueOf(ttl)
+                                                        ttl==DNSRecord.NO_TTL ? null : Integer.valueOf(ttl)
                                                     );
                                                     int pkey=DNSHandler.addDNSRecord(
                                                         conn,
@@ -1020,7 +1036,9 @@ public abstract class MasterServer {
                                                         zone,
                                                         domain,
                                                         type,
-                                                        mx_priority,
+                                                        priority,
+														weight,
+														port,
                                                         destination,
                                                         ttl
                                                     );

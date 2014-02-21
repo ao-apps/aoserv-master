@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.IPAddress;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.Connection;
@@ -71,14 +72,14 @@ final public class NetBindHandler {
         PackageHandler.checkAccessPackage(conn, source, "addNetBind", packageName);
         if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add net bind, package disabled: "+packageName);
         IPAddressHandler.checkAccessIPAddress(conn, source, "addNetBind", ipAddress);
-        String ipString=IPAddressHandler.getIPStringForIPAddress(conn, ipAddress);
+        InetAddress inetAddress = IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress);
 
         // Now allocating unique to entire system for server portability between farms
         //String farm=ServerHandler.getFarmForServer(conn, aoServer);
 
         int pkey;
         synchronized(netBindLock) {
-            if(ipString.equals(IPAddress.WILDCARD_IP)) {
+            if(inetAddress.isUnspecified()) {
                 // Wildcard must be unique to AOServ system, with the port completely free
                 if(
                     conn.executeBooleanQuery(
@@ -103,8 +104,8 @@ final public class NetBindHandler {
                         netProtocol,
 						server
                     )
-                ) throw new SQLException("NetBind already in use: "+server+"->"+ipAddress+":"+port+" ("+netProtocol+')');
-            } else if(ipString.equals(IPAddress.LOOPBACK_IP)) {
+                ) throw new SQLException("NetBind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port+" ("+netProtocol+')');
+            } else if(inetAddress.isLooback()) {
                 // Loopback must be unique to AOServ system and not have wildcard
                 if(
                     conn.executeBooleanQuery(
@@ -134,7 +135,7 @@ final public class NetBindHandler {
                         netProtocol,
 						server
                     )
-                ) throw new SQLException("NetBind already in use: "+server+"->"+ipAddress+":"+port+" ("+netProtocol+')');
+                ) throw new SQLException("NetBind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port+" ("+netProtocol+')');
             } else {
                 // Make sure that this port is not already allocated within the system on this IP or the wildcard
                 if(
@@ -166,7 +167,7 @@ final public class NetBindHandler {
                         netProtocol,
 						server
                     )
-                ) throw new SQLException("NetBind already in use: "+server+"->"+ipAddress+":"+port+" ("+netProtocol+')');
+                ) throw new SQLException("NetBind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port+" ("+netProtocol+')');
             }
 
             // Add the port to the DB
@@ -221,11 +222,11 @@ final public class NetBindHandler {
         int minimumPort
     ) throws IOException, SQLException {
         //String farm=ServerHandler.getFarmForServer(conn, aoServer);
-        String ipString=IPAddressHandler.getIPStringForIPAddress(conn, ipAddress);
+        InetAddress inetAddress = IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress);
         int pkey;
         synchronized(netBindLock) {
             pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('net_binds_pkey_seq')");
-            if(ipString.equals(IPAddress.WILDCARD_IP)) {
+            if(inetAddress.isUnspecified()) {
                 conn.executeUpdate(
                     "insert into\n"
                     + "  net_binds\n"

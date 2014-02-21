@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -791,7 +791,7 @@ final public class HttpdHandler {
             conn,
             invalidateList,
             testURL,
-            IPAddressHandler.getIPStringForIPAddress(conn, ipAddress),
+            IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress),
             tlds
         );
 

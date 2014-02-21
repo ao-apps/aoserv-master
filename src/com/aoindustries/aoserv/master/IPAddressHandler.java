@@ -13,7 +13,9 @@ import com.aoindustries.aoserv.client.NetProtocol;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.DomainName;
+import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.ValidationException;
+import com.aoindustries.lang.NotImplementedException;
 import com.aoindustries.sql.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -48,23 +50,28 @@ final public class IPAddressHandler {
         int ipAddress
     ) throws IOException, SQLException {
         try {
-            final String ip=getIPStringForIPAddress(conn, ipAddress);
-            int pos=ip.lastIndexOf('.');
-            final String octet=ip.substring(pos+1);
-            int server=getServerForIPAddress(conn, ipAddress);
-            final String net;
-            if(ip.startsWith("66.160.183.")) net = "net1.";
-            else if(ip.startsWith("64.62.174.")) net = "net2.";
-            else if(ip.startsWith("64.71.144.")) net = "net3.";
-            else net = "";
-            final String farm=ServerHandler.getFarmForServer(conn, server);
-            String hostname="unassigned"+octet+"."+net+farm+'.'+DNSZone.API_ZONE;
-            while(hostname.endsWith(".")) hostname = hostname.substring(0, hostname.length()-1);
-            return DomainName.valueOf(hostname);
+            final InetAddress inetAddress = getInetAddressForIPAddress(conn, ipAddress);
+			if(inetAddress.isIPv4()) {
+				String ip = inetAddress.toString();
+				int pos=ip.lastIndexOf('.');
+				final String octet=ip.substring(pos+1);
+				int server=getServerForIPAddress(conn, ipAddress);
+				final String net;
+				if(ip.startsWith("66.160.183.")) net = "net1.";
+				else if(ip.startsWith("64.62.174.")) net = "net2.";
+				else if(ip.startsWith("64.71.144.")) net = "net3.";
+				else net = "";
+				final String farm=ServerHandler.getFarmForServer(conn, server);
+				String hostname="unassigned"+octet+"."+net+farm+'.'+DNSZone.API_ZONE;
+				while(hostname.endsWith(".")) hostname = hostname.substring(0, hostname.length()-1);
+				return DomainName.valueOf(hostname);
+			} else if(inetAddress.isIPv6()) {
+				throw new NotImplementedException();
+			} else {
+				throw new AssertionError();
+			}
         } catch(ValidationException e) {
-            SQLException exc = new SQLException(e.getLocalizedMessage());
-            exc.initCause(e);
-            throw exc;
+            throw new SQLException(e.getLocalizedMessage(), e);
         }
     }
 
@@ -172,10 +179,10 @@ final public class IPAddressHandler {
         //String packageName=getPackageForIPAddress(conn, ipAddress);
         //if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to set hostname for an IP address, package disabled: "+packageName);
 
-        String ip=getIPStringForIPAddress(conn, ipAddress);
+        InetAddress ip = getInetAddressForIPAddress(conn, ipAddress);
         if(
-            ip.equals(IPAddress.LOOPBACK_IP)
-            || ip.equals(IPAddress.WILDCARD_IP)
+            ip.isLooback()
+            || ip.isUnspecified()
         ) throw new SQLException("Not allowed to set the hostname for "+ip);
 
         AccountingCode accounting=getBusinessForIPAddress(conn, ipAddress);
@@ -327,8 +334,12 @@ final public class IPAddressHandler {
         return conn.executeIntQuery("select nd.server from ip_addresses ia, net_devices nd where ia.pkey=? and ia.net_device=nd.pkey", ipAddress);
     }
 
-    public static String getIPStringForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-        return conn.executeStringQuery("select ip_address from ip_addresses where pkey=?", ipAddress);
+    public static InetAddress getInetAddressForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
+		try {
+	        return InetAddress.valueOf(conn.executeStringQuery("select ip_address from ip_addresses where pkey=?", ipAddress));
+		} catch(ValidationException e) {
+			throw new SQLException(e.getLocalizedMessage(), e);
+		}
     }
 
     public static int getWildcardIPAddress(DatabaseConnection conn) throws IOException, SQLException {

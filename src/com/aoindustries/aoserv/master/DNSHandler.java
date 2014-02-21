@@ -19,6 +19,7 @@ import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
+import com.aoindustries.lang.NotImplementedException;
 import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.sql.WrappedSQLException;
@@ -366,23 +367,40 @@ final public class DNSHandler implements CronJob {
         String zone,
         String domain,
         String type,
-        int mx_priority,
+        int priority,
+        int weight,
+        int port,
         String destination,
         int ttl
     ) throws IOException, SQLException {
         // Must be allowed to access this zone
         checkAccessDNSZone(conn, source, "addDNSRecord", zone);
 
-        // Must have appropriate MX priority
-        boolean isMX=conn.executeBooleanQuery("select is_mx from dns_types where type=?", type);
-        if(isMX) {
-            if(mx_priority==DNSRecord.NO_MX_PRIORITY) throw new IllegalArgumentException("mx_priority required for type="+type);
-            else if(mx_priority<=0) throw new SQLException("Invalid mx_priority: "+mx_priority);
+        // Must have appropriate priority
+        if(conn.executeBooleanQuery("select has_priority from dns_types where type=?", type)) {
+            if(priority == DNSRecord.NO_PRIORITY) throw new IllegalArgumentException("priority required for type=" + type);
+            else if(priority<=0) throw new SQLException("Invalid priority: " + priority);
         } else {
-            if(mx_priority!=DNSRecord.NO_MX_PRIORITY) throw new SQLException("No mx_priority allowed for type="+type);
+            if(priority != DNSRecord.NO_PRIORITY) throw new SQLException("No priority allowed for type="+type);
         }
 
-        // Must have a valid destination type unless is a TXT entry
+        // Must have appropriate weight
+        if(conn.executeBooleanQuery("select has_weight from dns_types where type=?", type)) {
+            if(weight == DNSRecord.NO_WEIGHT) throw new IllegalArgumentException("weight required for type=" + type);
+            else if(weight<=0) throw new SQLException("Invalid weight: " + weight);
+        } else {
+            if(weight != DNSRecord.NO_WEIGHT) throw new SQLException("No weight allowed for type="+type);
+        }
+
+        // Must have appropriate port
+        if(conn.executeBooleanQuery("select has_port from dns_types where type=?", type)) {
+            if(port == DNSRecord.NO_PORT) throw new IllegalArgumentException("port required for type=" + type);
+            else if(port < 1 || port > 65535) throw new SQLException("Invalid port: " + port);
+        } else {
+            if(port != DNSRecord.NO_PORT) throw new SQLException("No port allowed for type="+type);
+        }
+
+		// Must have a valid destination type unless is a TXT entry
         if(!DNSType.TXT.equals(type)) {
             try {
                 DNSType.checkDestination(
@@ -398,17 +416,21 @@ final public class DNSHandler implements CronJob {
         int pkey=conn.executeIntQuery("select nextval('dns_records_pkey_seq')");
 
         // Add the entry
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records values(?,?,?,?,?,?,null,?)");
+        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records values(?,?,?,?,?,?,?,?,null,?)");
         try {
             pstmt.setInt(1, pkey);
             pstmt.setString(2, zone);
             pstmt.setString(3, domain);
             pstmt.setString(4, type);
-            if(mx_priority==DNSRecord.NO_MX_PRIORITY) pstmt.setNull(5, Types.INTEGER);
-            else pstmt.setInt(5, mx_priority);
-            pstmt.setString(6, destination);
-            if(ttl==-1) pstmt.setNull(7, Types.INTEGER);
-            else pstmt.setInt(7, ttl);
+            if(priority == DNSRecord.NO_PRIORITY) pstmt.setNull(5, Types.INTEGER);
+            else pstmt.setInt(5, priority);
+            if(weight == DNSRecord.NO_WEIGHT) pstmt.setNull(6, Types.INTEGER);
+            else pstmt.setInt(6, weight);
+            if(port == DNSRecord.NO_PORT) pstmt.setNull(7, Types.INTEGER);
+            else pstmt.setInt(7, port);
+            pstmt.setString(8, destination);
+            if(ttl==-1) pstmt.setNull(9, Types.INTEGER);
+            else pstmt.setInt(9, ttl);
             pstmt.executeUpdate();
         } catch(SQLException err) {
             System.err.println("Error from query: "+pstmt.toString());
@@ -463,12 +485,12 @@ final public class DNSHandler implements CronJob {
         }
 
         // Add the MX entry
-        pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, mx_priority, destination) values(?,?,?,?,?)");
+        pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, priority, destination) values(?,?,?,?,?)");
         try {
             pstmt.setString(1, zone);
             pstmt.setString(2, "@");
-            pstmt.setString(3, "MX");
-            pstmt.setInt(4, 10);
+            pstmt.setString(3, DNSType.MX);
+            pstmt.setInt(4, DNSZone.DEFAULT_MX_PRIORITY);
             pstmt.setString(5, "mail");
             pstmt.executeUpdate();
         } finally {
@@ -624,7 +646,7 @@ final public class DNSHandler implements CronJob {
         DatabaseConnection conn,
         InvalidateList invalidateList,
         String hostname,
-        String ipAddress,
+        InetAddress ipAddress,
         List<DomainName> tlds
     ) throws IOException, SQLException {
         String tldPlus1 = DNSZoneTable.getHostTLD(hostname, tlds);
@@ -640,10 +662,19 @@ final public class DNSHandler implements CronJob {
                 preTldPlus1
             );
             if (!exists) {
+				String aType;
+				if(ipAddress.isIPv4()) {
+					aType = DNSType.A;
+				} else if(ipAddress.isIPv6()) {
+					aType = DNSType.AAAA;
+				} else {
+					throw new AssertionError();
+				}
                 conn.executeUpdate(
-                    "insert into dns_records (zone, domain, type, destination) values (?, ?, 'A', ?)",
+                    "insert into dns_records (zone, domain, type, destination) values (?,?,?,?)",
                     tldPlus1,
                     preTldPlus1,
+					aType,
                     ipAddress
                 );
                 invalidateList.addTable(
@@ -802,13 +833,14 @@ final public class DNSHandler implements CronJob {
                     + "        dns_records\n"
                     + "      where\n"
                     + "        zone=?\n"
-                    + "        and type='A'\n"
+                    + "        and type in (?,?)\n"
                     + "        and domain=?\n"
                     + "      limit 1\n"
                     + "    ),\n"
                     + "    -1\n"
                     + "  )",
                     tldPlus1,
+					DNSType.A, DNSType.AAAA,
                     preTldPlus1
                 );
                 if(pkey!=-1) {
@@ -922,49 +954,58 @@ final public class DNSHandler implements CronJob {
     public static void updateReverseDnsIfExists(
         DatabaseConnection conn,
         InvalidateList invalidateList,
-        String ip,
+        InetAddress ip,
         DomainName hostname
     ) throws IOException, SQLException {
-        String netmask;
-        if(
-            ip.startsWith("66.160.183.")
-            || ip.startsWith("64.62.174.")
-        ) {
-            netmask = "255.255.255.0";
-        } else if(ip.startsWith("64.71.144.")) {
-            netmask = "255.255.255.128";
-        } else {
-            netmask = null;
-        }
-        if(netmask!=null) {
-            String arpaZone=DNSZone.getArpaZoneForIPAddress(ip, netmask);
-            if(
-                conn.executeBooleanQuery(
-                    "select (select zone from dns_zones where zone=?) is not null",
-                    arpaZone
-                )
-            ) {
-                int pos=ip.lastIndexOf('.');
-                String oct4=ip.substring(pos+1);
-                if(
-                    conn.executeBooleanQuery(
-                        "select (select pkey from dns_records where zone=? and domain=? and type='"+DNSType.PTR+"' limit 1) is not null",
-                        arpaZone,
-                        oct4
-                    )
-                ) {
-                    updateDNSZoneSerial(conn, invalidateList, arpaZone);
+		if(ip.isIPv4()) {
+	        final String netmask;
+			final String ipStr = ip.toString();
+			if(
+				ipStr.startsWith("66.160.183.")
+				|| ipStr.startsWith("64.62.174.")
+			) {
+				netmask = "255.255.255.0";
+			} else if(ipStr.startsWith("64.71.144.")) {
+				netmask = "255.255.255.128";
+			} else {
+				netmask = null;
+			}
+			if(netmask!=null) {
+				String arpaZone=DNSZone.getArpaZoneForIPAddress(ipStr, netmask);
+				if(
+					conn.executeBooleanQuery(
+						"select (select zone from dns_zones where zone=?) is not null",
+						arpaZone
+					)
+				) {
+					int pos=ipStr.lastIndexOf('.');
+					String oct4=ipStr.substring(pos+1);
+					if(
+						conn.executeBooleanQuery(
+							"select (select pkey from dns_records where zone=? and domain=? and type=? limit 1) is not null",
+							arpaZone,
+							oct4,
+							DNSType.PTR
+						)
+					) {
+						updateDNSZoneSerial(conn, invalidateList, arpaZone);
 
-                    conn.executeUpdate(
-                        "update dns_records set destination=? where zone=? and domain=? and type='"+DNSType.PTR+'\'',
-                        hostname.toString()+'.',
-                        arpaZone,
-                        oct4
-                    );
-                    invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-                }
-            }
-        }
+						conn.executeUpdate(
+							"update dns_records set destination=? where zone=? and domain=? and type=?",
+							hostname.toString()+'.',
+							arpaZone,
+							oct4,
+							DNSType.PTR
+						);
+						invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+					}
+				}
+			}
+		} else if(ip.isIPv6()) {
+			throw new NotImplementedException();
+		} else {
+			throw new AssertionError();
+		}
     }
     
     public static class AccountingAndZone {
