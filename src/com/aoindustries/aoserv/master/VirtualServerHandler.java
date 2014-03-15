@@ -211,15 +211,15 @@ final public class VirtualServerHandler {
 		// Lookup values
 		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
 		String device = getDeviceForVirtualDisk(conn, virtualDisk);
-        // Find current location of server
+        // Find current location of primary and secondary servers
         int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
+        int secondaryPhysicalServer = ClusterHandler.getSecondaryPhysicalServer(virtualServer);
         // Begin verification, getting Unix time in seconds
         long lastVerified = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).verifyVirtualDisk(
 			virtualServerName,
 			device
 		);
 		// Update the verification time on the secondary
-        int secondaryPhysicalServer = ClusterHandler.getSecondaryPhysicalServer(virtualServer);
         DaemonHandler.getDaemonConnector(conn, secondaryPhysicalServer).updateVirtualDiskLastVerified(
 			virtualServerName,
 			device,
