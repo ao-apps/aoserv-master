@@ -8467,6 +8467,34 @@ public abstract class MasterServer {
                                             sendInvalidateList=false;
                                         }
                                         break;
+                                    case GET_PRIMARY_PHYSICAL_SERVER :
+                                        {
+                                            int virtualServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                AOSHCommand.GET_PRIMARY_PHYSICAL_SERVER,
+                                                Integer.valueOf(virtualServer)
+                                            );
+                                            int physicalServer = ClusterHandler.getPrimaryPhysicalServer(conn, source, virtualServer);
+                                            resp1=AOServProtocol.DONE;
+                                            resp2Int = physicalServer;
+                                            hasResp2Int=true;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
+                                    case GET_SECONDARY_PHYSICAL_SERVER :
+                                        {
+                                            int virtualServer = in.readCompressedInt();
+                                            process.setCommand(
+                                                AOSHCommand.GET_SECONDARY_PHYSICAL_SERVER,
+                                                Integer.valueOf(virtualServer)
+                                            );
+                                            int physicalServer = ClusterHandler.getSecondaryPhysicalServer(conn, source, virtualServer);
+                                            resp1=AOServProtocol.DONE;
+                                            resp2Int = physicalServer;
+                                            hasResp2Int=true;
+                                            sendInvalidateList=false;
+                                        }
+                                        break;
                                     // </editor-fold>
                                     default :
                                         keepOpen = false;

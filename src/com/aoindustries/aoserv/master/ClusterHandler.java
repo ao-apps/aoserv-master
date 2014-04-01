@@ -6,15 +6,18 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOServer;
+import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
+import com.aoindustries.sql.DatabaseConnection;
 import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.Tuple3;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -161,6 +164,12 @@ final public class ClusterHandler implements CronJob {
 		}
 	}
 
+    public static int getPrimaryPhysicalServer(DatabaseConnection conn, RequestSource source, int virtualServer) throws IOException, SQLException {
+		// Must be a cluster admin
+		checkClusterAdmin(conn, source, "getPrimaryPhysicalServer");
+		return getPrimaryPhysicalServer(virtualServer);
+	}
+	
 	/**
      * Gets the pkey of the physical server that is currently the primary for
 	 * the virtual server.  If there is no primary (Secondary/Secondary role),
@@ -191,6 +200,12 @@ final public class ClusterHandler implements CronJob {
         if(!physicalServerFound) throw new ClusterException("Virtual server primary not found on any physical server");
         return physicalServer;
     }
+
+    public static int getSecondaryPhysicalServer(DatabaseConnection conn, RequestSource source, int virtualServer) throws IOException, SQLException {
+		// Must be a cluster admin
+		checkClusterAdmin(conn, source, "getSecondaryPhysicalServer");
+		return getSecondaryPhysicalServer(virtualServer);
+	}
 
 	/**
      * Gets the pkey of the physical server that is currently the secondary for
@@ -394,5 +409,14 @@ final public class ClusterHandler implements CronJob {
                 logger.log(Level.SEVERE, null, T);
             }
         }
+    }
+
+	public static boolean isClusterAdmin(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+        MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+        return mu!=null && mu.isClusterAdmin();
+    }
+
+	public static void checkClusterAdmin(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
+        if(!isClusterAdmin(conn, source)) throw new SQLException("Cluster administration not allowed, '"+action+"'");
     }
 }
