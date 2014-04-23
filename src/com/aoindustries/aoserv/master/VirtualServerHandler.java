@@ -207,6 +207,8 @@ final public class VirtualServerHandler {
         // The business must have proper access
         boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
         if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
+		// Must be a cluster admin
+		ClusterHandler.checkClusterAdmin(conn, source, "verifyVirtualDisk");
         // TODO: Must not be a disabled server
 		// Lookup values
 		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
