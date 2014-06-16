@@ -387,4 +387,7 @@ final public class IPAddressHandler {
             false
         );
     }
+
+	private IPAddressHandler() {
+	}
 }
