@@ -497,7 +497,19 @@ final public class DNSHandler implements CronJob {
             pstmt.close();
         }
 
+        // Add the SPF TXt entry
         pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, destination) values(?,?,?,?)");
+        try {
+            pstmt.setString(1, zone);
+            pstmt.setString(2, "@");
+            pstmt.setString(3, DNSType.TXT);
+            pstmt.setString(4, "v=spf1 mx -all");
+            pstmt.executeUpdate();
+        } finally {
+            pstmt.close();
+        }
+
+		pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, destination) values(?,?,?,?)");
         try {
             // Add the ns1.aoindustries.com name server
             pstmt.setString(1, zone);
