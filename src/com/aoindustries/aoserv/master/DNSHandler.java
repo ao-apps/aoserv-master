@@ -497,18 +497,6 @@ final public class DNSHandler implements CronJob {
             pstmt.close();
         }
 
-        // Add the SPF TXt entry
-        pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, destination) values(?,?,?,?)");
-        try {
-            pstmt.setString(1, zone);
-            pstmt.setString(2, "@");
-            pstmt.setString(3, DNSType.TXT);
-            pstmt.setString(4, "v=spf1 mx -all");
-            pstmt.executeUpdate();
-        } finally {
-            pstmt.close();
-        }
-
 		pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, destination) values(?,?,?,?)");
         try {
             // Add the ns1.aoindustries.com name server
@@ -539,7 +527,14 @@ final public class DNSHandler implements CronJob {
             pstmt.setString(4, "ns4.aoindustries.com.");
             pstmt.executeUpdate();
 
-            String aType = ip.isIPv6() ? DNSType.AAAA : DNSType.A;
+	        // Add the SPF TXt entry
+            pstmt.setString(1, zone);
+            pstmt.setString(2, "@");
+            pstmt.setString(3, DNSType.TXT);
+            pstmt.setString(4, "v=spf1 mx -all");
+            pstmt.executeUpdate();
+
+			String aType = ip.isIPv6() ? DNSType.AAAA : DNSType.A;
 
             // Add the domain IP
             pstmt.setString(1, zone);
@@ -564,7 +559,7 @@ final public class DNSHandler implements CronJob {
             pstmt.setString(4, ip.toString());
             pstmt.executeUpdate();
 
-            // Add the www IP
+			// Add the www IP
             pstmt.setString(1, zone);
             pstmt.setString(2, "www");
             pstmt.setString(3, aType);
