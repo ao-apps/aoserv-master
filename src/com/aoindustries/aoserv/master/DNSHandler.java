@@ -531,7 +531,7 @@ final public class DNSHandler implements CronJob {
             pstmt.setString(1, zone);
             pstmt.setString(2, "@");
             pstmt.setString(3, DNSType.TXT);
-            pstmt.setString(4, "v=spf1 mx -all");
+            pstmt.setString(4, "v=spf1 a mx -all");
             pstmt.executeUpdate();
 
 			String aType = ip.isIPv6() ? DNSType.AAAA : DNSType.A;
