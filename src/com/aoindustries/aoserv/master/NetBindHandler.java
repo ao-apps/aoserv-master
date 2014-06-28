@@ -265,7 +265,8 @@ final public class NetBindHandler {
                     + "  ?,\n"
                     + "  ?,\n"
                     + "  false,\n"
-                    + "  false\n"
+                    + "  true,\n"
+					+ "  ''\n"
                     + ")",
                     pkey,
                     pack,
@@ -321,7 +322,8 @@ final public class NetBindHandler {
                     + "  ?,\n"
                     + "  ?,\n"
                     + "  false,\n"
-                    + "  false\n"
+                    + "  true,\n"
+					+ "  ''\n"
                     + ")",
                     pkey,
                     pack,
