@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2015 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -41,13 +41,29 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
         throw new SQLException("Method not implemented for direct master server persistence.");
     }
 
-    @Override
-    public void updateCardNumber(Principal principal, CreditCard creditCard, String cardNumber, byte expirationMonth, short expirationYear) throws SQLException {
+	@Override
+	public void updateCreditCard(Principal principal, CreditCard creditCard) throws SQLException {
+        throw new SQLException("Method not implemented for direct master server persistence.");
+	}
+
+	@Override
+    public void updateCardNumber(
+		Principal principal,
+		CreditCard creditCard,
+		String cardNumber,
+		byte expirationMonth,
+		short expirationYear
+	) throws SQLException {
         throw new SQLException("Method not implemented for direct master server persistence.");
     }
 
     @Override
-    public void updateExpiration(Principal principal, CreditCard creditCard, byte expirationMonth, short expirationYear) throws SQLException {
+    public void updateExpiration(
+		Principal principal,
+		CreditCard creditCard,
+		byte expirationMonth,
+		short expirationYear
+	) throws SQLException {
         throw new SQLException("Method not implemented for direct master server persistence.");
     }
 
