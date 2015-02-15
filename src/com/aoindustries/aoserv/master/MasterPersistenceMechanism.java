@@ -14,7 +14,7 @@ import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.creditcards.TransactionResult;
 import com.aoindustries.lang.ObjectUtils;
-import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.acl.Group;

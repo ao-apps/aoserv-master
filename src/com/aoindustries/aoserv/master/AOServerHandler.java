@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013, 2014 by AO Industries, Inc.,
+ * Copyright 2003-2013, 2014, 2015 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -8,7 +8,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.io.CompressedDataOutputStream;
-import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
 import java.sql.SQLException;

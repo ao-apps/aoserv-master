@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -7,7 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.sql.DatabaseAccess;
+import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntCollection;
 import com.aoindustries.util.IntList;

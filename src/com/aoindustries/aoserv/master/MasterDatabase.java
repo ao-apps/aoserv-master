@@ -1,11 +1,11 @@
 /*
- * Copyright 2001-2013 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.sql.Database;
+import com.aoindustries.dbc.Database;
 import java.io.IOException;
 import java.util.logging.Logger;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -10,7 +10,7 @@ import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.io.AOPool;
 import com.aoindustries.profiler.Profiler;
-import com.aoindustries.sql.DatabaseAccess;
+import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.util.PropertiesUtils;
 import com.aoindustries.util.StringUtility;
 import java.io.IOException;

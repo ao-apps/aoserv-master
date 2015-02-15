@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -17,7 +17,7 @@ import com.aoindustries.creditcards.MerchantServicesProviderFactory;
 import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.util.logging.ProcessTimer;
-import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.sql.WrappedSQLException;
 import java.io.IOException;
 import java.math.BigDecimal;

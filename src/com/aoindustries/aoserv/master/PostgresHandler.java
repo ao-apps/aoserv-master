@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -16,7 +16,7 @@ import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.PostgresUserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.io.CompressedDataOutputStream;
-import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import java.io.IOException;

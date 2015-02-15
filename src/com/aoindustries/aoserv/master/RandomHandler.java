@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013 by AO Industries, Inc.,
+ * Copyright 2004-2013, 2015 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -10,7 +10,7 @@ import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.io.FifoFile;
 import com.aoindustries.io.FifoFileInputStream;
 import com.aoindustries.io.FifoFileOutputStream;
-import com.aoindustries.sql.DatabaseConnection;
+import com.aoindustries.dbc.DatabaseConnection;
 import java.io.EOFException;
 import java.io.IOException;
 import java.sql.SQLException;

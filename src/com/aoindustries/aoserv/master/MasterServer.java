@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013, 2014 by AO Industries, Inc.,
+ * Copyright 2000-2013, 2014, 2015 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -37,8 +37,8 @@ import com.aoindustries.io.FifoFileInputStream;
 import com.aoindustries.io.FifoFileOutputStream;
 import com.aoindustries.profiler.Profiler;
 import com.aoindustries.sql.AOConnectionPool;
-import com.aoindustries.sql.DatabaseConnection;
-import com.aoindustries.sql.NoRowException;
+import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.dbc.NoRowException;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.BufferManager;
