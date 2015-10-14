@@ -16,9 +16,9 @@ import com.aoindustries.creditcards.CreditCardProcessor;
 import com.aoindustries.creditcards.MerchantServicesProviderFactory;
 import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
-import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.sql.WrappedSQLException;
+import com.aoindustries.util.logging.ProcessTimer;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.InetAddress;
@@ -1298,7 +1298,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "      businesses bu\n"
                             + "      left outer join transactions tr on bu.accounting=tr.accounting\n"
                             + "    where\n"
-                            + "      tr.payment_confirmed!='N'"
+                            + "      tr.payment_confirmed!='N'\n"
                             + "      and tr.time<?\n"
                             + "    group by\n"
                             + "      bu.accounting\n"
@@ -1311,14 +1311,14 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "      businesses bu\n"
                             + "      left outer join transactions tr on bu.accounting=tr.accounting\n"
                             + "    where\n"
-                            + "      tr.payment_confirmed!='N'"
+                            + "      tr.payment_confirmed!='N'\n"
                             + "    group by\n"
                             + "      bu.accounting\n"
                             + "  ) as current,\n"
                             + "  credit_cards cc,\n"
                             + "  credit_card_processors ccp\n"
                             + "where\n"
-                            + "  bu.accounting=cc.accounting"
+                            + "  bu.accounting=cc.accounting\n"
                             + "  and bu.accounting=endofmonth.accounting\n"
                             + "  and bu.accounting=current.accounting\n"
                             + "  and cc.use_monthly\n"
