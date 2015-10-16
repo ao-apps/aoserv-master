@@ -9,7 +9,6 @@ import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.InetAddress;
 import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.io.AOPool;
-import com.aoindustries.profiler.Profiler;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.util.PropertiesUtils;
 import com.aoindustries.util.StringUtility;
@@ -85,10 +84,6 @@ public final class MasterConfiguration {
         return ints;
     }
 
-    public static int getHistorySize() throws IOException {
-        return Integer.parseInt(getProperty("aoserv.master.history.size"));
-    }
-
     public static AccountingCode getRootBusiness() throws IOException {
         try {
             return AccountingCode.valueOf(getProperty("aoserv.master.businesses.root"));
@@ -151,10 +146,6 @@ public final class MasterConfiguration {
 
     public static String getDaemonKey(DatabaseAccess database, int aoServer) throws IOException, SQLException {
         return getProperty("aoserv.daemon.client.key."+ServerHandler.getHostnameForAOServer(database, aoServer));
-    }
-
-    public static int getProfilerLevel() throws IOException {
-        return Profiler.parseProfilerLevel(getProperty("aoserv.master.profiler.level"));
     }
 
     public static String getTicketSmtpServer() throws IOException {

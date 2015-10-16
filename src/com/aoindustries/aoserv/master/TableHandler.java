@@ -11,8 +11,6 @@ import com.aoindustries.aoserv.client.AOServPermission;
 import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.AOServerDaemonHost;
-import com.aoindustries.aoserv.client.TicketAction;
-import com.aoindustries.aoserv.client.TicketActionType;
 import com.aoindustries.aoserv.client.Architecture;
 import com.aoindustries.aoserv.client.BackupPartition;
 import com.aoindustries.aoserv.client.BackupReport;
@@ -38,7 +36,6 @@ import com.aoindustries.aoserv.client.DNSRecord;
 import com.aoindustries.aoserv.client.DNSTLD;
 import com.aoindustries.aoserv.client.DNSType;
 import com.aoindustries.aoserv.client.DNSZone;
-import com.aoindustries.aoserv.client.DaemonProfile;
 import com.aoindustries.aoserv.client.DisableLog;
 import com.aoindustries.aoserv.client.DistroFile;
 import com.aoindustries.aoserv.client.DistroFileType;
@@ -105,7 +102,6 @@ import com.aoindustries.aoserv.client.MajordomoList;
 import com.aoindustries.aoserv.client.MajordomoServer;
 import com.aoindustries.aoserv.client.MajordomoVersion;
 import com.aoindustries.aoserv.client.MasterHost;
-import com.aoindustries.aoserv.client.MasterServerProfile;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.MonthlyCharge;
 import com.aoindustries.aoserv.client.MySQLDBUser;
@@ -158,6 +154,8 @@ import com.aoindustries.aoserv.client.TechnologyClass;
 import com.aoindustries.aoserv.client.TechnologyName;
 import com.aoindustries.aoserv.client.TechnologyVersion;
 import com.aoindustries.aoserv.client.Ticket;
+import com.aoindustries.aoserv.client.TicketAction;
+import com.aoindustries.aoserv.client.TicketActionType;
 import com.aoindustries.aoserv.client.TicketAssignment;
 import com.aoindustries.aoserv.client.TicketBrandCategory;
 import com.aoindustries.aoserv.client.TicketCategory;
@@ -172,16 +170,12 @@ import com.aoindustries.aoserv.client.Username;
 import com.aoindustries.aoserv.client.VirtualDisk;
 import com.aoindustries.aoserv.client.VirtualServer;
 import com.aoindustries.aoserv.client.WhoisHistory;
-import com.aoindustries.io.CompressedDataInputStream;
-import com.aoindustries.io.CompressedDataOutputStream;
-import com.aoindustries.lang.ObjectUtils;
-import com.aoindustries.profiler.MethodProfile;
-import com.aoindustries.profiler.Profiler;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.io.CompressedDataInputStream;
+import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
-import java.net.SocketException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -192,7 +186,6 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -1363,8 +1356,6 @@ final public class TableHandler {
 					username
 				);
 				break;
-			case CLIENT_JVM_PROFILE :
-				throw new IOException("ClientJvmProfiles should be generated, not obtained from the MasterDatabase.getDatabase().");
 			case CREDIT_CARD_PROCESSORS :
 				if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_card_processors)) {
 					if(masterUser!=null) {
@@ -1556,39 +1547,6 @@ final public class TableHandler {
 					+ "  and lsa.pkey=cr.linux_server_account",
 					username
 				);
-				break;
-			case DAEMON_PROFILE :
-				{
-					List<DaemonProfile> objs=new ArrayList<>();
-					if(masterUser!=null && masterServers.length==0) {
-						// Get a list of all the servers
-						IntList aoServers=AOServerHandler.getAOServers(conn);
-						int serversSize=aoServers.size();
-						for(int c=0;c<serversSize;c++) {
-							int aoServer=aoServers.getInt(c);
-							if(DaemonHandler.isDaemonAvailable(aoServer)) {
-								try {
-									DaemonHandler.getDaemonConnector(conn, aoServer).getDaemonProfile(objs);
-								} catch(SocketException err) {
-									DaemonHandler.flagDaemonAsDown(aoServer);
-
-									// Connection reset happens when the daemon is not available
-									String message=err.getMessage();
-									if(!"Connection reset".equalsIgnoreCase(message)) {
-										logger.log(Level.SEVERE, null, err);
-									}
-								} catch(IOException err) {
-									DaemonHandler.flagDaemonAsDown(aoServer);
-									logger.log(Level.SEVERE, null, err);
-								} catch(SQLException err) {
-									DaemonHandler.flagDaemonAsDown(aoServer);
-									logger.log(Level.SEVERE, null, err);
-								}
-							}
-						}
-					}
-					MasterServer.writeObjects(source, out, provideProgress, objs);
-				}
 				break;
 			case DISABLE_LOG :
 				if(masterUser!=null) {
@@ -4660,16 +4618,6 @@ final public class TableHandler {
 					"select * from majordomo_versions"
 				);
 				break;
-			case MASTER_HISTORY :
-				MasterServer.writeHistory(
-					conn,
-					source,
-					out,
-					provideProgress,
-					masterUser,
-					masterServers
-				);
-				break;
 			case MASTER_HOSTS :
 				if(masterUser!=null) {
 					if(masterServers.length==0) MasterServer.writeObjects(
@@ -4738,34 +4686,6 @@ final public class TableHandler {
 					masterUser,
 					masterServers
 				);
-				break;
-			case MASTER_SERVER_PROFILE :
-				{
-					List<MasterServerProfile> objs=new ArrayList<>();
-					if(Profiler.getProfilerLevel()>Profiler.NONE) {
-						// Get all the methods
-						List<MethodProfile> profs=Profiler.getMethodProfiles();
-						int len=profs.size();
-						//objs.ensureCapacity(len);
-						for(int c=0;c<len;c++) {
-							MethodProfile mp=profs.get(c);
-							Object param1=mp.getParameter1();
-							objs.add(
-								new MasterServerProfile(
-									mp.getLevel(),
-									mp.getProfiledClassName(),
-									mp.getMethodName(),
-									ObjectUtils.toString(param1),
-									mp.getUseCount(),
-									mp.getTotalTime(),
-									mp.getMinTime(),
-									mp.getMaxTime()
-								)
-							);
-						}
-					}
-					MasterServer.writeObjects(source, out, provideProgress, objs);
-				}
 				break;
 			case MASTER_SERVER_STATS :
 				MasterServer.writeStats(

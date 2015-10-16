@@ -16,7 +16,6 @@ import com.aoindustries.aoserv.client.IpReputationSet.AddReputation;
 import com.aoindustries.aoserv.client.IpReputationSet.ConfidenceType;
 import com.aoindustries.aoserv.client.IpReputationSet.ReputationType;
 import com.aoindustries.aoserv.client.Language;
-import com.aoindustries.aoserv.client.MasterHistory;
 import com.aoindustries.aoserv.client.MasterProcess;
 import com.aoindustries.aoserv.client.MasterServerStat;
 import com.aoindustries.aoserv.client.MasterUser;
@@ -35,7 +34,6 @@ import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.io.FifoFile;
 import com.aoindustries.io.FifoFileInputStream;
 import com.aoindustries.io.FifoFileOutputStream;
-import com.aoindustries.profiler.Profiler;
 import com.aoindustries.sql.AOConnectionPool;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
@@ -8612,7 +8610,6 @@ public abstract class MasterServer {
 				}
 			}
 			out.flush();
-			if(addTime) addHistory(process);
 			process.commandCompleted();
 		} finally {
 			if(addTime) {
@@ -8734,8 +8731,6 @@ public abstract class MasterServer {
 	public static void main(String[] args) {
 		// Not profiled because the profiler is enabled here
 		try {
-			Profiler.setProfilerLevel(MasterConfiguration.getProfilerLevel());
-
 			// Configure the SSL
 			String trustStorePath=MasterConfiguration.getSSLTruststorePath();
 			if(trustStorePath!=null && trustStorePath.length()>0) {
@@ -8917,70 +8912,6 @@ public abstract class MasterServer {
 		return (inStr==null?null:inStr.trim());
 	}
 
-	private static final Object historyLock=new Object();
-	private static MasterHistory[] masterHistory;
-	private static int masterHistoryStart=0;
-
-	private static void addHistory(
-		MasterProcess process
-	) throws IOException {
-		synchronized(historyLock) {
-			if(masterHistory==null) masterHistory=new MasterHistory[
-				MasterConfiguration.getHistorySize()
-			];
-			masterHistory[masterHistoryStart]=new MasterHistory(
-				process.getProcessID(),
-				process.getConnectorID(),
-				process.getAuthenticatedUser(),
-				process.getEffectiveUser(),
-				process.getHost(),
-				process.getProtocol(),
-				process.isSecure(),
-				process.getStateStartTime(),
-				System.currentTimeMillis(),
-				process.getCommand()
-			);
-			masterHistoryStart++;
-			if(masterHistoryStart>=masterHistory.length) {
-				masterHistoryStart=0;
-			}
-		}
-	}
-
-	public static void writeHistory(
-		DatabaseConnection conn,
-		RequestSource source,
-		CompressedDataOutputStream out,
-		boolean provideProgress,
-		MasterUser masterUser,
-		com.aoindustries.aoserv.client.MasterServer[] masterServers
-	) throws IOException, SQLException {
-		// Create the list of objects first
-		List<MasterHistory> objs;
-		synchronized(historyLock) {
-			// Grab a copy of the history
-			MasterHistory[] history=masterHistory;
-			if(history!=null) {
-				int historyLen=history.length;
-				objs = new ArrayList<>(historyLen);
-				int startPos=masterHistoryStart;
-				for(int c=0;c<historyLen;c++) {
-					MasterHistory mh=history[(c+startPos)%historyLen];
-					if(mh!=null) {
-						if(masterUser!=null && masterServers.length==0) {
-							objs.add(mh);
-						} else {
-							if(UsernameHandler.canAccessUsername(conn, source, mh.getEffectiveUser())) objs.add(mh);
-						}
-					}
-				}
-			} else {
-				objs = Collections.emptyList();
-			}
-		}
-		writeObjects(source, out, provideProgress, objs);
-	}
-
 	private static void addStat(
 		List<MasterServerStat> objs, 
 		String name, 
@@ -9034,11 +8965,6 @@ public abstract class MasterServer {
 
 			addStat(objs, MasterServerStat.MEMORY_FREE, Long.toString(Runtime.getRuntime().freeMemory()), "Free virtual machine memory in bytes");
 			addStat(objs, MasterServerStat.MEMORY_TOTAL, Long.toString(Runtime.getRuntime().totalMemory()), "Total virtual machine memory in bytes");
-
-			addStat(objs, MasterServerStat.METHOD_CONCURRENCY, Integer.toString(Profiler.getConcurrency()), "Current number of virtual machine methods in use");
-			addStat(objs, MasterServerStat.METHOD_MAX_CONCURRENCY, Integer.toString(Profiler.getMaxConcurrency()), "Peak number of virtual machine methods in use");
-			addStat(objs, MasterServerStat.METHOD_PROFILE_LEVEL, Integer.toString(Profiler.getProfilerLevel()), "Current method profiling level");
-			addStat(objs, MasterServerStat.METHOD_USES, Long.toString(Profiler.getMethodUses()), "Number of virtual machine methods invoked");
 
 			addStat(objs, MasterServerStat.PROTOCOL_VERSION, StringUtility.join(AOServProtocol.Version.values(), ", "), "Supported AOServProtocol version numbers");
 
