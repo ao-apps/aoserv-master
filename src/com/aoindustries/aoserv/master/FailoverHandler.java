@@ -14,9 +14,9 @@ import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
+import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.BitRateProvider;
 import com.aoindustries.io.CompressedDataOutputStream;
-import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.Tuple2;
 import java.io.IOException;
@@ -383,7 +383,7 @@ final public class FailoverHandler implements CronJob {
 		int backupPartition = FailoverHandler.getBackupPartitionForFailoverFileReplication(conn, pkey);
 		int toServer = BackupHandler.getAOServerForBackupPartition(conn, backupPartition);
 
-		// The toPath includes the server name
+		// The overall backup path includes both the toPath and the server name
 		String serverName;
 		if(ServerHandler.isAOServer(conn, fromServer)) {
 			serverName = ServerHandler.getHostnameForAOServer(conn, fromServer);
@@ -394,11 +394,7 @@ final public class FailoverHandler implements CronJob {
 				+ ServerHandler.getNameForServer(conn, fromServer)
 			;
 		}
-		String toPath =
-			conn.executeStringQuery("select bp.path from failover_file_replications ffr inner join backup_partitions bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey)
-			+'/'
-			+serverName
-		;
+
 		int quota_gid = conn.executeIntQuery("select coalesce(quota_gid, -1) from failover_file_replications where pkey=?", pkey);
 
 		// Verify that the backup_partition is the correct type
@@ -421,7 +417,7 @@ final public class FailoverHandler implements CronJob {
 			AOServDaemonProtocol.FAILOVER_FILE_REPLICATION,
 			Integer.toString(pkey),
 			serverName,
-			toPath,
+			conn.executeStringQuery("select bp.path from failover_file_replications ffr inner join backup_partitions bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey),
 			quota_gid==-1 ? null : Integer.toString(quota_gid)
 		);
 	}
