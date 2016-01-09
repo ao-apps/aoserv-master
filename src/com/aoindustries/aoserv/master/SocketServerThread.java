@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2014, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014, 2015, 2016 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -208,6 +208,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				long existingID=in.readLong();
 
 				switch(protocolVersion) {
+					case VERSION_1_78 :
 					case VERSION_1_77 :
 					case VERSION_1_76 :
 					case VERSION_1_75 :
@@ -354,8 +355,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
 											conn.releaseConnection();
 											if(servers.length!=0) {
 												isOK=false;
-												for(int c=0;c<servers.length;c++) {
-													if(servers[c].getServerPKey()==daemonServer) {
+												for (com.aoindustries.aoserv.client.MasterServer server1 : servers) {
+													if (server1.getServerPKey() == daemonServer) {
 														isOK=true;
 														break;
 													}
