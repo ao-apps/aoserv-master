@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -6992,7 +6992,9 @@ final public class TableHandler {
 					+ "  version,\n"
 					+ "  updated,\n"
 					+ "  '"+AOServProtocol.FILTERED+"'::text,\n"
-					+ "  operating_system_version\n"
+					+ "  operating_system_version,\n"
+					+ "  disable_time,\n"
+					+ "  disable_reason\n"
 					+ "from\n"
 					+ "  technology_versions"
 				);
