@@ -809,18 +809,20 @@ final public class HttpdHandler {
 			"insert into\n"
 			+ "  httpd_sites\n"
 			+ "values(\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  false,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  null,\n"
-			+ "  false,\n"
-			+ "  null\n"
+			+ "  ?,\n" // pkey
+			+ "  ?,\n" // ao_server
+			+ "  ?,\n" // site_name
+			+ "  false,\n" // list_first
+			+ "  ?,\n" // package
+			+ "  ?,\n" // linux_account
+			+ "  ?,\n" // linux_group
+			+ "  ?,\n" // server_admin
+			+ "  ?,\n" // content_src
+			+ "  null,\n" // disable_log
+			+ "  false,\n" // is_manual
+			+ "  null,\n" // awstats_skip_files
+			+ "  null,\n" // TODO: PHP Selector
+			+ "  true\n" // TODO: CGI Selector
 			+ ")");
 		try {
 			pstmt.setInt(1, httpdSitePKey);
