@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -642,7 +642,7 @@ final public class LinuxAccountHandler {
 
 		// The UID must be a user UID
 		int uid=getUIDForLinuxServerAccount(conn, pkey);
-		if(uid<LinuxServerAccount.MINIMUM_USER_UID) throw new SQLException("Not allowed to remove a system LinuxServerAccount: pkey="+pkey+", uid="+uid);
+		if(uid<LinuxServerAccount.MINIMUM_USER_UID) throw new SQLException("Not allowed to disable a system LinuxServerAccount: pkey="+pkey+", uid="+uid);
 
 		IntList crs=CvsHandler.getCvsRepositoriesForLinuxServerAccount(conn, pkey);
 		for(int c=0;c<crs.size();c++) {
@@ -839,9 +839,9 @@ final public class LinuxAccountHandler {
 
 	public static boolean isLinuxServerAccountDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		synchronized(LinuxAccountHandler.class) {
-			Integer I=Integer.valueOf(pkey);
+			Integer I=pkey;
 			Boolean O=disabledLinuxServerAccounts.get(I);
-			if(O!=null) return O.booleanValue();
+			if(O!=null) return O;
 			boolean isDisabled=getDisableLogForLinuxServerAccount(conn, pkey)!=-1;
 			disabledLinuxServerAccounts.put(I, isDisabled);
 			return isDisabled;
@@ -1295,30 +1295,31 @@ final public class LinuxAccountHandler {
 				pkey
 			);
 		}
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
-			"update\n"
-			+ "  linux_server_accounts\n"
-			+ "set\n"
-			+ "  autoresponder_from=?,\n"
-			+ "  autoresponder_subject=?,\n"
-			+ "  autoresponder_path=?,\n"
-			+ "  is_autoresponder_enabled=?\n"
-			+ "where\n"
-			+ "  pkey=?"
-		);
-		try {
-			if(from==-1) pstmt.setNull(1, Types.INTEGER);
-			else pstmt.setInt(1, from);
-			pstmt.setString(2, subject);
-			pstmt.setString(3, path);
-			pstmt.setBoolean(4, enabled);
-			pstmt.setInt(5, pkey);
-			pstmt.executeUpdate();
-		} catch(SQLException err) {
-			System.err.println("Error from update: "+pstmt.toString());
-			throw err;
-		} finally {
-			pstmt.close();
+		try (
+			PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
+				"update\n"
+				+ "  linux_server_accounts\n"
+				+ "set\n"
+				+ "  autoresponder_from=?,\n"
+				+ "  autoresponder_subject=?,\n"
+				+ "  autoresponder_path=?,\n"
+				+ "  is_autoresponder_enabled=?\n"
+				+ "where\n"
+				+ "  pkey=?"
+			)
+		) {
+			try {
+				if(from==-1) pstmt.setNull(1, Types.INTEGER);
+				else pstmt.setInt(1, from);
+				pstmt.setString(2, subject);
+				pstmt.setString(3, path);
+				pstmt.setBoolean(4, enabled);
+				pstmt.setInt(5, pkey);
+				pstmt.executeUpdate();
+			} catch(SQLException err) {
+				System.err.println("Error from update: "+pstmt.toString());
+				throw err;
+			}
 		}
 
 		// Store the content on the server
