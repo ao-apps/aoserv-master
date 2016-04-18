@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -20,8 +20,8 @@ import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.MySQLUserId;
 import com.aoindustries.aoserv.client.validator.ValidationException;
-import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import java.io.IOException;
@@ -544,11 +544,11 @@ final public class MySQLHandler {
 
     public static boolean isMySQLServerUserDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 	    synchronized(MySQLHandler.class) {
-            Integer I=Integer.valueOf(pkey);
+            Integer I=pkey;
             Boolean O=disabledMySQLServerUsers.get(I);
-            if(O!=null) return O.booleanValue();
+            if(O!=null) return O;
             boolean isDisabled=getDisableLogForMySQLServerUser(conn, pkey)!=-1;
-            disabledMySQLServerUsers.put(I, isDisabled?Boolean.TRUE:Boolean.FALSE);
+            disabledMySQLServerUsers.put(I, isDisabled);
             return isDisabled;
 	    }
     }
@@ -631,7 +631,13 @@ final public class MySQLHandler {
     ) throws IOException, SQLException {
         // Cannot remove the mysql database
         String dbName=getMySQLDatabaseName(conn, pkey);
-        if(dbName.equals(MySQLDatabase.MYSQL)) throw new SQLException("Not allowed to remove the database named '"+MySQLDatabase.MYSQL+'\'');
+        if(
+			dbName.equals(MySQLDatabase.MYSQL)
+			|| dbName.equals(MySQLDatabase.INFORMATION_SCHEMA)
+			|| dbName.equals(MySQLDatabase.PERFORMANCE_SCHEMA)
+		) {
+			throw new SQLException("Not allowed to remove the database named '" + dbName + '\'');
+		}
 
         // Remove the mysql_db_user entries
         List<AccountingCode> dbUserAccounts=conn.executeObjectCollectionQuery(
