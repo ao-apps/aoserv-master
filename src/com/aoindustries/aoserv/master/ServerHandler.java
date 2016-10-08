@@ -458,6 +458,8 @@ final public class ServerHandler {
 									invalidateSyncLock.wait(maxWait);
 								} catch(InterruptedException err) {
 									logger.log(Level.WARNING, null, err);
+									// Restore the interrupted status
+									Thread.currentThread().interrupt();
 								}
 							} else {
 								invalidateSyncLock.notify();

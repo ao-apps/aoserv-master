@@ -270,6 +270,8 @@ final public class DNSHandler implements CronJob {
                 int retVal = P.waitFor();
                 if(retVal!=0) throw new IOException("/usr/bin/whois '"+zone+"' returned with non-zero value: "+retVal);
             } catch(InterruptedException err) {
+				// Restore the interrupted status
+				Thread.currentThread().interrupt();
                 InterruptedIOException ioErr = new InterruptedIOException("Interrupted while waiting for whois to complete");
                 ioErr.initCause(err);
                 throw ioErr;

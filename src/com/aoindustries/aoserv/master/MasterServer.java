@@ -310,6 +310,8 @@ public abstract class MasterServer {
 												source.wait(delay);
 											} catch(InterruptedException err) {
 												logger.log(Level.WARNING, null, err);
+												// Restore the interrupted status
+												Thread.currentThread().interrupt();
 											}
 										}
 									}

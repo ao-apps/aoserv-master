@@ -59,6 +59,8 @@ final public class AOServerHandler {
                             mrtgLocks.wait(startTime + 15000 - currentTime);
                         } catch(InterruptedException err) {
                             logger.log(Level.WARNING, null, err);
+							// Restore the interrupted status
+							Thread.currentThread().interrupt();
                         }
                     }
                 }

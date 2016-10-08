@@ -357,6 +357,8 @@ final public class ClusterHandler implements CronJob {
 											Thread.sleep(2000);
 										} catch(InterruptedException err) {
 											LogFactory.getLogger(ClusterHandler.class).log(Level.WARNING, null, err);
+											// Restore the interrupted status
+											Thread.currentThread().interrupt();
 										}
 									}
 								}
