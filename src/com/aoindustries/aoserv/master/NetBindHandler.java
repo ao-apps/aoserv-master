@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2014, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014, 2015, 2016 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -80,7 +80,7 @@ final public class NetBindHandler {
         int pkey;
         synchronized(netBindLock) {
             if(inetAddress.isUnspecified()) {
-                // Wildcard must be unique to AOServ system, with the port completely free
+                // Wildcard must be unique to AOServ Platform, with the port completely free
                 if(
                     conn.executeBooleanQuery(
                         "select\n"
@@ -106,7 +106,7 @@ final public class NetBindHandler {
                     )
                 ) throw new SQLException("NetBind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port+" ("+netProtocol+')');
             } else if(inetAddress.isLooback()) {
-                // Loopback must be unique to AOServ system and not have wildcard
+                // Loopback must be unique to AOServ Platform and not have wildcard
                 if(
                     conn.executeBooleanQuery(
                         "select\n"
