@@ -54,7 +54,7 @@ final public class LinuxAccountHandler {
 				IntList lsas = getLinuxServerAccountsForLinuxAccount(conn, username);
 				boolean found = false;
 				for(Integer lsa : lsas) {
-					if(ServerHandler.canAccessServer(conn, source, getAOServerForLinuxServerAccount(conn, lsa.intValue()))) {
+					if(ServerHandler.canAccessServer(conn, source, getAOServerForLinuxServerAccount(conn, lsa))) {
 						found=true;
 						break;
 					}
@@ -364,7 +364,8 @@ final public class LinuxAccountHandler {
 			+ "    from\n"
 			+ "      linux_ids li\n"
 			+ "    where\n"
-			+ "      not li.is_system\n"
+			+ "      li.id >= (select uid_min from ao_servers where server=?)\n"
+			+ "      and li.id <= " + LinuxAccount.UID_MAX + "\n"
 			+ "      and (\n"
 			+ "        select\n"
 			+ "          lsa.pkey\n"
@@ -398,6 +399,7 @@ final public class LinuxAccountHandler {
 			+ ")",
 			pkey,
 			username,
+			aoServer,
 			aoServer,
 			//farm,
 			home,
@@ -475,7 +477,8 @@ final public class LinuxAccountHandler {
 			+ "    from\n"
 			+ "      linux_ids li\n"
 			+ "    where\n"
-			+ "      not li.is_system\n"
+			+ "      li.id >= (select gid_min from ao_servers where server=?)\n"
+			+ "      and li.id <= " + LinuxGroup.GID_MAX + "\n"
 			+ "      and (\n"
 			+ "        select\n"
 			+ "          lsg.pkey\n"
@@ -505,7 +508,8 @@ final public class LinuxAccountHandler {
 			+ ")",
 			pkey,
 			groupName,
-			aoServer//,
+			aoServer,
+			aoServer
 			//farm
 		);
 
@@ -640,9 +644,12 @@ final public class LinuxAccountHandler {
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableLinuxServerAccount", disableLog, false);
 		checkAccessLinuxServerAccount(conn, source, "disableLinuxServerAccount", pkey);
 
+		int aoServer = getAOServerForLinuxServerAccount(conn, pkey);
+		int uid_min = AOServerHandler.getUidMin(conn, aoServer);
+
 		// The UID must be a user UID
 		int uid=getUIDForLinuxServerAccount(conn, pkey);
-		if(uid<LinuxServerAccount.MINIMUM_USER_UID) throw new SQLException("Not allowed to disable a system LinuxServerAccount: pkey="+pkey+", uid="+uid);
+		if(uid < uid_min) throw new SQLException("Not allowed to disable a system LinuxServerAccount: pkey="+pkey+", uid="+uid);
 
 		IntList crs=CvsHandler.getCvsRepositoriesForLinuxServerAccount(conn, pkey);
 		for(int c=0;c<crs.size();c++) {
@@ -684,7 +691,7 @@ final public class LinuxAccountHandler {
 			conn,
 			SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
 			getBusinessForLinuxServerAccount(conn, pkey),
-			getAOServerForLinuxServerAccount(conn, pkey),
+			aoServer,
 			false
 		);
 	}
@@ -816,7 +823,7 @@ final public class LinuxAccountHandler {
 	public static boolean isLinuxAccountDisabled(DatabaseConnection conn, String username) throws IOException, SQLException {
 		synchronized(LinuxAccountHandler.class) {
 			Boolean O=disabledLinuxAccounts.get(username);
-			if(O!=null) return O.booleanValue();
+			if(O != null) return O;
 			boolean isDisabled=getDisableLogForLinuxAccount(conn, username)!=-1;
 			disabledLinuxAccounts.put(username, isDisabled);
 			return isDisabled;
@@ -1127,13 +1134,16 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		String username=getUsernameForLinuxServerAccount(conn, account);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove LinuxServerAccount for user '"+LinuxAccount.MAIL+'\'');
+
+		int aoServer = getAOServerForLinuxServerAccount(conn, account);
+		int uid_min = AOServerHandler.getUidMin(conn, aoServer);
+
 		// The UID must be a user UID
 		int uid=getUIDForLinuxServerAccount(conn, account);
-		if(uid<LinuxServerAccount.MINIMUM_USER_UID) throw new SQLException("Not allowed to remove a system LinuxServerAccount: pkey="+account+", uid="+uid);
+		if(uid < uid_min) throw new SQLException("Not allowed to remove a system LinuxServerAccount: pkey="+account+", uid="+uid);
 
 		// Must not contain a CVS repository
 		String home=conn.executeStringQuery("select home from linux_server_accounts where pkey=?", account);
-		int aoServer=getAOServerForLinuxServerAccount(conn, account);
 		int count=conn.executeIntQuery(
 			"select\n"
 			+ "  count(*)\n"
