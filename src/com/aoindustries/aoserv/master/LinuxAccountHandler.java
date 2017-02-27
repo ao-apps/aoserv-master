@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2016 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -16,6 +16,7 @@ import com.aoindustries.aoserv.client.LinuxGroup;
 import com.aoindustries.aoserv.client.LinuxGroupAccount;
 import com.aoindustries.aoserv.client.LinuxServerAccount;
 import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
@@ -313,33 +314,69 @@ final public class LinuxAccountHandler {
 		String home,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add LinuxServerAccount for user '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(LinuxAccount.MAIL)) {
+			throw new SQLException("Not allowed to add LinuxServerAccount for user '"+LinuxAccount.MAIL+'\'');
+		}
 		if(!skipSecurityChecks) {
 			checkAccessLinuxAccount(conn, source, "addLinuxServerAccount", username);
 			if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to add LinuxServerAccount, LinuxAccount disabled: "+username);
 			ServerHandler.checkAccessServer(conn, source, "addLinuxServerAccount", aoServer);
 			UsernameHandler.checkUsernameAccessServer(conn, source, "addLinuxServerAccount", username, aoServer);
 		}
-		if(!home.equals(LinuxServerAccount.getDefaultHomeDirectory(username))) {
-			// Must be in /www/... or /wwwgroup/...
-			if(
-				(home.length()<=(HttpdSite.WWW_DIRECTORY.length()+1) || !home.substring(0, HttpdSite.WWW_DIRECTORY.length()+1).equals(HttpdSite.WWW_DIRECTORY+'/'))
-				&& (home.length()<=(HttpdSharedTomcat.WWW_GROUP_DIR.length()+1) || !home.substring(0, HttpdSharedTomcat.WWW_GROUP_DIR.length()+1).equals(HttpdSharedTomcat.WWW_GROUP_DIR+'/'))
-			) throw new SQLException("Invalid home directory: "+home);
 
-			if(home.length()>(HttpdSite.WWW_DIRECTORY.length()+1) && home.substring(0, HttpdSite.WWW_DIRECTORY.length()+1).equals(HttpdSite.WWW_DIRECTORY+'/')) {
+		// OperatingSystem settings
+		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+		String httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
+		String httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+
+		if(!home.equals(LinuxServerAccount.getDefaultHomeDirectory(username))) {
+			// Must be in /www/... or /wwwgroup/... (or newer CentOS 7 equivalent of /var/www and /var/opt/apache-tomcat)
+			if(
+				!home.startsWith(httpdSitesDir + '/')
+				&& !home.startsWith(httpdSharedTomcatsDir + '/')
+			) throw new SQLException("Invalid home directory: " + home);
+
+			final String SLASH_WEBAPPS = "/webapps";
+			if(home.startsWith(httpdSitesDir + '/')) {
 				// May also be in /www/(sitename)/webapps
-				String rh=home.substring(HttpdSite.WWW_DIRECTORY.length()+1);
-				if(rh.length()>8 && rh.substring(rh.length()-8).equals("/webapps")) rh=rh.substring(0, rh.length()-8);
+				String siteName = home.substring(httpdSitesDir.length() + 1);
+				if(siteName.endsWith(SLASH_WEBAPPS)) {
+					siteName = siteName.substring(0, siteName.length() - SLASH_WEBAPPS.length());
+				}
 				// May be in /www/(sitename)
-				if(!HttpdSite.isValidSiteName(rh)) throw new SQLException("Invalid site name for www home directory: "+home);
+				int httpdSite = HttpdHandler.getHttpdSite(conn, aoServer, siteName);
+				if(httpdSite != -1) {
+					if(!skipSecurityChecks) {
+						// Must be able to access an existing site
+						HttpdHandler.checkAccessHttpdSite(conn, source, "addLinuxServerAccount", httpdSite);
+					}
+				} else {
+					// Must be a valid site name
+					if(!HttpdSite.isValidSiteName(siteName)) {
+						throw new SQLException("Invalid site name for www home directory: " + home);
+					}
+				}
 			}
 
-			if(home.length()>(HttpdSharedTomcat.WWW_GROUP_DIR.length()+1) && home.substring(0, HttpdSharedTomcat.WWW_GROUP_DIR.length()+1).equals(HttpdSharedTomcat.WWW_GROUP_DIR+'/')) {
-				// May also be in /www/(sitename)/webapps
-				String rh=home.substring(HttpdSharedTomcat.WWW_GROUP_DIR.length()+1);
-				// May be in /wwwgroup/(sitename)
-				if(!HttpdSharedTomcat.isValidSharedTomcatName(rh)) throw new SQLException("Invalid shared tomcat name for wwwgroup home directory: "+home);
+			if(home.startsWith(httpdSharedTomcatsDir + '/')) {
+				// May also be in /wwwgroup/(tomcatname)/webapps
+				String tomcatName = home.substring(httpdSharedTomcatsDir.length() + 1);
+				if(tomcatName.endsWith(SLASH_WEBAPPS)) {
+					tomcatName = tomcatName.substring(0, tomcatName.length() - SLASH_WEBAPPS.length());
+				}
+				// May be in /wwwgroup/(tomcatname)
+				int httpdSharedTomcat = HttpdHandler.getHttpdSharedTomcat(conn, aoServer, tomcatName);
+				if(httpdSharedTomcat != -1) {
+					if(!skipSecurityChecks) {
+						// Must be able to access an existing site
+						HttpdHandler.checkAccessHttpdSharedTomcat(conn, source, "addLinuxServerAccount", httpdSharedTomcat);
+					}
+				} else {
+					// Must be a valid tomcat name
+					if(!HttpdSharedTomcat.isValidSharedTomcatName(tomcatName)) {
+						throw new SQLException("Invalid shared tomcat name for wwwgroup home directory: " + home);
+					}
+				}
 			}
 		}
 
