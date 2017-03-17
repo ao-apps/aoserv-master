@@ -1,16 +1,16 @@
 /*
- * Copyright 2013, 2015 by AO Industries, Inc.,
+ * Copyright 2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.DomainName;
-import com.aoindustries.aoserv.client.validator.HostAddress;
-import com.aoindustries.aoserv.client.validator.InetAddress;
-import com.aoindustries.aoserv.client.validator.ValidationException;
 import com.aoindustries.dbc.ObjectFactory;
+import com.aoindustries.net.DomainName;
+import com.aoindustries.net.HostAddress;
+import com.aoindustries.net.InetAddress;
+import com.aoindustries.validation.ValidationException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 

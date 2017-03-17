@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2016 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -7399,7 +7399,7 @@ final public class TableHandler {
 							"select\n"
 							+ "  ti.pkey,\n"
 							+ "  ti.brand,\n"
-							+ "  '"+AOServProtocol.FILTERED+"'::text,\n" // reseller
+							+ "  NULL::text,\n" // reseller
 							+ "  ti.accounting,\n"
 							+ "  ti.language,\n"
 							+ "  ti.created_by,\n"

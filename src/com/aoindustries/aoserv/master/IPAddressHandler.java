@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2014, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -12,11 +12,11 @@ import com.aoindustries.aoserv.client.NetDeviceID;
 import com.aoindustries.aoserv.client.NetProtocol;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.DomainName;
-import com.aoindustries.aoserv.client.validator.InetAddress;
-import com.aoindustries.aoserv.client.validator.ValidationException;
-import com.aoindustries.lang.NotImplementedException;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.lang.NotImplementedException;
+import com.aoindustries.net.DomainName;
+import com.aoindustries.net.InetAddress;
+import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.SQLException;
 

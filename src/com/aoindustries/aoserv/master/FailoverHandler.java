@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -8,7 +8,6 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.FailoverFileLog;
 import com.aoindustries.aoserv.client.SchemaTable;
-import com.aoindustries.aoserv.client.validator.HostAddress;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
@@ -17,6 +16,7 @@ import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.BitRateProvider;
 import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.net.HostAddress;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.Tuple2;
 import java.io.IOException;
