@@ -9,7 +9,6 @@ import com.aoindustries.aoserv.client.DNSZone;
 import com.aoindustries.aoserv.client.IPAddress;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.NetDeviceID;
-import com.aoindustries.aoserv.client.NetProtocol;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -19,6 +18,7 @@ import com.aoindustries.net.InetAddress;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Locale;
 
 /**
  * The <code>IPAddressHandler</code> handles all the accesses to the <code>ip_addresses</code> table.
@@ -269,7 +269,7 @@ final public class IPAddressHandler {
             + "      from\n"
             + "        ip_addresses ia,\n"
             + "        net_devices nd\n"
-            + "        left join net_binds nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol='"+NetProtocol.TCP+"'\n"
+            + "        left join net_binds nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?\n"
             + "        left join httpd_binds hb on nb.pkey=hb.net_bind\n"
             + "        left join httpd_servers hs on hb.httpd_server=hs.pkey\n"
             + "      where\n"
@@ -312,6 +312,7 @@ final public class IPAddressHandler {
             + "      limit 1\n"
             + "    ), -1\n"
             + "  )",
+			com.aoindustries.net.Protocol.TCP.name().toLowerCase(Locale.ROOT),
             aoServer,
             supportsModJK,
             aoServer

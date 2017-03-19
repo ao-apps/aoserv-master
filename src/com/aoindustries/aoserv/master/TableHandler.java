@@ -113,7 +113,6 @@ import com.aoindustries.aoserv.client.MySQLUser;
 import com.aoindustries.aoserv.client.NetBind;
 import com.aoindustries.aoserv.client.NetDevice;
 import com.aoindustries.aoserv.client.NetDeviceID;
-import com.aoindustries.aoserv.client.NetProtocol;
 import com.aoindustries.aoserv.client.NetTcpRedirect;
 import com.aoindustries.aoserv.client.NoticeLog;
 import com.aoindustries.aoserv.client.NoticeType;
@@ -4365,8 +4364,6 @@ final public class TableHandler {
 					"select * from linux_group_types"
 				);
 				break;
-			case LINUX_IDS :
-				throw new IOException("LinuxIDs should be generated, not obtained from the MasterServer");
 			case LINUX_SERVER_ACCOUNTS :
 				if(masterUser!=null) {
 					if(masterServers.length==0) MasterServer.writeObjects(
@@ -5388,18 +5385,6 @@ final public class TableHandler {
 					//+ "    or (bp.ao_server=nd.ao_server and nd.device_id=bpao.daemon_device_id)\n"
 					+ "  )",
 					username
-				);
-				break;
-			case NET_PORTS :
-				throw new IOException("NetPorts should be generated, not obtained from the MasterDatabase.getDatabase().");
-			case NET_PROTOCOLS :
-				MasterServer.writeObjects(
-					conn,
-					source,
-					out,
-					provideProgress,
-					new NetProtocol(),
-					"select * from net_protocols"
 				);
 				break;
 			case NET_TCP_REDIRECTS :

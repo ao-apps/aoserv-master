@@ -15,7 +15,6 @@ import com.aoindustries.aoserv.client.HttpdTomcatVersion;
 import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.LinuxGroup;
 import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.NetProtocol;
 import com.aoindustries.aoserv.client.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.PasswordGenerator;
 import com.aoindustries.aoserv.client.Protocol;
@@ -25,9 +24,11 @@ import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.net.DomainName;
+import com.aoindustries.net.Port;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.SortedIntArrayList;
+import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,6 +36,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -777,10 +779,18 @@ final public class HttpdHandler {
 			int ipServer=IPAddressHandler.getServerForIPAddress(conn, ipAddress);
 			if(ipServer!=aoServer) throw new SQLException("IP address "+ipAddress+" is not hosted on AOServer #"+aoServer);
 			if(isTomcat4) {
-				int[] ports=new int[] {80, 443};
+				Port[] ports;
+				try {
+					ports = new Port[] {
+						Port.valueOf(80, com.aoindustries.net.Protocol.TCP),
+						Port.valueOf(443, com.aoindustries.net.Protocol.TCP)
+					};
+				} catch(ValidationException e) {
+					throw new AssertionError("Hard-coded ports should never fail", e);
+				}
 				for(int c=0;c<ports.length;c++) {
 					// The IP must either be not attached to a httpd_server, or the server must support jk
-					int nb=NetBindHandler.getNetBind(conn, aoServer, ipAddress, ports[c], NetProtocol.TCP);
+					int nb=NetBindHandler.getNetBind(conn, aoServer, ipAddress, ports[c]);
 					if(nb!=-1) {
 						int hs=conn.executeIntQuery(
 							"select\n"
@@ -950,7 +960,7 @@ final public class HttpdHandler {
 				invalidateList,
 				aoServer,
 				wildcardIP,
-				NetProtocol.TCP,
+				com.aoindustries.net.Protocol.TCP,
 				Protocol.JNP,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -960,7 +970,7 @@ final public class HttpdHandler {
 				invalidateList,
 				aoServer,
 				wildcardIP,
-				NetProtocol.TCP,
+				com.aoindustries.net.Protocol.TCP,
 				Protocol.WEBSERVER,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -970,7 +980,7 @@ final public class HttpdHandler {
 				invalidateList,
 				aoServer,
 				wildcardIP,
-				NetProtocol.TCP,
+				com.aoindustries.net.Protocol.TCP,
 				Protocol.RMI,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -980,7 +990,7 @@ final public class HttpdHandler {
 				invalidateList,
 				aoServer,
 				wildcardIP,
-				NetProtocol.TCP,
+				com.aoindustries.net.Protocol.TCP,
 				Protocol.HYPERSONIC,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -990,7 +1000,7 @@ final public class HttpdHandler {
 				invalidateList,
 				aoServer,
 				wildcardIP,
-				NetProtocol.TCP,
+				com.aoindustries.net.Protocol.TCP,
 				Protocol.JMX,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -1028,7 +1038,7 @@ final public class HttpdHandler {
 					invalidateList,
 					aoServer,
 					IPAddressHandler.getLoopbackIPAddress(conn, aoServer),
-					NetProtocol.TCP,
+					com.aoindustries.net.Protocol.TCP,
 					Protocol.TOMCAT4_SHUTDOWN,
 					packageName,
 					MINIMUM_AUTO_PORT_NUMBER
@@ -1050,7 +1060,7 @@ final public class HttpdHandler {
 				invalidateList,
 				aoServer,
 				IPAddressHandler.getLoopbackIPAddress(conn, aoServer),
-				NetProtocol.TCP,
+				com.aoindustries.net.Protocol.TCP,
 				isTomcat4?HttpdJKProtocol.AJP13:HttpdJKProtocol.AJP12,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -1148,7 +1158,7 @@ final public class HttpdHandler {
 				invalidateList,
 				aoServer,
 				loopbackIP,
-				NetProtocol.TCP,
+				com.aoindustries.net.Protocol.TCP,
 				HttpdJKProtocol.AJP13,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -1168,7 +1178,7 @@ final public class HttpdHandler {
 				invalidateList,
 				aoServer,
 				loopbackIP,
-				NetProtocol.TCP,
+				com.aoindustries.net.Protocol.TCP,
 				Protocol.TOMCAT4_SHUTDOWN,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -2205,13 +2215,16 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		// First, find the net_bind
 		int netBind;
-		PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select pkey, app_protocol from net_binds where server=? and ip_address=? and port=? and net_protocol='"+NetProtocol.TCP+'\'');
+		PreparedStatement pstmt = conn.getConnection(
+			Connection.TRANSACTION_READ_COMMITTED,
+			true
+		).prepareStatement("select pkey, app_protocol from net_binds where server=? and ip_address=? and port=? and net_protocol=?");
 		try {
 			pstmt.setInt(1, aoServer);
 			pstmt.setInt(2, ipAddress);
 			pstmt.setInt(3, httpPort);
-			ResultSet results=pstmt.executeQuery();
-			try {
+			pstmt.setString(4, com.aoindustries.net.Protocol.TCP.name().toLowerCase(Locale.ROOT));
+			try (ResultSet results = pstmt.executeQuery()) {
 				if(results.next()) {
 					netBind=results.getInt(1);
 					String bindProtocol=results.getString(2);
@@ -2230,8 +2243,6 @@ final public class HttpdHandler {
 						+protocol
 					);
 				} else netBind=-1;
-			} finally {
-				results.close();
 			}
 		} catch(SQLException err) {
 			System.err.println("Error from query: "+pstmt.toString());
@@ -2243,14 +2254,15 @@ final public class HttpdHandler {
 		// Allocate the net_bind, if needed
 		if(netBind==-1) {
 			netBind=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('net_binds_pkey_seq')");
-			pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into net_binds values(?,?,?,?,?,'"+NetProtocol.TCP+"',?,true,true)");
+			pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into net_binds values(?,?,?,?,?,?,?,true,true)");
 			try {
 				pstmt.setInt(1, netBind);
 				pstmt.setString(2, packageName);
 				pstmt.setInt(3, aoServer);
 				pstmt.setInt(4, ipAddress);
 				pstmt.setInt(5, httpPort);
-				pstmt.setString(6, protocol);
+				pstmt.setString(6, com.aoindustries.net.Protocol.TCP.name().toLowerCase(Locale.ROOT));
+				pstmt.setString(7, protocol);
 				pstmt.executeUpdate();
 			} finally {
 				pstmt.close();

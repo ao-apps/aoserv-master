@@ -12,9 +12,11 @@ import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.InetAddress;
+import com.aoindustries.net.Port;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Locale;
 
 /**
  * The <code>NetBindHandler</code> handles all the accesses to the <code>net_binds</code> table.
@@ -216,7 +218,7 @@ final public class NetBindHandler {
         InvalidateList invalidateList,
         int server,
         int ipAddress,
-        String netProtocol,
+        com.aoindustries.net.Protocol netProtocol,
         String appProtocol,
         String pack,
         int minimumPort
@@ -274,8 +276,8 @@ final public class NetBindHandler {
                     ipAddress,
                     minimumPort,
                     //farm,
-                    netProtocol,
-                    netProtocol,
+                    netProtocol.name().toLowerCase(Locale.ROOT),
+                    netProtocol.name().toLowerCase(Locale.ROOT),
                     appProtocol
                 );
             } else {
@@ -332,8 +334,8 @@ final public class NetBindHandler {
                     minimumPort,
                     //farm,
                     ipAddress,
-                    netProtocol,
-                    netProtocol,
+                    netProtocol.name().toLowerCase(Locale.ROOT),
+                    netProtocol.name().toLowerCase(Locale.ROOT),
                     appProtocol
                 );
             }
@@ -363,8 +365,7 @@ final public class NetBindHandler {
         DatabaseConnection conn,
         int server,
         int ipAddress,
-        int port,
-        String netProtocol
+        Port port
     ) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
@@ -383,8 +384,8 @@ final public class NetBindHandler {
             + "  )",
             server,
             ipAddress,
-            port,
-            netProtocol
+            port.getPort(),
+            port.getProtocol().name().toLowerCase(Locale.ROOT)
         );
     }
 
