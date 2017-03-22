@@ -12,6 +12,7 @@ import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.net.DomainName;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.LongArrayList;
 import com.aoindustries.util.LongList;
@@ -282,14 +283,18 @@ final public class ServerHandler {
 		}
 	}
 
-	final private static Map<Integer,String> hostnamesForAOServers=new HashMap<>();
-	public static String getHostnameForAOServer(DatabaseAccess database, int aoServer) throws IOException, SQLException {
-		Integer I=aoServer;
+	final private static Map<Integer,DomainName> hostnamesForAOServers=new HashMap<>();
+	public static DomainName getHostnameForAOServer(DatabaseAccess database, int aoServer) throws IOException, SQLException {
+		Integer mapKey = aoServer;
 		synchronized(hostnamesForAOServers) {
-			String hostname=hostnamesForAOServers.get(I);
-			if(hostname==null) {
-				hostname=database.executeStringQuery("select hostname from ao_servers where server=?", aoServer);
-				hostnamesForAOServers.put(I, hostname);
+			DomainName hostname = hostnamesForAOServers.get(mapKey);
+			if(hostname == null) {
+				hostname = database.executeObjectQuery(
+					ObjectFactories.domainNameFactory,
+					"select hostname from ao_servers where server=?",
+					aoServer
+				);
+				hostnamesForAOServers.put(mapKey, hostname.intern());
 			}
 			return hostname;
 		}

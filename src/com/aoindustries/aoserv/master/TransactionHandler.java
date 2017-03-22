@@ -1,11 +1,10 @@
 /*
- * Copyright 2001-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
@@ -13,8 +12,9 @@ import com.aoindustries.aoserv.client.Transaction;
 import com.aoindustries.aoserv.client.TransactionSearchCriteria;
 import com.aoindustries.aoserv.client.TransactionType;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.util.StringUtility;
 import java.io.IOException;
@@ -25,6 +25,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The <code>TransactionHandler</code> handles all the accesses to the transaction tables.
@@ -53,7 +55,7 @@ final public class TransactionHandler {
         InvalidateList invalidateList,
         AccountingCode accounting,
         AccountingCode sourceAccounting,
-        String business_administrator,
+        UserId business_administrator,
         String type,
         String description,
         int quantity,
@@ -96,7 +98,7 @@ final public class TransactionHandler {
         Timestamp time,
         AccountingCode accounting,
         AccountingCode sourceAccounting,
-        String business_administrator,
+        UserId business_administrator,
         String type,
         String description,
         BigDecimal quantity,
@@ -251,7 +253,7 @@ final public class TransactionHandler {
                 "select * from transactions where type='"+TransactionType.PAYMENT+"' and payment_confirmed='W'"
             );
         } else {
-            MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject<?,?>>());
+            MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
         }
     }
 
@@ -265,7 +267,7 @@ final public class TransactionHandler {
         boolean provideProgress,
         AccountingCode accounting
     ) throws IOException, SQLException {
-        String username=source.getUsername();
+        UserId username=source.getUsername();
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
         if(masterUser!=null) {
@@ -277,7 +279,7 @@ final public class TransactionHandler {
                 new Transaction(),
                 "select * from transactions where accounting=?",
                 accounting
-            ); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject<?,?>>());
+            ); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
         } else MasterServer.writeObjects(
             conn,
             source,
@@ -312,7 +314,7 @@ final public class TransactionHandler {
         RequestSource source, 
         CompressedDataOutputStream out,
         boolean provideProgress,
-        String username
+        UserId username
     ) throws IOException, SQLException {
         UsernameHandler.checkAccessUsername(conn, source, "getTransactionsBusinessAdministrator", source.getUsername());
 
@@ -334,12 +336,12 @@ final public class TransactionHandler {
         boolean provideProgress,
         TransactionSearchCriteria criteria
     ) throws IOException, SQLException {
-        String username=source.getUsername();
+        UserId username=source.getUsername();
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
         StringBuilder sql;
+		List<Object> params;
         boolean whereDone;
-        boolean useUsername;
         if(masterUser!=null) {
             if(masterServers.length==0) {
                 sql=new StringBuilder(
@@ -348,10 +350,10 @@ final public class TransactionHandler {
                     + "from\n"
                     + "  transactions tr\n"
                 );
+				params = Collections.emptyList();
                 whereDone=false;
-                useUsername=false;
             } else {
-                MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject<?,?>>());
+                MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
                 return;
             }
         } else {
@@ -371,66 +373,69 @@ final public class TransactionHandler {
                 + "  )\n"
                 + "  and bu1.accounting=tr.accounting\n"
             );
+			params = new ArrayList<>();
+            params.add(source.getUsername());
             whereDone=true;
-            useUsername=true;
         }
 
         if (criteria.getAfter() != TransactionSearchCriteria.ANY) {
             sql.append(whereDone?"  and ":"where\n  ").append("tr.time>=?\n");
+			params.add(new Timestamp(criteria.getAfter()));
             whereDone=true;
         }
         if (criteria.getBefore() != TransactionSearchCriteria.ANY) {
             sql.append(whereDone?"  and ":"where\n  ").append("tr.time<?\n");
+			params.add(new Timestamp(criteria.getBefore()));
             whereDone=true;
         }
         if (criteria.getTransID() != TransactionSearchCriteria.ANY) {
             sql.append(whereDone?"  and ":"where\n  ").append("tr.transid=?\n");
+			params.add(criteria.getTransID());
             whereDone=true;
         }
         if (criteria.getBusiness() != null) {
             sql.append(whereDone?"  and ":"where\n  ").append("tr.accounting=?\n");
+			params.add(criteria.getBusiness());
             whereDone=true;
         }
         if (criteria.getSourceBusiness() != null) {
             sql.append(whereDone?"  and ":"where\n  ").append("tr.source_accounting=?\n");
+			params.add(criteria.getSourceBusiness());
             whereDone=true;
         }
         if (criteria.getBusinessAdministrator() != null) {
             sql.append(whereDone?"  and ":"where\n  ").append("tr.username=?\n");
+			params.add(criteria.getBusinessAdministrator());
             whereDone=true;
         }
         if (criteria.getType() != null) {
             sql.append(whereDone?"  and ":"where\n  ").append("tr.type=?\n");
+			params.add(criteria.getType());
             whereDone=true;
         }
 
         // description words
-        String[] descriptionWords=null;
         if (criteria.getDescription() != null && criteria.getDescription().length() > 0) {
-            descriptionWords = StringUtility.splitString(criteria.getDescription());
-            int len = descriptionWords.length;
-            for (int c = 0; c < len; c++) {
-                sql.append(whereDone?"  and ":"where\n  ").append("lower(tr.description) like '%");
-                SQLUtility.escapeSQL(descriptionWords[c].toLowerCase(), sql);
-                sql.append("%'\n");
+            String[] descriptionWords = StringUtility.splitString(criteria.getDescription());
+			for (String descriptionWord : descriptionWords) {
+                sql.append(whereDone?"  and ":"where\n  ").append("lower(tr.description) like ('%' || lower(?) || '%')\n");
+				params.add(descriptionWord);
                 whereDone=true;
             }
         }
 
         if (criteria.getPaymentType() != null) {
             sql.append(whereDone?"  and ":"where\n  ").append("tr.payment_type=?\n");
+			params.add(criteria.getPaymentType());
             whereDone=true;
         }
 
         // payment_info words
-        String[] paymentInfoWords=null;
         if (criteria.getPaymentInfo() != null && criteria.getPaymentInfo().length() > 0) {
-            paymentInfoWords = StringUtility.splitString(criteria.getPaymentInfo());
-            int len = paymentInfoWords.length;
-            for (int c = 0; c < len; c++) {
-                sql.append(whereDone?"  and ":"where\n  ").append("lower(tr.payment_info) like '%");
-                SQLUtility.escapeSQL(paymentInfoWords[c].toLowerCase(), sql);
-                sql.append("%'\n");
+            String[] paymentInfoWords = StringUtility.splitString(criteria.getPaymentInfo());
+			for (String paymentInfoWord : paymentInfoWords) {
+                sql.append(whereDone?"  and ":"where\n  ").append("lower(tr.payment_info) like ('%' || lower(?) || '%')\n");
+				params.add(paymentInfoWord);
                 whereDone=true;
             }
         }
@@ -438,32 +443,29 @@ final public class TransactionHandler {
         // payment_confirmed
         if (criteria.getPaymentConfirmed() != TransactionSearchCriteria.ANY) {
             sql.append(whereDone?"  and ":"where\n  ").append("tr.payment_confirmed=?\n");
+			String dbValue;
+			switch(criteria.getPaymentConfirmed()) {
+				case Transaction.CONFIRMED :
+					dbValue = "Y";
+					break;
+				case Transaction.NOT_CONFIRMED :
+					dbValue = "N";
+					break;
+				case Transaction.WAITING_CONFIRMATION :
+					dbValue = "W";
+					break;
+				default :
+					throw new AssertionError();
+			}
+			params.add(dbValue);
             whereDone=true;
         }
 
-        // Convert to string before allocating the DB connection for maximum DB concurrency
-        String sqlString=sql.toString();
-
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sqlString);
+		Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
+        PreparedStatement pstmt = dbConn.prepareStatement(sql.toString());
         try {
-            int pos=1;
-            if(useUsername) pstmt.setString(pos++, source.getUsername());
-            if (criteria.getAfter() != TransactionSearchCriteria.ANY) pstmt.setTimestamp(pos++, new Timestamp(criteria.getAfter()));
-            if (criteria.getBefore() != TransactionSearchCriteria.ANY) pstmt.setTimestamp(pos++, new Timestamp(criteria.getBefore()));
-            if (criteria.getTransID() != TransactionSearchCriteria.ANY) pstmt.setInt(pos++, criteria.getTransID());
-            if (criteria.getBusiness() != null) pstmt.setString(pos++, criteria.getBusiness().toString());
-            if (criteria.getSourceBusiness() != null) pstmt.setString(pos++, criteria.getSourceBusiness().toString());
-            if (criteria.getBusinessAdministrator() != null) pstmt.setString(pos++, criteria.getBusinessAdministrator());
-            if (criteria.getType() != null) pstmt.setString(pos++, criteria.getType());
-            if (criteria.getPaymentType() != null) pstmt.setString(pos++, criteria.getPaymentType());
-            if (criteria.getPaymentConfirmed() != TransactionSearchCriteria.ANY) pstmt.setString(
-                pos++,
-                criteria.getPaymentConfirmed()==Transaction.CONFIRMED?"Y"
-                :criteria.getPaymentConfirmed()==Transaction.NOT_CONFIRMED?"N"
-                :"W"
-            );
-
-            ResultSet results=pstmt.executeQuery();
+			DatabaseConnection.setParams(dbConn, pstmt, params.toArray());
+            ResultSet results = pstmt.executeQuery();
             try {
                 MasterServer.writeObjects(source, out, provideProgress, new Transaction(), results);
             } finally {

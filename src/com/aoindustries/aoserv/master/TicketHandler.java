@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -12,6 +12,7 @@ import com.aoindustries.aoserv.client.TicketActionType;
 import com.aoindustries.aoserv.client.TicketStatus;
 import com.aoindustries.aoserv.client.TicketType;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
@@ -211,7 +212,7 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode reseller,
         AccountingCode accounting,
         String language,
-        String createdBy,
+        UserId createdBy,
         int category,
         String type,
         String fromAddress,
@@ -1190,7 +1191,7 @@ final public class TicketHandler /*implements Runnable*/ {
         DatabaseConnection conn,
         InvalidateList invalidateList,
         int ticketID,
-        String administrator,
+        UserId administrator,
         String summary,
         String details
     ) throws IOException, SQLException {
@@ -1678,13 +1679,10 @@ final public class TicketHandler /*implements Runnable*/ {
      */
     private static boolean cronDaemonAdded = false;
 
-    private static final Schedule schedule = new Schedule() {
-		@Override
-        public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-            // Will now run once every four hours
-            return minute==25 && (hour&3)==3; // && hour==7
-        }
-    };
+	/**
+	 * Runs once every four hours
+	 */
+    private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) -> minute==25 && (hour&3)==3;
 
     public static void start() {
         synchronized(System.out) {

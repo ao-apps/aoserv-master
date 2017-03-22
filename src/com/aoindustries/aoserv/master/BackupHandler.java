@@ -1,11 +1,12 @@
 /*
- * Copyright 2002-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2002-2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
 import java.sql.Connection;
@@ -149,8 +150,12 @@ public final class BackupHandler {
         return conn.executeIntQuery("select ao_server from backup_partitions where pkey=?", pkey);
     }
 
-    public static String getPathForBackupPartition(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select path from backup_partitions where pkey=?", pkey);
+    public static UnixPath getPathForBackupPartition(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.unixPathFactory,
+			"select path from backup_partitions where pkey=?",
+			pkey
+		);
     }
 
     public static long getBackupPartitionTotalSize(
@@ -161,14 +166,10 @@ public final class BackupHandler {
         int aoServer=getAOServerForBackupPartition(conn, pkey);
         ServerHandler.checkAccessServer(conn, source, "getBackupPartitionTotalSize", aoServer);
         if(DaemonHandler.isDaemonAvailable(aoServer)) {
-            String path=getPathForBackupPartition(conn, pkey);
+            UnixPath path=getPathForBackupPartition(conn, pkey);
             try {
                 return DaemonHandler.getDaemonConnector(conn, aoServer).getDiskDeviceTotalSize(path);
-            } catch(IOException err) {
-                DaemonHandler.flagDaemonAsDown(aoServer);
-                logger.log(Level.SEVERE, "pkey="+pkey+", path="+path+", aoServer="+aoServer, err);
-                return -1;
-            } catch(SQLException err) {
+            } catch(IOException | SQLException err) {
                 DaemonHandler.flagDaemonAsDown(aoServer);
                 logger.log(Level.SEVERE, "pkey="+pkey+", path="+path+", aoServer="+aoServer, err);
                 return -1;
@@ -184,14 +185,10 @@ public final class BackupHandler {
         int aoServer=getAOServerForBackupPartition(conn, pkey);
         ServerHandler.checkAccessServer(conn, source, "getBackupPartitionUsedSize", aoServer);
         if(DaemonHandler.isDaemonAvailable(aoServer)) {
-            String path=getPathForBackupPartition(conn, pkey);
+            UnixPath path=getPathForBackupPartition(conn, pkey);
             try {
                 return DaemonHandler.getDaemonConnector(conn, aoServer).getDiskDeviceUsedSize(path);
-            } catch(IOException err) {
-                DaemonHandler.flagDaemonAsDown(aoServer);
-                logger.log(Level.SEVERE, "pkey="+pkey+", path="+path+", aoServer="+aoServer, err);
-                return -1;
-            } catch(SQLException err) {
+            } catch(IOException | SQLException err) {
                 DaemonHandler.flagDaemonAsDown(aoServer);
                 logger.log(Level.SEVERE, "pkey="+pkey+", path="+path+", aoServer="+aoServer, err);
                 return -1;

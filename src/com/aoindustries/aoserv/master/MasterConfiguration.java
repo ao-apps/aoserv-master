@@ -64,9 +64,7 @@ public final class MasterConfiguration {
         try {
             return InetAddress.valueOf(getProperty("aoserv.master.local_ip"));
         } catch(ValidationException e) {
-            IOException exc = new IOException(e.getLocalizedMessage());
-            exc.initCause(e);
-            throw exc;
+            throw new IOException(e.getLocalizedMessage(), e);
         }
     }
 
@@ -88,9 +86,7 @@ public final class MasterConfiguration {
         try {
             return AccountingCode.valueOf(getProperty("aoserv.master.businesses.root"));
         } catch(ValidationException e) {
-            IOException exc = new IOException(e.getLocalizedMessage());
-            exc.initCause(e);
-            throw exc;
+            throw new IOException(e.getLocalizedMessage(), e);
         }
     }
 

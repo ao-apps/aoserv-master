@@ -340,7 +340,7 @@ final public class DaemonHandler {
 		return new AOServer.DaemonAccess(
 			getDaemonConnectorProtocol(conn, aoServer),
 			connectAddress!=null ? connectAddress : getDaemonConnectAddress(conn, aoServer),
-			getDaemonConnectorPort(conn, aoServer).getPort(),
+			getDaemonConnectorPort(conn, aoServer),
 			key
 		);
 	}

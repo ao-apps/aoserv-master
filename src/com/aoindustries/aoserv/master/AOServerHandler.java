@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013, 2014, 2015, 2016 by AO Industries, Inc.,
+ * Copyright 2003-2013, 2014, 2015, 2016, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -7,8 +7,11 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.net.InetAddress;
+import com.aoindustries.net.Port;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -96,7 +99,7 @@ final public class AOServerHandler {
 		int aoServer,
 		long time
 	) throws IOException, SQLException {
-		String mustring = source.getUsername();
+		UserId mustring = source.getUsername();
 		MasterUser mu = MasterServer.getMasterUser(conn, mustring);
 		if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not set the last distro time");
 		ServerHandler.checkAccessServer(conn, source, "setLastDistroTime", aoServer);
@@ -281,13 +284,13 @@ final public class AOServerHandler {
 		return DaemonHandler.getDaemonConnector(conn, aoServer).getMemInfoReport();
 	}
 
-	public static String checkPort(DatabaseConnection conn, RequestSource source, int aoServer, String ipAddress, int port, String netProtocol, String appProtocol, String monitoringParameters) throws IOException, SQLException {
+	public static String checkPort(DatabaseConnection conn, RequestSource source, int aoServer, InetAddress ipAddress, Port port, String appProtocol, String monitoringParameters) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "checkPort", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).checkPort(ipAddress, port, netProtocol, appProtocol, monitoringParameters);
+		return DaemonHandler.getDaemonConnector(conn, aoServer).checkPort(ipAddress, port, appProtocol, monitoringParameters);
 	}
 
-	public static String checkSmtpBlacklist(DatabaseConnection conn, RequestSource source, int aoServer, String sourceIp, String connectIp) throws IOException, SQLException {
+	public static String checkSmtpBlacklist(DatabaseConnection conn, RequestSource source, int aoServer, InetAddress sourceIp, InetAddress connectIp) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "checkSmtpBlacklist", aoServer);
 
 		return DaemonHandler.getDaemonConnector(conn, aoServer).checkSmtpBlacklist(sourceIp, connectIp);

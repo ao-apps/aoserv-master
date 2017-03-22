@@ -814,8 +814,13 @@ final public class HttpdHandler {
 		}
 		int httpdSitePKey;
 
-		List<DomainName> tlds=DNSHandler.getDNSTLDs(conn);
-		String testURL = siteName+"."+ServerHandler.getHostnameForAOServer(conn, aoServer);
+		List<DomainName> tlds = DNSHandler.getDNSTLDs(conn);
+		DomainName testURL;
+		try {
+			testURL = DomainName.valueOf(siteName + "." + ServerHandler.getHostnameForAOServer(conn, aoServer));
+		} catch(ValidationException e) {
+			throw new SQLException(e);
+		}
 		DNSHandler.addDNSRecord(
 			conn,
 			invalidateList,
@@ -826,7 +831,9 @@ final public class HttpdHandler {
 
 		// Finish up the security checks with the Connection
 		MasterServer.checkAccessHostname(conn, source, methodName, primaryHttpHostname.toString(), tlds);
-		for(int c=0;c<altHttpHostnames.length;c++) MasterServer.checkAccessHostname(conn, source, methodName, altHttpHostnames[c].toString(), tlds);
+		for(DomainName altHttpHostname : altHttpHostnames) {
+			MasterServer.checkAccessHostname(conn, source, methodName, altHttpHostname.toString(), tlds);
+		}
 
 		// Create and/or get the HttpdBind info
 		int httpNetBind=getHttpdBind(conn, invalidateList, packageName, aoServer, ipAddress, httpPort, Protocol.HTTP, isTomcat4);
@@ -2565,7 +2572,11 @@ final public class HttpdHandler {
 					int httpdSiteURL=httpdSiteURLs.getInt(d);
 
 					// dns_records
-					String hostname=conn.executeStringQuery("select hostname from httpd_site_urls where pkey=?", httpdSiteURL);
+					DomainName hostname = conn.executeObjectQuery(
+						ObjectFactories.domainNameFactory,
+						"select hostname from httpd_site_urls where pkey=?",
+						httpdSiteURL
+					);
 					conn.executeUpdate("delete from httpd_site_urls where pkey=?", httpdSiteURL);
 					invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_URLS, accounting, aoServer, false);
 					DNSHandler.removeUnusedDNSRecord(conn, invalidateList, hostname, tlds);

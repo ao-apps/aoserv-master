@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -10,12 +10,13 @@ import com.aoindustries.aoserv.client.Package;
 import com.aoindustries.aoserv.client.Resource;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
-import com.aoindustries.util.SortedArrayList;
+import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -23,8 +24,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The <code>PackageHandler</code> handles all the accesses to the <code>packages</code> table.
@@ -36,9 +39,9 @@ final public class PackageHandler {
     private PackageHandler() {
     }
 
-    private final static Map<String,Boolean> disabledPackages=new HashMap<>();
+    private final static Map<AccountingCode,Boolean> disabledPackages=new HashMap<>();
 
-    public static boolean canPackageAccessServer(DatabaseConnection conn, RequestSource source, String packageName, int server) throws IOException, SQLException {
+    public static boolean canPackageAccessServer(DatabaseConnection conn, RequestSource source, AccountingCode packageName, int server) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             "select\n"
             + "  (\n"
@@ -59,7 +62,7 @@ final public class PackageHandler {
         );
     }
 
-    public static boolean canAccessPackage(DatabaseConnection conn, RequestSource source, String packageName) throws IOException, SQLException {
+    public static boolean canAccessPackage(DatabaseConnection conn, RequestSource source, AccountingCode packageName) throws IOException, SQLException {
         return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackage(conn, packageName));
     }
 
@@ -71,7 +74,7 @@ final public class PackageHandler {
         return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackageDefinition(conn, pkey));
     }
 
-    public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, String packageName) throws IOException, SQLException {
+    public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, AccountingCode packageName) throws IOException, SQLException {
         if(!canAccessPackage(conn, source, packageName)) {
             String message=
                 "business_administrator.username="
@@ -120,12 +123,10 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String packageName,
+        AccountingCode packageName,
         AccountingCode accounting,
         int packageDefinition
     ) throws IOException, SQLException {
-        if(!Package.isValidPackageName(packageName)) throw new SQLException("Invalid package name: "+packageName);
-
         BusinessHandler.checkAccessBusiness(conn, source, "addPackage", accounting);
         if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add Package '"+packageName+"', Business disabled: "+accounting);
 
@@ -160,10 +161,10 @@ final public class PackageHandler {
         );
         try {
             pstmt.setInt(1, pkey);
-            pstmt.setString(2, packageName);
+            pstmt.setString(2, packageName.toString());
             pstmt.setString(3, accounting.toString());
             pstmt.setInt(4, packageDefinition);
-            pstmt.setString(5, source.getUsername());
+            pstmt.setString(5, source.getUsername().toString());
             pstmt.executeUpdate();
         } catch(SQLException err) {
             throw new WrappedSQLException(err, pstmt);
@@ -423,7 +424,7 @@ final public class PackageHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
-        String name
+        AccountingCode name
     ) throws IOException, SQLException {
         if(isPackageDisabled(conn, name)) throw new SQLException("Package is already disabled: "+name);
         BusinessHandler.checkAccessDisableLog(conn, source, "disablePackage", disableLog, false);
@@ -442,9 +443,8 @@ final public class PackageHandler {
                 throw new SQLException("Cannot disable Package '"+name+"': EmailPipe not disabled: "+ep);
             }
         }
-        List<String> uns=UsernameHandler.getUsernamesForPackage(conn, name);
-        for(int c=0;c<uns.size();c++) {
-            String username=uns.get(c);
+        List<UserId> uns=UsernameHandler.getUsernamesForPackage(conn, name);
+		for (UserId username : uns) {
             if(!UsernameHandler.isUsernameDisabled(conn, username)) {
                 throw new SQLException("Cannot disable Package '"+name+"': Username not disabled: "+username);
             }
@@ -492,7 +492,7 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        String name
+        AccountingCode name
     ) throws IOException, SQLException {
         int disableLog=getDisableLogForPackage(conn, name);
         if(disableLog==-1) throw new SQLException("Package is already enabled: "+name);
@@ -516,35 +516,31 @@ final public class PackageHandler {
         );
     }
 
-    public static String generatePackageName(
+    public static AccountingCode generatePackageName(
         DatabaseConnection conn,
-        String template
+        AccountingCode template
     ) throws IOException, SQLException {
-        // Load the entire list of package names
-        List<String> names=conn.executeStringListQuery("select name from packages");
-        int size=names.size();
-
-        // Sort them
-        List<String> sorted=new SortedArrayList<>(size);
-        for(int c=0;c<size;c++) sorted.add(names.get(c));
-
-        // Find one that is not used
-        String goodOne=null;
-        for(int c=1;c<Integer.MAX_VALUE;c++) {
-            String name=template+c;
-            if(!Package.isValidPackageName(name)) throw new SQLException("Invalid package name: "+name);
-            if(!sorted.contains(name)) {
-                goodOne=name;
-                break;
-            }
-        }
-
-        // If could not find one, report and error
-        if(goodOne==null) throw new SQLException("Unable to find available package name for template: "+template);
-        return goodOne;
+		// Load the entire list of package names
+		Set<AccountingCode> names = conn.executeObjectCollectionQuery(
+			new HashSet<>(),
+			ObjectFactories.accountingCodeFactory,
+			"select name from packages"
+		);
+		// Find one that is not used
+		for(int c=0;c<Integer.MAX_VALUE;c++) {
+			AccountingCode name;
+			try {
+				name = AccountingCode.valueOf(template.toString()+c);
+			} catch(ValidationException e) {
+				throw new SQLException(e);
+			}
+			if(!names.contains(name)) return name;
+		}
+		// If could not find one, report and error
+        throw new SQLException("Unable to find available package name for template: "+template);
     }
 
-    public static int getDisableLogForPackage(DatabaseConnection conn, String name) throws IOException, SQLException {
+    public static int getDisableLogForPackage(DatabaseConnection conn, AccountingCode name) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from packages where name=?", name);
     }
 
@@ -552,7 +548,7 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source
     ) throws IOException, SQLException {
-        String username=source.getUsername();
+        UserId username=source.getUsername();
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
         if(masterUser!=null) {
@@ -595,7 +591,7 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source
     ) throws IOException, SQLException {
-        String username=source.getUsername();
+        UserId username=source.getUsername();
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
         if(masterUser!=null) {
@@ -651,17 +647,17 @@ final public class PackageHandler {
         }
     }
 
-    public static boolean isPackageDisabled(DatabaseConnection conn, String name) throws IOException, SQLException {
+    public static boolean isPackageDisabled(DatabaseConnection conn, AccountingCode name) throws IOException, SQLException {
 	    synchronized(PackageHandler.class) {
             Boolean O=disabledPackages.get(name);
-            if(O!=null) return O.booleanValue();
+            if(O!=null) return O;
             boolean isDisabled=getDisableLogForPackage(conn, name)!=-1;
             disabledPackages.put(name, isDisabled);
             return isDisabled;
 	    }
     }
 
-    public static boolean isPackageNameAvailable(DatabaseConnection conn, String packageName) throws IOException, SQLException {
+    public static boolean isPackageNameAvailable(DatabaseConnection conn, AccountingCode packageName) throws IOException, SQLException {
         return conn.executeBooleanQuery("select (select pkey from packages where name=? limit 1) is null", packageName);
     }
 
@@ -701,7 +697,7 @@ final public class PackageHandler {
         return conn.executeBooleanQuery("select active from package_definitions where pkey=?", packageDefinition);
     }
 
-    public static void checkPackageAccessServer(DatabaseConnection conn, RequestSource source, String action, String packageName, int server) throws IOException, SQLException {
+    public static void checkPackageAccessServer(DatabaseConnection conn, RequestSource source, String action, AccountingCode packageName, int server) throws IOException, SQLException {
         if(!canPackageAccessServer(conn, source, packageName, server)) {
             String message=
                 "package.name="
@@ -716,13 +712,13 @@ final public class PackageHandler {
         }
     }
 
-    public static AccountingCode getBusinessForPackage(DatabaseAccess database, String packageName) throws IOException, SQLException {
+    public static AccountingCode getBusinessForPackage(DatabaseAccess database, AccountingCode packageName) throws IOException, SQLException {
         return getBusinessForPackage(database, getPKeyForPackage(database, packageName));
     }
 
     private static final Map<Integer,AccountingCode> packageBusinesses=new HashMap<>();
     public static AccountingCode getBusinessForPackage(DatabaseAccess database, int pkey) throws IOException, SQLException {
-        Integer I=Integer.valueOf(pkey);
+        Integer I = pkey;
         synchronized(packageBusinesses) {
             AccountingCode O=packageBusinesses.get(I);
             if(O!=null) return O;
@@ -736,25 +732,29 @@ final public class PackageHandler {
         }
     }
 
-    private static final Map<Integer,String> packageNames=new HashMap<>();
-    public static String getNameForPackage(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Integer I=Integer.valueOf(pkey);
+    private static final Map<Integer,AccountingCode> packageNames=new HashMap<>();
+    public static AccountingCode getNameForPackage(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+        Integer I = pkey;
         synchronized(packageNames) {
-            String O=packageNames.get(I);
+            AccountingCode O=packageNames.get(I);
             if(O!=null) return O;
-            String name=conn.executeStringQuery("select name from packages where pkey=?", pkey);
+            AccountingCode name = conn.executeObjectQuery(
+				ObjectFactories.accountingCodeFactory,
+				"select name from packages where pkey=?",
+				pkey
+			);
             packageNames.put(I, name);
             return name;
         }
     }
 
-    private static final Map<String,Integer> packagePKeys=new HashMap<>();
-    public static int getPKeyForPackage(DatabaseAccess database, String name) throws IOException, SQLException {
+    private static final Map<AccountingCode,Integer> packagePKeys=new HashMap<>();
+    public static int getPKeyForPackage(DatabaseAccess database, AccountingCode name) throws IOException, SQLException {
         synchronized(packagePKeys) {
             Integer O=packagePKeys.get(name);
-            if(O!=null) return O.intValue();
+            if(O!=null) return O;
             int pkey=database.executeIntQuery("select pkey from packages where name=?", name);
-            packagePKeys.put(name, Integer.valueOf(pkey));
+            packagePKeys.put(name, pkey);
             return pkey;
         }
     }

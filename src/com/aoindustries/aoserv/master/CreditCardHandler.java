@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.PaymentType;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.TransactionType;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.creditcards.AuthorizationResult;
 import com.aoindustries.creditcards.CreditCard;
 import com.aoindustries.creditcards.CreditCardProcessor;
@@ -19,6 +20,7 @@ import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.logging.ProcessTimer;
+import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.InetAddress;
@@ -46,7 +48,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 
     private static final Logger logger = LogFactory.getLogger(ServerHandler.class);
 
-    private CreditCardHandler() {
+	private CreditCardHandler() {
     }
 
     /**
@@ -584,7 +586,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String invoiceNumber,
         String purchaseOrderNumber,
         String description,
-        String creditCardCreatedBy,
+        UserId creditCardCreatedBy,
         String creditCardPrincipalName,
         AccountingCode creditCardAccounting,
         String creditCardGroupName,
@@ -700,7 +702,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String invoiceNumber,
         String purchaseOrderNumber,
         String description,
-        String creditCardCreatedBy,
+        UserId creditCardCreatedBy,
         String creditCardPrincipalName,
         AccountingCode creditCardAccounting,
         String creditCardGroupName,
@@ -721,7 +723,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String creditCardCountryCode,
         String creditCardComments,
         long authorizationTime,
-        String authorizationUsername,
+        UserId authorizationUsername,
         String authorizationPrincipalName
     ) throws IOException, SQLException {
         int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('credit_card_transactions_pkey_seq')");
@@ -869,7 +871,14 @@ final public class CreditCardHandler /*implements CronJob*/ {
     ) throws IOException, SQLException {
         BusinessHandler.checkPermission(conn, source, "creditCardTransactionSaleCompleted", AOServPermission.Permission.credit_card_transaction_sale_completed);
         checkAccessCreditCardTransaction(conn, source, "creditCardTransactionSaleCompleted", pkey);
-        if(capturePrincipalName!=null) UsernameHandler.checkAccessUsername(conn, source, "creditCardTransactionSaleCompleted", capturePrincipalName);
+		// TODO: Are the principal names required to be AOServ objects, or are they arbitrary application-specific values?
+        if(capturePrincipalName!=null) {
+			try {
+				UsernameHandler.checkAccessUsername(conn, source, "creditCardTransactionSaleCompleted", UserId.valueOf(capturePrincipalName));
+			} catch(ValidationException e) {
+				throw new SQLException(e.getLocalizedMessage(), e);
+			}
+		}
 
         String processor = getCreditCardProcessorForCreditCardTransaction(conn, pkey);
         AccountingCode accounting = getBusinessForCreditCardProcessor(conn, processor);
@@ -927,7 +936,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String avsResult,
         String approvalCode,
         long captureTime,
-        String captureUsername,
+        UserId captureUsername,
         String capturePrincipalName,
         String captureCommunicationResult,
         String captureProviderErrorCode,
@@ -1431,7 +1440,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                                 new Timestamp(lastMinuteOfTheMonth.getTimeInMillis()),
                                 automaticPayment.accounting,
                                 automaticPayment.accounting,
-                                "aoserv",
+                                MasterPersistenceMechanism.MASTER_BUSINESS_ADMINISTRATOR,
                                 TransactionType.PAYMENT,
                                 "Monthly automatic billing",
                                 new BigDecimal("1.000"),
@@ -1568,13 +1577,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                                     throw new RuntimeException("Unexpected value for authorization communication result: "+authorizationResult.getCommunicationResult());
                             }
                         }
-                    } catch(RuntimeException err) {
-                        if(conn.rollback()) {
-                            connRolledBack=true;
-                            // invalidateList=null; Not cleared because some commits happen during processing
-                        }
-                        throw err;
-                    } catch(IOException err) {
+                    } catch(RuntimeException | IOException err) {
                         if(conn.rollback()) {
                             connRolledBack=true;
                             // invalidateList=null; Not cleared because some commits happen during processing

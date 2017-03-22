@@ -25,6 +25,7 @@ import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.logging.ProcessTimer;
+import com.aoindustries.validation.ValidationException;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -270,7 +271,7 @@ final public class DNSHandler implements CronJob {
 	/**
 	 * Gets the set of all unique business accounting code and top level domain (zone) pairs.
 	 *
-	 * @see  DNSZoneTable#getHostTLD
+	 * @see  DNSZoneTable#getHostTLD(com.aoindustries.net.DomainName, java.util.List)
 	 */
 	public static Set<AccountingAndZone> getBusinessesAndTopLevelZones(DatabaseConnection conn) throws IOException, SQLException {
 		List<DomainName> tlds = getDNSTLDs(conn);
@@ -312,9 +313,16 @@ final public class DNSHandler implements CronJob {
 						while(results.next()) {
 							String accounting = results.getString(1);
 							String zone = results.getString(2);
+							if(!zone.endsWith(".")) throw new SQLException("No end '.': " + zone);
+							DomainName domain;
+							try {
+								domain = DomainName.valueOf(zone.substring(0, zone.length() - 1));
+							} catch(ValidationException e) {
+								throw new SQLException(e);
+							}
 							String tld;
 							try {
-								tld = DNSZoneTable.getHostTLD(zone, tlds);
+								tld = DNSZoneTable.getHostTLD(domain, tlds) + ".";
 							} catch(IllegalArgumentException err) {
 								logger.log(Level.WARNING, null, err);
 								tld = zone;
@@ -643,24 +651,42 @@ final public class DNSHandler implements CronJob {
 		invalidateList.addTable(conn, SchemaTable.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 	}
 
+	/**
+	 * Gets the part of the DNS entry before the zone or "@" for the zone itself.
+	 */
+	private static String getPreTld(DomainName hostname, DomainName tld) {
+		String hostnameStr = hostname.toLowerCase();
+		String tldStr = tld.toLowerCase();
+		if(hostnameStr.equals(tldStr)) {
+			return "@";
+		}
+		if(!hostnameStr.endsWith("." + tldStr)) {
+			throw new IllegalArgumentException("hostname not in tld: " + hostname + ", " + tld);
+		}
+		String preTld = hostnameStr.substring(0, hostnameStr.length() - ".".length() - tldStr.length());
+		if(preTld.isEmpty()) throw new IllegalArgumentException("Empty preTld: " + preTld);
+		return preTld;
+	}
+
 	public static boolean addDNSRecord(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		String hostname,
+		DomainName hostname,
 		InetAddress ipAddress,
 		List<DomainName> tlds
 	) throws IOException, SQLException {
-		String tldPlus1 = DNSZoneTable.getHostTLD(hostname, tlds);
+		DomainName tld = DNSZoneTable.getHostTLD(hostname, tlds);
+		String zone = tld + ".";
 		boolean exists = conn.executeBooleanQuery(
 			"select (select zone from dns_zones where zone=?) is not null",
-			tldPlus1
+			zone
 		);
 		if (exists) {
-			String preTldPlus1 = hostname.substring(0, hostname.length()-tldPlus1.length());
+			String preTld = getPreTld(hostname, tld);
 			exists = conn.executeBooleanQuery(
 				"select (select pkey from dns_records where zone=? and type='A' and domain=?) is not null",
-				tldPlus1,
-				preTldPlus1
+				zone,
+				preTld
 			);
 			if (!exists) {
 				String aType;
@@ -676,19 +702,19 @@ final public class DNSHandler implements CronJob {
 				}
 				conn.executeUpdate(
 					"insert into dns_records (zone, domain, type, destination) values (?,?,?,?)",
-					tldPlus1,
-					preTldPlus1,
+					zone,
+					preTld,
 					aType,
 					ipAddress
 				);
 				invalidateList.addTable(
 					conn,
 					SchemaTable.TableID.DNS_RECORDS,
-					getBusinessForDNSZone(conn, tldPlus1),
+					getBusinessForDNSZone(conn, zone),
 					getDNSAOServers(conn),
 					false
 				);
-				updateDNSZoneSerial(conn, invalidateList, tldPlus1);
+				updateDNSZoneSerial(conn, invalidateList, zone);
 				return true;
 			}
 		}
@@ -826,45 +852,32 @@ final public class DNSHandler implements CronJob {
 	public static void removeUnusedDNSRecord(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		String hostname,
+		DomainName hostname,
 		List<DomainName> tlds
 	) throws IOException, SQLException {
-		if(
-			conn.executeBooleanQuery("select (select pkey from httpd_site_urls where hostname=? limit 1) is null", hostname)
-		) {
-			String tldPlus1 = DNSZoneTable.getHostTLD(hostname, tlds);
-			if(conn.executeBooleanQuery("select (select zone from dns_zones where zone=?) is not null", tldPlus1)) {
-				String preTldPlus1 = hostname.length()<=tldPlus1.length()?"@":hostname.substring(0, hostname.length()-tldPlus1.length());
-				int pkey=conn.executeIntQuery(
-					"select\n"
-					+ "  coalesce(\n"
-					+ "    (\n"
-					+ "      select\n"
-					+ "        pkey\n"
-					+ "      from\n"
-					+ "        dns_records\n"
-					+ "      where\n"
-					+ "        zone=?\n"
-					+ "        and type in (?,?)\n"
-					+ "        and domain=?\n"
-					+ "      limit 1\n"
-					+ "    ),\n"
-					+ "    -1\n"
-					+ "  )",
-					tldPlus1,
+		if(conn.executeBooleanQuery("select (select pkey from httpd_site_urls where hostname=? limit 1) is null", hostname)) {
+			DomainName tld = DNSZoneTable.getHostTLD(hostname, tlds);
+			String zone = tld + ".";
+			if(conn.executeBooleanQuery("select (select zone from dns_zones where zone=?) is not null", zone)) {
+				String preTld = getPreTld(hostname, tld);
+				int deleteCount = conn.executeUpdate(
+					"delete from dns_records where\n"
+					+ "  zone=?\n"
+					+ "  and type in (?,?)\n"
+					+ "  and domain=?",
+					zone,
 					DNSType.A, DNSType.AAAA,
-					preTldPlus1
+					preTld
 				);
-				if(pkey!=-1) {
-					conn.executeUpdate("delete from dns_records where pkey=?", pkey);
+				if(deleteCount > 0) {
 					invalidateList.addTable(
 						conn,
 						SchemaTable.TableID.DNS_RECORDS,
-						getBusinessForDNSZone(conn, tldPlus1),
+						getBusinessForDNSZone(conn, zone),
 						getDNSAOServers(conn),
 						false
 					);
-					updateDNSZoneSerial(conn, invalidateList, tldPlus1);
+					updateDNSZoneSerial(conn, invalidateList, zone);
 				}
 			}
 		}

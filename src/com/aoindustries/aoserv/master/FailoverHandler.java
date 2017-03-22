@@ -379,7 +379,7 @@ final public class FailoverHandler implements CronJob {
 		// The overall backup path includes both the toPath and the server name
 		String serverName;
 		if(ServerHandler.isAOServer(conn, fromServer)) {
-			serverName = ServerHandler.getHostnameForAOServer(conn, fromServer);
+			serverName = ServerHandler.getHostnameForAOServer(conn, fromServer).toString();
 		} else {
 			serverName =
 				PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer))

@@ -21,10 +21,12 @@ import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.Gecos;
+import com.aoindustries.aoserv.client.validator.GroupId;
+import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.util.IntList;
-import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -45,10 +47,10 @@ final public class LinuxAccountHandler {
 	private LinuxAccountHandler() {
 	}
 
-	private final static Map<String,Boolean> disabledLinuxAccounts=new HashMap<>();
+	private final static Map<UserId,Boolean> disabledLinuxAccounts=new HashMap<>();
 	private final static Map<Integer,Boolean> disabledLinuxServerAccounts=new HashMap<>();
 
-	public static void checkAccessLinuxAccount(DatabaseConnection conn, RequestSource source, String action, String username) throws IOException, SQLException {
+	public static void checkAccessLinuxAccount(DatabaseConnection conn, RequestSource source, String action, UserId username) throws IOException, SQLException {
 		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
 		if(mu!=null) {
 			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -77,7 +79,7 @@ final public class LinuxAccountHandler {
 		}
 	}
 
-	public static void checkAccessLinuxGroup(DatabaseConnection conn, RequestSource source, String action, String name) throws IOException, SQLException {
+	public static void checkAccessLinuxGroup(DatabaseConnection conn, RequestSource source, String action, GroupId name) throws IOException, SQLException {
 		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
 		if(mu!=null) {
 			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
@@ -164,18 +166,17 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String username,
-		String primary_group,
+		UserId username,
+		GroupId primary_group,
 		Gecos name,
 		Gecos office_location,
 		Gecos office_phone,
 		Gecos home_phone,
 		String type,
-		String shell,
+		UnixPath shell,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add LinuxAccount named '"+LinuxAccount.MAIL+'\'');
-		if(!LinuxAccount.isValidUsername(username)) throw new SQLException("Invalid LinuxAccount username: "+username);
 
 		// Make sure the shell is allowed for the type of account being added
 		if(!LinuxAccountType.isAllowedShell(type, shell)) throw new SQLException("shell='"+shell+"' not allowed for type='"+type+'\'');
@@ -217,10 +218,10 @@ final public class LinuxAccountHandler {
 
 	public static void addLinuxGroup(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
-		String groupName, 
-		String packageName, 
+		GroupId groupName,
+		AccountingCode packageName,
 		String type,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
@@ -228,7 +229,6 @@ final public class LinuxAccountHandler {
 			PackageHandler.checkAccessPackage(conn, source, "addLinuxGroup", packageName);
 			if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add LinuxGroup, Package disabled: "+packageName);
 		}
-		if(!LinuxGroup.isValidGroupname(groupName)) throw new SQLException("Invalid Linux Group name: "+groupName);
 		if (
 			groupName.equals(LinuxGroup.FTPONLY)
 			|| groupName.equals(LinuxGroup.MAIL)
@@ -249,10 +249,10 @@ final public class LinuxAccountHandler {
 
 	public static int addLinuxGroupAccount(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
-		String groupName, 
-		String username, 
+		GroupId groupName,
+		UserId username,
 		boolean isPrimary,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
@@ -309,9 +309,9 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String username,
+		UserId username,
 		int aoServer,
-		String home,
+		UnixPath home,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
 		if(username.equals(LinuxAccount.MAIL)) {
@@ -326,20 +326,21 @@ final public class LinuxAccountHandler {
 
 		// OperatingSystem settings
 		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
-		String httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
-		String httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+		UnixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
+		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 
 		if(!home.equals(LinuxServerAccount.getDefaultHomeDirectory(username))) {
+			String homeStr = home.toString();
 			// Must be in /www/... or /wwwgroup/... (or newer CentOS 7 equivalent of /var/www and /var/opt/apache-tomcat)
 			if(
-				!home.startsWith(httpdSitesDir + '/')
-				&& !home.startsWith(httpdSharedTomcatsDir + '/')
+				!homeStr.startsWith(httpdSitesDir + "/")
+				&& !homeStr.startsWith(httpdSharedTomcatsDir + "/")
 			) throw new SQLException("Invalid home directory: " + home);
 
 			final String SLASH_WEBAPPS = "/webapps";
-			if(home.startsWith(httpdSitesDir + '/')) {
+			if(homeStr.startsWith(httpdSitesDir + "/")) {
 				// May also be in /www/(sitename)/webapps
-				String siteName = home.substring(httpdSitesDir.length() + 1);
+				String siteName = homeStr.substring(httpdSitesDir.toString().length() + 1);
 				if(siteName.endsWith(SLASH_WEBAPPS)) {
 					siteName = siteName.substring(0, siteName.length() - SLASH_WEBAPPS.length());
 				}
@@ -358,9 +359,9 @@ final public class LinuxAccountHandler {
 				}
 			}
 
-			if(home.startsWith(httpdSharedTomcatsDir + '/')) {
+			if(homeStr.startsWith(httpdSharedTomcatsDir + "/")) {
 				// May also be in /wwwgroup/(tomcatname)/webapps
-				String tomcatName = home.substring(httpdSharedTomcatsDir.length() + 1);
+				String tomcatName = homeStr.substring(httpdSharedTomcatsDir.toString().length() + 1);
 				if(tomcatName.endsWith(SLASH_WEBAPPS)) {
 					tomcatName = tomcatName.substring(0, tomcatName.length() - SLASH_WEBAPPS.length());
 				}
@@ -381,7 +382,7 @@ final public class LinuxAccountHandler {
 		}
 
 		// The primary group for this user must exist on this server
-		String primaryGroup=getPrimaryLinuxGroup(conn, username);
+		GroupId primaryGroup=getPrimaryLinuxGroup(conn, username);
 		int primaryLSG=getLinuxServerGroup(conn, primaryGroup, aoServer);
 		if(primaryLSG<0) throw new SQLException("Unable to find primary Linux group '"+primaryGroup+"' on AOServer #"+aoServer+" for Linux account '"+username+"'");
 
@@ -481,7 +482,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String groupName,
+		GroupId groupName,
 		int aoServer,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
@@ -571,7 +572,7 @@ final public class LinuxAccountHandler {
 		int to_server
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "copyHomeDirectory", from_lsa);
-		String username=getUsernameForLinuxServerAccount(conn, from_lsa);
+		UserId username=getUsernameForLinuxServerAccount(conn, from_lsa);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to copy LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 		int from_server=getAOServerForLinuxServerAccount(conn, from_lsa);
 		int to_lsa=conn.executeIntQuery(
@@ -603,11 +604,11 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "copyLinuxServerAccountPassword", from_lsa);
 		if(isLinuxServerAccountDisabled(conn, from_lsa)) throw new SQLException("Unable to copy LinuxServerAccount password, from account disabled: "+from_lsa);
-		String from_username=getUsernameForLinuxServerAccount(conn, from_lsa);
+		UserId from_username=getUsernameForLinuxServerAccount(conn, from_lsa);
 		if(from_username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to copy the password from LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 		checkAccessLinuxServerAccount(conn, source, "copyLinuxServerAccountPassword", to_lsa);
 		if(isLinuxServerAccountDisabled(conn, to_lsa)) throw new SQLException("Unable to copy LinuxServerAccount password, to account disabled: "+to_lsa);
-		String to_username=getUsernameForLinuxServerAccount(conn, to_lsa);
+		UserId to_username=getUsernameForLinuxServerAccount(conn, to_lsa);
 		if(to_username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to copy the password to LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 
 		int from_server=getAOServerForLinuxServerAccount(conn, from_lsa);
@@ -641,7 +642,7 @@ final public class LinuxAccountHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int disableLog,
-		String username
+		UserId username
 	) throws IOException, SQLException {
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("LinuxAccount is already disabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableLinuxAccount", disableLog, false);
@@ -737,7 +738,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String username
+		UserId username
 	) throws IOException, SQLException {
 		int disableLog=getDisableLogForLinuxAccount(conn, username);
 		if(disableLog==-1) throw new SQLException("LinuxAccount is already enabled: "+username);
@@ -770,7 +771,7 @@ final public class LinuxAccountHandler {
 		if(disableLog==-1) throw new SQLException("LinuxServerAccount is already enabled: "+pkey);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableLinuxServerAccount", disableLog, true);
 		checkAccessLinuxServerAccount(conn, source, "enableLinuxServerAccount", pkey);
-		String la=getUsernameForLinuxServerAccount(conn, pkey);
+		UserId la=getUsernameForLinuxServerAccount(conn, pkey);
 		if(isLinuxAccountDisabled(conn, la)) throw new SQLException("Unable to enable LinuxServerAccount #"+pkey+", LinuxAccount not enabled: "+la);
 
 		conn.executeUpdate(
@@ -793,14 +794,19 @@ final public class LinuxAccountHandler {
 	 */
 	public static String getAutoresponderContent(DatabaseConnection conn, RequestSource source, int lsa) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "getAutoresponderContent", lsa);
-		String username=getUsernameForLinuxServerAccount(conn, lsa);
+		UserId username=getUsernameForLinuxServerAccount(conn, lsa);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to get the autoresponder content for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
-		String path=conn.executeStringQuery("select coalesce(autoresponder_path, '') from linux_server_accounts where pkey=?", lsa);
+		UnixPath path = conn.executeObjectQuery(
+			ObjectFactories.unixPathFactory,
+			"select autoresponder_path from linux_server_accounts where pkey=?",
+			lsa
+		);
 		String content;
-		if(path.length()==0) content="";
-		else {
-			int aoServer=getAOServerForLinuxServerAccount(conn, lsa);
-			content=DaemonHandler.getDaemonConnector(conn, aoServer).getAutoresponderContent(path);
+		if(path == null) {
+			content="";
+		} else {
+			int aoServer = getAOServerForLinuxServerAccount(conn, lsa);
+			content = DaemonHandler.getDaemonConnector(conn, aoServer).getAutoresponderContent(path);
 		}
 		return content;
 	}
@@ -810,7 +816,7 @@ final public class LinuxAccountHandler {
 	 */
 	public static String getCronTable(DatabaseConnection conn, RequestSource source, int lsa) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "getCronTable", lsa);
-		String username=getUsernameForLinuxServerAccount(conn, lsa);
+		UserId username=getUsernameForLinuxServerAccount(conn, lsa);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to get the cron table for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 		String type=getTypeForLinuxAccount(conn, username);
 		if(
@@ -821,7 +827,7 @@ final public class LinuxAccountHandler {
 		return DaemonHandler.getDaemonConnector(conn, aoServer).getCronTable(username);
 	}
 
-	public static int getDisableLogForLinuxAccount(DatabaseConnection conn, String username) throws IOException, SQLException {
+	public static int getDisableLogForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		return conn.executeIntQuery("select coalesce(disable_log, -1) from linux_accounts where username=?", username);
 	}
 
@@ -841,7 +847,7 @@ final public class LinuxAccountHandler {
 		}
 	}
 
-	public static boolean isLinuxAccount(DatabaseConnection conn, String username) throws IOException, SQLException {
+	public static boolean isLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
 			"select\n"
 			+ "  (\n"
@@ -857,7 +863,7 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static boolean isLinuxAccountDisabled(DatabaseConnection conn, String username) throws IOException, SQLException {
+	public static boolean isLinuxAccountDisabled(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		synchronized(LinuxAccountHandler.class) {
 			Boolean O=disabledLinuxAccounts.get(username);
 			if(O != null) return O;
@@ -867,7 +873,7 @@ final public class LinuxAccountHandler {
 		}
 	}
 
-	public static boolean isLinuxAccountEmailType(DatabaseConnection conn, String username) throws IOException, SQLException {
+	public static boolean isLinuxAccountEmailType(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
 			"select\n"
 			+ "  lat.is_email\n"
@@ -892,18 +898,22 @@ final public class LinuxAccountHandler {
 		}
 	}
 
-	public static boolean isLinuxGroupNameAvailable(DatabaseConnection conn, String groupname) throws IOException, SQLException {
+	public static boolean isLinuxGroupNameAvailable(DatabaseConnection conn, GroupId groupname) throws IOException, SQLException {
 		return conn.executeBooleanQuery("select (select name from linux_groups where name=?) is null", groupname);
 	}
 
-	public static int getLinuxServerGroup(DatabaseConnection conn, String group, int aoServer) throws IOException, SQLException {
+	public static int getLinuxServerGroup(DatabaseConnection conn, GroupId group, int aoServer) throws IOException, SQLException {
 		int pkey=conn.executeIntQuery("select coalesce((select pkey from linux_server_groups where name=? and ao_server=?), -1)", group, aoServer);
 		if(pkey==-1) throw new SQLException("Unable to find LinuxServerGroup "+group+" on "+aoServer);
 		return pkey;
 	}
 
-	public static String getPrimaryLinuxGroup(DatabaseConnection conn, String username) throws IOException, SQLException {
-		return conn.executeStringQuery("select group_name from linux_group_accounts where username=? and is_primary", username);
+	public static GroupId getPrimaryLinuxGroup(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.groupIdFactory,
+			"select group_name from linux_group_accounts where username=? and is_primary",
+			username
+		);
 	}
 
 	public static boolean isLinuxServerAccountPasswordSet(
@@ -912,7 +922,7 @@ final public class LinuxAccountHandler {
 		int account
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "isLinuxServerAccountPasswordSet", account);
-		String username=getUsernameForLinuxServerAccount(conn, account);
+		UserId username=getUsernameForLinuxServerAccount(conn, account);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to check if a password is set for LinuxServerAccount '"+LinuxAccount.MAIL+'\'');
 
 		int aoServer=getAOServerForLinuxServerAccount(conn, account);
@@ -944,7 +954,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String username
+		UserId username
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "removeLinuxAccount", username);
 
@@ -954,7 +964,7 @@ final public class LinuxAccountHandler {
 	public static void removeLinuxAccount(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		String username
+		UserId username
 	) throws IOException, SQLException {
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove LinuxAccount with username '"+LinuxAccount.MAIL+'\'');
 
@@ -991,7 +1001,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String name
+		GroupId name
 	) throws IOException, SQLException {
 		checkAccessLinuxGroup(conn, source, "removeLinuxGroup", name);
 
@@ -1001,7 +1011,7 @@ final public class LinuxAccountHandler {
 	public static void removeLinuxGroup(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		String name
+		GroupId name
 	) throws IOException, SQLException {
 		if(
 			name.equals(LinuxGroup.FTPONLY)
@@ -1089,8 +1099,8 @@ final public class LinuxAccountHandler {
 	public static void removeUnusedAlternateLinuxGroupAccount(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		String group,
-		String username
+		GroupId group,
+		UserId username
 	) throws IOException, SQLException {
 		int pkey=conn.executeIntQuery(
 			"select\n"
@@ -1169,7 +1179,7 @@ final public class LinuxAccountHandler {
 		InvalidateList invalidateList,
 		int account
 	) throws IOException, SQLException {
-		String username=getUsernameForLinuxServerAccount(conn, account);
+		UserId username=getUsernameForLinuxServerAccount(conn, account);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove LinuxServerAccount for user '"+LinuxAccount.MAIL+'\'');
 
 		int aoServer = getAOServerForLinuxServerAccount(conn, account);
@@ -1243,7 +1253,7 @@ final public class LinuxAccountHandler {
 		InvalidateList invalidateList,
 		int group
 	) throws IOException, SQLException {
-		String groupName=getGroupNameForLinuxServerGroup(conn, group);
+		GroupId groupName=getGroupNameForLinuxServerGroup(conn, group);
 		if(
 			groupName.equals(LinuxGroup.FTPONLY)
 			|| groupName.equals(LinuxGroup.MAIL)
@@ -1291,7 +1301,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "setAutoresponder", pkey);
 		if(isLinuxServerAccountDisabled(conn, pkey)) throw new SQLException("Unable to set autoresponder, LinuxServerAccount disabled: "+pkey);
-		String username=getUsernameForLinuxServerAccount(conn, pkey);
+		UserId username=getUsernameForLinuxServerAccount(conn, pkey);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set autoresponder for user '"+LinuxAccount.MAIL+'\'');
 		String type=getTypeForLinuxAccount(conn, username);
 		if(
@@ -1307,17 +1317,15 @@ final public class LinuxAccountHandler {
 
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		int aoServer=getAOServerForLinuxServerAccount(conn, pkey);
-		String path;
-		if(content==null && !enabled) path=null;
-		else {
-			path=conn.executeStringQuery(
-				"select coalesce(autoresponder_path, '') from linux_server_accounts where pkey=?",
+		UnixPath path;
+		if(content==null && !enabled) {
+			path = null;
+		} else {
+			path = conn.executeObjectQuery(
+				ObjectFactories.unixPathFactory,
+				"select coalesce(autoresponder_path, home || '/.autorespond.txt') from linux_server_accounts where pkey=?",
 				pkey
 			);
-			if(path.length()==0) {
-				String home=conn.executeStringQuery("select home from linux_server_accounts where pkey=?", pkey);
-				path=home+"/.autorespond.txt";
-			}
 		}
 		int uid;
 		int gid;
@@ -1359,7 +1367,7 @@ final public class LinuxAccountHandler {
 				if(from==-1) pstmt.setNull(1, Types.INTEGER);
 				else pstmt.setInt(1, from);
 				pstmt.setString(2, subject);
-				pstmt.setString(3, path);
+				pstmt.setString(3, ObjectUtils.toString(path));
 				pstmt.setBoolean(4, enabled);
 				pstmt.setInt(5, pkey);
 				pstmt.executeUpdate();
@@ -1395,7 +1403,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "setCronTable", lsa);
 		if(isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to set cron table, LinuxServerAccount disabled: "+lsa);
-		String username=getUsernameForLinuxServerAccount(conn, lsa);
+		UserId username=getUsernameForLinuxServerAccount(conn, lsa);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the cron table for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 		String type=getTypeForLinuxAccount(conn, username);
 		if(
@@ -1410,7 +1418,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String username,
+		UserId username,
 		Gecos phone
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountHomePhone", username);
@@ -1430,7 +1438,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String username,
+		UserId username,
 		Gecos name
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountName", username);
@@ -1450,7 +1458,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String username,
+		UserId username,
 		Gecos location
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountOfficeLocation", username);
@@ -1470,7 +1478,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String username,
+		UserId username,
 		Gecos phone
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountOfficePhone", username);
@@ -1490,8 +1498,8 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String username,
-		String shell
+		UserId username,
+		UnixPath shell
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountOfficeShell", username);
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set shell, LinuxAccount disabled: "+username);
@@ -1515,44 +1523,40 @@ final public class LinuxAccountHandler {
 		int pkey,
 		String password
 	) throws IOException, SQLException {
-		try {
-			BusinessHandler.checkPermission(conn, source, "setLinuxServerAccountPassword", AOServPermission.Permission.set_linux_server_account_password);
-			checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountPassword", pkey);
-			if(isLinuxServerAccountDisabled(conn, pkey)) throw new SQLException("Unable to set LinuxServerAccount password, account disabled: "+pkey);
+		BusinessHandler.checkPermission(conn, source, "setLinuxServerAccountPassword", AOServPermission.Permission.set_linux_server_account_password);
+		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountPassword", pkey);
+		if(isLinuxServerAccountDisabled(conn, pkey)) throw new SQLException("Unable to set LinuxServerAccount password, account disabled: "+pkey);
 
-			String username=getUsernameForLinuxServerAccount(conn, pkey);
-			if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set password for LinuxServerAccount named '"+LinuxAccount.MAIL+"': "+pkey);
-			String type=conn.executeStringQuery("select type from linux_accounts where username=?", username);
+		UserId username=getUsernameForLinuxServerAccount(conn, pkey);
+		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set password for LinuxServerAccount named '"+LinuxAccount.MAIL+"': "+pkey);
+		String type=conn.executeStringQuery("select type from linux_accounts where username=?", username);
 
-			// Make sure passwords can be set before doing a strength check
-			if(!LinuxAccountType.canSetPassword(type)) throw new SQLException("Passwords may not be set for LinuxAccountType="+type);
+		// Make sure passwords can be set before doing a strength check
+		if(!LinuxAccountType.canSetPassword(type)) throw new SQLException("Passwords may not be set for LinuxAccountType="+type);
 
-			if(password!=null && password.length()>0) {
-				// Perform the password check here, too.
-				List<PasswordChecker.Result> results = LinuxAccount.checkPassword(UserId.valueOf(username), type, password);
-				if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
-			}
-
-			AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
-			int aoServer=getAOServerForLinuxServerAccount(conn, pkey);
-			try {
-				DaemonHandler.getDaemonConnector(conn, aoServer).setLinuxServerAccountPassword(username, password);
-			} catch(IOException | SQLException err) {
-				System.err.println("Unable to set linux account password for "+username+" on "+aoServer);
-				throw err;
-			}
-
-			// Update the ao_servers table for emailmon and ftpmon
-			/*if(username.equals(LinuxAccount.EMAILMON)) {
-				conn.executeUpdate("update ao_servers set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
-				invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
-			} else if(username.equals(LinuxAccount.FTPMON)) {
-				conn.executeUpdate("update ao_servers set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
-				invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
-			}*/
-		} catch(ValidationException err) {
-			throw new SQLException(err.getMessage(), err);
+		if(password!=null && password.length()>0) {
+			// Perform the password check here, too.
+			List<PasswordChecker.Result> results = LinuxAccount.checkPassword(username, type, password);
+			if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 		}
+
+		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		int aoServer=getAOServerForLinuxServerAccount(conn, pkey);
+		try {
+			DaemonHandler.getDaemonConnector(conn, aoServer).setLinuxServerAccountPassword(username, password);
+		} catch(IOException | SQLException err) {
+			System.err.println("Unable to set linux account password for "+username+" on "+aoServer);
+			throw err;
+		}
+
+		// Update the ao_servers table for emailmon and ftpmon
+		/*if(username.equals(LinuxAccount.EMAILMON)) {
+			conn.executeUpdate("update ao_servers set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
+			invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
+		} else if(username.equals(LinuxAccount.FTPMON)) {
+			conn.executeUpdate("update ao_servers set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
+			invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
+		}*/
 	}
 
 	public static void setLinuxServerAccountPredisablePassword(
@@ -1594,7 +1598,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountJunkEmailRetention", pkey);
-		String username=getUsernameForLinuxServerAccount(conn, pkey);
+		UserId username=getUsernameForLinuxServerAccount(conn, pkey);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the junk email retention for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 
 		// Update the database
@@ -1629,7 +1633,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountSpamAssassinIntegrationMode", pkey);
-		String username=getUsernameForLinuxServerAccount(conn, pkey);
+		UserId username=getUsernameForLinuxServerAccount(conn, pkey);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the spam assassin integration mode for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 
 		// Update the database
@@ -1657,7 +1661,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountSpamAssassinRequiredScore", pkey);
-		String username=getUsernameForLinuxServerAccount(conn, pkey);
+		UserId username=getUsernameForLinuxServerAccount(conn, pkey);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the spam assassin required score for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 
 		// Update the database
@@ -1685,7 +1689,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountSpamAssassinDiscardScore", pkey);
-		String username=getUsernameForLinuxServerAccount(conn, pkey);
+		UserId username=getUsernameForLinuxServerAccount(conn, pkey);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the spam assassin discard score for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 
 		// Update the database
@@ -1720,7 +1724,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountTrashEmailRetention", pkey);
-		String username=getUsernameForLinuxServerAccount(conn, pkey);
+		UserId username=getUsernameForLinuxServerAccount(conn, pkey);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the trash email retention for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 
 		// Update the database
@@ -1755,7 +1759,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountUseInbox", pkey);
-		String username=getUsernameForLinuxServerAccount(conn, pkey);
+		UserId username=getUsernameForLinuxServerAccount(conn, pkey);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the use_inbox flag for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 
 		// Update the database
@@ -1787,7 +1791,7 @@ final public class LinuxAccountHandler {
 		DaemonHandler.getDaemonConnector(conn, aoServer).waitForLinuxAccountRebuild();
 	}
 
-	static boolean canLinuxGroupAccessServer(DatabaseConnection conn, RequestSource source, String groupName, int aoServer) throws IOException, SQLException {
+	static boolean canLinuxGroupAccessServer(DatabaseConnection conn, RequestSource source, GroupId groupName, int aoServer) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
 			"select\n"
 			+ "  (\n"
@@ -1810,7 +1814,7 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	static void checkLinuxGroupAccessServer(DatabaseConnection conn, RequestSource source, String action, String groupName, int server) throws IOException, SQLException {
+	static void checkLinuxGroupAccessServer(DatabaseConnection conn, RequestSource source, String action, GroupId groupName, int server) throws IOException, SQLException {
 		if(!canLinuxGroupAccessServer(conn, source, groupName, server)) {
 			String message=
 				"groupName="
@@ -1825,7 +1829,7 @@ final public class LinuxAccountHandler {
 		}
 	}
 
-	public static AccountingCode getBusinessForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
+	public static AccountingCode getBusinessForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
 			"select pk.accounting from linux_groups lg, packages pk where lg.package=pk.name and lg.name=?",
@@ -1896,8 +1900,12 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static String getGroupNameForLinuxServerGroup(DatabaseConnection conn, int lsgPKey) throws IOException, SQLException {
-		return conn.executeStringQuery("select name from linux_server_groups where pkey=?", lsgPKey);
+	public static GroupId getGroupNameForLinuxServerGroup(DatabaseConnection conn, int lsgPKey) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.groupIdFactory,
+			"select name from linux_server_groups where pkey=?",
+			lsgPKey
+		);
 	}
 
 	public static int getAOServerForLinuxServerAccount(DatabaseConnection conn, int account) throws IOException, SQLException {
@@ -1908,11 +1916,11 @@ final public class LinuxAccountHandler {
 		return conn.executeIntQuery("select ao_server from linux_server_groups where pkey=?", group);
 	}
 
-	public static IntList getAOServersForLinuxAccount(DatabaseConnection conn, String username) throws IOException, SQLException {
+	public static IntList getAOServersForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		return conn.executeIntListQuery("select ao_server from linux_server_accounts where username=?", username);
 	}
 
-	public static IntList getAOServersForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
+	public static IntList getAOServersForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
 		return conn.executeIntListQuery("select ao_server from linux_server_groups where name=?", name);
 	}
 
@@ -1933,7 +1941,7 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static String getTypeForLinuxAccount(DatabaseConnection conn, String username) throws IOException, SQLException {
+	public static String getTypeForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		return conn.executeStringQuery("select type from linux_accounts where username=?", username);
 	}
 
@@ -1965,7 +1973,7 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static int getLinuxServerAccount(DatabaseConnection conn, String username, int aoServer) throws IOException, SQLException {
+	public static int getLinuxServerAccount(DatabaseConnection conn, UserId username, int aoServer) throws IOException, SQLException {
 		int pkey=conn.executeIntQuery(
 			"select coalesce(\n"
 			+ "  (\n"
@@ -1985,16 +1993,17 @@ final public class LinuxAccountHandler {
 		return pkey;
 	}
 
-	public static IntList getLinuxServerAccountsForLinuxAccount(DatabaseConnection conn, String username) throws IOException, SQLException {
+	public static IntList getLinuxServerAccountsForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		return conn.executeIntListQuery("select pkey from linux_server_accounts where username=?", username);
 	}
 
-	public static IntList getLinuxServerGroupsForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
+	public static IntList getLinuxServerGroupsForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
 		return conn.executeIntListQuery("select pkey from linux_server_groups where name=?", name);
 	}
 
-	public static String getPackageForLinuxGroup(DatabaseConnection conn, String name) throws IOException, SQLException {
-		return conn.executeStringQuery(
+	public static AccountingCode getPackageForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.accountingCodeFactory,
 			"select\n"
 			+ "  package\n"
 			+ "from\n"
@@ -2005,8 +2014,9 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static String getPackageForLinuxServerGroup(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeStringQuery(
+	public static AccountingCode getPackageForLinuxServerGroup(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.accountingCodeFactory,
 			"select\n"
 			+ "  lg.package\n"
 			+ "from\n"
@@ -2027,16 +2037,28 @@ final public class LinuxAccountHandler {
 		return conn.executeIntQuery("select uid from linux_server_accounts where pkey=?", pkey);
 	}
 
-	public static String getLinuxAccountForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
-		return conn.executeStringQuery("select username from linux_group_accounts where pkey=?", lga);
+	public static UserId getLinuxAccountForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.userIdFactory,
+			"select username from linux_group_accounts where pkey=?",
+			lga
+		);
 	}
 
-	public static String getLinuxGroupForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
-		return conn.executeStringQuery("select group_name from linux_group_accounts where pkey=?", lga);
+	public static GroupId getLinuxGroupForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.groupIdFactory,
+			"select group_name from linux_group_accounts where pkey=?",
+			lga
+		);
 	}
 
-	public static String getUsernameForLinuxServerAccount(DatabaseConnection conn, int account) throws IOException, SQLException {
-		return conn.executeStringQuery("select username from linux_server_accounts where pkey=?", account);
+	public static UserId getUsernameForLinuxServerAccount(DatabaseConnection conn, int account) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.userIdFactory,
+			"select username from linux_server_accounts where pkey=?",
+			account
+		);
 	}
 
 	public static boolean comparePassword(
@@ -2048,7 +2070,7 @@ final public class LinuxAccountHandler {
 		checkAccessLinuxServerAccount(conn, source, "comparePassword", pkey);
 		if(isLinuxServerAccountDisabled(conn, pkey)) throw new SQLException("Unable to compare password, LinuxServerAccount disabled: "+pkey);
 
-		String username=getUsernameForLinuxServerAccount(conn, pkey);
+		UserId username=getUsernameForLinuxServerAccount(conn, pkey);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to compare password for LinuxServerAccount named '"+LinuxAccount.MAIL+"': "+pkey);
 		String type=conn.executeStringQuery("select type from linux_accounts where username=?", username);
 
@@ -2069,9 +2091,17 @@ final public class LinuxAccountHandler {
 		int pkey
 	) throws IOException, SQLException {
 		checkAccessLinuxGroupAccount(conn, source, "setPrimaryLinuxGroupAccount", pkey);
-		String username=conn.executeStringQuery("select username from linux_group_accounts where pkey=?", pkey);
+		UserId username = conn.executeObjectQuery(
+			ObjectFactories.userIdFactory,
+			"select username from linux_group_accounts where pkey=?",
+			pkey
+		);
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set primary LinuxGroupAccount, LinuxAccount disabled: "+username);
-		String group=conn.executeStringQuery("select group_name from linux_group_accounts where pkey=?", pkey);
+		GroupId group = conn.executeObjectQuery(
+			ObjectFactories.groupIdFactory,
+			"select group_name from linux_group_accounts where pkey=?",
+			pkey
+		);
 
 		conn.executeUpdate(
 			"update linux_group_accounts set is_primary=true where pkey=?",

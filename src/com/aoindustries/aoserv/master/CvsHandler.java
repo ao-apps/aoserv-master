@@ -76,9 +76,9 @@ final public class CvsHandler {
 					}
 				}
 				if(!found) throw new SQLException("Home directory not allowed for path: "+homeDir);
-			} else if(pathStr.startsWith("/var/cvs/")) {
+			} else if(pathStr.startsWith(CvsRepository.DEFAULT_CVS_DIRECTORY + "/")) {
 				// Must be directly in /var/cvs/ folder.
-				int slashPos=pathStr.indexOf('/', 9);
+				int slashPos=pathStr.indexOf('/', CvsRepository.DEFAULT_CVS_DIRECTORY.toString().length() + 1);
 				if(slashPos!=-1) throw new SQLException("Invalid path: "+path);
 			} else if(pathStr.startsWith(httpdSitesDirStr+ '/')) {
 				int slashPos = pathStr.indexOf('/', httpdSitesDirStr.length() + 1);

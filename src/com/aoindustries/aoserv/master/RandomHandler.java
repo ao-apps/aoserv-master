@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2004-2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -7,10 +7,11 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.FifoFile;
 import com.aoindustries.io.FifoFileInputStream;
 import com.aoindustries.io.FifoFileOutputStream;
-import com.aoindustries.dbc.DatabaseConnection;
 import java.io.EOFException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -23,92 +24,94 @@ import java.sql.SQLException;
  */
 public final class RandomHandler {
 
-    private static FifoFile fifoFile;
-    
-    public static FifoFile getFifoFile() throws IOException {
-        synchronized(RandomHandler.class) {
-            if(fifoFile==null) fifoFile=new FifoFile(MasterConfiguration.getEntropyPoolFilePath(), AOServConnector.MASTER_ENTROPY_POOL_SIZE);
-            return fifoFile;
-        }
-    }
-    
-    private static void checkAccessEntropy(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
-        boolean isAllowed=false;
+	private static FifoFile fifoFile;
 
-        String mustring=source.getUsername();
-        MasterUser mu = MasterServer.getMasterUser(conn, mustring);
-        if (mu!=null) {
-            com.aoindustries.aoserv.client.MasterServer[] masterServers=MasterServer.getMasterServers(conn, mustring);
-            if(masterServers.length==0) isAllowed=true;
-            else {
-                for(int c=0;c<masterServers.length;c++) {
-                    if(ServerHandler.isAOServer(conn, masterServers[c].getServerPKey())) {
-                        isAllowed=true;
-                        break;
-                    }
-                }
-            }
-        }
-        if(!isAllowed) {
-            String message=
-                "business_administrator.username="
-                +mustring
-                +" is not allowed to access the master entropy pool: action='"
-                +action
-            ;
-            throw new SQLException(message);
-        }
-    }
+	public static FifoFile getFifoFile() throws IOException {
+		synchronized(RandomHandler.class) {
+			if(fifoFile==null) fifoFile=new FifoFile(MasterConfiguration.getEntropyPoolFilePath(), AOServConnector.MASTER_ENTROPY_POOL_SIZE);
+			return fifoFile;
+		}
+	}
 
-    public static void addMasterEntropy(
-        DatabaseConnection conn,
-        RequestSource source,
-        byte[] entropy
-    ) throws IOException, SQLException {
-        checkAccessEntropy(conn, source, "addMasterEntropy");
+	private static void checkAccessEntropy(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
+		boolean isAllowed=false;
 
-        FifoFile file=getFifoFile();
-        synchronized(file) {
-            FifoFileOutputStream fileOut=file.getOutputStream();
-            long available=fileOut.available();
-            int addCount=entropy.length;
-            if(available<addCount) addCount=(int)available;
-            fileOut.write(entropy, 0, addCount);
-        }
-    }
+		UserId mustring=source.getUsername();
+		MasterUser mu = MasterServer.getMasterUser(conn, mustring);
+		if (mu!=null) {
+			com.aoindustries.aoserv.client.MasterServer[] masterServers=MasterServer.getMasterServers(conn, mustring);
+			if(masterServers.length==0) isAllowed=true;
+			else {
+				for (com.aoindustries.aoserv.client.MasterServer masterServer : masterServers) {
+					if (ServerHandler.isAOServer(conn, masterServer.getServerPKey())) {
+						isAllowed=true;
+						break;
+					}
+				}
+			}
+		}
+		if(!isAllowed) {
+			String message=
+				"business_administrator.username="
+				+mustring
+				+" is not allowed to access the master entropy pool: action='"
+				+action
+			;
+			throw new SQLException(message);
+		}
+	}
 
-    public static byte[] getMasterEntropy(
-        DatabaseConnection conn,
-        RequestSource source,
-        int numBytes
-    ) throws IOException, SQLException {
-        checkAccessEntropy(conn, source, "getMasterEntropy");
+	public static void addMasterEntropy(
+		DatabaseConnection conn,
+		RequestSource source,
+		byte[] entropy
+	) throws IOException, SQLException {
+		checkAccessEntropy(conn, source, "addMasterEntropy");
 
-        FifoFile file=getFifoFile();
-        synchronized(file) {
-            FifoFileInputStream fileIn=file.getInputStream();
-            long available=fileIn.available();
-            if(available<numBytes) numBytes=(int)available;
-            byte[] buff=new byte[numBytes];
-            int pos=0;
-            while(pos<numBytes) {
-                int ret=fileIn.read(buff, pos, numBytes-pos);
-                if(ret==-1) throw new EOFException("Unexpected EOF");
-                pos+=ret;
-            }
-            return buff;
-        }
-    }
+		FifoFile file=getFifoFile();
+		synchronized(file) {
+			FifoFileOutputStream fileOut=file.getOutputStream();
+			long available=fileOut.available();
+			int addCount=entropy.length;
+			if(available<addCount) addCount=(int)available;
+			fileOut.write(entropy, 0, addCount);
+		}
+	}
 
-    public static long getMasterEntropyNeeded(
-        DatabaseConnection conn,
-        RequestSource source
-    ) throws IOException, SQLException {
-        checkAccessEntropy(conn, source, "getMasterEntropyNeeded");
+	public static byte[] getMasterEntropy(
+		DatabaseConnection conn,
+		RequestSource source,
+		int numBytes
+	) throws IOException, SQLException {
+		checkAccessEntropy(conn, source, "getMasterEntropy");
 
-        FifoFile file=getFifoFile();
-        synchronized(file) {
-            return file.getMaximumFifoLength()-file.getLength();
-        }
-    }
+		FifoFile file=getFifoFile();
+		synchronized(file) {
+			FifoFileInputStream fileIn=file.getInputStream();
+			long available=fileIn.available();
+			if(available<numBytes) numBytes=(int)available;
+			byte[] buff=new byte[numBytes];
+			int pos=0;
+			while(pos<numBytes) {
+				int ret=fileIn.read(buff, pos, numBytes-pos);
+				if(ret==-1) throw new EOFException("Unexpected EOF");
+				pos+=ret;
+			}
+			return buff;
+		}
+	}
+
+	public static long getMasterEntropyNeeded(
+		DatabaseConnection conn,
+		RequestSource source
+	) throws IOException, SQLException {
+		checkAccessEntropy(conn, source, "getMasterEntropyNeeded");
+
+		FifoFile file=getFifoFile();
+		synchronized(file) {
+			return file.getMaximumFifoLength()-file.getLength();
+		}
+	}
+
+	private RandomHandler() {}
 }

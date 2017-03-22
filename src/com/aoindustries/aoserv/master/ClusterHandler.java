@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013, 2014, 2015, 2016 by AO Industries, Inc.,
+ * Copyright 2009-2013, 2014, 2015, 2016, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -291,7 +290,7 @@ final public class ClusterHandler implements CronJob {
 								// Try up to ten times
 								for(int c=0;c<10;c++) {
 									try {
-										final int rootPackagePkey = PackageHandler.getPKeyForPackage(database, BusinessHandler.getRootBusiness().toString());
+										final int rootPackagePkey = PackageHandler.getPKeyForPackage(database, BusinessHandler.getRootBusiness());
 										AOServDaemonConnector daemonConn = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
 										// Get the DRBD states
 										List<AOServer.DrbdReport> drbdReports = AOServer.parseDrbdReport(daemonConn.getDrbdReport());

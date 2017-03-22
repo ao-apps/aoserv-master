@@ -1,11 +1,13 @@
 /*
- * Copyright 2007-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.BusinessAdministrator;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.creditcards.AuthorizationResult;
 import com.aoindustries.creditcards.CaptureResult;
 import com.aoindustries.creditcards.CreditCard;
@@ -13,8 +15,9 @@ import com.aoindustries.creditcards.PersistenceMechanism;
 import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.creditcards.TransactionResult;
-import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.lang.ObjectUtils;
+import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.acl.Group;
@@ -28,7 +31,20 @@ import java.sql.SQLException;
  */
 public class MasterPersistenceMechanism implements PersistenceMechanism {
 
-    final private DatabaseConnection conn;
+	/**
+	 * The username used for actions taken directly by the AOServMaster
+	 * but that must be associated with a {@link BusinessAdministrator}.
+	 */
+	static final UserId MASTER_BUSINESS_ADMINISTRATOR;
+	static {
+		try {
+			MASTER_BUSINESS_ADMINISTRATOR = UserId.valueOf("aoserv").intern();
+		} catch(ValidationException e) {
+			throw new AssertionError("These hard-coded values are valid", e);
+		}
+	}
+
+	final private DatabaseConnection conn;
     final private InvalidateList invalidateList;
 
     public MasterPersistenceMechanism(DatabaseConnection conn, InvalidateList invalidateList) {
@@ -79,7 +95,11 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
             TransactionRequest transactionRequest = transaction.getTransactionRequest();
             CreditCard creditCard = transaction.getCreditCard();
             // Get the createdBy from the credit card persistence mechanism
-            String creditCardCreatedBy = conn.executeStringQuery("select created_by from credit_cards where pkey=?::integer", creditCard.getPersistenceUniqueId());
+            UserId creditCardCreatedBy = conn.executeObjectQuery(
+				ObjectFactories.userIdFactory,
+				"select created_by from credit_cards where pkey=?::integer",
+				creditCard.getPersistenceUniqueId()
+			);
             AccountingCode ccBusiness = conn.executeObjectQuery(
                 ObjectFactories.accountingCodeFactory,
                 "select accounting from credit_cards where pkey=?::integer",
@@ -135,15 +155,13 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 creditCard.getCountryCode(),
                 creditCard.getComments(),
                 System.currentTimeMillis(),
-                "aoserv",
+                MASTER_BUSINESS_ADMINISTRATOR,
                 principal==null ? null : principal.getName()
             );
             conn.commit();
             return Integer.toString(pkey);
         } catch(IOException err) {
-            SQLException sqlErr = new SQLException();
-            sqlErr.initCause(err);
-            throw sqlErr;
+            throw new SQLException(err);
         }
     }
 
@@ -199,7 +217,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 avsResult==null ? null : avsResult.name(),
                 authorizationResult.getApprovalCode(),
                 transaction.getCaptureTime(),
-                "aoserv",
+                MASTER_BUSINESS_ADMINISTRATOR,
                 transaction.getCapturePrincipalName(),
                 captureCommunicationResult==null ? null : captureCommunicationResult.name(),
                 captureResult.getProviderErrorCode(),
@@ -210,9 +228,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
             );
             conn.commit();
         } catch(IOException err) {
-            SQLException sqlErr = new SQLException();
-            sqlErr.initCause(err);
-            throw sqlErr;
+            throw new SQLException(err);
         }
     }
 

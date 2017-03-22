@@ -6,7 +6,6 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOSHCommand;
-import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.AOServPermission;
 import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.AOServer;
@@ -106,7 +105,6 @@ import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.MonthlyCharge;
 import com.aoindustries.aoserv.client.MySQLDBUser;
 import com.aoindustries.aoserv.client.MySQLDatabase;
-import com.aoindustries.aoserv.client.MySQLReservedWord;
 import com.aoindustries.aoserv.client.MySQLServer;
 import com.aoindustries.aoserv.client.MySQLServerUser;
 import com.aoindustries.aoserv.client.MySQLUser;
@@ -126,7 +124,6 @@ import com.aoindustries.aoserv.client.PaymentType;
 import com.aoindustries.aoserv.client.PhysicalServer;
 import com.aoindustries.aoserv.client.PostgresDatabase;
 import com.aoindustries.aoserv.client.PostgresEncoding;
-import com.aoindustries.aoserv.client.PostgresReservedWord;
 import com.aoindustries.aoserv.client.PostgresServer;
 import com.aoindustries.aoserv.client.PostgresServerUser;
 import com.aoindustries.aoserv.client.PostgresUser;
@@ -169,6 +166,7 @@ import com.aoindustries.aoserv.client.Username;
 import com.aoindustries.aoserv.client.VirtualDisk;
 import com.aoindustries.aoserv.client.VirtualServer;
 import com.aoindustries.aoserv.client.WhoisHistory;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataInputStream;
@@ -299,7 +297,7 @@ final public class TableHandler {
 		CompressedDataOutputStream out,
 		SchemaTable.TableID tableID
 	) throws IOException, SQLException {
-		String username=source.getUsername();
+		UserId username=source.getUsername();
 		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
 		com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
 		switch(tableID) {
@@ -307,17 +305,19 @@ final public class TableHandler {
 			{
 				int pkey=in.readCompressedInt();
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObject(
 						conn,
 						source,
 						out,
+						new BackupReport(),
 						"select * from backup_reports where pkey=?",
-						pkey,
-						new BackupReport()
+						pkey
 					); else MasterServer.writeObject(
 						conn,
 						source,
 						out,
+						new BackupReport(),
 						"select\n"
 						+ "  br.*\n"
 						+ "from\n"
@@ -328,14 +328,14 @@ final public class TableHandler {
 						+ "  and ms.server=br.server\n"
 						+ "  and br.pkey=?",
 						username,
-						pkey,
-						new BackupReport()
+						pkey
 					);
 				} else {
 					MasterServer.writeObject(
 						conn,
 						source,
 						out,
+						new BackupReport(),
 						"select\n"
 						+ "  br.*\n"
 						+ "from\n"
@@ -354,8 +354,7 @@ final public class TableHandler {
 						+ "  and pk2.pkey=br.package\n"
 						+ "  and br.pkey=?",
 						username,
-						pkey,
-						new BackupReport()
+						pkey
 					);
 				}
 				break;
@@ -366,6 +365,7 @@ final public class TableHandler {
 						conn,
 						source,
 						out,
+						new BankTransaction(),
 						"select\n"
 						+ "  time::date,\n"
 						+ "  transid,\n"
@@ -382,22 +382,25 @@ final public class TableHandler {
 						+ "  bank_transactions\n"
 						+ "where\n"
 						+ "  transid=?",
-						in.readCompressedInt(),
-						new BankTransaction()
+						in.readCompressedInt()
 					);
 				} else out.writeByte(AOServProtocol.DONE);
 				break;
 			case SPAM_EMAIL_MESSAGES :
 				{
 					int pkey=in.readCompressedInt();
-					if(masterUser!=null && masterServers.length==0) MasterServer.writeObject(
-						conn,
-						source,
-						out,
-						"select * from spam_email_messages where pkey=?",
-						pkey,
-						new SpamEmailMessage()
-					); else throw new SQLException("Only master users may access spam_email_messages.");
+					if(masterUser!=null && masterServers!=null && masterServers.length==0) {
+						MasterServer.writeObject(
+							conn,
+							source,
+							out,
+							new SpamEmailMessage(),
+							"select * from spam_email_messages where pkey=?",
+							pkey
+						);
+					} else {
+						throw new SQLException("Only master users may access spam_email_messages.");
+					}
 				}
 				break;
 			case TRANSACTIONS :
@@ -407,9 +410,9 @@ final public class TableHandler {
 						conn,
 						source,
 						out,
+						new Transaction(),
 						"select * from transactions where transid=?",
-						transid,
-						new Transaction()
+						transid
 					);
 				} else {
 					out.writeShort(AOServProtocol.DONE);
@@ -423,8 +426,8 @@ final public class TableHandler {
 	/**
 	 * Caches row counts for each table on a per-username basis.
 	 */
-	private static final Map<String,int[]> rowCountsPerUsername=new HashMap<>();
-	private static final Map<String,long[]> expireTimesPerUsername=new HashMap<>();
+	private static final Map<UserId,int[]> rowCountsPerUsername=new HashMap<>();
+	private static final Map<UserId,long[]> expireTimesPerUsername=new HashMap<>();
 
 	private static final int MAX_ROW_COUNT_CACHE_AGE=60*60*1000;
 
@@ -437,7 +440,7 @@ final public class TableHandler {
 		RequestSource source,
 		SchemaTable.TableID tableID
 	) throws IOException, SQLException {
-		String username=source.getUsername();
+		UserId username=source.getUsername();
 
 		// Synchronize to get the correct objects
 		int[] rowCounts;
@@ -479,12 +482,13 @@ final public class TableHandler {
 		RequestSource source,
 		SchemaTable.TableID tableID
 	) throws IOException, SQLException {
-		String username=source.getUsername();
+		UserId username=source.getUsername();
 		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
 		com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
 		switch(tableID) {
 			case DISTRO_FILES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_107)<=0) {
 							return 0;
@@ -526,13 +530,14 @@ final public class TableHandler {
 		boolean provideProgress,
 		final SchemaTable.TableID tableID
 	) throws IOException, SQLException {
-		String username=source.getUsername();
+		UserId username=source.getUsername();
 		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
 		com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
 
 		switch(tableID) {
 			case AO_SERVER_DAEMON_HOSTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -563,6 +568,7 @@ final public class TableHandler {
 				break;
 			case AO_SERVERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -707,6 +713,7 @@ final public class TableHandler {
 				break;
 			case BACKUP_PARTITIONS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -779,6 +786,7 @@ final public class TableHandler {
 				break;
 			case BACKUP_REPORTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -899,6 +907,7 @@ final public class TableHandler {
 				break;
 			case BLACKHOLE_EMAIL_ADDRESSES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -957,6 +966,7 @@ final public class TableHandler {
 				break;
 			case BRANDS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						MasterServer.writeObjects(
 							conn,
@@ -1051,6 +1061,7 @@ final public class TableHandler {
 				break;
 			case BUSINESS_ADMINISTRATORS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1154,6 +1165,7 @@ final public class TableHandler {
 				break;
 			case BUSINESS_ADMINISTRATOR_PERMISSIONS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1213,6 +1225,7 @@ final public class TableHandler {
 				break;
 			case BUSINESS_PROFILES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1263,6 +1276,7 @@ final public class TableHandler {
 				break;
 			case BUSINESS_SERVERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1311,6 +1325,7 @@ final public class TableHandler {
 				break;
 			case BUSINESSES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1360,6 +1375,7 @@ final public class TableHandler {
 			case CREDIT_CARD_PROCESSORS :
 				if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_card_processors)) {
 					if(masterUser!=null) {
+						assert masterServers != null;
 						if(masterServers.length==0) MasterServer.writeObjects(
 							conn,
 							source,
@@ -1402,6 +1418,7 @@ final public class TableHandler {
 			case CREDIT_CARDS :
 				if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_cards)) {
 					if(masterUser!=null) {
+						assert masterServers != null;
 						if(masterServers.length==0) MasterServer.writeObjects(
 							conn,
 							source,
@@ -1444,6 +1461,7 @@ final public class TableHandler {
 			case CREDIT_CARD_TRANSACTIONS :
 				if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_card_transactions)) {
 					if(masterUser!=null) {
+						assert masterServers != null;
 						if(masterServers.length==0) MasterServer.writeObjects(
 							conn,
 							source,
@@ -1495,6 +1513,7 @@ final public class TableHandler {
 				break;
 			case CVS_REPOSITORIES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1551,6 +1570,7 @@ final public class TableHandler {
 				break;
 			case DISABLE_LOG :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1616,6 +1636,7 @@ final public class TableHandler {
 				break;
 			case DISTRO_FILES :
 				if(masterUser!=null && masterUser.isActive()) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.DISTRO_FILES));
 						if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_107)<=0) {
@@ -1681,6 +1702,7 @@ final public class TableHandler {
 				break;
 			case DNS_RECORDS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0 || masterUser.isDNSAdmin()) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1741,6 +1763,7 @@ final public class TableHandler {
 				break;
 			case DNS_ZONES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0 || masterUser.isDNSAdmin()) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1779,6 +1802,7 @@ final public class TableHandler {
 				break;
 			case EMAIL_ADDRESSES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1833,6 +1857,7 @@ final public class TableHandler {
 				break;
 			case EMAIL_ATTACHMENT_BLOCKS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1899,6 +1924,7 @@ final public class TableHandler {
 				break;
 			case EMAIL_FORWARDING :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -1957,6 +1983,7 @@ final public class TableHandler {
 				break;
 			case EMAIL_LIST_ADDRESSES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2015,6 +2042,7 @@ final public class TableHandler {
 				break;
 			case EMAIL_LISTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2071,6 +2099,7 @@ final public class TableHandler {
 				break;
 			case EMAIL_PIPE_ADDRESSES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2129,6 +2158,7 @@ final public class TableHandler {
 				break;
 			case EMAIL_PIPES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2189,6 +2219,7 @@ final public class TableHandler {
 				break;
 			case ENCRYPTION_KEYS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						MasterServer.writeObjects(
 							conn,
@@ -2244,6 +2275,7 @@ final public class TableHandler {
 				break;
 			case FAILOVER_FILE_LOG :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2294,6 +2326,7 @@ final public class TableHandler {
 				break;
 			case FAILOVER_FILE_REPLICATIONS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2340,6 +2373,7 @@ final public class TableHandler {
 				break;
 			case FAILOVER_FILE_SCHEDULE :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2390,6 +2424,7 @@ final public class TableHandler {
 				break;
 			case FAILOVER_MYSQL_REPLICATIONS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2456,6 +2491,7 @@ final public class TableHandler {
 				break;
 			case FILE_BACKUP_SETTINGS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2512,6 +2548,7 @@ final public class TableHandler {
 				break;
 			case FTP_GUEST_USERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2572,6 +2609,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_BINDS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2637,6 +2675,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_JBOSS_SITES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						MasterServer.writeObjects(
 							conn,
@@ -2725,6 +2764,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_SERVERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2773,6 +2813,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_SHARED_TOMCATS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2827,6 +2868,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_SITE_AUTHENTICATED_LOCATIONS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2881,6 +2923,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_SITE_BINDS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2935,6 +2978,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_SITE_URLS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -2993,6 +3037,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_SITES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -3043,6 +3088,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_STATIC_SITES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -3097,6 +3143,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_TOMCAT_CONTEXTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -3151,6 +3198,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_TOMCAT_DATA_SOURCES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -3209,6 +3257,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_TOMCAT_PARAMETERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -3267,6 +3316,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_TOMCAT_SITES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -3321,6 +3371,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_TOMCAT_SHARED_SITES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -3375,6 +3426,7 @@ final public class TableHandler {
 				break;
 			case HTTPD_TOMCAT_STD_SITES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -3440,6 +3492,7 @@ final public class TableHandler {
 			// <editor-fold defaultstate="collapsed" desc="Httpd Workers">
 			case HTTPD_WORKERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -3496,6 +3549,7 @@ final public class TableHandler {
 			// <editor-fold defaultstate="collapsed" desc="IP Addresses">
 			case IP_ADDRESSES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -3640,6 +3694,7 @@ final public class TableHandler {
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Limiter Limits">
 			case IP_REPUTATION_LIMITER_LIMITS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						// Admin may access all limiters
 						MasterServer.writeObjects(
@@ -3703,6 +3758,7 @@ final public class TableHandler {
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Limiter Sets">
 			case IP_REPUTATION_LIMITER_SETS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						// Admin may access all limiters
 						MasterServer.writeObjects(
@@ -3766,6 +3822,7 @@ final public class TableHandler {
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Limiters">
 			case IP_REPUTATION_LIMITERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						// Admin may access all limiters
 						MasterServer.writeObjects(
@@ -3827,6 +3884,7 @@ final public class TableHandler {
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Set Hosts">
 			case IP_REPUTATION_SET_HOSTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						// Admin may access all sets
 						MasterServer.writeObjects(
@@ -3897,6 +3955,7 @@ final public class TableHandler {
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Set Networks">
 			case IP_REPUTATION_SET_NETWORKS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						// Admin may access all sets
 						MasterServer.writeObjects(
@@ -3967,6 +4026,7 @@ final public class TableHandler {
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Sets">
 			case IP_REPUTATION_SETS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						// Admin may access all sets
 						MasterServer.writeObjects(
@@ -4065,6 +4125,7 @@ final public class TableHandler {
 			// </editor-fold>
 			case LINUX_ACC_ADDRESSES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4123,6 +4184,7 @@ final public class TableHandler {
 				break;
 			case LINUX_ACCOUNTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4197,6 +4259,7 @@ final public class TableHandler {
 				break;
 			case LINUX_GROUP_ACCOUNTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4297,6 +4360,7 @@ final public class TableHandler {
 				break;
 			case LINUX_GROUPS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4366,6 +4430,7 @@ final public class TableHandler {
 				break;
 			case LINUX_SERVER_ACCOUNTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4443,6 +4508,7 @@ final public class TableHandler {
 				break;
 			case LINUX_SERVER_GROUPS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4501,6 +4567,7 @@ final public class TableHandler {
 				break;
 			case MAJORDOMO_LISTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4555,6 +4622,7 @@ final public class TableHandler {
 				break;
 			case MAJORDOMO_SERVERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4619,6 +4687,7 @@ final public class TableHandler {
 				break;
 			case MASTER_HOSTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4695,6 +4764,7 @@ final public class TableHandler {
 				break;
 			case MASTER_SERVERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4748,6 +4818,7 @@ final public class TableHandler {
 				break;
 			case MASTER_USERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4807,6 +4878,7 @@ final public class TableHandler {
 				break;
 			case MONTHLY_CHARGES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						MasterServer.writeObjects(
 							conn,
@@ -4854,6 +4926,7 @@ final public class TableHandler {
 				break;
 			case MYSQL_DATABASES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4906,6 +4979,7 @@ final public class TableHandler {
 				break;
 			case MYSQL_DB_USERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -4960,18 +5034,9 @@ final public class TableHandler {
 					username
 				);
 				break;
-			case MYSQL_RESERVED_WORDS :
-				MasterServer.writeObjects(
-					conn,
-					source,
-					out,
-					provideProgress,
-					new MySQLReservedWord(),
-					"select * from mysql_reserved_words"
-				);
-				break;
 			case MYSQL_SERVER_USERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5035,6 +5100,7 @@ final public class TableHandler {
 				break;
 			case MYSQL_SERVERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5081,6 +5147,7 @@ final public class TableHandler {
 				break;
 			case MYSQL_USERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5141,6 +5208,7 @@ final public class TableHandler {
 				break;
 			case NET_BINDS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5319,6 +5387,7 @@ final public class TableHandler {
 				break;
 			case NET_DEVICES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5389,6 +5458,7 @@ final public class TableHandler {
 				break;
 			case NET_TCP_REDIRECTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5443,6 +5513,7 @@ final public class TableHandler {
 				break;
 			case NOTICE_LOG :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5519,6 +5590,7 @@ final public class TableHandler {
 				break;
 			case PACKAGE_DEFINITION_LIMITS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5616,6 +5688,7 @@ final public class TableHandler {
 				break;
 			case PACKAGE_DEFINITIONS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5716,6 +5789,7 @@ final public class TableHandler {
 				break;
 			case PACKAGES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5778,6 +5852,7 @@ final public class TableHandler {
 				break;
 			case PHYSICAL_SERVERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5830,6 +5905,7 @@ final public class TableHandler {
 				break;
 			case POSTGRES_DATABASES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5894,18 +5970,9 @@ final public class TableHandler {
 					"select * from postgres_encodings"
 				);
 				break;
-			case POSTGRES_RESERVED_WORDS :
-				MasterServer.writeObjects(
-					conn,
-					source,
-					out,
-					provideProgress,
-					new PostgresReservedWord(),
-					"select * from postgres_reserved_words"
-				);
-				break;
 			case POSTGRES_SERVER_USERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -5964,6 +6031,7 @@ final public class TableHandler {
 				break;
 			case POSTGRES_SERVERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6010,6 +6078,7 @@ final public class TableHandler {
 				break;
 			case POSTGRES_USERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6080,6 +6149,7 @@ final public class TableHandler {
 				break;
 			case PRIVATE_FTP_SERVERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6156,6 +6226,7 @@ final public class TableHandler {
 				break;
 			case RACKS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6210,6 +6281,7 @@ final public class TableHandler {
 				break;
 			case RESELLERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6425,6 +6497,7 @@ final public class TableHandler {
 				break;
 			case EMAIL_DOMAINS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6485,6 +6558,7 @@ final public class TableHandler {
 				break;
 			case EMAIL_SMTP_RELAYS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6541,6 +6615,7 @@ final public class TableHandler {
 				break;
 			case EMAIL_SMTP_SMART_HOST_DOMAINS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6597,6 +6672,7 @@ final public class TableHandler {
 				break;
 			case EMAIL_SMTP_SMART_HOSTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6653,6 +6729,7 @@ final public class TableHandler {
 				break;
 			case SERVER_FARMS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6713,6 +6790,7 @@ final public class TableHandler {
 				break;
 			case SERVERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6793,6 +6871,7 @@ final public class TableHandler {
 				break;
 			case SIGNUP_REQUEST_OPTIONS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						MasterServer.writeObjects(
 							conn,
@@ -6835,6 +6914,7 @@ final public class TableHandler {
 				break;
 			case SIGNUP_REQUESTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						MasterServer.writeObjects(
 							conn,
@@ -6874,17 +6954,18 @@ final public class TableHandler {
 				}
 				break;
 			case SPAM_EMAIL_MESSAGES :
-				if(masterUser!=null && masterServers.length==0) MasterServer.writeObjects(
+				if(masterUser!=null && masterServers!=null && masterServers.length==0) MasterServer.writeObjects(
 					conn,
 					source,
 					out,
 					provideProgress,
 					new SpamEmailMessage(),
 					"select * from spam_email_messages"
-				); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject<?,?>>());
+				); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
 				break;
 			case SYSTEM_EMAIL_ALIASES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -6998,6 +7079,7 @@ final public class TableHandler {
 				break;
 			case TICKET_ACTIONS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -7132,6 +7214,7 @@ final public class TableHandler {
 				break;
 			case TICKET_ASSIGNMENTS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -7183,6 +7266,7 @@ final public class TableHandler {
 				break;
 			case TICKET_BRAND_CATEGORIES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -7258,6 +7342,7 @@ final public class TableHandler {
 				break;
 			case TICKETS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						MasterServer.writeObjects(
 							conn,
@@ -7439,6 +7524,7 @@ final public class TableHandler {
 				break;
 			case TRANSACTIONS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -7446,7 +7532,7 @@ final public class TableHandler {
 						provideProgress,
 						new Transaction(),
 						"select * from transactions"
-					); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<AOServObject<?,?>>());
+					); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
 				} else MasterServer.writeObjects(
 					conn,
 					source,
@@ -7472,6 +7558,7 @@ final public class TableHandler {
 				break;
 			case USERNAMES :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -7541,6 +7628,7 @@ final public class TableHandler {
 				break;
 			case VIRTUAL_DISKS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -7593,6 +7681,7 @@ final public class TableHandler {
 				break;
 			case VIRTUAL_SERVERS :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
 						conn,
 						source,
@@ -7668,6 +7757,7 @@ final public class TableHandler {
 				break;
 			case WHOIS_HISTORY :
 				if(masterUser!=null) {
+					assert masterServers != null;
 					if(masterServers.length==0) {
 						MasterServer.writeObjects(
 							conn,
@@ -7789,7 +7879,7 @@ final public class TableHandler {
 			fromClientTableIDs.put(version, tableIDs);
 		}
 		Integer I=tableIDs.get(clientTableID);
-		return I==null?-1:I.intValue();
+		return I==null ? -1 : I;
 	}
 
 	final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> toClientTableIDs=new EnumMap<>(AOServProtocol.Version.class);
@@ -7825,7 +7915,7 @@ final public class TableHandler {
 			toClientTableIDs.put(version, clientTableIDs);
 		}
 		Integer I=clientTableIDs.get(tableID);
-		int clientTableID=I==null?-1:I.intValue();
+		int clientTableID = (I == null) ? -1 : I;
 		return clientTableID;
 	}
 
@@ -7894,14 +7984,14 @@ final public class TableHandler {
 			int numColumns=clientColumns.size();
 			columns=new HashMap<>(numColumns);
 			for(int c=0;c<numColumns;c++) {
-				columns.put(clientColumns.get(c), Integer.valueOf(c));
+				columns.put(clientColumns.get(c), c);
 			}
 			tables.put(tableID, columns);
 		}
 
 		// Return the column or -1 if not found
-		Integer columnIndex=columns.get(columnName);
-		return columnIndex==null?-1:columnIndex.intValue();
+		Integer columnIndex = columns.get(columnName);
+		return (columnIndex == null) ? -1 : columnIndex;
 	}
 
 	public static void invalidateTable(SchemaTable.TableID tableID) {

@@ -9,6 +9,10 @@ import com.aoindustries.aoserv.client.BackupReport;
 import com.aoindustries.aoserv.client.Business;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.GroupId;
+import com.aoindustries.aoserv.client.validator.MySQLUserId;
+import com.aoindustries.aoserv.client.validator.PostgresUserId;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
@@ -21,7 +25,6 @@ import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
@@ -67,18 +70,10 @@ final public class AccountCleaner implements CronJob {
     private AccountCleaner() {
     }
 
-    private static final Schedule schedule = new Schedule() {
-        /**
-         * Runs at 5:25 am daily.
-         */
-		@Override
-        public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-            return
-                minute==25
-                && hour==5
-            ;
-        }
-    };
+	/**
+	 * Runs at 5:25 am daily.
+	 */
+    private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) -> minute==25 && hour==5;
 
 	@Override
     public Schedule getCronJobSchedule() {
@@ -215,24 +210,26 @@ final public class AccountCleaner implements CronJob {
                 {
                     {
                         // look for any accounts that have been canceled but not disabled
-                        List<String> bus=conn.executeStringListQuery(
+                        List<AccountingCode> bus = conn.executeObjectListQuery(
+							ObjectFactories.accountingCodeFactory,
                             "select accounting from businesses where parent=? and canceled is not null and disable_log is null",
                             BusinessHandler.getRootBusiness()
                         );
-                        if(bus.size()>0) {
+                        if(!bus.isEmpty()) {
                             message
                                 .append("The following ")
                                 .append(bus.size()==1?"business has":"businesses have")
                                 .append(" been canceled but not disabled:\n");
-                            for(int c=0;c<bus.size();c++) message.append(bus.get(c)).append('\n');
+							for (AccountingCode bu : bus) {
+								message.append(bu).append('\n');
+							}
                             message.append('\n');
                         }
                     }
 
                     {
                         // look for any accounts that have been disabled for over two months but not canceled
-                        List<AccountingCode> bus = conn.executeObjectCollectionQuery(
-                            new ArrayList<AccountingCode>(),
+                        List<AccountingCode> bus = conn.executeObjectListQuery(
                             ObjectFactories.accountingCodeFactory,
                             "select\n"
                             + "  bu.accounting\n"
@@ -250,7 +247,9 @@ final public class AccountCleaner implements CronJob {
                                 .append("The following ")
                                 .append(bus.size()==1?"business has":"businesses have")
                                 .append(" been disabled for over 60 days but not canceled:\n");
-                            for(int c=0;c<bus.size();c++) message.append(bus.get(c)).append('\n');
+							for (AccountingCode bu : bus) {
+								message.append(bu).append('\n');
+							}
                             message.append('\n');
                         }
                     }
@@ -278,7 +277,8 @@ final public class AccountCleaner implements CronJob {
                 // business_administrators over CANCELED_KEEP_DAYS days
                 // remove if balance is zero and has not been used in ticket_actions or transactions
                 {
-                    List<String> bas=conn.executeStringListQuery(
+                    List<UserId> bas=conn.executeObjectListQuery(
+						ObjectFactories.userIdFactory,
                         "select\n"
                         + "  ba.username\n"
                         + "from\n"
@@ -299,14 +299,13 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
-                    for(int c=0;c<bas.size();c++) {
-                        String username=bas.get(c);
-                        AccountingCode business=UsernameHandler.getBusinessForUsername(conn, username);
-                        int balance=TransactionHandler.getConfirmedAccountBalance(conn, business);
-                        if(balance<=0) {
-                            BusinessHandler.removeBusinessAdministrator(conn, invalidateList, username);
-                        }
-                    }
+					for (UserId username : bas) {
+						AccountingCode business=UsernameHandler.getBusinessForUsername(conn, username);
+						int balance=TransactionHandler.getConfirmedAccountBalance(conn, business);
+						if(balance<=0) {
+							BusinessHandler.removeBusinessAdministrator(conn, invalidateList, username);
+						}
+					}
                 }
 
                 // cvs_repositories
@@ -350,9 +349,9 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
-                    for(int c=0;c<dzs.size();c++) {
-                        DNSHandler.removeDNSZone(conn, invalidateList, dzs.get(c));
-                    }
+					for (String dz : dzs) {
+						DNSHandler.removeDNSZone(conn, invalidateList, dz);
+					}
                 }
 
                 // email_lists
@@ -577,7 +576,7 @@ final public class AccountCleaner implements CronJob {
                     );
                     for(int c=0;c<ias.size();c++) {
                         int ia=ias.getInt(c);
-                        IPAddressHandler.setIPAddressPackage(conn, invalidateList, ia, BusinessHandler.getRootBusiness().toString());
+                        IPAddressHandler.setIPAddressPackage(conn, invalidateList, ia, BusinessHandler.getRootBusiness());
                         IPAddressHandler.releaseIPAddress(conn, invalidateList, ia);
                     }
                 }
@@ -606,7 +605,8 @@ final public class AccountCleaner implements CronJob {
 
                 // linux_accounts
                 {
-                    List<String> las=conn.executeStringListQuery(
+                    List<UserId> las=conn.executeObjectListQuery(
+						ObjectFactories.userIdFactory,
                         "select\n"
                         + "  la.username\n"
                         + "from\n"
@@ -622,19 +622,20 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
-                    for(int c=0;c<las.size();c++) {
-                        try {
-                            LinuxAccountHandler.removeLinuxAccount(conn, invalidateList, las.get(c));
-                        } catch(SQLException err) {
-                            System.err.println("SQLException trying to remove LinuxAccount: "+las.get(c));
-                            throw err;
-                        }
-                    }
+					for (UserId la : las) {
+						try {
+							LinuxAccountHandler.removeLinuxAccount(conn, invalidateList, la);
+						} catch (SQLException err) {
+							System.err.println("SQLException trying to remove LinuxAccount: " + la);
+							throw err;
+						}
+					}
                 }
 
                 // linux_groups
                 {
-                    List<String> lgs=conn.executeStringListQuery(
+                    List<GroupId> lgs=conn.executeObjectListQuery(
+						ObjectFactories.groupIdFactory,
                         "select\n"
                         + "  lg.name\n"
                         + "from\n"
@@ -648,14 +649,14 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
-                    for(int c=0;c<lgs.size();c++) {
-                        try {
-                            LinuxAccountHandler.removeLinuxGroup(conn, invalidateList, lgs.get(c));
-                        } catch(SQLException err) {
-                            System.err.println("SQLException trying to remove LinuxGroup: "+lgs.get(c));
-                            throw err;
-                        }
-                    }
+					for (GroupId lg : lgs) {
+						try {
+							LinuxAccountHandler.removeLinuxGroup(conn, invalidateList, lg);
+						} catch (SQLException err) {
+							System.err.println("SQLException trying to remove LinuxGroup: " + lg);
+							throw err;
+						}
+					}
                 }
 
                 // mysql_databases
@@ -681,7 +682,8 @@ final public class AccountCleaner implements CronJob {
 
                 // mysql_users
                 {
-                    List<String> mus=conn.executeStringListQuery(
+                    List<MySQLUserId> mus=conn.executeObjectListQuery(
+						ObjectFactories.mySQLUserIdFactory,
                         "select\n"
                         + "  mu.username\n"
                         + "from\n"
@@ -697,9 +699,9 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
-                    for(int c=0;c<mus.size();c++) {
-                        MySQLHandler.removeMySQLUser(conn, invalidateList, mus.get(c));
-                    }
+					for (MySQLUserId mu : mus) {
+						MySQLHandler.removeMySQLUser(conn, invalidateList, mu);
+					}
                 }
 
                 // postgres_databases
@@ -729,7 +731,8 @@ final public class AccountCleaner implements CronJob {
 
                 // postgres_users
                 {
-                    List<String> pus=conn.executeStringListQuery( 
+                    List<PostgresUserId> pus=conn.executeObjectListQuery(
+						ObjectFactories.postgresUserIdFactory,
                         "select\n"
                         + "  pu.username\n"
                         + "from\n"
@@ -745,15 +748,16 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
-                    for(int c=0;c<pus.size();c++) {
-                        PostgresHandler.removePostgresUser(conn, invalidateList, pus.get(c));
-                    }
+					for (PostgresUserId pu : pus) {
+						PostgresHandler.removePostgresUser(conn, invalidateList, pu);
+					}
                 }
 
                 // usernames
                 // delete all closed usernames, unless used by a business_administrator that was left behind
                 {
-                    List<String> uns=conn.executeStringListQuery( 
+                    List<UserId> uns=conn.executeObjectListQuery(
+						ObjectFactories.userIdFactory,
                         "select\n"
                         + "  un.username\n"
                         + "from\n"
@@ -768,9 +772,9 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select ba.username from business_administrators ba where ba.username=un.username) is null",
                         now
                     );
-                    for(int c=0;c<uns.size();c++) {
-                        UsernameHandler.removeUsername(conn, invalidateList, uns.get(c));
-                    }
+					for (UserId un : uns) {
+						UsernameHandler.removeUsername(conn, invalidateList, un);
+					}
                 }
 
                 // disable_log
@@ -856,19 +860,7 @@ final public class AccountCleaner implements CronJob {
                 if(message.length()>0) {
                     logger.log(Level.WARNING, message.toString());
                 }
-            } catch(RuntimeException err) {
-                if(conn.rollback()) {
-                    connRolledBack=true;
-                    invalidateList=null;
-                }
-                throw err;
-            } catch(ValidationException err) {
-                if(conn.rollback()) {
-                    connRolledBack=true;
-                    invalidateList=null;
-                }
-                throw err;
-            } catch(IOException err) {
+            } catch(RuntimeException | ValidationException | IOException err) {
                 if(conn.rollback()) {
                     connRolledBack=true;
                     invalidateList=null;
@@ -904,16 +896,7 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
             }
-        } catch(RuntimeException err) {
-            ErrorPrinter.printStackTraces(err);
-            System.exit(1);
-        } catch(ValidationException err) {
-            ErrorPrinter.printStackTraces(err);
-            System.exit(1);
-        } catch(IOException err) {
-            ErrorPrinter.printStackTraces(err);
-            System.exit(1);
-        } catch(SQLException err) {
+        } catch(RuntimeException | ValidationException | IOException | SQLException err) {
             ErrorPrinter.printStackTraces(err);
             System.exit(1);
         }

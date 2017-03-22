@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2008-2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -16,26 +16,26 @@ import java.sql.SQLException;
  */
 final public class NetDeviceHandler {
 
-    private NetDeviceHandler() {
-    }
+	private NetDeviceHandler() {
+	}
 
-    public static String getNetDeviceBondingReport(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
-        int server = getServerForNetDevice(conn, pkey);
-        if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
-        ServerHandler.checkAccessServer(conn, source, "getNetDeviceBondingReport", server);
+	public static String getNetDeviceBondingReport(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
+		int server = getServerForNetDevice(conn, pkey);
+		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
+		ServerHandler.checkAccessServer(conn, source, "getNetDeviceBondingReport", server);
 
-        return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceBondingReport(pkey);
-    }
+		return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceBondingReport(pkey);
+	}
 
-    public static String getNetDeviceStatisticsReport(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
-        int server = getServerForNetDevice(conn, pkey);
-        if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
-        ServerHandler.checkAccessServer(conn, source, "getNetDeviceStatisticsReport", server);
+	public static String getNetDeviceStatisticsReport(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
+		int server = getServerForNetDevice(conn, pkey);
+		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
+		ServerHandler.checkAccessServer(conn, source, "getNetDeviceStatisticsReport", server);
 
-        return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceStatisticsReport(pkey);
-    }
+		return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceStatisticsReport(pkey);
+	}
 
-    public static int getServerForNetDevice(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeIntQuery("select server from net_devices where pkey=?", pkey);
-    }
+	public static int getServerForNetDevice(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+		return conn.executeIntQuery("select server from net_devices where pkey=?", pkey);
+	}
 }

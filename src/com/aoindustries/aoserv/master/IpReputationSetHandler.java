@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2012-2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -11,8 +11,8 @@ import com.aoindustries.aoserv.client.IpReputationSetNetwork;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.dbc.ObjectFactory;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -231,18 +231,14 @@ final public class IpReputationSetHandler {
                 IpReputationSet.ConfidenceType confidence = addRep.getConfidence();
                 IpReputationSet.ReputationType reputationType = addRep.getReputationType();
                 short score = addRep.getScore();
-                IpReputationSetHost dbHost = conn.executeObjectQuery(
-                    Connection.TRANSACTION_READ_COMMITTED,
+                IpReputationSetHost dbHost = conn.executeObjectQuery(Connection.TRANSACTION_READ_COMMITTED,
                     true,
                     false,
-                    new ObjectFactory<IpReputationSetHost>() {
-						@Override
-                        public IpReputationSetHost createObject(ResultSet result) throws SQLException {
-                            IpReputationSetHost obj = new IpReputationSetHost();
-                            obj.init(result);
-                            return obj;
-                        }
-                    },
+					(ResultSet result) -> {
+						IpReputationSetHost obj = new IpReputationSetHost();
+						obj.init(result);
+						return obj;
+					},
                     "select * from ip_reputation_set_hosts where \"set\"=? and host=?",
                     ipReputationSet,
                     host
@@ -321,18 +317,14 @@ final public class IpReputationSetHandler {
                 if(positiveChange>0) {
                     // Update network when positive change applied
                     int network = getNetwork(host, networkPrefix);
-                    IpReputationSetNetwork dbNetwork = conn.executeObjectQuery(
-                        Connection.TRANSACTION_READ_COMMITTED,
+                    IpReputationSetNetwork dbNetwork = conn.executeObjectQuery(Connection.TRANSACTION_READ_COMMITTED,
                         true,
                         false,
-                        new ObjectFactory<IpReputationSetNetwork>() {
-							@Override
-                            public IpReputationSetNetwork createObject(ResultSet result) throws SQLException {
-                                IpReputationSetNetwork obj = new IpReputationSetNetwork();
-                                obj.init(result);
-                                return obj;
-                            }
-                        },
+						(ResultSet result) -> {
+							IpReputationSetNetwork obj = new IpReputationSetNetwork();
+							obj.init(result);
+							return obj;
+						},
                         "select * from ip_reputation_set_networks where \"set\"=? and network=?",
                         ipReputationSet,
                         network
@@ -417,8 +409,8 @@ final public class IpReputationSetHandler {
                 );
             }
             // Also notify routers
-            for(Map.Entry<String,MasterUser> entry : MasterServer.getMasterUsers(conn).entrySet()) {
-                String username = entry.getKey();
+            for(Map.Entry<UserId,MasterUser> entry : MasterServer.getMasterUsers(conn).entrySet()) {
+                UserId username = entry.getKey();
                 MasterUser mu = entry.getValue();
                 if(mu.isRouter()) {
                     // TODO: Filter isRouter users by server_farm

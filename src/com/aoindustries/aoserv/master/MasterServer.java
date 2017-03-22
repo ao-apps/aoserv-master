@@ -6452,7 +6452,7 @@ public abstract class MasterServer {
 												AOServProtocol.DONE,
 												daemonAccess.getProtocol(),
 												daemonAccess.getHost(),
-												daemonAccess.getPort(),
+												daemonAccess.getPort().getPort(),
 												daemonAccess.getKey()
 											);
 											sendInvalidateList = false;
@@ -8719,7 +8719,7 @@ public abstract class MasterServer {
 												AOServProtocol.DONE,
 												daemonAccess.getProtocol(),
 												daemonAccess.getHost(),
-												daemonAccess.getPort(),
+												daemonAccess.getPort().getPort(),
 												daemonAccess.getKey()
 											);
 											sendInvalidateList = false;

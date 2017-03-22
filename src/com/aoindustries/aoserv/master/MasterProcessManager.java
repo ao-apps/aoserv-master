@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.MasterProcess;
 import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.net.InetAddress;
@@ -84,7 +85,7 @@ final public class MasterProcessManager {
                 // Stupor-user
                 objs.add(process);
             } else {
-                String effectiveUser = process.getEffectiveUser();
+                UserId effectiveUser = process.getEffectiveUser();
                 if(
                     effectiveUser!=null
                     && UsernameHandler.canAccessUsername(conn, source, effectiveUser)

@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
@@ -62,7 +63,7 @@ final public class SignupHandler {
         String ba_state,
         String ba_country,
         String ba_zip,
-        String ba_username,
+        UserId ba_username,
         String billing_contact,
         String billing_email,
         boolean billing_use_monthly,
@@ -112,7 +113,7 @@ final public class SignupHandler {
             pstmt.setString(24, ba_state);
             pstmt.setString(25, ba_country);
             pstmt.setString(26, ba_zip);
-            pstmt.setString(27, ba_username);
+            pstmt.setString(27, ba_username.toString());
             pstmt.setString(28, billing_contact);
             pstmt.setString(29, billing_email);
             pstmt.setBoolean(30, billing_use_monthly);
@@ -156,12 +157,7 @@ final public class SignupHandler {
 
     private static boolean cronDaemonAdded = false;
 
-    private static final Schedule schedule = new Schedule() {
-		@Override
-        public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-            return minute==32 && hour==6;
-        }
-    };
+    private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) -> minute==32 && hour==6;
 
     public static void start() {
         synchronized(System.out) {

@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.MasterProcess;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
@@ -91,7 +92,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 			);
 			isClosed=false;
 		} catch(ValidationException e) {
-			throw new IOException(e);
+			throw new IOException(e.getLocalizedMessage(), e);
 		}
 	}
 
@@ -155,7 +156,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	}
 
 	@Override
-	public String getUsername() {
+	public UserId getUsername() {
 		return process.getEffectiveUser();
 	}
 
@@ -185,8 +186,12 @@ final public class SocketServerThread extends Thread implements RequestSource {
 						conn.releaseConnection();
 					}
 				} else process.setDeamonServer(-1);
-				process.setEffectiveUser(in.readUTF());
-				process.setAuthenticatedUser(in.readUTF());
+				try {
+					process.setEffectiveUser(UserId.valueOf(in.readUTF()));
+					process.setAuthenticatedUser(UserId.valueOf(in.readUTF()));
+				} catch(ValidationException e) {
+					throw new IOException(e.getLocalizedMessage(), e);
+				}
 				String host=socket.getInetAddress().getHostAddress();
 				setName(
 					"SocketServerThread"
@@ -208,6 +213,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				long existingID=in.readLong();
 
 				switch(protocolVersion) {
+					case VERSION_1_80_0_SNAPSHOT :
 					case VERSION_1_80 :
 					case VERSION_1_79 :
 					case VERSION_1_78 :
@@ -324,7 +330,13 @@ final public class SocketServerThread extends Thread implements RequestSource {
 						DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
 						try {
 							try {
-								message=MasterServer.authenticate(conn, socket.getInetAddress().getHostAddress(), process.getEffectiveUser(), process.getAuthenticatedUser(), password);
+								message = MasterServer.authenticate(
+									conn,
+									socket.getInetAddress().getHostAddress(),
+									process.getEffectiveUser(),
+									process.getAuthenticatedUser(),
+									password
+								);
 							} catch(RuntimeException | IOException err) {
 								conn.rollback();
 								throw err;
