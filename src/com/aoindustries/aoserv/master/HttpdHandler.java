@@ -5,7 +5,6 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.EmailAddress;
 import com.aoindustries.aoserv.client.HttpdJKProtocol;
 import com.aoindustries.aoserv.client.HttpdSharedTomcat;
 import com.aoindustries.aoserv.client.HttpdSite;
@@ -20,10 +19,14 @@ import com.aoindustries.aoserv.client.PasswordGenerator;
 import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.GroupId;
+import com.aoindustries.aoserv.client.validator.UnixPath;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.net.DomainName;
+import com.aoindustries.net.Email;
 import com.aoindustries.net.Port;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
@@ -158,12 +161,12 @@ final public class HttpdHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int hsb_pkey,
-		String hostname
+		DomainName hostname
 	) throws IOException, SQLException {
 		int hs=getHttpdSiteForHttpdSiteBind(conn, hsb_pkey);
 		checkAccessHttpdSite(conn, source, "addHttpdSiteURL", hs);
 		if(isHttpdSiteBindDisabled(conn, hsb_pkey)) throw new SQLException("Unable to add HttpdSiteURL, HttpdSiteBind disabled: "+hsb_pkey);
-		MasterServer.checkAccessHostname(conn, source, "addHttpdSiteURL", hostname);
+		MasterServer.checkAccessHostname(conn, source, "addHttpdSiteURL", hostname.toString());
 
 		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_urls_pkey_seq')");
 		conn.executeUpdate(
@@ -272,8 +275,8 @@ final public class HttpdHandler {
 		String path,
 		boolean isRegularExpression,
 		String authName,
-		String authGroupFile,
-		String authUserFile,
+		UnixPath authGroupFile,
+		UnixPath authUserFile,
 		String require
 	) throws IOException, SQLException {
 		checkAccessHttpdSite(conn, source, "addHttpdSiteAuthenticatedLocation", httpd_site);
@@ -304,8 +307,8 @@ final public class HttpdHandler {
 			path,
 			isRegularExpression,
 			authName,
-			authGroupFile,
-			authUserFile,
+			authGroupFile==null ? "" : authGroupFile.toString(),
+			authUserFile==null ? "" : authUserFile.toString(),
 			require
 		);
 
@@ -328,7 +331,7 @@ final public class HttpdHandler {
 		String className,
 		boolean cookies,
 		boolean crossContext,
-		String docBase,
+		UnixPath docBase,
 		boolean override,
 		String path,
 		boolean privileged,
@@ -336,7 +339,7 @@ final public class HttpdHandler {
 		boolean useNaming,
 		String wrapperClass,
 		int debug,
-		String workDir
+		UnixPath workDir
 	) throws IOException, SQLException {
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatContext", tomcat_site);
 		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add HttpdTomcatContext, HttpdSite disabled: "+tomcat_site);
@@ -381,7 +384,7 @@ final public class HttpdHandler {
 				pstmt.setString(3, className);
 				pstmt.setBoolean(4, cookies);
 				pstmt.setBoolean(5, crossContext);
-				pstmt.setString(6, docBase);
+				pstmt.setString(6, docBase.toString());
 				pstmt.setBoolean(7, override);
 				pstmt.setString(8, path);
 				pstmt.setBoolean(9, privileged);
@@ -389,7 +392,7 @@ final public class HttpdHandler {
 				pstmt.setBoolean(11, useNaming);
 				pstmt.setString(12, wrapperClass);
 				pstmt.setInt(13, debug);
-				pstmt.setString(14, workDir);
+				pstmt.setString(14, ObjectUtils.toString(workDir));
 
 				pstmt.executeUpdate();
 			} catch(SQLException err) {
@@ -531,42 +534,18 @@ final public class HttpdHandler {
 		return pkey;
 	}
 
-	public static void checkArchivePath(RequestSource source, String action, String path) throws SQLException {
-		if(path!=null) {
-			if(path.length()==0) throw new SQLException("Archive path cannot be an empty string");
-
-			// must start with /
-			// must contain only [a-z][A-Z][0-9][-,_,.,/]
-
-			if (path.charAt(0)!='/') throw new SQLException("Invalid archive path: "+path);
-			int len = path.length();
-			for (int i = 1; i<len; i++) {
-				char c = path.charAt(i);
-				if (
-					(c<'a' || c>'z')
-					&& (c<'A' || c>'Z')
-					&& (c<'0' || c>'9')
-					&& c!='-'
-					&& c!='_'
-					&& c!='.'
-					&& c!='/'
-				) throw new SQLException("Invalid character in archive path: char="+c+" and path="+path);
-			}
-		}
-	}
-
 	public static void checkHttpdTomcatContext(
 		DatabaseConnection conn,
 		RequestSource source,
 		int tomcat_site,
 		String className,
 		boolean crossContext,
-		String docBase,
+		UnixPath docBase,
 		boolean override,
 		String path,
 		boolean privileged,
 		String wrapperClass,
-		String workDir
+		UnixPath workDir
 	) throws IOException, SQLException {
 		boolean isSecure=conn.executeBooleanQuery(
 			"select\n"
@@ -589,18 +568,24 @@ final public class HttpdHandler {
 
 		// OperatingSystem settings
 		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
-		String httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
-		String httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+		UnixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
+		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 
-		if(docBase.length()>6 && docBase.substring(0, 6).equals("/home/")) {
+		String docBaseStr = docBase.toString();
+		if(docBaseStr.startsWith("/home/")) {
 			// Must be able to access one of the linux_server_accounts with that home directory
-			int slashPos=docBase.indexOf('/', 6);
+			int slashPos=docBaseStr.indexOf('/', 6);
 			if(slashPos!=7) throw new SQLException("Invalid docBase: "+docBase);
-			char ch=docBase.charAt(6);
+			char ch=docBaseStr.charAt(6);
 			if(ch<'a' || ch>'z') throw new SQLException("Invalid docBase: "+docBase);
-			slashPos=docBase.indexOf('/', 8);
-			if(slashPos==-1) slashPos=docBase.length();
-			String homeDir=docBase.substring(0, slashPos);
+			slashPos=docBaseStr.indexOf('/', 8);
+			if(slashPos==-1) slashPos=docBaseStr.length();
+			UnixPath homeDir;
+			try {
+				homeDir = UnixPath.valueOf(docBaseStr.substring(0, slashPos));
+			} catch(ValidationException e) {
+				throw new SQLException(e);
+			}
 			IntList lsas=conn.executeIntListQuery(
 				"select pkey from linux_server_accounts where ao_server=? and home=?",
 				aoServer,
@@ -614,23 +599,26 @@ final public class HttpdHandler {
 				}
 			}
 			if(!found) throw new SQLException("Home directory not allowed for path: "+homeDir);
-		} else if(docBase.startsWith(httpdSitesDir + '/')) {
-			int slashPos = docBase.indexOf('/', httpdSitesDir.length() + 1);
-			if(slashPos == -1) slashPos = docBase.length();
-			String siteName = docBase.substring(httpdSitesDir.length() + 1, slashPos);
+		} else if(docBaseStr.startsWith(httpdSitesDir + "/")) {
+			int slashPos = docBaseStr.indexOf('/', httpdSitesDir.toString().length() + 1);
+			if(slashPos == -1) slashPos = docBaseStr.length();
+			String siteName = docBaseStr.substring(httpdSitesDir.toString().length() + 1, slashPos);
 			int hs = conn.executeIntQuery("select pkey from httpd_sites where ao_server=? and site_name=?", aoServer, siteName);
 			HttpdHandler.checkAccessHttpdSite(conn, source, "addCvsRepository", hs);
-		} else if(docBase.startsWith(httpdSharedTomcatsDir + '/')) {
-			int slashPos = docBase.indexOf('/', httpdSharedTomcatsDir.length() + 1);
-			if(slashPos == -1) slashPos = docBase.length();
-			String groupName = docBase.substring(httpdSharedTomcatsDir.length() + 1, slashPos);
-			int groupLSA = conn.executeIntQuery("select linux_server_account from httpd_shared_tomcats where name=? and ao_server=?", groupName, aoServer);
+		} else if(docBaseStr.startsWith(httpdSharedTomcatsDir + "/")) {
+			int slashPos = docBaseStr.indexOf('/', httpdSharedTomcatsDir.toString().length() + 1);
+			if(slashPos == -1) slashPos = docBaseStr.length();
+			String tomcatName = docBaseStr.substring(httpdSharedTomcatsDir.toString().length() + 1, slashPos);
+			int groupLSA = conn.executeIntQuery("select linux_server_account from httpd_shared_tomcats where name=? and ao_server=?", tomcatName, aoServer);
 			LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addCvsRepository", groupLSA);
 		} else {
 			// Allow the example directories
-			List<String> tomcats=conn.executeStringListQuery("select install_dir||'/webapps/examples' from httpd_tomcat_versions");
+			List<UnixPath> tomcats = conn.executeObjectListQuery(
+				ObjectFactories.unixPathFactory,
+				"select install_dir||'/webapps/examples' from httpd_tomcat_versions"
+			);
 			boolean found=false;
-			for (String tomcat : tomcats) {
+			for (UnixPath tomcat : tomcats) {
 				if (docBase.equals(tomcat)) {
 					found = true;
 					break;
@@ -645,7 +633,7 @@ final public class HttpdHandler {
 			if(!ObjectUtils.equals(className, HttpdTomcatContext.DEFAULT_CLASS_NAME)) throw new SQLException("className not allowed for secure JVM: "+className);
 			if(crossContext!=HttpdTomcatContext.DEFAULT_CROSS_CONTEXT) throw new SQLException("crossContext not allowed for secure JVM: "+crossContext);
 			String siteName=getSiteNameForHttpdSite(conn, tomcat_site);
-			if(!docBase.startsWith(httpdSitesDir + '/' + siteName + '/')) throw new SQLException("docBase not allowed for secure JVM: " + docBase);
+			if(!docBaseStr.startsWith(httpdSitesDir + "/" + siteName + "/")) throw new SQLException("docBase not allowed for secure JVM: " + docBase);
 			if(override!=HttpdTomcatContext.DEFAULT_OVERRIDE) throw new SQLException("override not allowed for secure JVM: "+override);
 			if(privileged!=HttpdTomcatContext.DEFAULT_PRIVILEGED) throw new SQLException("privileged not allowed for secure JVM: "+privileged);
 			if(!ObjectUtils.equals(wrapperClass, HttpdTomcatContext.DEFAULT_WRAPPER_CLASS)) throw new SQLException("wrapperClass not allowed for secure JVM: "+wrapperClass);
@@ -662,18 +650,19 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int aoServer,
 		String siteName,
-		String packageName,
-		String username,
-		String group,
-		String serverAdmin,
+		AccountingCode packageName,
+		UserId username,
+		GroupId group,
+		Email serverAdmin,
 		boolean useApache,
 		int ipAddress,
-		String primaryHttpHostname,
-		String[] altHttpHostnames,
+		DomainName primaryHttpHostname,
+		DomainName[] altHttpHostnames,
 		int jBossVersion,
-		String contentSrc
+		UnixPath contentSrc
 	) throws IOException, SQLException {
 		return addHttpdJVMSite(
+			"addHttdJBossSite",
 			conn,
 			source,
 			invalidateList,
@@ -696,32 +685,26 @@ final public class HttpdHandler {
 	}
 
 	private static int addHttpdJVMSite(
+		String methodName,
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
 		int aoServer,
 		String siteName,
-		String packageName,
-		String username,
-		String group,
-		String serverAdmin,
+		AccountingCode packageName,
+		UserId username,
+		GroupId group,
+		Email serverAdmin,
 		boolean useApache,
 		int ipAddress,
-		String primaryHttpHostname,
-		String[] altHttpHostnames,
+		DomainName primaryHttpHostname,
+		DomainName[] altHttpHostnames,
 		String siteType,
 		int jBossVersion,
 		int tomcatVersion,
 		String sharedTomcatName,
-		String contentSrc
+		UnixPath contentSrc
 	) throws IOException, SQLException {
-		String methodName;
-		if ("jboss".equals(siteType)) methodName = "addHttdJBossSite";
-		else if ("tomcat_shared".equals(siteType)) methodName = "addTomcatSharedSite";
-		else if ("tomcat_standard".equals(siteType)) methodName = "addTomcatStdSite";
-		else throw new RuntimeException("Unknown value for siteType: "+siteType);
-
-		if(contentSrc!=null && contentSrc.length()==0) contentSrc=null;
 		// Perform the security checks on the input
 		ServerHandler.checkAccessServer(conn, source, methodName, aoServer);
 		if(!HttpdSite.isValidSiteName(siteName)) throw new SQLException("Invalid site name: "+siteName);
@@ -739,8 +722,6 @@ final public class HttpdHandler {
 			|| group.equals(LinuxGroup.MAIL)
 			|| group.equals(LinuxGroup.MAILONLY)
 		) throw new SQLException("Not allowed to "+methodName+" for group '"+group+'\'');
-		checkArchivePath(source, methodName, contentSrc);
-		if(!EmailAddress.isValidEmailAddress(serverAdmin)) throw new SQLException("Invalid email address format for server_admin: "+serverAdmin);
 		int sharedTomcatPkey = 0;
 		if ("jboss".equals(siteType)) {
 			if(tomcatVersion!=-1) throw new SQLException("TomcatVersion cannot be supplied for a JBoss site: "+tomcatVersion);
@@ -788,10 +769,10 @@ final public class HttpdHandler {
 				} catch(ValidationException e) {
 					throw new AssertionError("Hard-coded ports should never fail", e);
 				}
-				for(int c=0;c<ports.length;c++) {
+				for (Port port : ports) {
 					// The IP must either be not attached to a httpd_server, or the server must support jk
-					int nb=NetBindHandler.getNetBind(conn, aoServer, ipAddress, ports[c]);
-					if(nb!=-1) {
+					int nb = NetBindHandler.getNetBind(conn, aoServer, ipAddress, port);
+					if(nb != -1) {
 						int hs=conn.executeIntQuery(
 							"select\n"
 							+ "  coalesce(\n"
@@ -825,7 +806,12 @@ final public class HttpdHandler {
 
 		AccountingCode accounting = PackageHandler.getBusinessForPackage(conn, packageName);
 
-		int httpPort = 80;
+		Port httpPort;
+		try {
+			httpPort = Port.valueOf(80, com.aoindustries.net.Protocol.TCP);
+		} catch(ValidationException e) {
+			throw new SQLException(e);
+		}
 		int httpdSitePKey;
 
 		List<DomainName> tlds=DNSHandler.getDNSTLDs(conn);
@@ -839,8 +825,8 @@ final public class HttpdHandler {
 		);
 
 		// Finish up the security checks with the Connection
-		MasterServer.checkAccessHostname(conn, source, methodName, primaryHttpHostname, tlds);
-		for(int c=0;c<altHttpHostnames.length;c++) MasterServer.checkAccessHostname(conn, source, methodName, altHttpHostnames[c], tlds);
+		MasterServer.checkAccessHostname(conn, source, methodName, primaryHttpHostname.toString(), tlds);
+		for(int c=0;c<altHttpHostnames.length;c++) MasterServer.checkAccessHostname(conn, source, methodName, altHttpHostnames[c].toString(), tlds);
 
 		// Create and/or get the HttpdBind info
 		int httpNetBind=getHttpdBind(conn, invalidateList, packageName, aoServer, ipAddress, httpPort, Protocol.HTTP, isTomcat4);
@@ -870,11 +856,11 @@ final public class HttpdHandler {
 			pstmt.setInt(1, httpdSitePKey);
 			pstmt.setInt(2, aoServer);
 			pstmt.setString(3, siteName);
-			pstmt.setString(4, packageName);
-			pstmt.setString(5, username);
-			pstmt.setString(6, group);
-			pstmt.setString(7, serverAdmin);
-			pstmt.setString(8, contentSrc);
+			pstmt.setString(4, packageName.toString());
+			pstmt.setString(5, username.toString());
+			pstmt.setString(6, group.toString());
+			pstmt.setString(7, serverAdmin.toString());
+			pstmt.setString(8, ObjectUtils.toString(contentSrc));
 			pstmt.executeUpdate();
 		} catch(SQLException err) {
 			System.err.println("Error from query: "+pstmt.toString());
@@ -895,7 +881,13 @@ final public class HttpdHandler {
 
 		// OperatingSystem settings
 		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
-		String httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+		UnixPath docBase;
+		try {
+			docBase = UnixPath.valueOf(httpdSitesDir + "/" + siteName + "/webapps/" + HttpdTomcatContext.ROOT_DOC_BASE);
+		} catch(ValidationException e) {
+			throw new SQLException(e);
+		}
 
 		// Add the default httpd_tomcat_context
 		int htcPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
@@ -920,7 +912,7 @@ final public class HttpdHandler {
 			+ ")",
 			htcPKey,
 			httpdSitePKey,
-			httpdSitesDir + '/' + siteName + "/webapps/" + HttpdTomcatContext.ROOT_DOC_BASE
+			docBase
 		);
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, aoServer, false);
 
@@ -1091,11 +1083,11 @@ final public class HttpdHandler {
 			httpSiteBindPKey,
 			primaryHttpHostname
 		);
-		for(int c=0;c<altHttpHostnames.length;c++) {
+		for (DomainName altHttpHostname : altHttpHostnames) {
 			conn.executeUpdate(
 				"insert into httpd_site_urls(httpd_site_bind, hostname, is_primary) values(?,?,false)",
 				httpSiteBindPKey,
-				altHttpHostnames[c]
+				altHttpHostname
 			);
 		}
 		conn.executeUpdate(
@@ -1115,8 +1107,8 @@ final public class HttpdHandler {
 		String name,
 		int aoServer,
 		int version,
-		String linuxServerAccount,
-		String linuxServerGroup,
+		UserId linuxServerAccount,
+		GroupId linuxServerGroup,
 		boolean isSecure,
 		boolean isOverflow,
 		boolean skipSecurityChecks
@@ -1149,7 +1141,7 @@ final public class HttpdHandler {
 
 		int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_shared_tomcats_pkey_seq')");
 		if(isTomcat4) {
-			String packageName=LinuxAccountHandler.getPackageForLinuxGroup(conn, linuxServerGroup);
+			AccountingCode packageName=LinuxAccountHandler.getPackageForLinuxGroup(conn, linuxServerGroup);
 			int loopbackIP=IPAddressHandler.getLoopbackIPAddress(conn, aoServer);
 
 			// Allocate a NetBind for the worker
@@ -1263,17 +1255,17 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int aoServer,
 		String siteName,
-		String packageName,
-		String username,
-		String group,
-		String serverAdmin,
+		AccountingCode packageName,
+		UserId username,
+		GroupId group,
+		Email serverAdmin,
 		boolean useApache,
 		int ipAddress,
-		String primaryHttpHostname,
-		String[] altHttpHostnames,
+		DomainName primaryHttpHostname,
+		DomainName[] altHttpHostnames,
 		String sharedTomcatName,
 		int version,
-		String contentSrc
+		UnixPath contentSrc
 	) throws IOException, SQLException {
 		if(sharedTomcatName==null) {
 			throw new SQLException("Fatal: No shared Tomcat specified.");
@@ -1498,6 +1490,7 @@ final public class HttpdHandler {
 			version=conn.executeIntQuery("select version from httpd_shared_tomcats where name=? and ao_server=?", sharedTomcatName, aoServer);
 		}
 		return addHttpdJVMSite(
+			"addTomcatSharedSite",
 			conn,
 			source,
 			invalidateList,
@@ -1528,18 +1521,19 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int aoServer,
 		String siteName,
-		String packageName,
-		String username,
-		String group,
-		String serverAdmin,
+		AccountingCode packageName,
+		UserId username,
+		GroupId group,
+		Email serverAdmin,
 		boolean useApache,
 		int ipAddress,
-		String primaryHttpHostname,
-		String[] altHttpHostnames,
+		DomainName primaryHttpHostname,
+		DomainName[] altHttpHostnames,
 		int tomcatVersion,
-		String contentSrc
+		UnixPath contentSrc
 	) throws IOException, SQLException {
 		return addHttpdJVMSite(
+			"addTomcatStdSite",
 			conn,
 			source,
 			invalidateList,
@@ -1660,7 +1654,7 @@ final public class HttpdHandler {
 		if(disableLog==-1) throw new SQLException("HttpdSharedTomcat is already enabled: "+pkey);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSharedTomcat", disableLog, true);
 		checkAccessHttpdSharedTomcat(conn, source, "enableHttpdSharedTomcat", pkey);
-		String pk=getPackageForHttpdSharedTomcat(conn, pkey);
+		AccountingCode pk=getPackageForHttpdSharedTomcat(conn, pkey);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable HttpdSharedTomcat #"+pkey+", Package not enabled: "+pk);
 		int lsa=getLinuxServerAccountForHttpdSharedTomcat(conn, pkey);
 		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable HttpdSharedTomcat #"+pkey+", LinuxServerAccount not enabled: "+lsa);
@@ -1690,7 +1684,7 @@ final public class HttpdHandler {
 		if(disableLog==-1) throw new SQLException("HttpdSite is already enabled: "+pkey);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSite", disableLog, true);
 		checkAccessHttpdSite(conn, source, "enableHttpdSite", pkey);
-		String pk=getPackageForHttpdSite(conn, pkey);
+		AccountingCode pk=getPackageForHttpdSite(conn, pkey);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable HttpdSite #"+pkey+", Package not enabled: "+pk);
 		int lsa=getLinuxServerAccountForHttpdSite(conn, pkey);
 		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable HttpdSite #"+pkey+", LinuxServerAccount not enabled: "+lsa);
@@ -1748,8 +1742,8 @@ final public class HttpdHandler {
 		sorted.addAll(names);
 
 		// OperatingSystem settings
-		String httpdSharedTomcatsDirCentOS5 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
-		String httpdSharedTomcatsDirCentOS7 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
+		UnixPath httpdSharedTomcatsDirCentOS5 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
+		UnixPath httpdSharedTomcatsDirCentOS7 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
 
 		// Find one that is not used
 		String goodOne=null;
@@ -1757,8 +1751,14 @@ final public class HttpdHandler {
 			String name=template+c;
 			if(!HttpdSharedTomcat.isValidSharedTomcatName(name)) throw new SQLException("Invalid shared Tomcat name: "+name);
 			if(!sorted.contains(name)) {
-				String wwwgroupDirCentOS5 = httpdSharedTomcatsDirCentOS5 + '/' + name;
-				String wwwgroupDirCentOS7 = httpdSharedTomcatsDirCentOS7 + '/' + name;
+				UnixPath wwwgroupDirCentOS5;
+				UnixPath wwwgroupDirCentOS7;
+				try {
+					wwwgroupDirCentOS5 = UnixPath.valueOf(httpdSharedTomcatsDirCentOS5 + "/" + name);
+					wwwgroupDirCentOS7 = UnixPath.valueOf(httpdSharedTomcatsDirCentOS7 + "/" + name);
+				} catch(ValidationException e) {
+					throw new SQLException(e);
+				}
 				if(
 					// Must also not be found in linux_server_accounts.home
 					conn.executeIntQuery(
@@ -1768,13 +1768,13 @@ final public class HttpdHandler {
 						+ "  linux_server_accounts\n"
 						+ "where\n"
 						+ "  home=?\n"
-						+ "  or substring(home from 1 for " + (wwwgroupDirCentOS5.length() + 1) + ")=?\n"
+						+ "  or substring(home from 1 for " + (wwwgroupDirCentOS5.toString().length() + 1) + ")=?\n"
 						+ "  or home=?\n"
-						+ "  or substring(home from 1 for " + (wwwgroupDirCentOS7.length() + 1) + ")=?",
+						+ "  or substring(home from 1 for " + (wwwgroupDirCentOS7.toString().length() + 1) + ")=?",
 						wwwgroupDirCentOS5,
-						wwwgroupDirCentOS5 + '/',
+						wwwgroupDirCentOS5 + "/",
 						wwwgroupDirCentOS7,
-						wwwgroupDirCentOS7 + '/'
+						wwwgroupDirCentOS7 + "/"
 					) == 0
 					// Must also not be found in usernames.username
 					&& conn.executeIntQuery("select count(*) from usernames where username=?", name) == 0
@@ -1805,8 +1805,8 @@ final public class HttpdHandler {
 		sorted.addAll(names);
 
 		// OperatingSystem settings
-		String httpdSitesDirCentOS5 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
-		String httpdSitesDirCentOS7 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
+		UnixPath httpdSitesDirCentOS5 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
+		UnixPath httpdSitesDirCentOS7 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
 
 		// Find one that is not used
 		String goodOne=null;
@@ -1815,8 +1815,14 @@ final public class HttpdHandler {
 			if(!HttpdSite.isValidSiteName(name)) throw new SQLException("Invalid site name: "+name);
 			if(!sorted.contains(name)) {
 				// Must also not be found in linux_server_accounts.home on CentOS 5 or CentOS 7
-				String wwwDirCentOS5 = httpdSitesDirCentOS5 + '/' + name;
-				String wwwDirCentOS7 = httpdSitesDirCentOS7 + '/' + name;
+				UnixPath wwwDirCentOS5;
+				UnixPath wwwDirCentOS7;
+				try {
+					wwwDirCentOS5 = UnixPath.valueOf(httpdSitesDirCentOS5 + "/" + name);
+					wwwDirCentOS7 = UnixPath.valueOf(httpdSitesDirCentOS7 + "/" + name);
+				} catch(ValidationException e) {
+					throw new SQLException(e);
+				}
 				int count=conn.executeIntQuery(
 					"select\n"
 					+ "  count(*)\n"
@@ -1824,13 +1830,13 @@ final public class HttpdHandler {
 					+ "  linux_server_accounts\n"
 					+ "where\n"
 					+ "  home=?\n"
-					+ "  or substring(home from 1 for " + (wwwDirCentOS5.length() + 1) + ")=?\n"
+					+ "  or substring(home from 1 for " + (wwwDirCentOS5.toString().length() + 1) + ")=?\n"
 					+ "  or home=?\n"
-					+ "  or substring(home from 1 for " + (wwwDirCentOS7.length() + 1) + ")=?",
+					+ "  or substring(home from 1 for " + (wwwDirCentOS7.toString().length() + 1) + ")=?",
 					wwwDirCentOS5,
-					wwwDirCentOS5 + '/',
+					wwwDirCentOS5 + "/",
 					wwwDirCentOS7,
-					wwwDirCentOS7 + '/'
+					wwwDirCentOS7 + "/"
 				);
 				if(count==0) {
 					goodOne=name;
@@ -1889,7 +1895,7 @@ final public class HttpdHandler {
 
 	public static IntList getHttpdSharedTomcatsForPackage(
 		DatabaseConnection conn,
-		String name
+		AccountingCode name
 	) throws IOException, SQLException {
 		return conn.executeIntListQuery(
 			"select\n"
@@ -1908,7 +1914,7 @@ final public class HttpdHandler {
 
 	public static IntList getHttpdSitesForPackage(
 		DatabaseConnection conn,
-		String name
+		AccountingCode name
 	) throws IOException, SQLException {
 		return conn.executeIntListQuery("select pkey from httpd_sites where package=?", name);
 	}
@@ -2021,11 +2027,12 @@ final public class HttpdHandler {
 		);
 	}
 
-	public static String getPackageForHttpdSharedTomcat(
+	public static AccountingCode getPackageForHttpdSharedTomcat(
 		DatabaseConnection conn,
 		int pkey
 	) throws IOException, SQLException {
-		return conn.executeStringQuery(
+		return conn.executeObjectQuery(
+			ObjectFactories.accountingCodeFactory,
 			"select\n"
 			+ "  lg.package\n"
 			+ "from\n"
@@ -2040,11 +2047,15 @@ final public class HttpdHandler {
 		);
 	}
 
-	public static String getPackageForHttpdSite(
+	public static AccountingCode getPackageForHttpdSite(
 		DatabaseConnection conn,
 		int pkey
 	) throws IOException, SQLException {
-		return conn.executeStringQuery("select package from httpd_sites where pkey=?", pkey);
+		return conn.executeObjectQuery(
+			ObjectFactories.accountingCodeFactory,
+			"select package from httpd_sites where pkey=?",
+			pkey
+		);
 	}
 
 	public static int getAOServerForHttpdSharedTomcat(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -2206,10 +2217,10 @@ final public class HttpdHandler {
 	public static int getHttpdBind(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		String packageName,
+		AccountingCode packageName,
 		int aoServer,
 		int ipAddress,
-		int httpPort,
+		Port httpPort,
 		String protocol,
 		boolean isTomcat4
 	) throws IOException, SQLException {
@@ -2222,8 +2233,8 @@ final public class HttpdHandler {
 		try {
 			pstmt.setInt(1, aoServer);
 			pstmt.setInt(2, ipAddress);
-			pstmt.setInt(3, httpPort);
-			pstmt.setString(4, com.aoindustries.net.Protocol.TCP.name().toLowerCase(Locale.ROOT));
+			pstmt.setInt(3, httpPort.getPort());
+			pstmt.setString(4, httpPort.getProtocol().name().toLowerCase(Locale.ROOT));
 			try (ResultSet results = pstmt.executeQuery()) {
 				if(results.next()) {
 					netBind=results.getInt(1);
@@ -2257,11 +2268,11 @@ final public class HttpdHandler {
 			pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into net_binds values(?,?,?,?,?,?,?,true,true)");
 			try {
 				pstmt.setInt(1, netBind);
-				pstmt.setString(2, packageName);
+				pstmt.setString(2, packageName.toString());
 				pstmt.setInt(3, aoServer);
 				pstmt.setInt(4, ipAddress);
-				pstmt.setInt(5, httpPort);
-				pstmt.setString(6, com.aoindustries.net.Protocol.TCP.name().toLowerCase(Locale.ROOT));
+				pstmt.setInt(5, httpPort.getPort());
+				pstmt.setString(6, httpPort.getProtocol().name().toLowerCase(Locale.ROOT));
 				pstmt.setString(7, protocol);
 				pstmt.executeUpdate();
 			} finally {
@@ -2339,7 +2350,7 @@ final public class HttpdHandler {
 			try {
 				pstmt.setBoolean(1, isTomcat4);
 				pstmt.setInt(2, aoServer);
-				pstmt.setString(3, packageName);
+				pstmt.setString(3, packageName.toString());
 				ResultSet results=pstmt.executeQuery();
 				try {
 					while(results.next()) {
@@ -2501,11 +2512,16 @@ final public class HttpdHandler {
 
 		// OperatingSystem settings
 		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
-		String httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 
 		// Must not contain a CVS repository
-		String siteDir = httpdSitesDir + '/' + siteName;
-		int count=conn.executeIntQuery(
+		UnixPath siteDir;
+		try {
+			siteDir = UnixPath.valueOf(httpdSitesDir + "/" + siteName);
+		} catch(ValidationException e) {
+			throw new SQLException(e);
+		}
+		int count = conn.executeIntQuery(
 			"select\n"
 			+ "  count(*)\n"
 			+ "from\n"
@@ -2516,11 +2532,11 @@ final public class HttpdHandler {
 			+ "  and lsa.ao_server=?\n"
 			+ "  and (\n"
 			+ "    cr.path=?\n"
-			+ "    or substring(cr.path from 1 for " + (siteDir + 1) + ")=?\n"
+			+ "    or substring(cr.path from 1 for " + (siteDir.toString().length() + 1) + ")=?\n"
 			+ "  )",
 			aoServer,
 			siteDir,
-			siteDir + '/'
+			siteDir + "/"
 		);
 		if(count > 0) {
 			throw new SQLException(
@@ -2646,10 +2662,26 @@ final public class HttpdHandler {
 				int httpdSharedTomcat=conn.executeIntQuery("select httpd_shared_tomcat from httpd_tomcat_shared_sites where tomcat_site=?", httpdSitePKey);
 				if(conn.executeBooleanQuery("select is_overflow from httpd_shared_tomcats where pkey=?", httpdSharedTomcat)) {
 					// Only remove group ties if the shared tomcat is an overflow type
-					String hsUsername=conn.executeStringQuery("select linux_account from httpd_sites where pkey=?", httpdSitePKey);
-					String hsGroup=conn.executeStringQuery("select linux_group from httpd_sites where pkey=?", httpdSitePKey);
-					String hstUsername=conn.executeStringQuery("select lsa.username from httpd_shared_tomcats hst, linux_server_accounts lsa where hst.pkey=? and hst.linux_server_account=lsa.pkey", httpdSharedTomcat);
-					String hstGroup=conn.executeStringQuery("select lsg.name from httpd_shared_tomcats hst, linux_server_groups lsg where hst.pkey=? and hst.linux_server_group=lsg.pkey", httpdSharedTomcat);
+					UserId hsUsername = conn.executeObjectQuery(
+						ObjectFactories.userIdFactory,
+						"select linux_account from httpd_sites where pkey=?",
+						httpdSitePKey
+					);
+					GroupId hsGroup = conn.executeObjectQuery(
+						ObjectFactories.groupIdFactory,
+						"select linux_group from httpd_sites where pkey=?",
+						httpdSitePKey
+					);
+					UserId hstUsername = conn.executeObjectQuery(
+						ObjectFactories.userIdFactory,
+						"select lsa.username from httpd_shared_tomcats hst, linux_server_accounts lsa where hst.pkey=? and hst.linux_server_account=lsa.pkey",
+						httpdSharedTomcat
+					);
+					GroupId hstGroup = conn.executeObjectQuery(
+						ObjectFactories.groupIdFactory,
+						"select lsg.name from httpd_shared_tomcats hst, linux_server_groups lsg where hst.pkey=? and hst.linux_server_group=lsg.pkey",
+						httpdSharedTomcat
+					);
 
 					conn.executeUpdate("delete from httpd_tomcat_shared_sites where tomcat_site=?", httpdSitePKey);
 
@@ -2986,8 +3018,8 @@ final public class HttpdHandler {
 		String path,
 		boolean isRegularExpression,
 		String authName,
-		String authGroupFile,
-		String authUserFile,
+		UnixPath authGroupFile,
+		UnixPath authUserFile,
 		String require
 	) throws IOException, SQLException {
 		int httpd_site=conn.executeIntQuery("select httpd_site from httpd_site_authenticated_locations where pkey=?", pkey);
@@ -3014,8 +3046,8 @@ final public class HttpdHandler {
 			path,
 			isRegularExpression,
 			authName,
-			authGroupFile,
-			authUserFile,
+			authGroupFile==null ? "" : authGroupFile.toString(),
+			authUserFile==null ? "" : authUserFile.toString(),
 			require,
 			pkey
 		);
@@ -3145,11 +3177,10 @@ final public class HttpdHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int pkey,
-		String emailAddress
+		Email emailAddress
 	) throws IOException, SQLException {
 		checkAccessHttpdSite(conn, source, "setHttpdSiteServerAdmin", pkey);
 		if(isHttpdSiteDisabled(conn, pkey)) throw new SQLException("Unable to set server administrator: HttpdSite disabled: "+pkey);
-		if(!EmailAddress.isValidEmailAddress(emailAddress)) throw new SQLException("Invalid email address: "+emailAddress);
 
 		// Update the database
 		conn.executeUpdate(
@@ -3175,7 +3206,7 @@ final public class HttpdHandler {
 		String className,
 		boolean cookies,
 		boolean crossContext,
-		String docBase,
+		UnixPath docBase,
 		boolean override,
 		String path,
 		boolean privileged,
@@ -3183,7 +3214,7 @@ final public class HttpdHandler {
 		boolean useNaming,
 		String wrapperClass,
 		int debug,
-		String workDir
+		UnixPath workDir
 	) throws IOException, SQLException {
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "setHttpdTomcatContextAttributes", tomcat_site);
@@ -3227,7 +3258,7 @@ final public class HttpdHandler {
 				pstmt.setString(1, className);
 				pstmt.setBoolean(2, cookies);
 				pstmt.setBoolean(3, crossContext);
-				pstmt.setString(4, docBase);
+				pstmt.setString(4, docBase.toString());
 				pstmt.setBoolean(5, override);
 				pstmt.setString(6, path);
 				pstmt.setBoolean(7, privileged);
@@ -3235,7 +3266,7 @@ final public class HttpdHandler {
 				pstmt.setBoolean(9, useNaming);
 				pstmt.setString(10, wrapperClass);
 				pstmt.setInt(11, debug);
-				pstmt.setString(12, workDir);
+				pstmt.setString(12, ObjectUtils.toString(workDir));
 				pstmt.setInt(13, pkey);
 
 				pstmt.executeUpdate();

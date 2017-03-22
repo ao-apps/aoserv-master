@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2016 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.IntList;
@@ -37,7 +38,7 @@ final public class ServerHandler {
 	private ServerHandler() {
 	}
 
-	private static Map<String,List<Integer>> usernameServers;
+	private static Map<UserId,List<Integer>> usernameServers;
 
 	/*
 	public static int addBackupServer(
@@ -198,7 +199,7 @@ final public class ServerHandler {
 	 */
 	static List<Integer> getAllowedServers(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
 		synchronized(ServerHandler.class) {
-			String username=source.getUsername();
+			UserId username=source.getUsername();
 			if(usernameServers==null) usernameServers=new HashMap<>();
 			List<Integer> SV=usernameServers.get(username);
 			if(SV==null) {

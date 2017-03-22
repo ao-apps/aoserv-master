@@ -13,6 +13,7 @@ import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.AOPool;
 import com.aoindustries.net.HostAddress;
 import com.aoindustries.net.InetAddress;
+import com.aoindustries.net.Port;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -68,8 +69,7 @@ final public class DaemonHandler {
 			aoServer
 		);
 		if(address!=null) return address;
-		InetAddress ip = database.executeObjectQuery(
-			ObjectFactories.inetAddresFactory,
+		InetAddress ip = database.executeObjectQuery(ObjectFactories.inetAddressFactory,
 			"select\n"
 			+ "  ia.ip_address\n"
 			+ "from\n"
@@ -84,8 +84,7 @@ final public class DaemonHandler {
 		);
 		if(ip==null) throw new SQLException("Unable to find daemon IP address for AOServer: "+aoServer);
 		if(ip.isUnspecified()) {
-			ip = database.executeObjectQuery(
-				ObjectFactories.inetAddresFactory,
+			ip = database.executeObjectQuery(ObjectFactories.inetAddressFactory,
 				"select\n"
 				+ "  ia.ip_address\n"
 				+ "from\n"
@@ -110,10 +109,12 @@ final public class DaemonHandler {
 		return HostAddress.valueOf(ip);
 	}
 
-	public static int getDaemonConnectorPort(DatabaseAccess database, int aoServer) throws IOException, SQLException {
-		return database.executeIntQuery(
+	public static Port getDaemonConnectorPort(DatabaseAccess database, int aoServer) throws IOException, SQLException {
+		return database.executeObjectQuery(
+			ObjectFactories.portFactory,
 			"select\n"
-			+ "  nb.port\n"
+			+ "  nb.port,\n"
+			+ "  nb.net_protocol\n"
 			+ "from\n"
 			+ "  ao_servers ao,\n"
 			+ "  net_binds nb\n"
@@ -151,7 +152,7 @@ final public class DaemonHandler {
 	}
 
 	public static AOServDaemonConnector getDaemonConnector(DatabaseAccess database, int aoServer) throws IOException, SQLException {
-		Integer I=Integer.valueOf(aoServer);
+		Integer I = aoServer;
 		synchronized(DaemonHandler.class) {
 			AOServDaemonConnector O=connectors.get(I);
 			if(O!=null) return O;
@@ -245,11 +246,11 @@ final public class DaemonHandler {
 	 * a daemon that is not responding while other daemons could be used.
 	 */
 	public static boolean isDaemonAvailable(int aoServer) {
-		Integer I=Integer.valueOf(aoServer);
+		Integer I = aoServer;
 		synchronized(downDaemons) {
 			Long O=downDaemons.get(I);
 			if(O!=null) {
-				long downTime=System.currentTimeMillis()-O.longValue();
+				long downTime=System.currentTimeMillis() - O;
 				if(downTime<0) {
 					downDaemons.remove(I);
 					return true;
@@ -262,9 +263,9 @@ final public class DaemonHandler {
 	}
 
 	public static void flagDaemonAsDown(int aoServer) throws IOException {
-		Integer I=Integer.valueOf(aoServer);
+		Integer I = aoServer;
 		synchronized(downDaemons) {
-			downDaemons.put(I, Long.valueOf(System.currentTimeMillis()));
+			downDaemons.put(I, System.currentTimeMillis());
 		}
 	}
 
@@ -311,7 +312,7 @@ final public class DaemonHandler {
 					Iterator<Long> I=recentKeys.keySet().iterator();
 					while(I.hasNext()) {
 						Long keyObj=I.next();
-						long time=recentKeys.get(keyObj).longValue();
+						long time = recentKeys.get(keyObj);
 						timeSince=currentTime-time;
 						if(timeSince<0 || timeSince>=(60L*60*1000)) {
 							I.remove();
@@ -325,9 +326,9 @@ final public class DaemonHandler {
 			Random random=MasterServer.getRandom();
 			while(true) {
 				key=random.nextLong();
-				Long L=Long.valueOf(key);
+				Long L = key;
 				if(!recentKeys.containsKey(L)) {
-					recentKeys.put(L, Long.valueOf(System.currentTimeMillis()));
+					recentKeys.put(L, System.currentTimeMillis());
 					break;
 				}
 			}
@@ -339,7 +340,7 @@ final public class DaemonHandler {
 		return new AOServer.DaemonAccess(
 			getDaemonConnectorProtocol(conn, aoServer),
 			connectAddress!=null ? connectAddress : getDaemonConnectAddress(conn, aoServer),
-			getDaemonConnectorPort(conn, aoServer),
+			getDaemonConnectorPort(conn, aoServer).getPort(),
 			key
 		);
 	}

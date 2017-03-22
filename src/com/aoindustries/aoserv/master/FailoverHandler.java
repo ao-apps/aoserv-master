@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.FailoverFileLog;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
@@ -54,8 +55,8 @@ final public class FailoverHandler implements CronJob {
 
 		// The server must be an exact package match to allow adding log entries
 		int server=getFromServerForFailoverFileReplication(conn, replication);
-		String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
-		String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+		AccountingCode userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
+		AccountingCode serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
 		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_log for servers that have the same package as the business_administrator adding the log entry");
 		//ServerHandler.checkAccessServer(conn, source, "add_failover_file_log", server);
 
@@ -108,8 +109,8 @@ final public class FailoverHandler implements CronJob {
 
 		// The server must be an exact package match to allow setting the bit rate
 		int server=getFromServerForFailoverFileReplication(conn, pkey);
-		String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
-		String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+		AccountingCode userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
+		AccountingCode serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
 		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_replications.max_bit_rate for servers that have the same package as the business_administrator setting the bit rate");
 
 		if(bitRate==null) conn.executeUpdate("update failover_file_replications set max_bit_rate=null where pkey=?", pkey);
@@ -135,8 +136,8 @@ final public class FailoverHandler implements CronJob {
 	) throws IOException, SQLException {
 		// The server must be an exact package match to allow setting the schedule
 		int server=getFromServerForFailoverFileReplication(conn, replication);
-		String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
-		String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+		AccountingCode userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
+		AccountingCode serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
 		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_schedule for servers that have the same package as the business_administrator setting the schedule");
 
 		// If not modified, invalidation will not be performed
@@ -195,8 +196,8 @@ final public class FailoverHandler implements CronJob {
 	) throws IOException, SQLException {
 		// The server must be an exact package match to allow setting the schedule
 		int server=getFromServerForFailoverFileReplication(conn, replication);
-		String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
-		String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+		AccountingCode userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
+		AccountingCode serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
 		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set file_backup_settings for servers that have the same package as the business_administrator making the settings");
 
 		// If not modified, invalidation will not be performed
@@ -301,18 +302,10 @@ final public class FailoverHandler implements CronJob {
 		return DaemonHandler.getDaemonConnector(conn, toServer).getFailoverFileReplicationActivity(replication);
 	}
 
-	private static final Schedule schedule = new Schedule() {
-		/**
-		 * Runs at 1:20 am daily.
-		 */
-		@Override
-		public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-			return
-				minute==45
-				&& hour==1
-			;
-		}
-	};
+	/**
+	 * Runs at 1:20 am daily.
+	 */
+	private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) -> minute==45 && hour==1;
 
 	@Override
 	public Schedule getCronJobSchedule() {
@@ -373,9 +366,9 @@ final public class FailoverHandler implements CronJob {
 		// Sometime later we might restrict certain command codes to certain users
 
 		// Current user must have the same exact package as the from server
-		String userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
+		AccountingCode userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
 		int fromServer=FailoverHandler.getFromServerForFailoverFileReplication(conn, pkey);
-		String serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer));
+		AccountingCode serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer));
 		if(!userPackage.equals(serverPackage)) throw new SQLException("business_administrators.username.package!=servers.package.name: Not allowed to request daemon access for FAILOVER_FILE_REPLICATION");
 		//ServerHandler.checkAccessServer(conn, source, "requestDaemonAccess", fromServer);
 
@@ -390,7 +383,7 @@ final public class FailoverHandler implements CronJob {
 		} else {
 			serverName =
 				PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer))
-				+'/'
+				+"/"
 				+ ServerHandler.getNameForServer(conn, fromServer)
 			;
 		}

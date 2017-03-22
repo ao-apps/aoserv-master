@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.CvsRepository;
 import com.aoindustries.aoserv.client.LinuxAccountType;
 import com.aoindustries.aoserv.client.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
@@ -31,7 +32,7 @@ final public class CvsHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int aoServer,
-		String path,
+		UnixPath path,
 		int lsa,
 		int lsg,
 		long mode
@@ -45,20 +46,23 @@ final public class CvsHandler {
 
 			// OperatingSystem settings
 			int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
-			String httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
-			String httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+			UnixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
+			String httpdSharedTomcatsDirStr = httpdSharedTomcatsDir.toString();
+			UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+			String httpdSitesDirStr = httpdSitesDir.toString();
 
 			// Integrity checks
 			if(!CvsRepository.isValidPath(path)) throw new SQLException("Invalid path: "+path);
-			if(path.length()>6 && path.substring(0, 6).equals("/home/")) {
+			String pathStr = path.toString();
+			if(pathStr.startsWith("/home/")) {
 				// Must be able to access one of the linux_server_accounts with that home directory
-				int slashPos=path.indexOf('/', 6);
+				int slashPos=pathStr.indexOf('/', 6);
 				if(slashPos!=7) throw new SQLException("Invalid path: "+path);
-				char ch=path.charAt(6);
+				char ch=pathStr.charAt(6);
 				if(ch<'a' || ch>'z') throw new SQLException("Invalid path: "+path);
-				slashPos=path.indexOf('/', 8);
-				if(slashPos==-1) slashPos=path.length();
-				String homeDir=path.substring(0, slashPos);
+				slashPos=pathStr.indexOf('/', 8);
+				if(slashPos==-1) slashPos=pathStr.length();
+				String homeDir=pathStr.substring(0, slashPos);
 				IntList lsas=conn.executeIntListQuery(
 					"select pkey from linux_server_accounts where ao_server=? and home=?",
 					aoServer,
@@ -72,19 +76,20 @@ final public class CvsHandler {
 					}
 				}
 				if(!found) throw new SQLException("Home directory not allowed for path: "+homeDir);
-			} else if(path.length()>9 && path.substring(0, 9).equals("/var/cvs/")) {
-				int slashPos=path.indexOf('/', 9);
+			} else if(pathStr.startsWith("/var/cvs/")) {
+				// Must be directly in /var/cvs/ folder.
+				int slashPos=pathStr.indexOf('/', 9);
 				if(slashPos!=-1) throw new SQLException("Invalid path: "+path);
-			} else if(path.startsWith(httpdSitesDir+ '/')) {
-				int slashPos = path.indexOf('/', httpdSitesDir.length() + 1);
-				if(slashPos == -1) slashPos = path.length();
-				String siteName = path.substring(httpdSitesDir.length() + 1, slashPos);
+			} else if(pathStr.startsWith(httpdSitesDirStr+ '/')) {
+				int slashPos = pathStr.indexOf('/', httpdSitesDirStr.length() + 1);
+				if(slashPos == -1) slashPos = pathStr.length();
+				String siteName = pathStr.substring(httpdSitesDirStr.length() + 1, slashPos);
 				int hs = conn.executeIntQuery("select pkey from httpd_sites where ao_server=? and site_name=?", aoServer, siteName);
 				HttpdHandler.checkAccessHttpdSite(conn, source, "addCvsRepository", hs);
-			} else if(path.startsWith(httpdSharedTomcatsDir + '/')) {
-				int slashPos = path.indexOf('/', httpdSharedTomcatsDir.length() + 1);
-				if(slashPos == -1) slashPos = path.length();
-				String groupName = path.substring(httpdSharedTomcatsDir.length() + 1, slashPos);
+			} else if(pathStr.startsWith(httpdSharedTomcatsDirStr + '/')) {
+				int slashPos = pathStr.indexOf('/', httpdSharedTomcatsDirStr.length() + 1);
+				if(slashPos == -1) slashPos = pathStr.length();
+				String groupName = pathStr.substring(httpdSharedTomcatsDirStr.length() + 1, slashPos);
 				int groupLSA = conn.executeIntQuery("select linux_server_account from httpd_shared_tomcats where name=? and ao_server=?", groupName, aoServer);
 				LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addCvsRepository", groupLSA);
 			} else {
