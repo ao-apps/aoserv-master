@@ -401,7 +401,16 @@ final public class MySQLHandler {
 
 		int mysqlServer=getMySQLServerForMySQLDatabase(conn, dbPKey);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).dumpMySQLDatabase(dbPKey, gzip, out);
+		DaemonHandler.getDaemonConnector(conn, aoServer).dumpMySQLDatabase(
+			dbPKey,
+			gzip,
+			(long dumpSize) -> {
+				if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+					out.writeLong(dumpSize);
+				}
+			},
+			out
+		);
 	}
 
 	public static void enableMySQLServerUser(

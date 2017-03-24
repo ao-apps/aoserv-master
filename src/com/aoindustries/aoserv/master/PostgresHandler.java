@@ -6,6 +6,7 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOServPermission;
+import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.PasswordChecker;
@@ -324,7 +325,16 @@ final public class PostgresHandler {
 		checkAccessPostgresDatabase(conn, source, "dumpPostgresDatabase", dbPKey);
 
 		int aoServer=getAOServerForPostgresDatabase(conn, dbPKey);
-		DaemonHandler.getDaemonConnector(conn, aoServer).dumpPostgresDatabase(dbPKey, gzip, out);
+		DaemonHandler.getDaemonConnector(conn, aoServer).dumpPostgresDatabase(
+			dbPKey,
+			gzip,
+			(long dumpSize) -> {
+				if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+					out.writeLong(dumpSize);
+				}
+			},
+			out
+		);
 	}
 
 	public static void enablePostgresServerUser(
