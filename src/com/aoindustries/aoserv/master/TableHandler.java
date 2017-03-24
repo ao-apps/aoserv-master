@@ -178,6 +178,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -7825,13 +7826,23 @@ final public class TableHandler {
 					&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80) <= 0
 				) {
 					MySQLServer.ReservedWord[] reservedWords = MySQLServer.ReservedWord.values();
-					List<AOServWritable> objs = new ArrayList<>(reservedWords.length);
-					for(MySQLServer.ReservedWord reservedWord : reservedWords) {
-						objs.add((out, clientVersion) -> {
-							out.writeUTF(reservedWord.name().toLowerCase(Locale.ROOT));
-						});
-					}
-					MasterServer.writeObjects(source, clientOut, provideProgress, objs);
+					MasterServer.writeObjects(
+						source,
+						clientOut,
+						provideProgress,
+						new AbstractList<AOServWritable>() {
+							@Override
+							public AOServWritable get(int index) {
+								return (out, clientVersion) -> {
+									out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
+								};
+							}
+							@Override
+							public int size() {
+								return reservedWords.length;
+							}
+						}
+					);
 					return;
 				}
 				// fall-through to empty response
@@ -7843,13 +7854,23 @@ final public class TableHandler {
 				) {
 					// Send in lowercase
 					com.aoindustries.net.Protocol[] netProtocols = com.aoindustries.net.Protocol.values();
-					List<AOServWritable> objs = new ArrayList<>(netProtocols.length);
-					for(com.aoindustries.net.Protocol netProtocol : netProtocols) {
-						objs.add((out, clientVersion) -> {
-							out.writeUTF(netProtocol.name().toLowerCase(Locale.ROOT));
-						});
-					}
-					MasterServer.writeObjects(source, clientOut, provideProgress, objs);
+					MasterServer.writeObjects(
+						source,
+						clientOut,
+						provideProgress,
+						new AbstractList<AOServWritable>() {
+							@Override
+							public AOServWritable get(int index) {
+								return (out, clientVersion) -> {
+									out.writeUTF(netProtocols[index].name().toLowerCase(Locale.ROOT));
+								};
+							}
+							@Override
+							public int size() {
+								return netProtocols.length;
+							}
+						}
+					);
 					return;
 				}
 				// fall-through to empty response
@@ -7860,13 +7881,23 @@ final public class TableHandler {
 					&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80) <= 0
 				) {
 					PostgresServer.ReservedWord[] reservedWords = PostgresServer.ReservedWord.values();
-					List<AOServWritable> objs = new ArrayList<>(reservedWords.length);
-					for(PostgresServer.ReservedWord reservedWord : reservedWords) {
-						objs.add((out, clientVersion) -> {
-							out.writeUTF(reservedWord.name().toLowerCase(Locale.ROOT));
-						});
-					}
-					MasterServer.writeObjects(source, clientOut, provideProgress, objs);
+					MasterServer.writeObjects(
+						source,
+						clientOut,
+						provideProgress,
+						new AbstractList<AOServWritable>() {
+							@Override
+							public AOServWritable get(int index) {
+								return (out, clientVersion) -> {
+									out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
+								};
+							}
+							@Override
+							public int size() {
+								return reservedWords.length;
+							}
+						}
+					);
 					return;
 				}
 				// fall-through to empty response
