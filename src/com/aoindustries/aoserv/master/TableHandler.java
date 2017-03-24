@@ -188,6 +188,8 @@ import java.util.logging.Logger;
 /**
  * The <code>TableHandler</code> handles all the accesses to the AOServ tables.
  *
+ * TODO: Compatibility with tables removed in 1.80.0-SNAPSHOT
+ *
  * @author  AO Industries, Inc.
  */
 final public class TableHandler {
@@ -7833,10 +7835,16 @@ final public class TableHandler {
 
 	public static String getTableName(DatabaseAccess conn, SchemaTable.TableID tableID) throws IOException, SQLException {
 		synchronized(tableNames) {
-			String name=tableNames.get(tableID);
-			if(name==null) {
-				name=conn.executeStringQuery("select name from schema_tables where table_id=?", convertClientTableIDToDBTableID(conn, AOServProtocol.Version.CURRENT_VERSION, tableID.ordinal()));
-				if(name==null) throw new SQLException("Unable to find table name for table ID: "+tableID);
+			String name = tableNames.get(tableID);
+			if(name == null) {
+				name = conn.executeStringQuery("select name from schema_tables where table_id=?",
+					convertClientTableIDToDBTableID(
+						conn,
+						AOServProtocol.Version.CURRENT_VERSION,
+						tableID.ordinal()
+					)
+				);
+				if(name == null) throw new SQLException("Unable to find table name for table ID: " + tableID);
 				tableNames.put(tableID, name);
 			}
 			return name;
@@ -7853,33 +7861,35 @@ final public class TableHandler {
 		AOServProtocol.Version version,
 		int clientTableID
 	) throws IOException, SQLException {
-		Map<Integer,Integer> tableIDs=fromClientTableIDs.get(version);
-		if(tableIDs==null) {
-			IntList clientTables=conn.executeIntListQuery(
-				"select\n"
-				+ "  st.table_id\n"
-				+ "from\n"
-				+ "  aoserv_protocols client_ap,\n"
-				+ "  schema_tables st\n"
-				+ "  inner join aoserv_protocols since_version on st.since_version=since_version.version\n"
-				+ "  left join aoserv_protocols last_version on st.last_version=last_version.version\n"
-				+ "where\n"
-				+ "  client_ap.version=?\n"
-				+ "  and client_ap.created>=since_version.created\n"
-				+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
-				+ "order by\n"
-				+ "  st.table_id",
-				version.getVersion()
-			);
-			int numTables=clientTables.size();
-			tableIDs=new HashMap<>(numTables);
-			for(int c=0;c<numTables;c++) {
-				tableIDs.put(c, clientTables.getInt(c));
+		synchronized(fromClientTableIDs) {
+			Map<Integer,Integer> tableIDs = fromClientTableIDs.get(version);
+			if(tableIDs == null) {
+				IntList clientTables = conn.executeIntListQuery(
+					"select\n"
+					+ "  st.table_id\n"
+					+ "from\n"
+					+ "  aoserv_protocols client_ap,\n"
+					+ "  schema_tables st\n"
+					+ "  inner join aoserv_protocols since_version on st.since_version=since_version.version\n"
+					+ "  left join aoserv_protocols last_version on st.last_version=last_version.version\n"
+					+ "where\n"
+					+ "  client_ap.version=?\n"
+					+ "  and client_ap.created>=since_version.created\n"
+					+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
+					+ "order by\n"
+					+ "  st.table_id",
+					version.getVersion()
+				);
+				int numTables = clientTables.size();
+				tableIDs = new HashMap<>(numTables*4/3+1);
+				for(int c=0;c<numTables;c++) {
+					tableIDs.put(c, clientTables.getInt(c));
+				}
+				fromClientTableIDs.put(version, tableIDs);
 			}
-			fromClientTableIDs.put(version, tableIDs);
+			Integer I = tableIDs.get(clientTableID);
+			return (I == null) ? -1 : I;
 		}
-		Integer I=tableIDs.get(clientTableID);
-		return I==null ? -1 : I;
 	}
 
 	final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> toClientTableIDs=new EnumMap<>(AOServProtocol.Version.class);
@@ -7889,34 +7899,36 @@ final public class TableHandler {
 		AOServProtocol.Version version,
 		int tableID
 	) throws IOException, SQLException {
-		Map<Integer,Integer> clientTableIDs=toClientTableIDs.get(version);
-		if(clientTableIDs==null) {
-			IntList clientTables=conn.executeIntListQuery(
-				"select\n"
-				+ "  st.table_id\n"
-				+ "from\n"
-				+ "  aoserv_protocols client_ap,\n"
-				+ "  schema_tables st\n"
-				+ "  inner join aoserv_protocols since_version on st.since_version=since_version.version\n"
-				+ "  left join aoserv_protocols last_version on st.last_version=last_version.version\n"
-				+ "where\n"
-				+ "  client_ap.version=?\n"
-				+ "  and client_ap.created>=since_version.created\n"
-				+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
-				+ "order by\n"
-				+ "  st.table_id",
-				version.getVersion()
-			);
-			int numTables=clientTables.size();
-			clientTableIDs=new HashMap<>(numTables);
-			for(int c=0;c<numTables;c++) {
-				clientTableIDs.put(clientTables.getInt(c), c);
+		synchronized(toClientTableIDs) {
+			Map<Integer,Integer> clientTableIDs = toClientTableIDs.get(version);
+			if(clientTableIDs == null) {
+				IntList clientTables = conn.executeIntListQuery(
+					"select\n"
+					+ "  st.table_id\n"
+					+ "from\n"
+					+ "  aoserv_protocols client_ap,\n"
+					+ "  schema_tables st\n"
+					+ "  inner join aoserv_protocols since_version on st.since_version=since_version.version\n"
+					+ "  left join aoserv_protocols last_version on st.last_version=last_version.version\n"
+					+ "where\n"
+					+ "  client_ap.version=?\n"
+					+ "  and client_ap.created>=since_version.created\n"
+					+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
+					+ "order by\n"
+					+ "  st.table_id",
+					version.getVersion()
+				);
+				int numTables = clientTables.size();
+				clientTableIDs = new HashMap<>(numTables*4/3+1);
+				for(int c = 0; c < numTables; c++) {
+					clientTableIDs.put(clientTables.getInt(c), c);
+				}
+				toClientTableIDs.put(version, clientTableIDs);
 			}
-			toClientTableIDs.put(version, clientTableIDs);
+			Integer I = clientTableIDs.get(tableID);
+			int clientTableID = (I == null) ? -1 : I;
+			return clientTableID;
 		}
-		Integer I=clientTableIDs.get(tableID);
-		int clientTableID = (I == null) ? -1 : I;
-		return clientTableID;
 	}
 
 	/**
@@ -7959,39 +7971,41 @@ final public class TableHandler {
 	) throws IOException, SQLException {
 		// Get the list of resolved tables for the requested version
 		AOServProtocol.Version version = source.getProtocolVersion();
-		Map<SchemaTable.TableID,Map<String,Integer>> tables=clientColumnIndexes.get(version);
-		if(tables==null) clientColumnIndexes.put(version, tables=new EnumMap<>(SchemaTable.TableID.class));
+		synchronized(clientColumnIndexes) {
+			Map<SchemaTable.TableID,Map<String,Integer>> tables = clientColumnIndexes.get(version);
+			if(tables==null) clientColumnIndexes.put(version, tables = new EnumMap<>(SchemaTable.TableID.class));
 
-		// Find the list of columns for this table
-		Map<String,Integer> columns=tables.get(tableID);
-		if(columns==null) {
-			List<String> clientColumns=conn.executeStringListQuery(
-				"select\n"
-				+ "  sc.column_name\n"
-				+ "from\n"
-				+ "  aoserv_protocols client_ap,\n"
-				+ "  schema_columns sc\n"
-				+ "  inner join aoserv_protocols since_version on sc.since_version=since_version.version\n"
-				+ "  left join aoserv_protocols last_version on sc.last_version=last_version.version\n"
-				+ "where\n"
-				+ "  client_ap.version=?\n"
-				+ "  and client_ap.created>=since_version.created\n"
-				+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
-				+ "order by\n"
-				+ "  sc.index",
-				version.getVersion()
-			);
-			int numColumns=clientColumns.size();
-			columns=new HashMap<>(numColumns);
-			for(int c=0;c<numColumns;c++) {
-				columns.put(clientColumns.get(c), c);
+			// Find the list of columns for this table
+			Map<String,Integer> columns = tables.get(tableID);
+			if(columns == null) {
+				List<String> clientColumns = conn.executeStringListQuery(
+					"select\n"
+					+ "  sc.column_name\n"
+					+ "from\n"
+					+ "  aoserv_protocols client_ap,\n"
+					+ "  schema_columns sc\n"
+					+ "  inner join aoserv_protocols since_version on sc.since_version=since_version.version\n"
+					+ "  left join aoserv_protocols last_version on sc.last_version=last_version.version\n"
+					+ "where\n"
+					+ "  client_ap.version=?\n"
+					+ "  and client_ap.created>=since_version.created\n"
+					+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
+					+ "order by\n"
+					+ "  sc.index",
+					version.getVersion()
+				);
+				int numColumns = clientColumns.size();
+				columns = new HashMap<>(numColumns*4/3+1);
+				for(int c = 0; c < numColumns; c++) {
+					columns.put(clientColumns.get(c), c);
+				}
+				tables.put(tableID, columns);
 			}
-			tables.put(tableID, columns);
-		}
 
-		// Return the column or -1 if not found
-		Integer columnIndex = columns.get(columnName);
-		return (columnIndex == null) ? -1 : columnIndex;
+			// Return the column or -1 if not found
+			Integer columnIndex = columns.get(columnName);
+			return (columnIndex == null) ? -1 : columnIndex;
+		}
 	}
 
 	public static void invalidateTable(SchemaTable.TableID tableID) {
