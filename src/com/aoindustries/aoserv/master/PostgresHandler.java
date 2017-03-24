@@ -318,12 +318,13 @@ final public class PostgresHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		CompressedDataOutputStream out,
-		int dbPKey
+		int dbPKey,
+		boolean gzip
 	) throws IOException, SQLException {
 		checkAccessPostgresDatabase(conn, source, "dumpPostgresDatabase", dbPKey);
 
 		int aoServer=getAOServerForPostgresDatabase(conn, dbPKey);
-		DaemonHandler.getDaemonConnector(conn, aoServer).dumpPostgresDatabase(dbPKey, out);
+		DaemonHandler.getDaemonConnector(conn, aoServer).dumpPostgresDatabase(dbPKey, gzip, out);
 	}
 
 	public static void enablePostgresServerUser(

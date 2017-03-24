@@ -394,13 +394,14 @@ final public class MySQLHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		CompressedDataOutputStream out,
-		int dbPKey
+		int dbPKey,
+		boolean gzip
 	) throws IOException, SQLException {
 		checkAccessMySQLDatabase(conn, source, "dumpMySQLDatabase", dbPKey);
 
 		int mysqlServer=getMySQLServerForMySQLDatabase(conn, dbPKey);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).dumpMySQLDatabase(dbPKey, out);
+		DaemonHandler.getDaemonConnector(conn, aoServer).dumpMySQLDatabase(dbPKey, gzip, out);
 	}
 
 	public static void enableMySQLServerUser(

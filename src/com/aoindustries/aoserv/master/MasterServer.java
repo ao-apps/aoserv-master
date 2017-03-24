@@ -3724,15 +3724,23 @@ public abstract class MasterServer {
 											currentThread.setPriority(Thread.NORM_PRIORITY-1);
 
 											int pkey = in.readCompressedInt();
+											boolean gzip;
+											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+												gzip = in.readBoolean();
+											} else {
+												gzip = false;
+											}
 											process.setCommand(
 												AOSHCommand.DUMP_MYSQL_DATABASE,
-												pkey
+												pkey,
+												gzip
 											);
 											MySQLHandler.dumpMySQLDatabase(
 												conn,
 												source,
 												out,
-												pkey
+												pkey,
+												gzip
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -3744,15 +3752,23 @@ public abstract class MasterServer {
 											currentThread.setPriority(Thread.NORM_PRIORITY-1);
 
 											int pkey = in.readCompressedInt();
+											boolean gzip;
+											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+												gzip = in.readBoolean();
+											} else {
+												gzip = false;
+											}
 											process.setCommand(
 												AOSHCommand.DUMP_POSTGRES_DATABASE,
-												pkey
+												pkey,
+												gzip
 											);
 											PostgresHandler.dumpPostgresDatabase(
 												conn,
 												source,
 												out,
-												pkey
+												pkey,
+												gzip
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
