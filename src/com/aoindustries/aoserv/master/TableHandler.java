@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.AOSHCommand;
 import com.aoindustries.aoserv.client.AOServPermission;
 import com.aoindustries.aoserv.client.AOServProtocol;
+import com.aoindustries.aoserv.client.AOServWritable;
 import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.AOServerDaemonHost;
 import com.aoindustries.aoserv.client.Architecture;
@@ -182,6 +183,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -527,7 +529,6 @@ final public class TableHandler {
 	public static void getTable(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataInputStream in,
 		CompressedDataOutputStream out,
 		boolean provideProgress,
 		final SchemaTable.TableID tableID
@@ -7805,6 +7806,76 @@ final public class TableHandler {
 		}
 	}
 
+	/**
+	 * Gets an old table given its table name.
+	 * This is used for backwards compatibility to provide data for tables that no
+	 * longer exist.
+	 */
+	public static void getOldTable(
+		DatabaseConnection conn,
+		RequestSource source,
+		CompressedDataOutputStream clientOut,
+		boolean provideProgress,
+		String tableName
+	) throws IOException, SQLException {
+		switch(tableName) {
+			case "mysql_reserved_words" :
+				if(
+					source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_100) >= 0
+					&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80) <= 0
+				) {
+					MySQLServer.ReservedWord[] reservedWords = MySQLServer.ReservedWord.values();
+					List<AOServWritable> objs = new ArrayList<>(reservedWords.length);
+					for(MySQLServer.ReservedWord reservedWord : reservedWords) {
+						objs.add((out, clientVersion) -> {
+							out.writeUTF(reservedWord.name().toLowerCase(Locale.ROOT));
+						});
+					}
+					MasterServer.writeObjects(source, clientOut, provideProgress, objs);
+					return;
+				}
+				// fall-through to empty response
+				break;
+			case "net_protocols" :
+				if(
+					source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_100) >= 0
+					&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80) <= 0
+				) {
+					// Send in lowercase
+					com.aoindustries.net.Protocol[] netProtocols = com.aoindustries.net.Protocol.values();
+					List<AOServWritable> objs = new ArrayList<>(netProtocols.length);
+					for(com.aoindustries.net.Protocol netProtocol : netProtocols) {
+						objs.add((out, clientVersion) -> {
+							out.writeUTF(netProtocol.name().toLowerCase(Locale.ROOT));
+						});
+					}
+					MasterServer.writeObjects(source, clientOut, provideProgress, objs);
+					return;
+				}
+				// fall-through to empty response
+				break;
+			case "postgres_reserved_words" :
+				if(
+					source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_100) >= 0
+					&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80) <= 0
+				) {
+					PostgresServer.ReservedWord[] reservedWords = PostgresServer.ReservedWord.values();
+					List<AOServWritable> objs = new ArrayList<>(reservedWords.length);
+					for(PostgresServer.ReservedWord reservedWord : reservedWords) {
+						objs.add((out, clientVersion) -> {
+							out.writeUTF(reservedWord.name().toLowerCase(Locale.ROOT));
+						});
+					}
+					MasterServer.writeObjects(source, clientOut, provideProgress, objs);
+					return;
+				}
+				// fall-through to empty response
+				break;
+		}
+		// Not recognized table name and version range: write empty response
+		MasterServer.writeObjects(source, clientOut, provideProgress, Collections.emptyList());
+	}
+
 	public static void invalidate(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -7831,30 +7902,46 @@ final public class TableHandler {
 		return mu!=null && mu.canInvalidateTables();
 	}
 
-	final private static Map<SchemaTable.TableID,String> tableNames=new EnumMap<>(SchemaTable.TableID.class);
+	private static final Object tableNamesLock = new Object();
+	private static Map<Integer,String> tableNames;
+
+	public static String getTableNameForDBTableID(DatabaseAccess conn, Integer dbTableId) throws SQLException {
+		synchronized(tableNamesLock) {
+			if(tableNames == null) {
+				tableNames = conn.executeQuery(
+					(ResultSet results) -> {
+						Map<Integer,String> newMap = new HashMap<>();
+						while(results.next()) {
+							Integer tableId = results.getInt("table_id");
+							String name = results.getString("name");
+							if(newMap.put(tableId, name) != null) throw new SQLException("Duplicate table_id: " + tableId);
+						}
+						return newMap;
+					},
+					"select table_id, name from schema_tables"
+				);
+			}
+			return tableNames.get(dbTableId);
+		}
+	}
 
 	public static String getTableName(DatabaseAccess conn, SchemaTable.TableID tableID) throws IOException, SQLException {
-		synchronized(tableNames) {
-			String name = tableNames.get(tableID);
-			if(name == null) {
-				name = conn.executeStringQuery("select name from schema_tables where table_id=?",
-					convertClientTableIDToDBTableID(
-						conn,
-						AOServProtocol.Version.CURRENT_VERSION,
-						tableID.ordinal()
-					)
-				);
-				if(name == null) throw new SQLException("Unable to find table name for table ID: " + tableID);
-				tableNames.put(tableID, name);
-			}
-			return name;
-		}
+		return getTableNameForDBTableID(
+			conn,
+			convertClientTableIDToDBTableID(
+				conn,
+				AOServProtocol.Version.CURRENT_VERSION,
+				tableID.ordinal()
+			)
+		);
 	}
 
 	final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> fromClientTableIDs=new EnumMap<>(AOServProtocol.Version.class);
 
 	/**
 	 * Converts a specific AOServProtocol version table ID to the number used in the database storage.
+	 *
+	 * @return  the {@code table_id} used in the database or {@code -1} if unknown
 	 */
 	public static int convertClientTableIDToDBTableID(
 		DatabaseAccess conn,
@@ -8009,9 +8096,9 @@ final public class TableHandler {
 	}
 
 	public static void invalidateTable(SchemaTable.TableID tableID) {
-		if(tableID==SchemaTable.TableID.SCHEMA_TABLES) {
-			synchronized(tableNames) {
-				tableNames.clear();
+		if(tableID == SchemaTable.TableID.SCHEMA_TABLES) {
+			synchronized(tableNamesLock) {
+				tableNames = null;
 			}
 		}
 		if(tableID==SchemaTable.TableID.AOSERV_PROTOCOLS || tableID==SchemaTable.TableID.SCHEMA_TABLES) {

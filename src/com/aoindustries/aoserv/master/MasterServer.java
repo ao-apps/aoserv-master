@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.AOSHCommand;
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.AOServProtocol;
+import com.aoindustries.aoserv.client.AOServWritable;
 import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.DNSRecord;
 import com.aoindustries.aoserv.client.DNSZoneTable;
@@ -69,7 +70,9 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -5083,8 +5086,41 @@ public abstract class MasterServer {
 											int clientTableID = in.readCompressedInt();
 											SchemaTable.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
 											if(tableID == null) {
-												// Old, unrecognized tables
-												writeObjects(source, out, provideProgress, new ArrayList<>());
+												// Get the table name, if possible
+												int dbTableId = TableHandler.convertClientTableIDToDBTableID(
+													conn,
+													source.getProtocolVersion(),
+													clientTableID
+												);
+												String tableName = dbTableId == -1
+													? null
+													: TableHandler.getTableNameForDBTableID(conn, dbTableId)
+												;
+												if(tableName != null) {
+													// Is a recognized table name, give a chance for backward compatibility
+													process.setCommand(
+														AOSHCommand.SELECT,
+														"*",
+														"from",
+														tableName
+													);
+													TableHandler.getOldTable(
+														conn,
+														source,
+														out,
+														provideProgress,
+														tableName
+													);
+												} else {
+													// Not recognized table name, write empty response
+													process.setCommand(
+														AOSHCommand.SELECT,
+														"*",
+														"from",
+														clientTableID
+													);
+													writeObjects(source, out, provideProgress, Collections.emptyList());
+												}
 											} else {
 												if(
 													tableID == SchemaTable.TableID.DISTRO_FILES
@@ -5104,7 +5140,6 @@ public abstract class MasterServer {
 												TableHandler.getTable(
 													conn,
 													source,
-													in,
 													out,
 													provideProgress,
 													tableID
@@ -9224,43 +9259,55 @@ public abstract class MasterServer {
 	/**
 	 * Writes all rows of a results set.
 	 */
-	public static void writeObjects(RequestSource source, CompressedDataOutputStream out, boolean provideProgress, List<? extends AOServObject<?,?>> objs) throws IOException {
-		AOServProtocol.Version version=source.getProtocolVersion();
+	public static void writeObjects(
+		RequestSource source,
+		CompressedDataOutputStream out,
+		boolean provideProgress,
+		Collection<? extends AOServWritable> objs
+	) throws IOException {
+		AOServProtocol.Version version = source.getProtocolVersion();
 
-		int size=objs.size();
+		int size = objs.size();
 		if (provideProgress) {
 			out.writeByte(AOServProtocol.NEXT);
 			out.writeCompressedInt(size);
 		}
-		for(int c=0;c<size;c++) {
+		int count = 0;
+		for(AOServWritable obj : objs) {
+			count++;
+			if(count > size) throw new ConcurrentModificationException("Too many objects during iteration: " + count + " > " + size);
 			out.writeByte(AOServProtocol.NEXT);
-			objs.get(c).write(out, version);
+			obj.write(out, version);
 		}
+		if(count < size) throw new ConcurrentModificationException("Too few objects during iteration: " + count + " < " + size);
 	}
 
 	/**
-	 * Writes all rows of a results set.
+	 * Writes all rows of a results set while synchronizing on each object.
 	 */
 	public static void writeObjectsSynced(
 		RequestSource source,
 		CompressedDataOutputStream out,
 		boolean provideProgress,
-		List<? extends AOServObject<?,?>> objs
+		Collection<? extends AOServWritable> objs
 	) throws IOException {
-		AOServProtocol.Version version=source.getProtocolVersion();
+		AOServProtocol.Version version = source.getProtocolVersion();
 
-		int size=objs.size();
+		int size = objs.size();
 		if (provideProgress) {
 			out.writeByte(AOServProtocol.NEXT);
 			out.writeCompressedInt(size);
 		}
-		for(int c=0;c<size;c++) {
+		int count = 0;
+		for(AOServWritable obj : objs) {
+			count++;
+			if(count > size) throw new ConcurrentModificationException("Too many objects during iteration: " + count + " > " + size);
 			out.writeByte(AOServProtocol.NEXT);
-			AOServObject<?,?> obj=objs.get(c);
 			synchronized(obj) {
 				obj.write(out, version);
 			}
 		}
+		if(count < size) throw new ConcurrentModificationException("Too few objects during iteration: " + count + " < " + size);
 	}
 
 	public static String authenticate(
