@@ -282,21 +282,42 @@ final public class AccountCleaner implements CronJob {
                         "select\n"
                         + "  ba.username\n"
                         + "from\n"
-                        + "  business_administrators ba,\n"
-                        + "  usernames un,\n"
-                        + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  business_administrators ba\n"
+                        + "  inner join usernames    un on ba.username   = un.username\n"
+                        + "  inner join packages     pk on un.package    = pk.name\n"
+                        + "  inner join businesses   bu on pk.accounting = bu.accounting\n"
                         + "where\n"
-                        + "  (select ac.pkey from ticket_actions ac where ac.administrator=ba.username limit 1) is null\n"
+                        + "  bu.canceled is not null\n"
+                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS + "\n"
+						// credit_card_transactions
+						// PostgresSQL 8.3 doing sequential scan on "or":
+                        // + "  and (select cct.pkey from credit_card_transactions cct where cct.credit_card_created_by=ba.username or cct.authorization_username=ba.username or cct.capture_username=ba.username or cct.void_username=ba.username limit 1) is null\n"
+						+ "  and (select cct1.pkey from credit_card_transactions cct1 where cct1.credit_card_created_by = ba.username limit 1) is null\n"
+						+ "  and (select cct2.pkey from credit_card_transactions cct2 where cct2.authorization_username = ba.username limit 1) is null\n"
+						+ "  and (select cct3.pkey from credit_card_transactions cct3 where cct3.capture_username       = ba.username limit 1) is null\n"
+						+ "  and (select cct4.pkey from credit_card_transactions cct4 where cct4.void_username          = ba.username limit 1) is null\n"
+						// credit_cards
+                        + "  and (select cc.pkey from credit_cards cc where cc.created_by=ba.username limit 1) is null\n"
+						// disable_log
                         + "  and (select dl.pkey from disable_log dl where dl.disabled_by=ba.username limit 1) is null\n"
-                        + "  and (select pk2.name from packages pk2 where pk2.created_by=ba.username limit 1) is null\n"
-                        + "  and (select ti.pkey from tickets ti where ti.created_by=ba.username or ti.assigned_to=ba.username or ti.closed_by=ba.username limit 1) is null\n"
-                        + "  and (select tr.transid from transactions tr where tr.username=ba.username limit 1) is null\n"
-                        + "  and ba.username=un.username\n"
-                        + "  and un.package=pk.name\n"
-                        + "  and pk.accounting=bu.accounting\n"
-                        + "  and bu.canceled is not null\n"
-                        + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
+						// monthly_charges
+                        + "  and (select mc.pkey from monthly_charges mc where mc.created_by=ba.username limit 1) is null\n"
+						// packages
+                        + "  and (select pk2.pkey from packages pk2 where pk2.created_by=ba.username limit 1) is null\n"
+						// signup_requests
+                        + "  and (select sr.pkey from signup_requests sr where sr.completed_by=ba.username limit 1) is null\n"
+						// ticket_actions
+						// PostgresSQL 8.3 doing sequential scan on "or":
+						// + "  and (select ta.pkey from ticket_actions ta where ta.administrator=ba.username or ta.old_assigned_to=ba.username or ta.new_assigned_to=ba.username limit 1) is null\n"
+						+ "  and (select ta1.pkey from ticket_actions ta1 where ta1.administrator   = ba.username limit 1) is null\n"
+						+ "  and (select ta2.pkey from ticket_actions ta2 where ta2.old_assigned_to = ba.username limit 1) is null\n"
+						+ "  and (select ta3.pkey from ticket_actions ta3 where ta3.new_assigned_to = ba.username limit 1) is null\n"
+						// ticket_assignments
+                        + "  and (select ta4.pkey from ticket_assignments ta4 where ta4.administrator=ba.username limit 1) is null\n"
+						// tickets
+                        + "  and (select ti.pkey from tickets ti where ti.created_by=ba.username limit 1) is null\n"
+						// transactions
+                        + "  and (select tr.transid from transactions tr where tr.username=ba.username limit 1) is null",
                         now
                     );
 					for (UserId username : bas) {
