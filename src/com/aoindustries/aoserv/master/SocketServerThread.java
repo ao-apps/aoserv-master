@@ -190,7 +190,10 @@ final public class SocketServerThread extends Thread implements RequestSource {
 					process.setEffectiveUser(UserId.valueOf(in.readUTF()));
 					process.setAuthenticatedUser(UserId.valueOf(in.readUTF()));
 				} catch(ValidationException e) {
-					throw new IOException(e.getLocalizedMessage(), e);
+					out.writeBoolean(false);
+					out.writeUTF(e.getLocalizedMessage());
+					out.flush();
+					return;
 				}
 				String host=socket.getInetAddress().getHostAddress();
 				setName(
