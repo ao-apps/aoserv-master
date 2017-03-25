@@ -483,6 +483,7 @@ public abstract class MasterServer {
 	 */
 	final boolean handleRequest(
 		RequestSource source,
+		long seq,
 		CompressedDataInputStream in,
 		CompressedDataOutputStream out,
 		MasterProcess process
@@ -494,6 +495,13 @@ public abstract class MasterServer {
 		boolean keepOpen = true;
 
 		process.commandCompleted();
+
+		// Verify client sends matching sequence
+		if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+			long clientSeq = in.readLong();
+			if(clientSeq != seq) throw new IOException("Sequence mismatch: " + clientSeq + " != " + seq);
+		}
+		// Continue with task
 		int taskCodeOrdinal = in.readCompressedInt();
 		process.commandRunning();
 		{

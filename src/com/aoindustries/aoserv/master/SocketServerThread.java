@@ -411,7 +411,17 @@ final public class SocketServerThread extends Thread implements RequestSource {
 									if(existingID==-1) {
 										process.setConnectorID(MasterServer.getNextConnectorID());
 										out.writeLong(process.getConnectorID());
-									} else process.setConnectorID(existingID);
+									} else {
+										process.setConnectorID(existingID);
+									}
+									// Command sequence starts at a random value
+									final long startSeq;
+									if(protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+										startSeq = MasterServer.getRandom().nextLong();
+										out.writeLong(startSeq);
+									} else {
+										startSeq = 0;
+									}
 									out.flush();
 
 									try {
@@ -426,7 +436,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
 										conn.releaseConnection();
 									}
 
-									while(server.handleRequest(this, in, out, process)) {
+									long seq = startSeq;
+									while(server.handleRequest(this, seq++, in, out, process)) {
 										// Do nothing in loop
 									}
 								}
