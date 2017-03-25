@@ -2369,10 +2369,17 @@ public abstract class MasterServer {
 													int server = in.readCompressedInt();
 													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
 													int ipAddress = in.readCompressedInt();
-													Port port = Port.valueOf(
-														in.readCompressedInt(),
-														Protocol.valueOf(in.readUTF().toUpperCase(Locale.ROOT))
-													);
+													Port port;
+													{
+														int portNum = in.readCompressedInt();
+														Protocol protocol;
+														if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) < 0) {
+															protocol = Protocol.valueOf(in.readUTF().toUpperCase(Locale.ROOT));
+														} else {
+															protocol = in.readEnum(Protocol.class);
+														}
+														port = Port.valueOf(portNum, protocol);
+													}
 													String appProtocol = in.readUTF().trim();
 													boolean openFirewall = in.readBoolean();
 													boolean monitoringEnabled;
@@ -4890,10 +4897,17 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											InetAddress ipAddress = InetAddress.valueOf(in.readUTF());
-											Port port = Port.valueOf(
-												in.readCompressedInt(),
-												Protocol.valueOf(in.readUTF().toUpperCase(Locale.ROOT))
-											);
+											Port port;
+											{
+												int portNum = in.readCompressedInt();
+												Protocol protocol;
+												if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) < 0) {
+													protocol = Protocol.valueOf(in.readUTF().toUpperCase(Locale.ROOT));
+												} else {
+													protocol = in.readEnum(Protocol.class);
+												}
+												port = Port.valueOf(portNum, protocol);
+											}
 											String appProtocol = in.readUTF();
 											String monitoringParameters = in.readUTF();
 											process.setCommand(
