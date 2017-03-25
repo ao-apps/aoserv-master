@@ -304,8 +304,10 @@ final public class DNSHandler implements CronJob {
 						   + "  inner join packages pk on hs.package=pk.name\n"
 						   + "  inner join ao_servers ao on hs.ao_server=ao.server\n"
 						   + "where\n"
+						   // Is not "localhost"
+						   + "  hsu.hostname!='localhost'\n"
 						   // Is not the test URL
-						   + "  hsu.hostname!=(hs.site_name || '.' || ao.hostname)";
+						   + "  and hsu.hostname!=(hs.site_name || '.' || ao.hostname)";
 				try {
 					ResultSet results = stmt.executeQuery(sql);
 					try {
