@@ -307,15 +307,17 @@ final public class ServerHandler {
 		return conn.executeIntQuery("select coalesce((select operating_system_version from servers where pkey=?), -1)", server);
 	}
 
-	final private static Map<String,Integer> serversForAOServers=new HashMap<>();
-	public static int getServerForAOServerHostname(DatabaseConnection conn, String aoServerHostname) throws IOException, SQLException {
+	final private static Map<DomainName,Integer> serversForAOServers = new HashMap<>();
+	public static int getServerForAOServerHostname(DatabaseConnection conn, DomainName aoServerHostname) throws IOException, SQLException {
 		synchronized(serversForAOServers) {
-			Integer I=serversForAOServers.get(aoServerHostname);
+			Integer I = serversForAOServers.get(aoServerHostname);
 			int server;
-			if(I==null) {
-				server=conn.executeIntQuery("select server from ao_servers where hostname=?", aoServerHostname);
+			if(I == null) {
+				server = conn.executeIntQuery("select server from ao_servers where hostname=?", aoServerHostname);
 				serversForAOServers.put(aoServerHostname, server);
-			} else server=I;
+			} else {
+				server = I;
+			}
 			return server;
 		}
 	}

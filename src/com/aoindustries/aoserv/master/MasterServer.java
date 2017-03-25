@@ -625,7 +625,7 @@ public abstract class MasterServer {
 											if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
 											int server;
 											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
-												String hostname = in.readNullUTF();
+												DomainName hostname = DomainName.valueOf(in.readNullUTF());
 												server = hostname==null ? -1 : ServerHandler.getServerForAOServerHostname(conn, hostname);
 											} else {
 												server = in.readCompressedInt();
@@ -820,10 +820,10 @@ public abstract class MasterServer {
 													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
 													String contractVersion=in.readNullUTF();
 													int defaultServer;
-													String hostname;
+													DomainName hostname;
 													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
 														defaultServer = -1;
-														hostname = in.readUTF();
+														hostname = DomainName.valueOf(in.readUTF());
 													} else {
 														defaultServer = in.readCompressedInt();
 														hostname = null;

@@ -11,6 +11,7 @@ import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.net.DomainName;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
@@ -172,10 +173,18 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				this.protocolVersion=AOServProtocol.Version.getVersion(in.readUTF());
 				process.setAOServProtocol(protocolVersion.getVersion());
 				if(in.readBoolean()) {
-					String daemonServerHostname=in.readUTF();
+					DomainName daemonServer;
+					try {
+						daemonServer = DomainName.valueOf(in.readUTF());
+					} catch(ValidationException e) {
+						out.writeBoolean(false);
+						out.writeUTF(e.getLocalizedMessage());
+						out.flush();
+						return;
+					}
 					DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
 					try {
-						process.setDeamonServer(ServerHandler.getServerForAOServerHostname(conn, daemonServerHostname));
+						process.setDeamonServer(ServerHandler.getServerForAOServerHostname(conn, daemonServer));
 					} catch(RuntimeException | IOException err) {
 						conn.rollback();
 						throw err;
@@ -185,7 +194,9 @@ final public class SocketServerThread extends Thread implements RequestSource {
 					} finally {
 						conn.releaseConnection();
 					}
-				} else process.setDeamonServer(-1);
+				} else {
+					process.setDeamonServer(-1);
+				}
 				try {
 					process.setEffectiveUser(UserId.valueOf(in.readUTF()));
 					process.setAuthenticatedUser(UserId.valueOf(in.readUTF()));
@@ -502,7 +513,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				logger.log(Level.SEVERE, null, err);
 			} catch(ThreadDeath TD) {
 				throw TD;
-			} catch (Throwable T) {
+			} catch(Throwable T) {
 				logger.log(Level.SEVERE, null, T);
 			} finally {
 				// Close the socket
