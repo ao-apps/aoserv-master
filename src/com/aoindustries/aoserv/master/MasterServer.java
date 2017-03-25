@@ -9337,6 +9337,7 @@ public abstract class MasterServer {
 
 		// If connectAs is not authenticateAs, must be authenticated with switch user permissions
 		if(!connectAs.equals(authenticateAs)) {
+			if(!BusinessHandler.isBusinessAdministrator(conn, connectAs)) return "Unable to find BusinessAdministrator: "+connectAs;
 			// Must have can_switch_users permissions and must be switching to a subaccount user
 			if(!BusinessHandler.canSwitchUser(conn, authenticateAs, connectAs)) return "Not allowed to switch users from "+authenticateAs+" to "+connectAs;
 		}
