@@ -610,6 +610,7 @@ public abstract class MasterServer {
 					// These commands automatically have the try/catch and the database connection releasing
 					// And a finally block to reset thread priority
 					boolean logIOException = true;
+					boolean logSQLException = true;
 					Thread currentThread=Thread.currentThread();
 					try {
 						InvalidateList invalidateList=new InvalidateList();
@@ -4651,6 +4652,7 @@ public abstract class MasterServer {
 												mysqlSlave==-1 ? null : mysqlSlave,
 												tableNames
 											);
+											logSQLException = false;
 											MySQLHandler.checkTables(
 												conn,
 												source,
@@ -4659,6 +4661,7 @@ public abstract class MasterServer {
 												tableNames,
 												out
 											);
+											logSQLException = true;
 											resp = null;
 											sendInvalidateList = false;
 										}
@@ -9043,7 +9046,7 @@ public abstract class MasterServer {
 						logger.log(Level.SEVERE, null, err);
 						keepOpen = false;
 					} catch(SQLException err) {
-						logger.log(Level.SEVERE, null, err);
+						if(logSQLException) logger.log(Level.SEVERE, null, err);
 						String message=err.getMessage();
 						out.writeByte(AOServProtocol.SQL_EXCEPTION);
 						out.writeUTF(message==null?"":message);
