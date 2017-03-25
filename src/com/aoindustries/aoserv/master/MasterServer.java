@@ -8711,6 +8711,17 @@ public abstract class MasterServer {
 														aoServer
 													);
 													break;
+												case MYSQL_SERVERS :
+													process.setCommand(
+														AOSHCommand.WAIT_FOR_MYSQL_SERVER_REBUILD,
+														aoServer
+													);
+													MySQLHandler.waitForMySQLServerRebuild(
+														conn,
+														source,
+														aoServer
+													);
+													break;
 												case MYSQL_USERS :
 													process.setCommand(
 														AOSHCommand.WAIT_FOR_MYSQL_USER_REBUILD,

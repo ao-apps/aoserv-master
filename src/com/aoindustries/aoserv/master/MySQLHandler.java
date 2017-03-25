@@ -933,6 +933,16 @@ final public class MySQLHandler {
 		DaemonHandler.getDaemonConnector(conn, aoServer).waitForMySQLDBUserRebuild();
 	}
 
+	public static void waitForMySQLServerRebuild(
+		DatabaseConnection conn,
+		RequestSource source,
+		int aoServer
+	) throws IOException, SQLException {
+		ServerHandler.checkAccessServer(conn, source, "waitForMySQLServerRebuild", aoServer);
+		ServerHandler.waitForInvalidates(aoServer);
+		DaemonHandler.getDaemonConnector(conn, aoServer).waitForMySQLServerRebuild();
+	}
+
 	/**
 	 * Waits for any pending or processing MySQL database config rebuild to complete.
 	 */
