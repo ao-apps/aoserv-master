@@ -449,27 +449,55 @@ final public class SocketServerThread extends Thread implements RequestSource {
 			} catch(SSLHandshakeException err) {
 				String message = err.getMessage();
 				if(
-					!"Remote host closed connection during handshake".equalsIgnoreCase(message)
-				) logger.log(Level.SEVERE, null, err);
+					message == null
+					|| (
+						!message.equals("Remote host closed connection during handshake")
+						&& !message.equals("no cipher suites in common")
+					)
+				) {
+					logger.log(Level.SEVERE, null, err);
+				} else {
+					logger.log(Level.FINE, null, err);
+				}
 			} catch(SSLException err) {
 				String message = err.getMessage();
 				if(
-					!"Connection has been shutdown: javax.net.ssl.SSLException: java.net.SocketException: Connection reset".equalsIgnoreCase(message)
-				) logger.log(Level.SEVERE, null, err);
+					message == null
+					|| (
+						!message.equals("Connection has been shutdown: javax.net.ssl.SSLException: java.net.SocketException: Connection reset")
+						&& !message.equals("Unrecognized SSL message, plaintext connection?")
+					)
+				) {
+					logger.log(Level.SEVERE, null, err);
+				} else {
+					logger.log(Level.FINE, null, err);
+				}
 			} catch(SocketException err) {
-				// Connection reset common for abnormal client disconnects
-				String message=err.getMessage();
+				String message = err.getMessage();
 				if(
-					!"Broken pipe".equalsIgnoreCase(message)
-					&& !"Connection reset".equalsIgnoreCase(message)
-					&& !"Connection timed out".equalsIgnoreCase(message)
-				) logger.log(Level.SEVERE, null, err);
+					message == null
+					|| (
+						// Connection reset common for abnormal client disconnects
+						!message.startsWith("Broken pipe")
+						&& !message.equals("Connection reset")
+						&& !message.startsWith("Connection timed out")
+					)
+				) {
+					logger.log(Level.SEVERE, null, err);
+				} else {
+					logger.log(Level.FINE, null, err);
+				}
 			} catch(IOException err) {
-				// Broken pipe common for abnormal client disconnects
-				String message=err.getMessage();
+				String message = err.getMessage();
 				if(
-					!"Broken pipe".equalsIgnoreCase(message)
-				) logger.log(Level.SEVERE, null, err);
+					message == null
+					// Broken pipe common for abnormal client disconnects
+					|| !message.startsWith("Broken pipe")
+				) {
+					logger.log(Level.SEVERE, null, err);
+				} else {
+					logger.log(Level.FINE, null, err);
+				}
 			} catch(SQLException err) {
 				logger.log(Level.SEVERE, null, err);
 			} catch(ThreadDeath TD) {
@@ -479,7 +507,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 			} finally {
 				// Close the socket
 				try {
-					isClosed=true;
+					isClosed = true;
 					socket.close();
 				} catch (IOException err) {
 					logger.log(Level.SEVERE, null, err);
