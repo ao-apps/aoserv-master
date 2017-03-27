@@ -25,7 +25,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -340,7 +339,7 @@ final public class TransactionHandler {
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
         StringBuilder sql;
-		List<Object> params;
+		final List<Object> params = new ArrayList<>();
         boolean whereDone;
         if(masterUser!=null) {
             if(masterServers.length==0) {
@@ -350,7 +349,6 @@ final public class TransactionHandler {
                     + "from\n"
                     + "  transactions tr\n"
                 );
-				params = Collections.emptyList();
                 whereDone=false;
             } else {
                 MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
@@ -373,7 +371,6 @@ final public class TransactionHandler {
                 + "  )\n"
                 + "  and bu1.accounting=tr.accounting\n"
             );
-			params = new ArrayList<>();
             params.add(source.getUsername());
             whereDone=true;
         }
