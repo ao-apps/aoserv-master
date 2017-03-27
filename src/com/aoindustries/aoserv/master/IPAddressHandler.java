@@ -183,7 +183,7 @@ final public class IPAddressHandler {
 
 		InetAddress ip = getInetAddressForIPAddress(conn, ipAddress);
 		if(
-			ip.isLooback()
+			ip.isLoopback()
 			|| ip.isUnspecified()
 		) throw new SQLException("Not allowed to set the hostname for "+ip);
 

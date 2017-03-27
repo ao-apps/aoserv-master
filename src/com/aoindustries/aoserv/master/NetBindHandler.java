@@ -102,7 +102,7 @@ final public class NetBindHandler {
 						server
 					)
 				) throw new SQLException("NetBind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
-			} else if(inetAddress.isLooback()) {
+			} else if(inetAddress.isLoopback()) {
 				// Loopback must be unique to AOServ Platform and not have wildcard
 				if(
 					conn.executeBooleanQuery(
