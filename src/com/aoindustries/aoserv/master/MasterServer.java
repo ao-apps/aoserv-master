@@ -497,7 +497,7 @@ public abstract class MasterServer {
 		process.commandCompleted();
 
 		// Verify client sends matching sequence
-		if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+		if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
 			long clientSeq = in.readLong();
 			if(clientSeq != seq) throw new IOException("Sequence mismatch: " + clientSeq + " != " + seq);
 		}
@@ -2374,7 +2374,7 @@ public abstract class MasterServer {
 													{
 														int portNum = in.readCompressedInt();
 														Protocol protocol;
-														if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) < 0) {
+														if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) < 0) {
 															protocol = Protocol.valueOf(in.readUTF().toUpperCase(Locale.ROOT));
 														} else {
 															protocol = in.readEnum(Protocol.class);
@@ -3744,7 +3744,7 @@ public abstract class MasterServer {
 
 											int pkey = in.readCompressedInt();
 											boolean gzip;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
 												gzip = in.readBoolean();
 											} else {
 												gzip = false;
@@ -3772,7 +3772,7 @@ public abstract class MasterServer {
 
 											int pkey = in.readCompressedInt();
 											boolean gzip;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
 												gzip = in.readBoolean();
 											} else {
 												gzip = false;
@@ -4904,7 +4904,7 @@ public abstract class MasterServer {
 											{
 												int portNum = in.readCompressedInt();
 												Protocol protocol;
-												if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) < 0) {
+												if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) < 0) {
 													protocol = Protocol.valueOf(in.readUTF().toUpperCase(Locale.ROOT));
 												} else {
 													protocol = in.readEnum(Protocol.class);
@@ -9404,14 +9404,14 @@ public abstract class MasterServer {
 			List<MasterServerStat> objs=new ArrayList<>();
 			addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getByteBufferCreates()), "Number of byte[] buffers created");
 			addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_USES, Long.toString(BufferManager.getByteBufferUses()), "Total number of byte[] buffers allocated");
-			if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+			if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
 				addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_ZERO_FILLS, Long.toString(BufferManager.getByteBufferZeroFills()), "Total number of byte[] buffers zero-filled");
 				addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_COLLECTED, Long.toString(BufferManager.getByteBuffersCollected()), "Total number of byte[] buffers detected as garbage collected");
 			}
 
 			addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getCharBufferCreates()), "Number of char[] buffers created");
 			addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_USES, Long.toString(BufferManager.getCharBufferUses()), "Total number of char[] buffers allocated");
-			if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+			if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
 				addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_ZERO_FILLS, Long.toString(BufferManager.getCharBufferZeroFills()), "Total number of char[] buffers zero-filled");
 				addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_COLLECTED, Long.toString(BufferManager.getCharBuffersCollected()), "Total number of char[] buffers detected as garbage collected");
 			}

@@ -329,7 +329,7 @@ final public class PostgresHandler {
 			dbPKey,
 			gzip,
 			(long dumpSize) -> {
-				if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+				if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
 					out.writeLong(dumpSize);
 				}
 			},

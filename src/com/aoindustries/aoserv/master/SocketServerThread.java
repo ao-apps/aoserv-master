@@ -227,7 +227,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				long existingID=in.readLong();
 
 				switch(protocolVersion) {
-					case VERSION_1_80_0_SNAPSHOT :
+					case VERSION_1_80_0 :
 					case VERSION_1_80 :
 					case VERSION_1_79 :
 					case VERSION_1_78 :
@@ -416,7 +416,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 									}
 									// Command sequence starts at a random value
 									final long startSeq;
-									if(protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_80_0_SNAPSHOT) >= 0) {
+									if(protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
 										startSeq = MasterServer.getRandom().nextLong();
 										out.writeLong(startSeq);
 									} else {
