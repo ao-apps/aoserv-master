@@ -413,7 +413,7 @@ final public class DNSHandler implements CronJob {
 		}
 
 		// Make all database changes in one big transaction
-		int pkey=conn.executeIntQuery("select nextval('dns_records_pkey_seq')");
+		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('dns_records_pkey_seq')");
 
 		// Add the entry
 		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records values(?,?,?,?,?,?,?,?,null,?)");
