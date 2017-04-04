@@ -274,16 +274,17 @@ final public class MySQLHandler {
 		UsernameHandler.checkUsernameAccessServer(conn, source, "addMySQLServerUser", username, aoServer);
 
 		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_server_users_pkey_seq')");
+		boolean isSystemUser = username.equals(MySQLUser.ROOT) || username.equals(MySQLUser.MYSQL_SYS);
 		conn.executeUpdate(
 			"insert into mysql_server_users values(?,?,?,?,null,null,?,?,?,?)",
 			pkey,
 			username,
 			mysqlServer,
 			host,
-			username.equals(MySQLUser.ROOT)?MySQLServerUser.UNLIMITED_QUESTIONS:MySQLServerUser.DEFAULT_MAX_QUESTIONS,
-			username.equals(MySQLUser.ROOT)?MySQLServerUser.UNLIMITED_UPDATES:MySQLServerUser.DEFAULT_MAX_UPDATES,
-			username.equals(MySQLUser.ROOT)?MySQLServerUser.UNLIMITED_CONNECTIONS:MySQLServerUser.DEFAULT_MAX_CONNECTIONS,
-			username.equals(MySQLUser.ROOT)?MySQLServerUser.UNLIMITED_USER_CONNECTIONS:MySQLServerUser.DEFAULT_MAX_USER_CONNECTIONS
+			isSystemUser ? MySQLServerUser.UNLIMITED_QUESTIONS        : MySQLServerUser.DEFAULT_MAX_QUESTIONS,
+			isSystemUser ? MySQLServerUser.UNLIMITED_UPDATES          : MySQLServerUser.DEFAULT_MAX_UPDATES,
+			isSystemUser ? MySQLServerUser.UNLIMITED_CONNECTIONS      : MySQLServerUser.DEFAULT_MAX_CONNECTIONS,
+			isSystemUser ? MySQLServerUser.UNLIMITED_USER_CONNECTIONS : MySQLServerUser.DEFAULT_MAX_USER_CONNECTIONS
 		);
 
 		// Notify all clients of the update
@@ -628,6 +629,7 @@ final public class MySQLHandler {
 			dbName.equals(MySQLDatabase.MYSQL)
 			|| dbName.equals(MySQLDatabase.INFORMATION_SCHEMA)
 			|| dbName.equals(MySQLDatabase.PERFORMANCE_SCHEMA)
+			|| dbName.equals(MySQLDatabase.SYS)
 		) {
 			throw new SQLException("Not allowed to remove the database named '" + dbName + '\'');
 		}
@@ -715,7 +717,10 @@ final public class MySQLHandler {
 		checkAccessMySQLServerUser(conn, source, "removeMySQLServerUser", pkey);
 
 		MySQLUserId username=getUsernameForMySQLServerUser(conn, pkey);
-		if(username.equals(MySQLUser.ROOT)) throw new SQLException("Not allowed to remove MySQLServerUser for user '"+MySQLUser.ROOT+'\'');
+		if(
+			username.equals(MySQLUser.ROOT)
+			|| username.equals(MySQLUser.MYSQL_SYS)
+		) throw new SQLException("Not allowed to remove MySQLServerUser for user '" + username + '\'');
 
 		// Remove the mysql_db_user
 		boolean dbUsersExist=conn.executeBooleanQuery("select (select pkey from mysql_db_users where mysql_server_user=? limit 1) is not null", pkey);
@@ -766,7 +771,10 @@ final public class MySQLHandler {
 		InvalidateList invalidateList,
 		MySQLUserId username
 	) throws IOException, SQLException {
-		if(username.equals(MySQLUser.ROOT)) throw new SQLException("Not allowed to remove MySQLUser for user '"+MySQLUser.ROOT+'\'');
+		if(
+			username.equals(MySQLUser.ROOT)
+			|| username.equals(MySQLUser.MYSQL_SYS)
+		) throw new SQLException("Not allowed to remove MySQLUser for user '" + username + '\'');
 
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
@@ -857,7 +865,10 @@ final public class MySQLHandler {
 		MySQLUserId username=getUsernameForMySQLServerUser(conn, mysql_server_user);
 
 		// No setting the super user password
-		if(username.equals(MySQLUser.ROOT)) throw new SQLException("The MySQL "+MySQLUser.ROOT+" password may not be set.");
+		if(
+			username.equals(MySQLUser.ROOT)
+			|| username.equals(MySQLUser.MYSQL_SYS)
+		) throw new SQLException("The MySQL " + username + " password may not be set.");
 
 		// Perform the password check here, too.
 		if(password!=null && password.length()==0) password=MySQLUser.NO_PASSWORD;
