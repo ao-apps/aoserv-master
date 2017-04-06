@@ -2020,7 +2020,12 @@ public abstract class MasterServer {
 												{
 													UserId username = UserId.valueOf(in.readUTF());
 													GroupId primary_group = GroupId.valueOf(in.readUTF());
-													Gecos name = Gecos.valueOf(in.readUTF());
+													Gecos name;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) < 0) {
+														name = Gecos.valueOf(in.readUTF());
+													} else {
+														name = Gecos.valueOf(in.readNullUTF());
+													}
 													Gecos office_location = Gecos.valueOf(in.readNullUTF());
 													Gecos office_phone = Gecos.valueOf(in.readNullUTF());
 													Gecos home_phone = Gecos.valueOf(in.readNullUTF());
@@ -7319,7 +7324,13 @@ public abstract class MasterServer {
 									case SET_LINUX_ACCOUNT_NAME :
 										{
 											UserId username = UserId.valueOf(in.readUTF());
-											Gecos fullName = Gecos.valueOf(in.readUTF());
+											Gecos fullName;
+											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) < 0) {
+												fullName = Gecos.valueOf(in.readUTF());
+											} else {
+												String s = in.readUTF();
+												fullName = s.isEmpty() ? null : Gecos.valueOf(s);
+											}
 											process.setCommand(
 												AOSHCommand.SET_LINUX_ACCOUNT_NAME,
 												username,
