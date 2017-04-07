@@ -737,10 +737,45 @@ final public class HttpdHandler {
 			// Check for ties between jvm and site in linux_group_accounts
 			String sharedTomcatUsername = conn.executeStringQuery("select lsa.username from httpd_shared_tomcats hst, linux_server_accounts lsa where hst.linux_server_account = lsa.pkey and hst.pkey=?", sharedTomcatPkey);
 			String sharedTomcatLinuxGroup = conn.executeStringQuery("select lsg.name from httpd_shared_tomcats hst, linux_server_groups lsg where hst.linux_server_group = lsg.pkey and hst.pkey=?", sharedTomcatPkey);
-
-			boolean hasAccess = conn.executeBooleanQuery("select (select pkey from linux_group_accounts where group_name=? and username=?) is not null", sharedTomcatLinuxGroup, username);
+			int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+			if(osv == -1) throw new SQLException("Unknown operating system version for server #" + aoServer);
+			boolean hasAccess = conn.executeBooleanQuery(
+				"select (\n"
+				+ "  select\n"
+				+ "    pkey\n"
+				+ "  from\n"
+				+ "    linux_group_accounts\n"
+				+ "  where\n"
+				+ "    group_name=?\n"
+				+ "    and username=?\n"
+				+ "    and (\n"
+				+ "      operating_system_version is null\n"
+				+ "      or operating_system_version=?\n"
+				+ "    )\n"
+				+ ") is not null",
+				sharedTomcatLinuxGroup,
+				username,
+				osv
+			);
 			if (!hasAccess) throw new SQLException("Linux_account ("+username+") does not have access to linux_group ("+sharedTomcatLinuxGroup+")");
-			hasAccess = conn.executeBooleanQuery("select (select pkey from linux_group_accounts where group_name=? and username=?) is not null", group, sharedTomcatUsername);
+			hasAccess = conn.executeBooleanQuery(
+				"select (\n"
+				+ "  select\n"
+				+ "    pkey\n"
+				+ "  from\n"
+				+ "    linux_group_accounts\n"
+				+ "  where\n"
+				+ "    group_name=?\n"
+				+ "    and username=?\n"
+				+ "    and (\n"
+				+ "      operating_system_version is null\n"
+				+ "      or operating_system_version=?\n"
+				+ "    )\n"
+				+ ") is not null",
+				group,
+				sharedTomcatUsername,
+				osv
+			);
 			if (!hasAccess) throw new SQLException("Linux_account ("+sharedTomcatName+") does not have access to linux_group ("+group+")");
 
 			if(tomcatVersion!=-1) throw new SQLException("TomcatVersion cannot be supplied for a TomcatShared site: "+tomcatVersion);
@@ -1461,6 +1496,7 @@ final public class HttpdHandler {
 					Connection.TRANSACTION_READ_COMMITTED,
 					true,
 					"select (select pkey from linux_group_accounts where group_name=? and username=?) is null",
+					operating_system_version, too, if this code is resurrected
 					group,
 					sharedTomcatName
 				)
@@ -1479,6 +1515,7 @@ final public class HttpdHandler {
 					Connection.TRANSACTION_READ_COMMITTED,
 					true,
 					"select (select pkey from linux_group_accounts where group_name=? and username=?) is null",
+					operating_system_version, too, if this code is resurrected
 					sharedTomcatName,
 					username
 				)

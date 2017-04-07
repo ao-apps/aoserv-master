@@ -284,7 +284,7 @@ final public class LinuxAccountHandler {
 		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('linux_group_accounts_pkey_seq')");
 
 		conn.executeUpdate(
-			"insert into linux_group_accounts values(?,?,?,?)",
+			"insert into linux_group_accounts values(?,?,?,?,NULL)",
 			pkey,
 			groupName,
 			username,
@@ -326,6 +326,7 @@ final public class LinuxAccountHandler {
 
 		// OperatingSystem settings
 		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+		if(osv == -1) throw new SQLException("Operating system version not known for server #" + aoServer);
 		UnixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
 		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 
@@ -382,7 +383,7 @@ final public class LinuxAccountHandler {
 		}
 
 		// The primary group for this user must exist on this server
-		GroupId primaryGroup=getPrimaryLinuxGroup(conn, username);
+		GroupId primaryGroup=getPrimaryLinuxGroup(conn, username, osv);
 		int primaryLSG=getLinuxServerGroup(conn, primaryGroup, aoServer);
 		if(primaryLSG<0) throw new SQLException("Unable to find primary Linux group '"+primaryGroup+"' on AOServer #"+aoServer+" for Linux account '"+username+"'");
 
@@ -908,11 +909,22 @@ final public class LinuxAccountHandler {
 		return pkey;
 	}
 
-	public static GroupId getPrimaryLinuxGroup(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static GroupId getPrimaryLinuxGroup(DatabaseConnection conn, UserId username, int operatingSystemVersion) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.groupIdFactory,
-			"select group_name from linux_group_accounts where username=? and is_primary",
-			username
+			"select\n"
+			+ "  group_name\n"
+			+ "from\n"
+			+ "  linux_group_accounts\n"
+			+ "where\n"
+			+ "  username=?\n"
+			+ "  and is_primary\n"
+			+ "  and (\n"
+			+ "    operating_system_version is null\n"
+			+ "    or operating_system_version=?\n"
+		    + ")",
+			username,
+			operatingSystemVersion
 		);
 	}
 
@@ -1268,17 +1280,19 @@ final public class LinuxAccountHandler {
 			"select\n"
 			+ "  count(*)\n"
 			+ "from\n"
-			+ "  linux_server_groups lsg,\n"
-			+ "  linux_group_accounts lga,\n"
-			+ "  linux_server_accounts lsa\n"
+			+ "  linux_server_groups lsg\n"
+			+ "  inner join linux_group_accounts lga on lsg.name=lga.group_name\n"
+			+ "  inner join linux_server_accounts lsa on lga.username=lsa.username\n"
+			+ "  inner join servers se on lsg.ao_server=se.pkey\n"
 			+ "where\n"
-			+ "  lsg.name=lga.group_name\n"
-			+ "  and lga.username=lsa.username\n"
-			+ "  and lsg.pkey=?\n"
+			+ "  lsg.pkey=?\n"
 			+ "  and lga.is_primary\n"
-			+ "  and lsa.ao_server=?",
-			group,
-			aoServer
+			+ "  and (\n"
+			+ "    lga.operating_system_version is null\n"
+			+ "    or lga.operating_system_version=se.operating_system_version\n"
+			+ "  )\n"
+			+ "  and lsg.ao_server=lsa.ao_server",
+			group
 		);
 
 		if(primaryCount>0) throw new SQLException("linux_server_group.pkey="+group+" is the primary group for "+primaryCount+" Linux server "+(primaryCount==1?"account":"accounts")+" on "+aoServer);
@@ -1333,19 +1347,22 @@ final public class LinuxAccountHandler {
 			uid=-1;
 			gid=-1;
 		} else {
-			uid=getUIDForLinuxServerAccount(conn, pkey);
-			gid=conn.executeIntQuery(
+			uid = getUIDForLinuxServerAccount(conn, pkey);
+			gid = conn.executeIntQuery(
 				"select\n"
 				+ "  lsg.gid\n"
 				+ "from\n"
-				+ "  linux_server_accounts lsa,\n"
-				+ "  linux_group_accounts lga,\n"
-				+ "  linux_server_groups lsg\n"
+				+ "  linux_server_accounts lsa\n"
+				+ "  inner join linux_group_accounts lga on lsa.username=lga.username\n"
+				+ "  inner join linux_server_groups lsg on lga.group_name=lsg.name\n"
+				+ "  inner join servers se on lsa.ao_server=se.pkey\n"
 				+ "where\n"
 				+ "  lsa.pkey=?\n"
-				+ "  and lsa.username=lga.username\n"
 				+ "  and lga.is_primary\n"
-				+ "  and lga.group_name=lsg.name\n"
+				+ "  and (\n"
+				+ "    lga.operating_system_version is null\n"
+				+ "    or lga.operating_system_version=se.operating_system_version\n"
+				+ "  )\n"
 				+ "  and lsa.ao_server=lsg.ao_server",
 				pkey
 			);
@@ -1844,23 +1861,19 @@ final public class LinuxAccountHandler {
 		   "select\n"
 			+ "  pk1.accounting\n"
 			+ "from\n"
-			+ "  linux_group_accounts lga1,\n"
-			+ "  linux_groups lg1,\n"
-			+ "  packages pk1\n"
+			+ "  linux_group_accounts lga1\n"
+			+ "  inner join linux_groups lg1 on lga1.group_name=lg1.name\n"
+			+ "  inner join packages pk1 on lg1.package=pk1.name\n"
 			+ "where\n"
 			+ "  lga1.pkey=?\n"
-			+ "  and lga1.group_name=lg1.name\n"
-			+ "  and lg1.package=pk1.name\n"
 			+ "union select\n"
 			+ "  pk2.accounting\n"
 			+ "from\n"
-			+ "  linux_group_accounts lga2,\n"
-			+ "  usernames un2,\n"
-			+ "  packages pk2\n"
+			+ "  linux_group_accounts lga2\n"
+			+ "  inner join usernames un2 on lga2.username=un2.username\n"
+			+ "  inner join packages pk2 on un2.package=pk2.name\n"
 			+ "where\n"
-			+ "  lga2.pkey=?\n"
-			+ "  and lga2.username=un2.username\n"
-			+ "  and un2.package=pk2.name",
+			+ "  lga2.pkey=?",
 			pkey,
 			pkey
 		);
@@ -1929,14 +1942,17 @@ final public class LinuxAccountHandler {
 			"select\n"
 			+ "  lsg.ao_server\n"
 			+ "from\n"
-			+ "  linux_group_accounts lga,\n"
-			+ "  linux_server_groups lsg,\n"
-			+ "  linux_server_accounts lsa\n"
+			+ "  linux_group_accounts lga\n"
+			+ "  inner join linux_server_groups lsg on lga.group_name=lsg.name\n"
+			+ "  inner join linux_server_accounts lsa on lga.username=lsa.username\n"
+			+ "  inner join servers se on lsg.ao_server=se.pkey\n"
 			+ "where\n"
 			+ "  lga.pkey=?\n"
-			+ "  and lga.group_name=lsg.name\n"
-			+ "  and lga.username=lsa.username\n"
-			+ "  and lsg.ao_server=lsa.ao_server",
+			+ "  and lsg.ao_server=lsa.ao_server\n"
+			+ "  and (\n"
+			+ "    lga.operating_system_version is null\n"
+			+ "    or lga.operating_system_version=se.operating_system_version\n"
+			+ "  )",
 			pkey
 		);
 	}
