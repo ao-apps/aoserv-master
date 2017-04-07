@@ -574,22 +574,19 @@ final public class HttpdHandler {
 		String docBaseStr = docBase.toString();
 		if(docBaseStr.startsWith("/home/")) {
 			// Must be able to access one of the linux_server_accounts with that home directory
-			int slashPos=docBaseStr.indexOf('/', 6);
-			if(slashPos!=7) throw new SQLException("Invalid docBase: "+docBase);
-			char ch=docBaseStr.charAt(6);
-			if(ch<'a' || ch>'z') throw new SQLException("Invalid docBase: "+docBase);
-			slashPos=docBaseStr.indexOf('/', 8);
-			if(slashPos==-1) slashPos=docBaseStr.length();
-			UnixPath homeDir;
-			try {
-				homeDir = UnixPath.valueOf(docBaseStr.substring(0, slashPos));
-			} catch(ValidationException e) {
-				throw new SQLException(e);
-			}
-			IntList lsas=conn.executeIntListQuery(
-				"select pkey from linux_server_accounts where ao_server=? and home=?",
+			//
+			// This means there must be an accessible account that has a home directory that is a prefix of this docbase.
+			// Such as /home/e/example/ being a prefix of /home/e/example/my-webapp
+			IntList lsas = conn.executeIntListQuery(
+				"select\n"
+				+ "  pkey\n"
+				+ "from\n"
+				+ "  linux_server_accounts\n"
+				+ "where\n"
+				+ "  ao_server=?\n"
+				+ "  and (home || '/')=substring(? from 1 for (length(home) + 1))",
 				aoServer,
-				homeDir
+				docBaseStr
 			);
 			boolean found=false;
 			for(int c=0;c<lsas.size();c++) {
@@ -598,7 +595,7 @@ final public class HttpdHandler {
 					break;
 				}
 			}
-			if(!found) throw new SQLException("Home directory not allowed for path: "+homeDir);
+			if(!found) throw new SQLException("Home directory not allowed for path: " + docBaseStr);
 		} else if(docBaseStr.startsWith(httpdSitesDir + "/")) {
 			int slashPos = docBaseStr.indexOf('/', httpdSitesDir.toString().length() + 1);
 			if(slashPos == -1) slashPos = docBaseStr.length();

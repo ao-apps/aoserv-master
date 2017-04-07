@@ -330,7 +330,28 @@ final public class LinuxAccountHandler {
 		UnixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
 		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 
-		if(!home.equals(LinuxServerAccount.getDefaultHomeDirectory(username))) {
+		if(home.equals(LinuxServerAccount.getDefaultHomeDirectory(username))) {
+			// Make sure no conflicting /home/u/username account exists.
+			String prefix = home + "/";
+			List<String> conflicting = conn.executeStringListQuery(
+				"select distinct home from linux_server_accounts where ao_server=? and substring(home from 1 for " + prefix.length() + ")=? order by home",
+				aoServer,
+				prefix
+			);
+			if(!conflicting.isEmpty()) throw new SQLException("Found conflicting home directories: " + conflicting);
+		} else if(home.equals(LinuxServerAccount.getHashedHomeDirectory(username))) {
+			// Make sure no conflicting /home/u account exists.
+			String conflictHome = "/home/" + username.toString().charAt(0);
+			if(
+				conn.executeBooleanQuery(
+					"select (select pkey from linux_server_accounts where ao_server=? and home=? limit 1) is not null",
+					aoServer,
+					conflictHome
+				)
+			) {
+				throw new SQLException("Found conflicting home directory: " + conflictHome);
+			}
+		} else {
 			String homeStr = home.toString();
 			// Must be in /www/... or /wwwgroup/... (or newer CentOS 7 equivalent of /var/www and /var/opt/apache-tomcat)
 			if(

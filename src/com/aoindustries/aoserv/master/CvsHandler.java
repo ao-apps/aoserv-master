@@ -56,17 +56,19 @@ final public class CvsHandler {
 			String pathStr = path.toString();
 			if(pathStr.startsWith("/home/")) {
 				// Must be able to access one of the linux_server_accounts with that home directory
-				int slashPos=pathStr.indexOf('/', 6);
-				if(slashPos!=7) throw new SQLException("Invalid path: "+path);
-				char ch=pathStr.charAt(6);
-				if(ch<'a' || ch>'z') throw new SQLException("Invalid path: "+path);
-				slashPos=pathStr.indexOf('/', 8);
-				if(slashPos==-1) slashPos=pathStr.length();
-				String homeDir=pathStr.substring(0, slashPos);
-				IntList lsas=conn.executeIntListQuery(
-					"select pkey from linux_server_accounts where ao_server=? and home=?",
+				//
+				// This means there must be an accessible account that has a home directory that is a prefix of this docbase.
+				// Such as /home/e/example/ being a prefix of /home/e/example/my-webapp
+				IntList lsas = conn.executeIntListQuery(
+					"select\n"
+					+ "  pkey\n"
+					+ "from\n"
+					+ "  linux_server_accounts\n"
+					+ "where\n"
+					+ "  ao_server=?\n"
+					+ "  and (home || '/')=substring(? from 1 for (length(home) + 1))",
 					aoServer,
-					homeDir
+					pathStr
 				);
 				boolean found=false;
 				for(int c=0;c<lsas.size();c++) {
@@ -75,7 +77,7 @@ final public class CvsHandler {
 						break;
 					}
 				}
-				if(!found) throw new SQLException("Home directory not allowed for path: "+homeDir);
+				if(!found) throw new SQLException("Home directory not allowed for path: " + pathStr);
 			} else if(pathStr.startsWith(CvsRepository.DEFAULT_CVS_DIRECTORY + "/")) {
 				// Must be directly in /var/cvs/ folder.
 				int slashPos=pathStr.indexOf('/', CvsRepository.DEFAULT_CVS_DIRECTORY.toString().length() + 1);
