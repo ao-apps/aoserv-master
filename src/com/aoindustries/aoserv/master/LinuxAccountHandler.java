@@ -27,6 +27,7 @@ import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.util.IntList;
+import com.aoindustries.util.Tuple2;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -652,8 +653,8 @@ final public class LinuxAccountHandler {
 			&& !to_type.equals(LinuxAccountType.FTPONLY)
 		) throw new SQLException("Not allowed to copy passwords to LinuxAccounts of type '"+to_type+"', username="+to_username);
 
-		String enc_password=DaemonHandler.getDaemonConnector(conn, from_server).getEncryptedLinuxAccountPassword(from_username);
-		DaemonHandler.getDaemonConnector(conn, to_server).setEncryptedLinuxAccountPassword(to_username, enc_password);
+		Tuple2<String,Integer> enc_password = DaemonHandler.getDaemonConnector(conn, from_server).getEncryptedLinuxAccountPassword(from_username);
+		DaemonHandler.getDaemonConnector(conn, to_server).setEncryptedLinuxAccountPassword(to_username, enc_password.getElement1(), enc_password.getElement2());
 
 		//AccountingCode from_accounting=UsernameHandler.getBusinessForUsername(conn, from_username);
 		//AccountingCode to_accounting=UsernameHandler.getBusinessForUsername(conn, to_username);
@@ -959,8 +960,8 @@ final public class LinuxAccountHandler {
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to check if a password is set for LinuxServerAccount '"+LinuxAccount.MAIL+'\'');
 
 		int aoServer=getAOServerForLinuxServerAccount(conn, account);
-		String crypted=DaemonHandler.getDaemonConnector(conn, aoServer).getEncryptedLinuxAccountPassword(username);
-		return !LinuxAccount.NO_PASSWORD_CONFIG_VALUE.equals(crypted);
+		String crypted = DaemonHandler.getDaemonConnector(conn, aoServer).getEncryptedLinuxAccountPassword(username).getElement1();
+		return crypted.length() >= 2 && !LinuxAccount.NO_PASSWORD_CONFIG_VALUE.equals(crypted);
 	}
 
 	public static int isLinuxServerAccountProcmailManual(
