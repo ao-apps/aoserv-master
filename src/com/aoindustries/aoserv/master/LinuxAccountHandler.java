@@ -702,6 +702,7 @@ final public class LinuxAccountHandler {
 				|| (groupName.equals(LinuxGroup.AVAHI_AUTOIPD)   && gid == 170)
 				|| (groupName.equals(LinuxGroup.DHCPD)           && gid == 177)
 				|| (groupName.equals(LinuxGroup.SYSTEMD_JOURNAL) && gid == 190)
+				|| (groupName.equals(LinuxGroup.SYSTEMD_NETWORK) && gid == 192)
 				|| (groupName.equals(LinuxGroup.NFSNOBODY)       && gid == 65534)
 				|| (
 					// System groups in range 201 through gid_min - 1
@@ -805,11 +806,11 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(LinuxAccount.NOBODY,            99, LinuxGroup.NOBODY,            "Nobody",                     "/",                Shell.NOLOGIN);
 					addCentos7SystemUser(LinuxAccount.AVAHI_AUTOIPD,    170, LinuxGroup.AVAHI_AUTOIPD,     "Avahi IPv4LL Stack",         "/var/lib/avahi-autoipd", Shell.NOLOGIN);
 					addCentos7SystemUser(LinuxAccount.DHCPD,            177, LinuxGroup.DHCPD,             "DHCP server",                "/",                Shell.NOLOGIN);
+					addCentos7SystemUser(LinuxAccount.SYSTEMD_NETWORK,  192, LinuxGroup.SYSTEMD_NETWORK,   "systemd Network Management", "/",                Shell.NOLOGIN);
 					addCentos7SystemUser(LinuxAccount.NFSNOBODY,      65534, LinuxGroup.NFSNOBODY,         "Anonymous NFS User",         "/var/lib/nfs",     Shell.NOLOGIN);
 					addCentos7SystemUser(LinuxAccount.CHRONY,            -1, LinuxGroup.CHRONY,            null,                         "/var/lib/chrony",  Shell.NOLOGIN);
 					addCentos7SystemUser(LinuxAccount.POLKITD,           -1, LinuxGroup.POLKITD,           "User for polkitd",           "/",                Shell.NOLOGIN);
 					addCentos7SystemUser(LinuxAccount.SYSTEMD_BUS_PROXY, -1, LinuxGroup.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",          "/",                Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.SYSTEMD_NETWORK,   -1, LinuxGroup.SYSTEMD_NETWORK,   "systemd Network Management", "/",                Shell.NOLOGIN);
 					addCentos7SystemUser(LinuxAccount.UNBOUND,           -1, LinuxGroup.UNBOUND,           "Unbound DNS resolver",       "/etc/unbound",     Shell.NOLOGIN);
 				} catch(ValidationException e) {
 					throw new AssertionError("These hard-coded values are valid", e);
