@@ -41,6 +41,10 @@ final public class AOServerHandler {
 		return conn.executeIntQuery("select uid_min from ao_servers where server=?", aoServer);
 	}
 
+	public static int getGidMin(DatabaseConnection conn, int aoServer) throws SQLException {
+		return conn.executeIntQuery("select gid_min from ao_servers where server=?", aoServer);
+	}
+
 	private static final Map<Integer,Object> mrtgLocks = new HashMap<>();
 
 	public static void getMrtgFile(
