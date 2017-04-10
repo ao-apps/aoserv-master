@@ -19,6 +19,7 @@ import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.PasswordChecker;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.Shell;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.Gecos;
 import com.aoindustries.aoserv.client.validator.GroupId;
@@ -28,6 +29,7 @@ import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.Tuple2;
+import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -47,6 +49,12 @@ final public class LinuxAccountHandler {
 
 	private LinuxAccountHandler() {
 	}
+
+	/** Matches value in /etc/login.defs on CentOS 7 */
+	private static final int
+		CENTOS_7_SYS_GID_MIN = 201,
+		CENTOS_7_SYS_UID_MIN = 201
+	;
 
 	private final static Map<UserId,Boolean> disabledLinuxAccounts=new HashMap<>();
 	private final static Map<Integer,Boolean> disabledLinuxServerAccounts=new HashMap<>();
@@ -583,6 +591,359 @@ final public class LinuxAccountHandler {
 			true
 		);
 		return pkey;
+	}
+
+	/**
+	 * Gets the group name that exists on a server for the given gid
+	 * or {@code null} if the gid is not allocated to the server.
+	 */
+	public static GroupId getGroupNameByGid(
+		DatabaseConnection conn,
+		int aoServer,
+		int gid
+	) throws SQLException {
+		return conn.executeObjectQuery(
+			Connection.TRANSACTION_READ_COMMITTED,
+			true,
+			false,
+			ObjectFactories.groupIdFactory,
+			"select name from linux_server_groups where ao_server=? and gid=?",
+			aoServer,
+			gid
+		);
+	}
+
+	/**
+	 * Gets the username that exists on a server for the given uid
+	 * or {@code null} if the uid is not allocated to the server.
+	 */
+	public static UserId getUsernameByUid(
+		DatabaseConnection conn,
+		int aoServer,
+		int uid
+	) throws SQLException {
+		return conn.executeObjectQuery(
+			Connection.TRANSACTION_READ_COMMITTED,
+			true,
+			false,
+			ObjectFactories.userIdFactory,
+			"select username from linux_server_accounts where ao_server=? and uid=?",
+			aoServer,
+			uid
+		);
+	}
+
+	public static int addSystemGroup(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int aoServer,
+		GroupId groupName,
+		int gid
+	) throws IOException, SQLException {
+		// This must be a master user with access to the server
+		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		if(mu == null) throw new SQLException("Not a master user: " + source.getUsername());
+		ServerHandler.checkAccessServer(conn, source, "addSystemGroup", aoServer);
+		// The group ID must be in the system group range
+		if(gid < 0) throw new SQLException("Invalid gid: " + gid);
+		int gid_min = AOServerHandler.getGidMin(conn, aoServer);
+		if(gid >= gid_min && gid <= LinuxGroup.GID_MAX) throw new SQLException("Not a system gid: " + gid + " >= " + gid_min + " && " + gid + " <= " + LinuxGroup.GID_MAX);
+		// The group ID must not already exist on this server
+		{
+			GroupId existing = getGroupNameByGid(conn, aoServer, gid);
+			if(existing != null) throw new SQLException("Group #" + gid + " already exists on server #" + aoServer + ": " + existing);
+		}
+		// Must be one of the expected patterns for the servers operating system version
+		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+		if(
+			osv == OperatingSystemVersion.CENTOS_7_X86_64
+			&& (
+				// Fixed group ids
+				   (groupName.equals(LinuxGroup.ROOT)            && gid == 0)
+				|| (groupName.equals(LinuxGroup.BIN)             && gid == 1)
+				|| (groupName.equals(LinuxGroup.DAEMON)          && gid == 2)
+				|| (groupName.equals(LinuxGroup.SYS)             && gid == 3)
+				|| (groupName.equals(LinuxGroup.ADM)             && gid == 4)
+				|| (groupName.equals(LinuxGroup.TTY)             && gid == 5)
+				|| (groupName.equals(LinuxGroup.DISK)            && gid == 6)
+				|| (groupName.equals(LinuxGroup.LP)              && gid == 7)
+				|| (groupName.equals(LinuxGroup.MEM)             && gid == 8)
+				|| (groupName.equals(LinuxGroup.KMEM)            && gid == 9)
+				|| (groupName.equals(LinuxGroup.WHEEL)           && gid == 10)
+				|| (groupName.equals(LinuxGroup.CDROM)           && gid == 11)
+				|| (groupName.equals(LinuxGroup.MAIL)            && gid == 12)
+				|| (groupName.equals(LinuxGroup.MAN)             && gid == 15)
+				|| (groupName.equals(LinuxGroup.DIALOUT)         && gid == 18)
+				|| (groupName.equals(LinuxGroup.FLOPPY)          && gid == 19)
+				|| (groupName.equals(LinuxGroup.GAMES)           && gid == 20)
+				|| (groupName.equals(LinuxGroup.UTMP)            && gid == 22)
+				|| (groupName.equals(LinuxGroup.NAMED)           && gid == 25)
+				|| (groupName.equals(LinuxGroup.POSTGRES)        && gid == 26)
+				|| (groupName.equals(LinuxGroup.RPCUSER)         && gid == 29)
+				|| (groupName.equals(LinuxGroup.TAPE)            && gid == 30)
+				|| (groupName.equals(LinuxGroup.MYSQL)           && gid == 31)
+				|| (groupName.equals(LinuxGroup.RPC)             && gid == 32)
+				|| (groupName.equals(LinuxGroup.UTEMPTER)        && gid == 35)
+				|| (groupName.equals(LinuxGroup.VIDEO)           && gid == 39)
+				|| (groupName.equals(LinuxGroup.DIP)             && gid == 40)
+				|| (groupName.equals(LinuxGroup.APACHE)          && gid == 48)
+				|| (groupName.equals(LinuxGroup.FTP)             && gid == 50)
+				|| (groupName.equals(LinuxGroup.LOCK)            && gid == 54)
+				|| (groupName.equals(LinuxGroup.TSS)             && gid == 59)
+				|| (groupName.equals(LinuxGroup.AUDIO)           && gid == 63)
+				|| (groupName.equals(LinuxGroup.TCPDUMP)         && gid == 72)
+				|| (groupName.equals(LinuxGroup.SSHD)            && gid == 74)
+				|| (groupName.equals(LinuxGroup.DBUS)            && gid == 81)
+				|| (groupName.equals(LinuxGroup.SCREEN)          && gid == 84)
+				|| (groupName.equals(LinuxGroup.NOBODY)          && gid == 99)
+				|| (groupName.equals(LinuxGroup.USERS)           && gid == 100)
+				|| (groupName.equals(LinuxGroup.AVAHI_AUTOIPD)   && gid == 170)
+				|| (groupName.equals(LinuxGroup.DHCPD)           && gid == 177)
+				|| (groupName.equals(LinuxGroup.SYSTEMD_JOURNAL) && gid == 190)
+				|| (groupName.equals(LinuxGroup.NFSNOBODY)       && gid == 65534)
+				|| (
+					// System groups in range 201 through gid_min - 1
+					gid >= CENTOS_7_SYS_GID_MIN
+					&& gid < gid_min
+					&& (
+						   groupName.equals(LinuxGroup.CGRED)
+						|| groupName.equals(LinuxGroup.CHRONY)
+						|| groupName.equals(LinuxGroup.INPUT)
+						|| groupName.equals(LinuxGroup.POLKITD)
+						|| groupName.equals(LinuxGroup.SSH_KEYS)
+						|| groupName.equals(LinuxGroup.SYSTEMD_BUS_PROXY)
+						|| groupName.equals(LinuxGroup.SYSTEMD_NETWORK)
+						|| groupName.equals(LinuxGroup.UNBOUND)
+					)
+				)
+			)
+		) {
+			int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('linux_server_groups_pkey_seq')");
+			conn.executeUpdate(
+				"insert into\n"
+				+ "  linux_server_groups\n"
+				+ "values(\n"
+				+ "  ?,\n"
+				+ "  ?,\n"
+				+ "  ?,\n"
+				+ "  ?,\n"
+				+ "  now()\n"
+				+ ")",
+				pkey,
+				groupName,
+				aoServer,
+				gid
+			);
+			// Notify all clients of the update
+			invalidateList.addTable(
+				conn,
+				SchemaTable.TableID.LINUX_SERVER_GROUPS,
+				ServerHandler.getBusinessesForServer(conn, aoServer),
+				aoServer,
+				true
+			);
+			return pkey;
+		} else {
+			throw new SQLException("Unexpected system group: " + groupName + " #" + gid + " on operating system #" + osv);
+		}
+	}
+
+	static class SystemUser {
+		final UserId username;
+		final int uid;
+		final GroupId groupName;
+		final Gecos fullName;
+		final Gecos officeLocation;
+		final Gecos officePhone;
+		final Gecos homePhone;
+		final UnixPath home;
+		final UnixPath shell;
+
+		SystemUser(
+			UserId username,
+			int uid,
+			GroupId groupName,
+			Gecos fullName,
+			Gecos officeLocation,
+			Gecos officePhone,
+			Gecos homePhone,
+			UnixPath home,
+			UnixPath shell
+		) {
+			this.username = username;
+			this.uid = uid;
+			this.groupName = groupName;
+			this.fullName = fullName;
+			this.officeLocation = officeLocation;
+			this.officePhone = officePhone;
+			this.homePhone = homePhone;
+			this.home = home;
+			this.shell = shell;
+		}
+	}
+
+	/**
+	 * The set of allowed system group patterns for CentOS 7.
+	 */
+	private static final Map<UserId,SystemUser> centos7SystemUsers = new HashMap<>();
+	private static void addCentos7SystemUser(
+		UserId username,
+		int uid,
+		GroupId groupName,
+		String fullName,
+		String home,
+		UnixPath shell
+	) throws ValidationException {
+		if(
+			centos7SystemUsers.put(
+				username,
+				new SystemUser(
+					username,
+					uid,
+					groupName,
+					Gecos.valueOf(fullName).intern(), null, null, null,
+					UnixPath.valueOf(home).intern(),
+					shell
+				)
+			) != null
+		) throw new AssertionError("Duplicate username: " + username);
+	}
+	static {
+		try {
+			addCentos7SystemUser(LinuxAccount.ROOT,               0, LinuxGroup.ROOT,              "root",                       "/root",            Shell.BASH);
+			addCentos7SystemUser(LinuxAccount.BIN,                1, LinuxGroup.BIN,               "bin",                        "/bin",             Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.DAEMON,             2, LinuxGroup.DAEMON,            "daemon",                     "/sbin",            Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.ADM,                3, LinuxGroup.ADM,               "adm",                        "/var/adm",         Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.LP,                 4, LinuxGroup.LP,                "lp",                         "/var/spool/lpd",   Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.SYNC,               5, LinuxGroup.ROOT,              "sync",                       "/sbin",            Shell.SYNC);
+			addCentos7SystemUser(LinuxAccount.SHUTDOWN,           6, LinuxGroup.ROOT,              "shutdown",                   "/sbin",            Shell.SHUTDOWN);
+			addCentos7SystemUser(LinuxAccount.HALT,               7, LinuxGroup.ROOT,              "halt",                       "/sbin",            Shell.HALT);
+			addCentos7SystemUser(LinuxAccount.MAIL,               8, LinuxGroup.MAIL,              "mail",                       "/var/spool/mail",  Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.OPERATOR,          11, LinuxGroup.ROOT,              "operator",                   "/root",            Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.GAMES,             12, LinuxGroup.USERS,             "games",                      "/usr/games",       Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.FTP,               14, LinuxGroup.FTP,               "FTP User",                   "/var/ftp",         Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.NAMED,             25, LinuxGroup.NAMED,             "Named",                      "/var/named",       Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.POSTGRES,          26, LinuxGroup.POSTGRES,          "PostgreSQL Server",          "/var/lib/pgsql",   Shell.BASH);
+			addCentos7SystemUser(LinuxAccount.RPCUSER,           29, LinuxGroup.RPCUSER,           "RPC Service User",           "/var/lib/nfs",     Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.MYSQL,             31, LinuxGroup.MYSQL,             "MySQL server",               "/var/lib/mysql",   Shell.BASH);
+			addCentos7SystemUser(LinuxAccount.RPC,               32, LinuxGroup.RPC,               "Rpcbind Daemon",             "/var/lib/rpcbind", Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.APACHE,            48, LinuxGroup.APACHE,            "Apache",                     "/usr/share/httpd", Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.TSS,               59, LinuxGroup.TSS,               "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null", Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.TCPDUMP,           72, LinuxGroup.TCPDUMP,           null,                         "/",                Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.SSHD,              74, LinuxGroup.SSHD,              "Privilege-separated SSH",    "/var/empty/sshd",  Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.DBUS,              81, LinuxGroup.DBUS,              "System message bus",         "/",                Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.NOBODY,            99, LinuxGroup.NOBODY,            "Nobody",                     "/",                Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.AVAHI_AUTOIPD,    170, LinuxGroup.AVAHI_AUTOIPD,     "Avahi IPv4LL Stack",         "/var/lib/avahi-autoipd", Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.DHCPD,            177, LinuxGroup.DHCPD,             "DHCP server",                "/",                Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.NFSNOBODY,      65534, LinuxGroup.NFSNOBODY,         "Anonymous NFS User",         "/var/lib/nfs",     Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.CHRONY,            -1, LinuxGroup.CHRONY,            null,                         "/var/lib/chrony",  Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.POLKITD,           -1, LinuxGroup.POLKITD,           "User for polkitd",           "/",                Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.SYSTEMD_BUS_PROXY, -1, LinuxGroup.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",          "/",                Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.SYSTEMD_NETWORK,   -1, LinuxGroup.SYSTEMD_NETWORK,   "systemd Network Management", "/",                Shell.NOLOGIN);
+			addCentos7SystemUser(LinuxAccount.UNBOUND,           -1, LinuxGroup.UNBOUND,           "Unbound DNS resolver",       "/etc/unbound",     Shell.NOLOGIN);
+		} catch(ValidationException e) {
+			throw new AssertionError("These hard-coded values are valid", e);
+		}
+	}
+
+	public static int addSystemUser(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int aoServer,
+		UserId username,
+		int uid,
+		int gid,
+		Gecos fullName,
+		Gecos officeLocation,
+		Gecos officePhone,
+		Gecos homePhone,
+		UnixPath home,
+		UnixPath shell
+	) throws IOException, SQLException {
+		// This must be a master user with access to the server
+		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		if(mu == null) throw new SQLException("Not a master user: " + source.getUsername());
+		ServerHandler.checkAccessServer(conn, source, "addSystemUser", aoServer);
+		// The user ID must be in the system user range
+		if(uid < 0) throw new SQLException("Invalid uid: " + uid);
+		int uid_min = AOServerHandler.getUidMin(conn, aoServer);
+		if(uid >= uid_min && uid <= LinuxAccount.UID_MAX) throw new SQLException("Not a system uid: " + uid + " >= " + uid_min + " && " + uid + " <= " + LinuxAccount.UID_MAX);
+		// The user ID must not already exist on this server
+		{
+			UserId existing = getUsernameByUid(conn, aoServer, uid);
+			if(existing != null) throw new SQLException("User #" + uid + " already exists on server #" + aoServer + ": " + existing);
+		}
+		// Get the group name for the requested gid
+		GroupId groupName = getGroupNameByGid(conn, aoServer, gid);
+		if(groupName == null) throw new SQLException("Group #" + gid + " does not exist on server #" + aoServer);
+		// Must be one of the expected patterns for the servers operating system version
+		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+		SystemUser systemUser;
+		if(
+			osv == OperatingSystemVersion.CENTOS_7_X86_64
+			&& (systemUser = centos7SystemUsers.get(username)) != null
+		) {
+			if(systemUser.uid == -1) {
+				// System users in range 201 through uid_min - 1
+				if(uid < CENTOS_7_SYS_UID_MIN || uid >= uid_min) throw new SQLException("Invalid system uid: " + uid);
+			} else {
+				// UID must match exactly
+				if(uid != systemUser.uid) throw new SQLException("Unexpected system uid: " + uid + " != " + systemUser.uid);
+			}
+			// Check other fields match
+			if(!ObjectUtils.equals(groupName,      systemUser.groupName))      throw new SQLException("Unexpected system group: "          + groupName      + " != " + systemUser.groupName);
+			if(!ObjectUtils.equals(fullName,       systemUser.fullName))       throw new SQLException("Unexpected system fullName: "       + fullName       + " != " + systemUser.fullName);
+			if(!ObjectUtils.equals(officeLocation, systemUser.officeLocation)) throw new SQLException("Unexpected system officeLocation: " + officeLocation + " != " + systemUser.officeLocation);
+			if(!ObjectUtils.equals(officePhone,    systemUser.officePhone))    throw new SQLException("Unexpected system officePhone: "    + officePhone    + " != " + systemUser.officePhone);
+			if(!ObjectUtils.equals(homePhone,      systemUser.homePhone))      throw new SQLException("Unexpected system homePhone: "      + homePhone      + " != " + systemUser.homePhone);
+			if(!ObjectUtils.equals(home,           systemUser.home))           throw new SQLException("Unexpected system home: "           + home           + " != " + systemUser.home);
+			if(!ObjectUtils.equals(shell,          systemUser.shell))          throw new SQLException("Unexpected system shell: "          + shell          + " != " + systemUser.shell);
+			// Add to database
+			int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('linux_server_accounts_pkey_seq')");
+			conn.executeUpdate(
+				"insert into\n"
+				+ "  linux_server_accounts\n"
+				+ "values(\n"
+				+ "  ?,\n" // pkey
+				+ "  ?,\n" // username
+				+ "  ?,\n" // ao_server
+				+ "  ?,\n" // uid
+				+ "  ?,\n" // home
+				+ "  null,\n" // autoresponder_from
+				+ "  null,\n" // autoresponder_subject
+				+ "  null,\n" // autoresponder_path
+				+ "  false,\n" // is_autoresponder_enabled
+				+ "  null,\n" // disable_log
+				+ "  null,\n" // predisable_password
+				+ "  now(),\n" // created
+				+ "  true,\n" // use_inbox
+				+ "  null,\n" // trash_email_retention
+				+ "  null,\n" // junk_email_retention
+				+ "  ?,\n" // sa_integration_mode
+				+ "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE+",\n"
+				+ "  null\n" // sa_discard_score
+				+ ")",
+				pkey,
+				username,
+				aoServer,
+				uid,
+				home,
+				EmailSpamAssassinIntegrationMode.NONE
+			);
+			// Notify all clients of the update
+			invalidateList.addTable(
+				conn,
+				SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+				ServerHandler.getBusinessesForServer(conn, aoServer),
+				aoServer,
+				true
+			);
+			return pkey;
+		} else {
+			throw new SQLException("Unexpected system user: " + username + " #" + uid + " on operating system #" + osv);
+		}
 	}
 
 	/**

@@ -3012,6 +3012,95 @@ public abstract class MasterServer {
 											sendInvalidateList=true;
 										}
 										break;*/
+									case ADD_SYSTEM_GROUP :
+										{
+											int aoServer = in.readCompressedInt();
+											GroupId groupName = GroupId.valueOf(in.readUTF());
+											int gid = in.readCompressedInt();
+											process.setCommand(
+												"add_system_group",
+												aoServer,
+												groupName,
+												gid
+											);
+											int pkey = LinuxAccountHandler.addSystemGroup(
+												conn,
+												source,
+												invalidateList,
+												aoServer,
+												groupName,
+												gid
+											);
+											resp = Response.valueOf(
+												AOServProtocol.DONE,
+												pkey
+											);
+											sendInvalidateList = true;
+										}
+										break;
+									case ADD_SYSTEM_USER:
+										{
+											int aoServer = in.readCompressedInt();
+											UserId username = UserId.valueOf(in.readUTF());
+											int uid = in.readCompressedInt();
+											int gid = in.readCompressedInt();
+											Gecos fullName;
+											{
+												String s = in.readUTF();
+												fullName = s.isEmpty() ? null : Gecos.valueOf(s);
+											}
+											Gecos officeLocation;
+											{
+												String s = in.readUTF();
+												officeLocation = s.isEmpty() ? null : Gecos.valueOf(s);
+											}
+											Gecos officePhone;
+											{
+												String s = in.readUTF();
+												officePhone = s.isEmpty() ? null : Gecos.valueOf(s);
+											}
+											Gecos homePhone;
+											{
+												String s = in.readUTF();
+												homePhone = s.isEmpty() ? null : Gecos.valueOf(s);
+											}
+											UnixPath home = UnixPath.valueOf(in.readUTF());
+											UnixPath shell = UnixPath.valueOf(in.readUTF());
+											process.setCommand(
+												"add_system_user",
+												aoServer,
+												username,
+												uid,
+												gid,
+												fullName,
+												officeLocation,
+												officePhone,
+												homePhone,
+												home,
+												shell
+											);
+											int pkey = LinuxAccountHandler.addSystemUser(
+												conn,
+												source,
+												invalidateList,
+												aoServer,
+												username,
+												uid,
+												gid,
+												fullName,
+												officeLocation,
+												officePhone,
+												homePhone,
+												home,
+												shell
+											);
+											resp = Response.valueOf(
+												AOServProtocol.DONE,
+												pkey
+											);
+											sendInvalidateList = true;
+										}
+										break;
 									case CANCEL_BUSINESS :
 										{
 											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
