@@ -57,6 +57,9 @@ final public class LinuxAccountHandler {
 		CENTOS_7_SYS_UID_MIN = 201
 	;
 
+	/** Default sudo setting for newly added "aoadmin" system users. */
+	private static final String AOADMIN_SUDO = "ALL=(ALL) NOPASSWD: ALL";
+
 	private final static Map<UserId,Boolean> disabledLinuxAccounts=new HashMap<>();
 	private final static Map<Integer,Boolean> disabledLinuxServerAccounts=new HashMap<>();
 
@@ -465,7 +468,8 @@ final public class LinuxAccountHandler {
 			+ "  "+LinuxServerAccount.DEFAULT_JUNK_EMAIL_RETENTION+",\n"
 			+ "  ?,\n"
 			+ "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE+",\n"
-			+ "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_DISCARD_SCORE+"\n"
+			+ "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_DISCARD_SCORE+",\n"
+			+ "  null\n" // sudo
 			+ ")",
 			pkey,
 			username,
@@ -649,7 +653,6 @@ final public class LinuxAccountHandler {
 		// The group ID must be in the system group range
 		if(gid < 0) throw new SQLException("Invalid gid: " + gid);
 		int gid_min = AOServerHandler.getGidMin(conn, aoServer);
-		if(gid >= gid_min && gid <= LinuxGroup.GID_MAX) throw new SQLException("Not a system gid: " + gid + " >= " + gid_min + " && " + gid + " <= " + LinuxGroup.GID_MAX);
 		// The group ID must not already exist on this server
 		{
 			GroupId existing = getGroupNameByGid(conn, aoServer, gid);
@@ -718,6 +721,11 @@ final public class LinuxAccountHandler {
 						|| groupName.equals(LinuxGroup.SYSTEMD_NETWORK)
 						|| groupName.equals(LinuxGroup.UNBOUND)
 					)
+				) || (
+					// Regular user groups in range gid_min through LinuxGroup.GID_MAX
+					gid >= gid_min
+					&& gid <= LinuxGroup.GID_MAX
+					&& groupName.equals(LinuxGroup.AOADMIN)
 				)
 			)
 		) {
@@ -752,6 +760,10 @@ final public class LinuxAccountHandler {
 	}
 
 	static class SystemUser {
+
+		static final int ANY_SYSTEM_UID = -1;
+		static final int ANY_USER_UID = -2;
+
 		/**
 		 * The set of allowed system group patterns for CentOS 7.
 		 */
@@ -762,7 +774,8 @@ final public class LinuxAccountHandler {
 			GroupId groupName,
 			String fullName,
 			String home,
-			UnixPath shell
+			UnixPath shell,
+			String sudo
 		) throws ValidationException {
 			if(
 				centos7SystemUsers.put(
@@ -773,7 +786,8 @@ final public class LinuxAccountHandler {
 						groupName,
 						InternUtils.intern(Gecos.valueOf(fullName)), null, null, null,
 						UnixPath.valueOf(home).intern(),
-						shell
+						shell,
+						sudo
 					)
 				) != null
 			) throw new AssertionError("Duplicate username: " + username);
@@ -781,37 +795,38 @@ final public class LinuxAccountHandler {
 		static {
 			try {
 				try {
-					addCentos7SystemUser(LinuxAccount.ROOT,               0, LinuxGroup.ROOT,              "root",                       "/root",            Shell.BASH);
-					addCentos7SystemUser(LinuxAccount.BIN,                1, LinuxGroup.BIN,               "bin",                        "/bin",             Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.DAEMON,             2, LinuxGroup.DAEMON,            "daemon",                     "/sbin",            Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.ADM,                3, LinuxGroup.ADM,               "adm",                        "/var/adm",         Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.LP,                 4, LinuxGroup.LP,                "lp",                         "/var/spool/lpd",   Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.SYNC,               5, LinuxGroup.ROOT,              "sync",                       "/sbin",            Shell.SYNC);
-					addCentos7SystemUser(LinuxAccount.SHUTDOWN,           6, LinuxGroup.ROOT,              "shutdown",                   "/sbin",            Shell.SHUTDOWN);
-					addCentos7SystemUser(LinuxAccount.HALT,               7, LinuxGroup.ROOT,              "halt",                       "/sbin",            Shell.HALT);
-					addCentos7SystemUser(LinuxAccount.MAIL,               8, LinuxGroup.MAIL,              "mail",                       "/var/spool/mail",  Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.OPERATOR,          11, LinuxGroup.ROOT,              "operator",                   "/root",            Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.GAMES,             12, LinuxGroup.USERS,             "games",                      "/usr/games",       Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.FTP,               14, LinuxGroup.FTP,               "FTP User",                   "/var/ftp",         Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.NAMED,             25, LinuxGroup.NAMED,             "Named",                      "/var/named",       Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.POSTGRES,          26, LinuxGroup.POSTGRES,          "PostgreSQL Server",          "/var/lib/pgsql",   Shell.BASH);
-					addCentos7SystemUser(LinuxAccount.RPCUSER,           29, LinuxGroup.RPCUSER,           "RPC Service User",           "/var/lib/nfs",     Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.MYSQL,             31, LinuxGroup.MYSQL,             "MySQL server",               "/var/lib/mysql",   Shell.BASH);
-					addCentos7SystemUser(LinuxAccount.RPC,               32, LinuxGroup.RPC,               "Rpcbind Daemon",             "/var/lib/rpcbind", Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.APACHE,            48, LinuxGroup.APACHE,            "Apache",                     "/usr/share/httpd", Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.TSS,               59, LinuxGroup.TSS,               "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null", Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.TCPDUMP,           72, LinuxGroup.TCPDUMP,           null,                         "/",                Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.SSHD,              74, LinuxGroup.SSHD,              "Privilege-separated SSH",    "/var/empty/sshd",  Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.DBUS,              81, LinuxGroup.DBUS,              "System message bus",         "/",                Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.NOBODY,            99, LinuxGroup.NOBODY,            "Nobody",                     "/",                Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.AVAHI_AUTOIPD,    170, LinuxGroup.AVAHI_AUTOIPD,     "Avahi IPv4LL Stack",         "/var/lib/avahi-autoipd", Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.DHCPD,            177, LinuxGroup.DHCPD,             "DHCP server",                "/",                Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.SYSTEMD_NETWORK,  192, LinuxGroup.SYSTEMD_NETWORK,   "systemd Network Management", "/",                Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.NFSNOBODY,      65534, LinuxGroup.NFSNOBODY,         "Anonymous NFS User",         "/var/lib/nfs",     Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.CHRONY,            -1, LinuxGroup.CHRONY,            null,                         "/var/lib/chrony",  Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.POLKITD,           -1, LinuxGroup.POLKITD,           "User for polkitd",           "/",                Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.SYSTEMD_BUS_PROXY, -1, LinuxGroup.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",          "/",                Shell.NOLOGIN);
-					addCentos7SystemUser(LinuxAccount.UNBOUND,           -1, LinuxGroup.UNBOUND,           "Unbound DNS resolver",       "/etc/unbound",     Shell.NOLOGIN);
+					addCentos7SystemUser(LinuxAccount.ROOT,                           0, LinuxGroup.ROOT,              "root",                        "/root",            Shell.BASH, null);
+					addCentos7SystemUser(LinuxAccount.BIN,                            1, LinuxGroup.BIN,               "bin",                         "/bin",             Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.DAEMON,                         2, LinuxGroup.DAEMON,            "daemon",                      "/sbin",            Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.ADM,                            3, LinuxGroup.ADM,               "adm",                         "/var/adm",         Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.LP,                             4, LinuxGroup.LP,                "lp",                          "/var/spool/lpd",   Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.SYNC,                           5, LinuxGroup.ROOT,              "sync",                        "/sbin",            Shell.SYNC, null);
+					addCentos7SystemUser(LinuxAccount.SHUTDOWN,                       6, LinuxGroup.ROOT,              "shutdown",                    "/sbin",            Shell.SHUTDOWN, null);
+					addCentos7SystemUser(LinuxAccount.HALT,                           7, LinuxGroup.ROOT,              "halt",                        "/sbin",            Shell.HALT, null);
+					addCentos7SystemUser(LinuxAccount.MAIL,                           8, LinuxGroup.MAIL,              "mail",                        "/var/spool/mail",  Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.OPERATOR,                      11, LinuxGroup.ROOT,              "operator",                    "/root",            Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.GAMES,                         12, LinuxGroup.USERS,             "games",                       "/usr/games",       Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.FTP,                           14, LinuxGroup.FTP,               "FTP User",                    "/var/ftp",         Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.NAMED,                         25, LinuxGroup.NAMED,             "Named",                       "/var/named",       Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.POSTGRES,                      26, LinuxGroup.POSTGRES,          "PostgreSQL Server",           "/var/lib/pgsql",   Shell.BASH, null);
+					addCentos7SystemUser(LinuxAccount.RPCUSER,                       29, LinuxGroup.RPCUSER,           "RPC Service User",            "/var/lib/nfs",     Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.MYSQL,                         31, LinuxGroup.MYSQL,             "MySQL server",                "/var/lib/mysql",   Shell.BASH, null);
+					addCentos7SystemUser(LinuxAccount.RPC,                           32, LinuxGroup.RPC,               "Rpcbind Daemon",              "/var/lib/rpcbind", Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.APACHE,                        48, LinuxGroup.APACHE,            "Apache",                      "/usr/share/httpd", Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.TSS,                           59, LinuxGroup.TSS,               "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null", Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.TCPDUMP,                       72, LinuxGroup.TCPDUMP,           null,                          "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.SSHD,                          74, LinuxGroup.SSHD,              "Privilege-separated SSH",     "/var/empty/sshd",  Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.DBUS,                          81, LinuxGroup.DBUS,              "System message bus",          "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.NOBODY,                        99, LinuxGroup.NOBODY,            "Nobody",                      "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.AVAHI_AUTOIPD,                170, LinuxGroup.AVAHI_AUTOIPD,     "Avahi IPv4LL Stack",          "/var/lib/avahi-autoipd", Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.DHCPD,                        177, LinuxGroup.DHCPD,             "DHCP server",                 "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.SYSTEMD_NETWORK,              192, LinuxGroup.SYSTEMD_NETWORK,   "systemd Network Management",  "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.NFSNOBODY,                  65534, LinuxGroup.NFSNOBODY,         "Anonymous NFS User",          "/var/lib/nfs",     Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.CHRONY,            ANY_SYSTEM_UID, LinuxGroup.CHRONY,            null,                          "/var/lib/chrony",  Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.POLKITD,           ANY_SYSTEM_UID, LinuxGroup.POLKITD,           "User for polkitd",            "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.SYSTEMD_BUS_PROXY, ANY_SYSTEM_UID, LinuxGroup.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",           "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.UNBOUND,           ANY_SYSTEM_UID, LinuxGroup.UNBOUND,           "Unbound DNS resolver",        "/etc/unbound",     Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.AOADMIN,           ANY_USER_UID,   LinuxGroup.AOADMIN,           "AO Industries Administrator", "/home/aoadmin",  Shell.BASH, AOADMIN_SUDO);
 				} catch(ValidationException e) {
 					throw new AssertionError("These hard-coded values are valid", e);
 				}
@@ -832,6 +847,7 @@ final public class LinuxAccountHandler {
 		final Gecos homePhone;
 		final UnixPath home;
 		final UnixPath shell;
+		final String sudo;
 
 		SystemUser(
 			UserId username,
@@ -842,7 +858,8 @@ final public class LinuxAccountHandler {
 			Gecos officePhone,
 			Gecos homePhone,
 			UnixPath home,
-			UnixPath shell
+			UnixPath shell,
+			String sudo
 		) {
 			this.username = username;
 			this.uid = uid;
@@ -853,6 +870,7 @@ final public class LinuxAccountHandler {
 			this.homePhone = homePhone;
 			this.home = home;
 			this.shell = shell;
+			this.sudo = sudo;
 		}
 	}
 
@@ -878,7 +896,6 @@ final public class LinuxAccountHandler {
 		// The user ID must be in the system user range
 		if(uid < 0) throw new SQLException("Invalid uid: " + uid);
 		int uid_min = AOServerHandler.getUidMin(conn, aoServer);
-		if(uid >= uid_min && uid <= LinuxAccount.UID_MAX) throw new SQLException("Not a system uid: " + uid + " >= " + uid_min + " && " + uid + " <= " + LinuxAccount.UID_MAX);
 		// The user ID must not already exist on this server
 		{
 			UserId existing = getUsernameByUid(conn, aoServer, uid);
@@ -894,9 +911,12 @@ final public class LinuxAccountHandler {
 			osv == OperatingSystemVersion.CENTOS_7_X86_64
 			&& (systemUser = SystemUser.centos7SystemUsers.get(username)) != null
 		) {
-			if(systemUser.uid == -1) {
+			if(systemUser.uid == SystemUser.ANY_SYSTEM_UID) {
 				// System users in range 201 through uid_min - 1
 				if(uid < CENTOS_7_SYS_UID_MIN || uid >= uid_min) throw new SQLException("Invalid system uid: " + uid);
+			} else if(systemUser.uid == SystemUser.ANY_USER_UID) {
+				// Regular users in range uid_min through LinuxAccount.UID_MAX
+				if(uid < uid_min || uid > LinuxAccount.UID_MAX) throw new SQLException("Invalid regular user uid: " + uid);
 			} else {
 				// UID must match exactly
 				if(uid != systemUser.uid) throw new SQLException("Unexpected system uid: " + uid + " != " + systemUser.uid);
@@ -932,14 +952,16 @@ final public class LinuxAccountHandler {
 				+ "  null,\n" // junk_email_retention
 				+ "  ?,\n" // sa_integration_mode
 				+ "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE+",\n"
-				+ "  null\n" // sa_discard_score
+				+ "  null,\n" // sa_discard_score
+				+ "  ?\n" // sudo
 				+ ")",
 				pkey,
 				username,
 				aoServer,
 				uid,
 				home,
-				EmailSpamAssassinIntegrationMode.NONE
+				EmailSpamAssassinIntegrationMode.NONE,
+				systemUser.sudo
 			);
 			// Notify all clients of the update
 			invalidateList.addTable(
