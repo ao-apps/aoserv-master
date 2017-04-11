@@ -501,6 +501,10 @@ public abstract class MasterServer {
 			long clientSeq = in.readLong();
 			if(clientSeq != seq) throw new IOException("Sequence mismatch: " + clientSeq + " != " + seq);
 		}
+		// Send command sequence
+		if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) >= 0) {
+			out.writeLong(seq); // out is buffered, so no I/O created by writing this early
+		}
 		// Continue with task
 		int taskCodeOrdinal = in.readCompressedInt();
 		process.commandRunning();
