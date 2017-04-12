@@ -18,10 +18,12 @@ import com.aoindustries.aoserv.client.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.PasswordGenerator;
 import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.TechnologyName;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.GroupId;
 import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.lang.ObjectUtils;
@@ -37,6 +39,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -656,7 +659,13 @@ final public class HttpdHandler {
 		DomainName primaryHttpHostname,
 		DomainName[] altHttpHostnames,
 		int jBossVersion,
-		UnixPath contentSrc
+		UnixPath contentSrc,
+		int phpVersion,
+		boolean enableCgi,
+		boolean enableSsi,
+		boolean enableHtaccess,
+		boolean enableIndexes,
+		boolean enableFollowSymlinks
 	) throws IOException, SQLException {
 		return addHttpdJVMSite(
 			"addHttdJBossSite",
@@ -677,7 +686,13 @@ final public class HttpdHandler {
 			jBossVersion,
 			-1,
 			"",
-			contentSrc
+			contentSrc,
+			phpVersion,
+			enableCgi,
+			enableSsi,
+			enableHtaccess,
+			enableIndexes,
+			enableFollowSymlinks
 		);
 	}
 
@@ -700,7 +715,13 @@ final public class HttpdHandler {
 		int jBossVersion,
 		int tomcatVersion,
 		String sharedTomcatName,
-		UnixPath contentSrc
+		UnixPath contentSrc,
+		int phpVersion,
+		boolean enableCgi,
+		boolean enableSsi,
+		boolean enableHtaccess,
+		boolean enableIndexes,
+		boolean enableFollowSymlinks
 	) throws IOException, SQLException {
 		// Perform the security checks on the input
 		ServerHandler.checkAccessServer(conn, source, methodName, aoServer);
@@ -714,6 +735,8 @@ final public class HttpdHandler {
 		int lsg=LinuxAccountHandler.getLinuxServerGroup(conn, group, aoServer);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to "+methodName+" for user '"+LinuxAccount.MAIL+'\'');
 		LinuxAccountHandler.checkAccessLinuxGroup(conn, source, methodName, group);
+		final int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+		if(osv == -1) throw new SQLException("Unknown operating system version for server #" + aoServer);
 		if(
 			group.equals(LinuxGroup.FTPONLY)
 			|| group.equals(LinuxGroup.MAIL)
@@ -734,8 +757,6 @@ final public class HttpdHandler {
 			// Check for ties between jvm and site in linux_group_accounts
 			String sharedTomcatUsername = conn.executeStringQuery("select lsa.username from httpd_shared_tomcats hst, linux_server_accounts lsa where hst.linux_server_account = lsa.pkey and hst.pkey=?", sharedTomcatPkey);
 			String sharedTomcatLinuxGroup = conn.executeStringQuery("select lsg.name from httpd_shared_tomcats hst, linux_server_groups lsg where hst.linux_server_group = lsg.pkey and hst.pkey=?", sharedTomcatPkey);
-			int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
-			if(osv == -1) throw new SQLException("Unknown operating system version for server #" + aoServer);
 			boolean hasAccess = conn.executeBooleanQuery(
 				"select (\n"
 				+ "  select\n"
@@ -833,6 +854,19 @@ final public class HttpdHandler {
 			ipAddress=IPAddressHandler.getSharedHttpdIP(conn, aoServer, isTomcat4);
 			if(ipAddress==-1) throw new SQLException("Unable to find shared IP address for AOServer #"+aoServer);
 		}
+		if(phpVersion != -1) {
+			// Version must be correct for this server
+			int tvOsv = conn.executeIntQuery(
+				"select coalesce(\n"
+				+ "  (select operating_system_version from technology_versions where pkey=? and name=?),\n"
+				+ "  -1\n"
+				+ ")",
+				phpVersion,
+				TechnologyName.PHP
+			);
+			if(tvOsv == -1) throw new SQLException("Requested PHP version is not a PHP version: #" + phpVersion);
+			if(tvOsv != osv) throw new SQLException("Requested PHP version is for the wrong operating system version: #" + phpVersion + ": " + tvOsv + " != " + osv);
+		}
 
 		PackageHandler.checkPackageAccessServer(conn, source, methodName, packageName, aoServer);
 
@@ -888,8 +922,12 @@ final public class HttpdHandler {
 			+ "  null,\n" // disable_log
 			+ "  false,\n" // is_manual
 			+ "  null,\n" // awstats_skip_files
-			+ "  null,\n" // TODO: PHP Selector
-			+ "  true\n" // TODO: CGI Selector
+			+ "  ?,\n" // php_version
+			+ "  ?,\n" // enable_cgi
+			+ "  ?,\n" // enable_ssh
+			+ "  ?,\n" // enable_htaccess
+			+ "  ?,\n" // enable_indexes
+			+ "  ?\n" // enable_follow_symlinks
 			+ ")");
 		try {
 			pstmt.setInt(1, httpdSitePKey);
@@ -900,6 +938,13 @@ final public class HttpdHandler {
 			pstmt.setString(6, group.toString());
 			pstmt.setString(7, serverAdmin.toString());
 			pstmt.setString(8, ObjectUtils.toString(contentSrc));
+			if(phpVersion == -1) pstmt.setNull(9, Types.INTEGER);
+			else pstmt.setInt(9, phpVersion);
+			pstmt.setBoolean(10, enableCgi);
+			pstmt.setBoolean(11, enableSsi);
+			pstmt.setBoolean(12, enableHtaccess);
+			pstmt.setBoolean(13, enableIndexes);
+			pstmt.setBoolean(14, enableFollowSymlinks);
 			pstmt.executeUpdate();
 		} catch(SQLException err) {
 			System.err.println("Error from query: "+pstmt.toString());
@@ -919,7 +964,6 @@ final public class HttpdHandler {
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITES, accounting, aoServer, false);
 
 		// OperatingSystem settings
-		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
 		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 		UnixPath docBase;
 		try {
@@ -1304,7 +1348,13 @@ final public class HttpdHandler {
 		DomainName[] altHttpHostnames,
 		String sharedTomcatName,
 		int version,
-		UnixPath contentSrc
+		UnixPath contentSrc,
+		int phpVersion,
+		boolean enableCgi,
+		boolean enableSsi,
+		boolean enableHtaccess,
+		boolean enableIndexes,
+		boolean enableFollowSymlinks
 	) throws IOException, SQLException {
 		if(sharedTomcatName==null) {
 			throw new SQLException("Fatal: No shared Tomcat specified.");
@@ -1549,7 +1599,13 @@ final public class HttpdHandler {
 			-1,
 			-1,
 			sharedTomcatName,
-			contentSrc
+			contentSrc,
+			phpVersion,
+			enableCgi,
+			enableSsi,
+			enableHtaccess,
+			enableIndexes,
+			enableFollowSymlinks
 		);
 	}
 
@@ -1571,7 +1627,13 @@ final public class HttpdHandler {
 		DomainName primaryHttpHostname,
 		DomainName[] altHttpHostnames,
 		int tomcatVersion,
-		UnixPath contentSrc
+		UnixPath contentSrc,
+		int phpVersion,
+		boolean enableCgi,
+		boolean enableSsi,
+		boolean enableHtaccess,
+		boolean enableIndexes,
+		boolean enableFollowSymlinks
 	) throws IOException, SQLException {
 		return addHttpdJVMSite(
 			"addTomcatStdSite",
@@ -1592,7 +1654,13 @@ final public class HttpdHandler {
 			-1,
 			tomcatVersion,
 			"",
-			contentSrc
+			contentSrc,
+			phpVersion,
+			enableCgi,
+			enableSsi,
+			enableHtaccess,
+			enableIndexes,
+			enableFollowSymlinks
 		);
 	}
 
@@ -3243,6 +3311,170 @@ final public class HttpdHandler {
 		);
 	}
 
+	public static void setHttpdSitePhpVersion(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		int phpVersion
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdSitePhpVersion", pkey);
+		int aoServer = getAOServerForHttpdSite(conn, pkey);
+		if(phpVersion != -1) {
+			int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+			// Version must be correct for this server
+			int tvOsv = conn.executeIntQuery(
+				"select coalesce(\n"
+				+ "  (select operating_system_version from technology_versions where pkey=? and name=?),\n"
+				+ "  -1\n"
+				+ ")",
+				phpVersion,
+				TechnologyName.PHP
+			);
+			if(tvOsv == -1) throw new SQLException("Requested PHP version is not a PHP version: #" + phpVersion);
+			if(tvOsv != osv) throw new SQLException("Requested PHP version is for the wrong operating system version: #" + phpVersion + ": " + tvOsv + " != " + osv);
+		}
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_sites set php_version=? where pkey=?",
+			phpVersion == -1 ? DatabaseAccess.Null.INTEGER : phpVersion,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			aoServer,
+			false
+		);
+	}
+
+	public static void setHttpdSiteEnableCgi(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean enableCgi
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableCgi", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_sites set enable_cgi=? where pkey=?",
+			enableCgi,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdSiteEnableSsi(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean enableSsi
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableSsi", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_sites set enable_ssi=? where pkey=?",
+			enableSsi,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdSiteEnableHtaccess(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean enableHtaccess
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableHtaccess", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_sites set enable_htaccess=? where pkey=?",
+			enableHtaccess,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdSiteEnableIndexes(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean enableIndexes
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableIndexes", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_sites set enable_indexes=? where pkey=?",
+			enableIndexes,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdSiteEnableFollowSymlinks(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean enableFollowSymlinks
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableFollowSymlinks", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_sites set enable_follow_symlinks=? where pkey=?",
+			enableFollowSymlinks,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
 	public static int setHttpdTomcatContextAttributes(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -3348,6 +3580,32 @@ final public class HttpdHandler {
 			SchemaTable.TableID.HTTPD_SITE_URLS,
 			getBusinessForHttpdSite(conn, hs),
 			getAOServerForHttpdSite(conn, hs),
+			false
+		);
+	}
+
+	public static void setHttpdTomcatSiteUseApache(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean useApache
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdTomcatSiteUseApache", pkey);
+
+		// Update the database
+		int updateCount = conn.executeUpdate(
+			"update httpd_tomcat_sites set use_apache=? where httpd_site=?",
+			useApache,
+			pkey
+		);
+		if(updateCount == 0) throw new SQLException("Not a HttpdTomcatSite: #" + pkey);
+		if(updateCount != 1) throw new SQLException("Unexpected updateCount: " + updateCount);
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_TOMCAT_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
 			false
 		);
 	}

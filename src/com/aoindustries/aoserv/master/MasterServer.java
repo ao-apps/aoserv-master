@@ -264,32 +264,6 @@ public abstract class MasterServer {
 
 		static final Response DONE = valueOf(AOServProtocol.DONE);
 
-		/* TODO
-		final byte resp1;
-
-		short resp2Short=-1;
-		boolean hasResp2Short=false;
-
-		String resp2NullLongString = null;
-		boolean hasResp2NullLongString = false;
-
-		String resp2LongString = null;
-
-		InboxAttributes resp2InboxAttributes=null;
-		boolean hasResp2InboxAttributes=false;
-
-		long[] resp2LongArray=null;
-
-		String resp3String=null;
-
-		String resp4String=null;
-		int resp4Int=-1;
-		boolean hasResp4Int=false;
-
-		long resp5Long=-1;
-		boolean hasResp5Long=false;
-		 */
-
 		static Response valueOf(int resp1) {
 			return new Response() {
 				@Override
@@ -444,34 +418,6 @@ public abstract class MasterServer {
 			};
 		}
 	}
-
-	/* TODO
-				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
-					out.writeByte(resp1);
-					// response 2
-					if(hasResp2Int) out.writeCompressedInt(resp2Int);
-					else if(hasResp2Long) out.writeLong(resp2Long);
-					else if(hasResp2Short) out.writeShort(resp2Short);
-					else if(resp2String!=null) out.writeUTF(resp2String);
-					else if(hasResp2NullLongString) out.writeNullLongUTF(resp2NullLongString);
-					else if(resp2LongString!=null) out.writeLongUTF(resp2LongString);
-					else if(hasResp2Boolean) out.writeBoolean(resp2Boolean);
-					else if(hasResp2InboxAttributes) {
-						out.writeBoolean(resp2InboxAttributes!=null);
-						if(resp2InboxAttributes!=null) resp2InboxAttributes.write(out, protocolVersion);
-					} else if(resp2LongArray!=null) {
-						for(int c=0;c<resp2LongArray.length;c++) out.writeLong(resp2LongArray[c]);
-					}
-					// response 3
-					if(resp3String!=null) out.writeUTF(resp3String);
-					// response 4
-					if(hasResp4Int) out.writeCompressedInt(resp4Int);
-					else if(resp4String!=null) out.writeUTF(resp4String);
-					// response 5
-					if(hasResp5Long) out.writeLong(resp5Long);
-				}
-	*/
 
 	/**
 	 * Handles a single request and then returns.  Exceptions during command processing
@@ -1643,6 +1589,27 @@ public abstract class MasterServer {
 													for(int c=0;c<len;c++) altHttpHostnames[c] = DomainName.valueOf(in.readUTF());
 													int jBossVersion = in.readCompressedInt();
 													UnixPath contentSrc = UnixPath.valueOf(in.readNullUTF());
+													int phpVersion;
+													boolean enableCgi;
+													boolean enableSsi;
+													boolean enableHtaccess;
+													boolean enableIndexes;
+													boolean enableFollowSymlinks;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) < 0) {
+														phpVersion = -1;
+														enableCgi = true;
+														enableSsi = true;
+														enableHtaccess = true;
+														enableIndexes = true;
+														enableFollowSymlinks = false;
+													} else {
+														phpVersion = in.readCompressedInt();
+														enableCgi = in.readBoolean();
+														enableSsi = in.readBoolean();
+														enableHtaccess = in.readBoolean();
+														enableIndexes = in.readBoolean();
+														enableFollowSymlinks = in.readBoolean();
+													}
 													process.setCommand(
 														AOSHCommand.ADD_HTTPD_JBOSS_SITE,
 														aoServer,
@@ -1656,7 +1623,13 @@ public abstract class MasterServer {
 														primaryHttpHostname,
 														altHttpHostnames,
 														jBossVersion,
-														contentSrc
+														contentSrc,
+														phpVersion,
+														enableCgi,
+														enableSsi,
+														enableHtaccess,
+														enableIndexes,
+														enableFollowSymlinks
 													);
 													int pkey = HttpdHandler.addHttpdJBossSite(
 														conn,
@@ -1673,7 +1646,13 @@ public abstract class MasterServer {
 														primaryHttpHostname,
 														altHttpHostnames,
 														jBossVersion,
-														contentSrc
+														contentSrc,
+														phpVersion,
+														enableCgi,
+														enableSsi,
+														enableHtaccess,
+														enableIndexes,
+														enableFollowSymlinks
 													);
 													resp = Response.valueOf(
 														AOServProtocol.DONE,
@@ -1899,6 +1878,27 @@ public abstract class MasterServer {
 													String sharedTomcatName=in.readNullUTF();
 													int version=in.readCompressedInt();
 													UnixPath contentSrc = UnixPath.valueOf(in.readNullUTF());
+													int phpVersion;
+													boolean enableCgi;
+													boolean enableSsi;
+													boolean enableHtaccess;
+													boolean enableIndexes;
+													boolean enableFollowSymlinks;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) < 0) {
+														phpVersion = -1;
+														enableCgi = true;
+														enableSsi = true;
+														enableHtaccess = true;
+														enableIndexes = true;
+														enableFollowSymlinks = false;
+													} else {
+														phpVersion = in.readCompressedInt();
+														enableCgi = in.readBoolean();
+														enableSsi = in.readBoolean();
+														enableHtaccess = in.readBoolean();
+														enableIndexes = in.readBoolean();
+														enableFollowSymlinks = in.readBoolean();
+													}
 													process.setCommand(
 														AOSHCommand.ADD_HTTPD_TOMCAT_SHARED_SITE,
 														aoServer,
@@ -1913,7 +1913,13 @@ public abstract class MasterServer {
 														altHttpHostnames,
 														sharedTomcatName,
 														version==-1?null:version,
-														contentSrc
+														contentSrc,
+														phpVersion,
+														enableCgi,
+														enableSsi,
+														enableHtaccess,
+														enableIndexes,
+														enableFollowSymlinks
 													);
 													int pkey = HttpdHandler.addHttpdTomcatSharedSite(
 														conn,
@@ -1931,7 +1937,13 @@ public abstract class MasterServer {
 														altHttpHostnames,
 														sharedTomcatName,
 														version,
-														contentSrc
+														contentSrc,
+														phpVersion,
+														enableCgi,
+														enableSsi,
+														enableHtaccess,
+														enableIndexes,
+														enableFollowSymlinks
 													);
 													resp = Response.valueOf(
 														AOServProtocol.DONE,
@@ -1955,6 +1967,27 @@ public abstract class MasterServer {
 													for(int c=0;c<len;c++) altHttpHostnames[c] = DomainName.valueOf(in.readUTF());
 													int tomcatVersion = in.readCompressedInt();
 													UnixPath contentSrc = UnixPath.valueOf(in.readNullUTF());
+													int phpVersion;
+													boolean enableCgi;
+													boolean enableSsi;
+													boolean enableHtaccess;
+													boolean enableIndexes;
+													boolean enableFollowSymlinks;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) < 0) {
+														phpVersion = -1;
+														enableCgi = true;
+														enableSsi = true;
+														enableHtaccess = true;
+														enableIndexes = true;
+														enableFollowSymlinks = false;
+													} else {
+														phpVersion = in.readCompressedInt();
+														enableCgi = in.readBoolean();
+														enableSsi = in.readBoolean();
+														enableHtaccess = in.readBoolean();
+														enableIndexes = in.readBoolean();
+														enableFollowSymlinks = in.readBoolean();
+													}
 													process.setCommand(
 														AOSHCommand.ADD_HTTPD_TOMCAT_STD_SITE,
 														aoServer,
@@ -1968,7 +2001,13 @@ public abstract class MasterServer {
 														primaryHttpHostname,
 														altHttpHostnames,
 														tomcatVersion,
-														contentSrc
+														contentSrc,
+														phpVersion,
+														enableCgi,
+														enableSsi,
+														enableHtaccess,
+														enableIndexes,
+														enableFollowSymlinks
 													);
 													int pkey = HttpdHandler.addHttpdTomcatStdSite(
 														conn,
@@ -1985,7 +2024,13 @@ public abstract class MasterServer {
 														primaryHttpHostname,
 														altHttpHostnames,
 														tomcatVersion,
-														contentSrc
+														contentSrc,
+														phpVersion,
+														enableCgi,
+														enableSsi,
+														enableHtaccess,
+														enableIndexes,
+														enableFollowSymlinks
 													);
 													resp = Response.valueOf(
 														AOServProtocol.DONE,
@@ -7179,6 +7224,126 @@ public abstract class MasterServer {
 											sendInvalidateList = true;
 										}
 										break;
+									case SET_HTTPD_SITE_PHP_VERSION :
+										{
+											int pkey = in.readCompressedInt();
+											int phpVersion = in.readCompressedInt();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SITE_PHP_VERSION,
+												pkey,
+												phpVersion
+											);
+											HttpdHandler.setHttpdSitePhpVersion(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												phpVersion
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_SITE_ENABLE_CGI :
+										{
+											int pkey = in.readCompressedInt();
+											boolean enableCgi = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SITE_ENABLE_CGI,
+												pkey,
+												enableCgi
+											);
+											HttpdHandler.setHttpdSiteEnableCgi(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												enableCgi
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_SITE_ENABLE_SSI :
+										{
+											int pkey = in.readCompressedInt();
+											boolean enableSsi = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SITE_ENABLE_SSI,
+												pkey,
+												enableSsi
+											);
+											HttpdHandler.setHttpdSiteEnableSsi(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												enableSsi
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_SITE_ENABLE_HTACCESS :
+										{
+											int pkey = in.readCompressedInt();
+											boolean enableHtaccess = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SITE_ENABLE_HTACCESS,
+												pkey,
+												enableHtaccess
+											);
+											HttpdHandler.setHttpdSiteEnableHtaccess(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												enableHtaccess
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_SITE_ENABLE_INDEXES :
+										{
+											int pkey = in.readCompressedInt();
+											boolean enableIndexes = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SITE_ENABLE_INDEXES,
+												pkey,
+												enableIndexes
+											);
+											HttpdHandler.setHttpdSiteEnableIndexes(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												enableIndexes
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_SITE_ENABLE_FOLLOW_SYMLINKS :
+										{
+											int pkey = in.readCompressedInt();
+											boolean enableFollowSymlinks = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SITE_ENABLE_FOLLOW_SYMLINKS,
+												pkey,
+												enableFollowSymlinks
+											);
+											HttpdHandler.setHttpdSiteEnableFollowSymlinks(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												enableFollowSymlinks
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
 									case SET_HTTPD_SITE_BIND_PREDISABLE_CONFIG :
 										{
 											int pkey = in.readCompressedInt();
@@ -7247,6 +7412,26 @@ public abstract class MasterServer {
 												wrapperClass,
 												debug,
 												workDir
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_TOMCAT_SITE_USE_APACHE :
+										{
+											int pkey = in.readCompressedInt();
+											boolean useApache = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_TOMCAT_SITE_USE_APACHE,
+												pkey,
+												useApache
+											);
+											HttpdHandler.setHttpdTomcatSiteUseApache(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												useApache
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
