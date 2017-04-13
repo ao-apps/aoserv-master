@@ -7121,6 +7121,46 @@ public abstract class MasterServer {
 											sendInvalidateList = true;
 										}
 										break;
+									case SET_HTTPD_SHARED_TOMCAT_UNPACK_WARS :
+										{
+											int pkey = in.readCompressedInt();
+											boolean unpackWARs = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SHARED_TOMCAT_UNPACK_WARS,
+												pkey,
+												unpackWARs
+											);
+											HttpdHandler.setHttpdSharedTomcatUnpackWARs(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												unpackWARs
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_SHARED_TOMCAT_AUTO_DEPLOY :
+										{
+											int pkey = in.readCompressedInt();
+											boolean autoDeploy = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SHARED_TOMCAT_AUTO_DEPLOY,
+												pkey,
+												autoDeploy
+											);
+											HttpdHandler.setHttpdSharedTomcatAutoDeploy(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												autoDeploy
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
 									case SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES :
 										{
 											int pkey = in.readCompressedInt();
@@ -7472,6 +7512,46 @@ public abstract class MasterServer {
 												invalidateList,
 												pkey,
 												maxPostSize
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_TOMCAT_STD_SITE_UNPACK_WARS :
+										{
+											int pkey = in.readCompressedInt();
+											boolean unpackWARs = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_TOMCAT_STD_SITE_UNPACK_WARS,
+												pkey,
+												unpackWARs
+											);
+											HttpdHandler.setHttpdTomcatStdSiteUnpackWARs(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												unpackWARs
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_TOMCAT_STD_SITE_AUTO_DEPLOY :
+										{
+											int pkey = in.readCompressedInt();
+											boolean autoDeploy = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_TOMCAT_STD_SITE_AUTO_DEPLOY,
+												pkey,
+												autoDeploy
+											);
+											HttpdHandler.setHttpdTomcatStdSiteAutoDeploy(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												autoDeploy
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;

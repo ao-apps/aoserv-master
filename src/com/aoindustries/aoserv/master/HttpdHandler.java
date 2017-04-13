@@ -1120,7 +1120,7 @@ final public class HttpdHandler {
 					MINIMUM_AUTO_PORT_NUMBER
 				);
 				conn.executeUpdate(
-					"insert into httpd_tomcat_std_sites values(?,?,?,?)",
+					"insert into httpd_tomcat_std_sites values(?,?,?,?,true,true)",
 					httpdSitePKey,
 					shutdownPort,
 					new Identifier(MasterServer.getRandom()).toString(),
@@ -1128,7 +1128,7 @@ final public class HttpdHandler {
 				);
 			} else {
 				conn.executeUpdate(
-					"insert into httpd_tomcat_std_sites values(?,null,null,?)",
+					"insert into httpd_tomcat_std_sites values(?,null,null,?,true,true)",
 					httpdSitePKey,
 					HttpdSharedTomcat.DEFAULT_MAX_POST_SIZE
 				);
@@ -1284,7 +1284,9 @@ final public class HttpdHandler {
 				+ "  ?,\n"
 				+ "  ?,\n"
 				+ "  false,\n" // is_manual
-				+ "  ?\n" // max_post_size
+				+ "  ?,\n" // max_post_size
+				+ "  true,\n" // unpack_wars
+				+ "  true\n" // auto_deploy
 				+ ")",
 				pkey,
 				name,
@@ -1317,7 +1319,9 @@ final public class HttpdHandler {
 				+ "  null,\n"
 				+ "  null,\n"
 				+ "  false,\n" // is_manual
-				+ "  ?\n" // max_post_size
+				+ "  ?,\n" // max_post_size
+				+ "  true,\n" // unpack_wars
+				+ "  true\n" // auto_deploy
 				+ ")",
 				pkey,
 				name,
@@ -3160,6 +3164,56 @@ final public class HttpdHandler {
 		);
 	}
 
+	public static void setHttpdSharedTomcatUnpackWARs(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean unpackWARs
+	) throws IOException, SQLException {
+		checkAccessHttpdSharedTomcat(conn, source, "setHttpdSharedTomcatUnpackWARs", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_shared_tomcats set unpack_wars=? where pkey=?",
+			unpackWARs,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
+			getBusinessForHttpdSharedTomcat(conn, pkey),
+			getAOServerForHttpdSharedTomcat(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdSharedTomcatAutoDeploy(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean autoDeploy
+	) throws IOException, SQLException {
+		checkAccessHttpdSharedTomcat(conn, source, "setHttpdSharedTomcatAutoDeploy", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_shared_tomcats set auto_deploy=? where pkey=?",
+			autoDeploy,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
+			getBusinessForHttpdSharedTomcat(conn, pkey),
+			getAOServerForHttpdSharedTomcat(conn, pkey),
+			false
+		);
+	}
+
 	public static void setHttpdSiteAuthenticatedLocationAttributes(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -3614,6 +3668,58 @@ final public class HttpdHandler {
 		int updateCount = conn.executeUpdate(
 			"update httpd_tomcat_std_sites set max_post_size=? where httpd_site=?",
 			maxPostSize==-1 ? DatabaseAccess.Null.INTEGER : maxPostSize,
+			pkey
+		);
+		if(updateCount == 0) throw new SQLException("Not a HttpdTomcatStdSite: #" + pkey);
+		if(updateCount != 1) throw new SQLException("Unexpected updateCount: " + updateCount);
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdTomcatStdSiteUnpackWARs(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean unpackWARs
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdTomcatStdSiteUnpackWARs", pkey);
+
+		// Update the database
+		int updateCount = conn.executeUpdate(
+			"update httpd_tomcat_std_sites set unpack_wars=? where httpd_site=?",
+			unpackWARs,
+			pkey
+		);
+		if(updateCount == 0) throw new SQLException("Not a HttpdTomcatStdSite: #" + pkey);
+		if(updateCount != 1) throw new SQLException("Unexpected updateCount: " + updateCount);
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdTomcatStdSiteAutoDeploy(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean autoDeploy
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdTomcatStdSiteAutoDeploy", pkey);
+
+		// Update the database
+		int updateCount = conn.executeUpdate(
+			"update httpd_tomcat_std_sites set auto_deploy=? where httpd_site=?",
+			autoDeploy,
 			pkey
 		);
 		if(updateCount == 0) throw new SQLException("Not a HttpdTomcatStdSite: #" + pkey);
