@@ -3147,7 +3147,7 @@ final public class HttpdHandler {
 		// Update the database
 		conn.executeUpdate(
 			"update httpd_shared_tomcats set max_post_size=? where pkey=?",
-			maxPostSize,
+			maxPostSize==-1 ? DatabaseAccess.Null.INTEGER : maxPostSize,
 			pkey
 		);
 
@@ -3613,7 +3613,7 @@ final public class HttpdHandler {
 		// Update the database
 		int updateCount = conn.executeUpdate(
 			"update httpd_tomcat_std_sites set max_post_size=? where httpd_site=?",
-			maxPostSize,
+			maxPostSize==-1 ? DatabaseAccess.Null.INTEGER : maxPostSize,
 			pkey
 		);
 		if(updateCount == 0) throw new SQLException("Not a HttpdTomcatStdSite: #" + pkey);
