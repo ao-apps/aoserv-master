@@ -10,12 +10,12 @@ import com.aoindustries.aoserv.client.HttpdSharedTomcat;
 import com.aoindustries.aoserv.client.HttpdSite;
 import com.aoindustries.aoserv.client.HttpdSiteAuthenticatedLocation;
 import com.aoindustries.aoserv.client.HttpdTomcatContext;
+import com.aoindustries.aoserv.client.HttpdTomcatStdSite;
 import com.aoindustries.aoserv.client.HttpdTomcatVersion;
 import com.aoindustries.aoserv.client.LinuxAccount;
 import com.aoindustries.aoserv.client.LinuxGroup;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.OperatingSystemVersion;
-import com.aoindustries.aoserv.client.PasswordGenerator;
 import com.aoindustries.aoserv.client.Protocol;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.TechnologyName;
@@ -30,6 +30,7 @@ import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.Email;
 import com.aoindustries.net.Port;
+import com.aoindustries.security.Identifier;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.SortedIntArrayList;
@@ -1119,12 +1120,19 @@ final public class HttpdHandler {
 					MINIMUM_AUTO_PORT_NUMBER
 				);
 				conn.executeUpdate(
-					"insert into httpd_tomcat_std_sites values(?,?,?)",
+					"insert into httpd_tomcat_std_sites values(?,?,?,?)",
 					httpdSitePKey,
 					shutdownPort,
-					PasswordGenerator.generatePassword(MasterServer.getRandom())
+					new Identifier(MasterServer.getRandom()).toString(),
+					HttpdTomcatStdSite.DEFAULT_MAX_POST_SIZE
 				);
-			} else conn.executeUpdate("insert into httpd_tomcat_std_sites values(?,null,null)", httpdSitePKey);
+			} else {
+				conn.executeUpdate(
+					"insert into httpd_tomcat_std_sites values(?,null,null,?)",
+					httpdSitePKey,
+					HttpdSharedTomcat.DEFAULT_MAX_POST_SIZE
+				);
+			}
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES, accounting, aoServer, false);
 		}
 
@@ -1275,7 +1283,8 @@ final public class HttpdHandler {
 				+ "  ?,\n"
 				+ "  ?,\n"
 				+ "  ?,\n"
-				+ "  false\n"
+				+ "  false,\n" // is_manual
+				+ "  ?\n" // max_post_size
 				+ ")",
 				pkey,
 				name,
@@ -1287,7 +1296,8 @@ final public class HttpdHandler {
 				isOverflow,
 				httpdWorkerPKey,
 				shutdownBindPKey,
-				PasswordGenerator.generatePassword(MasterServer.getRandom())
+				new Identifier(MasterServer.getRandom()).toString(),
+				HttpdSharedTomcat.DEFAULT_MAX_POST_SIZE
 			);
 		} else {
 			conn.executeUpdate(
@@ -1306,7 +1316,8 @@ final public class HttpdHandler {
 				+ "  null,\n"
 				+ "  null,\n"
 				+ "  null,\n"
-				+ "  false\n"
+				+ "  false,\n" // is_manual
+				+ "  ?\n" // max_post_size
 				+ ")",
 				pkey,
 				name,
@@ -1315,7 +1326,8 @@ final public class HttpdHandler {
 				lsaPkey,
 				lsgPkey,
 				isSecure,
-				isOverflow
+				isOverflow,
+				HttpdSharedTomcat.DEFAULT_MAX_POST_SIZE
 			);
 		}
 		// Notify all clients of the update
@@ -3123,6 +3135,31 @@ final public class HttpdHandler {
 		);
 	}
 
+	public static void setHttpdSharedTomcatMaxPostSize(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		int maxPostSize
+	) throws IOException, SQLException {
+		checkAccessHttpdSharedTomcat(conn, source, "setHttpdSharedTomcatMaxPostSize", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_shared_tomcats set max_post_size=? where pkey=?",
+			maxPostSize,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
+			getBusinessForHttpdSharedTomcat(conn, pkey),
+			getAOServerForHttpdSharedTomcat(conn, pkey),
+			false
+		);
+	}
+
 	public static void setHttpdSiteAuthenticatedLocationAttributes(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -3562,6 +3599,32 @@ final public class HttpdHandler {
 		);
 
 		return pkey;
+	}
+
+	public static void setHttpdTomcatStdSiteMaxPostSize(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		int maxPostSize
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdTomcatStdSiteMaxPostSize", pkey);
+
+		// Update the database
+		int updateCount = conn.executeUpdate(
+			"update httpd_tomcat_std_sites set max_post_size=? where httpd_site=?",
+			maxPostSize,
+			pkey
+		);
+		if(updateCount == 0) throw new SQLException("Not a HttpdTomcatStdSite: #" + pkey);
+		if(updateCount != 1) throw new SQLException("Unexpected updateCount: " + updateCount);
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
 	}
 
 	public static void setPrimaryHttpdSiteURL(

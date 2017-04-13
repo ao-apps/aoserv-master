@@ -7101,6 +7101,26 @@ public abstract class MasterServer {
 											sendInvalidateList = true;
 										}
 										break;
+									case SET_HTTPD_SHARED_TOMCAT_MAX_POST_SIZE :
+										{
+											int pkey = in.readCompressedInt();
+											int maxPostSize = in.readInt();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SHARED_TOMCAT_MAX_POST_SIZE,
+												pkey,
+												maxPostSize
+											);
+											HttpdHandler.setHttpdSharedTomcatMaxPostSize(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												maxPostSize
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
 									case SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES :
 										{
 											int pkey = in.readCompressedInt();
@@ -7432,6 +7452,26 @@ public abstract class MasterServer {
 												invalidateList,
 												pkey,
 												useApache
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_TOMCAT_STD_SITE_MAX_POST_SIZE :
+										{
+											int pkey = in.readCompressedInt();
+											int maxPostSize = in.readInt();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_TOMCAT_STD_SITE_MAX_POST_SIZE,
+												pkey,
+												maxPostSize
+											);
+											HttpdHandler.setHttpdTomcatStdSiteMaxPostSize(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												maxPostSize
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
