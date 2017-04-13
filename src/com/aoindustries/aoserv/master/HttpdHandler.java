@@ -928,7 +928,8 @@ final public class HttpdHandler {
 			+ "  ?,\n" // enable_ssh
 			+ "  ?,\n" // enable_htaccess
 			+ "  ?,\n" // enable_indexes
-			+ "  ?\n" // enable_follow_symlinks
+			+ "  ?,\n" // enable_follow_symlinks
+			+ "  false\n" // enable_anonymous_ftp
 			+ ")");
 		try {
 			pstmt.setInt(1, httpdSitePKey);
@@ -3554,6 +3555,31 @@ final public class HttpdHandler {
 		conn.executeUpdate(
 			"update httpd_sites set enable_follow_symlinks=? where pkey=?",
 			enableFollowSymlinks,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdSiteEnableAnonymousFtp(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean enableAnonymousFtp
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableAnonymousFtp", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_sites set enable_anonymous_ftp=? where pkey=?",
+			enableAnonymousFtp,
 			pkey
 		);
 

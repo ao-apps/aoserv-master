@@ -7404,6 +7404,26 @@ public abstract class MasterServer {
 											sendInvalidateList = true;
 										}
 										break;
+									case SET_HTTPD_SITE_ENABLE_ANONYMOUS_FTP :
+										{
+											int pkey = in.readCompressedInt();
+											boolean enableAnonymousFtp = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SITE_ENABLE_ANONYMOUS_FTP,
+												pkey,
+												enableAnonymousFtp
+											);
+											HttpdHandler.setHttpdSiteEnableAnonymousFtp(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												enableAnonymousFtp
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
 									case SET_HTTPD_SITE_BIND_PREDISABLE_CONFIG :
 										{
 											int pkey = in.readCompressedInt();
