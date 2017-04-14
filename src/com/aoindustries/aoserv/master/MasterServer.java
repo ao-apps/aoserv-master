@@ -448,7 +448,7 @@ public abstract class MasterServer {
 			if(clientSeq != seq) throw new IOException("Sequence mismatch: " + clientSeq + " != " + seq);
 		}
 		// Send command sequence
-		if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) >= 0) {
+		if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) >= 0) {
 			out.writeLong(seq); // out is buffered, so no I/O created by writing this early
 		}
 		// Continue with task
@@ -1595,7 +1595,7 @@ public abstract class MasterServer {
 													boolean enableHtaccess;
 													boolean enableIndexes;
 													boolean enableFollowSymlinks;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) < 0) {
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) < 0) {
 														phpVersion = -1;
 														enableCgi = true;
 														enableSsi = true;
@@ -1884,7 +1884,7 @@ public abstract class MasterServer {
 													boolean enableHtaccess;
 													boolean enableIndexes;
 													boolean enableFollowSymlinks;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) < 0) {
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) < 0) {
 														phpVersion = -1;
 														enableCgi = true;
 														enableSsi = true;
@@ -1973,7 +1973,7 @@ public abstract class MasterServer {
 													boolean enableHtaccess;
 													boolean enableIndexes;
 													boolean enableFollowSymlinks;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) < 0) {
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) < 0) {
 														phpVersion = -1;
 														enableCgi = true;
 														enableSsi = true;
@@ -2070,7 +2070,7 @@ public abstract class MasterServer {
 													UserId username = UserId.valueOf(in.readUTF());
 													GroupId primary_group = GroupId.valueOf(in.readUTF());
 													Gecos name;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) < 0) {
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) < 0) {
 														name = Gecos.valueOf(in.readUTF());
 													} else {
 														name = Gecos.valueOf(in.readNullUTF());
@@ -7743,7 +7743,7 @@ public abstract class MasterServer {
 										{
 											UserId username = UserId.valueOf(in.readUTF());
 											Gecos fullName;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1_SNAPSHOT) < 0) {
+											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) < 0) {
 												fullName = Gecos.valueOf(in.readUTF());
 											} else {
 												String s = in.readUTF();
