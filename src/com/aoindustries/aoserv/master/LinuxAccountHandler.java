@@ -698,6 +698,7 @@ final public class LinuxAccountHandler {
 				|| (groupName.equals(LinuxGroup.AUDIO)           && gid == 63)
 				|| (groupName.equals(LinuxGroup.TCPDUMP)         && gid == 72)
 				|| (groupName.equals(LinuxGroup.SSHD)            && gid == 74)
+				|| (groupName.equals(LinuxGroup.SASLAUTH)        && gid == 76)
 				|| (groupName.equals(LinuxGroup.DBUS)            && gid == 81)
 				|| (groupName.equals(LinuxGroup.SCREEN)          && gid == 84)
 				|| (groupName.equals(LinuxGroup.NOBODY)          && gid == 99)
@@ -816,6 +817,7 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(LinuxAccount.TSS,                           59, LinuxGroup.TSS,               "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null", Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.TCPDUMP,                       72, LinuxGroup.TCPDUMP,           null,                          "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.SSHD,                          74, LinuxGroup.SSHD,              "Privilege-separated SSH",     "/var/empty/sshd",  Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.CYRUS,                         76, LinuxGroup.MAIL,              "Cyrus IMAP Server",           "/var/lib/imap",    Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.DBUS,                          81, LinuxGroup.DBUS,              "System message bus",          "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.NOBODY,                        99, LinuxGroup.NOBODY,            "Nobody",                      "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.AVAHI_AUTOIPD,                170, LinuxGroup.AVAHI_AUTOIPD,     "Avahi IPv4LL Stack",          "/var/lib/avahi-autoipd", Shell.NOLOGIN, null);
