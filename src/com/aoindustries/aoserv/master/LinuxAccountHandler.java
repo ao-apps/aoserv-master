@@ -714,7 +714,8 @@ final public class LinuxAccountHandler {
 					gid >= CENTOS_7_SYS_GID_MIN
 					&& gid < gid_min
 					&& (
-						   groupName.equals(LinuxGroup.CGRED)
+						   groupName.equals(LinuxGroup.AOSERV_JILTER)
+						|| groupName.equals(LinuxGroup.CGRED)
 						|| groupName.equals(LinuxGroup.CHRONY)
 						|| groupName.equals(LinuxGroup.INPUT)
 						|| groupName.equals(LinuxGroup.POLKITD)
@@ -826,6 +827,7 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(LinuxAccount.DHCPD,                        177, LinuxGroup.DHCPD,             "DHCP server",                 "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.SYSTEMD_NETWORK,              192, LinuxGroup.SYSTEMD_NETWORK,   "systemd Network Management",  "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.NFSNOBODY,                  65534, LinuxGroup.NFSNOBODY,         "Anonymous NFS User",          "/var/lib/nfs",     Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.AOSERV_JILTER,     ANY_SYSTEM_UID, LinuxGroup.AOSERV_JILTER,     "AOServ Jilter",               "/var/opt/aoserv-jilter", Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.CHRONY,            ANY_SYSTEM_UID, LinuxGroup.CHRONY,            null,                          "/var/lib/chrony",  Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.POLKITD,           ANY_SYSTEM_UID, LinuxGroup.POLKITD,           "User for polkitd",            "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.SYSTEMD_BUS_PROXY, ANY_SYSTEM_UID, LinuxGroup.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",           "/",                Shell.NOLOGIN, null);
