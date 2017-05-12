@@ -718,6 +718,7 @@ final public class LinuxAccountHandler {
 						|| groupName.equals(LinuxGroup.CGRED)
 						|| groupName.equals(LinuxGroup.CHRONY)
 						|| groupName.equals(LinuxGroup.INPUT)
+						|| groupName.equals(LinuxGroup.MEMCACHED)
 						|| groupName.equals(LinuxGroup.POLKITD)
 						|| groupName.equals(LinuxGroup.SSH_KEYS)
 						|| groupName.equals(LinuxGroup.SYSTEMD_BUS_PROXY)
@@ -829,6 +830,7 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(LinuxAccount.NFSNOBODY,                  65534, LinuxGroup.NFSNOBODY,         "Anonymous NFS User",          "/var/lib/nfs",     Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.AOSERV_JILTER,     ANY_SYSTEM_UID, LinuxGroup.AOSERV_JILTER,     "AOServ Jilter",               "/var/opt/aoserv-jilter", Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.CHRONY,            ANY_SYSTEM_UID, LinuxGroup.CHRONY,            null,                          "/var/lib/chrony",  Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.MEMCACHED,         ANY_SYSTEM_UID, LinuxGroup.MEMCACHED,         "Memcached daemon",            "/run/memcached",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.POLKITD,           ANY_SYSTEM_UID, LinuxGroup.POLKITD,           "User for polkitd",            "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.SYSTEMD_BUS_PROXY, ANY_SYSTEM_UID, LinuxGroup.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",           "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.UNBOUND,           ANY_SYSTEM_UID, LinuxGroup.UNBOUND,           "Unbound DNS resolver",        "/etc/unbound",     Shell.NOLOGIN, null);
