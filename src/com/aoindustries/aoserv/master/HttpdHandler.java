@@ -1160,13 +1160,14 @@ final public class HttpdHandler {
 
 		// Create the HTTP HttpdSiteBind
 		int httpSiteBindPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_binds_pkey_seq')");
+		String siteLogsDir = OperatingSystemVersion.getHttpdSiteLogsDirectory(osv).toString();
 		conn.executeUpdate(
 			"insert into httpd_site_binds values(?,?,?,?,?,null,null,null,null,false,true)",
 			httpSiteBindPKey,
 			httpdSitePKey,
 			httpNetBind,
-			"/logs/"+siteName+"/http/access_log",
-			"/logs/"+siteName+"/http/error_log"
+			siteLogsDir + '/' + siteName + "/http/access_log",
+			siteLogsDir + '/' + siteName + "/http/error_log"
 		);
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BINDS, accounting, aoServer, false);
 
