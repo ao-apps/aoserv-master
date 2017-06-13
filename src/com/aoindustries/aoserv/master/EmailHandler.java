@@ -100,7 +100,12 @@ final public class EmailHandler {
 	}
 
 	public static void checkAccessEmailListPath(DatabaseConnection conn, RequestSource source, String action, int aoServer, UnixPath path) throws IOException, SQLException {
-		if(!EmailList.isValidRegularPath(path)) {
+		if(
+			!EmailList.isValidRegularPath(
+				path,
+				ServerHandler.getOperatingSystemVersionForServer(conn, aoServer)
+			)
+		) {
 			String pathStr = path.toString();
 			// Can also be a path in a majordomo server that they may access
 			if(pathStr.startsWith(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY.toString()+'/')) {
