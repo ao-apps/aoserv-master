@@ -691,8 +691,10 @@ final public class LinuxAccountHandler {
 				|| (groupName.equals(LinuxGroup.UTEMPTER)        && gid == 35)
 				|| (groupName.equals(LinuxGroup.VIDEO)           && gid == 39)
 				|| (groupName.equals(LinuxGroup.DIP)             && gid == 40)
+				|| (groupName.equals(LinuxGroup.MAILNULL)        && gid == 47)
 				|| (groupName.equals(LinuxGroup.APACHE)          && gid == 48)
 				|| (groupName.equals(LinuxGroup.FTP)             && gid == 50)
+				|| (groupName.equals(LinuxGroup.SMMSP)           && gid == 51)
 				|| (groupName.equals(LinuxGroup.LOCK)            && gid == 54)
 				|| (groupName.equals(LinuxGroup.TSS)             && gid == 59)
 				|| (groupName.equals(LinuxGroup.AUDIO)           && gid == 63)
@@ -816,7 +818,9 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(LinuxAccount.RPCUSER,                       29, LinuxGroup.RPCUSER,           "RPC Service User",            "/var/lib/nfs",     Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.MYSQL,                         31, LinuxGroup.MYSQL,             "MySQL server",                "/var/lib/mysql",   Shell.BASH, null);
 					addCentos7SystemUser(LinuxAccount.RPC,                           32, LinuxGroup.RPC,               "Rpcbind Daemon",              "/var/lib/rpcbind", Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.MAILNULL,                      47, LinuxGroup.MAILNULL,          null,                          "/var/spool/mqueue", Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.APACHE,                        48, LinuxGroup.APACHE,            "Apache",                      "/usr/share/httpd", Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.SMMSP,                         51, LinuxGroup.SMMSP,             null,                          "/var/spool/mqueue", Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.TSS,                           59, LinuxGroup.TSS,               "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null", Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.TCPDUMP,                       72, LinuxGroup.TCPDUMP,           null,                          "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.SSHD,                          74, LinuxGroup.SSHD,              "Privilege-separated SSH",     "/var/empty/sshd",  Shell.NOLOGIN, null);
@@ -832,6 +836,7 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(LinuxAccount.CHRONY,            ANY_SYSTEM_UID, LinuxGroup.CHRONY,            null,                          "/var/lib/chrony",  Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.MEMCACHED,         ANY_SYSTEM_UID, LinuxGroup.MEMCACHED,         "Memcached daemon",            "/run/memcached",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.POLKITD,           ANY_SYSTEM_UID, LinuxGroup.POLKITD,           "User for polkitd",            "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.SASLAUTH,          ANY_SYSTEM_UID, LinuxGroup.SASLAUTH,          "Saslauthd user",              "/run/saslauthd",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.SYSTEMD_BUS_PROXY, ANY_SYSTEM_UID, LinuxGroup.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",           "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.UNBOUND,           ANY_SYSTEM_UID, LinuxGroup.UNBOUND,           "Unbound DNS resolver",        "/etc/unbound",     Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.AOADMIN,           ANY_USER_UID,   LinuxGroup.AOADMIN,           "AO Industries Administrator", "/home/aoadmin",  Shell.BASH, AOADMIN_SUDO);
