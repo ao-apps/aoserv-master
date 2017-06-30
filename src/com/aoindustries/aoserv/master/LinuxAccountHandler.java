@@ -703,6 +703,7 @@ final public class LinuxAccountHandler {
 				|| (groupName.equals(LinuxGroup.SASLAUTH)        && gid == 76)
 				|| (groupName.equals(LinuxGroup.AWSTATS)         && gid == 78)
 				|| (groupName.equals(LinuxGroup.DBUS)            && gid == 81)
+				|| (groupName.equals(LinuxGroup.MAILONLY)        && gid == 83)
 				|| (groupName.equals(LinuxGroup.SCREEN)          && gid == 84)
 				|| (groupName.equals(LinuxGroup.NOBODY)          && gid == 99)
 				|| (groupName.equals(LinuxGroup.USERS)           && gid == 100)
