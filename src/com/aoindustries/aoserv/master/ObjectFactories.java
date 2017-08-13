@@ -6,6 +6,7 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.FirewalldZoneName;
 import com.aoindustries.aoserv.client.validator.GroupId;
 import com.aoindustries.aoserv.client.validator.MySQLDatabaseName;
 import com.aoindustries.aoserv.client.validator.MySQLUserId;
@@ -56,6 +57,14 @@ final public class ObjectFactories {
     public static final ObjectFactory<GroupId> groupIdFactory = (ResultSet result) -> {
 		try {
 			return GroupId.valueOf(result.getString(1));
+		} catch(ValidationException e) {
+			throw new SQLException(e.getLocalizedMessage(), e);
+		}
+	};
+
+    public static final ObjectFactory<FirewalldZoneName> firewalldZoneNameFactory = (ResultSet result) -> {
+		try {
+			return FirewalldZoneName.valueOf(result.getString(1));
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}

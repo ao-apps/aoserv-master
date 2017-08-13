@@ -5,6 +5,7 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.FirewalldZone;
 import com.aoindustries.aoserv.client.HttpdJKProtocol;
 import com.aoindustries.aoserv.client.HttpdSharedTomcat;
 import com.aoindustries.aoserv.client.HttpdSite;
@@ -2390,9 +2391,9 @@ final public class HttpdHandler {
 		}
 
 		// Allocate the net_bind, if needed
-		if(netBind==-1) {
-			netBind=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('net_binds_pkey_seq')");
-			pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into net_binds values(?,?,?,?,?,?,?,true,true)");
+		if(netBind == -1) {
+			netBind = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('net_binds_pkey_seq')");
+			pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into net_binds values(?,?,?,?,?,?,?,true)");
 			try {
 				pstmt.setInt(1, netBind);
 				pstmt.setString(2, packageName.toString());
@@ -2405,10 +2406,28 @@ final public class HttpdHandler {
 			} finally {
 				pstmt.close();
 			}
+			AccountingCode business = PackageHandler.getBusinessForPackage(conn, packageName);
 			invalidateList.addTable(
 				conn,
 				SchemaTable.TableID.NET_BINDS,
-				PackageHandler.getBusinessForPackage(conn, packageName),
+				business,
+				aoServer,
+				false
+			);
+			// Default to open in public firewalld zone
+			conn.executeUpdate(
+				"insert into net_bind_firewalld_zones (net_bind, firewalld_zone) values (\n"
+				+ "  ?,\n"
+				+ "  (select pkey from firewalld_zones where ao_server=? and \"name\"=?)\n"
+				+ ")",
+				netBind,
+				aoServer,
+				FirewalldZone.PUBLIC
+			);
+			invalidateList.addTable(
+				conn,
+				SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+				business,
 				aoServer,
 				false
 			);
@@ -2532,17 +2551,25 @@ final public class HttpdHandler {
 			) throw new SQLException("HttpdServer has reached its maximum number of HttpdSiteBinds: "+ipAddress+":"+httpPort+" on "+aoServer);
 		}
 		// Always invalidate these tables because adding site may grant permissions to these rows
+		AccountingCode business = PackageHandler.getBusinessForPackage(conn, packageName);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_BINDS,
-			PackageHandler.getBusinessForPackage(conn, packageName),
+			business,
 			aoServer,
 			false
 		);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.NET_BINDS,
-			PackageHandler.getBusinessForPackage(conn, packageName),
+			business,
+			aoServer,
+			false
+		);
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+			business,
 			aoServer,
 			false
 		);
@@ -2588,11 +2615,13 @@ final public class HttpdHandler {
 
 			conn.executeUpdate("delete from net_binds where pkey=?", nb);
 			invalidateList.addTable(conn, SchemaTable.TableID.NET_BINDS, accounting, aoServer, false);
+			invalidateList.addTable(conn, SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES, accounting, aoServer, false);
 		}
 
 		if(tomcat4ShutdownPort!=-1) {
 			conn.executeUpdate("delete from net_binds where pkey=?", tomcat4ShutdownPort);
 			invalidateList.addTable(conn, SchemaTable.TableID.NET_BINDS, accounting, aoServer, false);
+			invalidateList.addTable(conn, SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES, accounting, aoServer, false);
 		}
 	}
 
@@ -2834,6 +2863,7 @@ final public class HttpdHandler {
 				if(tomcat4ShutdownPort!=-1) {
 					conn.executeUpdate("delete from net_binds where pkey=?", tomcat4ShutdownPort);
 					invalidateList.addTable(conn, SchemaTable.TableID.NET_BINDS, accounting, aoServer, false);
+					invalidateList.addTable(conn, SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES, accounting, aoServer, false);
 				}
 			}
 

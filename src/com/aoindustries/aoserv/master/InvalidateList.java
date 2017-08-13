@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -141,6 +141,7 @@ final public class InvalidateList {
         if(recurse) {
             switch(tableID) {
                 case AO_SERVERS :
+                    addTable(conn, SchemaTable.TableID.FIREWALLD_ZONES, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.MYSQL_SERVERS, businesses, servers, true);
@@ -198,6 +199,14 @@ final public class InvalidateList {
                     addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.MYSQL_DATABASES, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.MYSQL_SERVER_USERS, businesses, servers, true);
+                    break;
+                case NET_BINDS :
+                    addTable(conn, SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES, businesses, servers, false);
+                    break;
+                case NET_BIND_FIREWALLD_ZONES :
+					// Presence of "public" firewalld zone determines compatibility "open_firewall" for clients
+					// version <= 1.80.2
+                    addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, false);
                     break;
                 case NET_DEVICES :
                     addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);

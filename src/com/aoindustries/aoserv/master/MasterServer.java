@@ -12,6 +12,7 @@ import com.aoindustries.aoserv.client.AOServWritable;
 import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.DNSRecord;
 import com.aoindustries.aoserv.client.DNSZoneTable;
+import com.aoindustries.aoserv.client.FirewalldZone;
 import com.aoindustries.aoserv.client.InboxAttributes;
 import com.aoindustries.aoserv.client.IpReputationSet.AddReputation;
 import com.aoindustries.aoserv.client.IpReputationSet.ConfidenceType;
@@ -24,6 +25,7 @@ import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.Transaction;
 import com.aoindustries.aoserv.client.TransactionSearchCriteria;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.FirewalldZoneName;
 import com.aoindustries.aoserv.client.validator.Gecos;
 import com.aoindustries.aoserv.client.validator.GroupId;
 import com.aoindustries.aoserv.client.validator.HashedPassword;
@@ -75,10 +77,12 @@ import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -2436,26 +2440,53 @@ public abstract class MasterServer {
 														port = Port.valueOf(portNum, protocol);
 													}
 													String appProtocol = in.readUTF().trim();
-													boolean openFirewall = in.readBoolean();
 													boolean monitoringEnabled;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_103)<=0) {
-														monitoringEnabled = in.readCompressedInt() != -1;
-														in.readNullUTF();
-														in.readNullUTF();
-														in.readNullUTF();
+													int numZones;
+													Set<FirewalldZoneName> firewalldZones;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_2) <= 0) {
+														boolean openFirewall = in.readBoolean();
+														if(openFirewall) {
+															numZones = 1;
+															firewalldZones = Collections.singleton(FirewalldZone.PUBLIC);
+														} else {
+															numZones = 0;
+															firewalldZones = Collections.emptySet();
+														}
+														if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_103)<=0) {
+															monitoringEnabled = in.readCompressedInt() != -1;
+															in.readNullUTF();
+															in.readNullUTF();
+															in.readNullUTF();
+														} else {
+															monitoringEnabled = in.readBoolean();
+														}
 													} else {
 														monitoringEnabled = in.readBoolean();
+														numZones = in.readCompressedInt();
+														firewalldZones = new LinkedHashSet<>(numZones*4/3+1);
+														for(int i = 0; i < numZones; i++) {
+															FirewalldZoneName name = FirewalldZoneName.valueOf(in.readUTF());
+															if(!firewalldZones.add(name)) {
+																throw new IOException("Duplicate firewalld name: " + name);
+															}
+														}
 													}
-													process.setCommand(
-														AOSHCommand.ADD_NET_BIND,
-														server,
-														packageName,
-														ipAddress,
-														port,
-														appProtocol,
-														openFirewall,
-														monitoringEnabled
+													Object[] command = new Object[7 + numZones];
+													command[0] = AOSHCommand.ADD_NET_BIND;
+													command[1] = server;
+													command[2] = packageName;
+													command[3] = ipAddress;
+													command[4] = port;
+													command[5] = appProtocol;
+													command[6] = monitoringEnabled;
+													System.arraycopy(
+														firewalldZones.toArray(new FirewalldZoneName[numZones]),
+														0,
+														command,
+														7,
+														numZones
 													);
+													process.setCommand(command);
 													int pkey = NetBindHandler.addNetBind(
 														conn,
 														source,
@@ -2465,8 +2496,8 @@ public abstract class MasterServer {
 														ipAddress,
 														port,
 														appProtocol,
-														openFirewall,
-														monitoringEnabled
+														monitoringEnabled,
+														firewalldZones
 													);
 													resp = Response.valueOf(
 														AOServProtocol.DONE,
@@ -8070,6 +8101,39 @@ public abstract class MasterServer {
 											sendInvalidateList = true;
 										}
 										break;
+									case SET_NET_BIND_FIREWALLD_ZONES :
+										{
+											int pkey = in.readCompressedInt();
+											int numZones = in.readCompressedInt();
+											Set<FirewalldZoneName> firewalldZones = new LinkedHashSet<>(numZones*4/3+1);
+											for(int i = 0; i < numZones; i++) {
+												FirewalldZoneName name = FirewalldZoneName.valueOf(in.readUTF());
+												if(!firewalldZones.add(name)) {
+													throw new IOException("Duplicate firewalld name: " + name);
+												}
+											}
+											Object[] command = new Object[2 + numZones];
+											command[0] = AOSHCommand.SET_NET_BIND_FIREWALLD_ZONES;
+											command[1] = pkey;
+											System.arraycopy(
+												firewalldZones.toArray(new FirewalldZoneName[numZones]),
+												0,
+												command,
+												2,
+												numZones
+											);
+											process.setCommand(command);
+											NetBindHandler.setNetBindFirewalldZones(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												firewalldZones
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
 									case SET_NET_BIND_MONITORING :
 										{
 											int pkey = in.readCompressedInt();
@@ -8090,12 +8154,13 @@ public abstract class MasterServer {
 											sendInvalidateList = true;
 										}
 										break;
-									case SET_NET_BIND_OPEN_FIREWALL :
+									// This exists for compatibility with older clients (versions &lt;= 1.80.2) only.
+									case UNUSED_SET_NET_BIND_OPEN_FIREWALL :
 										{
 											int pkey = in.readCompressedInt();
 											boolean open_firewall = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_NET_BIND_OPEN_FIREWALL,
+												"set_net_bind_open_firewall",
 												pkey,
 												open_firewall
 											);

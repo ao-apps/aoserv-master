@@ -62,6 +62,7 @@ import com.aoindustries.aoserv.client.FailoverFileReplication;
 import com.aoindustries.aoserv.client.FailoverFileSchedule;
 import com.aoindustries.aoserv.client.FailoverMySQLReplication;
 import com.aoindustries.aoserv.client.FileBackupSetting;
+import com.aoindustries.aoserv.client.FirewalldZone;
 import com.aoindustries.aoserv.client.HttpdBind;
 import com.aoindustries.aoserv.client.HttpdJBossSite;
 import com.aoindustries.aoserv.client.HttpdJBossVersion;
@@ -110,6 +111,7 @@ import com.aoindustries.aoserv.client.MySQLServer;
 import com.aoindustries.aoserv.client.MySQLServerUser;
 import com.aoindustries.aoserv.client.MySQLUser;
 import com.aoindustries.aoserv.client.NetBind;
+import com.aoindustries.aoserv.client.NetBindFirewalldZone;
 import com.aoindustries.aoserv.client.NetDevice;
 import com.aoindustries.aoserv.client.NetDeviceID;
 import com.aoindustries.aoserv.client.NetTcpRedirect;
@@ -186,12 +188,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * The <code>TableHandler</code> handles all the accesses to the AOServ tables.
- *
- * TODO: Compatibility with tables removed in 1.80.0-SNAPSHOT
  *
  * @author  AO Industries, Inc.
  */
@@ -199,8 +198,6 @@ final public class TableHandler {
 
 	private TableHandler() {
 	}
-
-	private static final Logger logger = LogFactory.getLogger(TableHandler.class);
 
 	/**
 	 * The number of rows that will be loaded into each ResultSet for large tables.
@@ -2547,6 +2544,53 @@ final public class TableHandler {
 					+ "  and pk2.pkey=se.package\n"
 					+ "  and se.pkey=ffr.server\n"
 					+ "  and ffr.pkey=fbs.replication",
+					username
+				);
+				break;
+			case FIREWALLD_ZONES :
+				if(masterUser != null) {
+					assert masterServers != null;
+					if(masterServers.length == 0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new FirewalldZone(),
+						"select * from firewalld_zones"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new FirewalldZone(),
+						"select\n"
+						+ "  fz.*\n"
+						+ "from\n"
+						+ "  master_servers ms,\n"
+						+ "  firewalld_zones fz\n"
+						+ "where\n"
+						+ "  ms.username=?\n"
+						+ "  and ms.server=fz.ao_server",
+						username
+					);
+				} else MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new FirewalldZone(),
+					"select\n"
+					+ "  fz.*\n"
+					+ "from\n"
+					+ "  usernames un,\n"
+					+ "  packages pk,\n"
+					+ "  business_servers bs,\n"
+					+ "  firewalld_zones fz\n"
+					+ "where\n"
+					+ "  un.username=?\n"
+					+ "  and un.package=pk.name\n"
+					+ "  and pk.accounting=bs.accounting\n"
+					+ "  and bs.server=fz.ao_server",
 					username
 				);
 				break;
@@ -5211,7 +5255,120 @@ final public class TableHandler {
 					username
 				);
 				break;
+			case NET_BIND_FIREWALLD_ZONES :
+				if(masterUser != null) {
+					assert masterServers != null;
+					if(masterServers.length == 0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new NetBindFirewalldZone(),
+						"select * from net_bind_firewalld_zones"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new NetBindFirewalldZone(),
+						"select\n"
+						+ "  nbfz.*\n"
+						+ "from\n"
+						+ "  master_servers ms,\n"
+						+ "  net_binds nb,\n"
+						+ "  net_bind_firewalld_zones nbfz\n"
+						+ "where\n"
+						+ "  ms.username=?\n"
+						+ "  and ms.server=nb.server\n"
+						+ "  and nb.pkey=nbfz.net_bind",
+						username
+					);
+				} else MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new NetBindFirewalldZone(),
+					"select\n"
+					+ "  nbfz.*\n"
+					+ "from\n"
+					+ "  net_binds nb\n"
+					+ "  inner join net_bind_firewalld_zones nbfz on nb.pkey=nbfz.net_bind\n"
+					+ "where\n"
+					+ "  nb.pkey in (\n"
+					+ "    select\n"
+					+ "      nb2.pkey\n"
+					+ "    from\n"
+					+ "      usernames un1,\n"
+					+ "      packages pk1,\n"
+					+ BU1_PARENTS_JOIN
+					+ "      packages pk2,\n"
+					+ "      net_binds nb2\n"
+					+ "    where\n"
+					+ "      un1.username=?\n"
+					+ "      and un1.package=pk1.name\n"
+					+ "      and (\n"
+					+ PK1_BU1_PARENTS_WHERE
+					+ "      )\n"
+					+ "      and bu1.accounting=pk2.accounting\n"
+					+ "      and pk2.name=nb2.package\n"
+					+ "  )\n"
+					+ "  or nb.pkey in (\n"
+					+ "    select\n"
+					+ "      nb3.pkey\n"
+					+ "    from\n"
+					+ "      usernames un3,\n"
+					+ "      packages pk3,\n"
+					+ BU2_PARENTS_JOIN
+					+ "      packages pk4,\n"
+					+ "      httpd_sites hs,\n"
+					+ "      httpd_site_binds hsb,\n"
+					+ "      net_binds nb3\n"
+					+ "    where\n"
+					+ "      un3.username=?\n"
+					+ "      and un3.package=pk3.name\n"
+					+ "      and (\n"
+					+ PK3_BU2_PARENTS_WHERE
+					+ "      )\n"
+					+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+					+ "      and pk4.name=hs.package\n"
+					+ "      and hs.pkey=hsb.httpd_site\n"
+					+ "      and hsb.httpd_bind=nb3.pkey\n"
+					+ "  ) or nb.pkey in (\n"
+					+ "    select\n"
+					+ "      ms4.net_bind\n"
+					+ "    from\n"
+					+ "      usernames un4,\n"
+					+ "      packages pk4,\n"
+					+ "      business_servers bs4,\n"
+					+ "      mysql_servers ms4\n"
+					+ "    where\n"
+					+ "      un4.username=?\n"
+					+ "      and un4.package=pk4.name\n"
+					+ "      and pk4.accounting=bs4.accounting\n"
+					+ "      and bs4.server=ms4.ao_server\n"
+					+ "  ) or nb.pkey in (\n"
+					+ "    select\n"
+					+ "      ps5.net_bind\n"
+					+ "    from\n"
+					+ "      usernames un5,\n"
+					+ "      packages pk5,\n"
+					+ "      business_servers bs5,\n"
+					+ "      postgres_servers ps5\n"
+					+ "    where\n"
+					+ "      un5.username=?\n"
+					+ "      and un5.package=pk5.name\n"
+					+ "      and pk5.accounting=bs5.accounting\n"
+					+ "      and bs5.server=ps5.ao_server\n"
+					+ "  )",
+					username,
+					username,
+					username,
+					username
+				);
+				break;
 			case NET_BINDS :
+				// TODO: Only to inner joins for open_firewall for clients 1.80.2 and older?
 				if(masterUser!=null) {
 					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(
@@ -5220,7 +5377,21 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new NetBind(),
-						"select * from net_binds"
+						"select\n"
+						+ "  nb.*,\n"
+						+ "  (\n"
+						+ "    select\n"
+						+ "      nbfz.pkey\n"
+						+ "    from\n"
+						+ "      net_bind_firewalld_zones nbfz\n"
+						+ "      inner join firewalld_zones fz on nbfz.firewalld_zone=fz.pkey\n"
+						+ "    where\n"
+						+ "      nb.pkey=nbfz.net_bind\n"
+						+ "      and fz.\"name\"=?\n"
+						+ "  ) is not null as open_firewall\n"
+						+ "from\n"
+						+ "  net_binds nb",
+						FirewalldZone.PUBLIC
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5235,9 +5406,18 @@ final public class TableHandler {
 						+ "  nb.port,\n"
 						+ "  nb.net_protocol,\n"
 						+ "  nb.app_protocol,\n"
-						+ "  nb.open_firewall,\n"
 						+ "  nb.monitoring_enabled,\n"
-						+ "  case when nb.monitoring_parameters is null then null::text else '"+AOServProtocol.FILTERED+"'::text end as monitoring_parameters\n"
+						+ "  case when nb.monitoring_parameters is null then null::text else '"+AOServProtocol.FILTERED+"'::text end as monitoring_parameters,\n"
+						+ "  (\n"
+						+ "    select\n"
+						+ "      nbfz.pkey\n"
+						+ "    from\n"
+						+ "      net_bind_firewalld_zones nbfz\n"
+						+ "      inner join firewalld_zones fz on nbfz.firewalld_zone=fz.pkey\n"
+						+ "    where\n"
+						+ "      nb.pkey=nbfz.net_bind\n"
+						+ "      and fz.\"name\"=?\n"
+						+ "  ) is not null as open_firewall\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  servers se,\n"
@@ -5263,6 +5443,7 @@ final public class TableHandler {
 						+ "      limit 1\n"
 						+ "    ) is not null\n"
 						+ "  )",
+						FirewalldZone.PUBLIC,
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -5279,9 +5460,18 @@ final public class TableHandler {
 					+ "  nb.port,\n"
 					+ "  nb.net_protocol,\n"
 					+ "  nb.app_protocol,\n"
-					+ "  nb.open_firewall,\n"
 					+ "  nb.monitoring_enabled,\n"
-					+ "  case when nb.monitoring_parameters is null then null::text else '"+AOServProtocol.FILTERED+"'::text end as monitoring_parameters\n"
+					+ "  case when nb.monitoring_parameters is null then null::text else '"+AOServProtocol.FILTERED+"'::text end as monitoring_parameters,\n"
+					+ "  (\n"
+					+ "    select\n"
+					+ "      nbfz.pkey\n"
+					+ "    from\n"
+					+ "      net_bind_firewalld_zones nbfz\n"
+					+ "      inner join firewalld_zones fz on nbfz.firewalld_zone=fz.pkey\n"
+					+ "    where\n"
+					+ "      nb.pkey=nbfz.net_bind\n"
+					+ "      and fz.\"name\"=?\n"
+					+ "  ) is not null as open_firewall\n"
 					+ "from\n"
 					+ "  net_binds nb\n"
 					+ "where\n"
@@ -5373,6 +5563,7 @@ final public class TableHandler {
 					+ "        or nb6.app_protocol='"+Protocol.AOSERV_DAEMON_SSL+"'\n"
 					+ "      )\n"*/
 					+ "  )",
+					FirewalldZone.PUBLIC,
 					username,
 					username,
 					username,
@@ -5439,7 +5630,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new NetDevice(),
-					"select distinct\n"
+					"select\n" // distinct
 					+ "  nd.*\n"
 					+ "from\n"
 					+ "  usernames un,\n"
@@ -5456,6 +5647,7 @@ final public class TableHandler {
 					+ "  and pk.accounting=bs.accounting\n"
 					+ "  and (\n"
 					+ "    bs.server=nd.server\n"
+					// Need distinct above when using this or
 					//+ "    or (bp.ao_server=nd.ao_server and nd.device_id=bpao.daemon_device_id)\n"
 					+ "  )",
 					username

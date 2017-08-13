@@ -5,18 +5,23 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.AOServProtocol;
+import com.aoindustries.aoserv.client.FirewalldZone;
 import com.aoindustries.aoserv.client.HttpdWorker;
 import com.aoindustries.aoserv.client.IPAddress;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.FirewalldZoneName;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * The <code>NetBindHandler</code> handles all the accesses to the <code>net_binds</code> table.
@@ -31,7 +36,7 @@ final public class NetBindHandler {
 	/**
 	 * This lock is used to avoid a race condition between check and insert when allocating net_binds.
 	 */
-	private static final Object netBindLock=new Object();
+	private static final Object netBindLock = new Object();
 
 	public static int addNetBind(
 		DatabaseConnection conn,
@@ -42,8 +47,8 @@ final public class NetBindHandler {
 		int ipAddress,
 		Port port,
 		String appProtocol,
-		boolean openFirewall,
-		boolean monitoringEnabled
+		boolean monitoringEnabled,
+		Set<FirewalldZoneName> firewalldZones
 	) throws IOException, SQLException {
 		if(
 			conn.executeBooleanQuery("select (select protocol from protocols where protocol=?) is null", appProtocol)
@@ -71,39 +76,31 @@ final public class NetBindHandler {
 		IPAddressHandler.checkAccessIPAddress(conn, source, "addNetBind", ipAddress);
 		InetAddress inetAddress = IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress);
 
-		// Now allocating unique to entire system for server portability between farms
-		//String farm=ServerHandler.getFarmForServer(conn, aoServer);
-
 		int pkey;
 		synchronized(netBindLock) {
 			if(inetAddress.isUnspecified()) {
-				// Wildcard must be unique to AOServ Platform, with the port completely free
+				// Wildcard must be unique per server
 				if(
 					conn.executeBooleanQuery(
 						"select\n"
 						+ "  (\n"
 						+ "    select\n"
-						+ "      nb.pkey\n"
+						+ "      pkey\n"
 						+ "    from\n"
-						+ "      net_binds nb,\n"
-						+ "      servers se\n"
-						+ "      left outer join ao_servers ao on se.pkey=ao.server\n"
+						+ "      net_binds\n"
 						+ "    where\n"
-						+ "      nb.server=se.pkey\n"
-						//+ "      and se.farm=?\n"
-						+ "      and nb.port=?\n"
-						+ "      and nb.net_protocol=?\n"
-						+ "      and (se.pkey=? or ao.server is not null)\n" // Per-server unique for unmanaged, per-AOServ unique for managed
+						+ "      server=?\n"
+						+ "      and port=?\n"
+						+ "      and net_protocol=?\n"
 						+ "    limit 1\n"
 						+ "  ) is not null",
-						//farm,
+						server,
 						port.getPort(),
-						port.getProtocol().name().toLowerCase(Locale.ROOT),
-						server
+						port.getProtocol().name().toLowerCase(Locale.ROOT)
 					)
 				) throw new SQLException("NetBind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
 			} else if(inetAddress.isLoopback()) {
-				// Loopback must be unique to AOServ Platform and not have wildcard
+				// Loopback must be unique per server and not have wildcard
 				if(
 					conn.executeBooleanQuery(
 						"select\n"
@@ -111,30 +108,24 @@ final public class NetBindHandler {
 						+ "    select\n"
 						+ "      nb.pkey\n"
 						+ "    from\n"
-						+ "      net_binds nb,\n"
-						+ "      servers se\n"
-						+ "      left outer join ao_servers ao on se.pkey=ao.server,\n"
-						+ "      ip_addresses ia\n"
+						+ "      net_binds nb\n"
+						+ "      inner join ip_addresses ia on nb.ip_address=ia.pkey\n"
 						+ "    where\n"
-						+ "      nb.server=se.pkey\n"
-						//+ "      and se.farm=?\n"
-						+ "      and nb.ip_address=ia.pkey\n"
-						+ "      and (\n"
-						+ "        ia.ip_address='"+IPAddress.WILDCARD_IP+"'\n"
-						+ "        or ia.ip_address='"+IPAddress.LOOPBACK_IP+"'\n"
-						+ "      ) and nb.port=?\n"
+						+ "      nb.server=?\n"
+						+ "      and ia.ip_address in (?,?)\n"
+						+ "      and nb.port=?\n"
 						+ "      and nb.net_protocol=?\n"
-						+ "      and (se.pkey=? or ao.server is not null)\n" // Per-server unique for unmanaged, per-AOServ unique for managed
 						+ "    limit 1\n"
 						+ "  ) is not null",
-						//farm,
+						server,
+						IPAddress.WILDCARD_IP,
+						IPAddress.LOOPBACK_IP,
 						port.getPort(),
-						port.getProtocol().name().toLowerCase(Locale.ROOT),
-						server
+						port.getProtocol().name().toLowerCase(Locale.ROOT)
 					)
 				) throw new SQLException("NetBind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
 			} else {
-				// Make sure that this port is not already allocated within the system on this IP or the wildcard
+				// Make sure that this port is not already allocated within the server on this IP or the wildcard
 				if(
 					conn.executeBooleanQuery(
 						"select\n"
@@ -142,27 +133,23 @@ final public class NetBindHandler {
 						+ "    select\n"
 						+ "      nb.pkey\n"
 						+ "    from\n"
-						+ "      net_binds nb,\n"
-						+ "      servers se\n"
-						+ "      left outer join ao_servers ao on se.pkey=ao.server,\n"
-						+ "      ip_addresses ia\n"
+						+ "      net_binds nb\n"
+						+ "      inner join ip_addresses ia on nb.ip_address=ia.pkey\n"
 						+ "    where\n"
-						+ "      nb.server=se.pkey\n"
-						//+ "      and se.farm=?\n"
-						+ "      and nb.ip_address=ia.pkey\n"
+						+ "      nb.server=?\n"
 						+ "      and (\n"
-						+ "        ia.ip_address='"+IPAddress.WILDCARD_IP+"'\n"
+						+ "        ia.ip_address=?\n"
 						+ "        or nb.ip_address=?\n"
-						+ "      ) and nb.port=?\n"
+						+ "      )\n"
+						+ "      and nb.port=?\n"
 						+ "      and nb.net_protocol=?\n"
-						+ "      and (se.pkey=? or ao.server is not null)\n" // Per-server unique for unmanaged, per-AOServ unique for managed
 						+ "    limit 1\n"
 						+ "  ) is not null",
-						//farm,
+						server,
+						IPAddress.WILDCARD_IP,
 						ipAddress,
 						port.getPort(),
-						port.getProtocol().name().toLowerCase(Locale.ROOT),
-						server
+						port.getProtocol().name().toLowerCase(Locale.ROOT)
 					)
 				) throw new SQLException("NetBind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
 			}
@@ -180,7 +167,6 @@ final public class NetBindHandler {
 				+ "  ?,\n"
 				+ "  ?,\n"
 				+ "  ?,\n"
-				+ "  ?,\n"
 				+ "  ?\n"
 				+ ")",
 				pkey,
@@ -190,24 +176,40 @@ final public class NetBindHandler {
 				port.getPort(),
 				port.getProtocol().name().toLowerCase(Locale.ROOT),
 				appProtocol,
-				openFirewall,
 				monitoringEnabled
 			);
 		}
-
+		AccountingCode business = PackageHandler.getBusinessForPackage(conn, packageName);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.NET_BINDS,
-			PackageHandler.getBusinessForPackage(conn, packageName),
+			business,
 			server,
 			false
 		);
+		if(!firewalldZones.isEmpty()) {
+			for(FirewalldZoneName firewalldZone : firewalldZones) {
+				conn.executeUpdate(
+					"insert into net_bind_firewalld_zones (net_bind, firewalld_zone) values (\n"
+					+ "  ?,\n"
+					+ "  (select pkey from firewalld_zones where ao_server=? and \"name\"=?)\n"
+					+ ")",
+					pkey,
+					server,
+					firewalldZone
+				);
+			}
+			invalidateList.addTable(
+				conn,
+				SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+				business,
+				server,
+				false
+			);
+		}
 		return pkey;
 	}
 
-	/**
-	 * Now allocating unique to entire system for server portability between farms
-	 */
 	public static int allocateNetBind(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
@@ -218,7 +220,6 @@ final public class NetBindHandler {
 		AccountingCode pack,
 		int minimumPort
 	) throws IOException, SQLException {
-		//String farm=ServerHandler.getFarmForServer(conn, aoServer);
 		InetAddress inetAddress = IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress);
 		int pkey;
 		synchronized(netBindLock) {
@@ -239,18 +240,15 @@ final public class NetBindHandler {
 					+ "      net_ports np\n"
 					+ "    where\n"
 					+ "      np.is_user\n"
-					+ "      and np.port!="+HttpdWorker.ERROR_CAUSING_PORT+"\n"
-					+ "      and np.port>=?\n"
+					+ "      and np.port != ?\n"
+					+ "      and np.port >= ?\n"
 					+ "      and (\n"
 					+ "        select\n"
 					+ "          nb.pkey\n"
 					+ "        from\n"
-					+ "          net_binds nb,\n"
-					+ "          servers se\n"
+					+ "          net_binds nb\n"
 					+ "        where\n"
-					+ "          nb.server=se.pkey\n"
-					// Now allocating unique to entire system for server portability between farms
-					//+ "          and se.farm=?\n"
+					+ "          nb.server=?\n"
 					+ "          and np.port=nb.port\n"
 					+ "          and nb.net_protocol=?\n"
 					+ "        limit 1\n"
@@ -261,7 +259,6 @@ final public class NetBindHandler {
 					+ "  ),\n"
 					+ "  ?,\n"
 					+ "  ?,\n"
-					+ "  false,\n"
 					+ "  true,\n"
 					+ "  ''\n"
 					+ ")",
@@ -269,8 +266,9 @@ final public class NetBindHandler {
 					pack,
 					server,
 					ipAddress,
+					HttpdWorker.ERROR_CAUSING_PORT,
 					minimumPort,
-					//farm,
+					server,
 					netProtocol.name().toLowerCase(Locale.ROOT),
 					netProtocol.name().toLowerCase(Locale.ROOT),
 					appProtocol
@@ -291,24 +289,21 @@ final public class NetBindHandler {
 					+ "      net_ports np\n"
 					+ "    where\n"
 					+ "      np.is_user\n"
-					+ "      and np.port!="+HttpdWorker.ERROR_CAUSING_PORT+"\n"
-					+ "      and np.port>=?\n"
+					+ "      and np.port != ?\n"
+					+ "      and np.port >= ?\n"
 					+ "      and (\n"
 					+ "        select\n"
 					+ "          nb.pkey\n"
 					+ "        from\n"
-					+ "          net_binds nb,\n"
-					+ "          servers se,\n"
-					+ "          ip_addresses ia\n"
+					+ "          net_binds nb\n"
+					+ "          inner join ip_addresses ia on nb.ip_address=ia.pkey\n"
 					+ "        where\n"
-					+ "          nb.server=se.pkey\n"
-					// Now allocating unique to entire system for server portability between farms
-					//+ "          and se.farm=?\n"
-					+ "          and nb.ip_address=ia.pkey\n"
-					+ "          and (\n"
-					+ "            ia.ip_address=(select ip_address from ip_addresses where pkey=?)\n"
-					+ "            or ia.ip_address='"+IPAddress.WILDCARD_IP+"'\n"
-					+ "          )  and np.port=nb.port\n"
+					+ "          nb.server=?\n"
+					+ "          and ia.ip_address in (\n"
+					+ "            (select ip_address from ip_addresses where pkey=?),\n"
+					+ "            ?\n"
+					+ "          )\n"
+					+ "          and np.port=nb.port\n"
 					+ "          and nb.net_protocol=?\n"
 					+ "        limit 1\n"
 					+ "      ) is null\n"
@@ -326,9 +321,11 @@ final public class NetBindHandler {
 					pack,
 					server,
 					ipAddress,
+					HttpdWorker.ERROR_CAUSING_PORT,
 					minimumPort,
-					//farm,
+					server,
 					ipAddress,
+					IPAddress.WILDCARD_IP,
 					netProtocol.name().toLowerCase(Locale.ROOT),
 					netProtocol.name().toLowerCase(Locale.ROOT),
 					appProtocol
@@ -464,6 +461,97 @@ final public class NetBindHandler {
 			server,
 			false
 		);
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+			business,
+			server,
+			false
+		);
+	}
+
+	public static void setNetBindFirewalldZones(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		Set<FirewalldZoneName> firewalldZones
+	) throws IOException, SQLException {
+		PackageHandler.checkAccessPackage(conn, source, "setNetBindFirewalldZones", getPackageForNetBind(conn, pkey));
+
+		boolean updated = false;
+		int server = getServerForNetBind(conn, pkey);
+		if(firewalldZones.isEmpty()) {
+			if(conn.executeUpdate("delete from net_bind_firewalld_zones where net_bind=?", pkey) != 0) {
+				updated = true;
+			}
+		} else {
+			// Find the set that exists
+			Set<FirewalldZoneName> existing = conn.executeObjectCollectionQuery(
+				new HashSet<>(),
+				ObjectFactories.firewalldZoneNameFactory,
+				"select\n"
+				+ "  fz.\"name\"\n"
+				+ "from\n"
+				+ "  net_bind_firewalld_zones nbfz\n"
+				+ "  inner join firewalld_zones fz on nbfz.firewalld_zone=fz.pkey\n"
+				+ "where\n"
+				+ "  nbfz.net_bind=?",
+				pkey
+			);
+			// Delete extra
+			for(FirewalldZoneName name : existing) {
+				if(!firewalldZones.contains(name)) {
+					conn.executeUpdate(
+						"delete from net_bind_firewalld_zones where pkey=(\n"
+						+ "  select\n"
+						+ "    nbfz.pkey\n"
+						+ "  from\n"
+						+ "    net_bind_firewalld_zones nbfz\n"
+						+ "    inner join firewalld_zones fz on nbfz.firewalld_zone=fz.pkey\n"
+						+ "  where\n"
+						+ "    nbfz.net_bind=?\n"
+						+ "    and fz.\"name\"=?\n"
+						+ ")",
+						pkey,
+						name
+					);
+					updated = true;
+				}
+			}
+			// Add new
+			for(FirewalldZoneName name : firewalldZones) {
+				if(!existing.contains(name)) {
+					conn.executeUpdate(
+						"insert into net_bind_firewalld_zones (net_bind, firewalld_zone) values (\n"
+						+ "  ?,\n"
+						+ "  (select pkey from firewalld_zones where ao_server=? and \"name\"=?)\n"
+						+ ")",
+						pkey,
+						server,
+						name
+					);
+					updated = true;
+				}
+			}
+		}
+		if(updated) {
+			AccountingCode business = getBusinessForNetBind(conn, pkey);
+			invalidateList.addTable(
+				conn,
+				SchemaTable.TableID.NET_BINDS,
+				business,
+				server,
+				false
+			);
+			invalidateList.addTable(
+				conn,
+				SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+				business,
+				server,
+				false
+			);
+		}
 	}
 
 	public static void setNetBindMonitoringEnabled(
@@ -486,6 +574,10 @@ final public class NetBindHandler {
 		);
 	}
 
+	/**
+	 * This exists for compatibility with older clients (versions &lt;= 1.80.2) only.
+	 * This has been implemented by adding and removing the public zone from the net_bind.
+	 */
 	public static void setNetBindOpenFirewall(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -493,16 +585,71 @@ final public class NetBindHandler {
 		int pkey,
 		boolean open_firewall
 	) throws IOException, SQLException {
+		AOServProtocol.Version clientVersion = source.getProtocolVersion();
+		if(clientVersion.compareTo(AOServProtocol.Version.VERSION_1_80_2) > 0) {
+			throw new IOException("This compatibility method only remains for clients version <= 1.80.2: Client is version " + clientVersion);
+		}
+
 		PackageHandler.checkAccessPackage(conn, source, "setNetBindOpenFirewall", getPackageForNetBind(conn, pkey));
 
-		conn.executeUpdate("update net_binds set open_firewall=? where pkey=?", open_firewall, pkey);
-
-		invalidateList.addTable(
-			conn,
-			SchemaTable.TableID.NET_BINDS,
-			getBusinessForNetBind(conn, pkey),
-			getServerForNetBind(conn, pkey),
-			false
-		);
+		int server = getServerForNetBind(conn, pkey);
+		if(open_firewall) {
+			// Add the public zone if missing
+			int fz = conn.executeIntQuery("select pkey from firewalld_zones where ao_server=? and \"name\"=?", server, FirewalldZone.PUBLIC);
+			boolean updated;
+			synchronized(netBindLock) {
+				if(
+					conn.executeBooleanQuery("select (select pkey from net_bind_firewalld_zones where net_bind=? and firewalld_zone=?) is null", pkey, fz)
+				) {
+					conn.executeUpdate("insert into net_bind_firewalld_zones (net_bind, firewalld_zone) values (?,?)", pkey, fz);
+					updated = true;
+				} else {
+					updated = false;
+				}
+			}
+			if(updated) {
+				AccountingCode business = getBusinessForNetBind(conn, pkey);
+				invalidateList.addTable(
+					conn,
+					SchemaTable.TableID.NET_BINDS,
+					business,
+					server,
+					false
+				);
+				invalidateList.addTable(
+					conn,
+					SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+					business,
+					server,
+					false
+				);
+			}
+		} else {
+			// Remove the public zone if present
+			if(
+				conn.executeUpdate(
+					"delete from net_bind_firewalld_zones where net_bind=? and firewalld_zone=(select pkey from firewalld_zones where ao_server=? and \"name\"=?)",
+					pkey,
+					server,
+					FirewalldZone.PUBLIC
+				) != 0
+			) {
+				AccountingCode business = getBusinessForNetBind(conn, pkey);
+				invalidateList.addTable(
+					conn,
+					SchemaTable.TableID.NET_BINDS,
+					business,
+					server,
+					false
+				);
+				invalidateList.addTable(
+					conn,
+					SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+					business,
+					server,
+					false
+				);
+			}
+		}
 	}
 }
