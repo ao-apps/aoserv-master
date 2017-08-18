@@ -2418,7 +2418,7 @@ final public class HttpdHandler {
 			conn.executeUpdate(
 				"insert into net_bind_firewalld_zones (net_bind, firewalld_zone) values (\n"
 				+ "  ?,\n"
-				+ "  (select pkey from firewalld_zones where ao_server=? and \"name\"=?)\n"
+				+ "  (select pkey from firewalld_zones where server=? and \"name\"=?)\n"
 				+ ")",
 				netBind,
 				aoServer,

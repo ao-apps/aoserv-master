@@ -2570,7 +2570,7 @@ final public class TableHandler {
 						+ "  firewalld_zones fz\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
-						+ "  and ms.server=fz.ao_server",
+						+ "  and ms.server=fz.server",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -2590,7 +2590,7 @@ final public class TableHandler {
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
 					+ "  and pk.accounting=bs.accounting\n"
-					+ "  and bs.server=fz.ao_server",
+					+ "  and bs.server=fz.server",
 					username
 				);
 				break;
