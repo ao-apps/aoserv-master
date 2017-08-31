@@ -175,6 +175,7 @@ final public class InvalidateList {
                     break;
                 case HTTPD_SITE_BINDS :
                     addTable(conn, SchemaTable.TableID.HTTPD_BINDS, businesses, servers, true);
+                    addTable(conn, SchemaTable.TableID.HTTPD_SITE_BIND_REDIRECTS, businesses, servers, false);
                     break;
                 case LINUX_ACCOUNTS :
                     addTable(conn, SchemaTable.TableID.FTP_GUEST_USERS, businesses, servers, true);

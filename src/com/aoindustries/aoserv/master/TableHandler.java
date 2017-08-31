@@ -73,6 +73,7 @@ import com.aoindustries.aoserv.client.HttpdSharedTomcat;
 import com.aoindustries.aoserv.client.HttpdSite;
 import com.aoindustries.aoserv.client.HttpdSiteAuthenticatedLocation;
 import com.aoindustries.aoserv.client.HttpdSiteBind;
+import com.aoindustries.aoserv.client.HttpdSiteBindRedirect;
 import com.aoindustries.aoserv.client.HttpdSiteURL;
 import com.aoindustries.aoserv.client.HttpdStaticSite;
 import com.aoindustries.aoserv.client.HttpdTomcatContext;
@@ -2966,6 +2967,65 @@ final public class TableHandler {
 					+ "  and bu1.accounting=pk2.accounting\n"
 					+ "  and pk2.name=hs.package\n"
 					+ "  and hs.pkey=hsal.httpd_site",
+					username
+				);
+				break;
+			case HTTPD_SITE_BIND_REDIRECTS :
+				if(masterUser!=null) {
+					assert masterServers != null;
+					if(masterServers.length==0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new HttpdSiteBindRedirect(),
+						"select * from httpd_site_bind_redirects"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new HttpdSiteBindRedirect(),
+						"select\n"
+						+ "  hsbr.*\n"
+						+ "from\n"
+						+ "  master_servers ms,\n"
+						+ "  httpd_sites hs,\n"
+						+ "  httpd_site_binds hsb,\n"
+						+ "  httpd_site_bind_redirects hsbr\n"
+						+ "where\n"
+						+ "  ms.username=?\n"
+						+ "  and ms.server=hs.ao_server\n"
+						+ "  and hs.pkey=hsb.httpd_site\n"
+						+ "  and hsb.pkey=hsbr.httpd_site_bind",
+						username
+					);
+				} else MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new HttpdSiteBindRedirect(),
+					"select\n"
+					+ "  hsbr.*\n"
+					+ "from\n"
+					+ "  usernames un,\n"
+					+ "  packages pk1,\n"
+					+ BU1_PARENTS_JOIN
+					+ "  packages pk2,\n"
+					+ "  httpd_sites hs,\n"
+					+ "  httpd_site_binds hsb,\n"
+					+ "  httpd_site_bind_redirects hsbr\n"
+					+ "where\n"
+					+ "  un.username=?\n"
+					+ "  and un.package=pk1.name\n"
+					+ "  and (\n"
+					+ PK1_BU1_PARENTS_WHERE
+					+ "  )\n"
+					+ "  and bu1.accounting=pk2.accounting\n"
+					+ "  and pk2.name=hs.package\n"
+					+ "  and hs.pkey=hsb.httpd_site\n"
+					+ "  and hsb.pkey=hsbr.httpd_site_bind",
 					username
 				);
 				break;
