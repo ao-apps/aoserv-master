@@ -195,6 +195,7 @@ final public class MySQLHandler {
 		boolean canDelete,
 		boolean canCreate,
 		boolean canDrop,
+		boolean canReference,
 		boolean canIndex,
 		boolean canAlter,
 		boolean canCreateTempTable,
@@ -220,7 +221,7 @@ final public class MySQLHandler {
 		// Add the entry to the database
 		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_db_users_pkey_seq')");
 		conn.executeUpdate(
-			"insert into mysql_db_users values(?,?,?,?,?,?,?,?,?,false,false,?,?,?,?,?,?,?,?,?,?,?)",
+			"insert into mysql_db_users values(?,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?,?,?,?,?,?)",
 			pkey,
 			mysql_database,
 			mysql_server_user,
@@ -230,6 +231,7 @@ final public class MySQLHandler {
 			canDelete,
 			canCreate,
 			canDrop,
+			canReference,
 			canIndex,
 			canAlter,
 			canCreateTempTable,

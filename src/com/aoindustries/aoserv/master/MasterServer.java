@@ -2290,6 +2290,13 @@ public abstract class MasterServer {
 													boolean canDelete=in.readBoolean();
 													boolean canCreate=in.readBoolean();
 													boolean canDrop=in.readBoolean();
+													boolean canReference;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_2) >= 0) {
+														canReference = in.readBoolean();
+													} else {
+														// Default to copying drop_priv for older clients
+														canReference = canDrop;
+													}
 													boolean canIndex=in.readBoolean();
 													boolean canAlter=in.readBoolean();
 													boolean canCreateTempTable;
@@ -2340,6 +2347,7 @@ public abstract class MasterServer {
 														canDelete,
 														canCreate,
 														canDrop,
+														canReference,
 														canIndex,
 														canAlter,
 														canCreateTempTable,
@@ -2364,6 +2372,7 @@ public abstract class MasterServer {
 														canDelete,
 														canCreate,
 														canDrop,
+														canReference,
 														canIndex,
 														canAlter,
 														canCreateTempTable,
