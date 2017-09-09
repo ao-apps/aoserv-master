@@ -13,6 +13,7 @@ import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.DNSRecord;
 import com.aoindustries.aoserv.client.DNSZoneTable;
 import com.aoindustries.aoserv.client.FirewalldZone;
+import com.aoindustries.aoserv.client.HttpdTomcatContext;
 import com.aoindustries.aoserv.client.InboxAttributes;
 import com.aoindustries.aoserv.client.IpReputationSet.AddReputation;
 import com.aoindustries.aoserv.client.IpReputationSet.ConfidenceType;
@@ -1746,6 +1747,12 @@ public abstract class MasterServer {
 													String wrapperClass = in.readNullUTF();
 													int debug = in.readCompressedInt();
 													UnixPath workDir = UnixPath.valueOf(in.readNullUTF());
+													boolean serverXmlConfigured;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_2) <= 0) {
+														serverXmlConfigured = HttpdTomcatContext.DEFAULT_SERVER_XML_CONFIGURED;
+													} else {
+														serverXmlConfigured = in.readBoolean();
+													}
 													process.setCommand(
 														AOSHCommand.ADD_HTTPD_TOMCAT_CONTEXT,
 														tomcat_site,
@@ -1760,7 +1767,8 @@ public abstract class MasterServer {
 														useNaming,
 														wrapperClass,
 														debug,
-														workDir
+														workDir,
+														serverXmlConfigured
 													);
 													int pkey = HttpdHandler.addHttpdTomcatContext(
 														conn,
@@ -1778,7 +1786,8 @@ public abstract class MasterServer {
 														useNaming,
 														wrapperClass,
 														debug,
-														workDir
+														workDir,
+														serverXmlConfigured
 													);
 													resp = Response.valueOf(
 														AOServProtocol.DONE,
@@ -2461,7 +2470,7 @@ public abstract class MasterServer {
 															numZones = 0;
 															firewalldZones = Collections.emptySet();
 														}
-														if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_103)<=0) {
+														if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_103) <= 0) {
 															monitoringEnabled = in.readCompressedInt() != -1;
 															in.readNullUTF();
 															in.readNullUTF();
@@ -7499,6 +7508,12 @@ public abstract class MasterServer {
 											String wrapperClass = in.readNullUTF();
 											int debug = in.readCompressedInt();
 											UnixPath workDir = UnixPath.valueOf(in.readNullUTF());
+											boolean serverXmlConfigured;
+											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_2) <= 0) {
+												serverXmlConfigured = HttpdTomcatContext.DEFAULT_SERVER_XML_CONFIGURED;
+											} else {
+												serverXmlConfigured = in.readBoolean();
+											}
 											process.setCommand(
 												AOSHCommand.SET_HTTPD_TOMCAT_CONTEXT_ATTRIBUTES,
 												pkey,
@@ -7513,7 +7528,8 @@ public abstract class MasterServer {
 												useNaming,
 												wrapperClass,
 												debug,
-												workDir
+												workDir,
+												serverXmlConfigured
 											);
 											HttpdHandler.setHttpdTomcatContextAttributes(
 												conn,
@@ -7531,7 +7547,8 @@ public abstract class MasterServer {
 												useNaming,
 												wrapperClass,
 												debug,
-												workDir
+												workDir,
+												serverXmlConfigured
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;

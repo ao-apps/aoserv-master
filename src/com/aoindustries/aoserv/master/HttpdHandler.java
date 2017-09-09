@@ -344,7 +344,8 @@ final public class HttpdHandler {
 		boolean useNaming,
 		String wrapperClass,
 		int debug,
-		UnixPath workDir
+		UnixPath workDir,
+		boolean serverXmlConfigured
 	) throws IOException, SQLException {
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatContext", tomcat_site);
 		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add HttpdTomcatContext, HttpdSite disabled: "+tomcat_site);
@@ -359,7 +360,8 @@ final public class HttpdHandler {
 			path,
 			privileged,
 			wrapperClass,
-			workDir
+			workDir,
+			serverXmlConfigured
 		);
 
 		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
@@ -367,6 +369,7 @@ final public class HttpdHandler {
 			"insert into\n"
 			+ "  httpd_tomcat_contexts\n"
 			+ "values (\n"
+			+ "  ?,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
@@ -398,6 +401,7 @@ final public class HttpdHandler {
 				pstmt.setString(12, wrapperClass);
 				pstmt.setInt(13, debug);
 				pstmt.setString(14, ObjectUtils.toString(workDir));
+				pstmt.setBoolean(15, serverXmlConfigured);
 
 				pstmt.executeUpdate();
 			} catch(SQLException err) {
@@ -550,7 +554,8 @@ final public class HttpdHandler {
 		String path,
 		boolean privileged,
 		String wrapperClass,
-		UnixPath workDir
+		UnixPath workDir,
+		boolean serverXmlConfigured
 	) throws IOException, SQLException {
 		boolean isSecure=conn.executeBooleanQuery(
 			"select\n"
@@ -3641,7 +3646,8 @@ final public class HttpdHandler {
 		boolean useNaming,
 		String wrapperClass,
 		int debug,
-		UnixPath workDir
+		UnixPath workDir,
+		boolean serverXmlConfigured
 	) throws IOException, SQLException {
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "setHttpdTomcatContextAttributes", tomcat_site);
@@ -3657,7 +3663,8 @@ final public class HttpdHandler {
 			path,
 			privileged,
 			wrapperClass,
-			workDir
+			workDir,
+			serverXmlConfigured
 		);
 		String oldPath=conn.executeStringQuery("select path from httpd_tomcat_contexts where pkey=?", pkey);
 		if(oldPath.length()==0 && path.length()>0) throw new SQLException("Not allowed to change the path of the default context: "+path);
@@ -3677,7 +3684,8 @@ final public class HttpdHandler {
 			+ "  use_naming=?,\n"
 			+ "  wrapper_class=?,\n"
 			+ "  debug=?,\n"
-			+ "  work_dir=?\n"
+			+ "  work_dir=?,\n"
+			+ "  server_xml_configured=?\n"
 			+ "where\n"
 			+ "  pkey=?"
 		)) {
@@ -3694,7 +3702,8 @@ final public class HttpdHandler {
 				pstmt.setString(10, wrapperClass);
 				pstmt.setInt(11, debug);
 				pstmt.setString(12, ObjectUtils.toString(workDir));
-				pstmt.setInt(13, pkey);
+				pstmt.setBoolean(13, serverXmlConfigured);
+				pstmt.setInt(14, pkey);
 
 				pstmt.executeUpdate();
 			} catch(SQLException err) {
