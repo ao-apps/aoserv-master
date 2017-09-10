@@ -999,7 +999,8 @@ final public class HttpdHandler {
 			+ "  "+HttpdTomcatContext.DEFAULT_USE_NAMING+",\n"
 			+ "  "+HttpdTomcatContext.DEFAULT_WRAPPER_CLASS+",\n"
 			+ "  "+HttpdTomcatContext.DEFAULT_DEBUG+",\n"
-			+ "  "+HttpdTomcatContext.DEFAULT_WORK_DIR+"\n"
+			+ "  "+HttpdTomcatContext.DEFAULT_WORK_DIR+",\n"
+			+ "  "+HttpdTomcatContext.DEFAULT_SERVER_XML_CONFIGURED+"\n"
 			+ ")",
 			htcPKey,
 			httpdSitePKey,
@@ -1026,7 +1027,8 @@ final public class HttpdHandler {
 				+ "  "+HttpdTomcatContext.DEFAULT_USE_NAMING+",\n"
 				+ "  "+HttpdTomcatContext.DEFAULT_WRAPPER_CLASS+",\n"
 				+ "  "+HttpdTomcatContext.DEFAULT_DEBUG+",\n"
-				+ "  "+HttpdTomcatContext.DEFAULT_WORK_DIR+"\n"
+				+ "  "+HttpdTomcatContext.DEFAULT_WORK_DIR+",\n"
+				+ "  "+HttpdTomcatContext.DEFAULT_SERVER_XML_CONFIGURED+"\n"
 				+ ")",
 				htcPKey,
 				httpdSitePKey,
