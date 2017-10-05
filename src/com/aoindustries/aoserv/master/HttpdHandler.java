@@ -1167,10 +1167,10 @@ final public class HttpdHandler {
 		}
 
 		// Create the HTTP HttpdSiteBind
-		int httpSiteBindPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_binds_pkey_seq')");
+		int httpSiteBindPKey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_binds_pkey_seq')");
 		String siteLogsDir = OperatingSystemVersion.getHttpdSiteLogsDirectory(osv).toString();
 		conn.executeUpdate(
-			"insert into httpd_site_binds values(?,?,?,?,?,null,null,null,null,false,true)",
+			"insert into httpd_site_binds (pkey, httpd_site, httpd_bind, access_log, error_log) values(?,?,?,?,?)",
 			httpSiteBindPKey,
 			httpdSitePKey,
 			httpNetBind,
