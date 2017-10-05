@@ -22,6 +22,7 @@ import com.aoindustries.aoserv.client.validator.GroupId;
 import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.net.DomainName;
@@ -556,7 +557,7 @@ final public class EmailHandler {
 				packageName,
 				host,
 				type,
-				duration==-1?(Timestamp)null:new Timestamp(System.currentTimeMillis()+duration)
+				duration == -1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(System.currentTimeMillis() + duration)
 			);
 		} else {
 			conn.executeUpdate(
@@ -566,7 +567,7 @@ final public class EmailHandler {
 				aoServer,
 				host,
 				type,
-				duration==-1?(Timestamp)null:new Timestamp(System.currentTimeMillis()+duration)
+				duration == -1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(System.currentTimeMillis() + duration)
 			);
 		}
 
