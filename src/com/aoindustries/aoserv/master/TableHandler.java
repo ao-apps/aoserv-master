@@ -81,6 +81,7 @@ import com.aoindustries.aoserv.client.HttpdTomcatDataSource;
 import com.aoindustries.aoserv.client.HttpdTomcatParameter;
 import com.aoindustries.aoserv.client.HttpdTomcatSharedSite;
 import com.aoindustries.aoserv.client.HttpdTomcatSite;
+import com.aoindustries.aoserv.client.HttpdTomcatSiteJkMount;
 import com.aoindustries.aoserv.client.HttpdTomcatStdSite;
 import com.aoindustries.aoserv.client.HttpdTomcatVersion;
 import com.aoindustries.aoserv.client.HttpdWorker;
@@ -3423,6 +3424,61 @@ final public class TableHandler {
 					username
 				);
 				break;
+			case HTTPD_TOMCAT_SITE_JK_MOUNTS :
+				if(masterUser!=null) {
+					assert masterServers != null;
+					if(masterServers.length==0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new HttpdTomcatSiteJkMount(),
+						"select * from httpd_tomcat_site_jk_mounts"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new HttpdTomcatSiteJkMount(),
+						"select\n"
+						+ "  htsjm.*\n"
+						+ "from\n"
+						+ "  master_servers ms,\n"
+						+ "  httpd_sites hs,\n"
+						+ "  httpd_tomcat_site_jk_mounts htsjm\n"
+						+ "where\n"
+						+ "  ms.username=?\n"
+						+ "  and ms.server=hs.ao_server\n"
+						+ "  and hs.pkey=htsjm.httpd_tomcat_site",
+						username
+					);
+				} else MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new HttpdTomcatSiteJkMount(),
+					"select\n"
+					+ "  htsjm.*\n"
+					+ "from\n"
+					+ "  usernames un,\n"
+					+ "  packages pk1,\n"
+					+ BU1_PARENTS_JOIN
+					+ "  packages pk2,\n"
+					+ "  httpd_sites hs,\n"
+					+ "  httpd_tomcat_site_jk_mounts htsjm\n"
+					+ "where\n"
+					+ "  un.username=?\n"
+					+ "  and un.package=pk1.name\n"
+					+ "  and (\n"
+					+ PK1_BU1_PARENTS_WHERE
+					+ "  )\n"
+					+ "  and bu1.accounting=pk2.accounting\n"
+					+ "  and pk2.name=hs.package\n"
+					+ "  and hs.pkey=htsjm.httpd_tomcat_site",
+					username
+				);
+				break;
 			case HTTPD_TOMCAT_SITES :
 				if(masterUser!=null) {
 					assert masterServers != null;
@@ -3432,7 +3488,14 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatSite(),
-						"select * from httpd_tomcat_sites"
+						"select\n"
+						+ "  hts.*,\n"
+						+ "  (\n"
+						+ "    select htsjm.pkey from httpd_tomcat_site_jk_mounts htsjm\n"
+						+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
+						+ "  ) is null as use_apache\n"
+						+ "from\n"
+						+ "  httpd_tomcat_sites hts"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3440,7 +3503,11 @@ final public class TableHandler {
 						provideProgress,
 						new HttpdTomcatSite(),
 						"select\n"
-						+ "  hts.*\n"
+						+ "  hts.*,\n"
+						+ "  (\n"
+						+ "    select htsjm.pkey from httpd_tomcat_site_jk_mounts htsjm\n"
+						+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
+						+ "  ) is null as use_apache\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  httpd_sites hs,\n"
@@ -3458,7 +3525,11 @@ final public class TableHandler {
 					provideProgress,
 					new HttpdTomcatSite(),
 					"select\n"
-					+ "  hts.*\n"
+					+ "  hts.*,\n"
+					+ "  (\n"
+					+ "    select htsjm.pkey from httpd_tomcat_site_jk_mounts htsjm\n"
+					+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
+					+ "  ) is null as use_apache\n"
 					+ "from\n"
 					+ "  usernames un,\n"
 					+ "  packages pk1,\n"
@@ -5429,7 +5500,7 @@ final public class TableHandler {
 				);
 				break;
 			case NET_BINDS :
-				// TODO: Only to inner joins for open_firewall for clients 1.80.2 and older?
+				// TODO: Only do inner joins for open_firewall for clients 1.80.2 and older?
 				if(masterUser!=null) {
 					assert masterServers != null;
 					if(masterServers.length==0) MasterServer.writeObjects(

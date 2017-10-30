@@ -604,9 +604,12 @@ final public class BusinessHandler {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accounting, server, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accounting, server, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, accounting, server, false);
+		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.NET_DEVICES, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.IP_ADDRESSES, accounting, server, true);
 		return pkey;
 	}
 
@@ -1310,9 +1313,12 @@ final public class BusinessHandler {
 		}
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accounting, server, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accounting, server, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, accounting, server, false);
+		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.NET_DEVICES, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.IP_ADDRESSES, accounting, server, true);
 	}
 
 	public static void removeDisableLog(

@@ -1607,13 +1607,20 @@ public abstract class MasterServer {
 														enableHtaccess = true;
 														enableIndexes = true;
 														enableFollowSymlinks = false;
-													} else {
+													} else if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_6) < 0) {
 														phpVersion = in.readCompressedInt();
 														enableCgi = in.readBoolean();
 														enableSsi = in.readBoolean();
 														enableHtaccess = in.readBoolean();
 														enableIndexes = in.readBoolean();
 														enableFollowSymlinks = in.readBoolean();
+													} else {
+														phpVersion = -1;
+														enableCgi = false;
+														enableSsi = false;
+														enableHtaccess = false;
+														enableIndexes = false;
+														enableFollowSymlinks = false;
 													}
 													process.setCommand(
 														AOSHCommand.ADD_HTTPD_JBOSS_SITE,
@@ -1874,6 +1881,31 @@ public abstract class MasterServer {
 													);
 												}
 												break;							
+											case HTTPD_TOMCAT_SITE_JK_MOUNTS :
+												{
+													int tomcat_site = in.readCompressedInt();
+													String path = in.readUTF();
+													boolean mount = in.readBoolean();
+													process.setCommand(
+														AOSHCommand.ADD_HTTPD_TOMCAT_SITE_JK_MOUNT,
+														tomcat_site,
+														path,
+														mount
+													);
+													int pkey = HttpdHandler.addHttpdTomcatSiteJkMount(
+														conn,
+														source,
+														invalidateList,
+														tomcat_site,
+														path,
+														mount
+													);
+													resp = Response.valueOf(
+														AOServProtocol.DONE,
+														pkey
+													);
+												}
+												break;							
 											case HTTPD_TOMCAT_SHARED_SITES :
 												{
 													int aoServer = in.readCompressedInt();
@@ -1904,13 +1936,20 @@ public abstract class MasterServer {
 														enableHtaccess = true;
 														enableIndexes = true;
 														enableFollowSymlinks = false;
-													} else {
+													} else if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_6) < 0) {
 														phpVersion = in.readCompressedInt();
 														enableCgi = in.readBoolean();
 														enableSsi = in.readBoolean();
 														enableHtaccess = in.readBoolean();
 														enableIndexes = in.readBoolean();
 														enableFollowSymlinks = in.readBoolean();
+													} else {
+														phpVersion = -1;
+														enableCgi = false;
+														enableSsi = false;
+														enableHtaccess = false;
+														enableIndexes = false;
+														enableFollowSymlinks = false;
 													}
 													process.setCommand(
 														AOSHCommand.ADD_HTTPD_TOMCAT_SHARED_SITE,
@@ -1993,13 +2032,20 @@ public abstract class MasterServer {
 														enableHtaccess = true;
 														enableIndexes = true;
 														enableFollowSymlinks = false;
-													} else {
+													} else if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_6) < 0) {
 														phpVersion = in.readCompressedInt();
 														enableCgi = in.readBoolean();
 														enableSsi = in.readBoolean();
 														enableHtaccess = in.readBoolean();
 														enableIndexes = in.readBoolean();
 														enableFollowSymlinks = in.readBoolean();
+													} else {
+														phpVersion = -1;
+														enableCgi = false;
+														enableSsi = false;
+														enableHtaccess = false;
+														enableIndexes = false;
+														enableFollowSymlinks = false;
 													}
 													process.setCommand(
 														AOSHCommand.ADD_HTTPD_TOMCAT_STD_SITE,
@@ -6427,6 +6473,22 @@ public abstract class MasterServer {
 													resp = Response.DONE;
 												}
 												break;
+											case HTTPD_TOMCAT_SITE_JK_MOUNTS :
+												{
+													int pkey = in.readCompressedInt();
+													process.setCommand(
+														AOSHCommand.REMOVE_HTTPD_TOMCAT_SITE_JK_MOUNT,
+														pkey
+													);
+													HttpdHandler.removeHttpdTomcatSiteJkMount(
+														conn,
+														source,
+														invalidateList,
+														pkey
+													);
+													resp = Response.DONE;
+												}
+												break;
 											case LINUX_ACC_ADDRESSES :
 												{
 													int pkey = in.readCompressedInt();
@@ -7473,6 +7535,86 @@ public abstract class MasterServer {
 											sendInvalidateList = true;
 										}
 										break;
+									case SET_HTTPD_SITE_BLOCK_TRACE_TRACK :
+										{
+											int pkey = in.readCompressedInt();
+											boolean blockTraceTrack = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SITE_BLOCK_TRACE_TRACK,
+												pkey,
+												blockTraceTrack
+											);
+											HttpdHandler.setHttpdSiteBlockTraceTrack(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												blockTraceTrack
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_SITE_BLOCK_SCM :
+										{
+											int pkey = in.readCompressedInt();
+											boolean blockScm = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SITE_BLOCK_SCM,
+												pkey,
+												blockScm
+											);
+											HttpdHandler.setHttpdSiteBlockScm(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												blockScm
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_SITE_BLOCK_CORE_DUMPS :
+										{
+											int pkey = in.readCompressedInt();
+											boolean blockCoreDumps = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SITE_BLOCK_CORE_DUMPS,
+												pkey,
+												blockCoreDumps
+											);
+											HttpdHandler.setHttpdSiteBlockCoreDumps(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												blockCoreDumps
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_SITE_BLOCK_EDITOR_BACKUPS :
+										{
+											int pkey = in.readCompressedInt();
+											boolean blockEditorBackups = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SITE_BLOCK_EDITOR_BACKUPS,
+												pkey,
+												blockEditorBackups
+											);
+											HttpdHandler.setHttpdSiteBlockEditorBackups(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												blockEditorBackups
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
 									case SET_HTTPD_SITE_BIND_PREDISABLE_CONFIG :
 										{
 											int pkey = in.readCompressedInt();
@@ -7554,21 +7696,21 @@ public abstract class MasterServer {
 											sendInvalidateList = true;
 										}
 										break;
-									case SET_HTTPD_TOMCAT_SITE_USE_APACHE :
+									case SET_HTTPD_TOMCAT_SITE_BLOCK_WEBINF :
 										{
 											int pkey = in.readCompressedInt();
-											boolean useApache = in.readBoolean();
+											boolean blockWebinf = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_TOMCAT_SITE_USE_APACHE,
+												AOSHCommand.SET_HTTPD_TOMCAT_SITE_BLOCK_WEBINF,
 												pkey,
-												useApache
+												blockWebinf
 											);
-											HttpdHandler.setHttpdTomcatSiteUseApache(
+											HttpdHandler.setHttpdTomcatSiteBlockWebinf(
 												conn,
 												source,
 												invalidateList,
 												pkey,
-												useApache
+												blockWebinf
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;

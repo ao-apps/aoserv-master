@@ -177,6 +177,9 @@ final public class InvalidateList {
                     addTable(conn, SchemaTable.TableID.HTTPD_BINDS, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.HTTPD_SITE_BIND_REDIRECTS, businesses, servers, false);
                     break;
+                case HTTPD_TOMCAT_SITES :
+                    addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, businesses, servers, false);
+                    break;
                 case LINUX_ACCOUNTS :
                     addTable(conn, SchemaTable.TableID.FTP_GUEST_USERS, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.USERNAMES, businesses, servers, true);
@@ -228,10 +231,15 @@ final public class InvalidateList {
                     break;
                 case SERVERS :
                     addTable(conn, SchemaTable.TableID.AO_SERVERS, businesses, servers, true);
+                    addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.NET_DEVICES, businesses, servers, true);
+                    addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, businesses, servers, true);
                     break;
                 case USERNAMES :
                     addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, businesses, servers, true);
+                    break;
+                case VIRTUAL_SERVERS :
+                    addTable(conn, SchemaTable.TableID.VIRTUAL_DISKS, businesses, servers, true);
                     break;
             }
         }

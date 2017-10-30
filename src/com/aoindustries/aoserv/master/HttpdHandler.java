@@ -364,6 +364,9 @@ final public class HttpdHandler {
 			serverXmlConfigured
 		);
 
+		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
+		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
+
 		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
 		try (PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
 			"insert into\n"
@@ -413,10 +416,43 @@ final public class HttpdHandler {
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS,
-			getBusinessForHttpdSite(conn, tomcat_site),
-			getAOServerForHttpdSite(conn, tomcat_site),
+			accounting,
+			aoServer,
 			false
 		);
+
+		// Initial HttpdTomcatSiteJkMounts
+		boolean useApache = conn.executeBooleanQuery(
+			"select (\n"
+			+ "  select pkey from httpd_tomcat_site_jk_mounts\n"
+			+ "  where (httpd_tomcat_site, path)=(?, '/*')\n"
+			+ ") is null",
+			tomcat_site
+		);
+
+		if(useApache) {
+			conn.executeUpdate(
+				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				tomcat_site,
+				path + "/j_security_check"
+			);
+			conn.executeUpdate(
+				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				tomcat_site,
+				path + "/servlet/*"
+			);
+			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, accounting, aoServer, false);
+		} else {
+			boolean enableCgi = conn.executeBooleanQuery("select enable_cgi from httpd_sites where pkey=?", tomcat_site);
+			if(enableCgi) {
+				conn.executeUpdate(
+					"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
+					tomcat_site,
+					path + "/cgi-bin/*"
+				);
+				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, accounting, aoServer, false);
+			}
+		}
 
 		return pkey;
 	}
@@ -541,6 +577,56 @@ final public class HttpdHandler {
 		);
 
 		return pkey;
+	}
+
+	public static int addHttpdTomcatSiteJkMount(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int tomcat_site,
+		String path,
+		boolean mount
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "addHttpdTomcatSiteJkMount", tomcat_site);
+
+		int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_site_jk_mounts_pkey_seq')");
+		conn.executeUpdate(
+			"insert into httpd_tomcat_site_jk_mounts (pkey, httpd_tomcat_site, \"path\", mount) values (?,?,?,?)",
+			pkey,
+			tomcat_site,
+			path,
+			mount
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+			getBusinessForHttpdSite(conn, tomcat_site),
+			getAOServerForHttpdSite(conn, tomcat_site),
+			false
+		);
+
+		return pkey;
+	}
+
+	public static void removeHttpdTomcatSiteJkMount(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey
+	) throws IOException, SQLException {
+		int tomcat_site = conn.executeIntQuery("select httpd_tomcat_site from httpd_tomcat_site_jk_mounts where pkey=?", pkey);
+		checkAccessHttpdSite(conn, source, "removeHttpdTomcatSiteJkMount", tomcat_site);
+
+		conn.executeUpdate("delete from httpd_tomcat_site_jk_mounts where pkey=?", pkey);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+			getBusinessForHttpdSite(conn, tomcat_site),
+			getAOServerForHttpdSite(conn, tomcat_site),
+			false
+		);
 	}
 
 	public static void checkHttpdTomcatContext(
@@ -909,33 +995,41 @@ final public class HttpdHandler {
 		}
 
 		// Create and/or get the HttpdBind info
-		int httpNetBind=getHttpdBind(conn, invalidateList, packageName, aoServer, ipAddress, httpPort, Protocol.HTTP, isTomcat4);
+		int httpNetBind = getHttpdBind(conn, invalidateList, packageName, aoServer, ipAddress, httpPort, Protocol.HTTP, isTomcat4);
 
 		// Create the HttpdSite
-		httpdSitePKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_sites_pkey_seq')");
-		PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
-			"insert into\n"
-			+ "  httpd_sites\n"
-			+ "values(\n"
+		httpdSitePKey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_sites_pkey_seq')");
+		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
+			"insert into httpd_sites (\n"
+			+ "  pkey,\n"
+			+ "  ao_server,\n"
+			+ "  site_name,\n"
+			+ "  package,\n"
+			+ "  linux_account,\n"
+			+ "  linux_group,\n"
+			+ "  server_admin,\n"
+			+ "  content_src,\n"
+			+ "  php_version,\n"
+			+ "  enable_cgi,\n"
+			+ "  enable_ssi,\n"
+			+ "  enable_htaccess,\n"
+			+ "  enable_indexes,\n"
+			+ "  enable_follow_symlinks\n"
+			+ ") values(\n"
 			+ "  ?,\n" // pkey
 			+ "  ?,\n" // ao_server
 			+ "  ?,\n" // site_name
-			+ "  false,\n" // list_first
 			+ "  ?,\n" // package
 			+ "  ?,\n" // linux_account
 			+ "  ?,\n" // linux_group
 			+ "  ?,\n" // server_admin
 			+ "  ?,\n" // content_src
-			+ "  null,\n" // disable_log
-			+ "  false,\n" // is_manual
-			+ "  null,\n" // awstats_skip_files
 			+ "  ?,\n" // php_version
 			+ "  ?,\n" // enable_cgi
-			+ "  ?,\n" // enable_ssh
+			+ "  ?,\n" // enable_ssi
 			+ "  ?,\n" // enable_htaccess
 			+ "  ?,\n" // enable_indexes
-			+ "  ?,\n" // enable_follow_symlinks
-			+ "  false\n" // enable_anonymous_ftp
+			+ "  ?\n" // enable_follow_symlinks
 			+ ")");
 		try {
 			pstmt.setInt(1, httpdSitePKey);
@@ -955,7 +1049,7 @@ final public class HttpdHandler {
 			pstmt.setBoolean(14, enableFollowSymlinks);
 			pstmt.executeUpdate();
 		} catch(SQLException err) {
-			System.err.println("Error from query: "+pstmt.toString());
+			System.err.println("Error from query: " + pstmt.toString());
 			throw err;
 		} finally {
 			pstmt.close();
@@ -964,10 +1058,9 @@ final public class HttpdHandler {
 
 		// Create the HttpdTomcatSite
 		conn.executeUpdate(
-			"insert into httpd_tomcat_sites values(?,?,?)",
+			"insert into httpd_tomcat_sites (httpd_site, version) values (?,?)",
 			httpdSitePKey,
-			tomcatVersion,
-			useApache
+			tomcatVersion
 		);
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITES, accounting, aoServer, false);
 
@@ -981,7 +1074,7 @@ final public class HttpdHandler {
 		}
 
 		// Add the default httpd_tomcat_context
-		int htcPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
+		int htcPKey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
 		conn.executeUpdate(
 			"insert into\n"
 			+ "  httpd_tomcat_contexts\n"
@@ -1009,7 +1102,7 @@ final public class HttpdHandler {
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, aoServer, false);
 
 		if(!isTomcat4) {
-			htcPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
+			htcPKey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
 			conn.executeUpdate(
 				"insert into\n"
 				+ "  httpd_tomcat_contexts\n"
@@ -1197,6 +1290,87 @@ final public class HttpdHandler {
 			testURL
 		);
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_URLS, accounting, aoServer, false);
+
+		// Initial HttpdTomcatSiteJkMounts
+		if(useApache) {
+			conn.executeUpdate(
+				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				httpdSitePKey,
+				"/j_security_check"
+			);
+			conn.executeUpdate(
+				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				httpdSitePKey,
+				"/servlet/*"
+			);
+			conn.executeUpdate(
+				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				httpdSitePKey,
+				"/*.do"
+			);
+			conn.executeUpdate(
+				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				httpdSitePKey,
+				"/*.jsp"
+			);
+			conn.executeUpdate(
+				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				httpdSitePKey,
+				"/*.jspa"
+			);
+			conn.executeUpdate(
+				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				httpdSitePKey,
+				"/*.jspx"
+			);
+			conn.executeUpdate(
+				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				httpdSitePKey,
+				"/*.vm"
+			);
+			conn.executeUpdate(
+				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				httpdSitePKey,
+				"/*.xml"
+			);
+		} else {
+			conn.executeUpdate(
+				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				httpdSitePKey,
+				"/*"
+			);
+			if(enableCgi) {
+				conn.executeUpdate(
+					"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
+					httpdSitePKey,
+					"/cgi-bin/*"
+				);
+			}
+			boolean hasPhp;
+			if(phpVersion != -1) {
+				// CGI-based PHP
+				hasPhp = true;
+			} else {
+				// Check for mod_php
+				hasPhp = conn.executeBooleanQuery(
+					"select\n"
+					+ "  hs.mod_php_version is not null\n"
+					+ "from\n"
+					+ "  httpd_binds hb\n"
+					+ "  inner join httpd_servers hs on hb.httpd_server=hs.pkey\n"
+					+ "where\n"
+					+ "  hb.net_bind=?",
+					httpNetBind
+				);
+			}
+			if(hasPhp) {
+				conn.executeUpdate(
+					"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
+					httpdSitePKey
+				);
+			}
+		}
+		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, accounting, aoServer, false);
 
 		return httpdSitePKey;
 	}
@@ -2643,28 +2817,32 @@ final public class HttpdHandler {
 		removeHttpdSite(conn, invalidateList, httpdSitePKey);
 	}
 
-		/**
-		 * httpd_sites
-		 *           + httpd_site_binds
-		 *           |                + httpd_site_bind_redirects
-		 *           |                + httpd_site_urls
-		 *           |                |               + dns_records
-		 *           |                + httpd_binds
-		 *           |                            + net_binds
-		 *           + httpd_tomcat_sites
-		 *           |                  + httpd_tomcat_contexts
-		 *           |                                        + httpd_tomcat_data_sources
-		 *           |                                        + httpd_tomcat_parameters
-		 *           |                  + httpd_workers
-		 *           |                  |             + net_binds
-		 *           |                  + httpd_tomcat_shared_sites
-		 *           |                  |             + linux_group_accounts
-		 *           |                  + httpd_tomcat_std_sites
-		 *           |                                         + net_binds
-		 *           |                  + httpd_jboss_sites
-		 *           |                                   + net_binds
-		 *           + httpd_static_sites
-		 */
+	public static boolean isHttpdStaticSite(DatabaseConnection conn, int httpd_site) throws SQLException {
+		return conn.executeBooleanQuery("select (select httpd_site from httpd_static_sites where httpd_site=?) is not null", httpd_site);
+	}
+
+	/**
+	 * httpd_sites
+	 *           + httpd_site_binds
+	 *           |                + httpd_site_bind_redirects
+	 *           |                + httpd_site_urls
+	 *           |                |               + dns_records
+	 *           |                + httpd_binds
+	 *           |                            + net_binds
+	 *           + httpd_tomcat_sites
+	 *           |                  + httpd_tomcat_contexts
+	 *           |                                        + httpd_tomcat_data_sources
+	 *           |                                        + httpd_tomcat_parameters
+	 *           |                  + httpd_workers
+	 *           |                  |             + net_binds
+	 *           |                  + httpd_tomcat_shared_sites
+	 *           |                  |             + linux_group_accounts
+	 *           |                  + httpd_tomcat_std_sites
+	 *           |                                         + net_binds
+	 *           |                  + httpd_jboss_sites
+	 *           |                                   + net_binds
+	 *           + httpd_static_sites
+	 */
 	public static void removeHttpdSite(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
@@ -2711,13 +2889,13 @@ final public class HttpdHandler {
 		}
 
 		// httpd_site_authenticated_locations
-		if(conn.executeUpdate("delete from httpd_site_authenticated_locations where httpd_site=?", httpdSitePKey)>0) {
+		if(conn.executeUpdate("delete from httpd_site_authenticated_locations where httpd_site=?", httpdSitePKey) > 0) {
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS, accounting, aoServer, false);
 		}
 
 		// httpd_site_binds
 		IntList httpdSiteBinds=conn.executeIntListQuery("select pkey from httpd_site_binds where httpd_site=?", httpdSitePKey);
-		if(httpdSiteBinds.size()>0) {
+		if(httpdSiteBinds.size() > 0) {
 			List<DomainName> tlds=DNSHandler.getDNSTLDs(conn);
 			SortedIntArrayList httpdBinds=new SortedIntArrayList();
 			for(int c=0;c<httpdSiteBinds.size();c++) {
@@ -2788,7 +2966,7 @@ final public class HttpdHandler {
 		if(conn.executeBooleanQuery("select (select httpd_site from httpd_tomcat_sites where httpd_site=? limit 1) is not null", httpdSitePKey)) {
 			// httpd_tomcat_data_sources
 			IntList htdss=conn.executeIntListQuery("select htds.pkey from httpd_tomcat_contexts htc, httpd_tomcat_data_sources htds where htc.tomcat_site=? and htc.pkey=htds.tomcat_context", httpdSitePKey);
-			if(htdss.size()>0) {
+			if(htdss.size() > 0) {
 				for(int c=0;c<htdss.size();c++) {
 					conn.executeUpdate("delete from httpd_tomcat_data_sources where pkey=?", htdss.getInt(c));
 				}
@@ -2797,7 +2975,7 @@ final public class HttpdHandler {
 
 			// httpd_tomcat_parameters
 			IntList htps=conn.executeIntListQuery("select htp.pkey from httpd_tomcat_contexts htc, httpd_tomcat_parameters htp where htc.tomcat_site=? and htc.pkey=htp.tomcat_context", httpdSitePKey);
-			if(htps.size()>0) {
+			if(htps.size() > 0) {
 				for(int c=0;c<htps.size();c++) {
 					conn.executeUpdate("delete from httpd_tomcat_parameters where pkey=?", htps.getInt(c));
 				}
@@ -2806,7 +2984,7 @@ final public class HttpdHandler {
 
 			// httpd_tomcat_contexts
 			IntList htcs=conn.executeIntListQuery("select pkey from httpd_tomcat_contexts where tomcat_site=?", httpdSitePKey);
-			if(htcs.size()>0) {
+			if(htcs.size() > 0) {
 				for(int c=0;c<htcs.size();c++) {
 					conn.executeUpdate("delete from httpd_tomcat_contexts where pkey=?", htcs.getInt(c));
 				}
@@ -2815,7 +2993,7 @@ final public class HttpdHandler {
 
 			// httpd_workers
 			IntList httpdWorkers=conn.executeIntListQuery("select pkey from httpd_workers where tomcat_site=?", httpdSitePKey);
-			if(httpdWorkers.size()>0) {
+			if(httpdWorkers.size() > 0) {
 				for(int c=0;c<httpdWorkers.size();c++) {
 					int httpdWorker=httpdWorkers.getInt(c);
 					int netBind=conn.executeIntQuery("select net_bind from httpd_workers where pkey=?", httpdWorker);
@@ -2899,8 +3077,7 @@ final public class HttpdHandler {
 		}
 
 		// httpd_static_sites
-		if(conn.executeBooleanQuery("select (select httpd_site from httpd_static_sites where httpd_site=? limit 1) is not null", httpdSitePKey)) {
-			conn.executeUpdate("delete from httpd_static_sites where httpd_site=?", httpdSitePKey);
+		if(conn.executeUpdate("delete from httpd_static_sites where httpd_site=?", httpdSitePKey) != 0) {
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_STATIC_SITES, accounting, aoServer, false);
 		}
 
@@ -2982,15 +3159,15 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int pkey
 	) throws IOException, SQLException {
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", pkey);
+		int tomcat_site = conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatContext", tomcat_site);
-		String path=conn.executeStringQuery("select path from httpd_tomcat_contexts where pkey=?", pkey);
-		if(path.length()==0) throw new SQLException("Not allowed to remove the default context: "+pkey);
+		String path = conn.executeStringQuery("select path from httpd_tomcat_contexts where pkey=?", pkey);
+		if(path.isEmpty()) throw new SQLException("Not allowed to remove the default context: " + pkey);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
-		if(conn.executeUpdate("delete from httpd_tomcat_data_sources where tomcat_context=?", pkey)>0) {
+		if(conn.executeUpdate("delete from httpd_tomcat_data_sources where tomcat_context=?", pkey) > 0) {
 			invalidateList.addTable(
 				conn,
 				SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES,
@@ -3000,7 +3177,7 @@ final public class HttpdHandler {
 			);
 		}
 
-		if(conn.executeUpdate("delete from httpd_tomcat_parameters where tomcat_context=?", pkey)>0) {
+		if(conn.executeUpdate("delete from httpd_tomcat_parameters where tomcat_context=?", pkey) > 0) {
 			invalidateList.addTable(
 				conn,
 				SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS,
@@ -3018,6 +3195,23 @@ final public class HttpdHandler {
 			aoServer,
 			false
 		);
+
+		if(
+			conn.executeUpdate(
+				"delete from httpd_tomcat_site_jk_mounts where httpd_tomcat_site=? and substring(path from 1 for ?)=?",
+				tomcat_site,
+				path.length() + 1,
+				path + '/'
+			) > 0
+		) {
+			invalidateList.addTable(
+				conn,
+				SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+				accounting,
+				aoServer,
+				false
+			);
+		}
 	}
 
 	public static void removeHttpdTomcatDataSource(
@@ -3453,6 +3647,11 @@ final public class HttpdHandler {
 		checkAccessHttpdSite(conn, source, "setHttpdSitePhpVersion", pkey);
 		int aoServer = getAOServerForHttpdSite(conn, pkey);
 		if(phpVersion != -1) {
+			if(isHttpdStaticSite(conn, pkey)) {
+				// TODO: This would be better modeled by not having php_version on the httpd_sites table, but rather more specialized types of sites
+				// TODO: How to enable PHP on a per-site basis, so static site under mod_php apache doesn't get php?
+				throw new SQLException("May not enable PHP on a static site");
+			}
 			int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
 			// Version must be correct for this server
 			int tvOsv = conn.executeIntQuery(
@@ -3467,19 +3666,100 @@ final public class HttpdHandler {
 			if(tvOsv != osv) throw new SQLException("Requested PHP version is for the wrong operating system version: #" + phpVersion + ": " + tvOsv + " != " + osv);
 		}
 		// Update the database
-		conn.executeUpdate(
-			"update httpd_sites set php_version=? where pkey=?",
-			phpVersion == -1 ? DatabaseAccess.Null.INTEGER : phpVersion,
-			pkey
-		);
+		int updateCount;
+		if(phpVersion == -1) {
+			updateCount = conn.executeUpdate(
+				"update httpd_sites set php_version=null where pkey=? and php_version is not null",
+				pkey
+			);
+		} else {
+			updateCount = conn.executeUpdate(
+				"update httpd_sites set php_version=? where pkey=? and php_version!=?",
+				phpVersion,
+				pkey,
+				phpVersion
+			);
+		}
+		if(updateCount > 0) {
+			AccountingCode accounting = getBusinessForHttpdSite(conn, pkey);
+			invalidateList.addTable(
+				conn,
+				SchemaTable.TableID.HTTPD_SITES,
+				accounting,
+				aoServer,
+				false
+			);
 
-		invalidateList.addTable(
-			conn,
-			SchemaTable.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, pkey),
-			aoServer,
-			false
-		);
+			boolean useApache = conn.executeBooleanQuery(
+				"select (\n"
+				+ "  select pkey from httpd_tomcat_site_jk_mounts\n"
+				+ "  where (httpd_tomcat_site, path)=(?, '/*')\n"
+				+ ") is null",
+				pkey
+			);
+			boolean hasPhp;
+			if(phpVersion != -1) {
+				// CGI-based PHP
+				hasPhp = true;
+			} else {
+				// Check for mod_php
+				hasPhp = conn.executeBooleanQuery(
+					"select (\n"
+					+ "  select\n"
+					+ "    hs.pkey\n"
+					+ "  from\n"
+					+ "    httpd_site_binds hsb\n"
+					+ "    inner join httpd_binds hb on hsb.httpd_bind=hb.net_bind\n"
+					+ "    inner join httpd_servers hs on hb.httpd_server=hs.pkey\n"
+					+ "  where\n"
+					+ "    hsb.httpd_site=?\n"
+					+ "    and hs.mod_php_version is not null\n"
+					+ "  limit 1\n"
+					+ ") is not null",
+					pkey
+				);
+			}
+			if(!useApache && hasPhp) {
+				if(
+					conn.executeBooleanQuery(
+						"select (\n"
+						+ "  select pkey from httpd_tomcat_site_jk_mounts\n"
+						+ "  where (httpd_tomcat_site, path)=(?, '/*.php')\n"
+						+ ") is null",
+						pkey
+					)
+				) {
+					// Add /*.php to JkUnMounts
+					conn.executeUpdate(
+						"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
+						pkey
+					);
+					invalidateList.addTable(
+						conn,
+						SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+						accounting,
+						aoServer,
+						false
+					);
+				}
+			} else {
+				// Remove /*.php from JkUnMounts
+				if(
+					conn.executeUpdate(
+						"delete from httpd_tomcat_site_jk_mounts where (httpd_tomcat_site, path, mount)=(?,'/*.php',FALSE)",
+						pkey
+					) > 0
+				) {
+					invalidateList.addTable(
+						conn,
+						SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+						accounting,
+						aoServer,
+						false
+					);
+				}
+			}
+		}
 	}
 
 	public static void setHttpdSiteEnableCgi(
@@ -3491,20 +3771,57 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableCgi", pkey);
 
-		// Update the database
-		conn.executeUpdate(
-			"update httpd_sites set enable_cgi=? where pkey=?",
-			enableCgi,
-			pkey
-		);
+		if(enableCgi && isHttpdStaticSite(conn, pkey)) {
+			// TODO: This would be better modeled by not having enable_cgi on the httpd_sites table, but rather more specialized types of sites
+			throw new SQLException("May not enable CGI on a static site");
+		}
 
-		invalidateList.addTable(
-			conn,
-			SchemaTable.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, pkey),
-			getAOServerForHttpdSite(conn, pkey),
-			false
-		);
+		// Update the database
+		if(
+			conn.executeUpdate(
+				"update httpd_sites set enable_cgi=? where pkey=? and enable_cgi != ?",
+				enableCgi,
+				pkey,
+				enableCgi
+			) > 0
+		) {
+			AccountingCode accounting = getBusinessForHttpdSite(conn, pkey);
+			int aoServer = getAOServerForHttpdSite(conn, pkey);
+			invalidateList.addTable(
+				conn,
+				SchemaTable.TableID.HTTPD_SITES,
+				accounting,
+				aoServer,
+				false
+			);
+			List<String> paths = conn.executeStringListQuery("select path from httpd_tomcat_contexts where tomcat_site=?", pkey);
+			if(!paths.isEmpty()) {
+				for(String path : paths) {
+					if(enableCgi) {
+						// Add /cgi-bin to JkUnMounts
+						conn.executeUpdate(
+							"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
+							pkey,
+							path + "/cgi-bin/*"
+						);
+					} else {
+						// Remove /cgi-bin from JkUnMounts
+						conn.executeUpdate(
+							"delete from httpd_tomcat_site_jk_mounts where (httpd_tomcat_site, path, mount)=(?,?,FALSE)",
+							pkey,
+							path + "/cgi-bin/*"
+						);
+					}
+				}
+			}
+			invalidateList.addTable(
+				conn,
+				SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+				accounting,
+				aoServer,
+				false
+			);
+		}
 	}
 
 	public static void setHttpdSiteEnableSsi(
@@ -3632,6 +3949,106 @@ final public class HttpdHandler {
 		);
 	}
 
+	public static void setHttpdSiteBlockTraceTrack(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean blockTraceTrack
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdSiteBlockTraceTrack", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_sites set block_trace_track=? where pkey=?",
+			blockTraceTrack,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdSiteBlockScm(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean blockScm
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdSiteBlockScm", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_sites set block_scm=? where pkey=?",
+			blockScm,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdSiteBlockCoreDumps(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean blockCoreDumps
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdSiteBlockCoreDumps", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_sites set block_core_dumps=? where pkey=?",
+			blockCoreDumps,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdSiteBlockEditorBackups(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		boolean blockEditorBackups
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdSiteBlockEditorBackups", pkey);
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_sites set block_editor_backups=? where pkey=?",
+			blockEditorBackups,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
 	public static int setHttpdTomcatContextAttributes(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -3668,8 +4085,12 @@ final public class HttpdHandler {
 			workDir,
 			serverXmlConfigured
 		);
+
+		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
+		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
+
 		String oldPath=conn.executeStringQuery("select path from httpd_tomcat_contexts where pkey=?", pkey);
-		if(oldPath.length()==0 && path.length()>0) throw new SQLException("Not allowed to change the path of the default context: "+path);
+		if(oldPath.length()==0 && path.length() > 0) throw new SQLException("Not allowed to change the path of the default context: "+path);
 
 		try (PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
 			"update\n"
@@ -3714,11 +4135,33 @@ final public class HttpdHandler {
 			}
 		}
 
+		if(
+			!path.equals(oldPath)
+			&& conn.executeUpdate(
+				"update httpd_tomcat_site_jk_mounts\n"
+				+ "set path = ? || substring(path from ?)\n"
+				+ "where httpd_tomcat_site=? and substring(path from 1 for ?)=?",
+				path,
+				oldPath.length(),
+				tomcat_site,
+				oldPath.length() + 1,
+				oldPath + '/'
+			) > 0
+		) {
+			invalidateList.addTable(
+				conn,
+				SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+				accounting,
+				aoServer,
+				false
+			);
+		}
+
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS,
-			getBusinessForHttpdSite(conn, tomcat_site),
-			getAOServerForHttpdSite(conn, tomcat_site),
+			accounting,
+			aoServer,
 			false
 		);
 
@@ -3823,19 +4266,19 @@ final public class HttpdHandler {
 		);
 	}
 
-	public static void setHttpdTomcatSiteUseApache(
+	public static void setHttpdTomcatSiteBlockWebinf(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
 		int pkey,
-		boolean useApache
+		boolean blockWebinf
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdTomcatSiteUseApache", pkey);
+		checkAccessHttpdSite(conn, source, "setHttpdTomcatSiteBlockWebinf", pkey);
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
-			"update httpd_tomcat_sites set use_apache=? where httpd_site=?",
-			useApache,
+			"update httpd_tomcat_sites set block_webinf=? where httpd_site=?",
+			blockWebinf,
 			pkey
 		);
 		if(updateCount == 0) throw new SQLException("Not a HttpdTomcatSite: #" + pkey);
