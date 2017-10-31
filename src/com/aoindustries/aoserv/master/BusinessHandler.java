@@ -388,8 +388,13 @@ final public class BusinessHandler {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accounting, defaultServer, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accounting, defaultServer, false);
+		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.NET_DEVICES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.IP_ADDRESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
 	}
 
 	/**
@@ -604,12 +609,12 @@ final public class BusinessHandler {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accounting, server, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accounting, server, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, accounting, server, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, accounting, server, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.NET_DEVICES, accounting, server, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.IP_ADDRESSES, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.NET_DEVICES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.IP_ADDRESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
 		return pkey;
 	}
 
@@ -1313,12 +1318,12 @@ final public class BusinessHandler {
 		}
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accounting, server, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accounting, server, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, accounting, server, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, accounting, server, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.NET_DEVICES, accounting, server, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.IP_ADDRESSES, accounting, server, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.NET_DEVICES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, SchemaTable.TableID.IP_ADDRESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
 	}
 
 	public static void removeDisableLog(
