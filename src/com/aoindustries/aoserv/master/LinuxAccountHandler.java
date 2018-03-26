@@ -60,6 +60,9 @@ final public class LinuxAccountHandler {
 	/** Default sudo setting for newly added "aoadmin" system users. */
 	private static final String AOADMIN_SUDO = "ALL=(ALL) NOPASSWD: ALL";
 
+	/** Default sudo setting for newly added "aoserv-xen-migration" system users. */
+	private static final String AOSERV_XEN_MIGRATION_SUDO = "ALL=(ALL) NOPASSWD: /usr/sbin/xl migrate-receive";
+
 	private final static Map<UserId,Boolean> disabledLinuxAccounts=new HashMap<>();
 	private final static Map<Integer,Boolean> disabledLinuxServerAccounts=new HashMap<>();
 
@@ -718,6 +721,7 @@ final public class LinuxAccountHandler {
 					&& gid < gid_min
 					&& (
 						   groupName.equals(LinuxGroup.AOSERV_JILTER)
+						|| groupName.equals(LinuxGroup.AOSERV_XEN_MIGRATION)
 						|| groupName.equals(LinuxGroup.CGRED)
 						|| groupName.equals(LinuxGroup.CHRONY)
 						|| groupName.equals(LinuxGroup.INPUT)
@@ -842,7 +846,8 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(LinuxAccount.SASLAUTH,          ANY_SYSTEM_UID, LinuxGroup.SASLAUTH,          "Saslauthd user",              "/run/saslauthd",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.SYSTEMD_BUS_PROXY, ANY_SYSTEM_UID, LinuxGroup.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",           "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.UNBOUND,           ANY_SYSTEM_UID, LinuxGroup.UNBOUND,           "Unbound DNS resolver",        "/etc/unbound",     Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.AOADMIN,           ANY_USER_UID,   LinuxGroup.AOADMIN,           "AO Industries Administrator", "/home/aoadmin",  Shell.BASH, AOADMIN_SUDO);
+					addCentos7SystemUser(LinuxAccount.AOADMIN,           ANY_USER_UID,   LinuxGroup.AOADMIN,           "AO Industries Administrator", "/home/aoadmin",    Shell.BASH, AOADMIN_SUDO);
+					addCentos7SystemUser(LinuxAccount.AOSERV_XEN_MIGRATION, ANY_SYSTEM_UID, LinuxGroup.AOSERV_XEN_MIGRATION, "AOServ Xen Migration",  "/var/opt/aoserv-xen-migration", Shell.BASH, AOSERV_XEN_MIGRATION_SUDO);
 				} catch(ValidationException e) {
 					throw new AssertionError("These hard-coded values are valid", e);
 				}
