@@ -61,7 +61,7 @@ final public class LinuxAccountHandler {
 	private static final String AOADMIN_SUDO = "ALL=(ALL) NOPASSWD: ALL";
 
 	/** Default sudo setting for newly added "aoserv-xen-migration" system users. */
-	private static final String AOSERV_XEN_MIGRATION_SUDO = "ALL=(ALL) NOPASSWD: /usr/sbin/xl migrate-receive";
+	private static final String AOSERV_XEN_MIGRATION_SUDO = "ALL=(ALL) NOPASSWD: /usr/sbin/xl -t migrate-receive";
 
 	private final static Map<UserId,Boolean> disabledLinuxAccounts=new HashMap<>();
 	private final static Map<Integer,Boolean> disabledLinuxServerAccounts=new HashMap<>();
