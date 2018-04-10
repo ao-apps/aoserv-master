@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2016, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -467,11 +467,11 @@ final public class LinuxAccountHandler {
 			+ "  null,\n"
 			+ "  now(),\n"
 			+ "  true,\n"
-			+ "  "+LinuxServerAccount.DEFAULT_TRASH_EMAIL_RETENTION+",\n"
-			+ "  "+LinuxServerAccount.DEFAULT_JUNK_EMAIL_RETENTION+",\n"
+			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "NULL::int" : Integer.toString(LinuxServerAccount.DEFAULT_TRASH_EMAIL_RETENTION)) + ",\n"
+			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "NULL::int" : Integer.toString(LinuxServerAccount.DEFAULT_JUNK_EMAIL_RETENTION)) + ",\n"
 			+ "  ?,\n"
-			+ "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE+",\n"
-			+ "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_DISCARD_SCORE+",\n"
+			+ "  " + LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE + ",\n"
+			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "NULL::int" : Integer.toString(LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_DISCARD_SCORE)) + ",\n"
 			+ "  null\n" // sudo
 			+ ")",
 			pkey,
@@ -492,7 +492,7 @@ final public class LinuxAccountHandler {
 			true
 		);
 		// If it is a email type, add the default attachment blocks
-		if(isLinuxAccountEmailType(conn, username)) {
+		if(!username.equals(LinuxAccount.EMAILMON) && isLinuxAccountEmailType(conn, username)) {
 			conn.executeUpdate(
 				"insert into\n"
 				+ "  email_attachment_blocks\n"
