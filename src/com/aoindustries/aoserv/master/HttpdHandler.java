@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2014, 2015, 2016, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -985,19 +985,19 @@ final public class HttpdHandler {
 		int httpdSitePKey;
 
 		List<DomainName> tlds = DNSHandler.getDNSTLDs(conn);
-		DomainName testURL;
-		try {
-			testURL = DomainName.valueOf(siteName + "." + ServerHandler.getHostnameForAOServer(conn, aoServer));
-		} catch(ValidationException e) {
-			throw new SQLException(e);
-		}
-		DNSHandler.addDNSRecord(
-			conn,
-			invalidateList,
-			testURL,
-			IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress),
-			tlds
-		);
+//		DomainName testURL;
+//		try {
+//			testURL = DomainName.valueOf(siteName + "." + ServerHandler.getHostnameForAOServer(conn, aoServer));
+//		} catch(ValidationException e) {
+//			throw new SQLException(e);
+//		}
+//		DNSHandler.addDNSRecord(
+//			conn,
+//			invalidateList,
+//			testURL,
+//			IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress),
+//			tlds
+//		);
 
 		// Finish up the security checks with the Connection
 		MasterServer.checkAccessHostname(conn, source, methodName, primaryHttpHostname.toString(), tlds);
@@ -1295,11 +1295,11 @@ final public class HttpdHandler {
 				altHttpHostname
 			);
 		}
-		conn.executeUpdate(
-			"insert into httpd_site_urls(httpd_site_bind, hostname, is_primary) values(?,?,false)",
-			httpSiteBindPKey,
-			testURL
-		);
+//		conn.executeUpdate(
+//			"insert into httpd_site_urls(httpd_site_bind, hostname, is_primary) values(?,?,false)",
+//			httpSiteBindPKey,
+//			testURL
+//		);
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_URLS, accounting, aoServer, false);
 
 		// Initial HttpdTomcatSiteJkMounts
