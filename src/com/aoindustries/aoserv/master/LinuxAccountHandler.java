@@ -708,6 +708,7 @@ final public class LinuxAccountHandler {
 				|| (groupName.equals(LinuxGroup.DBUS)            && gid == 81)
 				|| (groupName.equals(LinuxGroup.MAILONLY)        && gid == 83)
 				|| (groupName.equals(LinuxGroup.SCREEN)          && gid == 84)
+				|| (groupName.equals(LinuxGroup.BIRD)            && gid == 95)
 				|| (groupName.equals(LinuxGroup.NOBODY)          && gid == 99)
 				|| (groupName.equals(LinuxGroup.USERS)           && gid == 100)
 				|| (groupName.equals(LinuxGroup.AVAHI_AUTOIPD)   && gid == 170)
@@ -833,6 +834,7 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(LinuxAccount.CYRUS,                         76, LinuxGroup.MAIL,              "Cyrus IMAP Server",           "/var/lib/imap",    Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.AWSTATS,                       78, LinuxGroup.AWSTATS,           "AWStats Background Log Processing", "/var/opt/awstats", Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.DBUS,                          81, LinuxGroup.DBUS,              "System message bus",          "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.BIRD,                          95, LinuxGroup.BIRD,              "BIRD Internet Routing Daemon", "/var/opt/bird",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.NOBODY,                        99, LinuxGroup.NOBODY,            "Nobody",                      "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.AVAHI_AUTOIPD,                170, LinuxGroup.AVAHI_AUTOIPD,     "Avahi IPv4LL Stack",          "/var/lib/avahi-autoipd", Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.DHCPD,                        177, LinuxGroup.DHCPD,             "DHCP server",                 "/",                Shell.NOLOGIN, null);
