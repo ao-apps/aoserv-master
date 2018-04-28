@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2014, 2015, 2016, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -227,6 +227,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				long existingID=in.readLong();
 
 				switch(protocolVersion) {
+					case VERSION_1_81_8 :
 					case VERSION_1_81_7 :
 					case VERSION_1_81_6 :
 					case VERSION_1_81_5 :
