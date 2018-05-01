@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -259,8 +259,6 @@ final public class DNSHandler implements CronJob {
 				int retVal = P.waitFor();
 				if(retVal!=0) throw new IOException("/usr/bin/whois '"+zone+"' returned with non-zero value: "+retVal);
 			} catch(InterruptedException err) {
-				// Restore the interrupted status
-				Thread.currentThread().interrupt();
 				InterruptedIOException ioErr = new InterruptedIOException("Interrupted while waiting for whois to complete");
 				ioErr.initCause(err);
 				throw ioErr;

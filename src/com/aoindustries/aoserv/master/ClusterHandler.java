@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013, 2014, 2015, 2016, 2017 by AO Industries, Inc.,
+ * Copyright 2009-2013, 2014, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -356,8 +356,6 @@ final public class ClusterHandler implements CronJob {
 											Thread.sleep(2000);
 										} catch(InterruptedException err) {
 											LogFactory.getLogger(ClusterHandler.class).log(Level.WARNING, null, err);
-											// Restore the interrupted status
-											Thread.currentThread().interrupt();
 										}
 									}
 								}

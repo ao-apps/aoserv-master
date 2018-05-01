@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013, 2014, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2000-2013, 2014, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -504,8 +504,7 @@ public abstract class MasterServer {
 												source.wait(delay);
 											} catch(InterruptedException err) {
 												logger.log(Level.WARNING, null, err);
-												// Restore the interrupted status
-												Thread.currentThread().interrupt();
+												break;
 											}
 										}
 									}

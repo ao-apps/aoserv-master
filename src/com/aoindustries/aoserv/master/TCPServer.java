@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 by AO Industries, Inc.,
+ * Copyright 2000-2013, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -29,7 +29,7 @@ public class TCPServer extends MasterServer implements Runnable {
     /**
      * The protocol of this server.
      */
-    static final String PROTOCOL_TCP="tcp";
+    static final String PROTOCOL_TCP = "tcp";
     
     /**
      * The thread that is listening.
@@ -44,8 +44,8 @@ public class TCPServer extends MasterServer implements Runnable {
     }
 
 	void start() {
-		if(thread!=null) throw new IllegalStateException();
-        (thread=new Thread(this, getClass().getName()+"?address="+serverBind+"&port="+serverPort)).start();
+		if(thread != null) throw new IllegalStateException();
+        (thread = new Thread(this, getClass().getName() + "?address=" + serverBind + "&port=" + serverPort)).start();
 	}
 
 	@Override
@@ -57,21 +57,21 @@ public class TCPServer extends MasterServer implements Runnable {
      * Determines if communication on this server is secure.
      */
     public boolean isSecure() throws UnknownHostException {
-        byte[] address=InetAddress.getByName(getBindAddress()).getAddress();
+        byte[] address = InetAddress.getByName(getBindAddress()).getAddress();
         if(
-            address[0]==(byte)127
-            || address[0]==(byte)10
+            address[0] == (byte)127
+            || address[0] == (byte)10
             || (
-                address[0]==(byte)192
-                && address[1]==(byte)168
+                address[0] == (byte)192
+                && address[1] == (byte)168
             )
         ) return true;
         // Allow same class C network
-        byte[] localAddress=InetAddress.getByName(serverBind).getAddress();
+        byte[] localAddress = InetAddress.getByName(serverBind).getAddress();
         return
-            address[0]==localAddress[0]
-            && address[1]==localAddress[1]
-            && address[2]==localAddress[2]
+            address[0] == localAddress[0]
+            && address[1] == localAddress[1]
+            && address[2] == localAddress[2]
         ;
     }
 
@@ -81,11 +81,11 @@ public class TCPServer extends MasterServer implements Runnable {
             try {
                 InetAddress address=InetAddress.getByName(serverBind);
                 synchronized(System.out) {
-                    System.out.println("Accepting TCP connections on "+address.getHostAddress()+':'+serverPort);
+                    System.out.println("Accepting TCP connections on " + address.getHostAddress() + ':' + serverPort);
                 }
                 try (ServerSocket SS = new ServerSocket(serverPort, 50, address)) {
                     while (true) {
-                        Socket socket=SS.accept();
+                        Socket socket = SS.accept();
                         incConnectionCount();
                         try {
                             socket.setKeepAlive(true);
@@ -95,21 +95,19 @@ public class TCPServer extends MasterServer implements Runnable {
                         } catch(ThreadDeath TD) {
                             throw TD;
                         } catch(Throwable T) {
-                            logger.log(Level.SEVERE, "serverPort="+serverPort+". address="+address, T);
+                            logger.log(Level.SEVERE, "serverPort=" + serverPort + ". address=" + address, T);
                         }
                     }
                 }
             } catch (ThreadDeath TD) {
                 throw TD;
             } catch (Throwable T) {
-                logger.log(Level.SEVERE, "serverPort="+serverPort+", serverBind="+serverBind, T);
+                logger.log(Level.SEVERE, "serverPort=" + serverPort + ", serverBind=" + serverBind, T);
             }
             try {
                 Thread.sleep(15000);
             } catch (InterruptedException err) {
                 logger.log(Level.WARNING, null, err);
-				// Restore the interrupted status
-				Thread.currentThread().interrupt();
             }
         }
     }

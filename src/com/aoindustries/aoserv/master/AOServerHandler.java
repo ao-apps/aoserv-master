@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013, 2014, 2015, 2016, 2017 by AO Industries, Inc.,
+ * Copyright 2003-2013, 2014, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -14,6 +14,7 @@ import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
@@ -69,9 +70,9 @@ final public class AOServerHandler {
 						try {
 							mrtgLocks.wait(startTime + 15000 - currentTime);
 						} catch(InterruptedException err) {
-							logger.log(Level.WARNING, null, err);
-							// Restore the interrupted status
-							Thread.currentThread().interrupt();
+							IOException ioErr = new InterruptedIOException();
+							ioErr.initCause(err);
+							throw ioErr;
 						}
 					}
 				}

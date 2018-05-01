@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 by AO Industries, Inc.,
+ * Copyright 2000-2013, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -26,84 +26,82 @@ import javax.net.ssl.SSLServerSocketFactory;
  */
 public class SSLServer extends TCPServer {
 
-    private static final Logger logger = LogFactory.getLogger(ServerHandler.class);
+	private static final Logger logger = LogFactory.getLogger(ServerHandler.class);
 
-    /**
-     * The protocol of this server.
-     */
-    static final String PROTOCOL_SSL="ssl";
-    
-    /**
-     * Creates a new, running <code>AOServServer</code>.
-     */
-    SSLServer(String serverBind, int serverPort) {
-        super(serverBind, serverPort);
-    }
+	/**
+	 * The protocol of this server.
+	 */
+	static final String PROTOCOL_SSL = "ssl";
 
-    @Override
-    public String getProtocol() {
-        return PROTOCOL_SSL;
-    }
+	/**
+	 * Creates a new, running <code>AOServServer</code>.
+	 */
+	SSLServer(String serverBind, int serverPort) {
+		super(serverBind, serverPort);
+	}
 
-    /**
-     * Determines if communication on this server is secure.
-     */
-    @Override
-    public boolean isSecure() throws UnknownHostException {
-        return true;
-    }
+	@Override
+	public String getProtocol() {
+		return PROTOCOL_SSL;
+	}
 
-    @Override
-    public void run() {
-        try {
-            System.setProperty(
-                "javax.net.ssl.keyStorePassword",
-                MasterConfiguration.getSSLKeystorePassword()
-            );
-            System.setProperty(
-                "javax.net.ssl.keyStore",
-                MasterConfiguration.getSSLKeystorePath()
-            );
-        } catch(IOException err) {
-            logger.log(Level.SEVERE, null, err);
-            return;
-        }
+	/**
+	 * Determines if communication on this server is secure.
+	 */
+	@Override
+	public boolean isSecure() throws UnknownHostException {
+		return true;
+	}
 
-        SSLServerSocketFactory factory = (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
-        while (true) {
-            try {
-                InetAddress address=InetAddress.getByName(serverBind);
-                synchronized(System.out) {
-                    System.out.println("Accepting SSL connections on "+address.getHostAddress()+':'+serverPort);
-                }
-                try (SSLServerSocket SS = (SSLServerSocket)factory.createServerSocket(serverPort, 50, address)) {
-                    while (true) {
-                        Socket socket=SS.accept();
-                        incConnectionCount();
-                        try {
-                            socket.setKeepAlive(true);
-                            socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
-                            //socket.setTcpNoDelay(true);
-                            new SocketServerThread(this, socket).start();
-                        } catch(ThreadDeath TD) {
-                            throw TD;
-                        } catch(Throwable T) {
-                            logger.log(Level.SEVERE, "serverPort="+serverPort+", address="+address, T);
-                        }
-                    }
-                }
-            } catch (ThreadDeath TD) {
-                throw TD;
-            } catch (Throwable T) {
-                logger.log(Level.SEVERE, null, T);
-            }
-            try {
-                Thread.sleep(15000);
-            } catch (InterruptedException err) {
-                logger.log(Level.WARNING, null, err);
-				// Restore the interrupted status
-				Thread.currentThread().interrupt();
-            }
-        }
-    }
+	@Override
+	public void run() {
+		try {
+			System.setProperty(
+				"javax.net.ssl.keyStorePassword",
+				MasterConfiguration.getSSLKeystorePassword()
+			);
+			System.setProperty(
+				"javax.net.ssl.keyStore",
+				MasterConfiguration.getSSLKeystorePath()
+			);
+		} catch(IOException err) {
+			logger.log(Level.SEVERE, null, err);
+			return;
+		}
+
+		SSLServerSocketFactory factory = (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
+		while (true) {
+			try {
+				InetAddress address = InetAddress.getByName(serverBind);
+				synchronized(System.out) {
+					System.out.println("Accepting SSL connections on " + address.getHostAddress() + ':' + serverPort);
+				}
+				try (SSLServerSocket SS = (SSLServerSocket)factory.createServerSocket(serverPort, 50, address)) {
+					while (true) {
+						Socket socket = SS.accept();
+						incConnectionCount();
+						try {
+							socket.setKeepAlive(true);
+							socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
+							//socket.setTcpNoDelay(true);
+							new SocketServerThread(this, socket).start();
+						} catch(ThreadDeath TD) {
+							throw TD;
+						} catch(Throwable T) {
+							logger.log(Level.SEVERE, "serverPort=" + serverPort + ", address=" + address, T);
+						}
+					}
+				}
+			} catch (ThreadDeath TD) {
+				throw TD;
+			} catch (Throwable T) {
+				logger.log(Level.SEVERE, null, T);
+			}
+			try {
+				Thread.sleep(15000);
+			} catch (InterruptedException err) {
+				logger.log(Level.WARNING, null, err);
+			}
+		}
+	}
 }
