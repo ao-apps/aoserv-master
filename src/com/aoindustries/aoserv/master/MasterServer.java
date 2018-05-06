@@ -6823,7 +6823,9 @@ public abstract class MasterServer {
 									case RESTART_MYSQL :
 										{
 											int mysqlServer = in.readCompressedInt();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4)<0) throw new IOException("addBackupServer call not supported for AOServ Client version < "+AOServProtocol.Version.VERSION_1_4+", please upgrade AOServ Client.");
+											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4) < 0) {
+												throw new IOException(AOSHCommand.RESTART_MYSQL + " call not supported for AOServ Client version < " + AOServProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
+											}
 											process.setCommand(
 												AOSHCommand.RESTART_MYSQL,
 												mysqlServer
@@ -8724,15 +8726,18 @@ public abstract class MasterServer {
 										break;
 									case START_MYSQL :
 										{
-											int aoServer = in.readCompressedInt();
+											int mysqlServer = in.readCompressedInt();
+											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4) < 0) {
+												throw new IOException(AOSHCommand.START_MYSQL + " call not supported for AOServ Client version < " + AOServProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
+											}
 											process.setCommand(
 												AOSHCommand.START_MYSQL,
-												aoServer
+												mysqlServer
 											);
 											MySQLHandler.startMySQL(
 												conn,
 												source,
-												aoServer
+												mysqlServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -8839,15 +8844,18 @@ public abstract class MasterServer {
 										break;
 									case STOP_MYSQL :
 										{
-											int aoServer = in.readCompressedInt();
+											int mysqlServer = in.readCompressedInt();
+											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4) < 0) {
+												throw new IOException(AOSHCommand.STOP_MYSQL + " call not supported for AOServ Client version < " + AOServProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
+											}
 											process.setCommand(
 												AOSHCommand.STOP_MYSQL,
-												aoServer
+												mysqlServer
 											);
 											MySQLHandler.stopMySQL(
 												conn,
 												source,
-												aoServer
+												mysqlServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;

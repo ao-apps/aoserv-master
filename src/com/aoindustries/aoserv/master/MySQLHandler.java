@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2016, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -1079,21 +1079,23 @@ final public class MySQLHandler {
 	public static void startMySQL(
 		DatabaseConnection conn,
 		RequestSource source,
-		int aoServer
+		int mysqlServer
 	) throws IOException, SQLException {
+		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_mysql");
 		if(!canControl) throw new SQLException("Not allowed to start MySQL on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).startMySQL();
+		DaemonHandler.getDaemonConnector(conn, aoServer).startMySQL(mysqlServer);
 	}
 
 	public static void stopMySQL(
 		DatabaseConnection conn,
 		RequestSource source,
-		int aoServer
+		int mysqlServer
 	) throws IOException, SQLException {
+		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_mysql");
 		if(!canControl) throw new SQLException("Not allowed to stop MySQL on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).stopMySQL();
+		DaemonHandler.getDaemonConnector(conn, aoServer).stopMySQL(mysqlServer);
 	}
 
 	public static void getMasterStatus(
