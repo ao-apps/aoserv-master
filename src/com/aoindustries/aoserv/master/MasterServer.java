@@ -1546,7 +1546,7 @@ public abstract class MasterServer {
 													int version=in.readCompressedInt();
 													UserId linuxServerAccount = UserId.valueOf(in.readUTF());
 													GroupId linuxServerGroup = GroupId.valueOf(in.readUTF());
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_10) < 0) {
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_9) <= 0) {
 														boolean isSecure = in.readBoolean();
 														boolean isOverflow = in.readBoolean();
 														if(isSecure) throw new IOException(AOSHCommand.ADD_HTTPD_SHARED_TOMCAT + " call no longer supports is_secure=true");
@@ -1924,7 +1924,7 @@ public abstract class MasterServer {
 													DomainName[] altHttpHostnames = new DomainName[len];
 													for(int c=0;c<len;c++) altHttpHostnames[c] = DomainName.valueOf(in.readUTF());
 													String sharedTomcatName;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_10) < 0) {
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_9) <= 0) {
 														sharedTomcatName = in.readNullUTF();
 														int version = in.readCompressedInt();
 													} else {
