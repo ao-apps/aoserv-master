@@ -1546,17 +1546,19 @@ public abstract class MasterServer {
 													int version=in.readCompressedInt();
 													UserId linuxServerAccount = UserId.valueOf(in.readUTF());
 													GroupId linuxServerGroup = GroupId.valueOf(in.readUTF());
-													boolean isSecure=in.readBoolean();
-													boolean isOverflow=in.readBoolean();
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_10) < 0) {
+														boolean isSecure = in.readBoolean();
+														boolean isOverflow = in.readBoolean();
+														if(isSecure) throw new IOException(AOSHCommand.ADD_HTTPD_SHARED_TOMCAT + " call no longer supports is_secure=true");
+														if(isOverflow) throw new IOException(AOSHCommand.ADD_HTTPD_SHARED_TOMCAT + " call no longer supports is_overflow=true");
+													}
 													process.setCommand(
 														AOSHCommand.ADD_HTTPD_SHARED_TOMCAT,
 														name,
 														aoServer,
 														version,
 														linuxServerAccount,
-														linuxServerGroup,
-														isSecure,
-														isOverflow
+														linuxServerGroup
 													);
 													int pkey = HttpdHandler.addHttpdSharedTomcat(
 														conn,
@@ -1567,8 +1569,6 @@ public abstract class MasterServer {
 														version,
 														linuxServerAccount,
 														linuxServerGroup,
-														isSecure,
-														isOverflow,
 														false
 													);
 													resp = Response.valueOf(
@@ -1592,7 +1592,12 @@ public abstract class MasterServer {
 													DomainName[] altHttpHostnames = new DomainName[len];
 													for(int c=0;c<len;c++) altHttpHostnames[c] = DomainName.valueOf(in.readUTF());
 													int jBossVersion = in.readCompressedInt();
-													UnixPath contentSrc = UnixPath.valueOf(in.readNullUTF());
+													UnixPath contentSrc;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_9) <= 0) {
+														contentSrc = UnixPath.valueOf(in.readNullUTF());
+													} else {
+														contentSrc = null;
+													}
 													int phpVersion;
 													boolean enableCgi;
 													boolean enableSsi;
@@ -1634,7 +1639,6 @@ public abstract class MasterServer {
 														primaryHttpHostname,
 														altHttpHostnames,
 														jBossVersion,
-														contentSrc,
 														phpVersion,
 														enableCgi,
 														enableSsi,
@@ -1642,6 +1646,7 @@ public abstract class MasterServer {
 														enableIndexes,
 														enableFollowSymlinks
 													);
+													if(contentSrc != null) throw new IOException(AOSHCommand.ADD_HTTPD_JBOSS_SITE + " call no longer supports non-null content_source");
 													int pkey = HttpdHandler.addHttpdJBossSite(
 														conn,
 														source,
@@ -1657,7 +1662,6 @@ public abstract class MasterServer {
 														primaryHttpHostname,
 														altHttpHostnames,
 														jBossVersion,
-														contentSrc,
 														phpVersion,
 														enableCgi,
 														enableSsi,
@@ -1919,9 +1923,19 @@ public abstract class MasterServer {
 													int len = in.readCompressedInt();
 													DomainName[] altHttpHostnames = new DomainName[len];
 													for(int c=0;c<len;c++) altHttpHostnames[c] = DomainName.valueOf(in.readUTF());
-													String sharedTomcatName=in.readNullUTF();
-													int version=in.readCompressedInt();
-													UnixPath contentSrc = UnixPath.valueOf(in.readNullUTF());
+													String sharedTomcatName;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_10) < 0) {
+														sharedTomcatName = in.readNullUTF();
+														int version = in.readCompressedInt();
+													} else {
+														sharedTomcatName = in.readUTF();
+													}
+													UnixPath contentSrc;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_9) <= 0) {
+														contentSrc = UnixPath.valueOf(in.readNullUTF());
+													} else {
+														contentSrc = null;
+													}
 													int phpVersion;
 													boolean enableCgi;
 													boolean enableSsi;
@@ -1963,8 +1977,6 @@ public abstract class MasterServer {
 														primaryHttpHostname,
 														altHttpHostnames,
 														sharedTomcatName,
-														version==-1?null:version,
-														contentSrc,
 														phpVersion,
 														enableCgi,
 														enableSsi,
@@ -1972,6 +1984,8 @@ public abstract class MasterServer {
 														enableIndexes,
 														enableFollowSymlinks
 													);
+													if(sharedTomcatName == null) throw new IOException(AOSHCommand.ADD_HTTPD_TOMCAT_SHARED_SITE + " call now requires non-null shared_tomcat_name");
+													if(contentSrc != null) throw new IOException(AOSHCommand.ADD_HTTPD_TOMCAT_SHARED_SITE + " call no longer supports non-null content_source");
 													int pkey = HttpdHandler.addHttpdTomcatSharedSite(
 														conn,
 														source,
@@ -1987,8 +2001,6 @@ public abstract class MasterServer {
 														primaryHttpHostname,
 														altHttpHostnames,
 														sharedTomcatName,
-														version,
-														contentSrc,
 														phpVersion,
 														enableCgi,
 														enableSsi,
@@ -2017,7 +2029,12 @@ public abstract class MasterServer {
 													DomainName[] altHttpHostnames = new DomainName[len];
 													for(int c=0;c<len;c++) altHttpHostnames[c] = DomainName.valueOf(in.readUTF());
 													int tomcatVersion = in.readCompressedInt();
-													UnixPath contentSrc = UnixPath.valueOf(in.readNullUTF());
+													UnixPath contentSrc;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_9) <= 0) {
+														contentSrc = UnixPath.valueOf(in.readNullUTF());
+													} else {
+														contentSrc = null;
+													}
 													int phpVersion;
 													boolean enableCgi;
 													boolean enableSsi;
@@ -2059,7 +2076,6 @@ public abstract class MasterServer {
 														primaryHttpHostname,
 														altHttpHostnames,
 														tomcatVersion,
-														contentSrc,
 														phpVersion,
 														enableCgi,
 														enableSsi,
@@ -2067,6 +2083,7 @@ public abstract class MasterServer {
 														enableIndexes,
 														enableFollowSymlinks
 													);
+													if(contentSrc != null) throw new IOException(AOSHCommand.ADD_HTTPD_TOMCAT_STD_SITE + " call no longer supports non-null content_source");
 													int pkey = HttpdHandler.addHttpdTomcatStdSite(
 														conn,
 														source,
@@ -2082,7 +2099,6 @@ public abstract class MasterServer {
 														primaryHttpHostname,
 														altHttpHostnames,
 														tomcatVersion,
-														contentSrc,
 														phpVersion,
 														enableCgi,
 														enableSsi,
@@ -7775,28 +7791,6 @@ public abstract class MasterServer {
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
-										}
-										break;
-									case SET_IMAP_FOLDER_SUBSCRIBED :
-										{
-											int pkey = in.readCompressedInt();
-											String folderName = in.readUTF();
-											boolean subscribed = in.readBoolean();
-											process.setCommand(
-												"set_imap_folder_subscribed",
-												pkey,
-												folderName,
-												subscribed
-											);
-											EmailHandler.setImapFolderSubscribed(
-												conn,
-												source,
-												pkey,
-												folderName,
-												subscribed
-											);
-											resp = Response.DONE;
-											sendInvalidateList = false;
 										}
 										break;
 									case SET_IP_ADDRESS_DHCP_ADDRESS :

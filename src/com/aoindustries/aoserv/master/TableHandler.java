@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2016, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -31,6 +31,8 @@ import com.aoindustries.aoserv.client.CreditCard;
 import com.aoindustries.aoserv.client.CreditCardProcessor;
 import com.aoindustries.aoserv.client.CreditCardTransaction;
 import com.aoindustries.aoserv.client.CvsRepository;
+import com.aoindustries.aoserv.client.CyrusImapdBind;
+import com.aoindustries.aoserv.client.CyrusImapdServer;
 import com.aoindustries.aoserv.client.DNSForbiddenZone;
 import com.aoindustries.aoserv.client.DNSRecord;
 import com.aoindustries.aoserv.client.DNSTLD;
@@ -143,6 +145,8 @@ import com.aoindustries.aoserv.client.SchemaColumn;
 import com.aoindustries.aoserv.client.SchemaForeignKey;
 import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.SchemaType;
+import com.aoindustries.aoserv.client.SendmailBind;
+import com.aoindustries.aoserv.client.SendmailServer;
 import com.aoindustries.aoserv.client.Server;
 import com.aoindustries.aoserv.client.ServerFarm;
 import com.aoindustries.aoserv.client.Shell;
@@ -308,9 +312,9 @@ final public class TableHandler {
 			case BACKUP_REPORTS :
 			{
 				int pkey=in.readCompressedInt();
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObject(
+					if(masterServers.length == 0) MasterServer.writeObject(
 						conn,
 						source,
 						out,
@@ -491,9 +495,9 @@ final public class TableHandler {
 		com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
 		switch(tableID) {
 			case DISTRO_FILES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_107)<=0) {
 							return 0;
 						} else {
@@ -539,9 +543,9 @@ final public class TableHandler {
 
 		switch(tableID) {
 			case AO_SERVER_DAEMON_HOSTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -570,9 +574,9 @@ final public class TableHandler {
 				}
 				break;
 			case AO_SERVERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -716,9 +720,9 @@ final public class TableHandler {
 				);
 				break;
 			case BACKUP_PARTITIONS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -789,9 +793,9 @@ final public class TableHandler {
 				);
 				break;
 			case BACKUP_REPORTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -910,9 +914,9 @@ final public class TableHandler {
 				}
 				break;
 			case BLACKHOLE_EMAIL_ADDRESSES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -969,9 +973,9 @@ final public class TableHandler {
 				);
 				break;
 			case BRANDS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						MasterServer.writeObjects(
 							conn,
 							source,
@@ -1064,9 +1068,9 @@ final public class TableHandler {
 				}
 				break;
 			case BUSINESS_ADMINISTRATORS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -1168,9 +1172,9 @@ final public class TableHandler {
 				}
 				break;
 			case BUSINESS_ADMINISTRATOR_PERMISSIONS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -1228,9 +1232,9 @@ final public class TableHandler {
 				);
 				break;
 			case BUSINESS_PROFILES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -1279,9 +1283,9 @@ final public class TableHandler {
 				);
 				break;
 			case BUSINESS_SERVERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -1328,9 +1332,9 @@ final public class TableHandler {
 				);
 				break;
 			case BUSINESSES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -1378,9 +1382,9 @@ final public class TableHandler {
 				break;
 			case CREDIT_CARD_PROCESSORS :
 				if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_card_processors)) {
-					if(masterUser!=null) {
+					if(masterUser != null) {
 						assert masterServers != null;
-						if(masterServers.length==0) MasterServer.writeObjects(
+						if(masterServers.length == 0) MasterServer.writeObjects(
 							conn,
 							source,
 							out,
@@ -1421,9 +1425,9 @@ final public class TableHandler {
 				break;
 			case CREDIT_CARDS :
 				if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_cards)) {
-					if(masterUser!=null) {
+					if(masterUser != null) {
 						assert masterServers != null;
-						if(masterServers.length==0) MasterServer.writeObjects(
+						if(masterServers.length == 0) MasterServer.writeObjects(
 							conn,
 							source,
 							out,
@@ -1464,9 +1468,9 @@ final public class TableHandler {
 				break;
 			case CREDIT_CARD_TRANSACTIONS :
 				if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_card_transactions)) {
-					if(masterUser!=null) {
+					if(masterUser != null) {
 						assert masterServers != null;
-						if(masterServers.length==0) MasterServer.writeObjects(
+						if(masterServers.length == 0) MasterServer.writeObjects(
 							conn,
 							source,
 							out,
@@ -1516,9 +1520,9 @@ final public class TableHandler {
 				);
 				break;
 			case CVS_REPOSITORIES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -1572,10 +1576,106 @@ final public class TableHandler {
 					username
 				);
 				break;
-			case DISABLE_LOG :
-				if(masterUser!=null) {
+			case CYRUS_IMAPD_BINDS :
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new CyrusImapdBind(),
+						"select * from cyrus_imapd_binds"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new CyrusImapdBind(),
+						"select\n"
+						+ "  cib.*\n"
+						+ "from\n"
+						+ "  master_servers ms\n"
+						+ "  inner join net_binds nb on ms.server=nb.server\n"
+						+ "  inner join cyrus_imapd_binds cib on nb.pkey=cib.net_bind\n"
+						+ "where\n"
+						+ "  ms.username=?",
+						username
+					);
+				} else MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new CyrusImapdBind(),
+					"select\n"
+					+ "  cib.*\n"
+					+ "from\n"
+					+ "  usernames un1,\n"
+					+ "  packages pk1,\n"
+					+ BU1_PARENTS_JOIN
+					+ "  packages pk2,\n"
+					+ "  net_binds nb,\n"
+					+ "  cyrus_imapd_binds cib\n"
+					+ "where\n"
+					+ "  un1.username=?\n"
+					+ "  and un1.package=pk1.name\n"
+					+ "  and (\n"
+					+ PK1_BU1_PARENTS_WHERE
+					+ "  )\n"
+					+ "  and bu1.accounting=pk2.accounting\n"
+					+ "  and pk2.name=nb.package\n"
+					+ "  and nb.pkey=cib.net_bind",
+					username
+				);
+				break;
+			case CYRUS_IMAPD_SERVERS :
+				if(masterUser != null) {
+					assert masterServers != null;
+					if(masterServers.length == 0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new CyrusImapdServer(),
+						"select * from cyrus_imapd_servers"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new CyrusImapdServer(),
+						"select\n"
+						+ "  cis.*\n"
+						+ "from\n"
+						+ "  master_servers ms\n"
+						+ "  inner join cyrus_imapd_servers cis on ms.server=cis.ao_server\n"
+						+ "where\n"
+						+ "  ms.username=?",
+						username
+					);
+				} else MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new CyrusImapdServer(),
+					"select\n"
+					+ "  cis.*\n"
+					+ "from\n"
+					+ "  usernames un\n"
+					+ "  inner join packages            pk  on un.package    = pk.name\n"
+					+ "  inner join business_servers    bs  on pk.accounting = bs.accounting\n"
+					+ "  inner join cyrus_imapd_servers cis on bs.server     = cis.ao_server\n"
+					+ "where\n"
+					+ "  un.username=?",
+					username
+				);
+				break;
+			case DISABLE_LOG :
+				if(masterUser != null) {
+					assert masterServers != null;
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -1641,7 +1741,7 @@ final public class TableHandler {
 			case DISTRO_FILES :
 				if(masterUser!=null && masterUser.isActive()) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.DISTRO_FILES));
 						if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_107)<=0) {
 							List<DistroFile> emptyList = Collections.emptyList();
@@ -1705,7 +1805,7 @@ final public class TableHandler {
 				);
 				break;
 			case DNS_RECORDS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
 					if(masterServers.length==0 || masterUser.isDNSAdmin()) MasterServer.writeObjects(
 						conn,
@@ -1766,7 +1866,7 @@ final public class TableHandler {
 				);
 				break;
 			case DNS_ZONES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
 					if(masterServers.length==0 || masterUser.isDNSAdmin()) MasterServer.writeObjects(
 						conn,
@@ -1805,9 +1905,9 @@ final public class TableHandler {
 				);
 				break;
 			case EMAIL_ADDRESSES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -1860,9 +1960,9 @@ final public class TableHandler {
 				);
 				break;
 			case EMAIL_ATTACHMENT_BLOCKS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -1927,9 +2027,9 @@ final public class TableHandler {
 				);
 				break;
 			case EMAIL_FORWARDING :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -1986,9 +2086,9 @@ final public class TableHandler {
 				);
 				break;
 			case EMAIL_LIST_ADDRESSES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2045,9 +2145,9 @@ final public class TableHandler {
 				);
 				break;
 			case EMAIL_LISTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2102,9 +2202,9 @@ final public class TableHandler {
 				);
 				break;
 			case EMAIL_PIPE_ADDRESSES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2161,9 +2261,9 @@ final public class TableHandler {
 				);
 				break;
 			case EMAIL_PIPES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2222,9 +2322,9 @@ final public class TableHandler {
 				);
 				break;
 			case ENCRYPTION_KEYS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						MasterServer.writeObjects(
 							conn,
 							source,
@@ -2278,9 +2378,9 @@ final public class TableHandler {
 				}
 				break;
 			case FAILOVER_FILE_LOG :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2329,9 +2429,9 @@ final public class TableHandler {
 				);
 				break;
 			case FAILOVER_FILE_REPLICATIONS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2376,9 +2476,9 @@ final public class TableHandler {
 				);
 				break;
 			case FAILOVER_FILE_SCHEDULE :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2427,9 +2527,9 @@ final public class TableHandler {
 				);
 				break;
 			case FAILOVER_MYSQL_REPLICATIONS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2494,9 +2594,9 @@ final public class TableHandler {
 				);
 				break;
 			case FILE_BACKUP_SETTINGS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2598,9 +2698,9 @@ final public class TableHandler {
 				);
 				break;
 			case FTP_GUEST_USERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2617,15 +2717,13 @@ final public class TableHandler {
 						+ "  fgu.username\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  ao_servers ao,\n"
 						+ "  business_servers bs,\n"
 						+ "  packages pk,\n"
 						+ "  usernames un,\n"
 						+ "  ftp_guest_users fgu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
-						+ "  and ms.server=ao.server\n"
-						+ "  and ao.server=bs.server\n"
+						+ "  and ms.server=bs.server\n"
 						+ "  and bs.accounting=pk.accounting\n"
 						+ "  and pk.name=un.package\n"
 						+ "  and un.username=fgu.username",
@@ -2659,9 +2757,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_BINDS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2725,9 +2823,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_JBOSS_SITES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						MasterServer.writeObjects(
 							conn,
 							source,
@@ -2814,9 +2912,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_SERVERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2863,9 +2961,9 @@ final public class TableHandler {
 				}
 				break;
 			case HTTPD_SHARED_TOMCATS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2918,9 +3016,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_SITE_AUTHENTICATED_LOCATIONS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -2973,9 +3071,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_SITE_BIND_REDIRECTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3032,9 +3130,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_SITE_BINDS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3087,9 +3185,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_SITE_URLS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3146,9 +3244,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_SITES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3197,9 +3295,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_STATIC_SITES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3252,9 +3350,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_TOMCAT_CONTEXTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3307,9 +3405,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_TOMCAT_DATA_SOURCES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3366,9 +3464,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_TOMCAT_PARAMETERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3425,9 +3523,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_TOMCAT_SITE_JK_MOUNTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3480,9 +3578,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_TOMCAT_SITES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3550,9 +3648,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_TOMCAT_SHARED_SITES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3605,9 +3703,9 @@ final public class TableHandler {
 				);
 				break;
 			case HTTPD_TOMCAT_STD_SITES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3671,9 +3769,9 @@ final public class TableHandler {
 				break;
 			// <editor-fold defaultstate="collapsed" desc="Httpd Workers">
 			case HTTPD_WORKERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3728,9 +3826,9 @@ final public class TableHandler {
 			// </editor-fold>
 			// <editor-fold defaultstate="collapsed" desc="IP Addresses">
 			case IP_ADDRESSES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -3873,9 +3971,9 @@ final public class TableHandler {
 			// </editor-fold>
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Limiter Limits">
 			case IP_REPUTATION_LIMITER_LIMITS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						// Admin may access all limiters
 						MasterServer.writeObjects(
 							conn,
@@ -3937,9 +4035,9 @@ final public class TableHandler {
 			// </editor-fold>
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Limiter Sets">
 			case IP_REPUTATION_LIMITER_SETS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						// Admin may access all limiters
 						MasterServer.writeObjects(
 							conn,
@@ -4001,9 +4099,9 @@ final public class TableHandler {
 			// </editor-fold>
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Limiters">
 			case IP_REPUTATION_LIMITERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						// Admin may access all limiters
 						MasterServer.writeObjects(
 							conn,
@@ -4063,9 +4161,9 @@ final public class TableHandler {
 			// </editor-fold>
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Set Hosts">
 			case IP_REPUTATION_SET_HOSTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						// Admin may access all sets
 						MasterServer.writeObjects(
 							conn,
@@ -4134,9 +4232,9 @@ final public class TableHandler {
 			// </editor-fold>
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Set Networks">
 			case IP_REPUTATION_SET_NETWORKS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						// Admin may access all sets
 						MasterServer.writeObjects(
 							conn,
@@ -4205,9 +4303,9 @@ final public class TableHandler {
 			// </editor-fold>
 			// <editor-fold defaultstate="collapsed" desc="IP Reputation Sets">
 			case IP_REPUTATION_SETS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						// Admin may access all sets
 						MasterServer.writeObjects(
 							conn,
@@ -4304,9 +4402,9 @@ final public class TableHandler {
 				break;
 			// </editor-fold>
 			case LINUX_ACC_ADDRESSES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -4363,9 +4461,9 @@ final public class TableHandler {
 				);
 				break;
 			case LINUX_ACCOUNTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -4438,9 +4536,9 @@ final public class TableHandler {
 				);
 				break;
 			case LINUX_GROUP_ACCOUNTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -4539,9 +4637,9 @@ final public class TableHandler {
 				);
 				break;
 			case LINUX_GROUPS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -4609,9 +4707,9 @@ final public class TableHandler {
 				);
 				break;
 			case LINUX_SERVER_ACCOUNTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -4688,9 +4786,9 @@ final public class TableHandler {
 				);
 				break;
 			case LINUX_SERVER_GROUPS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -4747,9 +4845,9 @@ final public class TableHandler {
 				);
 				break;
 			case MAJORDOMO_LISTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -4802,9 +4900,9 @@ final public class TableHandler {
 				);
 				break;
 			case MAJORDOMO_SERVERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -4867,9 +4965,9 @@ final public class TableHandler {
 				);
 				break;
 			case MASTER_HOSTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -4944,9 +5042,9 @@ final public class TableHandler {
 				);
 				break;
 			case MASTER_SERVERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -4998,9 +5096,9 @@ final public class TableHandler {
 				);
 				break;
 			case MASTER_USERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -5058,9 +5156,9 @@ final public class TableHandler {
 				);
 				break;
 			case MONTHLY_CHARGES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						MasterServer.writeObjects(
 							conn,
 							source,
@@ -5106,9 +5204,9 @@ final public class TableHandler {
 				}
 				break;
 			case MYSQL_DATABASES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -5159,9 +5257,9 @@ final public class TableHandler {
 				);
 				break;
 			case MYSQL_DB_USERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -5216,9 +5314,9 @@ final public class TableHandler {
 				);
 				break;
 			case MYSQL_SERVER_USERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -5280,9 +5378,9 @@ final public class TableHandler {
 				);
 				break;
 			case MYSQL_SERVERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -5327,9 +5425,9 @@ final public class TableHandler {
 				);
 				break;
 			case MYSQL_USERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -5346,15 +5444,13 @@ final public class TableHandler {
 						+ "  mu.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  ao_servers ao,\n"
 						+ "  business_servers bs,\n"
 						+ "  packages pk,\n"
 						+ "  usernames un,\n"
 						+ "  mysql_users mu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
-						+ "  and ms.server=ao.server\n"
-						+ "  and ao.server=bs.server\n"
+						+ "  and ms.server=bs.server\n"
 						+ "  and bs.accounting=pk.accounting\n"
 						+ "  and pk.name=un.package\n"
 						+ "  and un.username=mu.username",
@@ -5501,9 +5597,9 @@ final public class TableHandler {
 				break;
 			case NET_BINDS :
 				// TODO: Only do inner joins for open_firewall for clients 1.80.2 and older?
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -5552,11 +5648,9 @@ final public class TableHandler {
 						+ "  ) is not null as open_firewall\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  servers se,\n"
 						+ "  net_binds nb\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
-						+ "  and ms.server=se.pkey\n"
 						+ "  and (\n"
 						+ "    ms.server=nb.server\n"
 						+ "    or (\n"
@@ -5714,9 +5808,9 @@ final public class TableHandler {
 				);
 				break;
 			case NET_DEVICES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -5786,9 +5880,9 @@ final public class TableHandler {
 				);
 				break;
 			case NET_TCP_REDIRECTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -5841,9 +5935,9 @@ final public class TableHandler {
 				);
 				break;
 			case NOTICE_LOG :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -5918,9 +6012,9 @@ final public class TableHandler {
 				);
 				break;
 			case PACKAGE_DEFINITION_LIMITS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6016,9 +6110,9 @@ final public class TableHandler {
 				}
 				break;
 			case PACKAGE_DEFINITIONS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6117,9 +6211,9 @@ final public class TableHandler {
 				}
 				break;
 			case PACKAGES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6180,9 +6274,9 @@ final public class TableHandler {
 				);
 				break;
 			case PHYSICAL_SERVERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6233,9 +6327,9 @@ final public class TableHandler {
 				);
 				break;
 			case POSTGRES_DATABASES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6300,9 +6394,9 @@ final public class TableHandler {
 				);
 				break;
 			case POSTGRES_SERVER_USERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6359,9 +6453,9 @@ final public class TableHandler {
 				);
 				break;
 			case POSTGRES_SERVERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6406,9 +6500,9 @@ final public class TableHandler {
 				);
 				break;
 			case POSTGRES_USERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6425,15 +6519,13 @@ final public class TableHandler {
 						+ "  pu.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  ao_servers ao,\n"
 						+ "  business_servers bs,\n"
 						+ "  packages pk,\n"
 						+ "  usernames un,\n"
 						+ "  postgres_users pu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
-						+ "  and ms.server=ao.server\n"
-						+ "  and ao.server=bs.server\n"
+						+ "  and ms.server=bs.server\n"
 						+ "  and bs.accounting=pk.accounting\n"
 						+ "  and pk.name=un.package\n"
 						+ "  and un.username=pu.username",
@@ -6477,9 +6569,9 @@ final public class TableHandler {
 				);
 				break;
 			case PRIVATE_FTP_SERVERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6554,9 +6646,9 @@ final public class TableHandler {
 				);
 				break;
 			case RACKS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6609,9 +6701,9 @@ final public class TableHandler {
 				);
 				break;
 			case RESELLERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6825,9 +6917,9 @@ final public class TableHandler {
 				);
 				break;
 			case EMAIL_DOMAINS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6886,9 +6978,9 @@ final public class TableHandler {
 				);
 				break;
 			case EMAIL_SMTP_RELAYS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -6943,9 +7035,9 @@ final public class TableHandler {
 				);
 				break;
 			case EMAIL_SMTP_SMART_HOST_DOMAINS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -7000,9 +7092,9 @@ final public class TableHandler {
 				}
 				break;
 			case EMAIL_SMTP_SMART_HOSTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -7056,10 +7148,169 @@ final public class TableHandler {
 					);
 				}
 				break;
-			case SERVER_FARMS :
-				if(masterUser!=null) {
+			case SENDMAIL_BINDS :
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SendmailBind(),
+						"select * from sendmail_binds"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SendmailBind(),
+						"select\n"
+						+ "  sb.*\n"
+						+ "from\n"
+						+ "  master_servers ms\n"
+						+ "  inner join net_binds nb on ms.server=nb.server\n"
+						+ "  inner join sendmail_binds sb on nb.pkey=sb.net_bind\n"
+						+ "where\n"
+						+ "  ms.username=?",
+						username
+					);
+				} else MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new SendmailBind(),
+					"select\n"
+					+ "  *\n"
+					+ "from\n"
+					+ "  sendmail_binds\n"
+					+ "where\n"
+					// Allow by matching net_binds.package
+					+ "  net_bind in (\n"
+					+ "    select\n"
+					+ "      nb.pkey\n"
+					+ "    from\n"
+					+ "      usernames un1,\n"
+					+ "      packages pk1,\n"
+					+ BU1_PARENTS_JOIN
+					+ "      packages pk2,\n"
+					+ "      net_binds nb\n"
+					+ "    where\n"
+					+ "      un1.username=?\n"
+					+ "      and un1.package=pk1.name\n"
+					+ "      and (\n"
+					+ PK1_BU1_PARENTS_WHERE
+					+ "      )\n"
+					+ "      and bu1.accounting=pk2.accounting\n"
+					+ "      and pk2.name=nb.package\n"
+					+ "  )\n"
+					// Allow by matching sendmail_servers.package
+					+ "  or sendmail_server in (\n"
+					+ "    select\n"
+					+ "      ss.pkey\n"
+					+ "    from\n"
+					+ "      usernames un2,\n"
+					+ "      packages pk3,\n"
+					+ BU2_PARENTS_JOIN
+					+ "      packages pk4,\n"
+					+ "      sendmail_server ss\n"
+					+ "    where\n"
+					+ "      un2.username=?\n"
+					+ "      and un2.package=pk3.name\n"
+					+ "      and (\n"
+					+ PK3_BU2_PARENTS_WHERE
+					+ "      )\n"
+					+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+					+ "      and pk4.name=ss.package\n"
+					+ "  )",
+					username,
+					username
+				);
+				break;
+			case SENDMAIL_SERVERS :
+				if(masterUser != null) {
+					assert masterServers != null;
+					if(masterServers.length == 0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SendmailServer(),
+						"select * from sendmail_servers"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SendmailServer(),
+						"select\n"
+						+ "  ss.*\n"
+						+ "from\n"
+						+ "  master_servers ms\n"
+						+ "  inner join sendmail_servers ss on ms.server=ss.ao_server\n"
+						+ "where\n"
+						+ "  ms.username=?",
+						username
+					);
+				} else MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new SendmailServer(),
+					"select\n"
+					+ "  *\n"
+					+ "from\n"
+					+ "  sendmail_servers\n"
+					+ "where\n"
+					// Allow by matching net_binds.package
+					+ "  pkey in (\n"
+					+ "    select\n"
+					+ "      sb.sendmail_server\n"
+					+ "    from\n"
+					+ "      usernames un1,\n"
+					+ "      packages pk1,\n"
+					+ BU1_PARENTS_JOIN
+					+ "      packages pk2,\n"
+					+ "      net_binds nb,\n"
+					+ "      sendmail_binds sb\n"
+					+ "    where\n"
+					+ "      un1.username=?\n"
+					+ "      and un1.package=pk1.name\n"
+					+ "      and (\n"
+					+ PK1_BU1_PARENTS_WHERE
+					+ "      )\n"
+					+ "      and bu1.accounting=pk2.accounting\n"
+					+ "      and pk2.name=nb.package\n"
+					+ "      and nb.pkey=sb.net_bind\n"
+					+ "  )\n"
+					// Allow by matching sendmail_servers.package
+					+ "  or pkey in (\n"
+					+ "    select\n"
+					+ "      ss.pkey\n"
+					+ "    from\n"
+					+ "      usernames un2,\n"
+					+ "      packages pk3,\n"
+					+ BU2_PARENTS_JOIN
+					+ "      packages pk4,\n"
+					+ "      sendmail_server ss\n"
+					+ "    where\n"
+					+ "      un2.username=?\n"
+					+ "      and un2.package=pk3.name\n"
+					+ "      and (\n"
+					+ PK3_BU2_PARENTS_WHERE
+					+ "      )\n"
+					+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+					+ "      and pk4.name=ss.package\n"
+					+ "  )",
+					username,
+					username
+				);
+				break;
+			case SERVER_FARMS :
+				if(masterUser != null) {
+					assert masterServers != null;
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -7118,9 +7369,9 @@ final public class TableHandler {
 				);
 				break;
 			case SERVERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -7199,9 +7450,9 @@ final public class TableHandler {
 				);
 				break;
 			case SIGNUP_REQUEST_OPTIONS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						MasterServer.writeObjects(
 							conn,
 							source,
@@ -7242,9 +7493,9 @@ final public class TableHandler {
 				}
 				break;
 			case SIGNUP_REQUESTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						MasterServer.writeObjects(
 							conn,
 							source,
@@ -7293,9 +7544,9 @@ final public class TableHandler {
 				); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
 				break;
 			case SYSTEM_EMAIL_ALIASES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -7407,9 +7658,9 @@ final public class TableHandler {
 				);
 				break;
 			case TICKET_ACTIONS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -7542,9 +7793,9 @@ final public class TableHandler {
 				}
 				break;
 			case TICKET_ASSIGNMENTS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -7594,9 +7845,9 @@ final public class TableHandler {
 				}
 				break;
 			case TICKET_BRAND_CATEGORIES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -7670,9 +7921,9 @@ final public class TableHandler {
 				);
 				break;
 			case TICKETS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						MasterServer.writeObjects(
 							conn,
 							source,
@@ -7852,9 +8103,9 @@ final public class TableHandler {
 				);
 				break;
 			case TRANSACTIONS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -7886,9 +8137,9 @@ final public class TableHandler {
 				);
 				break;
 			case USERNAMES :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -7956,9 +8207,9 @@ final public class TableHandler {
 				);
 				break;
 			case VIRTUAL_DISKS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -8009,9 +8260,9 @@ final public class TableHandler {
 				);
 				break;
 			case VIRTUAL_SERVERS :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) MasterServer.writeObjects(
+					if(masterServers.length == 0) MasterServer.writeObjects(
 						conn,
 						source,
 						out,
@@ -8085,9 +8336,9 @@ final public class TableHandler {
 				);
 				break;
 			case WHOIS_HISTORY :
-				if(masterUser!=null) {
+				if(masterUser != null) {
 					assert masterServers != null;
-					if(masterServers.length==0) {
+					if(masterServers.length == 0) {
 						MasterServer.writeObjects(
 							conn,
 							source,

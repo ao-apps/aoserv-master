@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -1071,19 +1071,6 @@ final public class EmailHandler {
 		long[] sizes=new long[folderNames.length];
 		Arrays.fill(sizes, -1);
 		return sizes;
-	}
-
-	public static void setImapFolderSubscribed(
-		DatabaseConnection conn,
-		RequestSource source,
-		int linux_server_account,
-		String folderName,
-		boolean subscribed
-	) throws IOException, SQLException {
-		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "setImapFolderSubscribed", linux_server_account);
-		int aoServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, linux_server_account);
-		UserId username=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, linux_server_account);
-		DaemonHandler.getDaemonConnector(conn, aoServer).setImapFolderSubscribed(username, folderName, subscribed);
 	}
 
 	public static InboxAttributes getInboxAttributes(

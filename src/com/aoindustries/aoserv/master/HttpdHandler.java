@@ -654,22 +654,6 @@ final public class HttpdHandler {
 		UnixPath workDir,
 		boolean serverXmlConfigured
 	) throws IOException, SQLException {
-		boolean isSecure=conn.executeBooleanQuery(
-			"select\n"
-			+ "  coalesce(\n"
-			+ "    (\n"
-			+ "      select\n"
-			+ "        hst.is_secure\n"
-			+ "      from\n"
-			+ "        httpd_tomcat_shared_sites htss,\n"
-			+ "        httpd_shared_tomcats hst\n"
-			+ "      where\n"
-			+ "        htss.tomcat_site=?\n"
-			+ "        and htss.httpd_shared_tomcat=hst.pkey\n"
-			+ "    ), false\n"
-			+ "  )",
-			tomcat_site
-		);
 		if(!HttpdTomcatContext.isValidDocBase(docBase)) throw new SQLException("Invalid docBase: "+docBase);
 		int aoServer=getAOServerForHttpdSite(conn, tomcat_site);
 
@@ -733,16 +717,6 @@ final public class HttpdHandler {
 
 		if(!HttpdTomcatContext.isValidPath(path)) throw new SQLException("Invalid path: "+path);
 		if(!HttpdTomcatContext.isValidWorkDir(workDir)) throw new SQLException("Invalid workDir: "+workDir);
-		if(isSecure) {
-			if(!ObjectUtils.equals(className, HttpdTomcatContext.DEFAULT_CLASS_NAME)) throw new SQLException("className not allowed for secure JVM: "+className);
-			if(crossContext!=HttpdTomcatContext.DEFAULT_CROSS_CONTEXT) throw new SQLException("crossContext not allowed for secure JVM: "+crossContext);
-			String siteName=getSiteNameForHttpdSite(conn, tomcat_site);
-			if(!docBaseStr.startsWith(httpdSitesDir + "/" + siteName + "/")) throw new SQLException("docBase not allowed for secure JVM: " + docBase);
-			if(override!=HttpdTomcatContext.DEFAULT_OVERRIDE) throw new SQLException("override not allowed for secure JVM: "+override);
-			if(privileged!=HttpdTomcatContext.DEFAULT_PRIVILEGED) throw new SQLException("privileged not allowed for secure JVM: "+privileged);
-			if(!ObjectUtils.equals(wrapperClass, HttpdTomcatContext.DEFAULT_WRAPPER_CLASS)) throw new SQLException("wrapperClass not allowed for secure JVM: "+wrapperClass);
-			if(!ObjectUtils.equals(workDir, HttpdTomcatContext.DEFAULT_WORK_DIR)) throw new SQLException("workDir not allowed for secure JVM: "+workDir);
-		}
 	}
 
 	/**
@@ -763,7 +737,6 @@ final public class HttpdHandler {
 		DomainName primaryHttpHostname,
 		DomainName[] altHttpHostnames,
 		int jBossVersion,
-		UnixPath contentSrc,
 		int phpVersion,
 		boolean enableCgi,
 		boolean enableSsi,
@@ -790,7 +763,6 @@ final public class HttpdHandler {
 			jBossVersion,
 			-1,
 			"",
-			contentSrc,
 			phpVersion,
 			enableCgi,
 			enableSsi,
@@ -819,7 +791,6 @@ final public class HttpdHandler {
 		int jBossVersion,
 		int tomcatVersion,
 		String sharedTomcatName,
-		UnixPath contentSrc,
 		int phpVersion,
 		boolean enableCgi,
 		boolean enableSsi,
@@ -916,46 +887,8 @@ final public class HttpdHandler {
 			// The IP must be on the provided server
 			int ipServer=IPAddressHandler.getServerForIPAddress(conn, ipAddress);
 			if(ipServer!=aoServer) throw new SQLException("IP address "+ipAddress+" is not hosted on AOServer #"+aoServer);
-			if(isTomcat4) {
-				Port[] ports;
-				try {
-					ports = new Port[] {
-						Port.valueOf(80, com.aoindustries.net.Protocol.TCP),
-						Port.valueOf(443, com.aoindustries.net.Protocol.TCP)
-					};
-				} catch(ValidationException e) {
-					throw new AssertionError("Hard-coded ports should never fail", e);
-				}
-				for (Port port : ports) {
-					// The IP must either be not attached to a httpd_server, or the server must support jk
-					int nb = NetBindHandler.getNetBind(conn, aoServer, ipAddress, port);
-					if(nb != -1) {
-						int hs=conn.executeIntQuery(
-							"select\n"
-							+ "  coalesce(\n"
-							+ "    (\n"
-							+ "      select\n"
-							+ "        httpd_server\n"
-							+ "      from\n"
-							+ "        httpd_binds\n"
-							+ "      where\n"
-							+ "        net_bind=?\n"
-							+ "    ), -1\n"
-							+ "  )",
-							nb
-						);
-						if(
-							hs!=-1
-							&& conn.executeBooleanQuery(
-								"select not is_mod_jk from httpd_servers where pkey=?",
-								hs
-							)
-						) throw new SQLException("httpd_server does not support mod_jk: "+hs);
-					}
-				}
-			}
 		} else {
-			ipAddress=IPAddressHandler.getSharedHttpdIP(conn, aoServer, isTomcat4);
+			ipAddress=IPAddressHandler.getSharedHttpdIP(conn, aoServer);
 			if(ipAddress==-1) throw new SQLException("Unable to find shared IP address for AOServer #"+aoServer);
 		}
 		if(phpVersion != -1) {
@@ -1006,7 +939,7 @@ final public class HttpdHandler {
 		}
 
 		// Create and/or get the HttpdBind info
-		int httpNetBind = getHttpdBind(conn, invalidateList, packageName, aoServer, ipAddress, httpPort, Protocol.HTTP, isTomcat4);
+		int httpNetBind = getHttpdBind(conn, invalidateList, packageName, aoServer, ipAddress, httpPort, Protocol.HTTP);
 
 		// Create the HttpdSite
 		httpdSitePKey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_sites_pkey_seq')");
@@ -1019,7 +952,6 @@ final public class HttpdHandler {
 			+ "  linux_account,\n"
 			+ "  linux_group,\n"
 			+ "  server_admin,\n"
-			+ "  content_src,\n"
 			+ "  php_version,\n"
 			+ "  enable_cgi,\n"
 			+ "  enable_ssi,\n"
@@ -1034,7 +966,6 @@ final public class HttpdHandler {
 			+ "  ?,\n" // linux_account
 			+ "  ?,\n" // linux_group
 			+ "  ?,\n" // server_admin
-			+ "  ?,\n" // content_src
 			+ "  ?,\n" // php_version
 			+ "  ?,\n" // enable_cgi
 			+ "  ?,\n" // enable_ssi
@@ -1050,14 +981,13 @@ final public class HttpdHandler {
 			pstmt.setString(5, username.toString());
 			pstmt.setString(6, group.toString());
 			pstmt.setString(7, serverAdmin.toString());
-			pstmt.setString(8, ObjectUtils.toString(contentSrc));
-			if(phpVersion == -1) pstmt.setNull(9, Types.INTEGER);
-			else pstmt.setInt(9, phpVersion);
-			pstmt.setBoolean(10, enableCgi);
-			pstmt.setBoolean(11, enableSsi);
-			pstmt.setBoolean(12, enableHtaccess);
-			pstmt.setBoolean(13, enableIndexes);
-			pstmt.setBoolean(14, enableFollowSymlinks);
+			if(phpVersion == -1) pstmt.setNull(8, Types.INTEGER);
+			else pstmt.setInt(8, phpVersion);
+			pstmt.setBoolean(9, enableCgi);
+			pstmt.setBoolean(10, enableSsi);
+			pstmt.setBoolean(11, enableHtaccess);
+			pstmt.setBoolean(12, enableIndexes);
+			pstmt.setBoolean(13, enableFollowSymlinks);
 			pstmt.executeUpdate();
 		} catch(SQLException err) {
 			System.err.println("Error from query: " + pstmt.toString());
@@ -1395,8 +1325,6 @@ final public class HttpdHandler {
 		int version,
 		UserId linuxServerAccount,
 		GroupId linuxServerGroup,
-		boolean isSecure,
-		boolean isOverflow,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
 		if(!HttpdSharedTomcat.isValidSharedTomcatName(name)) throw new SQLException("Invalid shared Tomcat name: "+name);
@@ -1466,18 +1394,16 @@ final public class HttpdHandler {
 				"insert into\n"
 				+ "  httpd_shared_tomcats\n"
 				+ "values(\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  null,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
+				+ "  ?,\n" // pkey
+				+ "  ?,\n" // name
+				+ "  ?,\n" // ao_server
+				+ "  ?,\n" // version
+				+ "  ?,\n" // linux_server_account
+				+ "  ?,\n" // linux_server_group
+				+ "  null,\n" // disable_log
+				+ "  ?,\n" // tomcat4_worker
+				+ "  ?,\n" // tomcat4_shutdown_port
+				+ "  ?,\n" // tomcat4_shutdown_key
 				+ "  false,\n" // is_manual
 				+ "  ?,\n" // max_post_size
 				+ "  true,\n" // unpack_wars
@@ -1489,8 +1415,6 @@ final public class HttpdHandler {
 				version,
 				lsaPkey,
 				lsgPkey,
-				isSecure,
-				isOverflow,
 				httpdWorkerPKey,
 				shutdownBindPKey,
 				new Identifier(MasterServer.getRandom()).toString(),
@@ -1501,18 +1425,16 @@ final public class HttpdHandler {
 				"insert into\n"
 				+ "  httpd_shared_tomcats\n"
 				+ "values(\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  null,\n"
-				+ "  null,\n"
-				+ "  null,\n"
-				+ "  null,\n"
+				+ "  ?,\n" // pkey
+				+ "  ?,\n" // name
+				+ "  ?,\n" // ao_server
+				+ "  ?,\n" // version
+				+ "  ?,\n" // linux_server_account
+				+ "  ?,\n" // linux_server_group
+				+ "  null,\n" // disable_log
+				+ "  null,\n" // tomcat4_worker
+				+ "  null,\n" // tomcat4_shutdown_port
+				+ "  null,\n" // tomcat4_shutdown_key
 				+ "  false,\n" // is_manual
 				+ "  ?,\n" // max_post_size
 				+ "  true,\n" // unpack_wars
@@ -1524,8 +1446,6 @@ final public class HttpdHandler {
 				version,
 				lsaPkey,
 				lsgPkey,
-				isSecure,
-				isOverflow,
 				HttpdSharedTomcat.DEFAULT_MAX_POST_SIZE
 			);
 		}
@@ -1558,8 +1478,6 @@ final public class HttpdHandler {
 		DomainName primaryHttpHostname,
 		DomainName[] altHttpHostnames,
 		String sharedTomcatName,
-		int version,
-		UnixPath contentSrc,
 		int phpVersion,
 		boolean enableCgi,
 		boolean enableSsi,
@@ -1567,230 +1485,6 @@ final public class HttpdHandler {
 		boolean enableIndexes,
 		boolean enableFollowSymlinks
 	) throws IOException, SQLException {
-		if(sharedTomcatName==null) {
-			throw new SQLException("Fatal: No shared Tomcat specified.");
-			/*
-			if(version==-1) throw new SQLException("One of tomcat_name or tomcat_version must be requested.");
-			boolean found=false;
-			String[] okVersions=HttpdSharedTomcat.getOverflowVersions();
-			for(int c=0;c<okVersions.length;c++) {
-				if(
-					conn.executeIntQuery(
-						Connection.TRANSACTION_READ_COMMITTED,
-						true,
-						"select\n"
-						+ "  pkey\n"
-						+ "from\n"
-						+ "  technology_versions\n"
-						+ "where\n"
-						+ "  name='"+HttpdTomcatVersion.TECHNOLOGY_NAME+"'\n"
-						+ "  and version=?\n"
-			+ "  and operating_system_version=(select operating_system_version from servers where pkey=?)",
-						okVersions[c],
-			aoServer
-					)==version
-				) {
-					found=true;
-					break;
-				}
-			}
-			if(!found) throw new SQLException("Secured Shared JVM now allowed for tomcat_version: "+version+", aoServer="+aoServer+", okVersions={"+StringUtility.buildList(okVersions)+"}");
-
-			// Find or allocate a shared Tomcat for use with this site
-
-			// Find a JVM that does not already have the maximum number of sites
-			int sharedTomcatPKey = conn.executeIntQuery(
-				Connection.TRANSACTION_READ_COMMITTED,
-				true,
-				"select\n"
-				+ "  coalesce(\n"
-				+ "    (\n"
-				+ "      select\n"
-				+ "        hst.pkey\n"
-				+ "      from\n"
-				+ "        httpd_shared_tomcats hst\n"
-				+ "      where\n"
-				+ "        hst.is_overflow\n"
-				+ "        and hst.ao_server=?\n"
-				+ "        and hst.version=?\n"
-				+ "        and (\n"
-				+ "          select\n"
-				+ "            count(*)\n"
-				+ "          from\n"
-				+ "            httpd_tomcat_shared_sites htss\n"
-				+ "          where\n"
-				+ "            hst.pkey=htss.httpd_shared_tomcat\n"
-				+ "        )<"+HttpdSharedTomcat.MAX_SITES+"\n"
-				+ "      order by\n"
-				+ "        hst.name\n"
-				+ "      limit 1\n"
-				+ "    ),\n"
-				+ "    -1\n"
-				+ "  )",
-				aoServer,
-				version
-			);
-
-			String sharedTomcatUsername;
-			String sharedTomcatGroup;
-
-			if (sharedTomcatPKey!=-1) {
-				// Get the JVM name
-				sharedTomcatName=conn.executeStringQuery(
-					Connection.TRANSACTION_READ_COMMITTED,
-					true,
-					"select name from httpd_shared_tomcats where pkey=?",
-					sharedTomcatPKey
-				);
-
-				// Available JVM found, use it
-				sharedTomcatUsername=conn.executeStringQuery(
-					Connection.TRANSACTION_READ_COMMITTED,
-					true,
-					  "select\n"
-					+ "  lsa.username\n"
-					+ "from\n"
-					+ "  httpd_shared_tomcats hst,\n"
-					+ "  linux_server_accounts lsa\n"
-					+ "where\n"
-					+ "  hst.pkey=?\n"
-					+ "  and hst.linux_server_account=lsa.pkey",
-					sharedTomcatPKey
-				);
-				sharedTomcatGroup=conn.executeStringQuery(
-					Connection.TRANSACTION_READ_COMMITTED,
-					true,
-					  "select\n"
-					+ "  lsg.name\n"
-					+ "from\n"
-					+ "  httpd_shared_tomcats hst,\n"
-					+ "  linux_server_groups lsg\n"
-					+ "where\n"
-					+ "  hst.pkey=?\n"
-					+ "  and hst.linux_server_group=lsg.pkey",
-					sharedTomcatPKey
-				);
-			} else {
-				// create a new overflow JVM
-				sharedTomcatName = generateSharedTomcatName(conn, HttpdSharedTomcat.OVERFLOW_TEMPLATE);
-
-				// Add the username
-				UsernameHandler.addUsername(
-					conn,
-					source,
-					invalidateList,
-					BusinessHandler.getRootBusiness(),
-					sharedTomcatName,
-					true
-				);
-
-				// Add the Linux group
-				LinuxAccountHandler.addLinuxGroup(
-					conn,
-					source,
-					invalidateList,
-					sharedTomcatName,
-					BusinessHandler.getRootBusiness(),
-					LinuxGroupType.APPLICATION,
-					true
-				);
-
-				// Add the Linux account
-				LinuxAccountHandler.addLinuxAccount(
-					conn,
-					source,
-					invalidateList,
-					sharedTomcatName,
-					sharedTomcatName,
-					sharedTomcatName,
-					null,
-					null,
-					null,
-					LinuxAccountType.APPLICATION,
-					Shell.BASH,
-					true
-				);
-
-				// Add the Linux server group
-				int sharedTomcatGroupPKey=LinuxAccountHandler.addLinuxServerGroup(
-					conn,
-					source,
-					invalidateList,
-					sharedTomcatName,
-					aoServer,
-					true
-				);
-
-				// Add the Linux server account
-				int sharedTomcatAccountPKey=LinuxAccountHandler.addLinuxServerAccount(
-					conn,
-					source,
-					invalidateList,
-					sharedTomcatName,
-					aoServer,
-					HttpdSharedTomcat.WWW_GROUP_DIR+'/'+sharedTomcatName,
-					true
-				);
-
-				// Add the new overflow JVM
-				addHttpdSharedTomcat(
-					conn,
-					source,
-					invalidateList,
-					sharedTomcatName,
-					aoServer,
-					version,
-					sharedTomcatName,
-					sharedTomcatName,
-					true,
-					true,
-					true
-				);
-			}
-
-			// Grant group permissions if they do not already exist
-			if(
-				conn.executeBooleanQuery(
-					Connection.TRANSACTION_READ_COMMITTED,
-					true,
-					"select (select pkey from linux_group_accounts where group_name=? and username=?) is null",
-					operating_system_version, too, if this code is resurrected
-					group,
-					sharedTomcatName
-				)
-			) LinuxAccountHandler.addLinuxGroupAccount(
-				conn,
-				source,
-				invalidateList,
-				group,
-				sharedTomcatName,
-				false,
-				true
-			);
-
-			if(
-				conn.executeBooleanQuery(
-					Connection.TRANSACTION_READ_COMMITTED,
-					true,
-					"select (select pkey from linux_group_accounts where group_name=? and username=?) is null",
-					operating_system_version, too, if this code is resurrected
-					sharedTomcatName,
-					username
-				)
-			) LinuxAccountHandler.addLinuxGroupAccount(
-				conn,
-				source,
-				invalidateList,
-				sharedTomcatName,
-				username,
-				false,
-				true
-			);
-			*/
-		} else {
-			if(version!=-1) throw new SQLException("Only one of tomcat_name or tomcat_version may be requested.");
-			version=conn.executeIntQuery("select version from httpd_shared_tomcats where name=? and ao_server=?", sharedTomcatName, aoServer);
-		}
 		return addHttpdJVMSite(
 			"addTomcatSharedSite",
 			conn,
@@ -1810,7 +1504,6 @@ final public class HttpdHandler {
 			-1,
 			-1,
 			sharedTomcatName,
-			contentSrc,
 			phpVersion,
 			enableCgi,
 			enableSsi,
@@ -1838,7 +1531,6 @@ final public class HttpdHandler {
 		DomainName primaryHttpHostname,
 		DomainName[] altHttpHostnames,
 		int tomcatVersion,
-		UnixPath contentSrc,
 		int phpVersion,
 		boolean enableCgi,
 		boolean enableSsi,
@@ -1865,7 +1557,6 @@ final public class HttpdHandler {
 			-1,
 			tomcatVersion,
 			"",
-			contentSrc,
 			phpVersion,
 			enableCgi,
 			enableSsi,
@@ -2541,8 +2232,7 @@ final public class HttpdHandler {
 		int aoServer,
 		int ipAddress,
 		Port httpPort,
-		String protocol,
-		boolean isTomcat4
+		String protocol
 	) throws IOException, SQLException {
 		// First, find the net_bind
 		int netBind;
@@ -2661,10 +2351,7 @@ final public class HttpdHandler {
 				+ "  httpd_servers hs\n"
 				+ "where\n"
 				+ "  hs.can_add_sites\n"
-				+ "  and (\n"
-				+ "    hs.is_mod_jk\n"
-				+ "    or hs.is_mod_jk=?\n"
-				+ "  ) and hs.ao_server=?\n"
+				+ "  and hs.ao_server=?\n"
 				+ "  and (\n"
 				+ "    hs.is_shared\n"
 				+ "    or (\n"
@@ -2673,22 +2360,11 @@ final public class HttpdHandler {
 				+ "        (select accounting from packages where name=?)\n"
 				+ "      )\n"
 				+ "    )\n"
-				+ "  )\n"
-				+ "  and (\n"
-				+ "    select\n"
-				+ "      count(*)\n"
-				+ "    from\n"
-				+ "      httpd_binds hb,\n"
-				+ "      httpd_site_binds hsb\n"
-				+ "    where\n"
-				+ "      hs.pkey=hb.httpd_server\n"
-				+ "      and hb.net_bind=hsb.httpd_bind\n"
-				+ "  )<hs.max_binds"
+				+ "  )"
 			);
 			try {
-				pstmt.setBoolean(1, isTomcat4);
-				pstmt.setInt(2, aoServer);
-				pstmt.setString(3, packageName.toString());
+				pstmt.setInt(1, aoServer);
+				pstmt.setString(2, packageName.toString());
 				ResultSet results=pstmt.executeQuery();
 				try {
 					while(results.next()) {
@@ -2712,35 +2388,6 @@ final public class HttpdHandler {
 				netBind,
 				lowestPKey
 			);
-		} else {
-			if(
-				conn.executeBooleanQuery(
-					"select\n"
-					+ "  (\n"
-					+ "    select\n"
-					+ "      count(*)\n"
-					+ "    from\n"
-					+ "      httpd_binds hb1,\n"
-					+ "      httpd_binds hb2,\n"
-					+ "      httpd_site_binds hsb\n"
-					+ "    where\n"
-					+ "      hb1.net_bind=?\n"
-					+ "      and hb1.httpd_server=hb2.httpd_server\n"
-					+ "      and hb2.net_bind=hsb.httpd_bind\n"
-					+ "  )>=(\n"
-					+ "    select\n"
-					+ "      hs.max_binds\n"
-					+ "    from\n"
-					+ "      httpd_binds hb,\n"
-					+ "      httpd_servers hs\n"
-					+ "    where\n"
-					+ "      hb.net_bind=?\n"
-					+ "      and hb.httpd_server=hs.pkey\n"
-					+ "  )",
-					netBind,
-					netBind
-				)
-			) throw new SQLException("HttpdServer has reached its maximum number of HttpdSiteBinds: "+ipAddress+":"+httpPort+" on "+aoServer);
 		}
 		// Always invalidate these tables because adding site may grant permissions to these rows
 		AccountingCode business = PackageHandler.getBusinessForPackage(conn, packageName);
@@ -3015,39 +2662,7 @@ final public class HttpdHandler {
 			}
 
 			// httpd_tomcat_shared_sites
-			if(conn.executeBooleanQuery("select (select tomcat_site from httpd_tomcat_shared_sites where tomcat_site=? limit 1) is not null", httpdSitePKey)) {
-				// linux_group_accounts
-				int httpdSharedTomcat=conn.executeIntQuery("select httpd_shared_tomcat from httpd_tomcat_shared_sites where tomcat_site=?", httpdSitePKey);
-				if(conn.executeBooleanQuery("select is_overflow from httpd_shared_tomcats where pkey=?", httpdSharedTomcat)) {
-					// Only remove group ties if the shared tomcat is an overflow type
-					UserId hsUsername = conn.executeObjectQuery(
-						ObjectFactories.userIdFactory,
-						"select linux_account from httpd_sites where pkey=?",
-						httpdSitePKey
-					);
-					GroupId hsGroup = conn.executeObjectQuery(
-						ObjectFactories.groupIdFactory,
-						"select linux_group from httpd_sites where pkey=?",
-						httpdSitePKey
-					);
-					UserId hstUsername = conn.executeObjectQuery(
-						ObjectFactories.userIdFactory,
-						"select lsa.username from httpd_shared_tomcats hst, linux_server_accounts lsa where hst.pkey=? and hst.linux_server_account=lsa.pkey",
-						httpdSharedTomcat
-					);
-					GroupId hstGroup = conn.executeObjectQuery(
-						ObjectFactories.groupIdFactory,
-						"select lsg.name from httpd_shared_tomcats hst, linux_server_groups lsg where hst.pkey=? and hst.linux_server_group=lsg.pkey",
-						httpdSharedTomcat
-					);
-
-					conn.executeUpdate("delete from httpd_tomcat_shared_sites where tomcat_site=?", httpdSitePKey);
-
-					LinuxAccountHandler.removeUnusedAlternateLinuxGroupAccount(conn, invalidateList, hsGroup, hstUsername);
-					LinuxAccountHandler.removeUnusedAlternateLinuxGroupAccount(conn, invalidateList, hstGroup, hsUsername);
-				}
-
-				conn.executeUpdate("delete from httpd_tomcat_shared_sites where tomcat_site=?", httpdSitePKey);
+			if(conn.executeUpdate("delete from httpd_tomcat_shared_sites where tomcat_site=?", httpdSitePKey) > 0) {
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SHARED_SITES, accounting, aoServer, false);
 			}
 

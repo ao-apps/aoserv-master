@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2014, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -261,7 +261,7 @@ final public class IPAddressHandler {
 		);
 	}
 
-	public static int getSharedHttpdIP(DatabaseConnection conn, int aoServer, boolean supportsModJK) throws IOException, SQLException {
+	public static int getSharedHttpdIP(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select\n"
 			+ "  coalesce(\n"
@@ -281,20 +281,6 @@ final public class IPAddressHandler {
 			+ "        and (\n"
 			+ "          nb.ip_address is null\n"
 			+ "          or ia.pkey=nb.ip_address\n"
-			+ "        ) and (\n"
-			+ "          hs.pkey is null\n"
-			+ "          or hs.is_mod_jk\n"
-			+ "          or hs.is_mod_jk=?\n"
-			+ "        ) and (\n"
-			+ "          hb.net_bind is null\n"
-			+ "          or (\n"
-			+ "            select\n"
-			+ "              count(*)\n"
-			+ "            from\n"
-			+ "              httpd_site_binds hsb\n"
-			+ "            where\n"
-			+ "              hsb.httpd_bind=hb.net_bind\n"
-			+ "          )<(hs.max_binds-1)\n"
 			+ "        )\n"
 			+ "      order by\n"
 			+ "        (\n"
@@ -316,7 +302,6 @@ final public class IPAddressHandler {
 			+ "  )",
 			com.aoindustries.net.Protocol.TCP.name().toLowerCase(Locale.ROOT),
 			aoServer,
-			supportsModJK,
 			aoServer
 		);
 	}

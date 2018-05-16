@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -153,6 +153,12 @@ final public class InvalidateList {
                 case BUSINESSES :
                     addTable(conn, SchemaTable.TableID.BUSINESS_PROFILES, businesses, servers, true);
                     break;
+                case CYRUS_IMAPD_BINDS :
+                    addTable(conn, SchemaTable.TableID.CYRUS_IMAPD_SERVERS, businesses, servers, false);
+                    break;
+                case CYRUS_IMAPD_SERVERS :
+                    addTable(conn, SchemaTable.TableID.CYRUS_IMAPD_BINDS, businesses, servers, false);
+                    break;
                 case EMAIL_DOMAINS :
                     addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.MAJORDOMO_SERVERS, businesses, servers, true);
@@ -228,6 +234,12 @@ final public class InvalidateList {
                     addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.POSTGRES_DATABASES, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.POSTGRES_SERVER_USERS, businesses, servers, true);
+                    break;
+                case SENDMAIL_BINDS :
+                    addTable(conn, SchemaTable.TableID.SENDMAIL_SERVERS, businesses, servers, false);
+                    break;
+                case SENDMAIL_SERVERS :
+                    addTable(conn, SchemaTable.TableID.SENDMAIL_BINDS, businesses, servers, false);
                     break;
                 case SERVERS :
                     addTable(conn, SchemaTable.TableID.AO_SERVERS, businesses, servers, true);
