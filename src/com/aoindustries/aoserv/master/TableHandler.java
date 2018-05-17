@@ -153,6 +153,8 @@ import com.aoindustries.aoserv.client.Shell;
 import com.aoindustries.aoserv.client.SignupRequest;
 import com.aoindustries.aoserv.client.SignupRequestOption;
 import com.aoindustries.aoserv.client.SpamEmailMessage;
+import com.aoindustries.aoserv.client.SslCertificate;
+import com.aoindustries.aoserv.client.SslCertificateName;
 import com.aoindustries.aoserv.client.SystemEmailAlias;
 import com.aoindustries.aoserv.client.Technology;
 import com.aoindustries.aoserv.client.TechnologyClass;
@@ -3138,7 +3140,16 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdSiteBind(),
-						"select * from httpd_site_binds"
+						"select\n"
+						+ "  hsb.*,\n"
+						// Protocol conversion
+						+ "  sc.cert_file  as ssl_cert_file,\n"
+						+ "  sc.key_file   as ssl_cert_key_file,\n"
+						+ "  sc.chain_file as ssl_cert_chain_file\n"
+						+ "from\n"
+						+ "  httpd_site_binds hsb\n"
+						// Protocol conversion
+						+ "  left outer join ssl_certificates sc on hsb.certificate = sc.pkey"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3146,11 +3157,17 @@ final public class TableHandler {
 						provideProgress,
 						new HttpdSiteBind(),
 						"select\n"
-						+ "  hsb.*\n"
+						+ "  hsb.*,\n"
+						// Protocol conversion
+						+ "  sc.cert_file  as ssl_cert_file,\n"
+						+ "  sc.key_file   as ssl_cert_key_file,\n"
+						+ "  sc.chain_file as ssl_cert_chain_file\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  httpd_sites hs,\n"
 						+ "  httpd_site_binds hsb\n"
+						// Protocol conversion
+						+ "  left outer join ssl_certificates sc on hsb.certificate = sc.pkey"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3164,7 +3181,11 @@ final public class TableHandler {
 					provideProgress,
 					new HttpdSiteBind(),
 					"select\n"
-					+ "  hsb.*\n"
+					+ "  hsb.*,\n"
+					// Protocol conversion
+					+ "  sc.cert_file  as ssl_cert_file,\n"
+					+ "  sc.key_file   as ssl_cert_key_file,\n"
+					+ "  sc.chain_file as ssl_cert_chain_file\n"
 					+ "from\n"
 					+ "  usernames un,\n"
 					+ "  packages pk1,\n"
@@ -3172,6 +3193,8 @@ final public class TableHandler {
 					+ "  packages pk2,\n"
 					+ "  httpd_sites hs,\n"
 					+ "  httpd_site_binds hsb\n"
+					// Protocol conversion
+					+ "  left outer join ssl_certificates sc on hsb.certificate = sc.pkey"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -7542,6 +7565,109 @@ final public class TableHandler {
 					new SpamEmailMessage(),
 					"select * from spam_email_messages"
 				); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
+				break;
+			case SSL_CERTIFICATE_NAMES :
+				if(masterUser != null) {
+					assert masterServers != null;
+					if(masterServers.length == 0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SslCertificateName(),
+						"select * from ssl_certificate_names"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SslCertificateName(),
+						"select\n"
+						+ "  scn.*\n"
+						+ "from\n"
+						+ "  master_servers ms\n"
+						+ "  inner join ssl_certificates sc on ms.server=sc.ao_server\n"
+						+ "  inner join ssl_certificate_names scn on sc.pkey=scn.ssl_certificate\n"
+						+ "where\n"
+						+ "  ms.username=?",
+						username
+					);
+				} else MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new SslCertificateName(),
+					"select\n"
+					+ "  scn.*\n"
+					+ "from\n"
+					+ "  usernames un,\n"
+					+ "  packages pk1,\n"
+					+ BU1_PARENTS_JOIN
+					+ "  packages pk2,\n"
+					+ "  ssl_certificates sc,\n"
+					+ "  ssl_certificate_names scn\n"
+					+ "where\n"
+					+ "  un.username=?\n"
+					+ "  and un.package=pk1.name\n"
+					+ "  and (\n"
+					+ PK1_BU1_PARENTS_WHERE
+					+ "  )\n"
+					+ "  and bu1.accounting=pk2.accounting\n"
+					+ "  and pk2.pkey=sc.package\n"
+					+ "  and sc.pkey=scn.ssl_certificate",
+					username
+				);
+				break;
+			case SSL_CERTIFICATES :
+				if(masterUser != null) {
+					assert masterServers != null;
+					if(masterServers.length == 0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SslCertificate(),
+						"select * from ssl_certificates"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SslCertificate(),
+						"select\n"
+						+ "  sc.*\n"
+						+ "from\n"
+						+ "  master_servers ms\n"
+						+ "  inner join ssl_certificates sc on ms.server=sc.ao_server\n"
+						+ "where\n"
+						+ "  ms.username=?",
+						username
+					);
+				} else MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new SslCertificate(),
+					"select\n"
+					+ "  sc.*\n"
+					+ "from\n"
+					+ "  usernames un,\n"
+					+ "  packages pk1,\n"
+					+ BU1_PARENTS_JOIN
+					+ "  packages pk2,\n"
+					+ "  ssl_certificates sc\n"
+					+ "where\n"
+					+ "  un.username=?\n"
+					+ "  and un.package=pk1.name\n"
+					+ "  and (\n"
+					+ PK1_BU1_PARENTS_WHERE
+					+ "  )\n"
+					+ "  and bu1.accounting=pk2.accounting\n"
+					+ "  and pk2.pkey=sc.package",
+					username
+				);
 				break;
 			case SYSTEM_EMAIL_ALIASES :
 				if(masterUser != null) {

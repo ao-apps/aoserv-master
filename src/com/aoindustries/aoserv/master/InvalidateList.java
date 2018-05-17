@@ -247,6 +247,9 @@ final public class InvalidateList {
                     addTable(conn, SchemaTable.TableID.NET_DEVICES, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, businesses, servers, true);
                     break;
+                case SSL_CERTIFICATES :
+                    addTable(conn, SchemaTable.TableID.SSL_CERTIFICATE_NAMES, businesses, servers, false);
+                    break;
                 case USERNAMES :
                     addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, businesses, servers, true);
                     break;
