@@ -23,6 +23,7 @@ import com.aoindustries.aoserv.client.MasterProcess;
 import com.aoindustries.aoserv.client.MasterServerStat;
 import com.aoindustries.aoserv.client.MasterUser;
 import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.SslCertificate;
 import com.aoindustries.aoserv.client.Transaction;
 import com.aoindustries.aoserv.client.TransactionSearchCriteria;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
@@ -3426,6 +3427,31 @@ public abstract class MasterServer {
 											sendInvalidateList=true;
 										}
 										break;*/
+									case CHECK_SSL_CERTIFICATE :
+										{
+											int sslCertificate = in.readCompressedInt();
+											process.setCommand(
+												AOSHCommand.CHECK_SSL_CERTIFICATE,
+												sslCertificate
+											);
+											List<SslCertificate.Check> results = SslCertificateHandler.check(
+												conn,
+												source,
+												sslCertificate
+											);
+											out.writeByte(AOServProtocol.NEXT);
+											int size = results.size();
+											out.writeCompressedInt(size);
+											for(int c = 0; c < size; c++) {
+												SslCertificate.Check check = results.get(c);
+												out.writeUTF(check.getCheck());
+												out.writeUTF(check.getResult());
+												out.writeUTF(check.getAlertLevel().name());
+											}
+											resp = null;
+											sendInvalidateList = false;
+										}
+										break;
 									case COMPARE_LINUX_SERVER_ACCOUNT_PASSWORD :
 										{
 											int pkey = in.readCompressedInt();
