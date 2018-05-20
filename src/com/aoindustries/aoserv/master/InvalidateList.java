@@ -177,7 +177,7 @@ final public class InvalidateList {
                     break;
                 case HTTPD_BINDS :
                     addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
+                    addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, false);
                     break;
                 case HTTPD_SITE_BINDS :
                     addTable(conn, SchemaTable.TableID.HTTPD_BINDS, businesses, servers, true);
@@ -211,6 +211,7 @@ final public class InvalidateList {
                     addTable(conn, SchemaTable.TableID.MYSQL_SERVER_USERS, businesses, servers, true);
                     break;
                 case NET_BINDS :
+                    addTable(conn, SchemaTable.TableID.HTTPD_BINDS, businesses, servers, false);
                     addTable(conn, SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES, businesses, servers, false);
                     break;
                 case NET_BIND_FIREWALLD_ZONES :
