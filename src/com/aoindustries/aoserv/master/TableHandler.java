@@ -3149,7 +3149,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  httpd_site_binds hsb\n"
 						// Protocol conversion
-						+ "  left outer join ssl_certificates sc on hsb.certificate = sc.pkey"
+						+ "  left outer join ssl_certificates sc on hsb.certificate=sc.pkey"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3167,7 +3167,7 @@ final public class TableHandler {
 						+ "  httpd_sites hs,\n"
 						+ "  httpd_site_binds hsb\n"
 						// Protocol conversion
-						+ "  left outer join ssl_certificates sc on hsb.certificate = sc.pkey"
+						+ "  left outer join ssl_certificates sc on hsb.certificate=sc.pkey\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3194,7 +3194,7 @@ final public class TableHandler {
 					+ "  httpd_sites hs,\n"
 					+ "  httpd_site_binds hsb\n"
 					// Protocol conversion
-					+ "  left outer join ssl_certificates sc on hsb.certificate = sc.pkey"
+					+ "  left outer join ssl_certificates sc on hsb.certificate=sc.pkey\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
