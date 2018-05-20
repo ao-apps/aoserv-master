@@ -3445,8 +3445,9 @@ public abstract class MasterServer {
 											for(int c = 0; c < size; c++) {
 												SslCertificate.Check check = results.get(c);
 												out.writeUTF(check.getCheck());
-												out.writeUTF(check.getResult());
+												out.writeUTF(check.getValue());
 												out.writeUTF(check.getAlertLevel().name());
+												out.writeNullUTF(check.getMessage());
 											}
 											resp = null;
 											sendInvalidateList = false;
