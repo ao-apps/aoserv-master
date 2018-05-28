@@ -6683,7 +6683,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new PhysicalServer(),
+						new Rack(),
 						"select distinct\n"
 						+ "  ra.*\n"
 						+ "from\n"
@@ -6699,7 +6699,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new PhysicalServer(),
+					new Rack(),
 					"select distinct\n"
 					+ "  ra.*\n"
 					+ "from\n"
@@ -7236,7 +7236,7 @@ final public class TableHandler {
 					+ "      packages pk3,\n"
 					+ BU2_PARENTS_JOIN
 					+ "      packages pk4,\n"
-					+ "      sendmail_server ss\n"
+					+ "      sendmail_servers ss\n"
 					+ "    where\n"
 					+ "      un2.username=?\n"
 					+ "      and un2.package=pk3.name\n"
@@ -7244,7 +7244,7 @@ final public class TableHandler {
 					+ PK3_BU2_PARENTS_WHERE
 					+ "      )\n"
 					+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
-					+ "      and pk4.name=ss.package\n"
+					+ "      and pk4.pkey=ss.package\n"
 					+ "  )",
 					username,
 					username
@@ -7316,7 +7316,7 @@ final public class TableHandler {
 					+ "      packages pk3,\n"
 					+ BU2_PARENTS_JOIN
 					+ "      packages pk4,\n"
-					+ "      sendmail_server ss\n"
+					+ "      sendmail_servers ss\n"
 					+ "    where\n"
 					+ "      un2.username=?\n"
 					+ "      and un2.package=pk3.name\n"
@@ -7324,7 +7324,7 @@ final public class TableHandler {
 					+ PK3_BU2_PARENTS_WHERE
 					+ "      )\n"
 					+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
-					+ "      and pk4.name=ss.package\n"
+					+ "      and pk4.pkey=ss.package\n"
 					+ "  )",
 					username,
 					username
