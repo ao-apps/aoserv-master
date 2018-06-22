@@ -268,9 +268,9 @@ public abstract class MasterServer {
 
 		abstract void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException;
 
-		static final Response DONE = valueOf(AOServProtocol.DONE);
+		static final Response DONE = Response.of(AOServProtocol.DONE);
 
-		static Response valueOf(int resp1) {
+		static Response of(int resp1) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -279,7 +279,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOf(int resp1, int resp2) {
+		static Response of(int resp1, int resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -289,7 +289,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOf(int resp1, long resp2) {
+		static Response of(int resp1, long resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -299,7 +299,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOf(int resp1, boolean resp2) {
+		static Response of(int resp1, boolean resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -309,7 +309,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOf(int resp1, String resp2) {
+		static Response of(int resp1, String resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -319,19 +319,19 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOf(int resp1, AccountingCode resp2) {
-			return valueOf(resp1, resp2.toString());
+		static Response of(int resp1, AccountingCode resp2) {
+			return of(resp1, resp2.toString());
 		}
 
-		static Response valueOf(int resp1, MySQLDatabaseName resp2) {
-			return valueOf(resp1, resp2.toString());
+		static Response of(int resp1, MySQLDatabaseName resp2) {
+			return of(resp1, resp2.toString());
 		}
 
-		static Response valueOf(int resp1, PostgresDatabaseName resp2) {
-			return valueOf(resp1, resp2.toString());
+		static Response of(int resp1, PostgresDatabaseName resp2) {
+			return of(resp1, resp2.toString());
 		}
 
-		static Response valueOf(int resp1, long resp2, String resp3) {
+		static Response of(int resp1, long resp2, String resp3) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -342,7 +342,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOf(int resp1, long[] resp2) {
+		static Response of(int resp1, long[] resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -352,7 +352,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOf(int resp1, InboxAttributes resp2) {
+		static Response of(int resp1, InboxAttributes resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -363,7 +363,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOf(int resp1, String resp2, String resp3, String resp4) {
+		static Response of(int resp1, String resp2, String resp3, String resp4) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -375,7 +375,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOfNullLongString(int resp1, String resp2) {
+		static Response ofNullLongString(int resp1, String resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -385,7 +385,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOfLongString(int resp1, String resp2) {
+		static Response ofLongString(int resp1, String resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -395,7 +395,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOf(
+		static Response of(
 			int resp1,
 			String resp2,
 			HostAddress resp3,
@@ -414,7 +414,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response valueOfNullString(int resp1, String resp2) {
+		static Response ofNullString(int resp1, String resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
@@ -745,7 +745,7 @@ public abstract class MasterServer {
 														technicalContact,
 														technicalEmail
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -773,7 +773,7 @@ public abstract class MasterServer {
 														accounting,
 														server
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -946,7 +946,7 @@ public abstract class MasterServer {
 														encryptionFrom,
 														encryptionRecipient
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1107,7 +1107,7 @@ public abstract class MasterServer {
 														authorizationTime,
 														authorizationPrincipalName
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1138,7 +1138,7 @@ public abstract class MasterServer {
 														lsg,
 														mode
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1160,7 +1160,7 @@ public abstract class MasterServer {
 														accounting,
 														disableReason
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1212,7 +1212,7 @@ public abstract class MasterServer {
 														destination,
 														ttl
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1259,7 +1259,7 @@ public abstract class MasterServer {
 														address,
 														domain
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1284,7 +1284,7 @@ public abstract class MasterServer {
 														aoServer,
 														packageName
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1306,7 +1306,7 @@ public abstract class MasterServer {
 														address,
 														destination
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1328,7 +1328,7 @@ public abstract class MasterServer {
 														address,
 														email_list
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1353,7 +1353,7 @@ public abstract class MasterServer {
 														linuxServerAccount,
 														linuxServerGroup
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1375,7 +1375,7 @@ public abstract class MasterServer {
 														address,
 														pipe
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1400,7 +1400,7 @@ public abstract class MasterServer {
 														command,
 														packageName
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1434,7 +1434,7 @@ public abstract class MasterServer {
 														type,
 														duration
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1471,7 +1471,7 @@ public abstract class MasterServer {
 														bytes,
 														isSuccessful
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1518,7 +1518,7 @@ public abstract class MasterServer {
 														backupEnabled,
 														required
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1572,7 +1572,7 @@ public abstract class MasterServer {
 														linuxServerGroup,
 														false
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1670,7 +1670,7 @@ public abstract class MasterServer {
 														enableIndexes,
 														enableFollowSymlinks
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1715,7 +1715,7 @@ public abstract class MasterServer {
 														authUserFile,
 														require
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1737,7 +1737,7 @@ public abstract class MasterServer {
 														hsb_pkey,
 														hostname
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1800,7 +1800,7 @@ public abstract class MasterServer {
 														workDir,
 														serverXmlConfigured
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1847,7 +1847,7 @@ public abstract class MasterServer {
 														maxWait,
 														validationQuery
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1879,7 +1879,7 @@ public abstract class MasterServer {
 														override,
 														description
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -1904,7 +1904,7 @@ public abstract class MasterServer {
 														path,
 														mount
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2009,7 +2009,7 @@ public abstract class MasterServer {
 														enableIndexes,
 														enableFollowSymlinks
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2107,7 +2107,7 @@ public abstract class MasterServer {
 														enableIndexes,
 														enableFollowSymlinks
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2134,7 +2134,7 @@ public abstract class MasterServer {
 														address,
 														lsa
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2201,7 +2201,7 @@ public abstract class MasterServer {
 														false,
 														false
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2250,7 +2250,7 @@ public abstract class MasterServer {
 														home,
 														false
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2273,7 +2273,7 @@ public abstract class MasterServer {
 														aoServer,
 														false
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2295,7 +2295,7 @@ public abstract class MasterServer {
 														majordomoServer,
 														listName
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2345,7 +2345,7 @@ public abstract class MasterServer {
 														mysqlServer,
 														packageName
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2456,7 +2456,7 @@ public abstract class MasterServer {
 														canEvent,
 														canTrigger
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2481,7 +2481,7 @@ public abstract class MasterServer {
 														mysqlServer,
 														host
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2579,7 +2579,7 @@ public abstract class MasterServer {
 														monitoringEnabled,
 														firewalldZones
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2666,7 +2666,7 @@ public abstract class MasterServer {
 														accounting,
 														packageDefinition
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2712,7 +2712,7 @@ public abstract class MasterServer {
 														monthlyRate,
 														monthlyRateTransactionType
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2743,7 +2743,7 @@ public abstract class MasterServer {
 														encoding,
 														enable_postgis
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2765,7 +2765,7 @@ public abstract class MasterServer {
 														username,
 														postgresServer
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2913,7 +2913,7 @@ public abstract class MasterServer {
 														// options
 														options
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -2935,7 +2935,7 @@ public abstract class MasterServer {
 														esr,
 														message
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -3009,7 +3009,7 @@ public abstract class MasterServer {
 														contactEmails,
 														contactPhoneNumbers
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -3060,7 +3060,7 @@ public abstract class MasterServer {
 														processor,
 														payment_confirmed
 													);
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														pkey
 													);
@@ -3191,7 +3191,7 @@ public abstract class MasterServer {
 												groupName,
 												gid
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												pkey
 											);
@@ -3254,7 +3254,7 @@ public abstract class MasterServer {
 												home,
 												shell
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												pkey
 											);
@@ -3396,7 +3396,7 @@ public abstract class MasterServer {
 											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_48) < 0) {
 												resp = Response.DONE;
 											} else {
-												resp = Response.valueOf(
+												resp = Response.of(
 													AOServProtocol.DONE,
 													updated
 												);
@@ -3468,7 +3468,7 @@ public abstract class MasterServer {
 												pkey,
 												password
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												result
 											);
@@ -3490,7 +3490,7 @@ public abstract class MasterServer {
 												from_lsa,
 												to_server
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												byteCount
 											);
@@ -3530,7 +3530,7 @@ public abstract class MasterServer {
 												invalidateList,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												newPKey
 											);
@@ -4352,7 +4352,7 @@ public abstract class MasterServer {
 												conn,
 												template
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												accounting
 											);
@@ -4373,7 +4373,7 @@ public abstract class MasterServer {
 												template_base,
 												template_added
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												name
 											);
@@ -4391,7 +4391,7 @@ public abstract class MasterServer {
 												conn,
 												template
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												name
 											);
@@ -4412,7 +4412,7 @@ public abstract class MasterServer {
 												template_base,
 												template_added
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												name
 											);
@@ -4430,7 +4430,7 @@ public abstract class MasterServer {
 												conn,
 												template
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												name
 											);
@@ -4448,7 +4448,7 @@ public abstract class MasterServer {
 												conn,
 												template
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												name
 											);
@@ -4561,7 +4561,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												content
 											);
@@ -4603,7 +4603,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												size
 											);
@@ -4622,7 +4622,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												size
 											);
@@ -4646,7 +4646,7 @@ public abstract class MasterServer {
 												source,
 												tableID
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												count
 											);
@@ -4665,7 +4665,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												cronTable
 											);
@@ -4684,7 +4684,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												emailList
 											);
@@ -4718,7 +4718,7 @@ public abstract class MasterServer {
 												source,
 												replication
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												activity.getElement1(),
 												activity.getElement2()
@@ -4738,7 +4738,7 @@ public abstract class MasterServer {
 												numFolders,
 												folderNames
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												EmailHandler.getImapFolderSizes(
 													conn,
@@ -4757,7 +4757,7 @@ public abstract class MasterServer {
 												AOSHCommand.GET_INBOX_ATTRIBUTES,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												EmailHandler.getInboxAttributes(
 													conn,
@@ -4780,7 +4780,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												file
 											);
@@ -4799,7 +4799,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												file
 											);
@@ -4826,7 +4826,7 @@ public abstract class MasterServer {
 											process.setCommand(
 												"get_master_entropy_needed"
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												RandomHandler.getMasterEntropyNeeded(conn, source)
 											);
@@ -4958,7 +4958,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report
 											);
@@ -4977,7 +4977,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report
 											);
@@ -4996,7 +4996,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report
 											);
@@ -5015,7 +5015,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report
 											);
@@ -5034,7 +5034,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report
 											);
@@ -5053,7 +5053,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report
 											);
@@ -5072,7 +5072,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report[0],
 												report[1],
@@ -5093,7 +5093,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report
 											);
@@ -5112,7 +5112,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report
 											);
@@ -5131,7 +5131,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report
 											);
@@ -5150,7 +5150,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report
 											);
@@ -5169,7 +5169,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												report
 											);
@@ -5213,7 +5213,7 @@ public abstract class MasterServer {
 												monitoringParameters
 											);
 											logIOException = true;
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												result
 											);
@@ -5241,7 +5241,7 @@ public abstract class MasterServer {
 												connectIp
 											);
 											logIOException = true;
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												result
 											);
@@ -5260,7 +5260,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												systemTime
 											);
@@ -5279,7 +5279,7 @@ public abstract class MasterServer {
 												source,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												status
 											);
@@ -5329,7 +5329,7 @@ public abstract class MasterServer {
 									case GET_ROOT_BUSINESS :
 										{
 											process.setCommand(AOSHCommand.GET_ROOT_BUSINESS);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												BusinessHandler.getRootBusiness()
 											);
@@ -5358,7 +5358,7 @@ public abstract class MasterServer {
 													tableID
 												);
 											}
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												count
 											);
@@ -5466,7 +5466,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOfNullLongString(
+											resp = Response.ofNullLongString(
 												AOServProtocol.DONE,
 												details
 											);
@@ -5485,7 +5485,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOfNullLongString(
+											resp = Response.ofNullLongString(
 												AOServProtocol.DONE,
 												rawEmail
 											);
@@ -5504,7 +5504,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOfLongString(
+											resp = Response.ofLongString(
 												AOServProtocol.DONE,
 												internalNotes
 											);
@@ -5523,7 +5523,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOfNullLongString(
+											resp = Response.ofNullLongString(
 												AOServProtocol.DONE,
 												oldValue
 											);
@@ -5542,7 +5542,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOfNullLongString(
+											resp = Response.ofNullLongString(
 												AOServProtocol.DONE,
 												newValue
 											);
@@ -5561,7 +5561,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOfNullLongString(
+											resp = Response.ofNullLongString(
 												AOServProtocol.DONE,
 												details
 											);
@@ -5580,7 +5580,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOfNullLongString(
+											resp = Response.ofNullLongString(
 												AOServProtocol.DONE,
 												rawEmail
 											);
@@ -5660,7 +5660,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												whoisOutput
 											);
@@ -5720,7 +5720,7 @@ public abstract class MasterServer {
 												conn,
 												accounting
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -5739,7 +5739,7 @@ public abstract class MasterServer {
 												source,
 												username
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -5757,7 +5757,7 @@ public abstract class MasterServer {
 												conn,
 												zone
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -5779,7 +5779,7 @@ public abstract class MasterServer {
 												aoServer,
 												domain
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -5797,7 +5797,7 @@ public abstract class MasterServer {
 												conn,
 												name
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -5816,7 +5816,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -5836,18 +5836,18 @@ public abstract class MasterServer {
 												pkey
 											);
 											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_6)>=0) {
-												resp = Response.valueOf(
+												resp = Response.of(
 													AOServProtocol.DONE,
 													isManual
 												);
 											} else {
 												if(isManual==AOServProtocol.FALSE) {
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														false
 													);
 												} else if(isManual==AOServProtocol.TRUE) {
-													resp = Response.valueOf(
+													resp = Response.of(
 														AOServProtocol.DONE,
 														true
 													);
@@ -5874,7 +5874,7 @@ public abstract class MasterServer {
 												name,
 												mysqlServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -5893,7 +5893,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isSet
 											);
@@ -5911,7 +5911,7 @@ public abstract class MasterServer {
 												conn,
 												name
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -5933,7 +5933,7 @@ public abstract class MasterServer {
 												name,
 												postgresServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -5952,7 +5952,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -5974,7 +5974,7 @@ public abstract class MasterServer {
 												name,
 												aoServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -5992,7 +5992,7 @@ public abstract class MasterServer {
 												conn,
 												name
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -6010,7 +6010,7 @@ public abstract class MasterServer {
 												conn,
 												username
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -6028,7 +6028,7 @@ public abstract class MasterServer {
 												conn,
 												name
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												isAvailable
 											);
@@ -6821,7 +6821,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												daemonAccess.getProtocol(),
 												daemonAccess.getHost(),
@@ -8609,7 +8609,7 @@ public abstract class MasterServer {
 												resp = Response.DONE;
 											} else {
 												// Added boolean updated response
-												resp = Response.valueOf(
+												resp = Response.of(
 													AOServProtocol.DONE,
 													updated
 												);
@@ -8639,7 +8639,7 @@ public abstract class MasterServer {
 												newStatus,
 												statusTimeout
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												updated
 											);
@@ -8665,7 +8665,7 @@ public abstract class MasterServer {
 												oldInternalNotes,
 												newInternalNotes
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												updated
 											);
@@ -8738,7 +8738,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOfNullString(
+											resp = Response.ofNullString(
 												AOServProtocol.DONE,
 												message
 											);
@@ -8856,7 +8856,7 @@ public abstract class MasterServer {
 												source,
 												pkey
 											);
-											resp = Response.valueOfNullString(
+											resp = Response.ofNullString(
 												AOServProtocol.DONE,
 												message
 											);
@@ -9493,7 +9493,7 @@ public abstract class MasterServer {
 												source,
 												virtualServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												daemonAccess.getProtocol(),
 												daemonAccess.getHost(),
@@ -9515,7 +9515,7 @@ public abstract class MasterServer {
 												source,
 												virtualDisk
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												lastVerified
 											);
@@ -9534,7 +9534,7 @@ public abstract class MasterServer {
 												source,
 												virtualServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												output
 											);
@@ -9553,7 +9553,7 @@ public abstract class MasterServer {
 												source,
 												virtualServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												output
 											);
@@ -9572,7 +9572,7 @@ public abstract class MasterServer {
 												source,
 												virtualServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												output
 											);
@@ -9591,7 +9591,7 @@ public abstract class MasterServer {
 												source,
 												virtualServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												output
 											);
@@ -9610,7 +9610,7 @@ public abstract class MasterServer {
 												source,
 												virtualServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												output
 											);
@@ -9629,7 +9629,7 @@ public abstract class MasterServer {
 												source,
 												virtualServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												output
 											);
@@ -9648,7 +9648,7 @@ public abstract class MasterServer {
 												source,
 												virtualServer
 											);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												status
 											);
@@ -9663,7 +9663,7 @@ public abstract class MasterServer {
 												virtualServer
 											);
 											int physicalServer = ClusterHandler.getPrimaryPhysicalServer(conn, source, virtualServer);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												physicalServer
 											);
@@ -9678,7 +9678,7 @@ public abstract class MasterServer {
 												virtualServer
 											);
 											int physicalServer = ClusterHandler.getSecondaryPhysicalServer(conn, source, virtualServer);
-											resp = Response.valueOf(
+											resp = Response.of(
 												AOServProtocol.DONE,
 												physicalServer
 											);
