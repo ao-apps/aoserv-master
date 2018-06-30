@@ -234,6 +234,17 @@ final public class HttpdHandler {
 		}
 	}
 
+	public static void checkAccessHttpdServer(DatabaseConnection conn, RequestSource source, String action, int httpdServer) throws IOException, SQLException {
+		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		if(mu != null) {
+			if(MasterServer.getMasterServers(conn, source.getUsername()).length != 0) {
+				ServerHandler.checkAccessServer(conn, source, action, getAOServerForHttpdServer(conn, httpdServer));
+			}
+		} else {
+			PackageHandler.checkAccessPackage(conn, source, action, getPackageForHttpdServer(conn, httpdServer));
+		}
+	}
+
 	public static void checkAccessHttpdSite(DatabaseConnection conn, RequestSource source, String action, int httpdSite) throws IOException, SQLException {
 		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
 		if(mu!=null) {
@@ -243,6 +254,18 @@ final public class HttpdHandler {
 		} else {
 			PackageHandler.checkAccessPackage(conn, source, action, getPackageForHttpdSite(conn, httpdSite));
 		}
+	}
+
+	public static int getHttpdServerConcurrency(
+		DatabaseConnection conn,
+		RequestSource source,
+		int httpdServer
+	) throws IOException, SQLException {
+		checkAccessHttpdServer(conn, source, "getHttpdServerConcurrency", httpdServer);
+		return DaemonHandler.getDaemonConnector(
+			conn,
+			getAOServerForHttpdServer(conn, httpdServer)
+		).getHttpdServerConcurrency(httpdServer);
 	}
 
 	/**
@@ -339,6 +362,7 @@ final public class HttpdHandler {
 		return path;
 	}
 
+	@SuppressWarnings("deprecation") // Java 1.7: Do not suppress
 	public static int addHttpdTomcatContext(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -2038,6 +2062,23 @@ final public class HttpdHandler {
 		);
 	}
 
+	public static AccountingCode getPackageForHttpdServer(
+		DatabaseConnection conn,
+		int httpdServer
+	) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.accountingCodeFactory,
+			"select\n"
+			+ "  pk.name\n"
+			+ "from\n"
+			+ "  httpd_servers hs\n"
+			+ "  inner join packages pk on hs.package=pk.pkey\n"
+			+ "where\n"
+			+ "  hs.pkey=?",
+			httpdServer
+		);
+	}
+
 	public static AccountingCode getPackageForHttpdSharedTomcat(
 		DatabaseConnection conn,
 		int pkey
@@ -3675,6 +3716,7 @@ final public class HttpdHandler {
 		);
 	}
 
+	@SuppressWarnings("deprecation") // Java 1.7: Do not suppress
 	public static int setHttpdTomcatContextAttributes(
 		DatabaseConnection conn,
 		RequestSource source,

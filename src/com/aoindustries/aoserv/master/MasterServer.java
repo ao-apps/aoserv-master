@@ -4726,6 +4726,25 @@ public abstract class MasterServer {
 											sendInvalidateList = false;
 										}
 										break;
+									case GET_HTTPD_SERVER_CONCURRENCY :
+										{
+											int httpdServer = in.readCompressedInt();
+											process.setCommand(
+												AOSHCommand.GET_HTTPD_SERVER_CONCURRENCY,
+												httpdServer
+											);
+											int hsConcurrency = HttpdHandler.getHttpdServerConcurrency(
+												conn,
+												source,
+												httpdServer
+											);
+											resp = Response.of(
+												AOServProtocol.DONE,
+												hsConcurrency
+											);
+											sendInvalidateList = false;
+										}
+										break;
 									case GET_IMAP_FOLDER_SIZES :
 										{
 											int pkey = in.readCompressedInt();
