@@ -725,6 +725,8 @@ final public class LinuxAccountHandler {
 						|| groupName.equals(LinuxGroup.AOSERV_XEN_MIGRATION)
 						|| groupName.equals(LinuxGroup.CGRED)
 						|| groupName.equals(LinuxGroup.CHRONY)
+						|| groupName.equals(LinuxGroup.CLAMSCAN)
+						|| groupName.equals(LinuxGroup.CLAMUPDATE)
 						|| groupName.equals(LinuxGroup.INPUT)
 						|| groupName.equals(LinuxGroup.MEMCACHED)
 						|| groupName.equals(LinuxGroup.NGINX)
@@ -733,6 +735,7 @@ final public class LinuxAccountHandler {
 						|| groupName.equals(LinuxGroup.SYSTEMD_BUS_PROXY)
 						|| groupName.equals(LinuxGroup.SYSTEMD_NETWORK)
 						|| groupName.equals(LinuxGroup.UNBOUND)
+						|| groupName.equals(LinuxGroup.VIRUSGROUP)
 					)
 				) || (
 					// Regular user groups in range gid_min through LinuxGroup.GID_MAX
@@ -842,6 +845,8 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(LinuxAccount.NFSNOBODY,                  65534, LinuxGroup.NFSNOBODY,         "Anonymous NFS User",          "/var/lib/nfs",     Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.AOSERV_JILTER,     ANY_SYSTEM_UID, LinuxGroup.AOSERV_JILTER,     "AOServ Jilter",               "/var/opt/aoserv-jilter", Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.CHRONY,            ANY_SYSTEM_UID, LinuxGroup.CHRONY,            null,                          "/var/lib/chrony",  Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.CLAMSCAN,          ANY_SYSTEM_UID, LinuxGroup.CLAMSCAN,          "Clamav scanner user",         "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(LinuxAccount.CLAMUPDATE,        ANY_SYSTEM_UID, LinuxGroup.CLAMUPDATE,        "Clamav database update user", "/var/lib/clamav",  Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.MEMCACHED,         ANY_SYSTEM_UID, LinuxGroup.MEMCACHED,         "Memcached daemon",            "/run/memcached",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.NGINX,             ANY_SYSTEM_UID, LinuxGroup.NGINX,             "Nginx web server",            "/var/lib/nginx",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(LinuxAccount.POLKITD,           ANY_SYSTEM_UID, LinuxGroup.POLKITD,           "User for polkitd",            "/",                Shell.NOLOGIN, null);
