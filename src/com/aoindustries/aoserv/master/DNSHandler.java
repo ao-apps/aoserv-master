@@ -491,6 +491,12 @@ final public class DNSHandler implements CronJob {
 
 		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, destination) values(?,?,?,?)");
 		try {
+			// TODO: Take a "mail exchanger" parameter to properly setup the default MX records.
+			//       If in this domain, sets up SPF like below.  If outside this domain (ends in .),
+			//       sets up MX to the mail exchanger, and CNAME "mail" to the mail exchanger.
+
+			// TODO: Take nameservers from brands
+
 			// Add the ns1.aoindustries.com name server
 			pstmt.setString(1, zone);
 			pstmt.setString(2, "@");
@@ -519,7 +525,7 @@ final public class DNSHandler implements CronJob {
 			pstmt.setString(4, "ns4.aoindustries.com.");
 			pstmt.executeUpdate();
 
-			// Add the SPF TXt entry
+			// Add the SPF TXT entry
 			pstmt.setString(1, zone);
 			pstmt.setString(2, "@");
 			pstmt.setString(3, DNSType.TXT);
@@ -552,6 +558,13 @@ final public class DNSHandler implements CronJob {
 			pstmt.setString(3, aType);
 			pstmt.setString(4, ip.toString());
 			pstmt.executeUpdate();
+
+			// Add the ftp SPF TXT entry
+			pstmt.setString(1, zone);
+			pstmt.setString(2, "ftp");
+			pstmt.setString(3, DNSType.TXT);
+			pstmt.setString(4, "v=spf1 -all");
+			pstmt.executeUpdate();
 			 */
 
 			// Add the mail IP
@@ -561,11 +574,27 @@ final public class DNSHandler implements CronJob {
 			pstmt.setString(4, ip.toString());
 			pstmt.executeUpdate();
 
+			// Add the mail SPF TXT entry
+			// See http://www.openspf.org/FAQ/Common_mistakes#helo "Publish SPF records for HELO names used by your mail servers"
+			pstmt.setString(1, zone);
+			pstmt.setString(2, "mail");
+			pstmt.setString(3, DNSType.TXT);
+			pstmt.setString(4, "v=spf1 a -all");
+			pstmt.executeUpdate();
+
 			// Add the www IP
 			pstmt.setString(1, zone);
 			pstmt.setString(2, "www");
 			pstmt.setString(3, aType);
 			pstmt.setString(4, ip.toString());
+			pstmt.executeUpdate();
+
+			// Add the www SPF TXT entry
+			// See http://www.openspf.org/FAQ/Common_mistakes#all-domains "Publish null SPF records for your domains that don't send mail"
+			pstmt.setString(1, zone);
+			pstmt.setString(2, "www");
+			pstmt.setString(3, DNSType.TXT);
+			pstmt.setString(4, "v=spf1 -all");
 			pstmt.executeUpdate();
 		} finally {
 			pstmt.close();
