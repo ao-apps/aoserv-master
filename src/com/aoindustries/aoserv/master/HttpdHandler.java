@@ -900,11 +900,8 @@ final public class HttpdHandler {
 		}
 		String tomcatVersionStr=conn.executeStringQuery("select version from technology_versions where pkey=?", tomcatVersion);
 		boolean isTomcat4 =
-			tomcatVersionStr.startsWith(HttpdTomcatVersion.VERSION_4_1_PREFIX)
-			|| tomcatVersionStr.startsWith(HttpdTomcatVersion.VERSION_5_5_PREFIX)
-			|| tomcatVersionStr.startsWith(HttpdTomcatVersion.VERSION_6_0_PREFIX)
-			|| tomcatVersionStr.startsWith(HttpdTomcatVersion.VERSION_7_0_PREFIX)
-			|| tomcatVersionStr.startsWith(HttpdTomcatVersion.VERSION_8_0_PREFIX)
+			!tomcatVersionStr.equals(HttpdTomcatVersion.VERSION_3_1)
+			&& !tomcatVersionStr.equals(HttpdTomcatVersion.VERSION_3_2_4)
 		;
 		if(ipAddress!=-1) {
 			IPAddressHandler.checkAccessIPAddress(conn, source, methodName, ipAddress);
@@ -1370,11 +1367,8 @@ final public class HttpdHandler {
 		// Tomcat 4 version will start with "4."
 		String versionStr=conn.executeStringQuery("select version from technology_versions where pkey=?", version);
 		boolean isTomcat4 =
-			versionStr.startsWith(HttpdTomcatVersion.VERSION_4_1_PREFIX)
-			|| versionStr.startsWith(HttpdTomcatVersion.VERSION_5_5_PREFIX)
-			|| versionStr.startsWith(HttpdTomcatVersion.VERSION_6_0_PREFIX)
-			|| versionStr.startsWith(HttpdTomcatVersion.VERSION_7_0_PREFIX)
-			|| versionStr.startsWith(HttpdTomcatVersion.VERSION_8_0_PREFIX)
+			!versionStr.equals(HttpdTomcatVersion.VERSION_3_1)
+			&& !versionStr.equals(HttpdTomcatVersion.VERSION_3_2_4)
 		;
 
 		int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_shared_tomcats_pkey_seq')");
