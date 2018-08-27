@@ -3110,6 +3110,82 @@ final public class HttpdHandler {
 		);
 	}
 
+	private static void checkUpgradeFrom(String fromVersion) throws SQLException {
+		if(!HttpdTomcatVersion.canUpgradeFrom(fromVersion)) {
+			throw new SQLException("In-place Tomcat upgrades and downgrades are only supported from Tomcat 4.1 and newer, not supported from version \"" + fromVersion + "\".");
+		}
+	}
+
+	private static void checkUpgradeTo(String toVersion) throws SQLException {
+		if(!HttpdTomcatVersion.canUpgradeTo(toVersion)) {
+			throw new SQLException("In-place Tomcat upgrades and downgrades are only supported to Tomcat 8.5 and newer, not supported to version \"" + toVersion + "\".");
+		}
+	}
+
+	public static void setHttpdSharedTomcatVersion(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		int version
+	) throws IOException, SQLException {
+		checkAccessHttpdSharedTomcat(conn, source, "setHttpdSharedTomcatVersion", pkey);
+
+		// Make sure the version change is acceptable
+		checkUpgradeFrom(
+			conn.executeStringQuery(
+				"select\n"
+				+ "  tv.version\n"
+				+ "from\n"
+				+ "  httpd_shared_tomcats hst\n"
+				+ "  inner join technology_versions tv on hst.version=tv.pkey\n"
+				+ "where hst.pkey=?",
+				pkey
+			)
+		);
+		checkUpgradeTo(
+			conn.executeStringQuery(
+				"select\n"
+				+ "  tv.version\n"
+				+ "from\n"
+				+ "  httpd_tomcat_versions htv\n"
+				+ "  inner join technology_versions tv on htv.version=tv.pkey\n"
+				+ "where htv.version=?",
+				version
+			)
+		);
+
+		// Make sure operating system version matches
+		int aoServer = getAOServerForHttpdSharedTomcat(conn, pkey);
+		int fromOsv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+		int toOsv = conn.executeIntQuery(
+			"select operating_system_version from technology_versions where pkey=?",
+			version
+		);
+		if(fromOsv != toOsv) throw new SQLException("OperatingSystemVersion mismatch: " + fromOsv + " != " + toOsv);
+		// TODO: Check osv match on adding new sites (Tomcat versions)
+
+		// TODO: Check if disabled in technology_versions (do this in set PHP version, too)
+		// TODO: Add update of this in end-of-life tasks
+		// TODO: Check this "disable_time" in control panels, too.
+		// TODO: Check this on add site (both PHP and Tomcat versions)
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_shared_tomcats set version=? where pkey=?",
+			version,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
+			getBusinessForHttpdSharedTomcat(conn, pkey),
+			aoServer,
+			false
+		);
+	}
+
 	public static void setHttpdSiteAuthenticatedLocationAttributes(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -3904,6 +3980,71 @@ final public class HttpdHandler {
 			SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES,
 			getBusinessForHttpdSite(conn, pkey),
 			getAOServerForHttpdSite(conn, pkey),
+			false
+		);
+	}
+
+	public static void setHttpdTomcatStdSiteVersion(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int pkey,
+		int version
+	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "setHttpdTomcatStdSiteVersion", pkey);
+
+		// Make sure the version change is acceptable
+		checkUpgradeFrom(
+			conn.executeStringQuery(
+				"select\n"
+				+ "  tv.version\n"
+				+ "from\n"
+				+ "  httpd_tomcat_std_sites htss\n"
+				+ "  inner join httpd_tomcat_sites hts on htss.tomcat_site=hts.httpd_site\n"
+				+ "  inner join technology_versions tv on hts.version=tv.pkey\n"
+				+ "where htss.tomcat_site=?",
+				pkey
+			)
+		);
+		checkUpgradeTo(
+			conn.executeStringQuery(
+				"select\n"
+				+ "  tv.version\n"
+				+ "from\n"
+				+ "  httpd_tomcat_versions htv\n"
+				+ "  inner join technology_versions tv on htv.version=tv.pkey\n"
+				+ "where htv.version=?",
+				version
+			)
+		);
+
+		// Make sure operating system version matches
+		int aoServer = getAOServerForHttpdSite(conn, pkey);
+		int fromOsv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+		int toOsv = conn.executeIntQuery(
+			"select operating_system_version from technology_versions where pkey=?",
+			version
+		);
+		if(fromOsv != toOsv) throw new SQLException("OperatingSystemVersion mismatch: " + fromOsv + " != " + toOsv);
+		// TODO: Check osv match on adding new sites (Tomcat versions)
+
+		// TODO: Check if disabled in technology_versions (do this in set PHP version, too)
+		// TODO: Add update of this in end-of-life tasks
+		// TODO: Check this "disable_time" in control panels, too.
+		// TODO: Check this on add site (both PHP and Tomcat versions)
+
+		// Update the database
+		conn.executeUpdate(
+			"update httpd_tomcat_sites set version=? where pkey=?",
+			version,
+			pkey
+		);
+
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES,
+			getBusinessForHttpdSite(conn, pkey),
+			aoServer,
 			false
 		);
 	}

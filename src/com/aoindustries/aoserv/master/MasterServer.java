@@ -7335,6 +7335,26 @@ public abstract class MasterServer {
 											sendInvalidateList = true;
 										}
 										break;
+									case SET_HTTPD_SHARED_TOMCAT_VERSION :
+										{
+											int pkey = in.readCompressedInt();
+											int version = in.readCompressedInt();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_SHARED_TOMCAT_VERSION,
+												pkey,
+												version
+											);
+											HttpdHandler.setHttpdSharedTomcatVersion(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												version
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
 									case SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES :
 										{
 											int pkey = in.readCompressedInt();
@@ -7834,6 +7854,26 @@ public abstract class MasterServer {
 												invalidateList,
 												pkey,
 												autoDeploy
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case SET_HTTPD_TOMCAT_STD_SITE_VERSION :
+										{
+											int pkey = in.readCompressedInt();
+											int version = in.readCompressedInt();
+											process.setCommand(
+												AOSHCommand.SET_HTTPD_TOMCAT_STD_SITE_VERSION,
+												pkey,
+												version
+											);
+											HttpdHandler.setHttpdTomcatStdSiteVersion(
+												conn,
+												source,
+												invalidateList,
+												pkey,
+												version
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
