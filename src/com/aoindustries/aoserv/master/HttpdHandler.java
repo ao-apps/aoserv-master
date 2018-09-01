@@ -3176,11 +3176,25 @@ final public class HttpdHandler {
 			version,
 			pkey
 		);
+		conn.executeUpdate(
+			"update httpd_tomcat_sites set version=? where httpd_site in (\n"
+			+ "  select tomcat_site from httpd_tomcat_shared_sites where httpd_shared_tomcat=?\n"
+			+ ")",
+			version,
+			pkey
+		);
 
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
 			getBusinessForHttpdSharedTomcat(conn, pkey),
+			aoServer,
+			false
+		);
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.HTTPD_TOMCAT_SITES,
+			InvalidateList.allBusinesses, // TODO: Could be more selective here
 			aoServer,
 			false
 		);
