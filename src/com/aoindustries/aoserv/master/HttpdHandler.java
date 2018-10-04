@@ -306,7 +306,8 @@ final public class HttpdHandler {
 		String authName,
 		UnixPath authGroupFile,
 		UnixPath authUserFile,
-		String require
+		String require,
+		String handler
 	) throws IOException, SQLException {
 		checkAccessHttpdSite(conn, source, "addHttpdSiteAuthenticatedLocation", httpd_site);
 		if(isHttpdSiteDisabled(conn, httpd_site)) throw new SQLException("Unable to add HttpdSiteAuthenticatedLocation, HttpdSite disabled: "+httpd_site);
@@ -322,14 +323,15 @@ final public class HttpdHandler {
 			"insert into\n"
 			+ "  httpd_site_authenticated_locations\n"
 			+ "values (\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?\n"
+			+ "  ?,\n" // pkey
+			+ "  ?,\n" // httpd_site
+			+ "  ?,\n" // path
+			+ "  ?,\n" // is_regular_expression
+			+ "  ?,\n" // auth_name
+			+ "  ?,\n" // auth_group_file
+			+ "  ?,\n" // auth_user_file
+			+ "  ?,\n" // require
+			+ "  ?\n"  // handler
 			+ ")",
 			pkey,
 			httpd_site,
@@ -338,7 +340,8 @@ final public class HttpdHandler {
 			authName,
 			authGroupFile==null ? "" : authGroupFile.toString(),
 			authUserFile==null ? "" : authUserFile.toString(),
-			require
+			require,
+			handler
 		);
 
 		invalidateList.addTable(
@@ -3210,7 +3213,8 @@ final public class HttpdHandler {
 		String authName,
 		UnixPath authGroupFile,
 		UnixPath authUserFile,
-		String require
+		String require,
+		String handler
 	) throws IOException, SQLException {
 		int httpd_site=conn.executeIntQuery("select httpd_site from httpd_site_authenticated_locations where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "setHttpdSiteAuthenticatedLocationAttributes", httpd_site);
@@ -3221,26 +3225,51 @@ final public class HttpdHandler {
 		if(error==null) error = HttpdSiteAuthenticatedLocation.validateAuthUserFile(authUserFile);
 		if(error==null) error = HttpdSiteAuthenticatedLocation.validateRequire(require);
 		if(error!=null) throw new SQLException("Unable to add HttpdSiteAuthenticatedLocation: "+error);
-		conn.executeUpdate(
-			"update\n"
-			+ "  httpd_site_authenticated_locations\n"
-			+ "set\n"
-			+ "  path=?,\n"
-			+ "  is_regular_expression=?,\n"
-			+ "  auth_name=?,\n"
-			+ "  auth_group_file=?,\n"
-			+ "  auth_user_file=?,\n"
-			+ "  require=?\n"
-			+ "where\n"
-			+ "  pkey=?",
-			path,
-			isRegularExpression,
-			authName,
-			authGroupFile==null ? "" : authGroupFile.toString(),
-			authUserFile==null ? "" : authUserFile.toString(),
-			require,
-			pkey
-		);
+		if(HttpdSiteAuthenticatedLocation.Handler.CURRENT.equals(handler)) {
+			conn.executeUpdate(
+				"update\n"
+				+ "  httpd_site_authenticated_locations\n"
+				+ "set\n"
+				+ "  path=?,\n"
+				+ "  is_regular_expression=?,\n"
+				+ "  auth_name=?,\n"
+				+ "  auth_group_file=?,\n"
+				+ "  auth_user_file=?,\n"
+				+ "  require=?\n"
+				+ "where\n"
+				+ "  pkey=?",
+				path,
+				isRegularExpression,
+				authName,
+				authGroupFile==null ? "" : authGroupFile.toString(),
+				authUserFile==null ? "" : authUserFile.toString(),
+				require,
+				pkey
+			);
+		} else {
+			conn.executeUpdate(
+				"update\n"
+				+ "  httpd_site_authenticated_locations\n"
+				+ "set\n"
+				+ "  path=?,\n"
+				+ "  is_regular_expression=?,\n"
+				+ "  auth_name=?,\n"
+				+ "  auth_group_file=?,\n"
+				+ "  auth_user_file=?,\n"
+				+ "  require=?,\n"
+				+ "  handler=?\n"
+				+ "where\n"
+				+ "  pkey=?",
+				path,
+				isRegularExpression,
+				authName,
+				authGroupFile==null ? "" : authGroupFile.toString(),
+				authUserFile==null ? "" : authUserFile.toString(),
+				require,
+				handler,
+				pkey
+			);
+		}
 
 		invalidateList.addTable(
 			conn,

@@ -13,6 +13,7 @@ import com.aoindustries.aoserv.client.AOServer;
 import com.aoindustries.aoserv.client.DNSRecord;
 import com.aoindustries.aoserv.client.DNSZoneTable;
 import com.aoindustries.aoserv.client.FirewalldZone;
+import com.aoindustries.aoserv.client.HttpdSiteAuthenticatedLocation;
 import com.aoindustries.aoserv.client.HttpdTomcatContext;
 import com.aoindustries.aoserv.client.InboxAttributes;
 import com.aoindustries.aoserv.client.IpReputationSet.AddReputation;
@@ -1693,15 +1694,24 @@ public abstract class MasterServer {
 														authUserFile = s.isEmpty() ? null : UnixPath.valueOf(s);
 													}
 													String require = in.readUTF();
+													String handler;
+													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_13) >= 0) {
+														String s = in.readUTF();
+														handler = s.isEmpty() ? null : s;
+													} else {
+														handler = null;
+													}
+
 													process.setCommand(
-														"add_httpd_site_authenticated_location",
+														AOSHCommand.ADD_HTTPD_SITE_AUTHENTICATED_LOCATION,
 														httpd_site,
 														path,
 														isRegularExpression,
 														authName,
 														authGroupFile,
 														authUserFile,
-														require
+														require,
+														handler
 													);
 													int pkey = HttpdHandler.addHttpdSiteAuthenticatedLocation(
 														conn,
@@ -1713,7 +1723,8 @@ public abstract class MasterServer {
 														authName,
 														authGroupFile,
 														authUserFile,
-														require
+														require,
+														handler
 													);
 													resp = Response.of(
 														AOServProtocol.DONE,
@@ -7372,15 +7383,24 @@ public abstract class MasterServer {
 												authUserFile = s.isEmpty() ? null : UnixPath.valueOf(s);
 											}
 											String require = in.readUTF().trim();
+											String handler;
+											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_13) >= 0) {
+												String s = in.readUTF();
+												handler = s.isEmpty() ? null : s;
+											} else {
+												// Keep current value
+												handler = HttpdSiteAuthenticatedLocation.Handler.CURRENT;
+											}
 											process.setCommand(
-												"set_httpd_site_authenticated_location_attributes",
+												AOSHCommand.SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES,
 												pkey,
 												path,
 												isRegularExpression,
 												authName,
 												authGroupFile,
 												authUserFile,
-												require
+												require,
+												handler
 											);
 											HttpdHandler.setHttpdSiteAuthenticatedLocationAttributes(
 												conn,
@@ -7392,7 +7412,8 @@ public abstract class MasterServer {
 												authName,
 												authGroupFile,
 												authUserFile,
-												require
+												require,
+												handler
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
