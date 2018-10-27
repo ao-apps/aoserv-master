@@ -181,6 +181,7 @@ final public class InvalidateList {
                     break;
                 case HTTPD_SITE_BINDS :
                     addTable(conn, SchemaTable.TableID.HTTPD_BINDS, businesses, servers, true);
+                    addTable(conn, SchemaTable.TableID.HTTPD_SITE_BIND_HEADERS, businesses, servers, false);
                     addTable(conn, SchemaTable.TableID.HTTPD_SITE_BIND_REDIRECTS, businesses, servers, false);
                     break;
                 case HTTPD_TOMCAT_SITES :

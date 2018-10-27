@@ -2520,6 +2520,7 @@ final public class HttpdHandler {
 	/**
 	 * httpd_sites
 	 *           + httpd_site_binds
+	 *           |                + httpd_site_bind_headers
 	 *           |                + httpd_site_bind_redirects
 	 *           |                + httpd_site_urls
 	 *           |                |               + dns_records
@@ -2618,6 +2619,7 @@ final public class HttpdHandler {
 			}
 			conn.executeUpdate("delete from httpd_site_binds where httpd_site=?", httpdSitePKey);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BINDS, accounting, aoServer, false);
+			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BIND_HEADERS, accounting, aoServer, false);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BIND_REDIRECTS, accounting, aoServer, false);
 
 			for(int c=0;c<httpdBinds.size();c++) {
