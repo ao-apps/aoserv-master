@@ -4087,7 +4087,7 @@ final public class HttpdHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES,
+			SchemaTable.TableID.HTTPD_TOMCAT_SITES,
 			getBusinessForHttpdSite(conn, pkey),
 			aoServer,
 			false
