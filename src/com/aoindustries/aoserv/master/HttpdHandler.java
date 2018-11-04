@@ -4080,7 +4080,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_tomcat_sites set version=? where pkey=?",
+			"update httpd_tomcat_sites set version=? where httpd_site=?",
 			version,
 			pkey
 		);
