@@ -156,6 +156,7 @@ import com.aoindustries.aoserv.client.SignupRequestOption;
 import com.aoindustries.aoserv.client.SpamEmailMessage;
 import com.aoindustries.aoserv.client.SslCertificate;
 import com.aoindustries.aoserv.client.SslCertificateName;
+import com.aoindustries.aoserv.client.SslCertificateOtherUse;
 import com.aoindustries.aoserv.client.SystemEmailAlias;
 import com.aoindustries.aoserv.client.Technology;
 import com.aoindustries.aoserv.client.TechnologyClass;
@@ -7676,6 +7677,59 @@ final public class TableHandler {
 					+ "  and bu1.accounting=pk2.accounting\n"
 					+ "  and pk2.pkey=sc.package\n"
 					+ "  and sc.pkey=scn.ssl_certificate",
+					username
+				);
+				break;
+			case SSL_CERTIFICATE_OTHER_USES :
+				if(masterUser != null) {
+					assert masterServers != null;
+					if(masterServers.length == 0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SslCertificateOtherUse(),
+						"select * from ssl_certificate_other_uses"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SslCertificateOtherUse(),
+						"select\n"
+						+ "  scou.*\n"
+						+ "from\n"
+						+ "  master_servers ms\n"
+						+ "  inner join ssl_certificates sc on ms.server=sc.ao_server\n"
+						+ "  inner join ssl_certificate_other_uses scou on sc.pkey=scou.ssl_certificate\n"
+						+ "where\n"
+						+ "  ms.username=?",
+						username
+					);
+				} else MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new SslCertificateOtherUse(),
+					"select\n"
+					+ "  scou.*\n"
+					+ "from\n"
+					+ "  usernames un,\n"
+					+ "  packages pk1,\n"
+					+ BU1_PARENTS_JOIN
+					+ "  packages pk2,\n"
+					+ "  ssl_certificates sc,\n"
+					+ "  ssl_certificate_other_uses scou\n"
+					+ "where\n"
+					+ "  un.username=?\n"
+					+ "  and un.package=pk1.name\n"
+					+ "  and (\n"
+					+ PK1_BU1_PARENTS_WHERE
+					+ "  )\n"
+					+ "  and bu1.accounting=pk2.accounting\n"
+					+ "  and pk2.pkey=sc.package\n"
+					+ "  and sc.pkey=scou.ssl_certificate",
 					username
 				);
 				break;

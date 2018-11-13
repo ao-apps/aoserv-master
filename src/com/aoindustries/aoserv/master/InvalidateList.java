@@ -251,6 +251,7 @@ final public class InvalidateList {
                     break;
                 case SSL_CERTIFICATES :
                     addTable(conn, SchemaTable.TableID.SSL_CERTIFICATE_NAMES, businesses, servers, false);
+                    addTable(conn, SchemaTable.TableID.SSL_CERTIFICATE_OTHER_USES, businesses, servers, false);
                     break;
                 case USERNAMES :
                     addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, businesses, servers, true);
