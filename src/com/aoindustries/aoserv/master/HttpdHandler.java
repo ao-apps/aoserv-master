@@ -730,7 +730,8 @@ final public class HttpdHandler {
 			// Allow the example directories
 			List<UnixPath> tomcats = conn.executeObjectListQuery(
 				ObjectFactories.unixPathFactory,
-				"select install_dir||'/webapps/examples' from httpd_tomcat_versions"
+				"select install_dir||'/webapps/examples' from httpd_tomcat_versions\n"
+				+ "union select install_dir||'/webapps/manager' from httpd_tomcat_versions"
 			);
 			boolean found=false;
 			for (UnixPath tomcat : tomcats) {
