@@ -3197,6 +3197,8 @@ final public class HttpdHandler {
 			version,
 			pkey
 		);
+		// TODO: Update the context paths to an webapps in /opt/apache-tomcat.../webpaps to the new version
+		// TODO: See httpd_tomcat_versions table
 		conn.executeUpdate(
 			"update httpd_tomcat_sites set version=? where httpd_site in (\n"
 			+ "  select tomcat_site from httpd_tomcat_shared_sites where httpd_shared_tomcat=?\n"
@@ -4095,6 +4097,8 @@ final public class HttpdHandler {
 		// TODO: Check this on add site (both PHP and Tomcat versions)
 
 		// Update the database
+		// TODO: Update the context paths to an webapps in /opt/apache-tomcat.../webpaps to the new version
+		// TODO: See httpd_tomcat_versions table (might shared with the same code above)
 		conn.executeUpdate(
 			"update httpd_tomcat_sites set version=? where httpd_site=?",
 			version,
