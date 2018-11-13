@@ -730,8 +730,22 @@ final public class HttpdHandler {
 			// Allow the example directories
 			List<UnixPath> tomcats = conn.executeObjectListQuery(
 				ObjectFactories.unixPathFactory,
-				"select install_dir||'/webapps/examples' from httpd_tomcat_versions\n"
-				+ "union select install_dir||'/webapps/manager' from httpd_tomcat_versions"
+				"select\n"
+				+ "  htv.install_dir || '/webapps/examples'\n"
+				+ "from\n"
+				+ "  httpd_tomcat_sites hts\n"
+				+ "  inner join httpd_tomcat_versions htv on hts.version=htv.version\n"
+				+ "where\n"
+				+ "  hts.httpd_site=?\n"
+				+ "union select\n"
+				+ "  htv.install_dir || '/webapps/manager'\n"
+				+ "from\n"
+				+ "  httpd_tomcat_sites hts\n"
+				+ "  inner join httpd_tomcat_versions htv on hts.version=htv.version\n"
+				+ "where\n"
+				+ "  hts.httpd_site=?\n",
+				tomcat_site,
+				tomcat_site
 			);
 			boolean found=false;
 			for (UnixPath tomcat : tomcats) {
@@ -740,6 +754,7 @@ final public class HttpdHandler {
 					break;
 				}
 			}
+			// TODO: It would be better to make sure the
 			if(!found) throw new SQLException("Invalid docBase: " + docBase);
 		}
 
