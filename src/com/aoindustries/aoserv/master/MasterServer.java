@@ -493,25 +493,37 @@ public abstract class MasterServer {
 							try {
 								final AOServProtocol.Version protocolVersion = source.getProtocolVersion();
 								final UserId username = source.getUsername();
+								boolean didInitialInvalidateAll = false;
 								while(!BusinessHandler.isBusinessAdministratorDisabled(conn, username)) {
-									conn.releaseConnection();
-									process.commandSleeping();
-									long endTime=System.currentTimeMillis()+60000;
 									InvalidateCacheEntry ice;
-									synchronized(source) {
-										while((ice=source.getNextInvalidatedTables())==null) {
-											long delay=endTime-System.currentTimeMillis();
-											if(delay<=0 || delay>60000) break;
-											try {
-												source.wait(delay);
-											} catch(InterruptedException err) {
-												logger.log(Level.WARNING, null, err);
-												break;
+									if(!didInitialInvalidateAll) {
+										// Invalidate all once immediately now that listener added, just in case signals were lost during a network outage and reconnect
+										IntList clientInvalidateList = new IntArrayList();
+										for(SchemaTable.TableID tableID : SchemaTable.TableID.values()) {
+											int clientTableID = TableHandler.convertToClientTableID(conn, source, tableID);
+											if(clientTableID != -1) clientInvalidateList.add(clientTableID);
+										}
+										conn.releaseConnection();
+										ice = new InvalidateCacheEntry(clientInvalidateList, -1, null);
+									} else {
+										conn.releaseConnection();
+										process.commandSleeping();
+										long endTime=System.currentTimeMillis()+60000;
+										synchronized(source) {
+											while((ice=source.getNextInvalidatedTables())==null) {
+												long delay=endTime-System.currentTimeMillis();
+												if(delay<=0 || delay>60000) break;
+												try {
+													source.wait(delay);
+												} catch(InterruptedException err) {
+													logger.log(Level.WARNING, null, err);
+													break;
+												}
 											}
 										}
 									}
 									if(ice!=null) {
-										process.commandRunning();
+										if(didInitialInvalidateAll) process.commandRunning();
 										IntList clientTableIDs=ice.getInvalidateList();
 										int size=clientTableIDs.size();
 										if(protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_47)>=0) out.writeBoolean(ice.getCacheSyncID()!=null);
@@ -536,6 +548,7 @@ public abstract class MasterServer {
 									} else {
 										if(!in.readBoolean()) throw new IOException("Unexpected invalidate sync response.");
 									}
+									didInitialInvalidateAll = true;
 								}
 							} finally {
 								conn.releaseConnection();
@@ -9775,7 +9788,10 @@ public abstract class MasterServer {
 								if(sendInvalidateList) {
 									clientInvalidateList=new IntArrayList();
 									for(SchemaTable.TableID tableID : tableIDs) {
-										if(invalidateList.isInvalid(tableID)) clientInvalidateList.add(TableHandler.convertToClientTableID(conn, source, tableID));
+										if(invalidateList.isInvalid(tableID)) {
+											int clientTableID = TableHandler.convertToClientTableID(conn, source, tableID);
+											if(clientTableID != -1) clientInvalidateList.add(clientTableID);
+										}
 									}
 								}
 							} catch(RuntimeException | ValidationException | IOException err) {
