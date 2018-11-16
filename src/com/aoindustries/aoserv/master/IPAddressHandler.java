@@ -187,9 +187,6 @@ final public class IPAddressHandler {
 			|| ip.isUnspecified()
 		) throw new SQLException("Not allowed to set the hostname for "+ip);
 
-		AccountingCode accounting=getBusinessForIPAddress(conn, ipAddress);
-		int server=getServerForIPAddress(conn, ipAddress);
-
 		// Update the table
 		conn.executeUpdate("update ip_addresses set hostname=? where pkey=?", hostname.toString(), ipAddress);
 
@@ -197,13 +194,44 @@ final public class IPAddressHandler {
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.IP_ADDRESSES,
-			accounting,
-			server,
+			getBusinessForIPAddress(conn, ipAddress),
+			getServerForIPAddress(conn, ipAddress),
 			false
 		);
 
 		// Update any reverse DNS matchins this IP address
 		DNSHandler.updateReverseDnsIfExists(conn, invalidateList, ip, hostname);
+	}
+
+	public static void setIPAddressMonitoringEnabled(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int ipAddress,
+		boolean enabled
+	) throws IOException, SQLException {
+		checkAccessIPAddress(conn, source, "setIPAddressMonitoringEnabled", ipAddress);
+
+		setIPAddressMonitoringEnabled(conn, invalidateList, ipAddress, enabled);
+	}
+
+	public static void setIPAddressMonitoringEnabled(
+		DatabaseConnection conn,
+		InvalidateList invalidateList,
+		int ipAddress,
+		boolean enabled
+	) throws IOException, SQLException {
+		// Update the table
+		conn.executeUpdate("update ip_addresses set monitoring_enabled=? where pkey=?", enabled, ipAddress);
+
+		// Notify all clients of the update
+		invalidateList.addTable(
+			conn,
+			SchemaTable.TableID.IP_ADDRESSES,
+			getBusinessForIPAddress(conn, ipAddress),
+			getServerForIPAddress(conn, ipAddress),
+			false
+		);
 	}
 
 	/**
@@ -367,7 +395,7 @@ final public class IPAddressHandler {
 		);
 
 		conn.executeUpdate(
-			"update ip_addresses set available=true where pkey=?",
+			"update ip_addresses set available=true, is_overflow=false, monitoring_enabled=true where pkey=?",
 			ipAddress
 		);
 		invalidateList.addTable(

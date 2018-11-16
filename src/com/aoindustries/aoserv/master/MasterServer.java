@@ -7953,6 +7953,26 @@ public abstract class MasterServer {
 											sendInvalidateList = true;
 										}
 										break;
+									case SET_IP_ADDRESS_MONITORING_ENABLED :
+										{
+											int ipAddress = in.readCompressedInt();
+											boolean enabled = in.readBoolean();
+											process.setCommand(
+												AOSHCommand.SET_IP_ADDRESS_MONITORING_ENABLED,
+												ipAddress,
+												enabled
+											);
+											IPAddressHandler.setIPAddressMonitoringEnabled(
+												conn,
+												source,
+												invalidateList,
+												ipAddress,
+												enabled
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
 									case SET_IP_ADDRESS_PACKAGE :
 										{
 											int ipAddress = in.readCompressedInt();
