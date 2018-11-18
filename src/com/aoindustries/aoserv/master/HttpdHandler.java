@@ -2662,7 +2662,7 @@ final public class HttpdHandler {
 							+ "  not ia.is_overflow\n"
 							+ "from\n"
 							+ "  net_binds nb,\n"
-							+ "  ip_addresses ia\n"
+							+ "  \"IPAddress\" ia\n"
 							+ "where\n"
 							+ "  nb.pkey=?\n"
 							+ "  and nb.\"ipAddress\"=ia.pkey",

@@ -21,7 +21,7 @@ import java.sql.SQLException;
 import java.util.Locale;
 
 /**
- * The <code>IPAddressHandler</code> handles all the accesses to the <code>ip_addresses</code> table.
+ * The <code>IPAddressHandler</code> handles all the accesses to the <code>IPAddress</code> table.
  *
  * @author  AO Industries, Inc.
  */
@@ -40,7 +40,7 @@ final public class IPAddressHandler {
 
 	public static boolean isDHCPAddress(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
-			"select is_dhcp from ip_addresses where pkey=?",
+			"select is_dhcp from \"IPAddress\" where pkey=?",
 			pkey
 		);
 	}
@@ -92,14 +92,14 @@ final public class IPAddressHandler {
 
 		AccountingCode accounting=getBusinessForIPAddress(conn, ipAddress);
 
-		// Update ip_addresses
+		// Update IPAddress
 		int netDevice=conn.executeIntQuery(
 			"select pkey from net_devices where server=? and \"deviceID\"=?",
 			toServer,
 			NetDeviceID.ETH0
 		);
 		conn.executeUpdate(
-			"update ip_addresses set net_device=? where pkey=?",
+			"update \"IPAddress\" set net_device=? where pkey=?",
 			netDevice,
 			ipAddress
 		);
@@ -138,7 +138,7 @@ final public class IPAddressHandler {
 		int server=getServerForIPAddress(conn, ipAddress);
 
 		// Update the table
-		conn.executeUpdate("update ip_addresses set ip_address=? where pkey=?", dhcpAddress, ipAddress);
+		conn.executeUpdate("update \"IPAddress\" set ip_address=? where pkey=?", dhcpAddress, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -189,7 +189,7 @@ final public class IPAddressHandler {
 		) throw new SQLException("Not allowed to set the hostname for "+ip);
 
 		// Update the table
-		conn.executeUpdate("update ip_addresses set hostname=? where pkey=?", hostname.toString(), ipAddress);
+		conn.executeUpdate("update \"IPAddress\" set hostname=? where pkey=?", hostname.toString(), ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -223,7 +223,7 @@ final public class IPAddressHandler {
 		boolean enabled
 	) throws IOException, SQLException {
 		// Update the table
-		conn.executeUpdate("update ip_addresses set monitoring_enabled=? where pkey=?", enabled, ipAddress);
+		conn.executeUpdate("update \"IPAddress\" set monitoring_enabled=? where pkey=?", enabled, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -277,8 +277,8 @@ final public class IPAddressHandler {
 		if(count!=0) throw new SQLException("Unable to set Package, IPAddress in use by "+count+(count==1?" row":" rows")+" in net_binds: "+ipAddress);
 
 		// Update the table
-		conn.executeUpdate("update ip_addresses set package=? where pkey=?", newPackage, ipAddress);
-		conn.executeUpdate("update ip_addresses set available=false where pkey=?", ipAddress);
+		conn.executeUpdate("update \"IPAddress\" set package=? where pkey=?", newPackage, ipAddress);
+		conn.executeUpdate("update \"IPAddress\" set available=false where pkey=?", ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -298,7 +298,7 @@ final public class IPAddressHandler {
 			+ "      select\n"
 			+ "        ia.pkey\n"
 			+ "      from\n"
-			+ "        ip_addresses ia,\n"
+			+ "        \"IPAddress\" ia,\n"
 			+ "        net_devices nd\n"
 			+ "        left join net_binds nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?\n"
 			+ "        left join httpd_binds hb on nb.pkey=hb.net_bind\n"
@@ -338,7 +338,7 @@ final public class IPAddressHandler {
 	public static AccountingCode getPackageForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from ip_addresses where pkey=?",
+			"select package from \"IPAddress\" where pkey=?",
 			ipAddress
 		);
 	}
@@ -346,24 +346,24 @@ final public class IPAddressHandler {
 	public static AccountingCode getBusinessForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from ip_addresses ia, packages pk where ia.pkey=? and ia.package=pk.name",
+			"select pk.accounting from \"IPAddress\" ia, packages pk where ia.pkey=? and ia.package=pk.name",
 			ipAddress
 		);
 	}
 
 	public static int getServerForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-		return conn.executeIntQuery("select nd.server from ip_addresses ia, net_devices nd where ia.pkey=? and ia.net_device=nd.pkey", ipAddress);
+		return conn.executeIntQuery("select nd.server from \"IPAddress\" ia, net_devices nd where ia.pkey=? and ia.net_device=nd.pkey", ipAddress);
 	}
 
 	public static InetAddress getInetAddressForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.inetAddressFactory,
-			"select ip_address from ip_addresses where pkey=?",
+			"select ip_address from \"IPAddress\" where pkey=?",
 			ipAddress
 		);
 	}
 
 	public static int getWildcardIPAddress(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntQuery("select pkey from ip_addresses where ip_address=? limit 1", IPAddress.WILDCARD_IP);
+		return conn.executeIntQuery("select pkey from \"IPAddress\" where ip_address=? limit 1", IPAddress.WILDCARD_IP);
 	}
 
 	public static int getLoopbackIPAddress(DatabaseConnection conn, int server) throws IOException, SQLException {
@@ -371,7 +371,7 @@ final public class IPAddressHandler {
 			"select\n"
 			+ "  ia.pkey\n"
 			+ "from\n"
-			+ "  ip_addresses ia,\n"
+			+ "  \"IPAddress\" ia,\n"
 			+ "  net_devices nd\n"
 			+ "where\n"
 			+ "  ia.ip_address=?\n"
@@ -396,7 +396,7 @@ final public class IPAddressHandler {
 		);
 
 		conn.executeUpdate(
-			"update ip_addresses set available=true, is_overflow=false, monitoring_enabled=true where pkey=?",
+			"update \"IPAddress\" set available=true, is_overflow=false, monitoring_enabled=true where pkey=?",
 			ipAddress
 		);
 		invalidateList.addTable(

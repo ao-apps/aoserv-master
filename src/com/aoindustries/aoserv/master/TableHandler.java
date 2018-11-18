@@ -3918,7 +3918,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new IPAddress(),
-						"select * from ip_addresses"
+						"select * from \"IPAddress\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3931,7 +3931,7 @@ final public class TableHandler {
 						+ "  master_servers ms\n"
 						+ "  left join ao_servers ff on ms.server=ff.failover_server,\n"
 						+ "  net_devices nd\n"
-						+ "  right outer join ip_addresses ia on nd.pkey=ia.net_device\n"
+						+ "  right outer join \"IPAddress\" ia on nd.pkey=ia.net_device\n"
 						+ "where\n"
 						+ "  ia.ip_address='"+IPAddress.WILDCARD_IP+"' or (\n"
 						+ "    ms.username=?\n"
@@ -3965,7 +3965,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ia.*\n"
 						+ "from\n"
-						+ "  ip_addresses ia\n"
+						+ "  \"IPAddress\" ia\n"
 						+ "where\n"
 						+ "  ia.ip_address='"+IPAddress.WILDCARD_IP+"'\n"
 						+ "  or ia.pkey in (\n"
@@ -3976,7 +3976,7 @@ final public class TableHandler {
 						+ "      packages pk1,\n"
 						+ BU1_PARENTS_JOIN
 						+ "      packages pk2,\n"
-						+ "      ip_addresses ia2\n"
+						+ "      \"IPAddress\" ia2\n"
 						+ "    where\n"
 						+ "      un1.username=?\n"
 						+ "      and un1.package=pk1.name\n"
@@ -4015,7 +4015,7 @@ final public class TableHandler {
 						+ "      packages pk5,\n"
 						+ "      business_servers bs5,\n"
 						+ "      net_devices nd5,\n"
-						+ "      ip_addresses ia5\n"
+						+ "      \"IPAddress\" ia5\n"
 						+ "    where\n"
 						+ "      un5.username=?\n"
 						+ "      and un5.package=pk5.name\n"
@@ -4034,7 +4034,7 @@ final public class TableHandler {
 						+ "      backup_partitions bp6,\n"
 						+ "      ao_servers ao6,\n"
 						+ "      net_devices nd6,\n"
-						+ "      ip_addresses ia6\n"
+						+ "      \"IPAddress\" ia6\n"
 						+ "    where\n"
 						+ "      un6.username=?\n"
 						+ "      and un6.package=pk6.name\n"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -1068,7 +1068,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one HttpdSite on Server="+server);
 
-		// ip_addresses
+		// \"IPAddress\"
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1077,7 +1077,7 @@ final public class BusinessHandler {
 				+ "      ia.pkey\n"
 				+ "    from\n"
 				+ "      packages pk,\n"
-				+ "      ip_addresses ia,\n"
+				+ "      \"IPAddress\" ia,\n"
 				+ "      net_devices nd\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2003-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -579,13 +579,13 @@ final public class AccountCleaner implements CronJob {
 
                 }
 
-                // ip_addresses
+                // IPAddress
                 {
                     IntList ias=conn.executeIntListQuery(
                         "select\n"
                         + "  ia.pkey\n"
                         + "from\n"
-                        + "  ip_addresses ia,\n"
+                        + "  \"IPAddress\" ia,\n"
                         + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
