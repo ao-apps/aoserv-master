@@ -379,7 +379,7 @@ final public class TableHandler {
 						out,
 						new BankTransaction(),
 						"select\n"
-						+ "  time,\n" // Was cast to date here but not in full table query - why?
+						+ "  time::date,\n"
 						+ "  id,\n"
 						+ "  account,\n"
 						+ "  processor,\n"
@@ -880,19 +880,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new BankTransaction(),
-						"select\n"
-						+ "  time,\n" // Was not cast to date here while was in single object query - why?
-						+ "  id,\n"
-						+ "  account,\n"
-						+ "  processor,\n"
-						+ "  administrator,\n"
-						+ "  type,\n"
-						+ "  \"expenseCategory\",\n"
-						+ "  description,\n"
-						+ "  \"checkNo\",\n"
-						+ "  amount,\n"
-						+ "  confirmed\n"
-						+ "from accounting.\"BankTransaction\""
+						"select * from accounting.\"BankTransaction\""
 					);
 				} else {
 					List<BankTransaction> emptyList = Collections.emptyList();
@@ -2386,7 +2374,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new ExpenseCategory(),
-						"select * from accounting.\"ExpenseCategory\""
+						"select * from expense_categories"
 					);
 				} else {
 					List<ExpenseCategory> emptyList = Collections.emptyList();
