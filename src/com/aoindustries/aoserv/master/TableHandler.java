@@ -6858,7 +6858,7 @@ final public class TableHandler {
 						+ "  client_ap.version=?\n"
 						+ "  and client_ap.created>=sc_ap.created\n"
 						+ "  and (last_ap.created is null or client_ap.created<=last_ap.created)\n"
-						+ "  and sc.table_name=st.name\n"
+						+ "  and sc.\"table\"=st.\"name\"\n"
 						+ "order by\n"
 						+ "  st.id,\n"
 						+ "  sc.index"
