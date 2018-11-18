@@ -99,7 +99,7 @@ final public class IPAddressHandler {
 			NetDeviceID.ETH0
 		);
 		conn.executeUpdate(
-			"update \"IPAddress\" set net_device=? where id=?",
+			"update \"IPAddress\" set \"netDevice\"=? where id=?",
 			netDevice,
 			ipAddress
 		);
@@ -305,7 +305,7 @@ final public class IPAddressHandler {
 			+ "        left join httpd_servers hs on hb.httpd_server=hs.pkey\n"
 			+ "      where\n"
 			+ "        ia.is_overflow\n"
-			+ "        and ia.net_device=nd.pkey\n"
+			+ "        and ia.\"netDevice\"=nd.pkey\n"
 			+ "        and nd.server=?\n"
 			+ "        and (\n"
 			+ "          nb.\"ipAddress\" is null\n"
@@ -352,7 +352,7 @@ final public class IPAddressHandler {
 	}
 
 	public static int getServerForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-		return conn.executeIntQuery("select nd.server from \"IPAddress\" ia, net_devices nd where ia.id=? and ia.net_device=nd.pkey", ipAddress);
+		return conn.executeIntQuery("select nd.server from \"IPAddress\" ia, net_devices nd where ia.id=? and ia.\"netDevice\"=nd.pkey", ipAddress);
 	}
 
 	public static InetAddress getInetAddressForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
@@ -375,7 +375,7 @@ final public class IPAddressHandler {
 			+ "  net_devices nd\n"
 			+ "where\n"
 			+ "  ia.\"inetAddress\"=?\n"
-			+ "  and ia.net_device=nd.pkey\n"
+			+ "  and ia.\"netDevice\"=nd.pkey\n"
 			+ "  and nd.server=?\n"
 			+ "limit 1",
 			IPAddress.LOOPBACK_IP,

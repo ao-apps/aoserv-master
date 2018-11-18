@@ -3931,7 +3931,7 @@ final public class TableHandler {
 						+ "  master_servers ms\n"
 						+ "  left join ao_servers ff on ms.server=ff.failover_server,\n"
 						+ "  net_devices nd\n"
-						+ "  right outer join \"IPAddress\" ia on nd.pkey=ia.net_device\n"
+						+ "  right outer join \"IPAddress\" ia on nd.pkey=ia.\"netDevice\"\n"
 						+ "where\n"
 						+ "  ia.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"' or (\n"
 						+ "    ms.username=?\n"
@@ -4021,7 +4021,7 @@ final public class TableHandler {
 						+ "      and un5.package=pk5.name\n"
 						+ "      and pk5.accounting=bs5.accounting\n"
 						+ "      and bs5.server=nd5.server\n"
-						+ "      and nd5.pkey=ia5.net_device\n"
+						+ "      and nd5.pkey=ia5.\"netDevice\"\n"
 						+ "      and (ia5.\"inetAddress\"='"+IPAddress.LOOPBACK_IP+"' or ia5.is_overflow)\n"
 						/*+ "  ) or ia.id in (\n"
 						+ "    select \n"
@@ -4043,7 +4043,7 @@ final public class TableHandler {
 						+ "      and ffr6.backup_partition=bp6.pkey\n"
 						+ "      and bp6.ao_server=ao6.server\n"
 						+ "      and ao6.server=nd6.ao_server and ao6.\"daemonDeviceID\"=nd6.\"deviceID\"\n"
-						+ "      and nd6.pkey=ia6.net_device and not ia6.is_alias\n"*/
+						+ "      and nd6.pkey=ia6.\"netDevice\" and not ia6.is_alias\n"*/
 						+ "  )",
 						username,
 						username,
