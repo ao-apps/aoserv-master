@@ -583,7 +583,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList ias=conn.executeIntListQuery(
                         "select\n"
-                        + "  ia.pkey\n"
+                        + "  ia.id\n"
                         + "from\n"
                         + "  \"IPAddress\" ia,\n"
                         + "  packages pk,\n"

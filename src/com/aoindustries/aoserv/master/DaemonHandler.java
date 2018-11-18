@@ -79,7 +79,7 @@ final public class DaemonHandler {
 			+ "where\n"
 			+ "  ao.server=?\n"
 			+ "  and ao.daemon_connect_bind=nb.pkey\n"
-			+ "  and nb.\"ipAddress\"=ia.pkey",
+			+ "  and nb.\"ipAddress\"=ia.id",
 			aoServer
 		);
 		if(ip==null) throw new SQLException("Unable to find daemon IP address for AOServer: "+aoServer);

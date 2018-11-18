@@ -2665,7 +2665,7 @@ final public class HttpdHandler {
 							+ "  \"IPAddress\" ia\n"
 							+ "where\n"
 							+ "  nb.pkey=?\n"
-							+ "  and nb.\"ipAddress\"=ia.pkey",
+							+ "  and nb.\"ipAddress\"=ia.id",
 							httpdBind
 						)
 					) {

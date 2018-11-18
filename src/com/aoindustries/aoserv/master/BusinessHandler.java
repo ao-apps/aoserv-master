@@ -1068,13 +1068,13 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one HttpdSite on Server="+server);
 
-		// \"IPAddress\"
+		// IPAddress
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      ia.pkey\n"
+				+ "      ia.id\n"
 				+ "    from\n"
 				+ "      packages pk,\n"
 				+ "      \"IPAddress\" ia,\n"
