@@ -895,7 +895,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new BankTransactionType(),
-						"select * from bank_transaction_types"
+						"select * from accounting.\"BankTransactionType\""
 					);
 				} else {
 					List<BankTransactionType> emptyList = Collections.emptyList();
