@@ -279,7 +279,7 @@ final public class IPAddressHandler {
 		if(count!=0) throw new SQLException("Unable to set Package, IPAddress in use by "+count+(count==1?" row":" rows")+" in net_binds: "+ipAddress);
 
 		// Update the table
-		conn.executeUpdate("update \"IPAddress\" set package=?, available=false where id=?", newPackage, ipAddress);
+		conn.executeUpdate("update \"IPAddress\" set package=(select pkey from packages where name=?), available=false where id=?", newPackage, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -339,7 +339,13 @@ final public class IPAddressHandler {
 	public static AccountingCode getPackageForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from \"IPAddress\" where id=?",
+			"select\n"
+			+ "  pk.name\n"
+			+ "from\n"
+			+ "  \"IPAddress\" ia\n"
+			+ "  inner join packages pk on ia.package=pk.pkey\n"
+			+ "where\n"
+			+ "  ia.id=?",
 			ipAddress
 		);
 	}
@@ -347,7 +353,13 @@ final public class IPAddressHandler {
 	public static AccountingCode getBusinessForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from \"IPAddress\" ia, packages pk where ia.id=? and ia.package=pk.name",
+			"select\n"
+			+ "  pk.accounting\n"
+			+ "from\n"
+			+ "  \"IPAddress\" ia\n"
+			+ "  inner join packages pk on ia.package=pk.pkey\n"
+			+ "where\n"
+			+ "  ia.id=?",
 			ipAddress
 		);
 	}

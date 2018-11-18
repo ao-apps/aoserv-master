@@ -589,7 +589,7 @@ final public class AccountCleaner implements CronJob {
                         + "  packages pk,\n"
                         + "  businesses bu\n"
                         + "where\n"
-                        + "  ia.package=pk.name\n"
+                        + "  ia.package=pk.pkey\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,

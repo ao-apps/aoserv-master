@@ -1081,7 +1081,7 @@ final public class BusinessHandler {
 				+ "      net_devices nd\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
-				+ "      and pk.name=ia.package\n"
+				+ "      and pk.pkey=ia.package\n"
 				+ "      and ia.\"netDevice\"=nd.pkey\n"
 				+ "      and nd.server=?\n"
 				+ "    limit 1\n"
