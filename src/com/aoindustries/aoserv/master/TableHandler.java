@@ -3948,7 +3948,7 @@ final public class TableHandler {
 						+ "  m_ia.enabled\n"
 						+ "from\n"
 						+ "  \"IPAddress\" ia\n"
-						+ "  inner join monitoring.\"IPAddress\" m_ia"
+						+ "  inner join monitoring.\"IPAddress\" m_ia on ia.id=m_ia.id"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3973,7 +3973,7 @@ final public class TableHandler {
 						+ "  m_ia.enabled\n"
 						+ "from\n"
 						+ "  \"IPAddress\" ia\n"
-						+ "  inner join monitoring.\"IPAddress\" m_ia\n"
+						+ "  inner join monitoring.\"IPAddress\" m_ia on ia.id=m_ia.id\n"
 						+ "where\n"
 						+ "  ia.id in (\n"
 						+ "    select\n"
@@ -4032,7 +4032,7 @@ final public class TableHandler {
 						+ "  m_ia.enabled\n"
 						+ "from\n"
 						+ "  \"IPAddress\" ia\n"
-						+ "  inner join monitoring.\"IPAddress\" m_ia\n"
+						+ "  inner join monitoring.\"IPAddress\" m_ia on ia.id=m_ia.id\n"
 						+ "where\n"
 						+ "  ia.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"'\n"
 						+ "  or ia.id in (\n"
