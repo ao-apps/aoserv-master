@@ -10602,6 +10602,6 @@ public abstract class MasterServer {
 	}
 
 	public static void updateAOServProtocolLastUsed(DatabaseConnection conn, AOServProtocol.Version protocolVersion) throws IOException, SQLException {
-		conn.executeUpdate("update aoserv_protocols set last_used=now()::date where version=? and (last_used is null or last_used<now()::date)", protocolVersion.getVersion());
+		conn.executeUpdate("update schema.\"AOServProtocol\" set last_used=now()::date where version=? and (last_used is null or last_used<now()::date)", protocolVersion.getVersion());
 	}
 }
