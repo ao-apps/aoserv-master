@@ -379,21 +379,21 @@ final public class TableHandler {
 						out,
 						new BankTransaction(),
 						"select\n"
-						+ "  time::date,\n"
-						+ "  transid,\n"
-						+ "  bank_account,\n"
+						+ "  time,\n" // Was cast to date here but not in full table query - why?
+						+ "  id,\n"
+						+ "  account,\n"
 						+ "  processor,\n"
 						+ "  administrator,\n"
 						+ "  type,\n"
-						+ "  expense_code,\n"
+						+ "  \"expenseCategory\",\n"
 						+ "  description,\n"
-						+ "  check_no,\n"
+						+ "  \"checkNo\",\n"
 						+ "  amount,\n"
 						+ "  confirmed\n"
 						+ "from\n"
 						+ "  accounting.\"BankTransaction\"\n"
 						+ "where\n"
-						+ "  transid=?",
+						+ "  id=?",
 						in.readCompressedInt()
 					);
 				} else out.writeByte(AOServProtocol.DONE);
@@ -880,7 +880,19 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new BankTransaction(),
-						"select * from accounting.\"BankTransaction\""
+						"select\n"
+						+ "  time,\n" // Was not cast to date here while was in single object query - why?
+						+ "  id,\n"
+						+ "  account,\n"
+						+ "  processor,\n"
+						+ "  administrator,\n"
+						+ "  type,\n"
+						+ "  \"expenseCategory\",\n"
+						+ "  description,\n"
+						+ "  \"checkNo\",\n"
+						+ "  amount,\n"
+						+ "  confirmed\n"
+						+ "from accounting.\"BankTransaction\""
 					);
 				} else {
 					List<BankTransaction> emptyList = Collections.emptyList();
@@ -2374,7 +2386,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new ExpenseCategory(),
-						"select * from expense_categories"
+						"select * from accounting.\"ExpenseCategory\""
 					);
 				} else {
 					List<ExpenseCategory> emptyList = Collections.emptyList();
