@@ -7000,7 +7000,7 @@ final public class TableHandler {
 					+ "  st.*\n"
 					+ "from\n"
 					+ "  schema.\"AOServProtocol\" client_ap,\n"
-					+ "  schema_types st\n"
+					+ "  schema.\"Type\" st\n"
 					+ "  inner join schema.\"AOServProtocol\" since_version on st.since_version=since_version.version\n"
 					+ "  left join schema.\"AOServProtocol\" last_version on st.last_version=last_version.version\n"
 					+ "where\n"
