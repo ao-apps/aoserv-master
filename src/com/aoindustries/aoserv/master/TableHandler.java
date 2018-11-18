@@ -6924,12 +6924,12 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 					+ "  schema_foreign_keys sfk\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" since_version on sfk.since_version=since_version.version\n"
-					+ "  left join \"schema\".\"AOServProtocol\" last_version on sfk.last_version=last_version.version\n"
+					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on sfk.since_version=\"sinceVersion\".version\n"
+					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on sfk.last_version=\"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
-					+ "  and client_ap.created>=since_version.created\n"
-					+ "  and (last_version.created is null or client_ap.created<=last_version.created)",
+					+ "  and client_ap.created>=\"sinceVersion\".created\n"
+					+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)",
 					source.getProtocolVersion().getVersion()
 				);
 				break;
@@ -6942,12 +6942,12 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 						+ "  \"schema\".\"Table\" st\n"
-						+ "  inner join \"schema\".\"AOServProtocol\" since_version on st.since_version=since_version.version\n"
-						+ "  left join \"schema\".\"AOServProtocol\" last_version on st.last_version=last_version.version\n"
+						+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\"=\"sinceVersion\".version\n"
+						+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on st.\"lastVersion\"=\"lastVersion\".version\n"
 						+ "where\n"
 						+ "  client_ap.version=?\n"
-						+ "  and client_ap.created>=since_version.created\n"
-						+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
+						+ "  and client_ap.created>=\"sinceVersion\".created\n"
+						+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)\n"
 						+ "order by\n"
 						+ "  st.id"
 					);
@@ -7001,12 +7001,12 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 					+ "  \"schema\".\"Type\" st\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" since_version on st.\"sinceVersion\"=since_version.version\n"
-					+ "  left join \"schema\".\"AOServProtocol\" last_version on st.\"lastVersion\"=last_version.version\n"
+					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\"=\"sinceVersion\".version\n"
+					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on st.\"lastVersion\"=\"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
-					+ "  and client_ap.created>=since_version.created\n"
-					+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
+					+ "  and client_ap.created>=\"sinceVersion\".created\n"
+					+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)\n"
 					+ "order by\n"
 					+ "  st.id",
 					source.getProtocolVersion().getVersion()
@@ -8816,12 +8816,12 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 					+ "  \"schema\".\"Table\" st\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" since_version on st.since_version=since_version.version\n"
-					+ "  left join \"schema\".\"AOServProtocol\" last_version on st.last_version=last_version.version\n"
+					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\"=\"sinceVersion\".version\n"
+					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on st.\"lastVersion\"=\"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
-					+ "  and client_ap.created>=since_version.created\n"
-					+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
+					+ "  and client_ap.created>=\"sinceVersion\".created\n"
+					+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)\n"
 					+ "order by\n"
 					+ "  st.id",
 					version.getVersion()
@@ -8854,12 +8854,12 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 					+ "  \"schema\".\"Table\" st\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" since_version on st.since_version=since_version.version\n"
-					+ "  left join \"schema\".\"AOServProtocol\" last_version on st.last_version=last_version.version\n"
+					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\"=\"sinceVersion\".version\n"
+					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on st.\"lastVersion\"=\"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
-					+ "  and client_ap.created>=since_version.created\n"
-					+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
+					+ "  and client_ap.created>=\"sinceVersion\".created\n"
+					+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)\n"
 					+ "order by\n"
 					+ "  st.id",
 					version.getVersion()
@@ -8930,12 +8930,12 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 					+ "  schema_columns sc\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" since_version on sc.since_version=since_version.version\n"
-					+ "  left join \"schema\".\"AOServProtocol\" last_version on sc.last_version=last_version.version\n"
+					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on sc.since_version=\"sinceVersion\".version\n"
+					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on sc.last_version=\"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
-					+ "  and client_ap.created>=since_version.created\n"
-					+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
+					+ "  and client_ap.created>=\"sinceVersion\".created\n"
+					+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)\n"
 					+ "order by\n"
 					+ "  sc.index",
 					version.getVersion()
