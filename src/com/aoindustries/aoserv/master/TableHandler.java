@@ -2374,7 +2374,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new ExpenseCategory(),
-						"select * from expense_categories"
+						"select * from accounting.\"ExpenseCategory\""
 					);
 				} else {
 					List<ExpenseCategory> emptyList = Collections.emptyList();
