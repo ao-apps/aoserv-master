@@ -700,7 +700,7 @@ final public class TableHandler {
 					+ "  ac.*\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-					+ "  aosh_commands ac\n"
+					+ "  aosh.\"Command\" ac\n"
 					+ "  inner join \"schema\".\"AOServProtocol\" since_ap on ac.since_version=since_ap.version\n"
 					+ "  left outer join \"schema\".\"AOServProtocol\" last_ap on ac.last_version=last_ap.version\n"
 					+ "where\n"
