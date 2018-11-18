@@ -98,7 +98,7 @@ final public class DaemonHandler {
 				+ "  and ao.daemon_connect_bind=nb.pkey\n"
 				+ "  and nb.server=ao2.server\n"
 				+ "  and ao2.server=nd.server\n"
-				+ "  and ao2.\"daemonDeviceID\"=nd.device_id\n"
+				+ "  and ao2.\"daemonDeviceID\"=nd.\"deviceID\"\n"
 				+ "  and nd.pkey=ia.net_device\n"
 				+ "  and not ia.is_alias\n"
 				+ "limit 1",

@@ -3948,7 +3948,7 @@ final public class TableHandler {
 						+ "        where\n"
 						+ "          ms.server=ffr.server\n"
 						+ "          and bp.ao_server=nd.server\n"
-						+ "          and bpao.\"daemonDeviceID\"=nd.device_id\n" // Only allow access to the device device ID for failovers
+						+ "          and bpao.\"daemonDeviceID\"=nd.\"deviceID\"\n" // Only allow access to the device device ID for failovers
 						+ "        limit 1\n"
 						+ "      ) is not null\n"
 						+ "    )\n"
@@ -4042,7 +4042,7 @@ final public class TableHandler {
 						+ "      and bs6.server=ffr6.server\n"
 						+ "      and ffr6.backup_partition=bp6.pkey\n"
 						+ "      and bp6.ao_server=ao6.server\n"
-						+ "      and ao6.server=nd6.ao_server and ao6.\"daemonDeviceID\"=nd6.device_id\n"
+						+ "      and ao6.server=nd6.ao_server and ao6.\"daemonDeviceID\"=nd6.\"deviceID\"\n"
 						+ "      and nd6.pkey=ia6.net_device and not ia6.is_alias\n"*/
 						+ "  )",
 						username,
@@ -5928,7 +5928,7 @@ final public class TableHandler {
 						+ "      where\n"
 						+ "        ms.server=ffr.server\n"
 						+ "        and bp.ao_server=nd.server\n"
-						+ "        and bpao.\"daemonDeviceID\"=nd.device_id\n" // Only allow access to the device device ID for failovers
+						+ "        and bpao.\"daemonDeviceID\"=nd.\"deviceID\"\n" // Only allow access to the device device ID for failovers
 						+ "      limit 1\n"
 						+ "    ) is not null\n"
 						+ "  )",
@@ -5958,7 +5958,7 @@ final public class TableHandler {
 					+ "  and (\n"
 					+ "    bs.server=nd.server\n"
 					// Need distinct above when using this or
-					//+ "    or (bp.ao_server=nd.ao_server and nd.device_id=bpao.\"daemonDeviceID\")\n"
+					//+ "    or (bp.ao_server=nd.ao_server and nd.\"deviceID\"=bpao.\"daemonDeviceID\")\n"
 					+ "  )",
 					username
 				);

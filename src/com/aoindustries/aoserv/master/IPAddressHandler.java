@@ -94,8 +94,9 @@ final public class IPAddressHandler {
 
 		// Update ip_addresses
 		int netDevice=conn.executeIntQuery(
-			"select pkey from net_devices where server=? and device_id='"+NetDeviceID.ETH0+"'",
-			toServer
+			"select pkey from net_devices where server=? and \"deviceID\"=?",
+			toServer,
+			NetDeviceID.ETH0
 		);
 		conn.executeUpdate(
 			"update ip_addresses set net_device=? where pkey=?",
