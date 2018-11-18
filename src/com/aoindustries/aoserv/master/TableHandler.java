@@ -6923,7 +6923,7 @@ final public class TableHandler {
 					+ "  sfk.*\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-					+ "  schema_foreign_keys sfk\n"
+					+ "  \"schema\".\"ForeignKey\" sfk\n"
 					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on sfk.since_version=\"sinceVersion\".version\n"
 					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on sfk.last_version=\"lastVersion\".version\n"
 					+ "where\n"
