@@ -49,7 +49,7 @@ final public class BankAccountHandler {
 				out,
 				provideProgress,
 				new BankTransaction(),
-				"select * from accounting.\"BankTransaction\" where bank_account=?",
+				"select * from accounting.\"BankTransaction\" where account=?",
 				account
 			);
 		} else {
