@@ -6853,7 +6853,7 @@ final public class TableHandler {
 						+ "  schema_columns sc\n"
 						+ "  inner join \"schema\".\"AOServProtocol\" sc_ap on sc.since_version=sc_ap.version\n"
 						+ "  left join \"schema\".\"AOServProtocol\" last_ap on sc.last_version=last_ap.version,\n"
-						+ "  schema_tables st\n"
+						+ "  \"schema\".\"Table\" st\n"
 						+ "where\n"
 						+ "  client_ap.version=?\n"
 						+ "  and client_ap.created>=sc_ap.created\n"
@@ -6941,7 +6941,7 @@ final public class TableHandler {
 						+ "  st.*\n"
 						+ "from\n"
 						+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-						+ "  schema_tables st\n"
+						+ "  \"schema\".\"Table\" st\n"
 						+ "  inner join \"schema\".\"AOServProtocol\" since_version on st.since_version=since_version.version\n"
 						+ "  left join \"schema\".\"AOServProtocol\" last_version on st.last_version=last_version.version\n"
 						+ "where\n"
@@ -8777,7 +8777,7 @@ final public class TableHandler {
 						}
 						return newMap;
 					},
-					"select table_id, name from schema_tables"
+					"select table_id, name from \"schema\".\"Table\""
 				);
 			}
 			return tableNames.get(dbTableId);
@@ -8815,7 +8815,7 @@ final public class TableHandler {
 					+ "  st.table_id\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-					+ "  schema_tables st\n"
+					+ "  \"schema\".\"Table\" st\n"
 					+ "  inner join \"schema\".\"AOServProtocol\" since_version on st.since_version=since_version.version\n"
 					+ "  left join \"schema\".\"AOServProtocol\" last_version on st.last_version=last_version.version\n"
 					+ "where\n"
@@ -8853,7 +8853,7 @@ final public class TableHandler {
 					+ "  st.table_id\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-					+ "  schema_tables st\n"
+					+ "  \"schema\".\"Table\" st\n"
 					+ "  inner join \"schema\".\"AOServProtocol\" since_version on st.since_version=since_version.version\n"
 					+ "  left join \"schema\".\"AOServProtocol\" last_version on st.last_version=last_version.version\n"
 					+ "where\n"
