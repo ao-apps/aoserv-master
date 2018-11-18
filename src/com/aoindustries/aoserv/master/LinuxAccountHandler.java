@@ -1355,7 +1355,7 @@ final public class LinuxAccountHandler {
 		return conn.executeObjectQuery(
 			ObjectFactories.groupIdFactory,
 			"select\n"
-			+ "  group_name\n"
+			+ "  \"group\"\n"
 			+ "from\n"
 			+ "  linux_group_accounts\n"
 			+ "where\n"
@@ -1474,7 +1474,7 @@ final public class LinuxAccountHandler {
 		) throw new SQLException("Not allowed to remove LinuxGroup named '"+name+"'");
 
 		// Must not be the primary group for any LinuxAccount
-		int primaryCount=conn.executeIntQuery("select count(*) from linux_group_accounts where group_name=? and is_primary", name);
+		int primaryCount=conn.executeIntQuery("select count(*) from linux_group_accounts where \"group\"=? and is_primary", name);
 		if(primaryCount>0) throw new SQLException("linux_group.name="+name+" is the primary group for "+primaryCount+" Linux "+(primaryCount==1?"account":"accounts"));
 		// Get the values for later use
 		AccountingCode accounting = getBusinessForLinuxGroup(conn, name);
@@ -1484,8 +1484,8 @@ final public class LinuxAccountHandler {
 			conn.executeUpdate("delete from linux_server_groups where name=? and ao_server=?", name, aoServer);
 		}
 		// Delete the group relations for this group
-		boolean groupAccountsModified=conn.executeIntQuery("select count(*) from linux_group_accounts where group_name=? limit 1", name)>0;
-		if(groupAccountsModified) conn.executeUpdate("delete from linux_group_accounts where group_name=?", name);
+		boolean groupAccountsModified=conn.executeIntQuery("select count(*) from linux_group_accounts where \"group\"=? limit 1", name)>0;
+		if(groupAccountsModified) conn.executeUpdate("delete from linux_group_accounts where \"group\"=?", name);
 		// Delete from the database
 		conn.executeUpdate("delete from linux_groups where name=?", name);
 
@@ -1517,7 +1517,7 @@ final public class LinuxAccountHandler {
 						"where lga.username = lsa.username and "+
 						"lsa.pkey           = hst.linux_server_account and "+
 						"htss.tomcat_site   = hs.pkey and "+
-						"lga.group_name     = hs.linux_group and "+
+						"lga.\"group\"      = hs.linux_group and "+
 						"hst.pkey           = htss.httpd_shared_tomcat and "+
 						"lga.pkey = ?",
 			pkey
@@ -1529,11 +1529,11 @@ final public class LinuxAccountHandler {
 						"httpd_shared_tomcats hst, "+
 						"httpd_tomcat_shared_sites htss, "+
 						"httpd_sites hs "+
-							"where lga.group_name = lsg.name and "+
-							"lsg.pkey             = hst.linux_server_group and "+
-							"htss.tomcat_site     = hs.pkey and "+
-							"lga.username         = hs.linux_account and "+
-							"hst.pkey           = htss.httpd_shared_tomcat and "+
+							"where lga.\"group\" = lsg.name and "+
+							"lsg.pkey            = hst.linux_server_group and "+
+							"htss.tomcat_site    = hs.pkey and "+
+							"lga.username        = hs.linux_account and "+
+							"hst.pkey            = htss.httpd_shared_tomcat and "+
 							"lga.pkey = ?",
 				pkey
 			);
@@ -1565,7 +1565,7 @@ final public class LinuxAccountHandler {
 			+ "      from\n"
 			+ "        linux_group_accounts lga\n"
 			+ "      where\n"
-			+ "        lga.group_name=?\n"
+			+ "        lga.\"group\"=?\n"
 			+ "        and lga.username=?\n"
 			+ "        and not lga.is_primary\n"
 			+ "        and (\n"
@@ -1581,7 +1581,7 @@ final public class LinuxAccountHandler {
 			+ "            and lsa.pkey=hst.linux_server_account\n"
 			+ "            and hst.pkey=htss.httpd_shared_tomcat\n"
 			+ "            and htss.tomcat_site=hs.pkey\n"
-			+ "            and hs.linux_group=lga.group_name\n"
+			+ "            and hs.linux_group=lga.\"group\"\n"
 			+ "          limit 1\n"
 			+ "        ) is null\n"
 			+ "        and (\n"
@@ -1593,7 +1593,7 @@ final public class LinuxAccountHandler {
 			+ "            httpd_tomcat_shared_sites htss,\n"
 			+ "            httpd_sites hs\n"
 			+ "          where\n"
-			+ "            lga.group_name=lsg.name\n"
+			+ "            lga.\"group\"=lsg.name\n"
 			+ "            and lsg.pkey=hst.linux_server_group\n"
 			+ "            and hst.pkey=htss.httpd_shared_tomcat\n"
 			+ "            and htss.tomcat_site=hs.pkey\n"
@@ -1723,7 +1723,7 @@ final public class LinuxAccountHandler {
 			+ "  count(*)\n"
 			+ "from\n"
 			+ "  linux_server_groups lsg\n"
-			+ "  inner join linux_group_accounts lga on lsg.name=lga.group_name\n"
+			+ "  inner join linux_group_accounts lga on lsg.name=lga.\"group\"\n"
 			+ "  inner join linux_server_accounts lsa on lga.username=lsa.username\n"
 			+ "  inner join servers se on lsg.ao_server=se.pkey\n"
 			+ "where\n"
@@ -1796,7 +1796,7 @@ final public class LinuxAccountHandler {
 				+ "from\n"
 				+ "  linux_server_accounts lsa\n"
 				+ "  inner join linux_group_accounts lga on lsa.username=lga.username\n"
-				+ "  inner join linux_server_groups lsg on lga.group_name=lsg.name\n"
+				+ "  inner join linux_server_groups lsg on lga.\"group\"=lsg.name\n"
 				+ "  inner join servers se on lsa.ao_server=se.pkey\n"
 				+ "where\n"
 				+ "  lsa.pkey=?\n"
@@ -2304,7 +2304,7 @@ final public class LinuxAccountHandler {
 			+ "  pk1.accounting\n"
 			+ "from\n"
 			+ "  linux_group_accounts lga1\n"
-			+ "  inner join linux_groups lg1 on lga1.group_name=lg1.name\n"
+			+ "  inner join linux_groups lg1 on lga1.\"group\"=lg1.name\n"
 			+ "  inner join packages pk1 on lg1.package=pk1.name\n"
 			+ "where\n"
 			+ "  lga1.pkey=?\n"
@@ -2385,7 +2385,7 @@ final public class LinuxAccountHandler {
 			+ "  lsg.ao_server\n"
 			+ "from\n"
 			+ "  linux_group_accounts lga\n"
-			+ "  inner join linux_server_groups lsg on lga.group_name=lsg.name\n"
+			+ "  inner join linux_server_groups lsg on lga.\"group\"=lsg.name\n"
 			+ "  inner join linux_server_accounts lsa on lga.username=lsa.username\n"
 			+ "  inner join servers se on lsg.ao_server=se.pkey\n"
 			+ "where\n"
@@ -2506,7 +2506,7 @@ final public class LinuxAccountHandler {
 	public static GroupId getLinuxGroupForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.groupIdFactory,
-			"select group_name from linux_group_accounts where pkey=?",
+			"select \"group\" from linux_group_accounts where pkey=?",
 			lga
 		);
 	}
@@ -2557,7 +2557,7 @@ final public class LinuxAccountHandler {
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set primary LinuxGroupAccount, LinuxAccount disabled: "+username);
 		GroupId group = conn.executeObjectQuery(
 			ObjectFactories.groupIdFactory,
-			"select group_name from linux_group_accounts where pkey=?",
+			"select \"group\" from linux_group_accounts where pkey=?",
 			pkey
 		);
 
