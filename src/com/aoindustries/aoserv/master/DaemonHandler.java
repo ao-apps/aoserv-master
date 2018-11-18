@@ -100,7 +100,7 @@ final public class DaemonHandler {
 				+ "  and ao2.server=nd.server\n"
 				+ "  and ao2.\"daemonDeviceID\"=nd.\"deviceID\"\n"
 				+ "  and nd.pkey=ia.\"netDevice\"\n"
-				+ "  and not ia.is_alias\n"
+				+ "  and not ia.\"isAlias\"\n"
 				+ "limit 1",
 				aoServer
 			);

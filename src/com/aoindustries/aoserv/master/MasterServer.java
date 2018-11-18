@@ -1565,7 +1565,7 @@ public abstract class MasterServer {
 														boolean isSecure = in.readBoolean();
 														boolean isOverflow = in.readBoolean();
 														if(isSecure) throw new IOException(AOSHCommand.ADD_HTTPD_SHARED_TOMCAT + " call no longer supports is_secure=true");
-														if(isOverflow) throw new IOException(AOSHCommand.ADD_HTTPD_SHARED_TOMCAT + " call no longer supports is_overflow=true");
+														if(isOverflow) throw new IOException(AOSHCommand.ADD_HTTPD_SHARED_TOMCAT + " call no longer supports isOverflow=true");
 													}
 													process.setCommand(
 														AOSHCommand.ADD_HTTPD_SHARED_TOMCAT,

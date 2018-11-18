@@ -4022,7 +4022,7 @@ final public class TableHandler {
 						+ "      and pk5.accounting=bs5.accounting\n"
 						+ "      and bs5.server=nd5.server\n"
 						+ "      and nd5.pkey=ia5.\"netDevice\"\n"
-						+ "      and (ia5.\"inetAddress\"='"+IPAddress.LOOPBACK_IP+"' or ia5.is_overflow)\n"
+						+ "      and (ia5.\"inetAddress\"='"+IPAddress.LOOPBACK_IP+"' or ia5.\"isOverflow\")\n"
 						/*+ "  ) or ia.id in (\n"
 						+ "    select \n"
 						+ "      ia6.id\n"
@@ -4043,7 +4043,7 @@ final public class TableHandler {
 						+ "      and ffr6.backup_partition=bp6.pkey\n"
 						+ "      and bp6.ao_server=ao6.server\n"
 						+ "      and ao6.server=nd6.ao_server and ao6.\"daemonDeviceID\"=nd6.\"deviceID\"\n"
-						+ "      and nd6.pkey=ia6.\"netDevice\" and not ia6.is_alias\n"*/
+						+ "      and nd6.pkey=ia6.\"netDevice\" and not ia6.\"isAlias\"\n"*/
 						+ "  )",
 						username,
 						username,

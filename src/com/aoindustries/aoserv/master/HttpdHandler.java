@@ -2659,7 +2659,7 @@ final public class HttpdHandler {
 					if(
 						conn.executeBooleanQuery(
 							"select\n"
-							+ "  not ia.is_overflow\n"
+							+ "  not ia.\"isOverflow\"\n"
 							+ "from\n"
 							+ "  net_binds nb,\n"
 							+ "  \"IPAddress\" ia\n"

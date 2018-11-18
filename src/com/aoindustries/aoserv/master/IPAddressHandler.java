@@ -304,7 +304,7 @@ final public class IPAddressHandler {
 			+ "        left join httpd_binds hb on nb.pkey=hb.net_bind\n"
 			+ "        left join httpd_servers hs on hb.httpd_server=hs.pkey\n"
 			+ "      where\n"
-			+ "        ia.is_overflow\n"
+			+ "        ia.\"isOverflow\"\n"
 			+ "        and ia.\"netDevice\"=nd.pkey\n"
 			+ "        and nd.server=?\n"
 			+ "        and (\n"
@@ -396,7 +396,7 @@ final public class IPAddressHandler {
 		);
 
 		conn.executeUpdate(
-			"update \"IPAddress\" set available=true, is_overflow=false, monitoring_enabled=true where id=?",
+			"update \"IPAddress\" set available=true, \"isOverflow\"=false, monitoring_enabled=true where id=?",
 			ipAddress
 		);
 		invalidateList.addTable(
