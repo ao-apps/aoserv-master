@@ -40,7 +40,7 @@ final public class IPAddressHandler {
 
 	public static boolean isDHCPAddress(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
-			"select is_dhcp from \"IPAddress\" where id=?",
+			"select \"isDhcp\" from \"IPAddress\" where id=?",
 			id
 		);
 	}
