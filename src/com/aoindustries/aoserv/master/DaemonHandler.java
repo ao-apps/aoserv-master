@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -79,7 +79,7 @@ final public class DaemonHandler {
 			+ "where\n"
 			+ "  ao.server=?\n"
 			+ "  and ao.daemon_connect_bind=nb.pkey\n"
-			+ "  and nb.ip_address=ia.pkey",
+			+ "  and nb.\"ipAddress\"=ia.pkey",
 			aoServer
 		);
 		if(ip==null) throw new SQLException("Unable to find daemon IP address for AOServer: "+aoServer);

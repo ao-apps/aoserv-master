@@ -2293,7 +2293,7 @@ final public class HttpdHandler {
 		PreparedStatement pstmt = conn.getConnection(
 			Connection.TRANSACTION_READ_COMMITTED,
 			true
-		).prepareStatement("select pkey, app_protocol from net_binds where server=? and ip_address=? and port=? and net_protocol=?");
+		).prepareStatement("select pkey, app_protocol from net_binds where server=? and \"ipAddress\"=? and port=? and net_protocol=?");
 		try {
 			pstmt.setInt(1, aoServer);
 			pstmt.setInt(2, ipAddress);
@@ -2308,7 +2308,7 @@ final public class HttpdHandler {
 						+netBind
 						+" ao_server="
 						+aoServer
-						+" ip_address="
+						+" ipAddress="
 						+ipAddress
 						+" port="
 						+httpPort
@@ -2665,7 +2665,7 @@ final public class HttpdHandler {
 							+ "  ip_addresses ia\n"
 							+ "where\n"
 							+ "  nb.pkey=?\n"
-							+ "  and nb.ip_address=ia.pkey",
+							+ "  and nb.\"ipAddress\"=ia.pkey",
 							httpdBind
 						)
 					) {

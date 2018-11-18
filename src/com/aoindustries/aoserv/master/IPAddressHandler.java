@@ -271,7 +271,7 @@ final public class IPAddressHandler {
 			+ "from\n"
 			+ "  net_binds\n"
 			+ "where\n"
-			+ "  ip_address=?",
+			+ "  \"ipAddress\"=?",
 			ipAddress
 		);
 		if(count!=0) throw new SQLException("Unable to set Package, IPAddress in use by "+count+(count==1?" row":" rows")+" in net_binds: "+ipAddress);
@@ -308,8 +308,8 @@ final public class IPAddressHandler {
 			+ "        and ia.net_device=nd.pkey\n"
 			+ "        and nd.server=?\n"
 			+ "        and (\n"
-			+ "          nb.ip_address is null\n"
-			+ "          or ia.pkey=nb.ip_address\n"
+			+ "          nb.\"ipAddress\" is null\n"
+			+ "          or ia.pkey=nb.\"ipAddress\"\n"
 			+ "        )\n"
 			+ "      order by\n"
 			+ "        (\n"
@@ -320,7 +320,7 @@ final public class IPAddressHandler {
 			+ "            httpd_site_binds hsb2\n"
 			+ "          where\n"
 			+ "            nb2.server=?\n"
-			+ "            and nb2.ip_address=ia.pkey\n"
+			+ "            and nb2.\"ipAddress\"=ia.pkey\n"
 			+ "            and (\n"
 			+ "              nb2.port=80\n"
 			+ "              or nb2.port=443\n"
