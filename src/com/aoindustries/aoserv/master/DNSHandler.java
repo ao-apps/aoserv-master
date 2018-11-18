@@ -305,7 +305,7 @@ final public class DNSHandler implements CronJob {
 						   // Is not "localhost"
 						   + "  hsu.hostname!='localhost'\n"
 						   // Is not the test URL
-						   + "  and hsu.hostname!=(hs.site_name || '.' || ao.hostname)";
+						   + "  and hsu.hostname!=(hs.\"name\" || '.' || ao.hostname)";
 				try {
 					ResultSet results = stmt.executeQuery(sql);
 					try {

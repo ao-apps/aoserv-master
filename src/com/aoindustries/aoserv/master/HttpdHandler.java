@@ -274,7 +274,7 @@ final public class HttpdHandler {
 	public static int getHttpdSite(DatabaseConnection conn, int aoServer, String siteName) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select coalesce(\n"
-			+ "  (select pkey from httpd_sites where (ao_server, site_name)=(?,?)),\n"
+			+ "  (select pkey from httpd_sites where (ao_server, \"name\")=(?,?)),\n"
 			+ "  -1\n"
 			+ ")",
 			aoServer,
@@ -718,7 +718,7 @@ final public class HttpdHandler {
 			int slashPos = docBaseStr.indexOf('/', httpdSitesDir.toString().length() + 1);
 			if(slashPos == -1) slashPos = docBaseStr.length();
 			String siteName = docBaseStr.substring(httpdSitesDir.toString().length() + 1, slashPos);
-			int hs = conn.executeIntQuery("select pkey from httpd_sites where ao_server=? and site_name=?", aoServer, siteName);
+			int hs = conn.executeIntQuery("select pkey from httpd_sites where ao_server=? and \"name\"=?", aoServer, siteName);
 			HttpdHandler.checkAccessHttpdSite(conn, source, "addCvsRepository", hs);
 		} else if(docBaseStr.startsWith(httpdSharedTomcatsDir + "/")) {
 			int slashPos = docBaseStr.indexOf('/', httpdSharedTomcatsDir.toString().length() + 1);
@@ -987,7 +987,7 @@ final public class HttpdHandler {
 			"insert into httpd_sites (\n"
 			+ "  pkey,\n"
 			+ "  ao_server,\n"
-			+ "  site_name,\n"
+			+ "  \"name\",\n"
 			+ "  package,\n"
 			+ "  linux_account,\n"
 			+ "  linux_group,\n"
@@ -1001,7 +1001,7 @@ final public class HttpdHandler {
 			+ ") values(\n"
 			+ "  ?,\n" // pkey
 			+ "  ?,\n" // ao_server
-			+ "  ?,\n" // site_name
+			+ "  ?,\n" // name
 			+ "  ?,\n" // package
 			+ "  ?,\n" // linux_account
 			+ "  ?,\n" // linux_group
@@ -1845,7 +1845,7 @@ final public class HttpdHandler {
 		String template
 	) throws IOException, SQLException {
 		// Load the entire list of site names
-		List<String> names=conn.executeStringListQuery("select site_name from httpd_sites group by site_name");
+		List<String> names=conn.executeStringListQuery("select \"name\" from httpd_sites group by \"name\"");
 		int size=names.size();
 
 		// Sort them
@@ -2136,7 +2136,7 @@ final public class HttpdHandler {
 	}
 
 	public static String getSiteNameForHttpdSite(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeStringQuery("select site_name from httpd_sites where pkey=?", pkey);
+		return conn.executeStringQuery("select \"name\" from httpd_sites where pkey=?", pkey);
 	}
 
 	/**
@@ -2213,7 +2213,7 @@ final public class HttpdHandler {
 	}
 
 	public static boolean isSiteNameAvailable(DatabaseConnection conn, String siteName) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select (select pkey from httpd_sites where site_name=? limit 1) is null", siteName);
+		return conn.executeBooleanQuery("select (select pkey from httpd_sites where \"name\"=? limit 1) is null", siteName);
 	}
 
 	/**
@@ -2563,7 +2563,7 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		AccountingCode accounting = getBusinessForHttpdSite(conn, httpdSitePKey);
 		int aoServer=getAOServerForHttpdSite(conn, httpdSitePKey);
-		String siteName=conn.executeStringQuery("select site_name from httpd_sites where pkey=?", httpdSitePKey);
+		String siteName=conn.executeStringQuery("select \"name\" from httpd_sites where pkey=?", httpdSitePKey);
 
 		// OperatingSystem settings
 		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
@@ -2818,7 +2818,7 @@ final public class HttpdHandler {
 				+ "  (\n"
 				+ "    select hostname from httpd_site_urls where pkey=?\n"
 				+ "  )=(\n"
-				+ "    select hs.site_name||'.'||ao.hostname from httpd_sites hs, ao_servers ao where hs.pkey=? and hs.ao_server=ao.server\n"
+				+ "    select hs.\"name\"||'.'||ao.hostname from httpd_sites hs, ao_servers ao where hs.pkey=? and hs.ao_server=ao.server\n"
 				+ "  )",
 				pkey,
 				hs
