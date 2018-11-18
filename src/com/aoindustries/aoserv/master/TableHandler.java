@@ -910,7 +910,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new Bank(),
-						"select * from banks"
+						"select * from accounting.\"Bank\""
 					);
 				} else {
 					List<Bank> emptyList = Collections.emptyList();
