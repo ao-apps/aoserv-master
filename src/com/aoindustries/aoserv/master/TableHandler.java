@@ -8926,7 +8926,7 @@ final public class TableHandler {
 			if(columns == null) {
 				List<String> clientColumns = conn.executeStringListQuery(
 					"select\n"
-					+ "  sc.column_name\n"
+					+ "  sc.\"name\"\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 					+ "  \"schema\".\"Column\" sc\n"
