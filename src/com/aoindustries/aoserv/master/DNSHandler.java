@@ -945,7 +945,7 @@ final public class DNSHandler implements CronJob {
 		InetAddress dhcpAddress
 	) throws IOException, SQLException {
 		// Find the pkeys of the entries that should be changed
-		IntList pkeys=conn.executeIntListQuery("select pkey from dns_records where dhcp_address=?", ipAddress);
+		IntList pkeys=conn.executeIntListQuery("select pkey from dns_records where \"dhcpAddress\"=?", ipAddress);
 
 		// Build a list of affected zones
 		List<String> zones=new SortedArrayList<>();
