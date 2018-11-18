@@ -6860,7 +6860,7 @@ final public class TableHandler {
 						+ "  and (last_ap.created is null or client_ap.created<=last_ap.created)\n"
 						+ "  and sc.table_name=st.name\n"
 						+ "order by\n"
-						+ "  st.table_id,\n"
+						+ "  st.id,\n"
 						+ "  sc.index"
 					);
 					try {
@@ -6949,7 +6949,7 @@ final public class TableHandler {
 						+ "  and client_ap.created>=since_version.created\n"
 						+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
 						+ "order by\n"
-						+ "  st.table_id"
+						+ "  st.id"
 					);
 					try {
 						pstmt.setString(1, source.getProtocolVersion().getVersion());
@@ -8771,13 +8771,13 @@ final public class TableHandler {
 					(ResultSet results) -> {
 						Map<Integer,String> newMap = new HashMap<>();
 						while(results.next()) {
-							Integer tableId = results.getInt("table_id");
+							Integer id = results.getInt("id");
 							String name = results.getString("name");
-							if(newMap.put(tableId, name) != null) throw new SQLException("Duplicate table_id: " + tableId);
+							if(newMap.put(id, name) != null) throw new SQLException("Duplicate id: " + id);
 						}
 						return newMap;
 					},
-					"select table_id, name from \"schema\".\"Table\""
+					"select id, name from \"schema\".\"Table\""
 				);
 			}
 			return tableNames.get(dbTableId);
@@ -8800,7 +8800,7 @@ final public class TableHandler {
 	/**
 	 * Converts a specific AOServProtocol version table ID to the number used in the database storage.
 	 *
-	 * @return  the {@code table_id} used in the database or {@code -1} if unknown
+	 * @return  the {@code id} used in the database or {@code -1} if unknown
 	 */
 	public static int convertClientTableIDToDBTableID(
 		DatabaseAccess conn,
@@ -8812,7 +8812,7 @@ final public class TableHandler {
 			if(tableIDs == null) {
 				IntList clientTables = conn.executeIntListQuery(
 					"select\n"
-					+ "  st.table_id\n"
+					+ "  st.id\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 					+ "  \"schema\".\"Table\" st\n"
@@ -8823,7 +8823,7 @@ final public class TableHandler {
 					+ "  and client_ap.created>=since_version.created\n"
 					+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
 					+ "order by\n"
-					+ "  st.table_id",
+					+ "  st.id",
 					version.getVersion()
 				);
 				int numTables = clientTables.size();
@@ -8850,7 +8850,7 @@ final public class TableHandler {
 			if(clientTableIDs == null) {
 				IntList clientTables = conn.executeIntListQuery(
 					"select\n"
-					+ "  st.table_id\n"
+					+ "  st.id\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 					+ "  \"schema\".\"Table\" st\n"
@@ -8861,7 +8861,7 @@ final public class TableHandler {
 					+ "  and client_ap.created>=since_version.created\n"
 					+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
 					+ "order by\n"
-					+ "  st.table_id",
+					+ "  st.id",
 					version.getVersion()
 				);
 				int numTables = clientTables.size();
