@@ -391,7 +391,7 @@ final public class TableHandler {
 						+ "  amount,\n"
 						+ "  confirmed\n"
 						+ "from\n"
-						+ "  bank_transactions\n"
+						+ "  accounting.\"BankTransaction\"\n"
 						+ "where\n"
 						+ "  transid=?",
 						in.readCompressedInt()
@@ -880,7 +880,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new BankTransaction(),
-						"select * from bank_transactions"
+						"select * from accounting.\"BankTransaction\""
 					);
 				} else {
 					List<BankTransaction> emptyList = Collections.emptyList();
