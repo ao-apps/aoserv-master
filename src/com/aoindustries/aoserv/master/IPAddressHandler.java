@@ -223,7 +223,9 @@ final public class IPAddressHandler {
 		boolean enabled
 	) throws IOException, SQLException {
 		// Update the table
-		conn.executeUpdate("update \"IPAddress\" set monitoring_enabled=? where id=?", enabled, ipAddress);
+		// TODO: Add row when first enabled or column set to non-default
+		// TODO: Remove row when disabled and other columns match defaults
+		conn.executeUpdate("update monitoring.\"IPAddress\" set enabled=? where id=?", enabled, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -277,8 +279,7 @@ final public class IPAddressHandler {
 		if(count!=0) throw new SQLException("Unable to set Package, IPAddress in use by "+count+(count==1?" row":" rows")+" in net_binds: "+ipAddress);
 
 		// Update the table
-		conn.executeUpdate("update \"IPAddress\" set package=? where id=?", newPackage, ipAddress);
-		conn.executeUpdate("update \"IPAddress\" set available=false where id=?", ipAddress);
+		conn.executeUpdate("update \"IPAddress\" set package=?, available=false where id=?", newPackage, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -396,7 +397,11 @@ final public class IPAddressHandler {
 		);
 
 		conn.executeUpdate(
-			"update \"IPAddress\" set available=true, \"isOverflow\"=false, monitoring_enabled=true where id=?",
+			"update \"IPAddress\" set available=true, \"isOverflow\"=false where id=?",
+			ipAddress
+		);
+		conn.executeUpdate(
+			"update monitoring.\"IPAddress\" set enabled=true, \"pingMonitorEnabled\"=false, \"checkBlacklistsOverSmtp\"=false, \"verifyDnsPtr\"=true, \"verifyDnsA\"=false where id=?",
 			ipAddress
 		);
 		invalidateList.addTable(
