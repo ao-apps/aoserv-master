@@ -7008,7 +7008,7 @@ final public class TableHandler {
 					+ "  and client_ap.created>=since_version.created\n"
 					+ "  and (last_version.created is null or client_ap.created<=last_version.created)\n"
 					+ "order by\n"
-					+ "  st.num",
+					+ "  st.id",
 					source.getProtocolVersion().getVersion()
 				);
 				break;
