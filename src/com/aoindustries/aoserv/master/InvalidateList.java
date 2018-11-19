@@ -41,9 +41,9 @@ final public class InvalidateList {
 
     /** Copy once to avoid repeated copies. */
     final private static SchemaTable.TableID[] tableIDs = SchemaTable.TableID.values();
-    final private static int numTables = tableIDs.length;
+    // TODO: Unused 2018-11-18: final private static int numTables = tableIDs.length;
 
-    final private static String[] tableNames=new String[numTables];
+    // TODO: Unused 2018-11-18: final private static String[] tableNames=new String[numTables];
 
     /**
      * Indicates that all servers or businesses should receive the invalidate signal.
@@ -109,7 +109,7 @@ final public class InvalidateList {
         IntCollection servers,
         boolean recurse
     ) throws IOException, SQLException {
-        if(tableNames[tableID.ordinal()]==null) tableNames[tableID.ordinal()]=TableHandler.getTableName(conn, tableID);
+        // TODO: Unused 2018-11-18: if(tableNames[tableID.ordinal()]==null) tableNames[tableID.ordinal()]=TableHandler.getTableName(conn, tableID);
 
         // Add to the business lists
         {
