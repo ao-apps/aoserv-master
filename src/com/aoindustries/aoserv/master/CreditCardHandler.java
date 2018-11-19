@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -1304,8 +1304,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "      bu.accounting,\n"
                             + "      coalesce(sum(cast((tr.rate*tr.quantity) as decimal(9,2))), 0) as balance\n"
                             + "    from\n"
-                            + "      businesses bu\n"
-                            + "      left outer join transactions tr on bu.accounting=tr.accounting\n"
+                            + "                businesses   bu\n"
+                            + "      left join transactions tr on bu.accounting = tr.accounting\n"
                             + "    where\n"
                             + "      tr.payment_confirmed!='N'\n"
                             + "      and tr.time<?\n"
@@ -1317,8 +1317,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "      bu.accounting,\n"
                             + "      coalesce(sum(cast((tr.rate*tr.quantity) as decimal(9,2))), 0) as balance\n"
                             + "    from\n"
-                            + "      businesses bu\n"
-                            + "      left outer join transactions tr on bu.accounting=tr.accounting\n"
+                            + "                businesses   bu\n"
+                            + "      left join transactions tr on bu.accounting = tr.accounting\n"
                             + "    where\n"
                             + "      tr.payment_confirmed!='N'\n"
                             + "    group by\n"
