@@ -711,10 +711,10 @@ final public class TableHandler {
 					+ "  left  join \"schema\".\"Table\"                st on ac.\"table\"        =        st.id\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
-					+ "  and client_ap.created>=since_ap.created\n"
+					+ "  and client_ap.created >= since_ap.created\n"
 					+ "  and (\n"
 					+ "    last_ap.created is null\n"
-					+ "    or client_ap.created<=last_ap.created\n"
+					+ "    or client_ap.created <= last_ap.created\n"
 					+ "  )",
 					source.getProtocolVersion().getVersion()
 				);
@@ -6908,18 +6908,38 @@ final public class TableHandler {
 					List<SchemaColumn> clientColumns=new ArrayList<>();
 					PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
 						"select\n"
-						+ "  sc.*\n"
+						+ "  sc.id,\n"
+						+ "  st.\"name\" as \"table\",\n"
+						+ "  sc.\"name\",\n"
+						+ "  sc.index,\n"
+						+ "  ty.\"name\" as \"type\",\n"
+						+ "  sc.\"isNullable\",\n"
+						+ "  sc.\"isUnique\",\n"
+						+ "  sc.\"isPublic\",\n"
+						+ "  coalesce(sc.description, d.description, '') as description,\n"
+						+ "  sc.\"sinceVersion\",\n"
+						+ "  sc.\"lastVersion\"\n"
 						+ "from\n"
 						+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 						+ "             \"schema\".\"Column\"              sc\n"
+						+ "  inner join \"schema\".\"Table\"               st on sc.\"table\"        =      st.id\n"
+						+ "  inner join \"schema\".\"Schema\"               s on st.\"schema\"       =       s.id\n"
+						+ "  inner join \"schema\".\"Type\"                ty on sc.\"type\"         =      ty.id\n"
 						+ "  inner join \"schema\".\"AOServProtocol\"   sc_ap on sc.\"sinceVersion\" =   sc_ap.version\n"
-						+ "  left  join \"schema\".\"AOServProtocol\" last_ap on sc.\"lastVersion\"  = last_ap.version,\n"
-						+ "  \"schema\".\"Table\" st\n"
+						+ "  left  join \"schema\".\"AOServProtocol\" last_ap on sc.\"lastVersion\"  = last_ap.version\n"
+						+ "  left  join (\n"
+						+ "    select\n"
+						+ "      pn.nspname, pc.relname, pa.attname, pd.description\n"
+						+ "    from\n"
+						+ "                 pg_catalog.pg_namespace   pn\n"
+						+ "      inner join pg_catalog.pg_class       pc on pn.oid = pc.relnamespace\n"
+						+ "      inner join pg_catalog.pg_attribute   pa on pc.oid = pa.attrelid\n"
+						+ "      inner join pg_catalog.pg_description pd on pc.oid = pd.objoid and pd.objsubid = pa.attnum\n"
+						+ "  ) d on (s.\"name\", st.\"name\", sc.\"name\") = (d.nspname, d.relname, d.attname)\n"
 						+ "where\n"
 						+ "  client_ap.version=?\n"
-						+ "  and client_ap.created>=sc_ap.created\n"
-						+ "  and (last_ap.created is null or client_ap.created<=last_ap.created)\n"
-						+ "  and sc.\"table\"=st.\"name\"\n"
+						+ "  and client_ap.created >= sc_ap.created\n"
+						+ "  and (last_ap.created is null or client_ap.created <= last_ap.created)\n"
 						+ "order by\n"
 						+ "  st.id,\n"
 						+ "  sc.index"
@@ -6989,8 +7009,8 @@ final public class TableHandler {
 					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on sfk.\"lastVersion\"=\"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
-					+ "  and client_ap.created>=\"sinceVersion\".created\n"
-					+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)",
+					+ "  and client_ap.created >= \"sinceVersion\".created\n"
+					+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)",
 					source.getProtocolVersion().getVersion()
 				);
 				break;
@@ -7003,7 +7023,7 @@ final public class TableHandler {
 						+ "  st.id,\n"
 						+ "  st.display,\n"
 						+ "  st.\"isPublic\",\n"
-						+ "  coalesce(st.description, d.description) as description,\n"
+						+ "  coalesce(st.description, d.description, '') as description,\n"
 						+ "  st.\"sinceVersion\",\n"
 						+ "  st.\"lastVersion\"\n"
 						+ "from\n"
@@ -7019,11 +7039,11 @@ final public class TableHandler {
 						+ "                 pg_catalog.pg_namespace   pn\n"
 						+ "      inner join pg_catalog.pg_class       pc on pn.oid = pc.relnamespace\n"
 						+ "      inner join pg_catalog.pg_description pd on pc.oid = pd.objoid and pd.objsubid=0\n"
-						+ "  ) d on s.\"name\" = d.nspname and st.\"name\" = d.relname\n"
+						+ "  ) d on (s.\"name\", st.\"name\") = (d.nspname, d.relname)\n"
 						+ "where\n"
 						+ "  client_ap.version=?\n"
-						+ "  and client_ap.created>=\"sinceVersion\".created\n"
-						+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)\n"
+						+ "  and client_ap.created >= \"sinceVersion\".created\n"
+						+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
 						+ "order by\n"
 						+ "  st.id"
 					);
@@ -7084,8 +7104,8 @@ final public class TableHandler {
 					+ "  left  join \"schema\".\"AOServProtocol\" \"lastVersion\"  on st.\"lastVersion\"  =  \"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
-					+ "  and client_ap.created>=\"sinceVersion\".created\n"
-					+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)\n"
+					+ "  and client_ap.created >= \"sinceVersion\".created\n"
+					+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
 					+ "order by\n"
 					+ "  st.id",
 					source.getProtocolVersion().getVersion()
@@ -8918,8 +8938,8 @@ final public class TableHandler {
 					+ "  left  join \"schema\".\"AOServProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
-					+ "  and client_ap.created>=\"sinceVersion\".created\n"
-					+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)\n"
+					+ "  and client_ap.created >= \"sinceVersion\".created\n"
+					+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
 					+ "order by\n"
 					+ "  st.id",
 					version.getVersion()
@@ -8956,8 +8976,8 @@ final public class TableHandler {
 					+ "  left  join \"schema\".\"AOServProtocol\"  \"lastVersion\" on st.\"lastVersion\"  = \"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
-					+ "  and client_ap.created>=\"sinceVersion\".created\n"
-					+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)\n"
+					+ "  and client_ap.created >= \"sinceVersion\".created\n"
+					+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
 					+ "order by\n"
 					+ "  st.id",
 					version.getVersion()
@@ -9007,6 +9027,10 @@ final public class TableHandler {
 
 	final private static EnumMap<AOServProtocol.Version,Map<SchemaTable.TableID,Map<String,Integer>>> clientColumnIndexes=new EnumMap<>(AOServProtocol.Version.class);
 
+	/*
+	 * 2018-11-18: This method appears unused.
+	 * If need to bring it back, see the "TODO" note below about a likely bug.
+	 * Also note that index is now a smallint/short.
 	public static int getClientColumnIndex(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -9022,18 +9046,19 @@ final public class TableHandler {
 			// Find the list of columns for this table
 			Map<String,Integer> columns = tables.get(tableID);
 			if(columns == null) {
+				// TODO: Why is tableID not used in this query???
 				List<String> clientColumns = conn.executeStringListQuery(
 					"select\n"
 					+ "  sc.\"name\"\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-					+ "  \"schema\".\"Column\" sc\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on sc.\"sinceVersion\"=\"sinceVersion\".version\n"
-					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on sc.\"lastVersion\"=\"lastVersion\".version\n"
+					+ "             \"schema\".\"Column\"                     sc\n"
+					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on sc.\"sinceVersion\" = \"sinceVersion\".version\n"
+					+ "  left  join \"schema\".\"AOServProtocol\"  \"lastVersion\" on sc.\"lastVersion\"  =  \"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
-					+ "  and client_ap.created>=\"sinceVersion\".created\n"
-					+ "  and (\"lastVersion\".created is null or client_ap.created<=\"lastVersion\".created)\n"
+					+ "  and client_ap.created >= \"sinceVersion\".created\n"
+					+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
 					+ "order by\n"
 					+ "  sc.index",
 					version.getVersion()
@@ -9051,6 +9076,7 @@ final public class TableHandler {
 			return (columnIndex == null) ? -1 : columnIndex;
 		}
 	}
+	 */
 
 	public static void invalidateTable(SchemaTable.TableID tableID) {
 		if(tableID == SchemaTable.TableID.SCHEMA_TABLES) {
