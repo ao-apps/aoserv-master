@@ -7052,7 +7052,10 @@ final public class TableHandler {
 					provideProgress,
 					new SchemaType(),
 					"select\n"
-					+ "  st.*\n"
+					+ "  st.\"name\",\n"
+					+ "  st.id,\n"
+					+ "  st.\"sinceVersion\",\n"
+					+ "  st.\"lastVersion\"\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 					+ "  \"schema\".\"Type\" st\n"
