@@ -700,9 +700,9 @@ final public class TableHandler {
 					+ "  ac.*\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-					+ "  aosh.\"Command\" ac\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" since_ap on ac.\"sinceVersion\"=since_ap.version\n"
-					+ "  left outer join \"schema\".\"AOServProtocol\" last_ap on ac.\"lastVersion\"=last_ap.version\n"
+					+ "                   aosh.\"Command\"              ac\n"
+					+ "  inner join \"schema\".\"AOServProtocol\" since_ap on ac.\"sinceVersion\" = since_ap.version\n"
+					+ "  left  join \"schema\".\"AOServProtocol\"  last_ap on ac.\"lastVersion\"  =  last_ap.version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
 					+ "  and client_ap.created>=since_ap.created\n"
@@ -3222,7 +3222,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  httpd_site_binds hsb\n"
 						// Protocol conversion
-						+ "  left outer join ssl_certificates sc on hsb.certificate=sc.pkey"
+						+ "  left join ssl_certificates sc on hsb.certificate=sc.pkey"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3240,7 +3240,7 @@ final public class TableHandler {
 						+ "  httpd_sites hs,\n"
 						+ "  httpd_site_binds hsb\n"
 						// Protocol conversion
-						+ "  left outer join ssl_certificates sc on hsb.certificate=sc.pkey\n"
+						+ "  left join ssl_certificates sc on hsb.certificate=sc.pkey\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3267,7 +3267,7 @@ final public class TableHandler {
 					+ "  httpd_sites hs,\n"
 					+ "  httpd_site_binds hsb\n"
 					// Protocol conversion
-					+ "  left outer join ssl_certificates sc on hsb.certificate=sc.pkey\n"
+					+ "  left join ssl_certificates sc on hsb.certificate=sc.pkey\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -6014,9 +6014,9 @@ final public class TableHandler {
 					+ "  packages pk,\n"
 					+ "  business_servers bs,\n"
 					// Allow failover destinations
-					//+ "  left outer join failover_file_replications ffr on bs.server=ffr.server\n"
-					//+ "  left outer join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
-					//+ "  left outer join ao_servers bpao on bp.ao_server=bpao.server,\n"
+					//+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
+					//+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
+					//+ "  left join ao_servers bpao on bp.ao_server=bpao.server,\n"
 					+ "  net_devices nd\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -6905,9 +6905,9 @@ final public class TableHandler {
 						+ "  sc.*\n"
 						+ "from\n"
 						+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-						+ "  \"schema\".\"Column\" sc\n"
-						+ "  inner join \"schema\".\"AOServProtocol\" sc_ap on sc.\"sinceVersion\"=sc_ap.version\n"
-						+ "  left join \"schema\".\"AOServProtocol\" last_ap on sc.\"lastVersion\"=last_ap.version,\n"
+						+ "             \"schema\".\"Column\"              sc\n"
+						+ "  inner join \"schema\".\"AOServProtocol\"   sc_ap on sc.\"sinceVersion\" =   sc_ap.version\n"
+						+ "  left  join \"schema\".\"AOServProtocol\" last_ap on sc.\"lastVersion\"  = last_ap.version,\n"
 						+ "  \"schema\".\"Table\" st\n"
 						+ "where\n"
 						+ "  client_ap.version=?\n"
@@ -6993,12 +6993,27 @@ final public class TableHandler {
 					List<SchemaTable> clientTables=new ArrayList<>();
 					PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
 						"select\n"
-						+ "  st.*\n"
+						+ "  st.\"name\",\n"
+						+ "  st.id,\n"
+						+ "  st.display,\n"
+						+ "  st.\"isPublic\",\n"
+						+ "  coalesce(st.description, d.description) as description,\n"
+						+ "  st.\"sinceVersion\",\n"
+						+ "  st.\"lastVersion\"\n"
 						+ "from\n"
 						+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-						+ "  \"schema\".\"Table\" st\n"
-						+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\"=\"sinceVersion\".version\n"
-						+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on st.\"lastVersion\"=\"lastVersion\".version\n"
+						+ "             \"schema\".\"Table\"                        st\n"
+						+ "  inner join \"schema\".\"Schema\"                        s on st.\"schema\"       =                s.id\n"
+						+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+						+ "  left  join \"schema\".\"AOServProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
+						+ "  left  join (\n"
+						+ "    select\n"
+						+ "      pn.nspname, pc.relname, pd.description\n"
+						+ "    from\n"
+						+ "                 pg_catalog.pg_namespace   pn\n"
+						+ "      inner join pg_catalog.pg_class       pc on pn.oid = pc.relnamespace\n"
+						+ "      inner join pg_catalog.pg_description pd on pc.oid = pd.objoid and pd.objsubid=0\n"
+						+ "  ) d on s.\"name\" = d.nspname and st.\"name\" = d.relname\n"
 						+ "where\n"
 						+ "  client_ap.version=?\n"
 						+ "  and client_ap.created>=\"sinceVersion\".created\n"
@@ -7058,9 +7073,9 @@ final public class TableHandler {
 					+ "  st.\"lastVersion\"\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-					+ "  \"schema\".\"Type\" st\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\"=\"sinceVersion\".version\n"
-					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on st.\"lastVersion\"=\"lastVersion\".version\n"
+					+ "             \"schema\".\"Type\"                         st\n"
+					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+					+ "  left  join \"schema\".\"AOServProtocol\" \"lastVersion\"  on st.\"lastVersion\"  =  \"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
 					+ "  and client_ap.created>=\"sinceVersion\".created\n"
@@ -7482,9 +7497,9 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  servers se\n"
-						+ "  left outer join failover_file_replications ffr on se.pkey=ffr.server\n"
-						+ "  left outer join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
-						+ "  left outer join servers fs on bp.ao_server=fs.pkey,\n"
+						+ "  left join failover_file_replications ffr on  se.pkey             = ffr.server\n"
+						+ "  left join backup_partitions           bp on ffr.backup_partition =  bp.pkey\n"
+						+ "  left join servers                     fs on  bp.ao_server        =  fs.pkey,\n"
 						+ "  server_farms sf\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -8822,6 +8837,11 @@ final public class TableHandler {
 	private static final Object tableNamesLock = new Object();
 	private static Map<Integer,String> tableNames;
 
+	/**
+	 * Gets the table name, with schema prefixed, unless it is the "public" schema.
+	 *
+	 * @see  #getTableName(com.aoindustries.dbc.DatabaseAccess, com.aoindustries.aoserv.client.SchemaTable.TableID)
+	 */
 	public static String getTableNameForDBTableID(DatabaseAccess conn, Integer dbTableId) throws SQLException {
 		synchronized(tableNamesLock) {
 			if(tableNames == null) {
@@ -8830,18 +8850,32 @@ final public class TableHandler {
 						Map<Integer,String> newMap = new HashMap<>();
 						while(results.next()) {
 							Integer id = results.getInt("id");
+							String schema = results.getString("schema");
 							String name = results.getString("name");
+							// TODO: Reference constant in new "Schema" class
+							if(!"public".equals(schema)) name = schema + "." + name;
 							if(newMap.put(id, name) != null) throw new SQLException("Duplicate id: " + id);
 						}
 						return newMap;
 					},
-					"select id, name from \"schema\".\"Table\""
+					"select\n"
+					+ "  s.\"name\" as \"schema\",\n"
+					+ "  t.id,\n"
+					+ "  t.\"name\"\n"
+					+ "from\n"
+					+ "  \"schema\".\"Table\" t\n"
+					+ "  inner join \"schema\".\"Schema\" s on t.\"schema\" = s.id"
 				);
 			}
 			return tableNames.get(dbTableId);
 		}
 	}
 
+	/**
+	 * Gets the table name, with schema prefixed, unless it is the "public" schema.
+	 *
+	 * @see  #getTableNameForDBTableID(com.aoindustries.dbc.DatabaseAccess, java.lang.Integer)
+	 */
 	public static String getTableName(DatabaseAccess conn, SchemaTable.TableID tableID) throws IOException, SQLException {
 		return getTableNameForDBTableID(
 			conn,
@@ -8873,9 +8907,9 @@ final public class TableHandler {
 					+ "  st.id\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-					+ "  \"schema\".\"Table\" st\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\"=\"sinceVersion\".version\n"
-					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on st.\"lastVersion\"=\"lastVersion\".version\n"
+					+ "  \"schema\".\"Table\"          st\n"
+					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+					+ "  left  join \"schema\".\"AOServProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
 					+ "  and client_ap.created>=\"sinceVersion\".created\n"
@@ -8911,9 +8945,9 @@ final public class TableHandler {
 					+ "  st.id\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-					+ "  \"schema\".\"Table\" st\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\"=\"sinceVersion\".version\n"
-					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on st.\"lastVersion\"=\"lastVersion\".version\n"
+					+ "             \"schema\".\"Table\"                      st\n"
+					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+					+ "  left  join \"schema\".\"AOServProtocol\"  \"lastVersion\" on st.\"lastVersion\"  = \"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
 					+ "  and client_ap.created>=\"sinceVersion\".created\n"
