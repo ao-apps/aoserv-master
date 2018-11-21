@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2003-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -264,7 +264,7 @@ final public class ReportGenerator implements CronJob {
 							}*/
 
 							// Add these stats to the table
-							PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into backup_reports values(nextval('backup.backup_reports_pkey_seq'),?,?,?::date,?,?::int8);");
+							PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("INSERT INTO backup_reports VALUES (default,?,?,?::date,?,?::int8);");
 							try {
 								Iterator<Integer> serverKeys=stats.keySet().iterator();
 								while(serverKeys.hasNext()) {

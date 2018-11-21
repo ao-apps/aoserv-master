@@ -59,12 +59,11 @@ final public class FailoverHandler implements CronJob {
 		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_log for servers that have the same package as the business_administrator adding the log entry");
 		//ServerHandler.checkAccessServer(conn, source, "add_failover_file_log", server);
 
-		int pkey = conn.executeIntUpdate("select nextval('failover_file_log_pkey_seq')");
-		conn.executeUpdate(
-			"insert into\n"
+		int pkey = conn.executeIntUpdate(
+			"INSERT INTO\n"
 			+ "  failover_file_log\n"
-			+ "values(\n"
-			+ "  ?,\n"
+			+ "VALUES (\n"
+			+ "  default,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
@@ -72,8 +71,7 @@ final public class FailoverHandler implements CronJob {
 			+ "  ?,\n"
 			+ "  ?,\n"
 			+ "  ?\n"
-			+ ")",
-			pkey,
+			+ ") RETURNING pkey",
 			replication,
 			new Timestamp(startTime),
 			new Timestamp(endTime),

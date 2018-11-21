@@ -88,12 +88,11 @@ final public class ServerHandler {
 		PasswordChecker.Result[] results = BusinessAdministrator.checkPassword(Locale.getDefault(), username, password);
 		if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Password strength check failed: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 
-		int serverPKey = conn.executeIntUpdate("select nextval('servers_pkey_seq')");
-		conn.executeUpdate(
-			"insert into\n"
+		int serverPKey = conn.executeIntUpdate(
+			"INSERT INTO\n"
 			+ "  servers\n"
-			+ "values(\n"
-			+ "  ?,\n"
+			+ "VALUES (\n"
+			+ "  default,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
@@ -102,8 +101,7 @@ final public class ServerHandler {
 			+ "  null,\n"
 			+ "  ?,\n"
 			+ "  null\n"
-			+ ")",
-			serverPKey,
+			+ ") RETURNING pkey",
 			hostname,
 			farm,
 			PackageHandler.getBusinessForPackage(conn, owner),

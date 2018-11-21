@@ -417,9 +417,7 @@ final public class EmailHandler {
 	) throws IOException, SQLException {
 		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add EmailPipe, Package disabled: "+packageName);
 
-		int pkey = conn.executeIntUpdate("select nextval('email_pipes_pkey_seq')");
-
-		conn.executeUpdate("insert into email_pipes values(?,?,?,?,null)", pkey, aoServer, command, packageName);
+		int pkey = conn.executeIntUpdate("INSERT INTO email_pipes VALUES (default,?,?,?,null) RETURNING pkey", aoServer, command, packageName);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -456,8 +454,7 @@ final public class EmailHandler {
 		int address, 
 		int pipe
 	) throws IOException, SQLException {
-		int pkey = conn.executeIntUpdate("select nextval('email_pipe_addresses_pkey_seq')");
-		conn.executeUpdate("insert into email_pipe_addresses values(?,?,?)", pkey, address, pipe);
+		int pkey = conn.executeIntUpdate("INSERT INTO email_pipe_addresses VALUES (default,?,?) RETURNING pkey", address, pipe);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -484,8 +481,7 @@ final public class EmailHandler {
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add email addresses to LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 		// TODO: Make sure they are on the same server
 
-		int pkey = conn.executeIntUpdate("select nextval('linux_acc_addresses_pkey_seq')");
-		conn.executeUpdate("insert into linux_acc_addresses values(?,?,?)", pkey, address, lsa);
+		int pkey = conn.executeIntUpdate("INSERT INTO linux_acc_addresses VALUES (default,?,?) RETURNING pkey", address, lsa);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -511,8 +507,7 @@ final public class EmailHandler {
 		PackageHandler.checkAccessPackage(conn, source, "addEmailDomain", packageName);
 		PackageHandler.checkPackageAccessServer(conn, source, "addEmailDomain", packageName, aoServer);
 
-		int pkey = conn.executeIntUpdate("select nextval('email_domains_pkey_seq')");
-		conn.executeUpdate("insert into email_domains values(?,?,?,?)", pkey, domain, aoServer, packageName);
+		int pkey = conn.executeIntUpdate("INSERT INTO email_domains VALUES (default,?,?,?) RETURNING pkey", domain, aoServer, packageName);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -553,21 +548,18 @@ final public class EmailHandler {
 
 		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add EmailSmtpRelay, Package disabled: "+packageName);
 
-		int pkey = conn.executeIntUpdate("select nextval('email_smtp_relays_pkey_seq')");
-
+		int pkey;
 		if(aoServer==-1) {
-			conn.executeUpdate(
-				"insert into email_smtp_relays values(?,?,null,?,?,now(),now(),0,?,null)",
-				pkey,
+			pkey = conn.executeIntUpdate(
+				"INSERT INTO email_smtp_relays values(default,?,null,?,?,now(),now(),0,?,null) RETURNING pkey",
 				packageName,
 				host,
 				type,
 				duration == -1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(System.currentTimeMillis() + duration)
 			);
 		} else {
-			conn.executeUpdate(
-				"insert into email_smtp_relays values(?,?,?,?,?,now(),now(),0,?,null)",
-				pkey,
+			pkey = conn.executeIntUpdate(
+				"INSERT INTO email_smtp_relays VALUES (default,?,?,?,?,now(),now(),0,?,null) RETURNING pkey",
 				packageName,
 				aoServer,
 				host,
@@ -605,10 +597,8 @@ final public class EmailHandler {
 		com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
 		if(masterUser==null || masterServers.length!=0) throw new SQLException("Only master users may add spam email messages.");
 
-		int pkey = conn.executeIntUpdate("select nextval('spam_email_messages_pkey_seq')");
-		conn.executeUpdate(
-			"insert into spam_email_messages values(?,?,now(),?)",
-			pkey,
+		int pkey = conn.executeIntUpdate(
+			"INSERT INTO spam_email_messages VALUES(default,?,now(),?) RETURNING pkey",
 			esr,
 			message
 		);

@@ -390,13 +390,9 @@ final public class DNSHandler implements CronJob {
 			}
 		}
 
-		// Make all database changes in one big transaction
-		int pkey = conn.executeIntUpdate("select nextval('dns_records_pkey_seq')");
-
 		// Add the entry
-		conn.executeUpdate(
-			"insert into dns_records values(?,?,?,?,?,?,?,?,null,?)",
-			pkey,
+		int pkey = conn.executeIntUpdate(
+			"INSERT INTO dns_records VALUES (default,?,?,?,?,?,?,null,?) RETURNING pkey",
 			zone,
 			domain,
 			type,

@@ -150,12 +150,11 @@ final public class PostgresHandler {
 		BusinessHandler.checkBusinessAccessServer(conn, source, "addPostgresDatabase", accounting, aoServer);
 
 		// Add the entry to the database
-		int pkey = conn.executeIntUpdate("select nextval('postgres_databases_pkey_seq')");
-		conn.executeUpdate(
-			"insert into\n"
+		int pkey = conn.executeIntUpdate(
+			"INSERT INTO\n"
 			+ "  postgres_databases\n"
-			+ "values(\n"
-			+ "  ?,\n"
+			+ "VALUES (\n"
+			+ "  default,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
@@ -163,8 +162,7 @@ final public class PostgresHandler {
 			+ "  false,\n"
 			+ "  true,\n"
 			+ "  ?\n"
-			+ ")",
-			pkey,
+			+ ") RETURNING pkey",
 			name,
 			postgresServer,
 			datdba,
@@ -202,11 +200,8 @@ final public class PostgresHandler {
 		// This sub-account must have access to the server
 		UsernameHandler.checkUsernameAccessServer(conn, source, "addPostgresServerUser", username, aoServer);
 
-		int pkey = conn.executeIntUpdate("select nextval('postgres_server_users_pkey_seq')");
-
-		conn.executeUpdate(
-			"insert into postgres_server_users values(?,?,?,null,null)",
-			pkey,
+		int pkey = conn.executeIntUpdate(
+			"INSERT INTO postgres_server_users VALUES (default,?,?,null,null) RETURNING pkey",
 			username,
 			postgresServer
 		);

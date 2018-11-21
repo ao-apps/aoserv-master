@@ -297,11 +297,8 @@ final public class LinuxAccountHandler {
 		int count=conn.executeIntQuery("select count(*) from linux_group_accounts where username=?", username);
 		if(count>=LinuxGroupAccount.MAX_GROUPS) throw new SQLException("Only "+LinuxGroupAccount.MAX_GROUPS+" groups are allowed per user, username="+username+" already has access to "+count+" groups");
 
-		int pkey = conn.executeIntUpdate("select nextval('linux_group_accounts_pkey_seq')");
-
-		conn.executeUpdate(
-			"insert into linux_group_accounts values(?,?,?,?,NULL)",
-			pkey,
+		int pkey = conn.executeIntUpdate(
+			"INSERT INTO linux_group_accounts VALUES (default,?,?,?,null) RETURNING pkey",
 			groupName,
 			username,
 			isPrimary
@@ -424,14 +421,13 @@ final public class LinuxAccountHandler {
 		int primaryLSG=getLinuxServerGroup(conn, primaryGroup, aoServer);
 		if(primaryLSG<0) throw new SQLException("Unable to find primary Linux group '"+primaryGroup+"' on AOServer #"+aoServer+" for Linux account '"+username+"'");
 
-		int pkey = conn.executeIntUpdate("select nextval('linux_server_accounts_pkey_seq')");
 		// Now allocating unique to entire system for server portability between farms
 		//String farm=ServerHandler.getFarmForServer(conn, aoServer);
-		conn.executeUpdate(
-			"insert into\n"
+		int pkey = conn.executeIntUpdate(
+			"INSERT INTO\n"
 			+ "  linux_server_accounts\n"
-			+ "values(\n"
-			+ "  ?,\n"
+			+ "VALUES (\n"
+			+ "  default,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
 			+ "  (\n"
@@ -467,14 +463,13 @@ final public class LinuxAccountHandler {
 			+ "  null,\n"
 			+ "  now(),\n"
 			+ "  true,\n"
-			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "NULL::int" : Integer.toString(LinuxServerAccount.DEFAULT_TRASH_EMAIL_RETENTION)) + ",\n"
-			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "NULL::int" : Integer.toString(LinuxServerAccount.DEFAULT_JUNK_EMAIL_RETENTION)) + ",\n"
+			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "null::int" : Integer.toString(LinuxServerAccount.DEFAULT_TRASH_EMAIL_RETENTION)) + ",\n"
+			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "null::int" : Integer.toString(LinuxServerAccount.DEFAULT_JUNK_EMAIL_RETENTION)) + ",\n"
 			+ "  ?,\n"
 			+ "  " + LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE + ",\n"
-			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "NULL::int" : Integer.toString(LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_DISCARD_SCORE)) + ",\n"
+			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "null::int" : Integer.toString(LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_DISCARD_SCORE)) + ",\n"
 			+ "  null\n" // sudo
-			+ ")",
-			pkey,
+			+ ") RETURNING pkey",
 			username,
 			aoServer,
 			aoServer,
@@ -497,7 +492,7 @@ final public class LinuxAccountHandler {
 				"insert into\n"
 				+ "  email_attachment_blocks\n"
 				+ "select\n"
-				+ "  nextval('email_attachment_blocks_pkey_seq'),\n"
+				+ "  default,\n"
 				+ "  ?,\n"
 				+ "  extension\n"
 				+ "from\n"
@@ -540,12 +535,11 @@ final public class LinuxAccountHandler {
 
 		// Now allocating unique to entire system for server portability between farms
 		//String farm=ServerHandler.getFarmForServer(conn, aoServer);
-		int pkey = conn.executeIntUpdate("select nextval('linux_server_groups_pkey_seq')");
-		conn.executeUpdate(
-			"insert into\n"
+		int pkey = conn.executeIntUpdate(
+			"INSERT INTO\n"
 			+ "  linux_server_groups\n"
-			+ "values(\n"
-			+ "  ?,\n"
+			+ "VALUES (\n"
+			+ "  default,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
 			+ "  (\n"
@@ -582,8 +576,7 @@ final public class LinuxAccountHandler {
 			+ "    limit 1\n"
 			+ "  ),\n"
 			+ "  now()\n"
-			+ ")",
-			pkey,
+			+ ") RETURNING pkey",
 			groupName,
 			aoServer,
 			aoServer
@@ -745,18 +738,16 @@ final public class LinuxAccountHandler {
 				)
 			)
 		) {
-			int pkey = conn.executeIntUpdate("select nextval('linux_server_groups_pkey_seq')");
-			conn.executeUpdate(
-				"insert into\n"
+			int pkey = conn.executeIntUpdate(
+				"INSERT INTO\n"
 				+ "  linux_server_groups\n"
-				+ "values(\n"
-				+ "  ?,\n"
+				+ "VALUES (\n"
+				+ "  default,\n"
 				+ "  ?,\n"
 				+ "  ?,\n"
 				+ "  ?,\n"
 				+ "  now()\n"
-				+ ")",
-				pkey,
+				+ ") RETURNING pkey",
 				groupName,
 				aoServer,
 				gid
@@ -958,12 +949,11 @@ final public class LinuxAccountHandler {
 			if(!ObjectUtils.equals(home,           systemUser.home))           throw new SQLException("Unexpected system home: "           + home           + " != " + systemUser.home);
 			if(!ObjectUtils.equals(shell,          systemUser.shell))          throw new SQLException("Unexpected system shell: "          + shell          + " != " + systemUser.shell);
 			// Add to database
-			int pkey = conn.executeIntUpdate("select nextval('linux_server_accounts_pkey_seq')");
-			conn.executeUpdate(
-				"insert into\n"
+			int pkey = conn.executeIntUpdate(
+				"INSERT INTO\n"
 				+ "  linux_server_accounts\n"
-				+ "values(\n"
-				+ "  ?,\n" // pkey
+				+ "VALUES (\n"
+				+ "  default,\n" // pkey
 				+ "  ?,\n" // username
 				+ "  ?,\n" // ao_server
 				+ "  ?,\n" // uid
@@ -982,8 +972,7 @@ final public class LinuxAccountHandler {
 				+ "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE+",\n"
 				+ "  null,\n" // sa_discard_score
 				+ "  ?\n" // sudo
-				+ ")",
-				pkey,
+				+ ") RETURNING pkey",
 				username,
 				aoServer,
 				uid,

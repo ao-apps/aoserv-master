@@ -12,6 +12,7 @@ import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseAccess;
+import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
@@ -139,38 +140,35 @@ final public class PackageHandler {
         if(!isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not approved: "+packageDefinition);
         //if(!isPackageDefinitionActive(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not active: "+packageDefinition);
 
-        int pkey = conn.executeIntUpdate("select nextval('packages_pkey_seq')");
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
-            "insert into\n"
+        int pkey = conn.executeIntUpdate(
+            "INSERT INTO\n"
             + "  packages\n"
-            + "values(\n"
-            + "  ?,\n"
+            + "VALUES (\n"
+            + "  default,\n"
             + "  ?,\n"
             + "  ?,\n"
             + "  ?,\n"
             + "  now(),\n"
             + "  ?,\n"
             + "  null,\n"
-            + "  "+Package.DEFAULT_EMAIL_IN_BURST+"::integer,\n"
-            + "  "+Package.DEFAULT_EMAIL_IN_RATE+"::float4,\n"
-            + "  "+Package.DEFAULT_EMAIL_OUT_BURST+"::integer,\n"
-            + "  "+Package.DEFAULT_EMAIL_OUT_RATE+"::float4,\n"
-            + "  "+Package.DEFAULT_EMAIL_RELAY_BURST+"::integer,\n"
-            + "  "+Package.DEFAULT_EMAIL_RELAY_RATE+"::float4\n"
-            + ")"
-        );
-        try {
-            pstmt.setInt(1, pkey);
-            pstmt.setString(2, packageName.toString());
-            pstmt.setString(3, accounting.toString());
-            pstmt.setInt(4, packageDefinition);
-            pstmt.setString(5, source.getUsername().toString());
-            pstmt.executeUpdate();
-        } catch(SQLException err) {
-            throw new WrappedSQLException(err, pstmt);
-        } finally {
-            pstmt.close();
-        }
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?\n"
+            + ") RETURNING pkey",
+            packageName.toString(),
+            accounting.toString(),
+            packageDefinition,
+            source.getUsername().toString(),
+			Package.DEFAULT_EMAIL_IN_BURST,
+			Package.DEFAULT_EMAIL_IN_RATE,
+			Package.DEFAULT_EMAIL_OUT_BURST,
+			Package.DEFAULT_EMAIL_OUT_RATE,
+			Package.DEFAULT_EMAIL_RELAY_BURST,
+			Package.DEFAULT_EMAIL_RELAY_RATE
+		);
 
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.TableID.PACKAGES, accounting, InvalidateList.allServers, false);
@@ -199,12 +197,11 @@ final public class PackageHandler {
         BusinessHandler.checkAccessBusiness(conn, source, "addPackageDefinition", accounting);
         if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add PackageDefinition, Business disabled: "+accounting);
 
-        int pkey = conn.executeIntUpdate("select nextval('package_definitions_pkey_seq')");
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
-            "insert into\n"
+        int pkey = conn.executeIntUpdate(
+            "INSERT INTO\n"
             + "  package_definitions\n"
-            + "values(\n"
-            + "  ?,\n"
+            + "VALUES (\n"
+            + "  default,\n"
             + "  ?,\n"
             + "  ?,\n"
             + "  ?,\n"
@@ -217,24 +214,18 @@ final public class PackageHandler {
             + "  ?,\n"
             + "  false,\n"
             + "  false\n"
-            + ")"
-        );
-        try {
-            pstmt.setInt(1, pkey);
-            pstmt.setString(2, accounting.toString());
-            pstmt.setString(3, category);
-            pstmt.setString(4, name);
-            pstmt.setString(5, version);
-            pstmt.setString(6, display);
-            pstmt.setString(7, description);
-            pstmt.setBigDecimal(8, setupFee<=0 ? null : new BigDecimal(SQLUtility.getDecimal(setupFee)));
-            pstmt.setString(9, setupFeeTransactionType);
-            pstmt.setBigDecimal(10, new BigDecimal(SQLUtility.getDecimal(monthlyRate)));
-            pstmt.setString(11, monthlyRateTransactionType);
-            pstmt.executeUpdate();
-        } finally {
-            pstmt.close();
-        }
+            + ") RETURNING pkey",
+            accounting.toString(),
+            category,
+            name,
+            version,
+            display,
+            description,
+            setupFee <= 0 ? Null.NUMERIC : new BigDecimal(SQLUtility.getDecimal(setupFee)),
+            setupFeeTransactionType,
+            new BigDecimal(SQLUtility.getDecimal(monthlyRate)),
+            monthlyRateTransactionType
+		);
 
         // Notify all clients of the update
         invalidateList.addTable(
@@ -281,12 +272,19 @@ final public class PackageHandler {
         }
         if(newVersion==null) throw new SQLException("Unable to generate new version for copy PackageDefinition: "+pkey);
 
-        int newPKey = conn.executeIntUpdate("select nextval('package_definitions_pkey_seq')");
-        conn.executeUpdate(
-            "insert into\n"
-            + "  package_definitions\n"
-            + "select\n"
-            + "  ?,\n"
+        int newPKey = conn.executeIntUpdate(
+            "INSERT INTO package_definitions (\n"
+            + "  accounting,\n"
+            + "  category,\n"
+            + "  name,\n"
+            + "  version,\n"
+            + "  display,\n"
+            + "  description,\n"
+            + "  setup_fee,\n"
+            + "  setup_fee_transaction_type,\n"
+            + "  monthly_rate,\n"
+            + "  monthly_rate_transaction_type\n"
+            + ") SELECT\n"
             + "  accounting,\n"
             + "  category,\n"
             + "  name,\n"
@@ -296,14 +294,12 @@ final public class PackageHandler {
             + "  setup_fee,\n"
             + "  setup_fee_transaction_type,\n"
             + "  monthly_rate,\n"
-            + "  monthly_rate_transaction_type,\n"
-            + "  false,\n"
-            + "  false\n"
-            + "from\n"
+            + "  monthly_rate_transaction_type\n"
+            + "FROM\n"
             + "  package_definitions\n"
-            + "where\n"
-            + "  pkey=?",
-            newPKey,
+            + "WHERE\n"
+            + "  pkey=?\n"
+			+ "RETURNING pkey",
             newVersion,
             pkey
         );

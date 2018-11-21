@@ -81,57 +81,46 @@ final public class SignupHandler {
         CreditCardHandler.checkAccessEncryptionKey(conn, source, "addSignupRequest", from);
         CreditCardHandler.checkAccessEncryptionKey(conn, source, "addSignupRequest", recipient);
 
-        // Make all database changes in one big transaction
-        int pkey = conn.executeIntUpdate("select nextval('signup_requests_pkey_seq')");
-
         // Add the entry
-        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup_requests values(?,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null)");
-        try {
-            pstmt.setInt(1, pkey);
-            pstmt.setString(2, accounting.toString());
-            pstmt.setString(3, ip_address.toString());
-            pstmt.setInt(4, package_definition);
-            pstmt.setString(5, business_name);
-            pstmt.setString(6, business_phone);
-            pstmt.setString(7, business_fax);
-            pstmt.setString(8, business_address1);
-            pstmt.setString(9, business_address2);
-            pstmt.setString(10, business_city);
-            pstmt.setString(11, business_state);
-            pstmt.setString(12, business_country);
-            pstmt.setString(13, business_zip);
-            pstmt.setString(14, ba_name);
-            pstmt.setString(15, ba_title);
-            pstmt.setString(16, ba_work_phone);
-            pstmt.setString(17, ba_cell_phone);
-            pstmt.setString(18, ba_home_phone);
-            pstmt.setString(19, ba_fax);
-            pstmt.setString(20, ba_email);
-            pstmt.setString(21, ba_address1);
-            pstmt.setString(22, ba_address2);
-            pstmt.setString(23, ba_city);
-            pstmt.setString(24, ba_state);
-            pstmt.setString(25, ba_country);
-            pstmt.setString(26, ba_zip);
-            pstmt.setString(27, ba_username.toString());
-            pstmt.setString(28, billing_contact);
-            pstmt.setString(29, billing_email);
-            pstmt.setBoolean(30, billing_use_monthly);
-            pstmt.setBoolean(31, billing_pay_one_year);
-            pstmt.setString(32, ciphertext);
-            pstmt.setInt(33, from);
-            pstmt.setInt(34, recipient);
-
-            pstmt.executeUpdate();
-        } catch(SQLException err) {
-            System.err.println("Error from query: "+pstmt.toString());
-            throw err;
-        } finally {
-            pstmt.close();
-        }
+        int pkey = conn.executeIntUpdate(
+			"INSERT INTO signup_requests VALUES (default,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null) RETURNING pkey",
+            accounting.toString(),
+            ip_address.toString(),
+            package_definition,
+            business_name,
+            business_phone,
+            business_fax,
+            business_address1,
+            business_address2,
+            business_city,
+            business_state,
+            business_country,
+            business_zip,
+            ba_name,
+            ba_title,
+            ba_work_phone,
+            ba_cell_phone,
+            ba_home_phone,
+            ba_fax,
+            ba_email,
+            ba_address1,
+            ba_address2,
+            ba_city,
+            ba_state,
+            ba_country,
+            ba_zip,
+            ba_username.toString(),
+            billing_contact,
+            billing_email,
+            billing_use_monthly,
+            billing_pay_one_year,
+            ciphertext,
+            from,
+            recipient
+		);
 
         // Add the signup_options
-        pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup_request_options values(DEFAULT,?,?,?)");
+		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup_request_options values(default,?,?,?)");
         try {
             for(String name : options.keySet()) {
                 String value = options.get(name);

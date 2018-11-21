@@ -499,12 +499,10 @@ final public class BusinessHandler {
 
 		if (country.equals(CountryCode.US)) state=convertUSState(conn, state);
 
-		int pkey = conn.executeIntUpdate("select nextval('account.business_profiles_pkey_seq')");
 		int priority=conn.executeIntQuery("select coalesce(max(priority)+1, 1) from business_profiles where accounting=?", accounting);
 
-		conn.executeUpdate(
-			"insert into business_profiles values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?)",
-			pkey,
+		int pkey = conn.executeIntUpdate(
+			"INSERT INTO business_profiles VALUES (default,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?) RETURNING pkey",
 			accounting.toString(),
 			priority,
 			name,

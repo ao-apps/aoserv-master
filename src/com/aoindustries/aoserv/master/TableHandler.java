@@ -8550,7 +8550,7 @@ final public class TableHandler {
 							"select\n"
 							+ "  ti.pkey,\n"
 							+ "  ti.brand,\n"
-							+ "  NULL::text,\n" // reseller
+							+ "  null::text,\n" // reseller
 							+ "  ti.accounting,\n"
 							+ "  ti.language,\n"
 							+ "  ti.created_by,\n"

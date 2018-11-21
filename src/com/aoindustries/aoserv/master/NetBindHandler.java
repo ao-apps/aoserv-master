@@ -154,12 +154,11 @@ final public class NetBindHandler {
 			}
 
 			// Add the port to the DB
-			pkey = conn.executeIntUpdate("select nextval('net_binds_pkey_seq')");
-			conn.executeUpdate(
-				"insert into\n"
+			pkey = conn.executeIntUpdate(
+				"INSERT INTO\n"
 				+ "  net_binds\n"
-				+ "values(\n"
-				+ "  ?,\n"
+				+ "VALUES (\n"
+				+ "  DEFAULT,\n"
 				+ "  ?,\n"
 				+ "  ?,\n"
 				+ "  ?,\n"
@@ -167,8 +166,7 @@ final public class NetBindHandler {
 				+ "  ?,\n"
 				+ "  ?,\n"
 				+ "  ?\n"
-				+ ")",
-				pkey,
+				+ ") RETURNING pkey",
 				packageName,
 				server,
 				ipAddress,
@@ -222,13 +220,12 @@ final public class NetBindHandler {
 		InetAddress inetAddress = IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress);
 		int pkey;
 		synchronized(netBindLock) {
-			pkey = conn.executeIntUpdate("select nextval('net_binds_pkey_seq')");
 			if(inetAddress.isUnspecified()) {
-				conn.executeUpdate(
-					"insert into\n"
+				pkey = conn.executeIntUpdate(
+					"INSERT INTO\n"
 					+ "  net_binds\n"
-					+ "values(\n"
-					+ "  ?,\n"
+					+ "VALUES (\n"
+					+ "  default,\n"
 					+ "  ?,\n"
 					+ "  ?,\n"
 					+ "  ?,\n"
@@ -260,8 +257,7 @@ final public class NetBindHandler {
 					+ "  ?,\n"
 					+ "  true,\n"
 					+ "  null\n"
-					+ ")",
-					pkey,
+					+ ") RETURNING pkey",
 					pack,
 					server,
 					ipAddress,
@@ -273,11 +269,11 @@ final public class NetBindHandler {
 					appProtocol
 				);
 			} else {
-				conn.executeUpdate(
-					"insert into\n"
+				pkey = conn.executeIntUpdate(
+					"INSERT INTO\n"
 					+ "  net_binds\n"
-					+ "values(\n"
-					+ "  ?,\n"
+					+ "VALUES (\n"
+					+ "  default,\n"
 					+ "  ?,\n"
 					+ "  ?,\n"
 					+ "  ?,\n"
@@ -314,8 +310,7 @@ final public class NetBindHandler {
 					+ "  ?,\n"
 					+ "  true,\n"
 					+ "  null\n"
-					+ ")",
-					pkey,
+					+ ") RETURNING pkey",
 					pack,
 					server,
 					ipAddress,

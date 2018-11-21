@@ -109,12 +109,9 @@ final public class TransactionHandler {
     ) throws IOException, SQLException {
         if(business_administrator.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+LinuxAccount.MAIL+'\'');
 
-        int transid = conn.executeIntUpdate("select nextval('transactions_transid_seq')");
-
-        conn.executeUpdate(
-            "insert into transactions values(?,?,?,?,?,?,?,?,?,?,?,?,null,?)",
+        int transid = conn.executeIntUpdate(
+            "INSERT INTO transactions VALUES (?,default,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
             time,
-            transid,
             accounting,
             sourceAccounting,
             business_administrator,
