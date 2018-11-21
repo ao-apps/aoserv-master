@@ -421,7 +421,7 @@ final public class BusinessHandler {
 
 		String supportCode = enableEmailSupport ? generateSupportCode(conn) : null;
 		conn.executeUpdate(
-			"insert into business_administrators values(?,null,?,?,?,false,?,now(),?,?,?,?,?,?,?,?,?,?,?,null,true,?)",
+			"insert into account.\"Administrator\" values(?,null,?,?,?,false,?,now(),?,?,?,?,?,?,?,?,?,?,?,null,true,?)",
 			username.toString(),
 			name,
 			title,
@@ -712,7 +712,7 @@ final public class BusinessHandler {
 		UsernameHandler.checkAccessUsername(conn, source, "disableBusinessAdministrator", username);
 
 		conn.executeUpdate(
-			"update business_administrators set disable_log=? where username=?",
+			"update account.\"Administrator\" set disable_log=? where username=?",
 			disableLog,
 			username
 		);
@@ -757,7 +757,7 @@ final public class BusinessHandler {
 		UsernameHandler.checkAccessUsername(conn, source, "enableBusinessAdministrator", username);
 
 		conn.executeUpdate(
-			"update business_administrators set disable_log=null where username=?",
+			"update account.\"Administrator\" set disable_log=null where username=?",
 			username
 		);
 
@@ -786,7 +786,7 @@ final public class BusinessHandler {
 				SB.append((char)('a'+random.nextInt('z'+1-'a')));
 				SB.append(random.nextInt(range));
 				String supportCode = SB.toString();
-				if(conn.executeBooleanQuery("select (select support_code from business_administrators where support_code=?) is null", supportCode)) return supportCode;
+				if(conn.executeBooleanQuery("select (select support_code from account.\"Administrator\" where support_code=?) is null", supportCode)) return supportCode;
 			}
 		}
 		throw new SQLException("Failed to generate support code after thousands of attempts");
@@ -852,7 +852,7 @@ final public class BusinessHandler {
 	public static int getDisableLogForBusinessAdministrator(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		synchronized(businessAdministratorDisableLogs) {
 			if(businessAdministratorDisableLogs.containsKey(username)) return businessAdministratorDisableLogs.get(username);
-			int disableLog=conn.executeIntQuery("select coalesce(disable_log, -1) from business_administrators where username=?", username);
+			int disableLog=conn.executeIntQuery("select coalesce(disable_log, -1) from account.\"Administrator\" where username=?", username);
 			businessAdministratorDisableLogs.put(username, disableLog);
 			return disableLog;
 		}
@@ -888,7 +888,7 @@ final public class BusinessHandler {
 		UserId username
 	) throws IOException, SQLException {
 		UsernameHandler.checkAccessUsername(conn, source, "isBusinessAdministratorPasswordSet", username);
-		return conn.executeBooleanQuery("select password is not null from business_administrators where username=?", username);
+		return conn.executeBooleanQuery("select password is not null from account.\"Administrator\" where username=?", username);
 	}
 
 	public static void removeBusinessAdministrator(
@@ -913,7 +913,7 @@ final public class BusinessHandler {
 		AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
 
 		conn.executeUpdate("delete from business_administrator_permissions where username=?", username);
-		conn.executeUpdate("delete from business_administrators where username=?", username);
+		conn.executeUpdate("delete from account.\"Administrator\" where username=?", username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
@@ -1356,7 +1356,7 @@ final public class BusinessHandler {
 		;
 
 		AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
-		conn.executeUpdate("update business_administrators set password=? where username=?", encrypted, username);
+		conn.executeUpdate("update account.\"Administrator\" set password=? where username=?", encrypted, username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
@@ -1396,7 +1396,7 @@ final public class BusinessHandler {
 
 		AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
 		conn.executeUpdate(
-			"update business_administrators set name=?, title=?, birthday=?, private=?, work_phone=?, home_phone=?, cell_phone=?, fax=?, email=?, address1=?, address2=?, city=?, state=?, country=?, zip=? where username=?",
+			"update account.\"Administrator\" set name=?, title=?, birthday=?, private=?, work_phone=?, home_phone=?, cell_phone=?, fax=?, email=?, address1=?, address2=?, city=?, state=?, country=?, zip=? where username=?",
 			name,
 			title,
 			birthday==null?Null.DATE:birthday,
@@ -1472,7 +1472,7 @@ final public class BusinessHandler {
 						}
 						return table;
 					},
-					"select * from business_administrators"
+					"select * from account.\"Administrator\""
 				);
 			}
 			return businessAdministrators.get(username);
@@ -1573,7 +1573,7 @@ final public class BusinessHandler {
 		if(authAccounting.equals(connectAccounting)) return false;
 		return conn.executeBooleanQuery(
 			"select\n"
-			+ "  (select can_switch_users from business_administrators where username=?)\n"
+			+ "  (select can_switch_users from account.\"Administrator\" where username=?)\n"
 			+ "  and account.is_business_or_parent(?,?)",
 			authenticatedAs,
 			authAccounting,

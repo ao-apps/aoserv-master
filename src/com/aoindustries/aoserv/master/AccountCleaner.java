@@ -274,7 +274,7 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // business_administrators over CANCELED_KEEP_DAYS days
+                // account.Administrator over CANCELED_KEEP_DAYS days
                 // remove if balance is zero and has not been used in ticket_actions or transactions
                 {
                     List<UserId> bas=conn.executeObjectListQuery(
@@ -282,10 +282,10 @@ final public class AccountCleaner implements CronJob {
                         "select\n"
                         + "  ba.username\n"
                         + "from\n"
-                        + "  business_administrators ba\n"
-                        + "  inner join usernames    un on ba.username   = un.username\n"
-                        + "  inner join packages     pk on un.package    = pk.name\n"
-                        + "  inner join businesses   bu on pk.accounting = bu.accounting\n"
+                        + "  account.\"Administrator\" ba\n"
+                        + "  inner join usernames      un on ba.username   = un.username\n"
+                        + "  inner join packages       pk on un.package    = pk.name\n"
+                        + "  inner join businesses     bu on pk.accounting = bu.accounting\n"
                         + "where\n"
                         + "  bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS + "\n"
@@ -788,7 +788,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
-                        + "  and (select ba.username from business_administrators ba where ba.username=un.username) is null",
+                        + "  and (select ba.username from account.\"Administrator\" ba where ba.username=un.username) is null",
                         now
                     );
 					for (UserId un : uns) {
@@ -808,7 +808,7 @@ final public class AccountCleaner implements CronJob {
                         + "  dl.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
-                        + "  and (select ba.username from business_administrators ba where ba.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select ba.username from account.\"Administrator\" ba where ba.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select bu2.accounting from businesses bu2 where bu2.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select cr.pkey from cvs_repositories cr where cr.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select el.pkey from email_lists el where el.disable_log=dl.pkey limit 1) is null\n"

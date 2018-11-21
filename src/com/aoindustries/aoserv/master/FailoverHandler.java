@@ -366,7 +366,7 @@ final public class FailoverHandler implements CronJob {
 		AccountingCode userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
 		int fromServer=FailoverHandler.getFromServerForFailoverFileReplication(conn, pkey);
 		AccountingCode serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer));
-		if(!userPackage.equals(serverPackage)) throw new SQLException("business_administrators.username.package!=servers.package.name: Not allowed to request daemon access for FAILOVER_FILE_REPLICATION");
+		if(!userPackage.equals(serverPackage)) throw new SQLException("account.Administrator.username.package!=servers.package.name: Not allowed to request daemon access for FAILOVER_FILE_REPLICATION");
 		//ServerHandler.checkAccessServer(conn, source, "requestDaemonAccess", fromServer);
 
 		// The to server must match server

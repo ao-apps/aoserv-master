@@ -1098,7 +1098,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new BusinessAdministrator(),
-						"select * from business_administrators"
+						"select * from account.\"Administrator\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -1133,7 +1133,7 @@ final public class TableHandler {
 						+ "  business_servers bs,\n"
 						+ "  packages pk,\n"
 						+ "  usernames un,\n"
-						+ "  business_administrators ba\n"
+						+ "  account.\"Administrator\" ba\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=bs.server\n"
@@ -1178,7 +1178,7 @@ final public class TableHandler {
 						+ BU1_PARENTS_JOIN
 						+ "  packages pk2,\n"
 						+ "  usernames un2,\n"
-						+ "  business_administrators ba\n"
+						+ "  account.\"Administrator\" ba\n"
 						+ "where\n"
 						+ "  un1.username=?\n"
 						+ "  and un1.package=pk1.name\n"
