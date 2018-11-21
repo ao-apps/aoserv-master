@@ -4568,7 +4568,7 @@ final public class TableHandler {
 						+ "      ip_reputation_sets irs3\n"
 						+ "    where\n"
 						+ "      irs3.allow_subaccount_use\n"
-						+ "      and is_business_or_parent(irs3.accounting, ?)\n"
+						+ "      and account.is_business_or_parent(irs3.accounting, ?)\n"
 						+ "  )",
 						username,
 						UsernameHandler.getBusinessForUsername(conn, username)

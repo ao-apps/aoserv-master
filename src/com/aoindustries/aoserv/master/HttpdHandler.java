@@ -2409,7 +2409,7 @@ final public class HttpdHandler {
 				+ "  and (\n"
 				+ "    hs.is_shared\n"
 				+ "    or (\n"
-				+ "      is_business_or_parent(\n"
+				+ "      account.is_business_or_parent(\n"
 				+ "        (select pk1.accounting from packages pk1 where hs.package=pk1.pkey),\n"
 				+ "        (select accounting from packages where name=?)\n"
 				+ "      )\n"

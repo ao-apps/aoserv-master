@@ -1602,7 +1602,7 @@ final public class BusinessHandler {
 	}
 
 	public static boolean isBusinessOrParent(DatabaseConnection conn, AccountingCode parentAccounting, AccountingCode accounting) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select is_business_or_parent(?,?)", parentAccounting, accounting);
+		return conn.executeBooleanQuery("select account.is_business_or_parent(?,?)", parentAccounting, accounting);
 	}
 
 	public static boolean canSwitchUser(DatabaseConnection conn, UserId authenticatedAs, UserId connectAs) throws IOException, SQLException {
@@ -1613,7 +1613,7 @@ final public class BusinessHandler {
 		return conn.executeBooleanQuery(
 			"select\n"
 			+ "  (select can_switch_users from business_administrators where username=?)\n"
-			+ "  and is_business_or_parent(?,?)",
+			+ "  and account.is_business_or_parent(?,?)",
 			authenticatedAs,
 			authAccounting,
 			connectAccounting
