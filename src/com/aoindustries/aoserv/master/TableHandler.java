@@ -4087,7 +4087,7 @@ final public class TableHandler {
 						+ PK1_BU1_PARENTS_WHERE
 						+ "      )\n"
 						+ "      and bu1.accounting=pk2.accounting\n"
-						+ "      and pk2.name=ia2.package\n"
+						+ "      and pk2.pkey=ia2.package\n"
 						+ "  )\n"
 						+ "  or ia.id in (\n"
 						+ "    select\n"
