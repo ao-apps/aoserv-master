@@ -1262,7 +1262,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new BusinessProfile(),
-						"select * from business_profiles"
+						"select * from account.\"AccountProfile\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -1274,7 +1274,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  business_servers bs,\n"
-						+ "  business_profiles bp\n"
+						+ "  account.\"AccountProfile\" bp\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=bs.server\n"
@@ -1293,7 +1293,7 @@ final public class TableHandler {
 					+ "  usernames un,\n"
 					+ "  packages pk,\n"
 					+ BU1_PARENTS_JOIN
-					+ "  business_profiles bp\n"
+					+ "  account.\"AccountProfile\" bp\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
