@@ -5973,7 +5973,24 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new NetDevice(),
-						"select * from net_devices"
+						"select"
+						+ "  pkey,\n"
+						+ "  server,\n"
+						+ "  \"deviceID\",\n"
+						+ "  description,\n"
+						+ "  delete_route,\n"
+						+ "  host(gateway) as gateway,\n"
+						+ "  host(network) as network,\n"
+						+ "  host(broadcast) as broadcast,\n"
+						+ "  mac_address,\n"
+						+ "  max_bit_rate,\n"
+						+ "  monitoring_bit_rate_low,\n"
+						+ "  monitoring_bit_rate_medium,\n"
+						+ "  monitoring_bit_rate_high,\n"
+						+ "  monitoring_bit_rate_critical,\n"
+						+ "  monitoring_enabled\n"
+						+ "from\n"
+						+ "  net_devices"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5981,7 +5998,21 @@ final public class TableHandler {
 						provideProgress,
 						new NetDevice(),
 						"select distinct\n"
-						+ "  nd.*\n"
+						+ "  nd.pkey,\n"
+						+ "  nd.server,\n"
+						+ "  nd.\"deviceID\",\n"
+						+ "  nd.description,\n"
+						+ "  nd.delete_route,\n"
+						+ "  host(nd.gateway) as gateway,\n"
+						+ "  host(nd.network) as network,\n"
+						+ "  host(nd.broadcast) as broadcast,\n"
+						+ "  nd.mac_address,\n"
+						+ "  nd.max_bit_rate,\n"
+						+ "  nd.monitoring_bit_rate_low,\n"
+						+ "  nd.monitoring_bit_rate_medium,\n"
+						+ "  nd.monitoring_bit_rate_high,\n"
+						+ "  nd.monitoring_bit_rate_critical,\n"
+						+ "  nd.monitoring_enabled\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
 						+ "  left join ao_servers ff on ms.server=ff.failover_server,\n"
@@ -6014,7 +6045,21 @@ final public class TableHandler {
 					provideProgress,
 					new NetDevice(),
 					"select\n" // distinct
-					+ "  nd.*\n"
+					+ "  nd.pkey,\n"
+					+ "  nd.server,\n"
+					+ "  nd.\"deviceID\",\n"
+					+ "  nd.description,\n"
+					+ "  nd.delete_route,\n"
+					+ "  host(nd.gateway) as gateway,\n"
+					+ "  host(nd.network) as network,\n"
+					+ "  host(nd.broadcast) as broadcast,\n"
+					+ "  nd.mac_address,\n"
+					+ "  nd.max_bit_rate,\n"
+					+ "  nd.monitoring_bit_rate_low,\n"
+					+ "  nd.monitoring_bit_rate_medium,\n"
+					+ "  nd.monitoring_bit_rate_high,\n"
+					+ "  nd.monitoring_bit_rate_critical,\n"
+					+ "  nd.monitoring_enabled\n"
 					+ "from\n"
 					+ "  usernames un,\n"
 					+ "  packages pk,\n"
