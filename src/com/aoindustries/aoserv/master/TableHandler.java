@@ -3938,7 +3938,7 @@ final public class TableHandler {
 						new IPAddress(),
 						"select\n"
 						+ "  ia.id,\n"
-						+ "  ia.\"inetAddress\",\n"
+						+ "  host(ia.\"inetAddress\"),\n"
 						+ "  ia.\"netDevice\",\n"
 						+ "  ia.\"isAlias\",\n"
 						+ "  ia.hostname,\n"
@@ -3963,7 +3963,7 @@ final public class TableHandler {
 						new IPAddress(),
 						"select\n"
 						+ "  ia.id,\n"
-						+ "  ia.\"inetAddress\",\n"
+						+ "  host(ia.\"inetAddress\"),\n"
 						+ "  ia.\"netDevice\",\n"
 						+ "  ia.\"isAlias\",\n"
 						+ "  ia.hostname,\n"
@@ -4022,7 +4022,7 @@ final public class TableHandler {
 						new IPAddress(),
 						"select\n"
 						+ "  ia.id,\n"
-						+ "  ia.\"inetAddress\",\n"
+						+ "  host(ia.\"inetAddress\"),\n"
 						+ "  ia.\"netDevice\",\n"
 						+ "  ia.\"isAlias\",\n"
 						+ "  ia.hostname,\n"

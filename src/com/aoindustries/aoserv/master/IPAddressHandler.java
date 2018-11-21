@@ -370,13 +370,13 @@ final public class IPAddressHandler {
 
 	public static InetAddress getInetAddressForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.inetAddressFactory,
-			"select \"inetAddress\" from \"IPAddress\" where id=?",
+			"select host(\"inetAddress\") from \"IPAddress\" where id=?",
 			ipAddress
 		);
 	}
 
 	public static int getWildcardIPAddress(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntQuery("select id from \"IPAddress\" where \"inetAddress\"=? limit 1", IPAddress.WILDCARD_IP);
+		return conn.executeIntQuery("select id from \"IPAddress\" where \"inetAddress\"=?", IPAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
 	}
 
 	public static int getLoopbackIPAddress(DatabaseConnection conn, int server) throws IOException, SQLException {

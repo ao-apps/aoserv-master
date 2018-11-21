@@ -71,7 +71,7 @@ final public class DaemonHandler {
 		if(address!=null) return address;
 		InetAddress ip = database.executeObjectQuery(ObjectFactories.inetAddressFactory,
 			"select\n"
-			+ "  ia.\"inetAddress\"\n"
+			+ "  host(ia.\"inetAddress\")\n"
 			+ "from\n"
 			+ "  ao_servers ao,\n"
 			+ "  net_binds nb,\n"
@@ -86,7 +86,7 @@ final public class DaemonHandler {
 		if(ip.isUnspecified()) {
 			ip = database.executeObjectQuery(ObjectFactories.inetAddressFactory,
 				"select\n"
-				+ "  ia.\"inetAddress\"\n"
+				+ "  host(ia.\"inetAddress\")\n"
 				+ "from\n"
 				+ "  ao_servers ao,\n"
 				+ "  net_binds nb,\n"
