@@ -179,9 +179,12 @@ final public class EmailHandler {
 			if(!result.isValid()) throw new SQLException("Invalid email address: " + result);
 		}
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('email_addresses_pkey_seq')");
-
-		conn.executeUpdate("insert into email_addresses values(?,?,?)", pkey, address, domain);
+		int pkey = conn.executeIntQuery(
+			Connection.TRANSACTION_READ_COMMITTED, false, true,
+			"INSERT INTO email_addresses (address, \"domain\") VALUES (?,?) RETURNING pkey",
+			address,
+			domain
+		);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -221,8 +224,12 @@ final public class EmailHandler {
 
 		checkAccessEmailAddress(conn, source, "addEmailForwarding", address);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('email_forwarding_pkey_seq')");
-		conn.executeUpdate("insert into email_forwarding values(?,?,?)", pkey, address, destination);
+		int pkey = conn.executeIntQuery(
+			Connection.TRANSACTION_READ_COMMITTED, false, true,
+			"INSERT INTO email_forwarding (email_address, destination) VALUES (?,?) RETURNING pkey",
+			address,
+			destination
+		);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -296,18 +303,17 @@ final public class EmailHandler {
 			)
 		) throw new SQLException("EmailList path already used: "+path+" on "+groupAOServer);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('email_lists_pkey_seq')");
-		conn.executeUpdate(
-			"insert into\n"
-			+ "  email_lists\n"
+		int pkey = conn.executeIntQuery(
+			Connection.TRANSACTION_READ_COMMITTED, false, true,
+			"INSERT INTO email_lists (\n"
+			+ "  \"path\",\n"
+			+ "  linux_server_account,\n"
+			+ "  linux_server_group\n"
 			+ "values(\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  null\n"
-			+ ")",
-			pkey,
+			+ "  ?\n"
+			+ ") RETURNING pkey",
 			path,
 			linuxServerAccount,
 			linuxServerGroup
@@ -363,8 +369,11 @@ final public class EmailHandler {
 		int listServer=getAOServerForEmailList(conn, email_list);
 		if(domainAOServer!=listServer) throw new SQLException("List server ("+listServer+")!=Email address server ("+domainAOServer+')');
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('email_list_addresses_pkey_seq')");
-		conn.executeUpdate("insert into email_list_addresses values(?,?,?)", pkey, address, email_list);
+		int pkey = conn.executeIntUpdate(
+			"INSERT INTO email_list_addresses (email_address, email_list) VALUES (?,?) RETURNING pkey",
+			address,
+			email_list
+		);
 
 		// Notify all clients of the update
 		invalidateList.addTable(

@@ -143,20 +143,19 @@ final public class CvsHandler {
 			if(!found) throw new SQLException("Invalid mode: "+mode);
 
 			// Update the database
-			int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('scm.cvs_repositories_pkey_seq')");
-			conn.executeUpdate(
-				"insert into\n"
-				+ "  cvs_repositories\n"
-				+ "values(\n"
+			int pkey = conn.executeIntQuery(
+				Connection.TRANSACTION_READ_COMMITTED, false, true,
+				"INSERT INTO cvs_repositories (\n"
+				+ "  \"path\",\n"
+				+ "  linux_server_account,\n"
+				+ "  linux_server_group,\n"
+				+ "  mode\n"
+				+ ") VALUES (\n"
 				+ "  ?,\n"
 				+ "  ?,\n"
 				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  now(),\n"
-				+ "  null\n"
-				+ ")",
-				pkey,
+				+ "  ?\n"
+				+ ") RETURNING pkey",
 				path,
 				lsa,
 				lsg,

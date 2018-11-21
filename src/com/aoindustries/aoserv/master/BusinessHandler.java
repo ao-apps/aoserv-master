@@ -575,8 +575,6 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		if(isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add BusinessServer, Business disabled: "+accounting);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('server.business_servers_pkey_seq')");
-
 		// Parent business must also have access to the server
 		if(
 			!accounting.equals(getRootBusiness())
@@ -600,9 +598,9 @@ final public class BusinessHandler {
 
 		boolean hasDefault=conn.executeBooleanQuery("select (select pkey from business_servers where accounting=? and is_default limit 1) is not null", accounting);
 
-		conn.executeUpdate(
-			"insert into business_servers values(?,?,?,?,false,false,false,false,false,false,false)",
-			pkey,
+		int pkey = conn.executeIntQuery(
+			Connection.TRANSACTION_READ_COMMITTED, false, true,
+			"INSERT INTO business_servers (accounting, server, is_default) VALUES (?,?,?) RETURNING pkey",
 			accounting,
 			server,
 			!hasDefault
@@ -630,11 +628,10 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		checkAccessBusiness(conn, source, "addDisableLog", accounting);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('disable_log_pkey_seq')");
 		UserId username=source.getUsername();
-		conn.executeUpdate(
-			"insert into disable_log values(?,now(),?,?,?)",
-			pkey,
+		int pkey = conn.executeIntQuery(
+			Connection.TRANSACTION_READ_COMMITTED, false, true,
+			"INSERT INTO disable_log (accounting, disabled_by, disable_reason) VALUES (?,?,?) RETURNING pkey",
 			accounting,
 			username,
 			disableReason

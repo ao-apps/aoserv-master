@@ -150,12 +150,33 @@ final public class CreditCardHandler /*implements CronJob*/ {
         if(encryptionFrom!=-1) checkAccessEncryptionKey(conn, source, "addCreditCard", encryptionFrom);
         if(encryptionRecipient!=-1) checkAccessEncryptionKey(conn, source, "addCreditCard", encryptionRecipient);
 
-        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('payment.credit_cards_pkey_seq')");
-
+        int pkey;
         if(encryptedCardNumber==null && encryptedExpiration==null && encryptionFrom==-1 && encryptionRecipient==-1) {
-            conn.executeUpdate(
-                "insert into credit_cards values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,false,true,null,null,?,null,null,null,null,null,null)",
-                pkey,
+	        pkey = conn.executeIntQuery(
+				Connection.TRANSACTION_READ_COMMITTED, false, true,
+                "INSERT INTO credit_cards (\n"
+				+ "  processor_id,\n"
+				+ "  accounting,\n"
+				+ "  group_name,\n"
+				+ "  card_info,\n"
+				+ "  provider_unique_id,\n"
+				+ "  first_name,\n"
+				+ "  last_name,\n"
+				+ "  company_name,\n"
+				+ "  email,\n"
+				+ "  phone,\n"
+				+ "  fax,\n"
+				+ "  customer_tax_id,\n"
+				+ "  street_address1,\n"
+				+ "  street_address2,\n"
+				+ "  city,\n"
+				+ "  \"state\",\n"
+				+ "  postal_code,\n"
+				+ "  country_code,\n"
+				+ "  created_by,\n"
+				+ "  principal_name,\n"
+				+ "  description\n"
+				+ ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING pkey",
                 processorName,
                 accounting,
                 groupName,
@@ -179,9 +200,38 @@ final public class CreditCardHandler /*implements CronJob*/ {
                 description
             );
         } else if(encryptedCardNumber!=null && encryptedExpiration!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
-            conn.executeUpdate(
-                "insert into credit_cards values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,false,true,null,null,?,?,?,?,?,?,?)",
-                pkey,
+	        pkey = conn.executeIntQuery(
+				Connection.TRANSACTION_READ_COMMITTED, false, true,
+                "INSERT INTO credit_cards (\n"
+				+ "  processor_id,\n"
+				+ "  accounting,\n"
+				+ "  group_name,\n"
+				+ "  card_info,\n"
+				+ "  provider_unique_id,\n"
+				+ "  first_name,\n"
+				+ "  last_name,\n"
+				+ "  company_name,\n"
+				+ "  email,\n"
+				+ "  phone,\n"
+				+ "  fax,\n"
+				+ "  customer_tax_id,\n"
+				+ "  street_address1,\n"
+				+ "  street_address2,\n"
+				+ "  city,\n"
+				+ "  \"state\",\n"
+				+ "  postal_code,\n"
+				+ "  country_code,\n"
+				+ "  created_by,\n"
+				+ "  created_by,\n"
+				+ "  principal_name,\n"
+				+ "  description,\n"
+				+ "  encrypted_card_number,\n"
+				+ "  encryption_card_number_from,\n"
+				+ "  encryption_card_number_recipient,\n"
+				+ "  encrypted_expiration,\n"
+				+ "  encryption_expiration_from,\n"
+				+ "  encryption_expiration_recipient\n"
+				+ ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING pkey",
                 processorName,
                 accounting,
                 groupName,
@@ -726,11 +776,9 @@ final public class CreditCardHandler /*implements CronJob*/ {
         UserId authorizationUsername,
         String authorizationPrincipalName
     ) throws IOException, SQLException {
-        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('payment.credit_card_transactions_pkey_seq')");
-
-        conn.executeUpdate(
-            "insert into credit_card_transactions (\n"
-            + "  pkey,\n"
+        int pkey = conn.executeIntQuery(
+			Connection.TRANSACTION_READ_COMMITTED, false, true,
+            "INSERT INTO credit_card_transactions (\n"
             + "  processor_id,\n"
             + "  accounting,\n"
             + "  group_name,\n"
@@ -781,8 +829,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             + "  authorization_username,\n"
             + "  authorization_principal_name,\n"
             + "  status\n"
-            + ") values (?,?,?,?,?,?,?,?,?::decimal(9,2),?::decimal(9,2),?,?::decimal(9,2),?::decimal(9,2),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING')",
-            pkey,
+            + ") VALUES (?,?,?,?,?,?,?,?::decimal(9,2),?::decimal(9,2),?,?::decimal(9,2),?::decimal(9,2),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING') RETURNING pkey",
             processor,
             accounting,
             groupName,

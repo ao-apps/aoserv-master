@@ -45,10 +45,9 @@ public final class BackupHandler {
         if(slashPos==-1) throw new SQLException("Path must contain a slash (/): "+path);
         // TODO: Check for windows roots: if(FilePathHandler.getRootNode(backupConn, path.substring(0, slashPos+1))==-1) throw new SQLException("Path does not start with a valid root: "+path);
 
-        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('file_backup_settings_pkey_seq')");
-        conn.executeUpdate(
-            "insert into file_backup_settings values(?,?,?,?,?)",
-            pkey,
+        int pkey = conn.executeIntQuery(
+			Connection.TRANSACTION_READ_COMMITTED, false, true,
+            "INSERT INTO file_backup_settings (replication, \"path\", backup_enabled, required) VALUES (?,?,?,?) RETURNING pkey",
             replication,
             path,
             backupEnabled,
