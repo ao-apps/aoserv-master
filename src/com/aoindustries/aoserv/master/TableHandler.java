@@ -9014,7 +9014,7 @@ final public class TableHandler {
 	private static Map<Integer,String> tableNames;
 
 	/**
-	 * Gets the table name, with schema prefixed, unless it is the "public" schema.
+	 * Gets the table name, with schema prefixed.
 	 *
 	 * @see  #getTableName(com.aoindustries.dbc.DatabaseAccess, com.aoindustries.aoserv.client.SchemaTable.TableID)
 	 */
@@ -9028,9 +9028,7 @@ final public class TableHandler {
 							Integer id = results.getInt("id");
 							String schema = results.getString("schema");
 							String name = results.getString("name");
-							// TODO: Reference constant in new "Schema" class
-							if(!"public".equals(schema)) name = schema + "." + name;
-							if(newMap.put(id, name) != null) throw new SQLException("Duplicate id: " + id);
+							if(newMap.put(id, schema + "." + name) != null) throw new SQLException("Duplicate id: " + id);
 						}
 						return newMap;
 					},
@@ -9048,7 +9046,7 @@ final public class TableHandler {
 	}
 
 	/**
-	 * Gets the table name, with schema prefixed, unless it is the "public" schema.
+	 * Gets the table name, with schema prefixed.
 	 *
 	 * @see  #getTableNameForDBTableID(com.aoindustries.dbc.DatabaseAccess, java.lang.Integer)
 	 */
