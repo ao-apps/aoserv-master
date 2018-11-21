@@ -17,7 +17,6 @@ import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Locale;
