@@ -155,7 +155,7 @@ final public class NetBindHandler {
 			}
 
 			// Add the port to the DB
-			pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('net_binds_pkey_seq')");
+			pkey = conn.executeIntUpdate("select nextval('net_binds_pkey_seq')");
 			conn.executeUpdate(
 				"insert into\n"
 				+ "  net_binds\n"
@@ -223,7 +223,7 @@ final public class NetBindHandler {
 		InetAddress inetAddress = IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress);
 		int pkey;
 		synchronized(netBindLock) {
-			pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('net_binds_pkey_seq')");
+			pkey = conn.executeIntUpdate("select nextval('net_binds_pkey_seq')");
 			if(inetAddress.isUnspecified()) {
 				conn.executeUpdate(
 					"insert into\n"

@@ -17,11 +17,11 @@ import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
+import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.NotImplementedException;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.InetAddress;
-import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.logging.ProcessTimer;
@@ -30,12 +30,8 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -274,76 +270,60 @@ final public class DNSHandler implements CronJob {
 	public static Set<AccountingAndZone> getBusinessesAndTopLevelZones(DatabaseConnection conn) throws IOException, SQLException {
 		List<DomainName> tlds = getDNSTLDs(conn);
 
-		Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
-		try {
-			Statement stmt = dbConn.createStatement();
-			try {
-				String sql = "select distinct\n"
-						   + "  pk.accounting as accounting,\n"
-						   + "  dz.zone as zone\n"
-						   + "from\n"
-						   + "  dns_zones dz\n"
-						   + "  inner join packages pk on dz.package=pk.name\n"
-						   + "where\n"
-						   + "  dz.zone not like '%.in-addr.arpa'\n"
-						   + "union select distinct\n"
-						   + "  pk.accounting as accounting,\n"
-						   + "  ed.domain||'.' as zone\n"
-						   + "from\n"
-						   + "  email_domains ed\n"
-						   + "  inner join packages pk on ed.package=pk.name\n"
-						   + "union select distinct\n"
-						   + "  pk.accounting as accounting,\n"
-						   + "  hsu.hostname||'.' as zone\n"
-						   + "from\n"
-						   + "  httpd_site_urls hsu\n"
-						   + "  inner join httpd_site_binds hsb on hsu.httpd_site_bind=hsb.pkey\n"
-						   + "  inner join httpd_sites hs on hsb.httpd_site=hs.pkey\n"
-						   + "  inner join packages pk on hs.package=pk.name\n"
-						   + "  inner join ao_servers ao on hs.ao_server=ao.server\n"
-						   + "where\n"
-						   // Is not "localhost"
-						   + "  hsu.hostname!='localhost'\n"
-						   // Is not the test URL
-						   + "  and hsu.hostname!=(hs.\"name\" || '.' || ao.hostname)";
-				try {
-					ResultSet results = stmt.executeQuery(sql);
+		return conn.executeQuery(
+			(ResultSet results) -> {
+				Set<AccountingAndZone> aazs = new HashSet<>();
+				while(results.next()) {
+					String accounting = results.getString(1);
+					String zone = results.getString(2);
+					if(!zone.endsWith(".")) throw new SQLException("No end '.': " + zone);
+					DomainName domain;
 					try {
-						Set<AccountingAndZone> aazs = new HashSet<>();
-						while(results.next()) {
-							String accounting = results.getString(1);
-							String zone = results.getString(2);
-							if(!zone.endsWith(".")) throw new SQLException("No end '.': " + zone);
-							DomainName domain;
-							try {
-								domain = DomainName.valueOf(zone.substring(0, zone.length() - 1));
-							} catch(ValidationException e) {
-								throw new SQLException(e);
-							}
-							String tld;
-							try {
-								tld = DNSZoneTable.getHostTLD(domain, tlds) + ".";
-							} catch(IllegalArgumentException err) {
-								logger.log(Level.WARNING, null, err);
-								tld = zone;
-							}
-							AccountingAndZone aaz = new AccountingAndZone(accounting, tld);
-							if(!aazs.contains(aaz)) aazs.add(aaz);
-						}
-						return aazs;
-					} finally {
-						results.close();
+						domain = DomainName.valueOf(zone.substring(0, zone.length() - 1));
+					} catch(ValidationException e) {
+						throw new SQLException(e);
 					}
-				} catch(SQLException err) {
-					// Include the SQL in the exception
-					throw new WrappedSQLException(err, sql);
+					String tld;
+					try {
+						tld = DNSZoneTable.getHostTLD(domain, tlds) + ".";
+					} catch(IllegalArgumentException err) {
+						logger.log(Level.WARNING, null, err);
+						tld = zone;
+					}
+					AccountingAndZone aaz = new AccountingAndZone(accounting, tld);
+					if(!aazs.contains(aaz)) aazs.add(aaz);
 				}
-			} finally {
-				stmt.close();
-			}
-		} finally {
-			conn.releaseConnection();
-		}
+				return aazs;
+			},
+			"select distinct\n"
+			+ "  pk.accounting as accounting,\n"
+			+ "  dz.zone as zone\n"
+			+ "from\n"
+			+ "  dns_zones dz\n"
+			+ "  inner join packages pk on dz.package=pk.name\n"
+			+ "where\n"
+			+ "  dz.zone not like '%.in-addr.arpa'\n"
+			+ "union select distinct\n"
+			+ "  pk.accounting as accounting,\n"
+			+ "  ed.domain||'.' as zone\n"
+			+ "from\n"
+			+ "  email_domains ed\n"
+			+ "  inner join packages pk on ed.package=pk.name\n"
+			+ "union select distinct\n"
+			+ "  pk.accounting as accounting,\n"
+			+ "  hsu.hostname||'.' as zone\n"
+			+ "from\n"
+			+ "  httpd_site_urls hsu\n"
+			+ "  inner join httpd_site_binds hsb on hsu.httpd_site_bind=hsb.pkey\n"
+			+ "  inner join httpd_sites hs on hsb.httpd_site=hs.pkey\n"
+			+ "  inner join packages pk on hs.package=pk.name\n"
+			+ "  inner join ao_servers ao on hs.ao_server=ao.server\n"
+			+ "where\n"
+			// Is not "localhost"
+			+ "  hsu.hostname!='localhost'\n"
+			// Is not the test URL
+			+ "  and hsu.hostname!=(hs.\"name\" || '.' || ao.hostname)"
+		);
 	}
 
 	/**
@@ -411,31 +391,21 @@ final public class DNSHandler implements CronJob {
 		}
 
 		// Make all database changes in one big transaction
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('dns_records_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('dns_records_pkey_seq')");
 
 		// Add the entry
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records values(?,?,?,?,?,?,?,?,null,?)");
-		try {
-			pstmt.setInt(1, pkey);
-			pstmt.setString(2, zone);
-			pstmt.setString(3, domain);
-			pstmt.setString(4, type);
-			if(priority == DNSRecord.NO_PRIORITY) pstmt.setNull(5, Types.INTEGER);
-			else pstmt.setInt(5, priority);
-			if(weight == DNSRecord.NO_WEIGHT) pstmt.setNull(6, Types.INTEGER);
-			else pstmt.setInt(6, weight);
-			if(port == DNSRecord.NO_PORT) pstmt.setNull(7, Types.INTEGER);
-			else pstmt.setInt(7, port);
-			pstmt.setString(8, destination);
-			if(ttl==-1) pstmt.setNull(9, Types.INTEGER);
-			else pstmt.setInt(9, ttl);
-			pstmt.executeUpdate();
-		} catch(SQLException err) {
-			System.err.println("Error from query: "+pstmt.toString());
-			throw err;
-		} finally {
-			pstmt.close();
-		}
+		conn.executeUpdate(
+			"insert into dns_records values(?,?,?,?,?,?,?,?,null,?)",
+			pkey,
+			zone,
+			domain,
+			type,
+			(priority == DNSRecord.NO_PRIORITY) ? Null.INTEGER : priority,
+			(weight == DNSRecord.NO_WEIGHT) ? Null.INTEGER : weight,
+			(port == DNSRecord.NO_PORT) ? Null.INTEGER : port,
+			destination,
+			(ttl == -1) ? Null.INTEGER : ttl
+		);
 		invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
 		// Update the serial of the zone
@@ -489,116 +459,41 @@ final public class DNSHandler implements CronJob {
 			"mail"
 		);
 
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into dns_records(zone, domain, type, destination) values(?,?,?,?)");
-		try {
-			// TODO: Take a "mail exchanger" parameter to properly setup the default MX records.
-			//       If in this domain, sets up SPF like below.  If outside this domain (ends in .),
-			//       sets up MX to the mail exchanger, and CNAME "mail" to the mail exchanger.
+		final String INSERT_RECORD = "insert into dns_records(zone, domain, type, destination) values(?,?,?,?)";
+		// TODO: Take a "mail exchanger" parameter to properly setup the default MX records.
+		//       If in this domain, sets up SPF like below.  If outside this domain (ends in .),
+		//       sets up MX to the mail exchanger, and CNAME "mail" to the mail exchanger.
 
-			// TODO: Take nameservers from brands
+		// TODO: Take nameservers from brands
 
-			// Add the ns1.aoindustries.com name server
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "@");
-			pstmt.setString(3, DNSType.NS);
-			pstmt.setString(4, "ns1.aoindustries.com.");
-			pstmt.executeUpdate();
-
-			// Add the ns2.aoindustries.com name server
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "@");
-			pstmt.setString(3, DNSType.NS);
-			pstmt.setString(4, "ns2.aoindustries.com.");
-			pstmt.executeUpdate();
-
-			// Add the ns3.aoindustries.com name server
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "@");
-			pstmt.setString(3, DNSType.NS);
-			pstmt.setString(4, "ns3.aoindustries.com.");
-			pstmt.executeUpdate();
-
-			// Add the ns4.aoindustries.com name server
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "@");
-			pstmt.setString(3, DNSType.NS);
-			pstmt.setString(4, "ns4.aoindustries.com.");
-			pstmt.executeUpdate();
-
-			// Add the SPF TXT entry
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "@");
-			pstmt.setString(3, DNSType.TXT);
-			pstmt.setString(4, "v=spf1 a mx -all");
-			pstmt.executeUpdate();
-
-			String aType;
-			switch(ip.getAddressFamily()) {
-				case INET :
-					aType = DNSType.A;
-					break;
-				case INET6 :
-					aType = DNSType.AAAA;
-					break;
-				default :
-					throw new AssertionError();
-			}
-
-			// Add the domain IP
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "@");
-			pstmt.setString(3, aType);
-			pstmt.setString(4, ip.toString());
-			pstmt.executeUpdate();
-
-			// Add the ftp IP
-			/*
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "ftp");
-			pstmt.setString(3, aType);
-			pstmt.setString(4, ip.toString());
-			pstmt.executeUpdate();
-
-			// Add the ftp SPF TXT entry
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "ftp");
-			pstmt.setString(3, DNSType.TXT);
-			pstmt.setString(4, "v=spf1 -all");
-			pstmt.executeUpdate();
-			 */
-
-			// Add the mail IP
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "mail");
-			pstmt.setString(3, aType);
-			pstmt.setString(4, ip.toString());
-			pstmt.executeUpdate();
-
-			// Add the mail SPF TXT entry
-			// See http://www.openspf.org/FAQ/Common_mistakes#helo "Publish SPF records for HELO names used by your mail servers"
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "mail");
-			pstmt.setString(3, DNSType.TXT);
-			pstmt.setString(4, "v=spf1 a -all");
-			pstmt.executeUpdate();
-
-			// Add the www IP
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "www");
-			pstmt.setString(3, aType);
-			pstmt.setString(4, ip.toString());
-			pstmt.executeUpdate();
-
-			// Add the www SPF TXT entry
-			// See http://www.openspf.org/FAQ/Common_mistakes#all-domains "Publish null SPF records for your domains that don't send mail"
-			pstmt.setString(1, zone);
-			pstmt.setString(2, "www");
-			pstmt.setString(3, DNSType.TXT);
-			pstmt.setString(4, "v=spf1 -all");
-			pstmt.executeUpdate();
-		} finally {
-			pstmt.close();
+		String aType;
+		switch(ip.getAddressFamily()) {
+			case INET :
+				aType = DNSType.A;
+				break;
+			case INET6 :
+				aType = DNSType.AAAA;
+				break;
+			default :
+				throw new AssertionError();
 		}
+
+		conn.executeUpdate(INSERT_RECORD, zone, "@",    DNSType.NS,  "ns1.aoindustries.com.");
+		conn.executeUpdate(INSERT_RECORD, zone, "@",    DNSType.NS,  "ns2.aoindustries.com.");
+		conn.executeUpdate(INSERT_RECORD, zone, "@",    DNSType.NS,  "ns3.aoindustries.com.");
+		conn.executeUpdate(INSERT_RECORD, zone, "@",    DNSType.NS,  "ns4.aoindustries.com.");
+		conn.executeUpdate(INSERT_RECORD, zone, "@",    DNSType.TXT, "v=spf1 a mx -all");
+		conn.executeUpdate(INSERT_RECORD, zone, "@",    aType,       ip.toString());
+		/*
+		conn.executeUpdate(INSERT_RECORD, zone, "ftp",  aType,       ip.toString());
+		conn.executeUpdate(INSERT_RECORD, zone, "ftp",  DNSType.TXT, "v=spf1 -all");
+		 */
+		conn.executeUpdate(INSERT_RECORD, zone, "mail", aType,       ip.toString());
+		// See http://www.openspf.org/FAQ/Common_mistakes#helo "Publish SPF records for HELO names used by your mail servers"
+		conn.executeUpdate(INSERT_RECORD, zone, "mail", DNSType.TXT, "v=spf1 a -all");
+		conn.executeUpdate(INSERT_RECORD, zone, "www",  aType,       ip.toString());
+		// See http://www.openspf.org/FAQ/Common_mistakes#all-domains "Publish null SPF records for your domains that don't send mail"
+		conn.executeUpdate(INSERT_RECORD, zone, "www",  DNSType.TXT, "v=spf1 -all");
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
@@ -621,13 +516,7 @@ final public class DNSHandler implements CronJob {
 		String zone=getDNSZoneForDNSRecord(conn, pkey);
 
 		// Remove the dns_records entry
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_records where pkey=?");
-		try {
-			pstmt.setInt(1, pkey);
-			pstmt.executeUpdate();
-		} finally {
-			pstmt.close();
-		}
+		conn.executeUpdate("delete from dns_records where pkey=?", pkey);
 		invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
 		// Update the serial of the zone
@@ -658,22 +547,10 @@ final public class DNSHandler implements CronJob {
 		String zone
 	) throws IOException, SQLException {
 		// Remove the dns_records entries
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_records where zone=?");
-		try {
-			pstmt.setString(1, zone);
-			pstmt.executeUpdate();
-		} finally {
-			pstmt.close();
-		}
+		conn.executeUpdate("delete from dns_records where zone=?", zone);
 
 		// Remove the dns_zones entry
-		pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from dns_zones where zone=?");
-		try {
-			pstmt.setString(1, zone);
-			pstmt.executeUpdate();
-		} finally {
-			pstmt.close();
-		}
+		conn.executeUpdate("delete from dns_zones where zone=?", zone);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);

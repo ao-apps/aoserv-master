@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -139,7 +139,7 @@ final public class PackageHandler {
         if(!isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not approved: "+packageDefinition);
         //if(!isPackageDefinitionActive(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not active: "+packageDefinition);
 
-        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('packages_pkey_seq')");
+        int pkey = conn.executeIntUpdate("select nextval('packages_pkey_seq')");
         PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
             "insert into\n"
             + "  packages\n"
@@ -199,7 +199,7 @@ final public class PackageHandler {
         BusinessHandler.checkAccessBusiness(conn, source, "addPackageDefinition", accounting);
         if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add PackageDefinition, Business disabled: "+accounting);
 
-        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('package_definitions_pkey_seq')");
+        int pkey = conn.executeIntUpdate("select nextval('package_definitions_pkey_seq')");
         PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
             "insert into\n"
             + "  package_definitions\n"
@@ -281,7 +281,7 @@ final public class PackageHandler {
         }
         if(newVersion==null) throw new SQLException("Unable to generate new version for copy PackageDefinition: "+pkey);
 
-        int newPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('package_definitions_pkey_seq')");
+        int newPKey = conn.executeIntUpdate("select nextval('package_definitions_pkey_seq')");
         conn.executeUpdate(
             "insert into\n"
             + "  package_definitions\n"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -82,7 +82,7 @@ final public class SignupHandler {
         CreditCardHandler.checkAccessEncryptionKey(conn, source, "addSignupRequest", recipient);
 
         // Make all database changes in one big transaction
-        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('signup_requests_pkey_seq')");
+        int pkey = conn.executeIntUpdate("select nextval('signup_requests_pkey_seq')");
 
         // Add the entry
         PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup_requests values(?,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null)");

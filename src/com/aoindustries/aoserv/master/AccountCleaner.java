@@ -467,8 +467,6 @@ final public class AccountCleaner implements CronJob {
                 // file_backup_settings
                 {
                     IntList fbss=conn.executeIntListQuery(
-                        Connection.TRANSACTION_READ_COMMITTED,
-                        true,
                         "select\n"
                         + "  fbs.pkey\n"
                         + "from\n"

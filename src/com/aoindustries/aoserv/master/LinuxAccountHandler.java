@@ -297,7 +297,7 @@ final public class LinuxAccountHandler {
 		int count=conn.executeIntQuery("select count(*) from linux_group_accounts where username=?", username);
 		if(count>=LinuxGroupAccount.MAX_GROUPS) throw new SQLException("Only "+LinuxGroupAccount.MAX_GROUPS+" groups are allowed per user, username="+username+" already has access to "+count+" groups");
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('linux_group_accounts_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('linux_group_accounts_pkey_seq')");
 
 		conn.executeUpdate(
 			"insert into linux_group_accounts values(?,?,?,?,NULL)",
@@ -424,7 +424,7 @@ final public class LinuxAccountHandler {
 		int primaryLSG=getLinuxServerGroup(conn, primaryGroup, aoServer);
 		if(primaryLSG<0) throw new SQLException("Unable to find primary Linux group '"+primaryGroup+"' on AOServer #"+aoServer+" for Linux account '"+username+"'");
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('linux_server_accounts_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('linux_server_accounts_pkey_seq')");
 		// Now allocating unique to entire system for server portability between farms
 		//String farm=ServerHandler.getFarmForServer(conn, aoServer);
 		conn.executeUpdate(
@@ -540,7 +540,7 @@ final public class LinuxAccountHandler {
 
 		// Now allocating unique to entire system for server portability between farms
 		//String farm=ServerHandler.getFarmForServer(conn, aoServer);
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('linux_server_groups_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('linux_server_groups_pkey_seq')");
 		conn.executeUpdate(
 			"insert into\n"
 			+ "  linux_server_groups\n"
@@ -745,7 +745,7 @@ final public class LinuxAccountHandler {
 				)
 			)
 		) {
-			int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('linux_server_groups_pkey_seq')");
+			int pkey = conn.executeIntUpdate("select nextval('linux_server_groups_pkey_seq')");
 			conn.executeUpdate(
 				"insert into\n"
 				+ "  linux_server_groups\n"
@@ -958,7 +958,7 @@ final public class LinuxAccountHandler {
 			if(!ObjectUtils.equals(home,           systemUser.home))           throw new SQLException("Unexpected system home: "           + home           + " != " + systemUser.home);
 			if(!ObjectUtils.equals(shell,          systemUser.shell))          throw new SQLException("Unexpected system shell: "          + shell          + " != " + systemUser.shell);
 			// Add to database
-			int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('linux_server_accounts_pkey_seq')");
+			int pkey = conn.executeIntUpdate("select nextval('linux_server_accounts_pkey_seq')");
 			conn.executeUpdate(
 				"insert into\n"
 				+ "  linux_server_accounts\n"

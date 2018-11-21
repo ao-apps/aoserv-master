@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -151,7 +151,7 @@ final public class PostgresHandler {
 		BusinessHandler.checkBusinessAccessServer(conn, source, "addPostgresDatabase", accounting, aoServer);
 
 		// Add the entry to the database
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('postgres_databases_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('postgres_databases_pkey_seq')");
 		conn.executeUpdate(
 			"insert into\n"
 			+ "  postgres_databases\n"
@@ -203,7 +203,7 @@ final public class PostgresHandler {
 		// This sub-account must have access to the server
 		UsernameHandler.checkUsernameAccessServer(conn, source, "addPostgresServerUser", username, aoServer);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('postgres_server_users_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('postgres_server_users_pkey_seq')");
 
 		conn.executeUpdate(
 			"insert into postgres_server_users values(?,?,?,null,null)",

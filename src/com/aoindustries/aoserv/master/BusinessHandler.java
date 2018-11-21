@@ -21,21 +21,15 @@ import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.Email;
 import com.aoindustries.sql.SQLUtility;
-import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
 import com.aoindustries.validation.ValidationException;
 import com.aoindustries.validation.ValidationResult;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.Date;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -202,26 +196,25 @@ final public class BusinessHandler {
 
 	public static boolean hasPermission(DatabaseConnection conn, RequestSource source, AOServPermission.Permission permission) throws IOException, SQLException {
 		synchronized(cachedPermissionsLock) {
-			if(cachedPermissions==null) {
-				Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
-				try {
-					Map<UserId,Set<String>> newCache = new HashMap<>();
-					ResultSet results=stmt.executeQuery("select username, permission from business_administrator_permissions");
-					while(results.next()) {
-						UserId username;
-						try {
-							username = UserId.valueOf(results.getString(1));
-						} catch(ValidationException e) {
-							throw new SQLException(e);
+			if(cachedPermissions == null) {
+				cachedPermissions = conn.executeQuery(
+					(ResultSet results) -> {
+						Map<UserId,Set<String>> newCache = new HashMap<>();
+						while(results.next()) {
+							UserId username;
+							try {
+								username = UserId.valueOf(results.getString(1));
+							} catch(ValidationException e) {
+								throw new SQLException(e);
+							}
+							Set<String> permissions = newCache.get(username);
+							if(permissions==null) newCache.put(username, permissions = new HashSet<>());
+							permissions.add(results.getString(2));
 						}
-						Set<String> permissions = newCache.get(username);
-						if(permissions==null) newCache.put(username, permissions = new HashSet<>());
-						permissions.add(results.getString(2));
-					}
-					cachedPermissions = newCache;
-				} finally {
-					stmt.close();
-				}
+						return newCache;
+					},
+					"select username, permission from business_administrator_permissions"
+				);
 			}
 			Set<String> permissions = cachedPermissions.get(source.getUsername());
 			return permissions!=null && permissions.contains(permission.name());
@@ -427,34 +420,26 @@ final public class BusinessHandler {
 		if (country!=null && country.equals(CountryCode.US)) state=convertUSState(conn, state);
 
 		String supportCode = enableEmailSupport ? generateSupportCode(conn) : null;
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
-			"insert into business_administrators values(?,null,?,?,?,false,?,now(),?,?,?,?,?,?,?,?,?,?,?,null,true,?)"
+		conn.executeUpdate(
+			"insert into business_administrators values(?,null,?,?,?,false,?,now(),?,?,?,?,?,?,?,?,?,?,?,null,true,?)",
+			username.toString(),
+			name,
+			title,
+			birthday == null ? Null.DATE : birthday,
+			isPrivate,
+			workPhone,
+			homePhone,
+			cellPhone,
+			fax,
+			email,
+			address1,
+			address2,
+			city,
+			state,
+			country,
+			zip,
+			supportCode
 		);
-		try {
-			pstmt.setString(1, username.toString());
-			pstmt.setString(2, name);
-			pstmt.setString(3, title);
-			pstmt.setDate(4, birthday);
-			pstmt.setBoolean(5, isPrivate);
-			pstmt.setString(6, workPhone);
-			pstmt.setString(7, homePhone);
-			pstmt.setString(8, cellPhone);
-			pstmt.setString(9, fax);
-			pstmt.setString(10, email);
-			pstmt.setString(11, address1);
-			pstmt.setString(12, address2);
-			pstmt.setString(13, city);
-			pstmt.setString(14, state);
-			pstmt.setString(15, country);
-			pstmt.setString(16, zip);
-			pstmt.setString(17, supportCode);
-			pstmt.executeUpdate();
-		} catch(SQLException err) {
-			System.err.println("Error from query: "+pstmt.toString());
-			throw err;
-		} finally {
-			pstmt.close();
-		}
 
 		// administrators default to having the same permissions as the person who created them
 		conn.executeUpdate(
@@ -514,34 +499,30 @@ final public class BusinessHandler {
 
 		if (country.equals(CountryCode.US)) state=convertUSState(conn, state);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('account.business_profiles_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('account.business_profiles_pkey_seq')");
 		int priority=conn.executeIntQuery("select coalesce(max(priority)+1, 1) from business_profiles where accounting=?", accounting);
 
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into business_profiles values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-		try {
-			pstmt.setInt(1, pkey);
-			pstmt.setString(2, accounting.toString());
-			pstmt.setInt(3, priority);
-			pstmt.setString(4, name);
-			pstmt.setBoolean(5, isPrivate);
-			pstmt.setString(6, phone);
-			pstmt.setString(7, fax);
-			pstmt.setString(8, address1);
-			pstmt.setString(9, address2);
-			pstmt.setString(10, city);
-			pstmt.setString(11, state);
-			pstmt.setString(12, country);
-			pstmt.setString(13, zip);
-			pstmt.setBoolean(14, sendInvoice);
-			pstmt.setTimestamp(15, new Timestamp(System.currentTimeMillis()));
-			pstmt.setString(16, billingContact);
-			pstmt.setString(17, billingEmail);
-			pstmt.setString(18, technicalContact);
-			pstmt.setString(19, technicalEmail);
-			pstmt.executeUpdate();
-		} finally {
-			pstmt.close();
-		}
+		conn.executeUpdate(
+			"insert into business_profiles values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?)",
+			pkey,
+			accounting.toString(),
+			priority,
+			name,
+			isPrivate,
+			phone,
+			fax,
+			address1,
+			address2,
+			city,
+			state,
+			country,
+			zip,
+			sendInvoice,
+			billingContact,
+			billingEmail,
+			technicalContact,
+			technicalEmail
+		);
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_PROFILES, accounting, InvalidateList.allServers, false);
 		return pkey;
@@ -598,8 +579,7 @@ final public class BusinessHandler {
 
 		boolean hasDefault=conn.executeBooleanQuery("select (select pkey from business_servers where accounting=? and is_default limit 1) is not null", accounting);
 
-		int pkey = conn.executeIntQuery(
-			Connection.TRANSACTION_READ_COMMITTED, false, true,
+		int pkey = conn.executeIntUpdate(
 			"INSERT INTO business_servers (accounting, server, is_default) VALUES (?,?,?) RETURNING pkey",
 			accounting,
 			server,
@@ -629,8 +609,7 @@ final public class BusinessHandler {
 		checkAccessBusiness(conn, source, "addDisableLog", accounting);
 
 		UserId username=source.getUsername();
-		int pkey = conn.executeIntQuery(
-			Connection.TRANSACTION_READ_COMMITTED, false, true,
+		int pkey = conn.executeIntUpdate(
 			"INSERT INTO disable_log (accounting, disabled_by, disable_reason) VALUES (?,?,?) RETURNING pkey",
 			accounting,
 			username,
@@ -665,7 +644,7 @@ final public class BusinessHandler {
 		checkAccessBusiness(conn, source, "addNoticeLog", accounting);
 		if(transid!=NoticeLog.NO_TRANSACTION) TransactionHandler.checkAccessTransaction(conn, source, "addNoticeLog", transid);
 
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
+		conn.executeUpdate(
 			"insert into\n"
 			+ "  notice_log\n"
 			+ "(\n"
@@ -679,23 +658,17 @@ final public class BusinessHandler {
 			+ "  ?,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
-			+ "  ?::decimal(9,2),\n"
+			+ "  ?::numeric(9,2),\n"
 			+ "  ?,\n"
 			+ "  ?\n"
-			+ ")"
+			+ ")",
+			accounting.toString(),
+			billingContact,
+			emailAddress,
+			SQLUtility.getDecimal(balance),
+			type,
+			(transid == NoticeLog.NO_TRANSACTION) ? Null.INTEGER : transid
 		);
-		try {
-			pstmt.setString(1, accounting.toString());
-			pstmt.setString(2, billingContact);
-			pstmt.setString(3, emailAddress);
-			pstmt.setString(4, SQLUtility.getDecimal(balance));
-			pstmt.setString(5, type);
-			if(transid==NoticeLog.NO_TRANSACTION) pstmt.setNull(6, Types.INTEGER);
-			else pstmt.setInt(6, transid);
-			pstmt.executeUpdate();
-		} finally {
-			pstmt.close();
-		}
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.NOTICE_LOG, accounting, InvalidateList.allServers, false);
@@ -1306,13 +1279,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one EmailSmtpRelay on Server="+server);
 
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("delete from business_servers where pkey=?");
-		try {
-			pstmt.setInt(1, pkey);
-			pstmt.executeUpdate();
-		} finally {
-			pstmt.close();
-		}
+		conn.executeUpdate("delete from business_servers where pkey=?", pkey);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
@@ -1496,20 +1463,19 @@ final public class BusinessHandler {
 
 	public static BusinessAdministrator getBusinessAdministrator(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		synchronized(businessAdministratorsLock) {
-			if(businessAdministrators==null) {
-				Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
-				try {
-					Map<UserId,BusinessAdministrator> table=new HashMap<>();
-					ResultSet results=stmt.executeQuery("select * from business_administrators");
-					while(results.next()) {
-						BusinessAdministrator ba=new BusinessAdministrator();
-						ba.init(results);
-						table.put(ba.getKey(), ba);
-					}
-					businessAdministrators=table;
-				} finally {
-					stmt.close();
-				}
+			if(businessAdministrators == null) {
+				businessAdministrators = conn.executeQuery(
+					(ResultSet results) -> {
+						Map<UserId,BusinessAdministrator> table=new HashMap<>();
+						while(results.next()) {
+							BusinessAdministrator ba=new BusinessAdministrator();
+							ba.init(results);
+							table.put(ba.getKey(), ba);
+						}
+						return table;
+					},
+					"select * from business_administrators"
+				);
 			}
 			return businessAdministrators.get(username);
 		}
@@ -1623,50 +1589,45 @@ final public class BusinessHandler {
 	 * @return  a <code>HashMap</code> of <code>ArrayList</code>
 	 */
 	public static Map<AccountingCode,List<String>> getBusinessContacts(DatabaseConnection conn) throws IOException, SQLException {
-		// Load the list of businesses and their contacts
-		Map<AccountingCode,List<String>> businessContacts=new HashMap<>();
-		List<String> foundAddresses=new SortedArrayList<>();
-		PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select bp.accounting, bp.billing_email, bp.technical_email from business_profiles bp, businesses bu where bp.accounting=bu.accounting and bu.canceled is null order by bp.accounting, bp.priority desc");
-		try {
-			ResultSet results=pstmt.executeQuery();
-			try {
-				while(results.next()) {
-					AccountingCode accounting=AccountingCode.valueOf(results.getString(1));
-					if(!businessContacts.containsKey(accounting)) {
-						List<String> uniqueAddresses=new ArrayList<>();
-						foundAddresses.clear();
-						// billing contacts
-						List<String> addresses=StringUtility.splitStringCommaSpace(results.getString(2));
-						for (String address : addresses) {
-							String addy = address.toLowerCase();
-							if(!foundAddresses.contains(addy)) {
-								uniqueAddresses.add(addy);
-								foundAddresses.add(addy);
+		return conn.executeQuery(
+			(ResultSet results) -> {
+				// Load the list of businesses and their contacts
+				Map<AccountingCode,List<String>> businessContacts = new HashMap<>();
+				List<String> foundAddresses = new SortedArrayList<>();
+				try {
+					while(results.next()) {
+						AccountingCode accounting=AccountingCode.valueOf(results.getString(1));
+						if(!businessContacts.containsKey(accounting)) {
+							List<String> uniqueAddresses=new ArrayList<>();
+							foundAddresses.clear();
+							// billing contacts
+							List<String> addresses=StringUtility.splitStringCommaSpace(results.getString(2));
+							for (String address : addresses) {
+								String addy = address.toLowerCase();
+								if(!foundAddresses.contains(addy)) {
+									uniqueAddresses.add(addy);
+									foundAddresses.add(addy);
+								}
 							}
-						}
-						// technical contacts
-						addresses=StringUtility.splitStringCommaSpace(results.getString(3));
-						for (String address : addresses) {
-							String addy = address.toLowerCase();
-							if(!foundAddresses.contains(addy)) {
-								uniqueAddresses.add(addy);
-								foundAddresses.add(addy);
+							// technical contacts
+							addresses=StringUtility.splitStringCommaSpace(results.getString(3));
+							for (String address : addresses) {
+								String addy = address.toLowerCase();
+								if(!foundAddresses.contains(addy)) {
+									uniqueAddresses.add(addy);
+									foundAddresses.add(addy);
+								}
 							}
+							businessContacts.put(accounting, uniqueAddresses);
 						}
-						businessContacts.put(accounting, uniqueAddresses);
 					}
+				} catch(ValidationException e) {
+					throw new SQLException(e.getLocalizedMessage(), e);
 				}
-			} catch(ValidationException e) {
-				throw new SQLException(e.getLocalizedMessage(), e);
-			} finally {
-				results.close();
-			}
-		} catch(SQLException err) {
-			throw new WrappedSQLException(err, pstmt);
-		} finally {
-			pstmt.close();
-		}
-		return businessContacts;
+				return businessContacts;
+			},
+			"select bp.accounting, bp.billing_email, bp.technical_email from business_profiles bp, businesses bu where bp.accounting=bu.accounting and bu.canceled is null order by bp.accounting, bp.priority desc"
+		);
 	}
 
 	/**

@@ -88,7 +88,7 @@ final public class ServerHandler {
 		PasswordChecker.Result[] results = BusinessAdministrator.checkPassword(Locale.getDefault(), username, password);
 		if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Password strength check failed: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 
-		int serverPKey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('servers_pkey_seq')");
+		int serverPKey = conn.executeIntUpdate("select nextval('servers_pkey_seq')");
 		conn.executeUpdate(
 			"insert into\n"
 			+ "  servers\n"

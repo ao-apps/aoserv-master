@@ -79,7 +79,7 @@ final public class HttpdHandler {
 		int server=NetBindHandler.getServerForNetBind(conn, netBindPKey);
 		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
 		int aoServer = server;
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_workers_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('httpd_workers_pkey_seq')");
 		if(httpdSitePKey==-1) {
 			conn.executeUpdate(
 				"insert into\n"
@@ -174,7 +174,7 @@ final public class HttpdHandler {
 		if(isHttpdSiteBindDisabled(conn, hsb_pkey)) throw new SQLException("Unable to add HttpdSiteURL, HttpdSiteBind disabled: "+hsb_pkey);
 		MasterServer.checkAccessHostname(conn, source, "addHttpdSiteURL", hostname.toString());
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_urls_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('httpd_site_urls_pkey_seq')");
 		conn.executeUpdate(
 			"insert into\n"
 			+ "  httpd_site_urls\n"
@@ -318,7 +318,7 @@ final public class HttpdHandler {
 		if(error==null) error = HttpdSiteAuthenticatedLocation.validateRequire(require);
 		if(error!=null) throw new SQLException("Unable to add HttpdSiteAuthenticatedLocation: "+error);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_authenticated_locations_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('httpd_site_authenticated_locations_pkey_seq')");
 		conn.executeUpdate(
 			"insert into\n"
 			+ "  httpd_site_authenticated_locations\n"
@@ -405,7 +405,7 @@ final public class HttpdHandler {
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('httpd_tomcat_contexts_pkey_seq')");
 		try (PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
 			"insert into\n"
 			+ "  httpd_tomcat_contexts\n"
@@ -514,7 +514,7 @@ final public class HttpdHandler {
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatDataSource", tomcat_site);
 		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add HttpdTomcatDataSource, HttpdSite disabled: "+tomcat_site);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_data_sources_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('httpd_tomcat_data_sources_pkey_seq')");
 		try (PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
 			"insert into\n"
 			+ "  httpd_tomcat_data_sources\n"
@@ -577,7 +577,7 @@ final public class HttpdHandler {
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatParameter", tomcat_site);
 		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add HttpdTomcatParameter, HttpdSite disabled: "+tomcat_site);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_parameters_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('httpd_tomcat_parameters_pkey_seq')");
 		PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
 			"insert into\n"
 			+ "  httpd_tomcat_parameters\n"
@@ -627,7 +627,7 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatSiteJkMount", tomcat_site);
 
-		int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_site_jk_mounts_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('httpd_tomcat_site_jk_mounts_pkey_seq')");
 		conn.executeUpdate(
 			"insert into httpd_tomcat_site_jk_mounts (pkey, httpd_tomcat_site, \"path\", mount) values (?,?,?,?)",
 			pkey,
@@ -982,7 +982,7 @@ final public class HttpdHandler {
 		int httpNetBind = getHttpdBind(conn, invalidateList, packageName, aoServer, ipAddress, httpPort, Protocol.HTTP);
 
 		// Create the HttpdSite
-		httpdSitePKey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_sites_pkey_seq')");
+		httpdSitePKey = conn.executeIntUpdate("select nextval('httpd_sites_pkey_seq')");
 		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
 			"insert into httpd_sites (\n"
 			+ "  pkey,\n"
@@ -1055,7 +1055,7 @@ final public class HttpdHandler {
 		}
 
 		// Add the default httpd_tomcat_context
-		int htcPKey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
+		int htcPKey = conn.executeIntUpdate("select nextval('httpd_tomcat_contexts_pkey_seq')");
 		conn.executeUpdate(
 			"insert into\n"
 			+ "  httpd_tomcat_contexts\n"
@@ -1083,7 +1083,7 @@ final public class HttpdHandler {
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, aoServer, false);
 
 		if(!isTomcat4) {
-			htcPKey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_tomcat_contexts_pkey_seq')");
+			htcPKey = conn.executeIntUpdate("select nextval('httpd_tomcat_contexts_pkey_seq')");
 			conn.executeUpdate(
 				"insert into\n"
 				+ "  httpd_tomcat_contexts\n"
@@ -1241,7 +1241,7 @@ final public class HttpdHandler {
 		}
 
 		// Create the HTTP HttpdSiteBind
-		int httpSiteBindPKey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_site_binds_pkey_seq')");
+		int httpSiteBindPKey = conn.executeIntUpdate("select nextval('httpd_site_binds_pkey_seq')");
 		String siteLogsDir = OperatingSystemVersion.getHttpdSiteLogsDirectory(osv).toString();
 		conn.executeUpdate(
 			"insert into httpd_site_binds (pkey, httpd_site, httpd_bind, access_log, error_log) values(?,?,?,?,?)",
@@ -1390,7 +1390,7 @@ final public class HttpdHandler {
 			&& !versionStr.equals(HttpdTomcatVersion.VERSION_3_2_4)
 		;
 
-		int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('httpd_shared_tomcats_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('httpd_shared_tomcats_pkey_seq')");
 		if(isTomcat4) {
 			AccountingCode packageName=LinuxAccountHandler.getPackageForLinuxGroup(conn, linuxServerGroup);
 			int loopbackIP=IPAddressHandler.getLoopbackIPAddress(conn, aoServer);
@@ -2328,7 +2328,7 @@ final public class HttpdHandler {
 
 		// Allocate the net_bind, if needed
 		if(netBind == -1) {
-			netBind = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('net_binds_pkey_seq')");
+			netBind = conn.executeIntUpdate("select nextval('net_binds_pkey_seq')");
 			pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into net_binds values(?,?,?,?,?,?,?,true)");
 			try {
 				pstmt.setInt(1, netBind);

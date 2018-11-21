@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2012-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -231,7 +231,8 @@ final public class IpReputationSetHandler {
                 IpReputationSet.ConfidenceType confidence = addRep.getConfidence();
                 IpReputationSet.ReputationType reputationType = addRep.getReputationType();
                 short score = addRep.getScore();
-                IpReputationSetHost dbHost = conn.executeObjectQuery(Connection.TRANSACTION_READ_COMMITTED,
+                IpReputationSetHost dbHost = conn.executeObjectQuery(
+					Connection.TRANSACTION_READ_COMMITTED,
                     true,
                     false,
 					(ResultSet result) -> {
@@ -317,7 +318,8 @@ final public class IpReputationSetHandler {
                 if(positiveChange>0) {
                     // Update network when positive change applied
                     int network = getNetwork(host, networkPrefix);
-                    IpReputationSetNetwork dbNetwork = conn.executeObjectQuery(Connection.TRANSACTION_READ_COMMITTED,
+                    IpReputationSetNetwork dbNetwork = conn.executeObjectQuery(
+						Connection.TRANSACTION_READ_COMMITTED,
                         true,
                         false,
 						(ResultSet result) -> {

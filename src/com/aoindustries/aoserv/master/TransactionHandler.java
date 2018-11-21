@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -109,7 +109,7 @@ final public class TransactionHandler {
     ) throws IOException, SQLException {
         if(business_administrator.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+LinuxAccount.MAIL+'\'');
 
-        int transid = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('transactions_transid_seq')");
+        int transid = conn.executeIntUpdate("select nextval('transactions_transid_seq')");
 
         conn.executeUpdate(
             "insert into transactions values(?,?,?,?,?,?,?,?,?,?,?,?,null,?)",

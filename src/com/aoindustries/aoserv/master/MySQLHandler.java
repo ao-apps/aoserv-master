@@ -153,7 +153,7 @@ final public class MySQLHandler {
 		BusinessHandler.checkBusinessAccessServer(conn, source, "addMySQLDatabase", accounting, aoServer);
 
 		// Add the entry to the database
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_databases_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('mysql_databases_pkey_seq')");
 		conn.executeUpdate(
 			"insert into\n"
 			+ "  mysql_databases\n"
@@ -219,7 +219,7 @@ final public class MySQLHandler {
 		if(dbServer!=userServer) throw new SQLException("Mismatched mysql_servers for mysql_databases and mysql_server_users");
 
 		// Add the entry to the database
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_db_users_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('mysql_db_users_pkey_seq')");
 		conn.executeUpdate(
 			"insert into mysql_db_users values(?,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?,?,?,?,?,?)",
 			pkey,
@@ -275,7 +275,7 @@ final public class MySQLHandler {
 		// This sub-account must have access to the server
 		UsernameHandler.checkUsernameAccessServer(conn, source, "addMySQLServerUser", username, aoServer);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('mysql_server_users_pkey_seq')");
+		int pkey = conn.executeIntUpdate("select nextval('mysql_server_users_pkey_seq')");
 		boolean isSystemUser = username.equals(MySQLUser.ROOT) || username.equals(MySQLUser.MYSQL_SYS);
 		conn.executeUpdate(
 			"insert into mysql_server_users values(?,?,?,?,null,null,?,?,?,?)",

@@ -18,14 +18,11 @@ import com.aoindustries.creditcards.MerchantServicesProviderFactory;
 import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.InetAddress;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -152,8 +149,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 
         int pkey;
         if(encryptedCardNumber==null && encryptedExpiration==null && encryptionFrom==-1 && encryptionRecipient==-1) {
-	        pkey = conn.executeIntQuery(
-				Connection.TRANSACTION_READ_COMMITTED, false, true,
+	        pkey = conn.executeIntUpdate(
                 "INSERT INTO credit_cards (\n"
 				+ "  processor_id,\n"
 				+ "  accounting,\n"
@@ -200,8 +196,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                 description
             );
         } else if(encryptedCardNumber!=null && encryptedExpiration!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
-	        pkey = conn.executeIntQuery(
-				Connection.TRANSACTION_READ_COMMITTED, false, true,
+	        pkey = conn.executeIntUpdate(
                 "INSERT INTO credit_cards (\n"
 				+ "  processor_id,\n"
 				+ "  accounting,\n"
@@ -776,8 +771,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         UserId authorizationUsername,
         String authorizationPrincipalName
     ) throws IOException, SQLException {
-        int pkey = conn.executeIntQuery(
-			Connection.TRANSACTION_READ_COMMITTED, false, true,
+        int pkey = conn.executeIntUpdate(
             "INSERT INTO credit_card_transactions (\n"
             + "  processor_id,\n"
             + "  accounting,\n"
@@ -1313,8 +1307,67 @@ final public class CreditCardHandler /*implements CronJob*/ {
                     boolean connRolledBack=false;
                     try {
                         // Find the accounting code, credit_card pkey, and account balances of all businesses that have a credit card set for automatic payments (and is active)
-                        List<AutomaticPayment> automaticPayments = new ArrayList<>();
-                        PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
+                        List<AutomaticPayment> automaticPayments = conn.executeQuery(
+							(ResultSet results) -> {
+								try {
+									List<AutomaticPayment> list = new ArrayList<>();
+									BigDecimal total = BigDecimal.ZERO;
+									// Look for duplicate accounting codes and report a warning
+									AccountingCode lastAccounting = null;
+									while(results.next()) {
+										AccountingCode accounting = AccountingCode.valueOf(results.getString(1));
+										if(accounting.equals(lastAccounting)) {
+											logger.log(Level.WARNING, "More than one credit card marked as automatic for accounting={0}, using the first one found", accounting);
+										} else {
+											lastAccounting = accounting;
+											BigDecimal endofmonth = results.getBigDecimal(2);
+											BigDecimal current = results.getBigDecimal(3);
+											if(
+												endofmonth.compareTo(BigDecimal.ZERO)>0
+												&& current.compareTo(BigDecimal.ZERO)>0
+											) {
+												BigDecimal amount = endofmonth.compareTo(current)<=0 ? endofmonth : current;
+												total = total.add(amount);
+												list.add(
+													new AutomaticPayment(
+														accounting,
+														amount,
+														results.getInt(4),
+														results.getString(5),
+														results.getString(6),
+														results.getString(7),
+														results.getString(8),
+														results.getString(9),
+														results.getString(10),
+														results.getString(11),
+														results.getString(12),
+														results.getString(13),
+														results.getString(14),
+														results.getString(15),
+														results.getString(16),
+														results.getString(17),
+														results.getString(18),
+														results.getString(19),
+														results.getString(20),
+														results.getString(21),
+														results.getString(22),
+														results.getString(23),
+														results.getString(24),
+														results.getString(25),
+														results.getString(26),
+														results.getString(27),
+														results.getString(28)
+													)
+												);
+											}
+										}
+									}
+									System.out.println("Processing a total of $" + total);
+									return list;
+								} catch(ValidationException e) {
+									throw new SQLException(e.getLocalizedMessage(), e);
+								}
+							},
                             "select\n"
                             + "  bu.accounting,\n"
                             + "  endofmonth.balance as endofmonth,\n"
@@ -1382,72 +1435,9 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "  and cc.processor_id=ccp.provider_id\n"
                             + "  and ccp.enabled\n"
                             + "order by\n"
-                            + "  bu.accounting\n"
-                        );
-                        try {
-                            pstmt.setTimestamp(1, new Timestamp(beginningOfNextMonth.getTimeInMillis()));
-                            ResultSet results = pstmt.executeQuery();
-                            BigDecimal total = BigDecimal.ZERO;
-                            try {
-                                // Look for duplicate accounting codes and report a warning
-                                AccountingCode lastAccounting = null;
-                                while(results.next()) {
-                                    AccountingCode accounting = AccountingCode.valueOf(results.getString(1));
-                                    if(accounting.equals(lastAccounting)) {
-                                        logger.log(Level.WARNING, "More than one credit card marked as automatic for accounting={0}, using the first one found", accounting);
-                                    } else {
-                                        lastAccounting = accounting;
-                                        BigDecimal endofmonth = results.getBigDecimal(2);
-                                        BigDecimal current = results.getBigDecimal(3);
-                                        if(
-                                            endofmonth.compareTo(BigDecimal.ZERO)>0
-                                            && current.compareTo(BigDecimal.ZERO)>0
-                                        ) {
-                                            BigDecimal amount = endofmonth.compareTo(current)<=0 ? endofmonth : current;
-                                            total = total.add(amount);
-                                            automaticPayments.add(
-                                                new AutomaticPayment(
-                                                    accounting,
-                                                    amount,
-                                                    results.getInt(4),
-                                                    results.getString(5),
-                                                    results.getString(6),
-                                                    results.getString(7),
-                                                    results.getString(8),
-                                                    results.getString(9),
-                                                    results.getString(10),
-                                                    results.getString(11),
-                                                    results.getString(12),
-                                                    results.getString(13),
-                                                    results.getString(14),
-                                                    results.getString(15),
-                                                    results.getString(16),
-                                                    results.getString(17),
-                                                    results.getString(18),
-                                                    results.getString(19),
-                                                    results.getString(20),
-                                                    results.getString(21),
-                                                    results.getString(22),
-                                                    results.getString(23),
-                                                    results.getString(24),
-                                                    results.getString(25),
-                                                    results.getString(26),
-                                                    results.getString(27),
-                                                    results.getString(28)
-                                                )
-                                            );
-                                        }
-                                    }
-                                }
-                            } finally {
-                                results.close();
-                            }
-                            System.out.println("Processing a total of $"+total);
-                        } catch(SQLException err) {
-                            throw new WrappedSQLException(err, pstmt);
-                        } finally {
-                            pstmt.close();
-                        }
+                            + "  bu.accounting",
+							new Timestamp(beginningOfNextMonth.getTimeInMillis())
+						);
                         // Only need to create the persistence once per DB transaction
                         MasterPersistenceMechanism masterPersistenceMechanism = new MasterPersistenceMechanism(conn, invalidateList);
                         for(AutomaticPayment automaticPayment : automaticPayments) {

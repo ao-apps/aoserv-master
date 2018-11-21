@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2002-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -9,7 +9,6 @@ import com.aoindustries.aoserv.client.SchemaTable;
 import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,8 +44,7 @@ public final class BackupHandler {
         if(slashPos==-1) throw new SQLException("Path must contain a slash (/): "+path);
         // TODO: Check for windows roots: if(FilePathHandler.getRootNode(backupConn, path.substring(0, slashPos+1))==-1) throw new SQLException("Path does not start with a valid root: "+path);
 
-        int pkey = conn.executeIntQuery(
-			Connection.TRANSACTION_READ_COMMITTED, false, true,
+        int pkey = conn.executeIntUpdate(
             "INSERT INTO file_backup_settings (replication, \"path\", backup_enabled, required) VALUES (?,?,?,?) RETURNING pkey",
             replication,
             path,
