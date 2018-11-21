@@ -2459,7 +2459,19 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new FailoverFileReplication(),
-						"select * from failover_file_replications"
+						"select\n"
+						+ "  pkey,\n"
+						+ "  server,\n"
+						+ "  backup_partition,\n"
+						+ "  max_bit_rate,\n"
+						+ "  use_compression,\n"
+						+ "  retention,\n"
+						+ "  connect_address,\n"
+						+ "  host(connect_from) as connect_from,\n"
+						+ "  enabled,\n"
+						+ "  quota_gid\n"
+						+ "from\n"
+						+ "  failover_file_replications"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2467,7 +2479,16 @@ final public class TableHandler {
 						provideProgress,
 						new FailoverFileReplication(),
 						"select\n"
-						+ "  ffr.*\n"
+						+ "  ffr.pkey,\n"
+						+ "  ffr.server,\n"
+						+ "  ffr.backup_partition,\n"
+						+ "  ffr.max_bit_rate,\n"
+						+ "  ffr.use_compression,\n"
+						+ "  ffr.retention,\n"
+						+ "  ffr.connect_address,\n"
+						+ "  host(ffr.connect_from) as connect_from,\n"
+						+ "  ffr.enabled,\n"
+						+ "  ffr.quota_gid\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  failover_file_replications ffr\n"
@@ -2483,7 +2504,16 @@ final public class TableHandler {
 					provideProgress,
 					new FailoverFileReplication(),
 					"select\n"
-					+ "  ffr.*\n"
+					+ "  ffr.pkey,\n"
+					+ "  ffr.server,\n"
+					+ "  ffr.backup_partition,\n"
+					+ "  ffr.max_bit_rate,\n"
+					+ "  ffr.use_compression,\n"
+					+ "  ffr.retention,\n"
+					+ "  ffr.connect_address,\n"
+					+ "  host(ffr.connect_from) as connect_from,\n"
+					+ "  ffr.enabled,\n"
+					+ "  ffr.quota_gid\n"
 					+ "from\n"
 					+ "  usernames un,\n"
 					+ "  packages pk,\n"
