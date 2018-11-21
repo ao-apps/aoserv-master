@@ -264,7 +264,7 @@ final public class ReportGenerator implements CronJob {
 							}*/
 
 							// Add these stats to the table
-							PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into backup_reports values(nextval('backup_reports_pkey_seq'),?,?,?::date,?,?::int8);");
+							PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into backup_reports values(nextval('backup.backup_reports_pkey_seq'),?,?,?::date,?,?::int8);");
 							try {
 								Iterator<Integer> serverKeys=stats.keySet().iterator();
 								while(serverKeys.hasNext()) {

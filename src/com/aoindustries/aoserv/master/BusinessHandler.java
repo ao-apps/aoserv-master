@@ -514,7 +514,7 @@ final public class BusinessHandler {
 
 		if (country.equals(CountryCode.US)) state=convertUSState(conn, state);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('business_profiles_pkey_seq')");
+		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('account.business_profiles_pkey_seq')");
 		int priority=conn.executeIntQuery("select coalesce(max(priority)+1, 1) from business_profiles where accounting=?", accounting);
 
 		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into business_profiles values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
@@ -575,7 +575,7 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		if(isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add BusinessServer, Business disabled: "+accounting);
 
-		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('business_servers_pkey_seq')");
+		int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('server.business_servers_pkey_seq')");
 
 		// Parent business must also have access to the server
 		if(

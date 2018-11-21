@@ -143,7 +143,7 @@ final public class CvsHandler {
 			if(!found) throw new SQLException("Invalid mode: "+mode);
 
 			// Update the database
-			int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('cvs_repositories_pkey_seq')");
+			int pkey = conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('scm.cvs_repositories_pkey_seq')");
 			conn.executeUpdate(
 				"insert into\n"
 				+ "  cvs_repositories\n"

@@ -150,7 +150,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         if(encryptionFrom!=-1) checkAccessEncryptionKey(conn, source, "addCreditCard", encryptionFrom);
         if(encryptionRecipient!=-1) checkAccessEncryptionKey(conn, source, "addCreditCard", encryptionRecipient);
 
-        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('credit_cards_pkey_seq')");
+        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('payment.credit_cards_pkey_seq')");
 
         if(encryptedCardNumber==null && encryptedExpiration==null && encryptionFrom==-1 && encryptionRecipient==-1) {
             conn.executeUpdate(
@@ -726,7 +726,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         UserId authorizationUsername,
         String authorizationPrincipalName
     ) throws IOException, SQLException {
-        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('credit_card_transactions_pkey_seq')");
+        int pkey=conn.executeIntQuery(Connection.TRANSACTION_READ_COMMITTED, false, true, "select nextval('payment.credit_card_transactions_pkey_seq')");
 
         conn.executeUpdate(
             "insert into credit_card_transactions (\n"
