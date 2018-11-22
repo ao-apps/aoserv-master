@@ -3190,7 +3190,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdSiteBindRedirect(),
-						"select * from httpd_site_bind_redirects"
+						"select * from web.\"VirtualHostRedirect\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3203,7 +3203,7 @@ final public class TableHandler {
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  web.\"VirtualHost\" hsb,\n"
-						+ "  httpd_site_bind_redirects hsbr\n"
+						+ "  web.\"VirtualHostRedirect\" hsbr\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3226,7 +3226,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
 					+ "  web.\"VirtualHost\" hsb,\n"
-					+ "  httpd_site_bind_redirects hsbr\n"
+					+ "  web.\"VirtualHostRedirect\" hsbr\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

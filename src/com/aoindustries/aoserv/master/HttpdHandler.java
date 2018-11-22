@@ -2472,7 +2472,7 @@ final public class HttpdHandler {
 	 * web.Site
 	 *           + web.VirtualHost
 	 *           |                + web.VirtualHostHeader
-	 *           |                + httpd_site_bind_redirects
+	 *           |                + web.VirtualHostRedirect
 	 *           |                + httpd_site_urls
 	 *           |                |               + dns.Record
 	 *           |                + web.HttpdBind
