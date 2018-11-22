@@ -600,13 +600,13 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // httpd_servers
+                // httpd.HttpdServer
                 {
                     IntList hss=conn.executeIntListQuery(
                         "select\n"
                         + "  hs.pkey\n"
                         + "from\n"
-                        + "  httpd_servers hs,\n"
+                        + "  httpd.\"HttpdServer\" hs,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"

@@ -2972,7 +2972,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdServer(),
-						"select * from httpd_servers"
+						"select * from httpd.\"HttpdServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2983,7 +2983,7 @@ final public class TableHandler {
 						+ "  hs.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_servers hs\n"
+						+ "  httpd.\"HttpdServer\" hs\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server",
@@ -3002,7 +3002,7 @@ final public class TableHandler {
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  business_servers bs,\n"
-						+ "  httpd_servers hs\n"
+						+ "  httpd.\"HttpdServer\" hs\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk.name\n"

@@ -1280,7 +1280,7 @@ final public class HttpdHandler {
 					+ "  hs.mod_php_version is not null\n"
 					+ "from\n"
 					+ "  httpd_binds hb\n"
-					+ "  inner join httpd_servers hs on hb.httpd_server=hs.pkey\n"
+					+ "  inner join httpd.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
 					+ "where\n"
 					+ "  hb.net_bind=?",
 					httpNetBind
@@ -1974,7 +1974,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  httpd_servers hs,\n"
+			+ "  httpd.\"HttpdServer\" hs,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  hs.pkey=?\n"
@@ -2024,7 +2024,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  pk.name\n"
 			+ "from\n"
-			+ "  httpd_servers hs\n"
+			+ "  httpd.\"HttpdServer\" hs\n"
 			+ "  inner join billing.\"Package\" pk on hs.package=pk.pkey\n"
 			+ "where\n"
 			+ "  hs.pkey=?",
@@ -2072,7 +2072,7 @@ final public class HttpdHandler {
 	}
 
 	public static int getAOServerForHttpdServer(DatabaseConnection conn, int httpdServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from httpd_servers where pkey=?", httpdServer);
+		return conn.executeIntQuery("select ao_server from httpd.\"HttpdServer\" where pkey=?", httpdServer);
 	}
 
 	public static String getSiteNameForHttpdSite(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -2320,7 +2320,7 @@ final public class HttpdHandler {
 				netBind
 			)
 		) {
-			// Get the list of httpd_servers and how many httpd_site_binds there are
+			// Get the list of httpd.HttpdServer and how many httpd_site_binds there are
 			int lowestPKey=-1;
 			int lowestCount=Integer.MAX_VALUE;
 			pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
@@ -2337,7 +2337,7 @@ final public class HttpdHandler {
 				+ "      and hb.net_bind=hsb.httpd_bind\n"
 				+ "  )\n"
 				+ "from\n"
-				+ "  httpd_servers hs\n"
+				+ "  httpd.\"HttpdServer\" hs\n"
 				+ "where\n"
 				+ "  hs.can_add_sites\n"
 				+ "  and hs.ao_server=?\n"
@@ -2712,7 +2712,7 @@ final public class HttpdHandler {
 		int aoServer = getAOServerForHttpdServer(conn, pkey);
 
 		// httpd_sites
-		conn.executeUpdate("delete from httpd_servers where pkey=?", pkey);
+		conn.executeUpdate("delete from httpd.\"HttpdServer\" where pkey=?", pkey);
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SERVERS, accounting, aoServer, false);
 	}
 
@@ -3445,7 +3445,7 @@ final public class HttpdHandler {
 					+ "  from\n"
 					+ "    httpd_site_binds hsb\n"
 					+ "    inner join httpd_binds hb on hsb.httpd_bind=hb.net_bind\n"
-					+ "    inner join httpd_servers hs on hb.httpd_server=hs.pkey\n"
+					+ "    inner join httpd.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
 					+ "  where\n"
 					+ "    hsb.httpd_site=?\n"
 					+ "    and hs.mod_php_version is not null\n"
