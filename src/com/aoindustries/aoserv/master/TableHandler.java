@@ -3490,7 +3490,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatContext(),
-						"select * from httpd_tomcat_contexts"
+						"select * from web.\"TomcatContext\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3502,7 +3502,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  httpd_tomcat_contexts htc\n"
+						+ "  web.\"TomcatContext\" htc\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3523,7 +3523,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  httpd_tomcat_contexts htc\n"
+					+ "  web.\"TomcatContext\" htc\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3557,7 +3557,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  httpd_tomcat_contexts htc,\n"
+						+ "  web.\"TomcatContext\" htc,\n"
 						+ "  httpd_tomcat_data_sources htds\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3580,7 +3580,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  httpd_tomcat_contexts htc,\n"
+					+ "  web.\"TomcatContext\" htc,\n"
 					+ "  httpd_tomcat_data_sources htds\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3616,7 +3616,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  httpd_tomcat_contexts htc,\n"
+						+ "  web.\"TomcatContext\" htc,\n"
 						+ "  web.\"TomcatContextParameter\" htp\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3639,7 +3639,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  httpd_tomcat_contexts htc,\n"
+					+ "  web.\"TomcatContext\" htc,\n"
 					+ "  web.\"TomcatContextParameter\" htp\n"
 					+ "where\n"
 					+ "  un.username=?\n"

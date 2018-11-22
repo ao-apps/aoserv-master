@@ -401,7 +401,7 @@ final public class HttpdHandler {
 
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  httpd_tomcat_contexts\n"
+			+ "  web.\"TomcatContext\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -494,7 +494,7 @@ final public class HttpdHandler {
 		int maxWait,
 		String validationQuery
 	) throws IOException, SQLException {
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from web.\"TomcatContext\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatDataSource", tomcat_site);
 		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add HttpdTomcatDataSource, HttpdSite disabled: "+tomcat_site);
 
@@ -547,7 +547,7 @@ final public class HttpdHandler {
 		boolean override,
 		String description
 	) throws IOException, SQLException {
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from web.\"TomcatContext\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatParameter", tomcat_site);
 		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add HttpdTomcatParameter, HttpdSite disabled: "+tomcat_site);
 
@@ -1005,7 +1005,7 @@ final public class HttpdHandler {
 		// Add the default httpd_tomcat_context
 		conn.executeUpdate(
 			"INSERT INTO\n"
-			+ "  httpd_tomcat_contexts\n"
+			+ "  web.\"TomcatContext\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -1031,7 +1031,7 @@ final public class HttpdHandler {
 		if(!isTomcat4) {
 			conn.executeUpdate(
 				"INSERT INTO\n"
-				+ "  httpd_tomcat_contexts\n"
+				+ "  web.\"TomcatContext\"\n"
 				+ "VALUES (\n"
 				+ "  default,\n"
 				+ "  ?,\n"
@@ -2478,7 +2478,7 @@ final public class HttpdHandler {
 	 *           |                + web.HttpdBind
 	 *           |                            + net_binds
 	 *           + web.TomcatSite
-	 *           |                  + httpd_tomcat_contexts
+	 *           |                  + web.TomcatContext
 	 *           |                                        + httpd_tomcat_data_sources
 	 *           |                                        + web.TomcatContextParameter
 	 *           |                  + httpd_workers
@@ -2614,7 +2614,7 @@ final public class HttpdHandler {
 		// web.TomcatSite
 		if(conn.executeBooleanQuery("select (select httpd_site from web.\"TomcatSite\" where httpd_site=? limit 1) is not null", httpdSitePKey)) {
 			// httpd_tomcat_data_sources
-			IntList htdss=conn.executeIntListQuery("select htds.pkey from httpd_tomcat_contexts htc, httpd_tomcat_data_sources htds where htc.tomcat_site=? and htc.pkey=htds.tomcat_context", httpdSitePKey);
+			IntList htdss=conn.executeIntListQuery("select htds.pkey from web.\"TomcatContext\" htc, httpd_tomcat_data_sources htds where htc.tomcat_site=? and htc.pkey=htds.tomcat_context", httpdSitePKey);
 			if(htdss.size() > 0) {
 				for(int c=0;c<htdss.size();c++) {
 					conn.executeUpdate("delete from httpd_tomcat_data_sources where pkey=?", htdss.getInt(c));
@@ -2623,7 +2623,7 @@ final public class HttpdHandler {
 			}
 
 			// web.TomcatContextParameter
-			IntList htps=conn.executeIntListQuery("select htp.pkey from httpd_tomcat_contexts htc, web.\"TomcatContextParameter\" htp where htc.tomcat_site=? and htc.pkey=htp.tomcat_context", httpdSitePKey);
+			IntList htps=conn.executeIntListQuery("select htp.pkey from web.\"TomcatContext\" htc, web.\"TomcatContextParameter\" htp where htc.tomcat_site=? and htc.pkey=htp.tomcat_context", httpdSitePKey);
 			if(htps.size() > 0) {
 				for(int c=0;c<htps.size();c++) {
 					conn.executeUpdate("delete from web.\"TomcatContextParameter\" where pkey=?", htps.getInt(c));
@@ -2631,11 +2631,11 @@ final public class HttpdHandler {
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS, accounting, aoServer, false);
 			}
 
-			// httpd_tomcat_contexts
-			IntList htcs=conn.executeIntListQuery("select pkey from httpd_tomcat_contexts where tomcat_site=?", httpdSitePKey);
+			// web.TomcatContext
+			IntList htcs=conn.executeIntListQuery("select pkey from web.\"TomcatContext\" where tomcat_site=?", httpdSitePKey);
 			if(htcs.size() > 0) {
 				for(int c=0;c<htcs.size();c++) {
-					conn.executeUpdate("delete from httpd_tomcat_contexts where pkey=?", htcs.getInt(c));
+					conn.executeUpdate("delete from web.\"TomcatContext\" where pkey=?", htcs.getInt(c));
 				}
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, aoServer, false);
 			}
@@ -2776,9 +2776,9 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int pkey
 	) throws IOException, SQLException {
-		int tomcat_site = conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", pkey);
+		int tomcat_site = conn.executeIntQuery("select tomcat_site from web.\"TomcatContext\" where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatContext", tomcat_site);
-		String path = conn.executeStringQuery("select path from httpd_tomcat_contexts where pkey=?", pkey);
+		String path = conn.executeStringQuery("select path from web.\"TomcatContext\" where pkey=?", pkey);
 		if(path.isEmpty()) throw new SQLException("Not allowed to remove the default context: " + pkey);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
@@ -2804,7 +2804,7 @@ final public class HttpdHandler {
 			);
 		}
 
-		conn.executeUpdate("delete from httpd_tomcat_contexts where pkey=?", pkey);
+		conn.executeUpdate("delete from web.\"TomcatContext\" where pkey=?", pkey);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS,
@@ -2838,7 +2838,7 @@ final public class HttpdHandler {
 		int pkey
 	) throws IOException, SQLException {
 		int tomcat_context=conn.executeIntQuery("select tomcat_context from httpd_tomcat_data_sources where pkey=?", pkey);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from web.\"TomcatContext\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatDataSource", tomcat_site);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
@@ -2861,7 +2861,7 @@ final public class HttpdHandler {
 		int pkey
 	) throws IOException, SQLException {
 		int tomcat_context=conn.executeIntQuery("select tomcat_context from web.\"TomcatContextParameter\" where pkey=?", pkey);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from web.\"TomcatContext\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatParameter", tomcat_site);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
@@ -2893,7 +2893,7 @@ final public class HttpdHandler {
 		String validationQuery
 	) throws IOException, SQLException {
 		int tomcat_context=conn.executeIntQuery("select tomcat_context from httpd_tomcat_data_sources where pkey=?", pkey);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from web.\"TomcatContext\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "updateHttpdTomcatDataSource", tomcat_site);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
@@ -2932,7 +2932,7 @@ final public class HttpdHandler {
 		String description
 	) throws IOException, SQLException {
 		int tomcat_context=conn.executeIntQuery("select tomcat_context from web.\"TomcatContextParameter\" where pkey=?", pkey);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from web.\"TomcatContext\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "updateHttpdTomcatParameter", tomcat_site);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
@@ -3529,7 +3529,7 @@ final public class HttpdHandler {
 				aoServer,
 				false
 			);
-			List<String> paths = conn.executeStringListQuery("select path from httpd_tomcat_contexts where tomcat_site=?", pkey);
+			List<String> paths = conn.executeStringListQuery("select path from web.\"TomcatContext\" where tomcat_site=?", pkey);
 			if(!paths.isEmpty()) {
 				for(String path : paths) {
 					if(enableCgi) {
@@ -3804,7 +3804,7 @@ final public class HttpdHandler {
 		UnixPath workDir,
 		boolean serverXmlConfigured
 	) throws IOException, SQLException {
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", pkey);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from web.\"TomcatContext\" where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "setHttpdTomcatContextAttributes", tomcat_site);
 		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to set HttpdTomcatContext attributes, HttpdSite disabled: "+tomcat_site);
 		checkHttpdTomcatContext(
@@ -3825,12 +3825,12 @@ final public class HttpdHandler {
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
-		String oldPath=conn.executeStringQuery("select path from httpd_tomcat_contexts where pkey=?", pkey);
+		String oldPath=conn.executeStringQuery("select path from web.\"TomcatContext\" where pkey=?", pkey);
 		if(oldPath.length()==0 && path.length() > 0) throw new SQLException("Not allowed to change the path of the default context: "+path);
 
 		try (PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
 			"update\n"
-			+ "  httpd_tomcat_contexts\n"
+			+ "  web.\"TomcatContext\"\n"
 			+ "set\n"
 			+ "  class_name=?,\n"
 			+ "  cookies=?,\n"
