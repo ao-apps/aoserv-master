@@ -91,7 +91,7 @@ final public class CvsHandler {
 				int slashPos = pathStr.indexOf('/', httpdSharedTomcatsDirStr.length() + 1);
 				if(slashPos == -1) slashPos = pathStr.length();
 				String groupName = pathStr.substring(httpdSharedTomcatsDirStr.length() + 1, slashPos);
-				int groupLSA = conn.executeIntQuery("select linux_server_account from httpd_shared_tomcats where name=? and ao_server=?", groupName, aoServer);
+				int groupLSA = conn.executeIntQuery("select linux_server_account from web.\"SharedTomcat\" where name=? and ao_server=?", groupName, aoServer);
 				LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addCvsRepository", groupLSA);
 			} else {
 				throw new SQLException("Invalid path: " + path);

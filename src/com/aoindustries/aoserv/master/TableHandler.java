@@ -3021,7 +3021,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdSharedTomcat(),
-						"select * from httpd_shared_tomcats"
+						"select * from web.\"SharedTomcat\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3032,7 +3032,7 @@ final public class TableHandler {
 						+ "  hst.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_shared_tomcats hst\n"
+						+ "  web.\"SharedTomcat\" hst\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hst.ao_server",
@@ -3053,7 +3053,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  linux_groups lg,\n"
 					+ "  linux_server_groups lsg,\n"
-					+ "  httpd_shared_tomcats hst\n"
+					+ "  web.\"SharedTomcat\" hst\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

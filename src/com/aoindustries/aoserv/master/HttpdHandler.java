@@ -202,7 +202,7 @@ final public class HttpdHandler {
 			!LinuxAccountHandler.canAccessLinuxServerGroup(
 				conn,
 				source,
-				conn.executeIntQuery("select linux_server_group from httpd_shared_tomcats where pkey=?", pkey)
+				conn.executeIntQuery("select linux_server_group from web.\"SharedTomcat\" where pkey=?", pkey)
 			)
 		) {
 			String message=
@@ -284,7 +284,7 @@ final public class HttpdHandler {
 	public static int getHttpdSharedTomcat(DatabaseConnection conn, int aoServer, String name) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select coalesce(\n"
-			+ "  (select pkey from httpd_shared_tomcats where (ao_server, name)=(?,?)),\n"
+			+ "  (select pkey from web.\"SharedTomcat\" where (ao_server, name)=(?,?)),\n"
 			+ "  -1\n"
 			+ ")",
 			aoServer,
@@ -685,7 +685,7 @@ final public class HttpdHandler {
 			int slashPos = docBaseStr.indexOf('/', httpdSharedTomcatsDir.toString().length() + 1);
 			if(slashPos == -1) slashPos = docBaseStr.length();
 			String tomcatName = docBaseStr.substring(httpdSharedTomcatsDir.toString().length() + 1, slashPos);
-			int groupLSA = conn.executeIntQuery("select linux_server_account from httpd_shared_tomcats where name=? and ao_server=?", tomcatName, aoServer);
+			int groupLSA = conn.executeIntQuery("select linux_server_account from web.\"SharedTomcat\" where name=? and ao_server=?", tomcatName, aoServer);
 			LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addCvsRepository", groupLSA);
 		} else {
 			// Allow the example directories
@@ -828,14 +828,14 @@ final public class HttpdHandler {
 		} else if ("tomcat_shared".equals(siteType)) {
 			// Get shared Tomcat pkey
 			sharedTomcatPkey = conn.executeIntQuery(
-				"select pkey from httpd_shared_tomcats where ao_server=? and name=?",
+				"select pkey from web.\"SharedTomcat\" where ao_server=? and name=?",
 				aoServer,
 				sharedTomcatName
 			);
 
 			// Check for ties between jvm and site in linux_group_accounts
-			String sharedTomcatUsername = conn.executeStringQuery("select lsa.username from httpd_shared_tomcats hst, linux_server_accounts lsa where hst.linux_server_account = lsa.pkey and hst.pkey=?", sharedTomcatPkey);
-			String sharedTomcatLinuxGroup = conn.executeStringQuery("select lsg.name from httpd_shared_tomcats hst, linux_server_groups lsg where hst.linux_server_group = lsg.pkey and hst.pkey=?", sharedTomcatPkey);
+			String sharedTomcatUsername = conn.executeStringQuery("select lsa.username from web.\"SharedTomcat\" hst, linux_server_accounts lsa where hst.linux_server_account = lsa.pkey and hst.pkey=?", sharedTomcatPkey);
+			String sharedTomcatLinuxGroup = conn.executeStringQuery("select lsg.name from web.\"SharedTomcat\" hst, linux_server_groups lsg where hst.linux_server_group = lsg.pkey and hst.pkey=?", sharedTomcatPkey);
 			boolean hasAccess = conn.executeBooleanQuery(
 				"select (\n"
 				+ "  select\n"
@@ -876,7 +876,7 @@ final public class HttpdHandler {
 			if (!hasAccess) throw new SQLException("Linux_account ("+sharedTomcatName+") does not have access to linux_group ("+group+")");
 
 			if(tomcatVersion!=-1) throw new SQLException("TomcatVersion cannot be supplied for a TomcatShared site: "+tomcatVersion);
-			tomcatVersion = conn.executeIntQuery("select version from httpd_shared_tomcats where pkey=?", sharedTomcatPkey);
+			tomcatVersion = conn.executeIntQuery("select version from web.\"SharedTomcat\" where pkey=?", sharedTomcatPkey);
 		}
 		String tomcatVersionStr=conn.executeStringQuery("select version from distribution.\"SoftwareVersion\" where pkey=?", tomcatVersion);
 		boolean isTomcat4 =
@@ -1371,7 +1371,7 @@ final public class HttpdHandler {
 
 			pkey = conn.executeIntUpdate(
 				"INSERT INTO\n"
-				+ "  httpd_shared_tomcats\n"
+				+ "  web.\"SharedTomcat\"\n"
 				+ "VALUES(\n"
 				+ "  default,\n" // pkey
 				+ "  ?,\n" // name
@@ -1401,7 +1401,7 @@ final public class HttpdHandler {
 		} else {
 			pkey = conn.executeIntUpdate(
 				"INSERT INTO\n"
-				+ "  httpd_shared_tomcats\n"
+				+ "  web.\"SharedTomcat\"\n"
 				+ "VALUES (\n"
 				+ "  default,\n" // pkey
 				+ "  ?,\n" // name
@@ -1555,7 +1555,7 @@ final public class HttpdHandler {
 		checkAccessHttpdSharedTomcat(conn, source, "disableHttpdSharedTomcat", pkey);
 
 		conn.executeUpdate(
-			"update httpd_shared_tomcats set disable_log=? where pkey=?",
+			"update web.\"SharedTomcat\" set disable_log=? where pkey=?",
 			disableLog,
 			pkey
 		);
@@ -1648,7 +1648,7 @@ final public class HttpdHandler {
 		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable HttpdSharedTomcat #"+pkey+", LinuxServerAccount not enabled: "+lsa);
 
 		conn.executeUpdate(
-			"update httpd_shared_tomcats set disable_log=null where pkey=?",
+			"update web.\"SharedTomcat\" set disable_log=null where pkey=?",
 			pkey
 		);
 
@@ -1722,7 +1722,7 @@ final public class HttpdHandler {
 
 	public static String generateSharedTomcatName(DatabaseConnection conn, String template) throws SQLException, IOException {
 		// Load the entire list of site names
-		List<String> names=conn.executeStringListQuery("select name from httpd_shared_tomcats group by name");
+		List<String> names=conn.executeStringListQuery("select name from web.\"SharedTomcat\" group by name");
 		int size=names.size();
 
 		// Sort them
@@ -1839,7 +1839,7 @@ final public class HttpdHandler {
 	}
 
 	public static int getDisableLogForHttpdSharedTomcat(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from httpd_shared_tomcats where pkey=?", pkey);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from web.\"SharedTomcat\" where pkey=?", pkey);
 	}
 
 	public static int getDisableLogForHttpdSite(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -1878,7 +1878,7 @@ final public class HttpdHandler {
 		DatabaseConnection conn,
 		int pkey
 	) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from httpd_shared_tomcats where linux_server_account=?", pkey);
+		return conn.executeIntListQuery("select pkey from web.\"SharedTomcat\" where linux_server_account=?", pkey);
 	}
 
 	public static IntList getHttpdSharedTomcatsForPackage(
@@ -1891,7 +1891,7 @@ final public class HttpdHandler {
 			+ "from\n"
 			+ "  linux_groups lg,\n"
 			+ "  linux_server_groups lsg,\n"
-			+ "  httpd_shared_tomcats hst\n"
+			+ "  web.\"SharedTomcat\" hst\n"
 			+ "where\n"
 			+ "  lg.package=?\n"
 			+ "  and lg.name=lsg.name\n"
@@ -1934,7 +1934,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  httpd_shared_tomcats hst,\n"
+			+ "  web.\"SharedTomcat\" hst,\n"
 			+ "  linux_server_groups lsg,\n"
 			+ "  linux_groups lg,\n"
 			+ "  billing.\"Package\" pk\n"
@@ -1994,7 +1994,7 @@ final public class HttpdHandler {
 		DatabaseConnection conn,
 		int pkey
 	) throws IOException, SQLException {
-		return conn.executeIntQuery("select linux_server_account from httpd_shared_tomcats where pkey=?", pkey);
+		return conn.executeIntQuery("select linux_server_account from web.\"SharedTomcat\" where pkey=?", pkey);
 	}
 
 	public static int getLinuxServerAccountForHttpdSite(
@@ -2041,7 +2041,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  lg.package\n"
 			+ "from\n"
-			+ "  httpd_shared_tomcats hst,\n"
+			+ "  web.\"SharedTomcat\" hst,\n"
 			+ "  linux_server_groups lsg,\n"
 			+ "  linux_groups lg\n"
 			+ "where\n"
@@ -2064,7 +2064,7 @@ final public class HttpdHandler {
 	}
 
 	public static int getAOServerForHttpdSharedTomcat(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from httpd_shared_tomcats where pkey=?", pkey);
+		return conn.executeIntQuery("select ao_server from web.\"SharedTomcat\" where pkey=?", pkey);
 	}
 
 	public static int getAOServerForHttpdSite(DatabaseConnection conn, int httpdSite) throws IOException, SQLException {
@@ -2149,7 +2149,7 @@ final public class HttpdHandler {
 	}
 
 	public static boolean isSharedTomcatNameAvailable(DatabaseConnection conn, String name) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select (select pkey from httpd_shared_tomcats where name=? limit 1) is null", name);
+		return conn.executeBooleanQuery("select (select pkey from web.\"SharedTomcat\" where name=? limit 1) is null", name);
 	}
 
 	public static boolean isSiteNameAvailable(DatabaseConnection conn, String siteName) throws IOException, SQLException {
@@ -2190,7 +2190,7 @@ final public class HttpdHandler {
 				+ "  hst.linux_server_account\n"
 				+ "from\n"
 				+ "  httpd_tomcat_shared_sites htss,\n"
-				+ "  httpd_shared_tomcats hst\n"
+				+ "  web.\"SharedTomcat\" hst\n"
 				+ "where\n"
 				+ "  htss.tomcat_site=?\n"
 				+ "  and htss.httpd_shared_tomcat=hst.pkey",
@@ -2424,10 +2424,10 @@ final public class HttpdHandler {
 		AccountingCode accounting = getBusinessForHttpdSharedTomcat(conn, pkey);
 		int aoServer=getAOServerForHttpdSharedTomcat(conn, pkey);
 
-		int tomcat4Worker=conn.executeIntQuery("select coalesce(tomcat4_worker, -1) from httpd_shared_tomcats where pkey=?", pkey);
-		int tomcat4ShutdownPort=conn.executeIntQuery("select coalesce(tomcat4_shutdown_port, -1) from httpd_shared_tomcats where pkey=?", pkey);
+		int tomcat4Worker=conn.executeIntQuery("select coalesce(tomcat4_worker, -1) from web.\"SharedTomcat\" where pkey=?", pkey);
+		int tomcat4ShutdownPort=conn.executeIntQuery("select coalesce(tomcat4_shutdown_port, -1) from web.\"SharedTomcat\" where pkey=?", pkey);
 
-		conn.executeUpdate("delete from httpd_shared_tomcats where pkey=?", pkey);
+		conn.executeUpdate("delete from web.\"SharedTomcat\" where pkey=?", pkey);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_SHARED_TOMCATS,
@@ -2977,7 +2977,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_shared_tomcats set is_manual=? where pkey=?",
+			"update web.\"SharedTomcat\" set is_manual=? where pkey=?",
 			isManual,
 			pkey
 		);
@@ -3002,7 +3002,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_shared_tomcats set max_post_size=? where pkey=?",
+			"update web.\"SharedTomcat\" set max_post_size=? where pkey=?",
 			maxPostSize==-1 ? DatabaseAccess.Null.INTEGER : maxPostSize,
 			pkey
 		);
@@ -3027,7 +3027,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_shared_tomcats set unpack_wars=? where pkey=?",
+			"update web.\"SharedTomcat\" set unpack_wars=? where pkey=?",
 			unpackWARs,
 			pkey
 		);
@@ -3052,7 +3052,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_shared_tomcats set auto_deploy=? where pkey=?",
+			"update web.\"SharedTomcat\" set auto_deploy=? where pkey=?",
 			autoDeploy,
 			pkey
 		);
@@ -3093,7 +3093,7 @@ final public class HttpdHandler {
 				"select\n"
 				+ "  tv.version\n"
 				+ "from\n"
-				+ "  httpd_shared_tomcats hst\n"
+				+ "  web.\"SharedTomcat\" hst\n"
 				+ "  inner join distribution.\"SoftwareVersion\" tv on hst.version=tv.pkey\n"
 				+ "where hst.pkey=?",
 				pkey
@@ -3128,7 +3128,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_shared_tomcats set version=? where pkey=?",
+			"update web.\"SharedTomcat\" set version=? where pkey=?",
 			version,
 			pkey
 		);

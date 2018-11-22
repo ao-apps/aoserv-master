@@ -1498,7 +1498,7 @@ final public class LinuxAccountHandler {
 		int useCount = conn.executeIntQuery(
 			"select count(*) from linux_group_accounts lga, "+
 					"linux_server_accounts lsa, "+
-					"httpd_shared_tomcats hst, "+
+					"web.\"SharedTomcat\" hst, "+
 					"httpd_tomcat_shared_sites htss, "+
 					"web.\"Site\" hs "+
 						"where lga.username = lsa.username and "+
@@ -1513,7 +1513,7 @@ final public class LinuxAccountHandler {
 			useCount = conn.executeIntQuery(
 				"select count(*) from linux_group_accounts lga, "+
 						"linux_server_groups lsg, "+
-						"httpd_shared_tomcats hst, "+
+						"web.\"SharedTomcat\" hst, "+
 						"httpd_tomcat_shared_sites htss, "+
 						"web.\"Site\" hs "+
 							"where lga.\"group\" = lsg.name and "+
@@ -1560,7 +1560,7 @@ final public class LinuxAccountHandler {
 			+ "            htss.tomcat_site\n"
 			+ "          from\n"
 			+ "            linux_server_accounts lsa,\n"
-			+ "            httpd_shared_tomcats hst,\n"
+			+ "            web.\"SharedTomcat\" hst,\n"
 			+ "            httpd_tomcat_shared_sites htss,\n"
 			+ "            web.\"Site\" hs\n"
 			+ "          where\n"
@@ -1576,7 +1576,7 @@ final public class LinuxAccountHandler {
 			+ "            htss.tomcat_site\n"
 			+ "          from\n"
 			+ "            linux_server_groups lsg,\n"
-			+ "            httpd_shared_tomcats hst,\n"
+			+ "            web.\"SharedTomcat\" hst,\n"
 			+ "            httpd_tomcat_shared_sites htss,\n"
 			+ "            web.\"Site\" hs\n"
 			+ "          where\n"
