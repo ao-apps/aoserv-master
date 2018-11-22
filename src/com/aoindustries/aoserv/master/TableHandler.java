@@ -6252,7 +6252,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new PackageDefinitionLimit(),
-						"select * from package_definition_limits"
+						"select * from billing.\"PackageDefinitionLimit\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -6265,7 +6265,7 @@ final public class TableHandler {
 						+ "  master_servers ms,\n"
 						+ "  business_servers bs,\n"
 						+ "  packages pk,\n"
-						+ "  package_definition_limits pdl\n"
+						+ "  billing.\"PackageDefinitionLimit\" pdl\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=bs.server\n"
@@ -6289,7 +6289,7 @@ final public class TableHandler {
 							+ BU1_PARENTS_JOIN
 							+ "  packages pk2,\n"
 							+ "  package_definitions pd,\n"
-							+ "  package_definition_limits pdl\n"
+							+ "  billing.\"PackageDefinitionLimit\" pdl\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk1.name\n"
@@ -6324,7 +6324,7 @@ final public class TableHandler {
 							+ BU1_PARENTS_JOIN
 							+ "  packages pk2,\n"
 							+ "  package_definitions pd,\n"
-							+ "  package_definition_limits pdl\n"
+							+ "  billing.\"PackageDefinitionLimit\" pdl\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk1.name\n"

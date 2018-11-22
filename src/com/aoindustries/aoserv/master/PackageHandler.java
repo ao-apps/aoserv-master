@@ -305,7 +305,7 @@ final public class PackageHandler {
         );
         conn.executeUpdate(
             "insert into\n"
-            + "  package_definition_limits\n"
+            + "  billing.\"PackageDefinitionLimit\"\n"
             + "(\n"
             + "  package_definition,\n"
             + "  resource,\n"
@@ -321,7 +321,7 @@ final public class PackageHandler {
             + "  additional_rate,\n"
             + "  additional_transaction_type\n"
             + "from\n"
-            + "  package_definition_limits\n"
+            + "  billing.\"PackageDefinitionLimit\"\n"
             + "where\n"
             + "  package_definition=?",
             newPKey,
@@ -829,12 +829,11 @@ final public class PackageHandler {
         if(isPackageDefinitionApproved(conn, pkey)) throw new SQLException("PackageDefinition may not have its limits set after it is approved: "+pkey);
 
         // Update the database
-        conn.executeUpdate("delete from package_definition_limits where package_definition=?", pkey);
+        conn.executeUpdate("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", pkey);
         for(int c=0;c<resources.length;c++) {
             conn.executeUpdate(
-
                 "insert into\n"
-                + "  package_definition_limits\n"
+                + "  billing.\"PackageDefinitionLimit\"\n"
                 + "(\n"
                 + "  package_definition,\n"
                 + "  resource,\n"
@@ -895,7 +894,7 @@ final public class PackageHandler {
     ) throws IOException, SQLException {
         AccountingCode accounting = getBusinessForPackageDefinition(conn, pkey);
         IntList servers=BusinessHandler.getServersForBusiness(conn, accounting);
-        if(conn.executeUpdate("delete from package_definition_limits where package_definition=?", pkey)>0) {
+        if(conn.executeUpdate("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", pkey)>0) {
             invalidateList.addTable(
                 conn,
                 SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
