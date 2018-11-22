@@ -1108,7 +1108,7 @@ final public class HttpdHandler {
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
 			);
-			PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into httpd_jboss_sites values(?,?,?,?,?,?,?)");
+			PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into web.\"JbossSite\" values(?,?,?,?,?,?,?)");
 			try {
 				pstmt.setInt(1, httpdSitePKey);
 				pstmt.setInt(2, jBossVersion);
@@ -2487,7 +2487,7 @@ final public class HttpdHandler {
 	 *           |                  |             + linux_group_accounts
 	 *           |                  + httpd_tomcat_std_sites
 	 *           |                                         + net_binds
-	 *           |                  + httpd_jboss_sites
+	 *           |                  + web.JbossSite
 	 *           |                                   + net_binds
 	 *           + httpd_static_sites
 	 */
@@ -2671,16 +2671,16 @@ final public class HttpdHandler {
 				}
 			}
 
-			// httpd_jboss_sites
-			if(conn.executeBooleanQuery("select (select tomcat_site from httpd_jboss_sites where tomcat_site=? limit 1) is not null", httpdSitePKey)) {
+			// web.JbossSite
+			if(conn.executeBooleanQuery("select (select tomcat_site from web.\"JbossSite\" where tomcat_site=? limit 1) is not null", httpdSitePKey)) {
 				// net_binds
-				int jnp_bind=conn.executeIntQuery("select jnp_bind from httpd_jboss_sites where tomcat_site=?", httpdSitePKey);
-				int webserver_bind=conn.executeIntQuery("select webserver_bind from httpd_jboss_sites where tomcat_site=?", httpdSitePKey);
-				int rmi_bind=conn.executeIntQuery("select rmi_bind from httpd_jboss_sites where tomcat_site=?", httpdSitePKey);
-				int hypersonic_bind=conn.executeIntQuery("select hypersonic_bind from httpd_jboss_sites where tomcat_site=?", httpdSitePKey);
-				int jmx_bind=conn.executeIntQuery("select jmx_bind from httpd_jboss_sites where tomcat_site=?", httpdSitePKey);
+				int jnp_bind=conn.executeIntQuery("select jnp_bind from web.\"JbossSite\" where tomcat_site=?", httpdSitePKey);
+				int webserver_bind=conn.executeIntQuery("select webserver_bind from web.\"JbossSite\" where tomcat_site=?", httpdSitePKey);
+				int rmi_bind=conn.executeIntQuery("select rmi_bind from web.\"JbossSite\" where tomcat_site=?", httpdSitePKey);
+				int hypersonic_bind=conn.executeIntQuery("select hypersonic_bind from web.\"JbossSite\" where tomcat_site=?", httpdSitePKey);
+				int jmx_bind=conn.executeIntQuery("select jmx_bind from web.\"JbossSite\" where tomcat_site=?", httpdSitePKey);
 
-				conn.executeUpdate("delete from httpd_jboss_sites where tomcat_site=?", httpdSitePKey);
+				conn.executeUpdate("delete from web.\"JbossSite\" where tomcat_site=?", httpdSitePKey);
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_JBOSS_SITES, accounting, aoServer, false);
 				NetBindHandler.removeNetBind(conn, invalidateList, jnp_bind);
 				NetBindHandler.removeNetBind(conn, invalidateList, webserver_bind);
