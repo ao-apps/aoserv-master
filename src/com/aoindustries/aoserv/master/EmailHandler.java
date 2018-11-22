@@ -223,7 +223,7 @@ final public class EmailHandler {
 		checkAccessEmailAddress(conn, source, "addEmailForwarding", address);
 
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO email_forwarding (email_address, destination) VALUES (?,?) RETURNING pkey",
+			"INSERT INTO email.\"Forwarding\" (email_address, destination) VALUES (?,?) RETURNING pkey",
 			address,
 			destination
 		);
@@ -1332,12 +1332,9 @@ final public class EmailHandler {
 			}
 		}
 
-		boolean isEmailForwarding=conn.executeIntQuery("select count(*) from email_forwarding where email_address=?", address)>0;
-		if(isEmailForwarding) conn.executeUpdate("delete from email_forwarding where email_address=?", address);
-		boolean isEmailListAddress=conn.executeIntQuery("select count(*) from email_list_addresses where email_address=?", address)>0;
-		if(isEmailListAddress) conn.executeUpdate("delete from email_list_addresses where email_address=?", address);
-		boolean isEmailPipeAddress=conn.executeIntQuery("select count(*) from email_pipe_addresses where email_address=?", address)>0;
-		if(isEmailPipeAddress) conn.executeUpdate("delete from email_pipe_addresses where email_address=?", address);
+		boolean isEmailForwarding = conn.executeUpdate("delete from email.\"Forwarding\" where email_address=?", address) > 0;
+		boolean isEmailListAddress = conn.executeUpdate("delete from email_list_addresses where email_address=?", address) > 0;
+		boolean isEmailPipeAddress = conn.executeUpdate("delete from email_pipe_addresses where email_address=?", address) > 0;
 
 		// Delete from the database
 		conn.executeUpdate("delete from email.\"Address\" where pkey=?", address);
@@ -1357,7 +1354,7 @@ final public class EmailHandler {
 		InvalidateList invalidateList,
 		int ef
 	) throws IOException, SQLException {
-		int ea=conn.executeIntQuery("select email_address from email_forwarding where pkey=?", ef);
+		int ea=conn.executeIntQuery("select email_address from email.\"Forwarding\" where pkey=?", ef);
 		checkAccessEmailAddress(conn, source, "removeEmailForwarding", ea);
 
 		// Get stuff for use after the try block
@@ -1365,7 +1362,7 @@ final public class EmailHandler {
 		int aoServer=getAOServerForEmailAddress(conn, ea);
 
 		// Delete from the database
-		conn.executeUpdate("delete from email_forwarding where pkey=?", ef);
+		conn.executeUpdate("delete from email.\"Forwarding\" where pkey=?", ef);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_FORWARDING, accounting, aoServer, false);
@@ -1653,11 +1650,11 @@ final public class EmailHandler {
 
 			if(
 				conn.executeBooleanQuery(
-					"select (select pkey from email_forwarding where email_address=? limit 1) is not null",
+					"select (select pkey from email.\"Forwarding\" where email_address=? limit 1) is not null",
 					address
 				)
 			) {
-				conn.executeUpdate("delete from email_forwarding where email_address=?", address);
+				conn.executeUpdate("delete from email.\"Forwarding\" where email_address=?", address);
 				efMod=true;
 			}
 
@@ -1961,7 +1958,7 @@ final public class EmailHandler {
 	public static boolean isEmailAddressUsed(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return
 			conn.executeBooleanQuery("select (select email_address from email.\"BlackholeAddress\" where email_address=? limit 1) is not null", pkey)
-			|| conn.executeBooleanQuery("select (select pkey from email_forwarding where email_address=? limit 1) is not null", pkey)
+			|| conn.executeBooleanQuery("select (select pkey from email.\"Forwarding\" where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery("select (select pkey from email_list_addresses where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery("select (select pkey from email_pipe_addresses where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery("select (select pkey from linux_acc_addresses where email_address=? limit 1) is not null", pkey)

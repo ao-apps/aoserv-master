@@ -2057,7 +2057,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new EmailForwarding(),
-						"select * from email_forwarding"
+						"select * from email.\"Forwarding\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2070,7 +2070,7 @@ final public class TableHandler {
 						+ "  master_servers ms,\n"
 						+ "  email.\"Domain\" ed,\n"
 						+ "  email.\"Address\" ea,\n"
-						+ "  email_forwarding ef\n"
+						+ "  email.\"Forwarding\" ef\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ed.ao_server\n"
@@ -2093,7 +2093,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  email.\"Domain\" ed,\n"
 					+ "  email.\"Address\" ea,\n"
-					+ "  email_forwarding ef\n"
+					+ "  email.\"Forwarding\" ef\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
