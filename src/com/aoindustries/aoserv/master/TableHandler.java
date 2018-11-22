@@ -2340,7 +2340,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new EmailSpamAssassinIntegrationMode(),
-					"select * from email_sa_integration_modes"
+					"select * from email.\"SpamAssassinMode\""
 				);
 				break;
 			case ENCRYPTION_KEYS :
