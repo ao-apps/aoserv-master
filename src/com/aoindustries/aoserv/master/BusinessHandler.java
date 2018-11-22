@@ -644,7 +644,7 @@ final public class BusinessHandler {
 
 		conn.executeUpdate(
 			"insert into\n"
-			+ "  notice_log\n"
+			+ "  billing.\"NoticeLog\"\n"
 			+ "(\n"
 			+ "  accounting,\n"
 			+ "  billing_contact,\n"

@@ -6175,7 +6175,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new NoticeLog(),
-						"select * from notice_log"
+						"select * from billing.\"NoticeLog\""
 					); else {
 						List<NoticeLog> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
@@ -6192,7 +6192,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un,\n"
 					+ "  packages pk,\n"
 					+ BU1_PARENTS_JOIN
-					+ "  notice_log nl\n"
+					+ "  billing.\"NoticeLog\" nl\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
