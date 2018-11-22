@@ -8118,7 +8118,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new Technology(),
-					"select * from technologies"
+					"select * from distribution.\"SoftwareCategorization\""
 				);
 				break;
 			case TECHNOLOGY_VERSIONS :
