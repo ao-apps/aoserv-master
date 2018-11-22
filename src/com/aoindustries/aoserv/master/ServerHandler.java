@@ -219,7 +219,7 @@ final public class ServerHandler {
 								"select\n"
 								+ "  bs.server\n"
 								+ "from\n"
-								+ "  usernames un,\n"
+								+ "  account.\"Username\" un,\n"
 								+ "  packages pk,\n"
 								+ "  business_servers bs\n"
 								+ "where\n"

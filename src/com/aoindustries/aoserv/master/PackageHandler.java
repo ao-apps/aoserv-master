@@ -568,7 +568,7 @@ final public class PackageHandler {
             "select\n"
             + "  pk2.name\n"
             + "from\n"
-            + "  usernames un,\n"
+            + "  account.\"Username\" un,\n"
             + "  packages pk1,\n"
             + TableHandler.BU1_PARENTS_JOIN
             + "  packages pk2\n"
@@ -611,7 +611,7 @@ final public class PackageHandler {
             "select\n"
             + "  pk2.pkey\n"
             + "from\n"
-            + "  usernames un,\n"
+            + "  account.\"Username\" un,\n"
             + "  packages pk1,\n"
             + TableHandler.BU1_PARENTS_JOIN
             + "  packages pk2\n"

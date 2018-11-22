@@ -2301,7 +2301,7 @@ final public class LinuxAccountHandler {
 			+ "  pk2.accounting\n"
 			+ "from\n"
 			+ "  linux_group_accounts lga2\n"
-			+ "  inner join usernames un2 on lga2.username=un2.username\n"
+			+ "  inner join account.\"Username\" un2 on lga2.username=un2.username\n"
 			+ "  inner join packages pk2 on un2.package=pk2.name\n"
 			+ "where\n"
 			+ "  lga2.pkey=?",
@@ -2317,7 +2317,7 @@ final public class LinuxAccountHandler {
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  linux_server_accounts lsa,\n"
-			+ "  usernames un,\n"
+			+ "  account.\"Username\" un,\n"
 			+ "  packages pk\n"
 			+ "where\n"
 			+ "  lsa.pkey=?\n"

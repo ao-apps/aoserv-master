@@ -1764,8 +1764,8 @@ final public class HttpdHandler {
 						wwwgroupDirCentOS7,
 						wwwgroupDirCentOS7 + "/"
 					) == 0
-					// Must also not be found in usernames.username
-					&& conn.executeIntQuery("select count(*) from usernames where username=?", name) == 0
+					// Must also not be found in account.Username.username
+					&& conn.executeIntQuery("select count(*) from account.\"Username\" where username=?", name) == 0
 					// Must also not be found in linux_groups.name
 					&& conn.executeIntQuery("select count(*) from linux_groups where name=?", name) == 0
 				) {

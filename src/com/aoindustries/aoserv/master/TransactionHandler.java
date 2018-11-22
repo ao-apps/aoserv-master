@@ -285,7 +285,7 @@ final public class TransactionHandler {
             "select\n"
             + "  tr.*\n"
             + "from\n"
-            + "  usernames un1,\n"
+            + "  account.\"Username\" un1,\n"
             + "  packages pk1,\n"
             + TableHandler.BU1_PARENTS_JOIN
             + "  transactions tr\n"
@@ -356,7 +356,7 @@ final public class TransactionHandler {
                 "select\n"
                 + "  tr.*\n"
                 + "from\n"
-                + "  usernames un1,\n"
+                + "  account.\"Username\" un1,\n"
                 + "  packages pk1,\n"
                 + TableHandler.BU1_PARENTS_JOIN
                 + "  transactions tr\n"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The <code>UsernameHandler</code> handles all the accesses to the <code>usernames</code> table.
+ * The <code>UsernameHandler</code> handles all the accesses to the <code>account."Username"</code> table.
  *
  * @author  AO Industries, Inc.
  */
@@ -65,7 +65,7 @@ final public class UsernameHandler {
 			PackageHandler.checkAccessPackage(conn, source, "addUsername", packageName);
 			if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add Username '"+username+"', Package disabled: "+packageName);
 
-			// Make sure people don't create @hostname.com usernames for domains they cannot control
+			// Make sure people don't create @hostname.com account.Username for domains they cannot control
 			String usernameStr = username.toString();
 			int atPos=usernameStr.lastIndexOf('@');
 			if(atPos!=-1) {
@@ -75,7 +75,7 @@ final public class UsernameHandler {
 		}
 
 		conn.executeUpdate(
-			"insert into usernames values(?,?,null)",
+			"insert into account.\"Username\" values(?,?,null)",
 			username,
 			packageName
 		);
@@ -114,7 +114,7 @@ final public class UsernameHandler {
 		}
 
 		conn.executeUpdate(
-			"update usernames set disable_log=? where username=?",
+			"update account.\"Username\" set disable_log=? where username=?",
 			disableLog,
 			username
 		);
@@ -143,7 +143,7 @@ final public class UsernameHandler {
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable Username '"+username+"', Package not enabled: "+pk);
 
 		conn.executeUpdate(
-			"update usernames set disable_log=null where username=?",
+			"update account.\"Username\" set disable_log=null where username=?",
 			username
 		);
 
@@ -158,7 +158,7 @@ final public class UsernameHandler {
 	}
 
 	public static int getDisableLogForUsername(DatabaseConnection conn, UserId username) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from usernames where username=?", username);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from account.\"Username\" where username=?", username);
 	}
 
 	public static void invalidateTable(SchemaTable.TableID tableID) {
@@ -173,7 +173,7 @@ final public class UsernameHandler {
 	}
 
 	public static boolean isUsernameAvailable(DatabaseConnection conn, UserId username) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select (select username from usernames where username=?) is null", username);
+		return conn.executeBooleanQuery("select (select username from account.\"Username\" where username=?) is null", username);
 	}
 
 	public static boolean isUsernameDisabled(DatabaseConnection conn, UserId username) throws IOException, SQLException {
@@ -207,7 +207,7 @@ final public class UsernameHandler {
 
 		AccountingCode accounting = getBusinessForUsername(conn, username);
 
-		conn.executeUpdate("delete from usernames where username=?", username);
+		conn.executeUpdate("delete from account.\"Username\" where username=?", username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.USERNAMES, accounting, InvalidateList.allServers, false);
@@ -219,7 +219,7 @@ final public class UsernameHandler {
 			if(O!=null) return O;
 			AccountingCode accounting = conn.executeObjectQuery(
 				ObjectFactories.accountingCodeFactory,
-				"select pk.accounting from usernames un, packages pk where un.username=? and un.package=pk.name",
+				"select pk.accounting from account.\"Username\" un, packages pk where un.username=? and un.package=pk.name",
 				username
 			);
 			usernameBusinesses.put(username, accounting);
@@ -230,7 +230,7 @@ final public class UsernameHandler {
 	public static AccountingCode getPackageForUsername(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from usernames where username=?",
+			"select package from account.\"Username\" where username=?",
 			username
 		);
 	}
@@ -240,7 +240,7 @@ final public class UsernameHandler {
 			"select\n"
 			+ "  bs.server\n"
 			+ "from\n"
-			+ "  usernames un,\n"
+			+ "  account.\"Username\" un,\n"
 			+ "  packages pk,\n"
 			+ "  business_servers bs\n"
 			+ "where\n"
@@ -254,7 +254,7 @@ final public class UsernameHandler {
 	public static List<UserId> getUsernamesForPackage(DatabaseConnection conn, AccountingCode name) throws IOException, SQLException {
 		return conn.executeObjectListQuery(
 			ObjectFactories.userIdFactory,
-			"select username from usernames where package=?",
+			"select username from account.\"Username\" where package=?",
 			name
 		);
 	}
@@ -266,7 +266,7 @@ final public class UsernameHandler {
 			+ "    select\n"
 			+ "      un.username\n"
 			+ "    from\n"
-			+ "      usernames un,\n"
+			+ "      account.\"Username\" un,\n"
 			+ "      packages pk,\n"
 			+ "      business_servers bs\n"
 			+ "    where\n"

@@ -282,10 +282,10 @@ final public class AccountCleaner implements CronJob {
                         "select\n"
                         + "  ba.username\n"
                         + "from\n"
-                        + "  account.\"Administrator\"      ba\n"
-                        + "  inner join usernames           un on ba.username   = un.username\n"
-                        + "  inner join packages            pk on un.package    = pk.name\n"
-                        + "  inner join account.\"Account\" bu on pk.accounting = bu.accounting\n"
+                        + "  account.\"Administrator\"       ba\n"
+                        + "  inner join account.\"Username\" un on ba.username   = un.username\n"
+                        + "  inner join packages             pk on un.package    = pk.name\n"
+                        + "  inner join account.\"Account\"  bu on pk.accounting = bu.accounting\n"
                         + "where\n"
                         + "  bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS + "\n"
@@ -337,7 +337,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  cvs_repositories cr,\n"
                         + "  linux_server_accounts lsa,\n"
-                        + "  usernames un,\n"
+                        + "  account.\"Username\" un,\n"
                         + "  packages pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -630,7 +630,7 @@ final public class AccountCleaner implements CronJob {
                         + "  la.username\n"
                         + "from\n"
                         + "  linux_accounts la,\n"
-                        + "  usernames un,\n"
+                        + "  account.\"Username\" un,\n"
                         + "  packages pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -707,7 +707,7 @@ final public class AccountCleaner implements CronJob {
                         + "  mu.username\n"
                         + "from\n"
                         + "  mysql_users mu,\n"
-                        + "  usernames un,\n"
+                        + "  account.\"Username\" un,\n"
                         + "  packages pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -731,7 +731,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  postgres_databases pd,\n"
                         + "  postgres_server_users psu,\n"
-                        + "  usernames un,\n"
+                        + "  account.\"Username\" un,\n"
                         + "  packages pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -756,7 +756,7 @@ final public class AccountCleaner implements CronJob {
                         + "  pu.username\n"
                         + "from\n"
                         + "  postgres_users pu,\n"
-                        + "  usernames un,\n"
+                        + "  account.\"Username\" un,\n"
                         + "  packages pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -772,15 +772,15 @@ final public class AccountCleaner implements CronJob {
 					}
                 }
 
-                // usernames
-                // delete all closed usernames, unless used by a business_administrator that was left behind
+                // account.Username
+                // delete all closed account.Username, unless used by a business_administrator that was left behind
                 {
                     List<UserId> uns=conn.executeObjectListQuery(
 						ObjectFactories.userIdFactory,
                         "select\n"
                         + "  un.username\n"
                         + "from\n"
-                        + "  usernames un,\n"
+                        + "  account.\"Username\" un,\n"
                         + "  packages pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -824,7 +824,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select pk.name from packages pk where pk.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select psu.pkey from postgres_server_users psu where psu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select pu.username from postgres_users pu where pu.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select un.username from usernames un where un.disable_log=dl.pkey limit 1) is null",
+                        + "  and (select un.username from account.\"Username\" un where un.disable_log=dl.pkey limit 1) is null",
                         now
                     );
                     for(int c=0;c<dls.size();c++) BusinessHandler.removeDisableLog(conn, invalidateList, dls.getInt(c));
