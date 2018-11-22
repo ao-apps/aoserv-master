@@ -5352,7 +5352,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new MonthlyCharge(),
-							"select * from monthly_charges"
+							"select * from billing.\"MonthlyCharge\""
 						);
 					} else {
 						List<MonthlyCharge> emptyList = Collections.emptyList();
@@ -5373,7 +5373,7 @@ final public class TableHandler {
 							+ "  packages pk1,\n"
 							+ BU1_PARENTS_JOIN
 							+ "  packages pk2,\n"
-							+ "  monthly_charges mc\n"
+							+ "  billing.\"MonthlyCharge\" mc\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk1.name\n"

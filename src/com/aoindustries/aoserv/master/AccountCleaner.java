@@ -300,8 +300,8 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select cc.pkey from credit_cards cc where cc.created_by=ba.username limit 1) is null\n"
 						// account.DisableLog
                         + "  and (select dl.pkey from account.\"DisableLog\" dl where dl.disabled_by=ba.username limit 1) is null\n"
-						// monthly_charges
-                        + "  and (select mc.pkey from monthly_charges mc where mc.created_by=ba.username limit 1) is null\n"
+						// billing.MonthlyCharge
+                        + "  and (select mc.pkey from billing.\"MonthlyCharge\" mc where mc.created_by=ba.username limit 1) is null\n"
 						// packages
                         + "  and (select pk2.pkey from packages pk2 where pk2.created_by=ba.username limit 1) is null\n"
 						// signup_requests
