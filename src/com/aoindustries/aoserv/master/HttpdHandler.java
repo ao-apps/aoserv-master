@@ -2465,7 +2465,7 @@ final public class HttpdHandler {
 	}
 
 	public static boolean isHttpdStaticSite(DatabaseConnection conn, int httpd_site) throws SQLException {
-		return conn.executeBooleanQuery("select (select httpd_site from httpd_static_sites where httpd_site=?) is not null", httpd_site);
+		return conn.executeBooleanQuery("select (select httpd_site from web.\"StaticSite\" where httpd_site=?) is not null", httpd_site);
 	}
 
 	/**
@@ -2489,7 +2489,7 @@ final public class HttpdHandler {
 	 *           |                                         + net_binds
 	 *           |                  + web.JbossSite
 	 *           |                                   + net_binds
-	 *           + httpd_static_sites
+	 *           + web.StaticSite
 	 */
 	public static void removeHttpdSite(
 		DatabaseConnection conn,
@@ -2693,8 +2693,8 @@ final public class HttpdHandler {
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITES, accounting, aoServer, false);
 		}
 
-		// httpd_static_sites
-		if(conn.executeUpdate("delete from httpd_static_sites where httpd_site=?", httpdSitePKey) != 0) {
+		// web.StaticSite
+		if(conn.executeUpdate("delete from web.\"StaticSite\" where httpd_site=?", httpdSitePKey) != 0) {
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_STATIC_SITES, accounting, aoServer, false);
 		}
 
