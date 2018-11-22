@@ -1660,7 +1660,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new CyrusImapdServer(),
-						"select * from cyrus_imapd_servers"
+						"select * from email.\"CyrusImapdServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -1671,7 +1671,7 @@ final public class TableHandler {
 						+ "  cis.*\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  inner join cyrus_imapd_servers cis on ms.server=cis.ao_server\n"
+						+ "  inner join email.\"CyrusImapdServer\" cis on ms.server=cis.ao_server\n"
 						+ "where\n"
 						+ "  ms.username=?",
 						username
@@ -1686,9 +1686,9 @@ final public class TableHandler {
 					+ "  cis.*\n"
 					+ "from\n"
 					+ "  account.\"Username\" un\n"
-					+ "  inner join billing.\"Package\" pk  on un.package    = pk.name\n"
-					+ "  inner join business_servers    bs  on pk.accounting = bs.accounting\n"
-					+ "  inner join cyrus_imapd_servers cis on bs.server     = cis.ao_server\n"
+					+ "  inner join billing.\"Package\"        pk  on un.package    = pk.name\n"
+					+ "  inner join business_servers           bs  on pk.accounting = bs.accounting\n"
+					+ "  inner join email.\"CyrusImapdServer\" cis on bs.server     = cis.ao_server\n"
 					+ "where\n"
 					+ "  un.username=?",
 					username
