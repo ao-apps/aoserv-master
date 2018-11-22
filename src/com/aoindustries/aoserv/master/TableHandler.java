@@ -6230,7 +6230,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new OperatingSystem(),
-					"select * from operating_systems"
+					"select * from distribution.\"OperatingSystem\""
 				);
 				break;
 			case PACKAGE_CATEGORIES :
