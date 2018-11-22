@@ -302,7 +302,7 @@ final public class IPAddressHandler {
 			+ "        \"IPAddress\" ia,\n"
 			+ "        net_devices nd\n"
 			+ "        left join net_binds nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?\n"
-			+ "        left join httpd_binds hb on nb.pkey=hb.net_bind\n"
+			+ "        left join httpd.\"HttpdBind\" hb on nb.pkey=hb.net_bind\n"
 			+ "        left join httpd.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
 			+ "      where\n"
 			+ "        ia.\"isOverflow\"\n"

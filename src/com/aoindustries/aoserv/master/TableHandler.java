@@ -2817,7 +2817,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdBind(),
-						"select * from httpd_binds"
+						"select * from httpd.\"HttpdBind\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2829,7 +2829,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  net_binds nb,\n"
-						+ "  httpd_binds hb\n"
+						+ "  httpd.\"HttpdBind\" hb\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=nb.server\n"
@@ -2851,7 +2851,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  httpd_sites hs,\n"
 					+ "  httpd_site_binds hsb,\n"
-					+ "  httpd_binds hb,\n"
+					+ "  httpd.\"HttpdBind\" hb,\n"
 					+ "  net_binds nb\n"
 					+ "where\n"
 					+ "  un.username=?\n"

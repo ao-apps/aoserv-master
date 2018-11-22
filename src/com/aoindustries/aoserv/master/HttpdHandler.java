@@ -1279,7 +1279,7 @@ final public class HttpdHandler {
 					"select\n"
 					+ "  hs.mod_php_version is not null\n"
 					+ "from\n"
-					+ "  httpd_binds hb\n"
+					+ "  httpd.\"HttpdBind\" hb\n"
 					+ "  inner join httpd.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
 					+ "where\n"
 					+ "  hb.net_bind=?",
@@ -2312,7 +2312,7 @@ final public class HttpdHandler {
 				+ "    select\n"
 				+ "      net_bind\n"
 				+ "    from\n"
-				+ "      httpd_binds\n"
+				+ "      httpd.\"HttpdBind\"\n"
 				+ "    where\n"
 				+ "      net_bind=?\n"
 				+ "    limit 1\n"
@@ -2330,7 +2330,7 @@ final public class HttpdHandler {
 				+ "    select\n"
 				+ "      count(*)\n"
 				+ "    from\n"
-				+ "      httpd_binds hb,\n"
+				+ "      httpd.\"HttpdBind\" hb,\n"
 				+ "      httpd_site_binds hsb\n"
 				+ "    where\n"
 				+ "      hs.pkey=hb.httpd_server\n"
@@ -2373,7 +2373,7 @@ final public class HttpdHandler {
 			if(lowestPKey==-1) throw new SQLException("Unable to determine which httpd_server to add the new httpd_bind to");
 			// Insert into the DB
 			conn.executeUpdate(
-				"insert into httpd_binds values(?,?)",
+				"insert into httpd.\"HttpdBind\" values(?,?)",
 				netBind,
 				lowestPKey
 			);
@@ -2475,7 +2475,7 @@ final public class HttpdHandler {
 	 *           |                + httpd_site_bind_redirects
 	 *           |                + httpd_site_urls
 	 *           |                |               + dns.Record
-	 *           |                + httpd_binds
+	 *           |                + httpd.HttpdBind
 	 *           |                            + net_binds
 	 *           + httpd_tomcat_sites
 	 *           |                  + httpd_tomcat_contexts
@@ -2590,7 +2590,7 @@ final public class HttpdHandler {
 						httpdBind
 					)
 				) {
-					// Do not clear up the httpd_binds for overflow IPs
+					// Do not clear up the httpd.HttpdBind for overflow IPs
 					if(
 						conn.executeBooleanQuery(
 							"select\n"
@@ -2604,7 +2604,7 @@ final public class HttpdHandler {
 							httpdBind
 						)
 					) {
-						conn.executeUpdate("delete from httpd_binds where net_bind=?", httpdBind);
+						conn.executeUpdate("delete from httpd.\"HttpdBind\" where net_bind=?", httpdBind);
 						conn.executeUpdate("delete from net_binds where pkey=?", httpdBind);
 					}
 				}
@@ -3444,7 +3444,7 @@ final public class HttpdHandler {
 					+ "    hs.pkey\n"
 					+ "  from\n"
 					+ "    httpd_site_binds hsb\n"
-					+ "    inner join httpd_binds hb on hsb.httpd_bind=hb.net_bind\n"
+					+ "    inner join httpd.\"HttpdBind\" hb on hsb.httpd_bind=hb.net_bind\n"
 					+ "    inner join httpd.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
 					+ "  where\n"
 					+ "    hsb.httpd_site=?\n"
