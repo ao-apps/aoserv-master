@@ -7474,7 +7474,7 @@ final public class TableHandler {
 					+ "      and bu1.accounting=pk2.accounting\n"
 					+ "      and pk2.name=nb.package\n"
 					+ "  )\n"
-					// Allow by matching sendmail_servers.package
+					// Allow by matching email.SendmailServer.package
 					+ "  or sendmail_server in (\n"
 					+ "    select\n"
 					+ "      ss.pkey\n"
@@ -7483,7 +7483,7 @@ final public class TableHandler {
 					+ "      billing.\"Package\" pk3,\n"
 					+ BU2_PARENTS_JOIN
 					+ "      billing.\"Package\" pk4,\n"
-					+ "      sendmail_servers ss\n"
+					+ "      email.\"SendmailServer\" ss\n"
 					+ "    where\n"
 					+ "      un2.username=?\n"
 					+ "      and un2.package=pk3.name\n"
@@ -7506,7 +7506,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new SendmailServer(),
-						"select * from sendmail_servers"
+						"select * from email.\"SendmailServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -7517,7 +7517,7 @@ final public class TableHandler {
 						+ "  ss.*\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  inner join sendmail_servers ss on ms.server=ss.ao_server\n"
+						+ "  inner join email.\"SendmailServer\" ss on ms.server=ss.ao_server\n"
 						+ "where\n"
 						+ "  ms.username=?",
 						username
@@ -7531,7 +7531,7 @@ final public class TableHandler {
 					"select\n"
 					+ "  *\n"
 					+ "from\n"
-					+ "  sendmail_servers\n"
+					+ "  email.\"SendmailServer\"\n"
 					+ "where\n"
 					// Allow by matching net_binds.package
 					+ "  pkey in (\n"
@@ -7554,7 +7554,7 @@ final public class TableHandler {
 					+ "      and pk2.name=nb.package\n"
 					+ "      and nb.pkey=sb.net_bind\n"
 					+ "  )\n"
-					// Allow by matching sendmail_servers.package
+					// Allow by matching email.SendmailServer.package
 					+ "  or pkey in (\n"
 					+ "    select\n"
 					+ "      ss.pkey\n"
@@ -7563,7 +7563,7 @@ final public class TableHandler {
 					+ "      billing.\"Package\" pk3,\n"
 					+ BU2_PARENTS_JOIN
 					+ "      billing.\"Package\" pk4,\n"
-					+ "      sendmail_servers ss\n"
+					+ "      email.\"SendmailServer\" ss\n"
 					+ "    where\n"
 					+ "      un2.username=?\n"
 					+ "      and un2.package=pk3.name\n"
