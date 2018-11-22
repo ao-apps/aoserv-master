@@ -604,7 +604,7 @@ final public class TableHandler {
 						+ "  left join ao_servers fs on ao.server=fs.failover_server\n"
 						// Allow servers it replicates to
 						+ "  left join failover_file_replications ffr on ms.server=ffr.server\n"
-						+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
+						+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
 						+ "  ao_servers ao2\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -655,7 +655,7 @@ final public class TableHandler {
 					+ "  business_servers bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
-					//+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
+					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
 					+ "  ao_servers ao\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -738,7 +738,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new BackupPartition(),
-						"select * from backup_partitions"
+						"select * from backup.\"BackupPartition\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -749,7 +749,7 @@ final public class TableHandler {
 						+ "  bp.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  backup_partitions bp\n"
+						+ "  backup.\"BackupPartition\" bp\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and (\n"
@@ -759,7 +759,7 @@ final public class TableHandler {
 						+ "        ffr.pkey\n"
 						+ "      from\n"
 						+ "        failover_file_replications ffr\n"
-						+ "        inner join backup_partitions bp2 on ffr.backup_partition=bp2.pkey\n"
+						+ "        inner join backup.\"BackupPartition\" bp2 on ffr.backup_partition=bp2.pkey\n"
 						+ "      where\n"
 						+ "        ms.server=ffr.server\n"
 						+ "        and bp.ao_server=bp2.ao_server\n"
@@ -780,7 +780,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un,\n"
 					+ "  packages pk,\n"
 					+ "  business_servers bs,\n"
-					+ "  backup_partitions bp\n"
+					+ "  backup.\"BackupPartition\" bp\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -792,7 +792,7 @@ final public class TableHandler {
 					//+ "        ffr.pkey\n"
 					//+ "      from\n"
 					//+ "        failover_file_replications ffr\n"
-					//+ "        inner join backup_partitions bp2 on ffr.backup_partition=bp2.pkey\n"
+					//+ "        inner join backup.\"BackupPartition\" bp2 on ffr.backup_partition=bp2.pkey\n"
 					//+ "      where\n"
 					//+ "        bs.server=ffr.server\n"
 					//+ "        and bp.ao_server=bp2.ao_server\n"
@@ -4030,7 +4030,7 @@ final public class TableHandler {
 						+ "              ffr.pkey\n"
 						+ "            from\n"
 						+ "              failover_file_replications ffr\n"
-						+ "              inner join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
+						+ "              inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey\n"
 						+ "              inner join ao_servers bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
 						+ "            where\n"
 						+ "              ms.server=ffr.server\n"
@@ -4134,7 +4134,7 @@ final public class TableHandler {
 						+ "      packages pk6,\n"
 						+ "      business_servers bs6,\n"
 						+ "      failover_file_replications ffr6,\n"
-						+ "      backup_partitions bp6,\n"
+						+ "      backup.\"BackupPartition\" bp6,\n"
 						+ "      ao_servers ao6,\n"
 						+ "      net_devices nd6,\n"
 						+ "      \"IPAddress\" ia6\n"
@@ -5845,7 +5845,7 @@ final public class TableHandler {
 						+ "        ffr.pkey\n"
 						+ "      from\n"
 						+ "        failover_file_replications ffr\n"
-						+ "        inner join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
+						+ "        inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey\n"
 						+ "      where\n"
 						+ "        ms.server=ffr.server\n"
 						+ "        and bp.ao_server=nb.server\n"
@@ -5962,7 +5962,7 @@ final public class TableHandler {
 					+ "      packages pk6,\n"
 					+ "      servers se6,\n"
 					+ "      failover_file_replications ffr6,\n"
-					+ "      backup_partitions bp6,\n"
+					+ "      backup.\"BackupPartition\" bp6,\n"
 					+ "      net_binds nb6\n"
 					+ "    where\n"
 					+ "      un6.username=?\n"
@@ -6057,7 +6057,7 @@ final public class TableHandler {
 						+ "        ffr.pkey\n"
 						+ "      from\n"
 						+ "        failover_file_replications ffr\n"
-						+ "        inner join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
+						+ "        inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey\n"
 						+ "        inner join ao_servers bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
 						+ "      where\n"
 						+ "        ms.server=ffr.server\n"
@@ -6096,7 +6096,7 @@ final public class TableHandler {
 					+ "  business_servers bs,\n"
 					// Allow failover destinations
 					//+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
-					//+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey\n"
+					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey\n"
 					//+ "  left join ao_servers bpao on bp.ao_server=bpao.server,\n"
 					+ "  net_devices nd\n"
 					+ "where\n"
@@ -6544,7 +6544,7 @@ final public class TableHandler {
 					+ "  business_servers bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
-					//+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
+					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
 					+ "  physical_servers ps\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -6917,7 +6917,7 @@ final public class TableHandler {
 					+ "  business_servers bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
-					//+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
+					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
 					+ "  physical_servers ps,\n"
 					+ "  racks ra\n"
 					+ "where\n"
@@ -7599,7 +7599,7 @@ final public class TableHandler {
 						+ "  master_servers ms,\n"
 						+ "  servers se\n"
 						+ "  left join failover_file_replications ffr on  se.pkey             = ffr.server\n"
-						+ "  left join backup_partitions           bp on ffr.backup_partition =  bp.pkey\n"
+						+ "  left join backup.\"BackupPartition\"  bp on ffr.backup_partition =  bp.pkey\n"
 						+ "  left join servers                     fs on  bp.ao_server        =  fs.pkey,\n"
 						+ "  server_farms sf\n"
 						+ "where\n"
@@ -7665,7 +7665,7 @@ final public class TableHandler {
 						+ "  left join ao_servers fs on ao.server=fs.failover_server\n"
 						// Allow servers it replicates to
 						+ "  left join failover_file_replications ffr on ms.server=ffr.server\n"
-						+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
+						+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
 						+ "  servers se\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -7695,7 +7695,7 @@ final public class TableHandler {
 					+ "  business_servers bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
-					//+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
+					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
 					+ "  servers se\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -8746,7 +8746,7 @@ final public class TableHandler {
 					+ "  business_servers bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
-					//+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
+					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
 					+ "  virtual_disks vd\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -8822,7 +8822,7 @@ final public class TableHandler {
 					+ "  business_servers bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join failover_file_replications ffr on bs.server=ffr.server\n"
-					//+ "  left join backup_partitions bp on ffr.backup_partition=bp.pkey,\n"
+					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
 					+ "  virtual_servers vs\n"
 					+ "where\n"
 					+ "  un.username=?\n"

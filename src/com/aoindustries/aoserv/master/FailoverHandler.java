@@ -388,7 +388,7 @@ final public class FailoverHandler implements CronJob {
 		int quota_gid = conn.executeIntQuery("select coalesce(quota_gid, -1) from failover_file_replications where pkey=?", pkey);
 
 		// Verify that the backup_partition is the correct type
-		boolean isQuotaEnabled = conn.executeBooleanQuery("select bp.quota_enabled from failover_file_replications ffr inner join backup_partitions bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey);
+		boolean isQuotaEnabled = conn.executeBooleanQuery("select bp.quota_enabled from failover_file_replications ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey);
 		if(quota_gid==-1) {
 			if(isQuotaEnabled) throw new SQLException("quota_gid is null when quota_enabled=true: failover_file_replications.pkey="+pkey);
 		} else {
@@ -407,7 +407,7 @@ final public class FailoverHandler implements CronJob {
 			AOServDaemonProtocol.FAILOVER_FILE_REPLICATION,
 			Integer.toString(pkey),
 			serverName,
-			conn.executeStringQuery("select bp.path from failover_file_replications ffr inner join backup_partitions bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey),
+			conn.executeStringQuery("select bp.path from failover_file_replications ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey),
 			quota_gid==-1 ? null : Integer.toString(quota_gid)
 		);
 	}

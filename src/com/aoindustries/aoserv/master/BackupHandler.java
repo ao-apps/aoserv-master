@@ -144,13 +144,13 @@ public final class BackupHandler {
         DatabaseConnection conn,
         int pkey
     ) throws IOException, SQLException {
-        return conn.executeIntQuery("select ao_server from backup_partitions where pkey=?", pkey);
+        return conn.executeIntQuery("select ao_server from backup.\"BackupPartition\" where pkey=?", pkey);
     }
 
     public static UnixPath getPathForBackupPartition(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.unixPathFactory,
-			"select path from backup_partitions where pkey=?",
+			"select path from backup.\"BackupPartition\" where pkey=?",
 			pkey
 		);
     }
