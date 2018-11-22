@@ -1607,7 +1607,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new CyrusImapdBind(),
-						"select * from cyrus_imapd_binds"
+						"select * from email.\"CyrusImapdBind\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -1619,7 +1619,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms\n"
 						+ "  inner join net_binds nb on ms.server=nb.server\n"
-						+ "  inner join cyrus_imapd_binds cib on nb.pkey=cib.net_bind\n"
+						+ "  inner join email.\"CyrusImapdBind\" cib on nb.pkey=cib.net_bind\n"
 						+ "where\n"
 						+ "  ms.username=?",
 						username
@@ -1638,7 +1638,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  net_binds nb,\n"
-					+ "  cyrus_imapd_binds cib\n"
+					+ "  email.\"CyrusImapdBind\" cib\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"
