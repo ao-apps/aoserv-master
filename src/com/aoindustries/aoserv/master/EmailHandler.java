@@ -481,7 +481,7 @@ final public class EmailHandler {
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add email addresses to LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 		// TODO: Make sure they are on the same server
 
-		int pkey = conn.executeIntUpdate("INSERT INTO linux_acc_addresses VALUES (default,?,?) RETURNING pkey", address, lsa);
+		int pkey = conn.executeIntUpdate("INSERT INTO email.\"InboxAddress\" VALUES (default,?,?) RETURNING pkey", address, lsa);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -1322,13 +1322,13 @@ final public class EmailHandler {
 		boolean isBlackhole=conn.executeBooleanQuery("select (select email_address from email.\"BlackholeAddress\" where email_address=?) is not null", address);
 		if(isBlackhole) conn.executeUpdate("delete from email.\"BlackholeAddress\" where email_address=?", address);
 
-		IntList pkeys=conn.executeIntListQuery("select pkey from linux_acc_addresses where email_address=?", address);
+		IntList pkeys=conn.executeIntListQuery("select pkey from email.\"InboxAddress\" where email_address=?", address);
 		boolean isLinuxAccAddress=pkeys.size()>0;
 		if(isLinuxAccAddress) {
 			for(int d=0;d<pkeys.size();d++) {
 				int laaPkey=pkeys.getInt(d);
 				conn.executeUpdate("update linux_server_accounts set autoresponder_from=null where autoresponder_from=?", laaPkey);
-				conn.executeUpdate("delete from linux_acc_addresses where pkey=?", laaPkey);
+				conn.executeUpdate("delete from email.\"InboxAddress\" where pkey=?", laaPkey);
 			}
 		}
 
@@ -1511,7 +1511,7 @@ final public class EmailHandler {
 		InvalidateList invalidateList,
 		int laa
 	) throws IOException, SQLException {
-		int ea=conn.executeIntQuery("select email_address from linux_acc_addresses where pkey=?", laa);
+		int ea=conn.executeIntQuery("select email_address from email.\"InboxAddress\" where pkey=?", laa);
 		checkAccessEmailAddress(conn, source, "removeLinuxAccAddress", ea);
 
 		// Get stuff for use after the try block
@@ -1520,7 +1520,7 @@ final public class EmailHandler {
 
 		// Delete from the database
 		conn.executeUpdate("update linux_server_accounts set autoresponder_from=null where autoresponder_from=?", laa);
-		conn.executeUpdate("delete from linux_acc_addresses where pkey=?", laa);
+		conn.executeUpdate("delete from email.\"InboxAddress\" where pkey=?", laa);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
@@ -1637,13 +1637,13 @@ final public class EmailHandler {
 				beaMod=true;
 			}
 
-			// Delete any linux_acc_addresses used by this email address
-	IntList pkeys=conn.executeIntListQuery("select pkey from linux_acc_addresses where email_address=?", address);
+			// Delete any email.InboxAddress used by this email address
+	IntList pkeys=conn.executeIntListQuery("select pkey from email.\"InboxAddress\" where email_address=?", address);
 	if(pkeys.size()>0) {
 		for(int d=0;d<pkeys.size();d++) {
 		int laaPkey=pkeys.getInt(d);
 		conn.executeUpdate("update linux_server_accounts set autoresponder_from=null where autoresponder_from=?", laaPkey);
-		conn.executeUpdate("delete from linux_acc_addresses where pkey=?", laaPkey);
+		conn.executeUpdate("delete from email.\"InboxAddress\" where pkey=?", laaPkey);
 		}
 				laaMod=true;
 			}
@@ -1961,7 +1961,7 @@ final public class EmailHandler {
 			|| conn.executeBooleanQuery("select (select pkey from email.\"Forwarding\" where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery("select (select pkey from email.\"ListAddress\" where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery("select (select pkey from email.\"PipeAddress\" where email_address=? limit 1) is not null", pkey)
-			|| conn.executeBooleanQuery("select (select pkey from linux_acc_addresses where email_address=? limit 1) is not null", pkey)
+			|| conn.executeBooleanQuery("select (select pkey from email.\"InboxAddress\" where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery(
 				"select\n"
 				+ "  (\n"

@@ -1652,12 +1652,12 @@ final public class LinuxAccountHandler {
 		if(count>0) throw new SQLException("Home directory on "+aoServer+" contains "+count+" CVS "+(count==1?"repository":"repositories")+": "+home);
 
 		// Delete the email configurations that depend on this account
-		IntList addresses=conn.executeIntListQuery("select email_address from linux_acc_addresses where linux_server_account=?", account);
+		IntList addresses=conn.executeIntListQuery("select email_address from email.\"InboxAddress\" where linux_server_account=?", account);
 		int size=addresses.size();
 		boolean addressesModified=size>0;
 		for(int c=0;c<size;c++) {
 			int address=addresses.getInt(c);
-			conn.executeUpdate("delete from linux_acc_addresses where email_address=?", address);
+			conn.executeUpdate("delete from email.\"InboxAddress\" where email_address=?", address);
 			if(!EmailHandler.isEmailAddressUsed(conn, address)) {
 				conn.executeUpdate("delete from email.\"Address\" where pkey=?", address);
 			}
@@ -1756,7 +1756,7 @@ final public class LinuxAccountHandler {
 
 		// The from must be on this account
 		if(from!=-1) {
-			int fromLSA=conn.executeIntQuery("select linux_server_account from linux_acc_addresses where pkey=?", from);
+			int fromLSA=conn.executeIntQuery("select linux_server_account from email.\"InboxAddress\" where pkey=?", from);
 			if(fromLSA!=pkey) throw new SQLException("((linux_acc_address.pkey="+from+").linux_server_account="+fromLSA+")!=((linux_server_account.pkey="+pkey+").username="+username+")");
 		}
 

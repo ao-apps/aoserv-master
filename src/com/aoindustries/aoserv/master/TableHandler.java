@@ -4597,7 +4597,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new LinuxAccAddress(),
-						"select * from linux_acc_addresses"
+						"select * from email.\"InboxAddress\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -4610,7 +4610,7 @@ final public class TableHandler {
 						+ "  master_servers ms,\n"
 						+ "  email.\"Domain\" ed,\n"
 						+ "  email.\"Address\" ea,\n"
-						+ "  linux_acc_addresses laa\n"
+						+ "  email.\"InboxAddress\" laa\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ed.ao_server\n"
@@ -4633,7 +4633,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  email.\"Domain\" ed,\n"
 					+ "  email.\"Address\" ea,\n"
-					+ "  linux_acc_addresses laa\n"
+					+ "  email.\"InboxAddress\" laa\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
