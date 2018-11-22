@@ -38,7 +38,7 @@ final public class FTPHandler {
 			&& !LinuxAccountType.FTPONLY.equals(type)
 		) throw new SQLException("Only Linux Accounts of type '"+LinuxAccountType.USER+"' or '"+LinuxAccountType.FTPONLY+"' may be flagged as a FTP Guest User: "+type);
 
-		conn.executeUpdate("insert into ftp_guest_users values(?)", username);
+		conn.executeUpdate("insert into ftp.\"GuestUser\" values(?)", username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -59,7 +59,7 @@ final public class FTPHandler {
 		LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "removeFTPGuestUser", username);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove FTPGuestUser for user '"+LinuxAccount.MAIL+'\'');
 
-		conn.executeUpdate("delete from ftp_guest_users where username=?", username);
+		conn.executeUpdate("delete from ftp.\"GuestUser\" where username=?", username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(

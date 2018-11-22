@@ -2758,7 +2758,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new FTPGuestUser(),
-						"select * from ftp_guest_users"
+						"select * from ftp.\"GuestUser\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2772,7 +2772,7 @@ final public class TableHandler {
 						+ "  business_servers bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
-						+ "  ftp_guest_users fgu\n"
+						+ "  ftp.\"GuestUser\" fgu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=bs.server\n"
@@ -2795,7 +2795,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
-					+ "  ftp_guest_users fgu\n"
+					+ "  ftp.\"GuestUser\" fgu\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"

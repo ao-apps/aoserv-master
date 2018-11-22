@@ -1418,8 +1418,7 @@ final public class LinuxAccountHandler {
 			conn.executeUpdate("update linux_server_accounts set autoresponder_from=null where username=? and ao_server=?", username, aoServer);
 		}
 		// Delete any FTP guest user info attached to this account
-		boolean ftpModified=conn.executeIntQuery("select count(*) from ftp_guest_users where username=?", username)>0;
-		if(ftpModified) conn.executeUpdate("delete from ftp_guest_users where username=?", username);
+		boolean ftpModified = conn.executeUpdate("delete from ftp.\"GuestUser\" where username=?", username) > 0;
 		// Delete the account from all servers
 		// Get the values for later use
 		for(int c=0;c<aoServers.size();c++) {
@@ -1428,8 +1427,7 @@ final public class LinuxAccountHandler {
 			removeLinuxServerAccount(conn, invalidateList, pkey);
 		}
 		// Delete the group relations for this account
-		boolean groupAccountModified=conn.executeIntQuery("select count(*) from linux_group_accounts where username=? limit 1", username)>0;
-		if(groupAccountModified) conn.executeUpdate("delete from linux_group_accounts where username=?", username);
+		boolean groupAccountModified = conn.executeUpdate("delete from linux_group_accounts where username=?", username) > 0;
 		// Delete from the database
 		conn.executeUpdate("delete from linux_accounts where username=?", username);
 
