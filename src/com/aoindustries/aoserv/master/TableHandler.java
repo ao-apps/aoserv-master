@@ -1703,7 +1703,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new DisableLog(),
-						"select * from disable_log"
+						"select * from account.\"DisableLog\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -1717,7 +1717,7 @@ final public class TableHandler {
 						+ "  ao_servers ao\n"
 						+ "  left join ao_servers ff on ao.server=ff.failover_server,\n"
 						+ "  business_servers bs,\n"
-						+ "  disable_log dl\n"
+						+ "  account.\"DisableLog\" dl\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ao.server\n"
@@ -1739,7 +1739,7 @@ final public class TableHandler {
 					+ "  usernames un,\n"
 					+ "  packages pk,\n"
 					+ BU1_PARENTS_JOIN
-					+ "  disable_log dl\n"
+					+ "  account.\"DisableLog\" dl\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"

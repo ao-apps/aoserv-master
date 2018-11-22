@@ -235,7 +235,7 @@ final public class AccountCleaner implements CronJob {
                             + "  bu.accounting\n"
                             + "from\n"
                             + "  account.\"Account\" bu,\n"
-                            + "  disable_log dl\n"
+                            + "  account.\"DisableLog\" dl\n"
                             + "where\n"
                             + "  bu.canceled is null\n"
                             + "  and bu.disable_log=dl.pkey\n"
@@ -298,8 +298,8 @@ final public class AccountCleaner implements CronJob {
 						+ "  and (select cct4.pkey from credit_card_transactions cct4 where cct4.void_username          = ba.username limit 1) is null\n"
 						// credit_cards
                         + "  and (select cc.pkey from credit_cards cc where cc.created_by=ba.username limit 1) is null\n"
-						// disable_log
-                        + "  and (select dl.pkey from disable_log dl where dl.disabled_by=ba.username limit 1) is null\n"
+						// account.DisableLog
+                        + "  and (select dl.pkey from account.\"DisableLog\" dl where dl.disabled_by=ba.username limit 1) is null\n"
 						// monthly_charges
                         + "  and (select mc.pkey from monthly_charges mc where mc.created_by=ba.username limit 1) is null\n"
 						// packages
@@ -796,13 +796,13 @@ final public class AccountCleaner implements CronJob {
 					}
                 }
 
-                // disable_log
+                // account.DisableLog
                 {
                     IntList dls=conn.executeIntListQuery(
                         "select\n"
                         + "  dl.pkey\n"
                         + "from\n"
-                        + "  disable_log dl,\n"
+                        + "  account.\"DisableLog\" dl,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  dl.accounting=bu.accounting\n"

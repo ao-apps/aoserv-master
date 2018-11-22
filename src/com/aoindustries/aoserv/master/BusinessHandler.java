@@ -154,7 +154,7 @@ final public class BusinessHandler {
 			String message=
 				"business_administrator.username="
 				+source.getUsername()
-				+" is not allowed to access disable_log: action='"
+				+" is not allowed to access account.DisableLog: action='"
 				+action
 				+"', pkey="
 				+pkey
@@ -295,7 +295,7 @@ final public class BusinessHandler {
 	}
 
 	public static AccountingCode getBusinessForDisableLog(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountingCodeFactory, "select accounting from disable_log where pkey=?", pkey);
+		return conn.executeObjectQuery(ObjectFactories.accountingCodeFactory, "select accounting from account.\"DisableLog\" where pkey=?", pkey);
 	}
 
 	/**
@@ -608,7 +608,7 @@ final public class BusinessHandler {
 
 		UserId username=source.getUsername();
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO disable_log (accounting, disabled_by, disable_reason) VALUES (?,?,?) RETURNING pkey",
+			"INSERT INTO account.\"DisableLog\" (accounting, disabled_by, disable_reason) VALUES (?,?,?) RETURNING pkey",
 			accounting,
 			username,
 			disableReason
@@ -839,7 +839,7 @@ final public class BusinessHandler {
 	public static UserId getDisableLogDisabledBy(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.userIdFactory,
-			"select disabled_by from disable_log where pkey=?",
+			"select disabled_by from account.\"DisableLog\" where pkey=?",
 			pkey
 		);
 	}
@@ -1295,7 +1295,7 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		AccountingCode accounting=getBusinessForDisableLog(conn, pkey);
 
-		conn.executeUpdate("delete from disable_log where pkey=?", pkey);
+		conn.executeUpdate("delete from account.\"DisableLog\" where pkey=?", pkey);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.DISABLE_LOG, accounting, InvalidateList.allServers, false);
