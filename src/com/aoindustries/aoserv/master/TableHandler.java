@@ -6220,7 +6220,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new OperatingSystemVersion(),
-					"select * from operating_system_versions"
+					"select * from distribution.\"OperatingSystemVersion\""
 				);
 				break;
 			case OPERATING_SYSTEMS :
@@ -9255,7 +9255,7 @@ final public class TableHandler {
 			+ "  master_servers ms,\n"
 			+ "  ao_servers ao,\n"
 			+ "  servers se,\n"
-			+ "  operating_system_versions osv\n"
+			+ "  distribution.\"OperatingSystemVersion\" osv\n"
 			+ "where\n"
 			+ "  ms.username=?\n"
 			+ "  and ms.server=ao.server\n"
