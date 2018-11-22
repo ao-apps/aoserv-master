@@ -423,7 +423,7 @@ final public class TableHandler {
 						source,
 						out,
 						new Transaction(),
-						"select * from transactions where transid=?",
+						"select * from billing.\"Transaction\" where transid=?",
 						transid
 					);
 				} else {
@@ -8612,7 +8612,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new Transaction(),
-						"select * from transactions"
+						"select * from billing.\"Transaction\""
 					); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
 				} else MasterServer.writeObjects(
 					conn,
@@ -8626,7 +8626,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un1,\n"
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
-					+ "  transactions tr\n"
+					+ "  billing.\"Transaction\" tr\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"

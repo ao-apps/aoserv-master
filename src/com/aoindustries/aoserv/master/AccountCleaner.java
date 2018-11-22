@@ -275,7 +275,7 @@ final public class AccountCleaner implements CronJob {
                 }
 
                 // account.Administrator over CANCELED_KEEP_DAYS days
-                // remove if balance is zero and has not been used in ticket_actions or transactions
+                // remove if balance is zero and has not been used in ticket_actions or billing.Transaction
                 {
                     List<UserId> bas=conn.executeObjectListQuery(
 						ObjectFactories.userIdFactory,
@@ -316,8 +316,8 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select ta4.pkey from ticket_assignments ta4 where ta4.administrator=ba.username limit 1) is null\n"
 						// tickets
                         + "  and (select ti.pkey from tickets ti where ti.created_by=ba.username limit 1) is null\n"
-						// transactions
-                        + "  and (select tr.transid from transactions tr where tr.username=ba.username limit 1) is null",
+						// billing.Transaction
+                        + "  and (select tr.transid from billing.\"Transaction\" tr where tr.username=ba.username limit 1) is null",
                         now
                     );
 					for (UserId username : bas) {

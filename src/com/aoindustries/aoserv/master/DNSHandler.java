@@ -141,9 +141,9 @@ final public class DNSHandler implements CronJob {
 							+ "  select\n"
 							+ "    wh.pkey\n"
 							+ "  from\n"
-							+ "               whois_history       wh\n"
-							+ "    inner join account.\"Account\" bu on wh.accounting = bu.accounting\n"
-							+ "    left  join account_balances    ab on bu.accounting = ab.accounting"
+							+ "               whois_history            wh\n"
+							+ "    inner join account.\"Account\"      bu on wh.accounting = bu.accounting\n"
+							+ "    left  join billing.account_balances ab on bu.accounting = ab.accounting"
 							+ "  where\n"
 							// entry is older than one year
 							+ "    (now()-wh.time)>'1 year'::interval\n"
@@ -155,22 +155,22 @@ final public class DNSHandler implements CronJob {
 						);
 						if(updated>0) invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
-						// Closed account that have a balance of $0.00, has not had any accounting transactions for one year, and entry is older than one year
+						// Closed account that have a balance of $0.00, has not had any billing.Transaction for one year, and entry is older than one year
 						updated = conn.executeUpdate(
 							"delete from whois_history where pkey in (\n"
 							+ "  select\n"
 							+ "    wh.pkey\n"
 							+ "  from\n"
-							+ "               whois_history       wh\n"
-							+ "    inner join account.\"Account\" bu on wh.accounting = bu.accounting\n"
-							+ "    left  join account_balances    ab on bu.accounting = ab.accounting"
+							+ "               whois_history            wh\n"
+							+ "    inner join account.\"Account\"      bu on wh.accounting = bu.accounting\n"
+							+ "    left  join billing.account_balances ab on bu.accounting = ab.accounting"
 							+ "  where\n"
 							// entry is older than one year
 							+ "    (now()-wh.time)>'1 year'::interval\n"
 							// closed account
 							+ "    and bu.canceled is not null\n"
-							// has not had any accounting transactions for one year
-							+ "    and (select tr.transid from transactions tr where bu.accounting=tr.accounting and tr.time>=(now()-'1 year'::interval) limit 1) is null\n"
+							// has not had any accounting billing.Transaction for one year
+							+ "    and (select tr.transid from billing.\"Transaction\" tr where bu.accounting=tr.accounting and tr.time>=(now()-'1 year'::interval) limit 1) is null\n"
 							// balance is $0.00
 							+ "    and (ab.accounting is null or ab.balance='0.00'::decimal(9,2))"
 							+ ")"

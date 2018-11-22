@@ -110,7 +110,7 @@ final public class TransactionHandler {
         if(business_administrator.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+LinuxAccount.MAIL+'\'');
 
         int transid = conn.executeIntUpdate(
-            "INSERT INTO transactions VALUES (?,default,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
+            "INSERT INTO billing.\"Transaction\" VALUES (?,default,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
             time,
             accounting,
             sourceAccounting,
@@ -145,7 +145,7 @@ final public class TransactionHandler {
             "getAccountBalance",
             accounting,
             out,
-            "select coalesce(sum(cast((rate*quantity) as decimal(9,2))), 0) from transactions where accounting=? and payment_confirmed!='N'",
+            "select coalesce(sum(cast((rate*quantity) as decimal(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed!='N'",
             accounting.toString()
         );
     }
@@ -166,7 +166,7 @@ final public class TransactionHandler {
             "getAccountBalanceBefore",
             accounting,
             out,
-            "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from transactions where accounting=? and time<? and payment_confirmed!='N'",
+            "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from billing.\"Transaction\" where accounting=? and time<? and payment_confirmed!='N'",
             accounting.toString(),
             new Timestamp(before)
         );
@@ -187,7 +187,7 @@ final public class TransactionHandler {
             "getConfirmedAccountBalance",
             accounting,
             out,
-            "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from transactions where accounting=? and payment_confirmed='Y'",
+            "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed='Y'",
             accounting.toString()
         );
     }
@@ -201,7 +201,7 @@ final public class TransactionHandler {
     ) throws IOException, SQLException {
         return SQLUtility.getPennies(
             conn.executeStringQuery(
-                "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from transactions where accounting=? and payment_confirmed='Y'",
+                "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed='Y'",
                 accounting.toString()
             )
         );
@@ -223,7 +223,7 @@ final public class TransactionHandler {
             "getConfirmedAccountBalanceBefore",
             accounting,
             out,
-            "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from transactions where accounting=? and time<? and payment_confirmed='Y'",
+            "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from billing.\"Transaction\" where accounting=? and time<? and payment_confirmed='Y'",
             accounting.toString(),
             new Timestamp(before)
         );
@@ -246,7 +246,8 @@ final public class TransactionHandler {
                 out,
                 provideProgress,
                 new Transaction(),
-                "select * from transactions where type='"+TransactionType.PAYMENT+"' and payment_confirmed='W'"
+                "select * from billing.\"Transaction\" where type=? and payment_confirmed='W'",
+				TransactionType.PAYMENT
             );
         } else {
             MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
@@ -254,7 +255,7 @@ final public class TransactionHandler {
     }
 
     /**
-     * Gets all transactions for one business.
+     * Gets all billing.Transaction for one business.
      */
     public static void getTransactionsBusiness(
         DatabaseConnection conn,
@@ -273,7 +274,7 @@ final public class TransactionHandler {
                 out,
                 provideProgress,
                 new Transaction(),
-                "select * from transactions where accounting=?",
+                "select * from billing.\"Transaction\" where accounting=?",
                 accounting
             ); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
         } else MasterServer.writeObjects(
@@ -288,7 +289,7 @@ final public class TransactionHandler {
             + "  account.\"Username\" un1,\n"
             + "  billing.\"Package\" pk1,\n"
             + TableHandler.BU1_PARENTS_JOIN
-            + "  transactions tr\n"
+            + "  billing.\"Transaction\" tr\n"
             + "where\n"
             + "  un1.username=?\n"
             + "  and un1.package=pk1.name\n"
@@ -303,7 +304,7 @@ final public class TransactionHandler {
     }
 
     /**
-     * Gets all transactions for one business administrator.
+     * Gets all billing.Transaction for one business administrator.
      */
     public static void getTransactionsBusinessAdministrator(
         DatabaseConnection conn,
@@ -320,7 +321,7 @@ final public class TransactionHandler {
             out,
             provideProgress,
             new Transaction(),
-            "select * from transactions where username=?",
+            "select * from billing.\"Transaction\" where username=?",
             username
         );
     }
@@ -344,7 +345,7 @@ final public class TransactionHandler {
                     "select\n"
                     + "  tr.*\n"
                     + "from\n"
-                    + "  transactions tr\n"
+                    + "  billing.\"Transaction\" tr\n"
                 );
                 whereDone=false;
             } else {
@@ -359,7 +360,7 @@ final public class TransactionHandler {
                 + "  account.\"Username\" un1,\n"
                 + "  billing.\"Package\" pk1,\n"
                 + TableHandler.BU1_PARENTS_JOIN
-                + "  transactions tr\n"
+                + "  billing.\"Transaction\" tr\n"
                 + "where\n"
                 + "  un1.username=?\n"
                 + "  and un1.package=pk1.name\n"
@@ -495,7 +496,7 @@ final public class TransactionHandler {
     ) throws IOException, SQLException {
         AccountingCode accounting = getBusinessForTransaction(conn, transid);
         int updateCount = conn.executeUpdate(
-            "update transactions set credit_card_transaction=?, payment_confirmed='Y' where transid=? and payment_confirmed='W'",
+            "update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='Y' where transid=? and payment_confirmed='W'",
             creditCardTransaction,
             transid
         );
@@ -527,7 +528,7 @@ final public class TransactionHandler {
     ) throws IOException, SQLException {
         AccountingCode accounting = getBusinessForTransaction(conn, transid);
 
-        int updateCount = conn.executeUpdate("update transactions set credit_card_transaction=?, payment_confirmed='N' where transid=? and payment_confirmed='W'", creditCardTransaction, transid);
+        int updateCount = conn.executeUpdate("update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='N' where transid=? and payment_confirmed='W'", creditCardTransaction, transid);
         if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W'");
 
         // Notify all clients of the update
@@ -556,7 +557,7 @@ final public class TransactionHandler {
     ) throws IOException, SQLException {
         AccountingCode accounting = getBusinessForTransaction(conn, transid);
 
-        int updateCount = conn.executeUpdate("update transactions set credit_card_transaction=? where transid=? and payment_confirmed='W' and credit_card_transaction is null", creditCardTransaction, transid);
+        int updateCount = conn.executeUpdate("update billing.\"Transaction\" set credit_card_transaction=? where transid=? and payment_confirmed='W' and credit_card_transaction is null", creditCardTransaction, transid);
         if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W' and credit_card_transaction is null");
 
         // Notify all clients of the update
@@ -566,7 +567,7 @@ final public class TransactionHandler {
     public static AccountingCode getBusinessForTransaction(DatabaseConnection conn, int transid) throws IOException, SQLException {
         return conn.executeObjectQuery(
             ObjectFactories.accountingCodeFactory,
-            "select accounting from transactions where transid=?",
+            "select accounting from billing.\"Transaction\" where transid=?",
             transid
         );
     }
