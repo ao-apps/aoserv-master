@@ -10284,7 +10284,7 @@ public abstract class MasterServer {
 
 	/**
 	 * Determines if this hostname may be used by the source.  The <code>dns.ForbiddenZone</code>,
-	 * <code>dns.Zone</code>, httpd_site_urls, and <code>email.Domain</code> tables are searched, in this order,
+	 * <code>dns.Zone</code>, <code>web.VirtualHostName</code>, and <code>email.Domain</code> tables are searched, in this order,
 	 * for a match.  If a match is found with an owner of this source, then access is
 	 * granted.  If the source is not restricted by either server or business, then
 	 * access is granted and the previous checks are avoided.
@@ -10316,7 +10316,7 @@ public abstract class MasterServer {
 			"select\n"
 			+ "  hsb.httpd_site\n"
 			+ "from\n"
-			+ "  httpd_site_urls hsu,\n"
+			+ "  web.\"VirtualHostName\" hsu,\n"
 			+ "  web.\"VirtualHost\" hsb\n"
 			+ "where\n"
 			+ "  (hsu.hostname=? or hsu.hostname like ?)\n"
@@ -10325,7 +10325,7 @@ public abstract class MasterServer {
 			"%."+domain
 		);
 		// Must be able to access all of the sites
-		for(int httpdSite : httpdSites) if(!HttpdHandler.canAccessHttpdSite(conn, source, httpdSite)) throw new SQLException("Access to this hostname forbidden: Exists in httpd_site_urls: "+hostname);
+		for(int httpdSite : httpdSites) if(!HttpdHandler.canAccessHttpdSite(conn, source, httpdSite)) throw new SQLException("Access to this hostname forbidden: Exists in web.VirtualHostName: "+hostname);
 
 		IntList emailDomains=conn.executeIntListQuery(
 			"select pkey from email.\"Domain\" where (domain=? or domain like ?)",

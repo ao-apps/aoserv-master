@@ -313,7 +313,7 @@ final public class DNSHandler implements CronJob {
 			+ "  pk.accounting as accounting,\n"
 			+ "  hsu.hostname||'.' as zone\n"
 			+ "from\n"
-			+ "  httpd_site_urls hsu\n"
+			+ "  web.\"VirtualHostName\" hsu\n"
 			+ "  inner join web.\"VirtualHost\" hsb on hsu.httpd_site_bind=hsb.pkey\n"
 			+ "  inner join web.\"Site\" hs on hsb.httpd_site=hs.pkey\n"
 			+ "  inner join billing.\"Package\" pk on hs.package=pk.name\n"
@@ -758,7 +758,7 @@ final public class DNSHandler implements CronJob {
 		DomainName hostname,
 		List<DomainName> tlds
 	) throws IOException, SQLException {
-		if(conn.executeBooleanQuery("select (select pkey from httpd_site_urls where hostname=? limit 1) is null", hostname)) {
+		if(conn.executeBooleanQuery("select (select pkey from web.\"VirtualHostName\" where hostname=? limit 1) is null", hostname)) {
 			DomainName tld = DNSZoneTable.getHostTLD(hostname, tlds);
 			String zone = tld + ".";
 			if(conn.executeBooleanQuery("select (select zone from dns.\"Zone\" where zone=?) is not null", zone)) {

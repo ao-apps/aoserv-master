@@ -174,12 +174,12 @@ final public class HttpdHandler {
 
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  httpd_site_urls\n"
+			+ "  web.\"VirtualHostName\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
-			+ "  (select pkey from httpd_site_urls where httpd_site_bind=? and is_primary limit 1) is null\n"
+			+ "  (select pkey from web.\"VirtualHostName\" where httpd_site_bind=? and is_primary limit 1) is null\n"
 			+ ") RETURNING pkey",
 			hsb_pkey,
 			hostname,
@@ -1196,19 +1196,19 @@ final public class HttpdHandler {
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BINDS, accounting, aoServer, false);
 
 		conn.executeUpdate(
-			"insert into httpd_site_urls(httpd_site_bind, hostname, is_primary) values(?,?,true)",
+			"insert into web.\"VirtualHostName\"(httpd_site_bind, hostname, is_primary) values(?,?,true)",
 			httpSiteBindPKey,
 			primaryHttpHostname
 		);
 		for (DomainName altHttpHostname : altHttpHostnames) {
 			conn.executeUpdate(
-				"insert into httpd_site_urls(httpd_site_bind, hostname, is_primary) values(?,?,false)",
+				"insert into web.\"VirtualHostName\"(httpd_site_bind, hostname, is_primary) values(?,?,false)",
 				httpSiteBindPKey,
 				altHttpHostname
 			);
 		}
 //		conn.executeUpdate(
-//			"insert into httpd_site_urls(httpd_site_bind, hostname, is_primary) values(?,?,false)",
+//			"insert into web.\"VirtualHostName\"(httpd_site_bind, hostname, is_primary) values(?,?,false)",
 //			httpSiteBindPKey,
 //			testURL
 //		);
@@ -1865,7 +1865,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  hsb.httpd_site\n"
 			+ "from\n"
-			+ "  httpd_site_urls hsu,\n"
+			+ "  web.\"VirtualHostName\" hsu,\n"
 			+ "  web.\"VirtualHost\" hsb\n"
 			+ "where\n"
 			+ "  hsu.pkey=?\n"
@@ -2473,7 +2473,7 @@ final public class HttpdHandler {
 	 *           + web.VirtualHost
 	 *           |                + web.Header
 	 *           |                + web.Redirect
-	 *           |                + httpd_site_urls
+	 *           |                + web.VirtualHostName
 	 *           |                |               + dns.Record
 	 *           |                + web.HttpdBind
 	 *           |                            + net_binds
@@ -2549,18 +2549,18 @@ final public class HttpdHandler {
 			for(int c=0;c<httpdSiteBinds.size();c++) {
 				int httpdSiteBind=httpdSiteBinds.getInt(c);
 
-				// httpd_site_urls
-				IntList httpdSiteURLs=conn.executeIntListQuery("select pkey from httpd_site_urls where httpd_site_bind=?", httpdSiteBind);
+				// web.VirtualHostName
+				IntList httpdSiteURLs=conn.executeIntListQuery("select pkey from web.\"VirtualHostName\" where httpd_site_bind=?", httpdSiteBind);
 				for(int d=0;d<httpdSiteURLs.size();d++) {
 					int httpdSiteURL=httpdSiteURLs.getInt(d);
 
 					// dns.Record
 					DomainName hostname = conn.executeObjectQuery(
 						ObjectFactories.domainNameFactory,
-						"select hostname from httpd_site_urls where pkey=?",
+						"select hostname from web.\"VirtualHostName\" where pkey=?",
 						httpdSiteURL
 					);
-					conn.executeUpdate("delete from httpd_site_urls where pkey=?", httpdSiteURL);
+					conn.executeUpdate("delete from web.\"VirtualHostName\" where pkey=?", httpdSiteURL);
 					invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_URLS, accounting, aoServer, false);
 					DNSHandler.removeUnusedDNSRecord(conn, invalidateList, hostname, tlds);
 				}
@@ -2746,12 +2746,12 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		int hs=getHttpdSiteForHttpdSiteURL(conn, pkey);
 		checkAccessHttpdSite(conn, source, "removeHttpdSiteURL", hs);
-		if(conn.executeBooleanQuery("select is_primary from httpd_site_urls where pkey=?", pkey)) throw new SQLException("Not allowed to remove the primary hostname: "+pkey);
+		if(conn.executeBooleanQuery("select is_primary from web.\"VirtualHostName\" where pkey=?", pkey)) throw new SQLException("Not allowed to remove the primary hostname: "+pkey);
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
 				+ "  (\n"
-				+ "    select hostname from httpd_site_urls where pkey=?\n"
+				+ "    select hostname from web.\"VirtualHostName\" where pkey=?\n"
 				+ "  )=(\n"
 				+ "    select hs.\"name\"||'.'||ao.hostname from web.\"Site\" hs, ao_servers ao where hs.pkey=? and hs.ao_server=ao.server\n"
 				+ "  )",
@@ -2760,7 +2760,7 @@ final public class HttpdHandler {
 			)
 		) throw new SQLException("Not allowed to remove a test URL: "+pkey);
 
-		conn.executeUpdate("delete from httpd_site_urls where pkey=?", pkey);
+		conn.executeUpdate("delete from web.\"VirtualHostName\" where pkey=?", pkey);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_SITE_URLS,
@@ -4055,11 +4055,11 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int pkey
 	) throws IOException, SQLException {
-		int hsb=conn.executeIntQuery("select httpd_site_bind from httpd_site_urls where pkey=?", pkey);
+		int hsb=conn.executeIntQuery("select httpd_site_bind from web.\"VirtualHostName\" where pkey=?", pkey);
 		int hs=getHttpdSiteForHttpdSiteBind(conn, hsb);
 		checkAccessHttpdSite(conn, source, "setPrimaryHttpdSiteURL", hs);
 
-		conn.executeUpdate("update httpd_site_urls set is_primary=(pkey=?) where httpd_site_bind=?", pkey, hsb);
+		conn.executeUpdate("update web.\"VirtualHostName\" set is_primary=(pkey=?) where httpd_site_bind=?", pkey, hsb);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_SITE_URLS,
