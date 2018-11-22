@@ -10283,7 +10283,7 @@ public abstract class MasterServer {
 	}
 
 	/**
-	 * Determines if this hostname may be used by the source.  The dns_forbidden_zones,
+	 * Determines if this hostname may be used by the source.  The <code>dns.ForbiddenZone</code>,
 	 * dns_zones, httpd_site_urls, and email_domains tables are searched, in this order,
 	 * for a match.  If a match is found with an owner of this source, then access is
 	 * granted.  If the source is not restricted by either server or business, then
@@ -10295,9 +10295,9 @@ public abstract class MasterServer {
 		String zone = DNSZoneTable.getDNSZoneForHostname(hostname, tlds);
 
 		if(conn.executeBooleanQuery(
-			"select (select zone from dns_forbidden_zones where zone=?) is not null",
+			"select (select zone from dns.\"ForbiddenZone\" where zone=?) is not null",
 			zone
-		)) throw new SQLException("Access to this hostname forbidden: Exists in dns_forbidden_zones: "+hostname);
+		)) throw new SQLException("Access to this hostname forbidden: Exists in dns.ForbiddenZone: "+hostname);
 
 		UserId username = source.getUsername();
 

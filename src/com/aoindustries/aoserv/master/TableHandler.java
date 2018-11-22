@@ -1823,7 +1823,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new DNSForbiddenZone(),
-					"select * from dns_forbidden_zones"
+					"select * from dns.\"ForbiddenZone\""
 				);
 				break;
 			case DNS_RECORDS :
