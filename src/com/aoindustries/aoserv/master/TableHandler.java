@@ -1884,7 +1884,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new DNSType(),
-					"select * from dns_types"
+					"select * from dns.\"RecordType\""
 				);
 				break;
 			case DNS_ZONES :

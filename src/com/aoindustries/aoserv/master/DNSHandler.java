@@ -355,7 +355,7 @@ final public class DNSHandler implements CronJob {
 		checkAccessDNSZone(conn, source, "addDNSRecord", zone);
 
 		// Must have appropriate priority
-		if(conn.executeBooleanQuery("select has_priority from dns_types where type=?", type)) {
+		if(conn.executeBooleanQuery("select has_priority from dns.\"RecordType\" where type=?", type)) {
 			if(priority == DNSRecord.NO_PRIORITY) throw new IllegalArgumentException("priority required for type=" + type);
 			else if(priority<=0) throw new SQLException("Invalid priority: " + priority);
 		} else {
@@ -363,7 +363,7 @@ final public class DNSHandler implements CronJob {
 		}
 
 		// Must have appropriate weight
-		if(conn.executeBooleanQuery("select has_weight from dns_types where type=?", type)) {
+		if(conn.executeBooleanQuery("select has_weight from dns.\"RecordType\" where type=?", type)) {
 			if(weight == DNSRecord.NO_WEIGHT) throw new IllegalArgumentException("weight required for type=" + type);
 			else if(weight<=0) throw new SQLException("Invalid weight: " + weight);
 		} else {
@@ -371,7 +371,7 @@ final public class DNSHandler implements CronJob {
 		}
 
 		// Must have appropriate port
-		if(conn.executeBooleanQuery("select has_port from dns_types where type=?", type)) {
+		if(conn.executeBooleanQuery("select has_port from dns.\"RecordType\" where type=?", type)) {
 			if(port == DNSRecord.NO_PORT) throw new IllegalArgumentException("port required for type=" + type);
 			else if(port < 1 || port > 65535) throw new SQLException("Invalid port: " + port);
 		} else {
