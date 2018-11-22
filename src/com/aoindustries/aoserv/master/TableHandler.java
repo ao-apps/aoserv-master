@@ -944,7 +944,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new BlackholeEmailAddress(),
-						"select * from blackhole_email_addresses"
+						"select * from email.\"BlackholeAddress\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -957,7 +957,7 @@ final public class TableHandler {
 						+ "  master_servers ms,\n"
 						+ "  email_domains ed,\n"
 						+ "  email_addresses ea,\n"
-						+ "  blackhole_email_addresses bh\n"
+						+ "  email.\"BlackholeAddress\" bh\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ed.ao_server\n"
@@ -980,7 +980,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  email_domains ed,\n"
 					+ "  email_addresses ea,\n"
-					+ "  blackhole_email_addresses bh\n"
+					+ "  email.\"BlackholeAddress\" bh\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

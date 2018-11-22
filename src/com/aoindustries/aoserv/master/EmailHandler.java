@@ -1294,7 +1294,7 @@ final public class EmailHandler {
 		int aoServer=getAOServerForEmailAddress(conn, bea);
 
 		// Delete from the database
-		conn.executeUpdate("delete from blackhole_email_addresses where email_address=?", bea);
+		conn.executeUpdate("delete from email.\"BlackholeAddress\" where email_address=?", bea);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -1319,8 +1319,8 @@ final public class EmailHandler {
 		int aoServer=getAOServerForEmailAddress(conn, address);
 
 		// Delete the objects that depend on this one first
-		boolean isBlackhole=conn.executeBooleanQuery("select (select email_address from blackhole_email_addresses where email_address=?) is not null", address);
-		if(isBlackhole) conn.executeUpdate("delete from blackhole_email_addresses where email_address=?", address);
+		boolean isBlackhole=conn.executeBooleanQuery("select (select email_address from email.\"BlackholeAddress\" where email_address=?) is not null", address);
+		if(isBlackhole) conn.executeUpdate("delete from email.\"BlackholeAddress\" where email_address=?", address);
 
 		IntList pkeys=conn.executeIntListQuery("select pkey from linux_acc_addresses where email_address=?", address);
 		boolean isLinuxAccAddress=pkeys.size()>0;
@@ -1632,11 +1632,11 @@ final public class EmailHandler {
 
 			if(
 				conn.executeBooleanQuery(
-					"select (select email_address from blackhole_email_addresses where email_address=?) is not null",
+					"select (select email_address from email.\"BlackholeAddress\" where email_address=?) is not null",
 					address
 				)
 			) {
-				conn.executeUpdate("delete from blackhole_email_addresses where email_address=?", address);
+				conn.executeUpdate("delete from email.\"BlackholeAddress\" where email_address=?", address);
 				beaMod=true;
 			}
 
@@ -1960,7 +1960,7 @@ final public class EmailHandler {
 
 	public static boolean isEmailAddressUsed(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return
-			conn.executeBooleanQuery("select (select email_address from blackhole_email_addresses where email_address=? limit 1) is not null", pkey)
+			conn.executeBooleanQuery("select (select email_address from email.\"BlackholeAddress\" where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery("select (select pkey from email_forwarding where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery("select (select pkey from email_list_addresses where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery("select (select pkey from email_pipe_addresses where email_address=? limit 1) is not null", pkey)
