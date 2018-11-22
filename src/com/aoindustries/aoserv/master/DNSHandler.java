@@ -137,11 +137,11 @@ final public class DNSHandler implements CronJob {
 						 */
 						//  Open account that have balance <= $0.00 and entry is older than one year
 						int updated = conn.executeUpdate(
-							"delete from whois_history where pkey in (\n"
+							"delete from billing.\"WhoisHistory\" where pkey in (\n"
 							+ "  select\n"
 							+ "    wh.pkey\n"
 							+ "  from\n"
-							+ "               whois_history            wh\n"
+							+ "               billing.\"WhoisHistory\" wh\n"
 							+ "    inner join account.\"Account\"      bu on wh.accounting = bu.accounting\n"
 							+ "    left  join billing.account_balances ab on bu.accounting = ab.accounting"
 							+ "  where\n"
@@ -157,11 +157,11 @@ final public class DNSHandler implements CronJob {
 
 						// Closed account that have a balance of $0.00, has not had any billing.Transaction for one year, and entry is older than one year
 						updated = conn.executeUpdate(
-							"delete from whois_history where pkey in (\n"
+							"delete from billing.\"WhoisHistory\" where pkey in (\n"
 							+ "  select\n"
 							+ "    wh.pkey\n"
 							+ "  from\n"
-							+ "               whois_history            wh\n"
+							+ "               billing.\"WhoisHistory\" wh\n"
 							+ "    inner join account.\"Account\"      bu on wh.accounting = bu.accounting\n"
 							+ "    left  join billing.account_balances ab on bu.accounting = ab.accounting"
 							+ "  where\n"
@@ -203,7 +203,7 @@ final public class DNSHandler implements CronJob {
 							String accounting = aaz.getAccounting();
 							String zone = aaz.getZone();
 							String whoisOutput = whoisOutputs.get(zone);
-							conn.executeUpdate("insert into whois_history (accounting, zone, whois_output) values(?,?,?)", accounting, zone, whoisOutput);
+							conn.executeUpdate("insert into billing.\"WhoisHistory\" (accounting, zone, whois_output) values(?,?,?)", accounting, zone, whoisOutput);
 							invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 						}
 					} catch(RuntimeException | IOException err) {
@@ -327,12 +327,12 @@ final public class DNSHandler implements CronJob {
 	}
 
 	/**
-	 * Gets the whois output for the specific whois_history record.
+	 * Gets the whois output for the specific billing.WhoisHistory record.
 	 */
 	public static String getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
 		AccountingCode accounting = getBusinessForWhoisHistory(conn, pkey);
 		BusinessHandler.checkAccessBusiness(conn, source, "getWhoisHistoryOutput", accounting);
-		return conn.executeStringQuery("select whois_output from whois_history where pkey=?", pkey);
+		return conn.executeStringQuery("select whois_output from billing.\"WhoisHistory\" where pkey=?", pkey);
 	}
 
 	/**
@@ -693,7 +693,7 @@ final public class DNSHandler implements CronJob {
 	public static AccountingCode getBusinessForWhoisHistory(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from whois_history where pkey=?",
+			"select accounting from billing.\"WhoisHistory\" where pkey=?",
 			pkey
 		);
 	}

@@ -8846,7 +8846,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new WhoisHistory(),
-							"select pkey, time, accounting, zone from whois_history"
+							"select pkey, time, accounting, zone from billing.\"WhoisHistory\""
 						);
 					} else {
 						// The servers don't need access to this information
@@ -8868,7 +8868,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
 					+ BU1_PARENTS_JOIN
-					+ "  whois_history wh\n"
+					+ "  billing.\"WhoisHistory\" wh\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
