@@ -6288,7 +6288,7 @@ final public class TableHandler {
 							+ "  packages pk1,\n"
 							+ BU1_PARENTS_JOIN
 							+ "  packages pk2,\n"
-							+ "  package_definitions pd,\n"
+							+ "  billing.\"PackageDefinition\" pd,\n"
 							+ "  billing.\"PackageDefinitionLimit\" pdl\n"
 							+ "where\n"
 							+ "  un.username=?\n"
@@ -6323,7 +6323,7 @@ final public class TableHandler {
 							+ "  packages pk1,\n"
 							+ BU1_PARENTS_JOIN
 							+ "  packages pk2,\n"
-							+ "  package_definitions pd,\n"
+							+ "  billing.\"PackageDefinition\" pd,\n"
 							+ "  billing.\"PackageDefinitionLimit\" pdl\n"
 							+ "where\n"
 							+ "  un.username=?\n"
@@ -6350,7 +6350,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new PackageDefinition(),
-						"select * from package_definitions"
+						"select * from billing.\"PackageDefinition\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -6363,7 +6363,7 @@ final public class TableHandler {
 						+ "  master_servers ms,\n"
 						+ "  business_servers bs,\n"
 						+ "  packages pk,\n"
-						+ "  package_definitions pd\n"
+						+ "  billing.\"PackageDefinition\" pd\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=bs.server\n"
@@ -6386,7 +6386,7 @@ final public class TableHandler {
 							+ "  packages pk1,\n"
 							+ BU1_PARENTS_JOIN
 							+ "  packages pk2,\n"
-							+ "  package_definitions pd\n"
+							+ "  billing.\"PackageDefinition\" pd\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk1.name\n"
@@ -6425,7 +6425,7 @@ final public class TableHandler {
 							+ "  packages pk1,\n"
 							+ BU1_PARENTS_JOIN
 							+ "  packages pk2,\n"
-							+ "  package_definitions pd\n"
+							+ "  billing.\"PackageDefinition\" pd\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk1.name\n"
