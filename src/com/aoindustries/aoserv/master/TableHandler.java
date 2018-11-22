@@ -5148,7 +5148,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new MajordomoVersion(),
-					"select * from majordomo_versions"
+					"select * from email.\"MajordomoVersion\""
 				);
 				break;
 			case MASTER_HOSTS :
