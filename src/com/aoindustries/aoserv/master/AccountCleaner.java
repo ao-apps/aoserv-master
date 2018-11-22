@@ -421,13 +421,13 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // email_pipes
+                // email.Pipe
                 {
                     IntList eps=conn.executeIntListQuery(
                         "select\n"
                         + "  ep.pkey\n"
                         + "from\n"
-                        + "  email_pipes ep,\n"
+                        + "  email.\"Pipe\" ep,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -812,7 +812,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select bu2.accounting from account.\"Account\" bu2 where bu2.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select cr.pkey from cvs_repositories cr where cr.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select el.pkey from email.\"List\" el where el.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select ep.pkey from email_pipes ep where ep.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select ep.pkey from email.\"Pipe\" ep where ep.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select esr.pkey from email_smtp_relays esr where esr.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select hst.pkey from httpd_shared_tomcats hst where hst.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select hsb.pkey from httpd_site_binds hsb where hsb.disable_log=dl.pkey limit 1) is null\n"

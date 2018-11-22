@@ -2291,7 +2291,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new EmailPipe(),
-						"select * from email_pipes"
+						"select * from email.\"Pipe\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2302,7 +2302,7 @@ final public class TableHandler {
 						+ "  ep.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  email_pipes ep\n"
+						+ "  email.\"Pipe\" ep\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ep.ao_server",
@@ -2321,7 +2321,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  email_pipes ep\n"
+					+ "  email.\"Pipe\" ep\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

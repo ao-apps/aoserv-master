@@ -417,7 +417,7 @@ final public class EmailHandler {
 	) throws IOException, SQLException {
 		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add EmailPipe, Package disabled: "+packageName);
 
-		int pkey = conn.executeIntUpdate("INSERT INTO email_pipes VALUES (default,?,?,?,null) RETURNING pkey", aoServer, command, packageName);
+		int pkey = conn.executeIntUpdate("INSERT INTO email.\"Pipe\" VALUES (default,?,?,?,null) RETURNING pkey", aoServer, command, packageName);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -863,7 +863,7 @@ final public class EmailHandler {
 		checkAccessEmailPipe(conn, source, "disableEmailPipe", pkey);
 
 		conn.executeUpdate(
-			"update email_pipes set disable_log=? where pkey=?",
+			"update email.\"Pipe\" set disable_log=? where pkey=?",
 			disableLog,
 			pkey
 		);
@@ -947,7 +947,7 @@ final public class EmailHandler {
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable EmailPipe #"+pkey+", Package not enabled: "+pk);
 
 		conn.executeUpdate(
-			"update email_pipes set disable_log=null where pkey=?",
+			"update email.\"Pipe\" set disable_log=null where pkey=?",
 			pkey
 		);
 
@@ -994,7 +994,7 @@ final public class EmailHandler {
 	}
 
 	public static int getDisableLogForEmailPipe(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from email_pipes where pkey=?", pkey);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from email.\"Pipe\" where pkey=?", pkey);
 	}
 
 	public static int getDisableLogForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -1043,7 +1043,7 @@ final public class EmailHandler {
 		DatabaseConnection conn,
 		AccountingCode name
 	) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from email_pipes where package=?", name);
+		return conn.executeIntListQuery("select pkey from email.\"Pipe\" where package=?", name);
 	}
 
 	public static long[] getImapFolderSizes(
@@ -1443,7 +1443,7 @@ final public class EmailHandler {
 				conn.executeUpdate("delete from email.\"Address\" where pkey=?", listnameEA);
 				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
-			conn.executeUpdate("delete from email_pipes where pkey=?", listnameEP);
+			conn.executeUpdate("delete from email.\"Pipe\" where pkey=?", listnameEP);
 			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, aoServer, false);
 
 			// Delete the listname_list_add
@@ -1461,7 +1461,7 @@ final public class EmailHandler {
 				conn.executeUpdate("delete from email.\"Address\" where pkey=?", listnameRequestEA);
 				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
-			conn.executeUpdate("delete from email_pipes where pkey=?", listnameRequestEP);
+			conn.executeUpdate("delete from email.\"Pipe\" where pkey=?", listnameRequestEP);
 			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, aoServer, false);
 
 			// Other direct email addresses
@@ -1559,7 +1559,7 @@ final public class EmailHandler {
 		}
 
 		// Delete from the database
-		conn.executeUpdate("delete from email_pipes where pkey=?", pkey);
+		conn.executeUpdate("delete from email.\"Pipe\" where pkey=?", pkey);
 
 		// Notify all clients of the update
 		if(addressesModified) {
@@ -1777,7 +1777,7 @@ final public class EmailHandler {
 			conn.executeUpdate("delete from email.\"Address\" where pkey=?", ea);
 			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 		}
-		conn.executeUpdate("delete from email_pipes where pkey=?", ep);
+		conn.executeUpdate("delete from email.\"Pipe\" where pkey=?", ep);
 		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, aoServer, false);
 
 		// Remove the referenced email addresses if not used
@@ -1829,7 +1829,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailPipe(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email_pipes ep, billing.\"Package\" pk where ep.package=pk.name and ep.pkey=?",
+			"select pk.accounting from email.\"Pipe\" ep, billing.\"Package\" pk where ep.package=pk.name and ep.pkey=?",
 			pkey
 		);
 	}
@@ -1908,7 +1908,7 @@ final public class EmailHandler {
 	public static AccountingCode getPackageForEmailPipe(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from email_pipes where pkey=?",
+			"select package from email.\"Pipe\" where pkey=?",
 			pkey
 		);
 	}
@@ -2017,7 +2017,7 @@ final public class EmailHandler {
 	}
 
 	public static int getAOServerForEmailPipe(DatabaseConnection conn, int pipe) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from email_pipes where pkey=?", pipe);
+		return conn.executeIntQuery("select ao_server from email.\"Pipe\" where pkey=?", pipe);
 	}
 
 	public static int getAOServerForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {

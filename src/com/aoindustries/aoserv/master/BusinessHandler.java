@@ -992,7 +992,7 @@ final public class BusinessHandler {
 		/*
 		 * Business must not have any resources on the server
 		 */
-		// email_pipes
+		// email.Pipe
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1001,7 +1001,7 @@ final public class BusinessHandler {
 				+ "      ep.pkey\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
-				+ "      email_pipes ep\n"
+				+ "      email.\"Pipe\" ep\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=ep.package\n"
