@@ -1500,7 +1500,7 @@ final public class LinuxAccountHandler {
 					"linux_server_accounts lsa, "+
 					"httpd_shared_tomcats hst, "+
 					"httpd_tomcat_shared_sites htss, "+
-					"httpd_sites hs "+
+					"web.\"Site\" hs "+
 						"where lga.username = lsa.username and "+
 						"lsa.pkey           = hst.linux_server_account and "+
 						"htss.tomcat_site   = hs.pkey and "+
@@ -1515,7 +1515,7 @@ final public class LinuxAccountHandler {
 						"linux_server_groups lsg, "+
 						"httpd_shared_tomcats hst, "+
 						"httpd_tomcat_shared_sites htss, "+
-						"httpd_sites hs "+
+						"web.\"Site\" hs "+
 							"where lga.\"group\" = lsg.name and "+
 							"lsg.pkey            = hst.linux_server_group and "+
 							"htss.tomcat_site    = hs.pkey and "+
@@ -1562,7 +1562,7 @@ final public class LinuxAccountHandler {
 			+ "            linux_server_accounts lsa,\n"
 			+ "            httpd_shared_tomcats hst,\n"
 			+ "            httpd_tomcat_shared_sites htss,\n"
-			+ "            httpd_sites hs\n"
+			+ "            web.\"Site\" hs\n"
 			+ "          where\n"
 			+ "            lga.username=lsa.username\n"
 			+ "            and lsa.pkey=hst.linux_server_account\n"
@@ -1578,7 +1578,7 @@ final public class LinuxAccountHandler {
 			+ "            linux_server_groups lsg,\n"
 			+ "            httpd_shared_tomcats hst,\n"
 			+ "            httpd_tomcat_shared_sites htss,\n"
-			+ "            httpd_sites hs\n"
+			+ "            web.\"Site\" hs\n"
 			+ "          where\n"
 			+ "            lga.\"group\"=lsg.name\n"
 			+ "            and lsg.pkey=hst.linux_server_group\n"

@@ -486,13 +486,13 @@ final public class AccountCleaner implements CronJob {
                 }*/
                 // TODO: Should also remove backup servers
 
-                // httpd_sites
+                // web.Site
                 {
                     IntList hss=conn.executeIntListQuery(
                         "select\n"
                         + "  hs.pkey\n"
                         + "from\n"
-                        + "  httpd_sites hs,\n"
+                        + "  web.\"Site\" hs,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -816,7 +816,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select esr.pkey from email.\"SmtpRelay\" esr where esr.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select hst.pkey from httpd_shared_tomcats hst where hst.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select hsb.pkey from httpd_site_binds hsb where hsb.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select hs.pkey from httpd_sites hs where hs.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select hs.pkey from web.\"Site\" hs where hs.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select la.username from linux_accounts la where la.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select lsa.pkey from linux_server_accounts lsa where lsa.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select msu.pkey from mysql_server_users msu where msu.disable_log=dl.pkey limit 1) is null\n"

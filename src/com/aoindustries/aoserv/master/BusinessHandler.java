@@ -1014,7 +1014,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one EmailPipe on Server="+server);
 
-		// httpd_sites
+		// web.Site
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1023,7 +1023,7 @@ final public class BusinessHandler {
 				+ "      hs.pkey\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
-				+ "      httpd_sites hs\n"
+				+ "      web.\"Site\" hs\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=hs.package\n"
@@ -1692,7 +1692,7 @@ final public class BusinessHandler {
 						+ "from\n"
 						+ "  httpd_site_urls hsu,\n"
 						+ "  httpd_site_binds hsb,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  billing.\"Package\" pk\n"
 						+ "where\n"
 						+ "  hsu.hostname=?\n"

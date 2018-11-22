@@ -2849,7 +2849,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_site_binds hsb,\n"
 					+ "  web.\"HttpdBind\" hb,\n"
 					+ "  net_binds nb\n"
@@ -2897,7 +2897,7 @@ final public class TableHandler {
 							+ "  hjs.*\n"
 							+ "from\n"
 							+ "  master_servers ms,\n"
-							+ "  httpd_sites hs,\n"
+							+ "  web.\"Site\" hs,\n"
 							+ "  httpd_jboss_sites hjs\n"
 							+ "where\n"
 							+ "  ms.username=?\n"
@@ -2919,7 +2919,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_jboss_sites hjs\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3087,7 +3087,7 @@ final public class TableHandler {
 						+ "  hsal.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_site_authenticated_locations hsal\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3108,7 +3108,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_site_authenticated_locations hsal\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3142,7 +3142,7 @@ final public class TableHandler {
 						+ "  hsbh.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_site_binds hsb,\n"
 						+ "  httpd_site_bind_headers hsbh\n"
 						+ "where\n"
@@ -3165,7 +3165,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_site_binds hsb,\n"
 					+ "  httpd_site_bind_headers hsbh\n"
 					+ "where\n"
@@ -3201,7 +3201,7 @@ final public class TableHandler {
 						+ "  hsbr.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_site_binds hsb,\n"
 						+ "  httpd_site_bind_redirects hsbr\n"
 						+ "where\n"
@@ -3224,7 +3224,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_site_binds hsb,\n"
 					+ "  httpd_site_bind_redirects hsbr\n"
 					+ "where\n"
@@ -3273,7 +3273,7 @@ final public class TableHandler {
 						+ "  sc.chain_file as ssl_cert_chain_file\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_site_binds hsb\n"
 						// Protocol conversion
 						+ "  left join ssl_certificates sc on hsb.certificate=sc.pkey\n"
@@ -3300,7 +3300,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_site_binds hsb\n"
 					// Protocol conversion
 					+ "  left join ssl_certificates sc on hsb.certificate=sc.pkey\n"
@@ -3336,7 +3336,7 @@ final public class TableHandler {
 						+ "  hsu.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_site_binds hsb,\n"
 						+ "  httpd_site_urls hsu\n"
 						+ "where\n"
@@ -3359,7 +3359,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_site_binds hsb,\n"
 					+ "  httpd_site_urls hsu\n"
 					+ "where\n"
@@ -3384,7 +3384,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdSite(),
-						"select * from httpd_sites"
+						"select * from web.\"Site\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3395,7 +3395,7 @@ final public class TableHandler {
 						+ "  hs.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs\n"
+						+ "  web.\"Site\" hs\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server",
@@ -3414,7 +3414,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs\n"
+					+ "  web.\"Site\" hs\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3446,7 +3446,7 @@ final public class TableHandler {
 						+ "  hss.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_static_sites hss\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3467,7 +3467,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_static_sites hss\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3501,7 +3501,7 @@ final public class TableHandler {
 						+ "  htc.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_tomcat_contexts htc\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3522,7 +3522,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_tomcat_contexts htc\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3556,7 +3556,7 @@ final public class TableHandler {
 						+ "  htds.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_tomcat_contexts htc,\n"
 						+ "  httpd_tomcat_data_sources htds\n"
 						+ "where\n"
@@ -3579,7 +3579,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_tomcat_contexts htc,\n"
 					+ "  httpd_tomcat_data_sources htds\n"
 					+ "where\n"
@@ -3615,7 +3615,7 @@ final public class TableHandler {
 						+ "  htp.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_tomcat_contexts htc,\n"
 						+ "  httpd_tomcat_parameters htp\n"
 						+ "where\n"
@@ -3638,7 +3638,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_tomcat_contexts htc,\n"
 					+ "  httpd_tomcat_parameters htp\n"
 					+ "where\n"
@@ -3674,7 +3674,7 @@ final public class TableHandler {
 						+ "  htsjm.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_tomcat_site_jk_mounts htsjm\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3695,7 +3695,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_tomcat_site_jk_mounts htsjm\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3740,7 +3740,7 @@ final public class TableHandler {
 						+ "  ) is null as use_apache\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_tomcat_sites hts\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3765,7 +3765,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_tomcat_sites hts\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3799,7 +3799,7 @@ final public class TableHandler {
 						+ "  htss.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_tomcat_shared_sites htss\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3820,7 +3820,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_tomcat_shared_sites htss\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3854,7 +3854,7 @@ final public class TableHandler {
 						+ "  htss.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  httpd_sites hs,\n"
+						+ "  web.\"Site\" hs,\n"
 						+ "  httpd_tomcat_std_sites htss\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3875,7 +3875,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  httpd_sites hs,\n"
+					+ "  web.\"Site\" hs,\n"
 					+ "  httpd_tomcat_std_sites htss\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -4097,7 +4097,7 @@ final public class TableHandler {
 						+ "      billing.\"Package\" pk3,\n"
 						+ BU2_PARENTS_JOIN
 						+ "      billing.\"Package\" pk4,\n"
-						+ "      httpd_sites hs,\n"
+						+ "      web.\"Site\" hs,\n"
 						+ "      httpd_site_binds hsb,\n"
 						+ "      net_binds nb\n"
 						+ "    where\n"
@@ -5736,7 +5736,7 @@ final public class TableHandler {
 					+ "      billing.\"Package\" pk3,\n"
 					+ BU2_PARENTS_JOIN
 					+ "      billing.\"Package\" pk4,\n"
-					+ "      httpd_sites hs,\n"
+					+ "      web.\"Site\" hs,\n"
 					+ "      httpd_site_binds hsb,\n"
 					+ "      net_binds nb3\n"
 					+ "    where\n"
@@ -5914,7 +5914,7 @@ final public class TableHandler {
 					+ "      billing.\"Package\" pk3,\n"
 					+ BU2_PARENTS_JOIN
 					+ "      billing.\"Package\" pk4,\n"
-					+ "      httpd_sites hs,\n"
+					+ "      web.\"Site\" hs,\n"
 					+ "      httpd_site_binds hsb,\n"
 					+ "      net_binds nb3\n"
 					+ "    where\n"

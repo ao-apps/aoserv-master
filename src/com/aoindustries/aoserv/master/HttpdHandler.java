@@ -270,7 +270,7 @@ final public class HttpdHandler {
 	public static int getHttpdSite(DatabaseConnection conn, int aoServer, String siteName) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select coalesce(\n"
-			+ "  (select pkey from httpd_sites where (ao_server, \"name\")=(?,?)),\n"
+			+ "  (select pkey from web.\"Site\" where (ao_server, \"name\")=(?,?)),\n"
 			+ "  -1\n"
 			+ ")",
 			aoServer,
@@ -465,7 +465,7 @@ final public class HttpdHandler {
 			);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, accounting, aoServer, false);
 		} else {
-			boolean enableCgi = conn.executeBooleanQuery("select enable_cgi from httpd_sites where pkey=?", tomcat_site);
+			boolean enableCgi = conn.executeBooleanQuery("select enable_cgi from web.\"Site\" where pkey=?", tomcat_site);
 			if(enableCgi) {
 				conn.executeUpdate(
 					"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
@@ -679,7 +679,7 @@ final public class HttpdHandler {
 			int slashPos = docBaseStr.indexOf('/', httpdSitesDir.toString().length() + 1);
 			if(slashPos == -1) slashPos = docBaseStr.length();
 			String siteName = docBaseStr.substring(httpdSitesDir.toString().length() + 1, slashPos);
-			int hs = conn.executeIntQuery("select pkey from httpd_sites where ao_server=? and \"name\"=?", aoServer, siteName);
+			int hs = conn.executeIntQuery("select pkey from web.\"Site\" where ao_server=? and \"name\"=?", aoServer, siteName);
 			HttpdHandler.checkAccessHttpdSite(conn, source, "addCvsRepository", hs);
 		} else if(docBaseStr.startsWith(httpdSharedTomcatsDir + "/")) {
 			int slashPos = docBaseStr.indexOf('/', httpdSharedTomcatsDir.toString().length() + 1);
@@ -943,7 +943,7 @@ final public class HttpdHandler {
 
 		// Create the HttpdSite
 		int httpdSitePKey = conn.executeIntUpdate(
-			"INSERT INTO httpd_sites (\n"
+			"INSERT INTO web.\"Site\" (\n"
 			+ "  ao_server,\n"
 			+ "  \"name\",\n"
 			+ "  package,\n"
@@ -1589,7 +1589,7 @@ final public class HttpdHandler {
 		}
 
 		conn.executeUpdate(
-			"update httpd_sites set disable_log=? where pkey=?",
+			"update web.\"Site\" set disable_log=? where pkey=?",
 			disableLog,
 			pkey
 		);
@@ -1678,7 +1678,7 @@ final public class HttpdHandler {
 		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable HttpdSite #"+pkey+", LinuxServerAccount not enabled: "+lsa);
 
 		conn.executeUpdate(
-			"update httpd_sites set disable_log=null where pkey=?",
+			"update web.\"Site\" set disable_log=null where pkey=?",
 			pkey
 		);
 
@@ -1785,7 +1785,7 @@ final public class HttpdHandler {
 		String template
 	) throws IOException, SQLException {
 		// Load the entire list of site names
-		List<String> names=conn.executeStringListQuery("select \"name\" from httpd_sites group by \"name\"");
+		List<String> names=conn.executeStringListQuery("select \"name\" from web.\"Site\" group by \"name\"");
 		int size=names.size();
 
 		// Sort them
@@ -1843,7 +1843,7 @@ final public class HttpdHandler {
 	}
 
 	public static int getDisableLogForHttpdSite(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from httpd_sites where pkey=?", pkey);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from web.\"Site\" where pkey=?", pkey);
 	}
 
 	public static int getDisableLogForHttpdSiteBind(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -1904,7 +1904,7 @@ final public class HttpdHandler {
 		DatabaseConnection conn,
 		AccountingCode name
 	) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from httpd_sites where package=?", name);
+		return conn.executeIntListQuery("select pkey from web.\"Site\" where package=?", name);
 	}
 
 	public static IntList getHttpdSitesForLinuxServerAccount(
@@ -1916,7 +1916,7 @@ final public class HttpdHandler {
 			+ "  hs.pkey\n"
 			+ "from\n"
 			+ "  linux_server_accounts lsa,\n"
-			+ "  httpd_sites hs\n"
+			+ "  web.\"Site\" hs\n"
 			+ "where\n"
 			+ "  lsa.pkey=?\n"
 			+ "  and lsa.username=hs.linux_account\n"
@@ -1956,7 +1956,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  httpd_sites hs,\n"
+			+ "  web.\"Site\" hs,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  hs.pkey=?\n"
@@ -2005,7 +2005,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  lsa.pkey\n"
 			+ "from\n"
-			+ "  httpd_sites hs,\n"
+			+ "  web.\"Site\" hs,\n"
 			+ "  linux_server_accounts lsa\n"
 			+ "where\n"
 			+ "  hs.pkey=?\n"
@@ -2058,7 +2058,7 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from httpd_sites where pkey=?",
+			"select package from web.\"Site\" where pkey=?",
 			pkey
 		);
 	}
@@ -2068,7 +2068,7 @@ final public class HttpdHandler {
 	}
 
 	public static int getAOServerForHttpdSite(DatabaseConnection conn, int httpdSite) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from httpd_sites where pkey=?", httpdSite);
+		return conn.executeIntQuery("select ao_server from web.\"Site\" where pkey=?", httpdSite);
 	}
 
 	public static int getAOServerForHttpdServer(DatabaseConnection conn, int httpdServer) throws IOException, SQLException {
@@ -2076,7 +2076,7 @@ final public class HttpdHandler {
 	}
 
 	public static String getSiteNameForHttpdSite(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeStringQuery("select \"name\" from httpd_sites where pkey=?", pkey);
+		return conn.executeStringQuery("select \"name\" from web.\"Site\" where pkey=?", pkey);
 	}
 
 	/**
@@ -2153,7 +2153,7 @@ final public class HttpdHandler {
 	}
 
 	public static boolean isSiteNameAvailable(DatabaseConnection conn, String siteName) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select (select pkey from httpd_sites where \"name\"=? limit 1) is null", siteName);
+		return conn.executeBooleanQuery("select (select pkey from web.\"Site\" where \"name\"=? limit 1) is null", siteName);
 	}
 
 	/**
@@ -2469,7 +2469,7 @@ final public class HttpdHandler {
 	}
 
 	/**
-	 * httpd_sites
+	 * web.Site
 	 *           + httpd_site_binds
 	 *           |                + httpd_site_bind_headers
 	 *           |                + httpd_site_bind_redirects
@@ -2498,7 +2498,7 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		AccountingCode accounting = getBusinessForHttpdSite(conn, httpdSitePKey);
 		int aoServer=getAOServerForHttpdSite(conn, httpdSitePKey);
-		String siteName=conn.executeStringQuery("select \"name\" from httpd_sites where pkey=?", httpdSitePKey);
+		String siteName=conn.executeStringQuery("select \"name\" from web.\"Site\" where pkey=?", httpdSitePKey);
 
 		// OperatingSystem settings
 		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
@@ -2698,8 +2698,8 @@ final public class HttpdHandler {
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_STATIC_SITES, accounting, aoServer, false);
 		}
 
-		// httpd_sites
-		conn.executeUpdate("delete from httpd_sites where pkey=?", httpdSitePKey);
+		// web.Site
+		conn.executeUpdate("delete from web.\"Site\" where pkey=?", httpdSitePKey);
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITES, accounting, aoServer, false);
 	}
 
@@ -2711,7 +2711,7 @@ final public class HttpdHandler {
 		AccountingCode accounting = getBusinessForHttpdServer(conn, pkey);
 		int aoServer = getAOServerForHttpdServer(conn, pkey);
 
-		// httpd_sites
+		// web.Site
 		conn.executeUpdate("delete from web.\"HttpdServer\" where pkey=?", pkey);
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SERVERS, accounting, aoServer, false);
 	}
@@ -2753,7 +2753,7 @@ final public class HttpdHandler {
 				+ "  (\n"
 				+ "    select hostname from httpd_site_urls where pkey=?\n"
 				+ "  )=(\n"
-				+ "    select hs.\"name\"||'.'||ao.hostname from httpd_sites hs, ao_servers ao where hs.pkey=? and hs.ao_server=ao.server\n"
+				+ "    select hs.\"name\"||'.'||ao.hostname from web.\"Site\" hs, ao_servers ao where hs.pkey=? and hs.ao_server=ao.server\n"
 				+ "  )",
 				pkey,
 				hs
@@ -3332,7 +3332,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_sites set is_manual=? where pkey=?",
+			"update web.\"Site\" set is_manual=? where pkey=?",
 			isManual,
 			pkey
 		);
@@ -3358,7 +3358,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_sites set server_admin=? where pkey=?",
+			"update web.\"Site\" set server_admin=? where pkey=?",
 			emailAddress,
 			pkey
 		);
@@ -3383,7 +3383,7 @@ final public class HttpdHandler {
 		int aoServer = getAOServerForHttpdSite(conn, pkey);
 		if(phpVersion != -1) {
 			if(isHttpdStaticSite(conn, pkey)) {
-				// TODO: This would be better modeled by not having php_version on the httpd_sites table, but rather more specialized types of sites
+				// TODO: This would be better modeled by not having php_version on the web.Site table, but rather more specialized types of sites
 				// TODO: How to enable PHP on a per-site basis, so static site under mod_php apache doesn't get php?
 				throw new SQLException("May not enable PHP on a static site");
 			}
@@ -3404,12 +3404,12 @@ final public class HttpdHandler {
 		int updateCount;
 		if(phpVersion == -1) {
 			updateCount = conn.executeUpdate(
-				"update httpd_sites set php_version=null where pkey=? and php_version is not null",
+				"update web.\"Site\" set php_version=null where pkey=? and php_version is not null",
 				pkey
 			);
 		} else {
 			updateCount = conn.executeUpdate(
-				"update httpd_sites set php_version=? where pkey=? and php_version!=?",
+				"update web.\"Site\" set php_version=? where pkey=? and php_version!=?",
 				phpVersion,
 				pkey,
 				phpVersion
@@ -3507,14 +3507,14 @@ final public class HttpdHandler {
 		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableCgi", pkey);
 
 		if(enableCgi && isHttpdStaticSite(conn, pkey)) {
-			// TODO: This would be better modeled by not having enable_cgi on the httpd_sites table, but rather more specialized types of sites
+			// TODO: This would be better modeled by not having enable_cgi on the web.Site table, but rather more specialized types of sites
 			throw new SQLException("May not enable CGI on a static site");
 		}
 
 		// Update the database
 		if(
 			conn.executeUpdate(
-				"update httpd_sites set enable_cgi=? where pkey=? and enable_cgi != ?",
+				"update web.\"Site\" set enable_cgi=? where pkey=? and enable_cgi != ?",
 				enableCgi,
 				pkey,
 				enableCgi
@@ -3570,7 +3570,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_sites set enable_ssi=? where pkey=?",
+			"update web.\"Site\" set enable_ssi=? where pkey=?",
 			enableSsi,
 			pkey
 		);
@@ -3595,7 +3595,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_sites set enable_htaccess=? where pkey=?",
+			"update web.\"Site\" set enable_htaccess=? where pkey=?",
 			enableHtaccess,
 			pkey
 		);
@@ -3620,7 +3620,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_sites set enable_indexes=? where pkey=?",
+			"update web.\"Site\" set enable_indexes=? where pkey=?",
 			enableIndexes,
 			pkey
 		);
@@ -3645,7 +3645,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_sites set enable_follow_symlinks=? where pkey=?",
+			"update web.\"Site\" set enable_follow_symlinks=? where pkey=?",
 			enableFollowSymlinks,
 			pkey
 		);
@@ -3670,7 +3670,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_sites set enable_anonymous_ftp=? where pkey=?",
+			"update web.\"Site\" set enable_anonymous_ftp=? where pkey=?",
 			enableAnonymousFtp,
 			pkey
 		);
@@ -3695,7 +3695,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_sites set block_trace_track=? where pkey=?",
+			"update web.\"Site\" set block_trace_track=? where pkey=?",
 			blockTraceTrack,
 			pkey
 		);
@@ -3720,7 +3720,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_sites set block_scm=? where pkey=?",
+			"update web.\"Site\" set block_scm=? where pkey=?",
 			blockScm,
 			pkey
 		);
@@ -3745,7 +3745,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_sites set block_core_dumps=? where pkey=?",
+			"update web.\"Site\" set block_core_dumps=? where pkey=?",
 			blockCoreDumps,
 			pkey
 		);
@@ -3770,7 +3770,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_sites set block_editor_backups=? where pkey=?",
+			"update web.\"Site\" set block_editor_backups=? where pkey=?",
 			blockEditorBackups,
 			pkey
 		);

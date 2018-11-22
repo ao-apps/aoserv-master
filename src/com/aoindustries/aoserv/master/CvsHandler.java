@@ -85,7 +85,7 @@ final public class CvsHandler {
 				int slashPos = pathStr.indexOf('/', httpdSitesDirStr.length() + 1);
 				if(slashPos == -1) slashPos = pathStr.length();
 				String siteName = pathStr.substring(httpdSitesDirStr.length() + 1, slashPos);
-				int hs = conn.executeIntQuery("select pkey from httpd_sites where ao_server=? and \"name\"=?", aoServer, siteName);
+				int hs = conn.executeIntQuery("select pkey from web.\"Site\" where ao_server=? and \"name\"=?", aoServer, siteName);
 				HttpdHandler.checkAccessHttpdSite(conn, source, "addCvsRepository", hs);
 			} else if(pathStr.startsWith(httpdSharedTomcatsDirStr + '/')) {
 				int slashPos = pathStr.indexOf('/', httpdSharedTomcatsDirStr.length() + 1);
