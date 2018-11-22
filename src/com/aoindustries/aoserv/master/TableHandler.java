@@ -3545,7 +3545,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatDataSource(),
-						"select * from httpd_tomcat_data_sources"
+						"select * from web.\"TomcatContextDataSource\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3558,7 +3558,7 @@ final public class TableHandler {
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  web.\"TomcatContext\" htc,\n"
-						+ "  httpd_tomcat_data_sources htds\n"
+						+ "  web.\"TomcatContextDataSource\" htds\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3581,7 +3581,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
 					+ "  web.\"TomcatContext\" htc,\n"
-					+ "  httpd_tomcat_data_sources htds\n"
+					+ "  web.\"TomcatContextDataSource\" htds\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

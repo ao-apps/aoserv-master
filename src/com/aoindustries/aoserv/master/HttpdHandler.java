@@ -500,7 +500,7 @@ final public class HttpdHandler {
 
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  httpd_tomcat_data_sources\n"
+			+ "  web.\"TomcatContextDataSource\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -2479,7 +2479,7 @@ final public class HttpdHandler {
 	 *           |                            + net_binds
 	 *           + web.TomcatSite
 	 *           |                  + web.TomcatContext
-	 *           |                                        + httpd_tomcat_data_sources
+	 *           |                                        + web.TomcatContextDataSource
 	 *           |                                        + web.TomcatContextParameter
 	 *           |                  + httpd_workers
 	 *           |                  |             + net_binds
@@ -2613,11 +2613,11 @@ final public class HttpdHandler {
 
 		// web.TomcatSite
 		if(conn.executeBooleanQuery("select (select httpd_site from web.\"TomcatSite\" where httpd_site=? limit 1) is not null", httpdSitePKey)) {
-			// httpd_tomcat_data_sources
-			IntList htdss=conn.executeIntListQuery("select htds.pkey from web.\"TomcatContext\" htc, httpd_tomcat_data_sources htds where htc.tomcat_site=? and htc.pkey=htds.tomcat_context", httpdSitePKey);
+			// web.TomcatContextDataSource
+			IntList htdss=conn.executeIntListQuery("select htds.pkey from web.\"TomcatContext\" htc, web.\"TomcatContextDataSource\" htds where htc.tomcat_site=? and htc.pkey=htds.tomcat_context", httpdSitePKey);
 			if(htdss.size() > 0) {
 				for(int c=0;c<htdss.size();c++) {
-					conn.executeUpdate("delete from httpd_tomcat_data_sources where pkey=?", htdss.getInt(c));
+					conn.executeUpdate("delete from web.\"TomcatContextDataSource\" where pkey=?", htdss.getInt(c));
 				}
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES, accounting, aoServer, false);
 			}
@@ -2784,7 +2784,7 @@ final public class HttpdHandler {
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
-		if(conn.executeUpdate("delete from httpd_tomcat_data_sources where tomcat_context=?", pkey) > 0) {
+		if(conn.executeUpdate("delete from web.\"TomcatContextDataSource\" where tomcat_context=?", pkey) > 0) {
 			invalidateList.addTable(
 				conn,
 				SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES,
@@ -2837,14 +2837,14 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int pkey
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from httpd_tomcat_data_sources where pkey=?", pkey);
+		int tomcat_context=conn.executeIntQuery("select tomcat_context from web.\"TomcatContextDataSource\" where pkey=?", pkey);
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from web.\"TomcatContext\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatDataSource", tomcat_site);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
-		conn.executeUpdate("delete from httpd_tomcat_data_sources where pkey=?", pkey);
+		conn.executeUpdate("delete from web.\"TomcatContextDataSource\" where pkey=?", pkey);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES,
@@ -2892,7 +2892,7 @@ final public class HttpdHandler {
 		int maxWait,
 		String validationQuery
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from httpd_tomcat_data_sources where pkey=?", pkey);
+		int tomcat_context=conn.executeIntQuery("select tomcat_context from web.\"TomcatContextDataSource\" where pkey=?", pkey);
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from web.\"TomcatContext\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "updateHttpdTomcatDataSource", tomcat_site);
 
@@ -2900,7 +2900,7 @@ final public class HttpdHandler {
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
 		conn.executeUpdate(
-			"update httpd_tomcat_data_sources set name=?, driver_class_name=?, url=?, username=?, password=?, max_active=?, max_idle=?, max_wait=?, validation_query=? where pkey=?",
+			"update web.\"TomcatContextDataSource\" set name=?, driver_class_name=?, url=?, username=?, password=?, max_active=?, max_idle=?, max_wait=?, validation_query=? where pkey=?",
 			name,
 			driverClassName,
 			url,
