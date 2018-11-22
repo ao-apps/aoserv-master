@@ -726,7 +726,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new Architecture(),
-					"select * from architectures"
+					"select * from distribution.\"Architecture\""
 				);
 				break;
 			case BACKUP_PARTITIONS :
