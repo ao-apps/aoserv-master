@@ -354,13 +354,13 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // dns_zones
+                // dns.Zone
                 {
                     List<String> dzs=conn.executeStringListQuery(
                         "select\n"
                         + "  dz.zone\n"
                         + "from\n"
-                        + "  dns_zones dz,\n"
+                        + "  dns.\"Zone\" dz,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"

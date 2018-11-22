@@ -10284,7 +10284,7 @@ public abstract class MasterServer {
 
 	/**
 	 * Determines if this hostname may be used by the source.  The <code>dns.ForbiddenZone</code>,
-	 * dns_zones, httpd_site_urls, and email_domains tables are searched, in this order,
+	 * <code>dns.Zone</code>, httpd_site_urls, and email_domains tables are searched, in this order,
 	 * for a match.  If a match is found with an owner of this source, then access is
 	 * granted.  If the source is not restricted by either server or business, then
 	 * access is granted and the previous checks are avoided.
@@ -10305,10 +10305,10 @@ public abstract class MasterServer {
 			Connection.TRANSACTION_READ_COMMITTED,
 			true,
 			false,
-			"select zone from dns_zones where zone=?",
+			"select zone from dns.\"Zone\" where zone=?",
 			zone
 		);
-		if(existingZone!=null && !DNSHandler.canAccessDNSZone(conn, source, existingZone)) throw new SQLException("Access to this hostname forbidden: Exists in dns_zones: "+hostname);
+		if(existingZone!=null && !DNSHandler.canAccessDNSZone(conn, source, existingZone)) throw new SQLException("Access to this hostname forbidden: Exists in dns.Zone: "+hostname);
 
 		String domain = zone.substring(0, zone.length()-1);
 

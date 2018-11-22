@@ -299,7 +299,7 @@ final public class DNSHandler implements CronJob {
 			+ "  pk.accounting as accounting,\n"
 			+ "  dz.zone as zone\n"
 			+ "from\n"
-			+ "  dns_zones dz\n"
+			+ "  dns.\"Zone\" dz\n"
 			+ "  inner join billing.\"Package\" pk on dz.package=pk.name\n"
 			+ "where\n"
 			+ "  dz.zone not like '%.in-addr.arpa'\n"
@@ -436,7 +436,7 @@ final public class DNSHandler implements CronJob {
 
 		// Add the dns_zone entry
 		conn.executeUpdate(
-			"insert into dns_zones values(?,?,?,?,?,?)",
+			"insert into dns.\"Zone\" values(?,?,?,?,?,?)",
 			zone,
 			zone,
 			packageName,
@@ -545,8 +545,8 @@ final public class DNSHandler implements CronJob {
 		// Remove the dns_records entries
 		conn.executeUpdate("delete from dns_records where zone=?", zone);
 
-		// Remove the dns_zones entry
-		conn.executeUpdate("delete from dns_zones where zone=?", zone);
+		// Remove the dns.Zone entry
+		conn.executeUpdate("delete from dns.\"Zone\" where zone=?", zone);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
@@ -580,7 +580,7 @@ final public class DNSHandler implements CronJob {
 		DomainName tld = DNSZoneTable.getHostTLD(hostname, tlds);
 		String zone = tld + ".";
 		boolean exists = conn.executeBooleanQuery(
-			"select (select zone from dns_zones where zone=?) is not null",
+			"select (select zone from dns.\"Zone\" where zone=?) is not null",
 			zone
 		);
 		if (exists) {
@@ -677,7 +677,7 @@ final public class DNSHandler implements CronJob {
 	public static AccountingCode getBusinessForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from dns_records nr, dns_zones nz, billing.\"Package\" pk where nr.zone=nz.zone and nz.package=pk.name and nr.pkey=?",
+			"select pk.accounting from dns_records nr, dns.\"Zone\" nz, billing.\"Package\" pk where nr.zone=nz.zone and nz.package=pk.name and nr.pkey=?",
 			pkey
 		);
 	}
@@ -685,7 +685,7 @@ final public class DNSHandler implements CronJob {
 	public static AccountingCode getBusinessForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from dns_zones nz, billing.\"Package\" pk where nz.package=pk.name and nz.zone=?",
+			"select pk.accounting from dns.\"Zone\" nz, billing.\"Package\" pk where nz.package=pk.name and nz.zone=?",
 			zone
 		);
 	}
@@ -722,13 +722,13 @@ final public class DNSHandler implements CronJob {
 	}
 
 	public static boolean isDNSZoneAvailable(DatabaseConnection conn, String zone) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select (select zone from dns_zones where zone=?) is null", zone);
+		return conn.executeBooleanQuery("select (select zone from dns.\"Zone\" where zone=?) is null", zone);
 	}
 
 	public static AccountingCode getPackageForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select nz.package from dns_records nr, dns_zones nz where nr.pkey=? and nr.zone=nz.zone",
+			"select nz.package from dns_records nr, dns.\"Zone\" nz where nr.pkey=? and nr.zone=nz.zone",
 			pkey
 		);
 	}
@@ -736,7 +736,7 @@ final public class DNSHandler implements CronJob {
 	public static AccountingCode getPackageForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from dns_zones where zone=?",
+			"select package from dns.\"Zone\" where zone=?",
 			zone
 		);
 	}
@@ -760,7 +760,7 @@ final public class DNSHandler implements CronJob {
 		if(conn.executeBooleanQuery("select (select pkey from httpd_site_urls where hostname=? limit 1) is null", hostname)) {
 			DomainName tld = DNSZoneTable.getHostTLD(hostname, tlds);
 			String zone = tld + ".";
-			if(conn.executeBooleanQuery("select (select zone from dns_zones where zone=?) is not null", zone)) {
+			if(conn.executeBooleanQuery("select (select zone from dns.\"Zone\" where zone=?) is not null", zone)) {
 				String preTld = getPreTld(hostname, tld);
 				int deleteCount = conn.executeUpdate(
 					"delete from dns_records where\n"
@@ -800,7 +800,7 @@ final public class DNSHandler implements CronJob {
 		if (ttl <= 0 || ttl > 24*60*60) {
 			throw new SQLException("Illegal TTL value: "+ttl);
 		}
-		conn.executeUpdate("update dns_zones set ttl=? where zone=?", ttl, zone);
+		conn.executeUpdate("update dns.\"Zone\" set ttl=? where zone=?", ttl, zone);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.DNS_ZONES,
@@ -855,7 +855,7 @@ final public class DNSHandler implements CronJob {
 		String zone
 	) throws IOException, SQLException {
 		// Get the old serial
-		long serial=conn.executeLongQuery("select serial from dns_zones where zone=?", zone);
+		long serial=conn.executeLongQuery("select serial from dns.\"Zone\" where zone=?", zone);
 
 		// Check if already today or higher
 		long todaySerial=DNSZone.getCurrentSerial();
@@ -868,7 +868,7 @@ final public class DNSHandler implements CronJob {
 		}
 
 		// Place the serial back in the database
-		conn.executeUpdate("update dns_zones set serial=? where zone=?", serial, zone);
+		conn.executeUpdate("update dns.\"Zone\" set serial=? where zone=?", serial, zone);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.DNS_ZONES,
@@ -902,7 +902,7 @@ final public class DNSHandler implements CronJob {
 					String arpaZone=DNSZone.getArpaZoneForIPAddress(ip, netmask);
 					if(
 						conn.executeBooleanQuery(
-							"select (select zone from dns_zones where zone=?) is not null",
+							"select (select zone from dns.\"Zone\" where zone=?) is not null",
 							arpaZone
 						)
 					) {

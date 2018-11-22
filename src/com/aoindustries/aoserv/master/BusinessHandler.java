@@ -1635,7 +1635,7 @@ final public class BusinessHandler {
 	 *   <li>Look for exact matches in billing and technical contacts, with a weight of 10.</li>
 	 *   <li>Look for matches in email_domains, with a weight of 5</li>
 	 *   <li>Look for matches in httpd_site_urls with a weight of 1</li>
-	 *   <li>Look for matches in dns_zones with a weight of 1</li>
+	 *   <li>Look for matches in dns.Zone with a weight of 1</li>
 	 *   <li>Add up the weights per business</li>
 	 *   <li>Find the highest weight</li>
 	 *   <li>Follow the bill_parents up to top billing level</li>
@@ -1704,14 +1704,14 @@ final public class BusinessHandler {
 					for (AccountingCode accounting : sites) {
 						addWeight(businessWeights, accounting, 1);
 					}
-					// Look for matches in dns_zones, 1 point each
+					// Look for matches in dns.Zone, 1 point each
 					List<AccountingCode> zones=conn.executeObjectCollectionQuery(
 						new ArrayList<AccountingCode>(),
 						ObjectFactories.accountingCodeFactory,
 						"select\n"
 						+ "  pk.accounting\n"
 						+ "from\n"
-						+ "  dns_zones dz,\n"
+						+ "  dns.\"Zone\" dz,\n"
 						+ "  billing.\"Package\" pk\n"
 						+ "where\n"
 						+ "  dz.zone=?\n"

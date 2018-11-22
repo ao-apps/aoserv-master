@@ -1853,7 +1853,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  dns_zones dz,\n"
+					+ "  dns.\"Zone\" dz,\n"
 					+ "  dns_records dr\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -1896,7 +1896,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new DNSZone(),
-						"select * from dns_zones"
+						"select * from dns.\"Zone\""
 					); else {
 						List<DNSZone> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
@@ -1914,7 +1914,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  dns_zones dz\n"
+					+ "  dns.\"Zone\" dz\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
