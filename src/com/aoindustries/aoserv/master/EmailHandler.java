@@ -179,7 +179,7 @@ final public class EmailHandler {
 		}
 
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO email_addresses (address, \"domain\") VALUES (?,?) RETURNING pkey",
+			"INSERT INTO email.\"Address\" (address, \"domain\") VALUES (?,?) RETURNING pkey",
 			address,
 			domain
 		);
@@ -1118,7 +1118,7 @@ final public class EmailHandler {
 		DatabaseConnection conn,
 		int emailAddress
 	) throws IOException, SQLException {
-		return conn.executeIntQuery("select domain from email_addresses where pkey=?", emailAddress);
+		return conn.executeIntQuery("select domain from email.\"Address\" where pkey=?", emailAddress);
 	}
 
 	public static String getMajordomoInfoFile(
@@ -1340,7 +1340,7 @@ final public class EmailHandler {
 		if(isEmailPipeAddress) conn.executeUpdate("delete from email_pipe_addresses where email_address=?", address);
 
 		// Delete from the database
-		conn.executeUpdate("delete from email_addresses where pkey=?", address);
+		conn.executeUpdate("delete from email.\"Address\" where pkey=?", address);
 
 		// Notify all clients of the update
 		if(isBlackhole) invalidateList.addTable(conn, SchemaTable.TableID.BLACKHOLE_EMAIL_ADDRESSES, accounting, aoServer, false);
@@ -1443,7 +1443,7 @@ final public class EmailHandler {
 			conn.executeUpdate("delete from email_pipe_addresses where pkey=?", listnameEPA);
 			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
 			if(!isEmailAddressUsed(conn, listnameEA)) {
-				conn.executeUpdate("delete from email_addresses where pkey=?", listnameEA);
+				conn.executeUpdate("delete from email.\"Address\" where pkey=?", listnameEA);
 				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 			conn.executeUpdate("delete from email_pipes where pkey=?", listnameEP);
@@ -1453,7 +1453,7 @@ final public class EmailHandler {
 			conn.executeUpdate("delete from email_list_addresses where pkey=?", listnameListELA);
 			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
 			if(!isEmailAddressUsed(conn, listnameListEA)) {
-				conn.executeUpdate("delete from email_addresses where pkey=?", listnameListEA);
+				conn.executeUpdate("delete from email.\"Address\" where pkey=?", listnameListEA);
 				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 
@@ -1461,7 +1461,7 @@ final public class EmailHandler {
 			conn.executeUpdate("delete from email_pipe_addresses where pkey=?", listnameRequestEPA);
 			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
 			if(!isEmailAddressUsed(conn, listnameRequestEA)) {
-				conn.executeUpdate("delete from email_addresses where pkey=?", listnameRequestEA);
+				conn.executeUpdate("delete from email.\"Address\" where pkey=?", listnameRequestEA);
 				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 			conn.executeUpdate("delete from email_pipes where pkey=?", listnameRequestEP);
@@ -1469,15 +1469,15 @@ final public class EmailHandler {
 
 			// Other direct email addresses
 			if(!isEmailAddressUsed(conn, ownerListnameEA)) {
-				conn.executeUpdate("delete from email_addresses where pkey=?", ownerListnameEA);
+				conn.executeUpdate("delete from email.\"Address\" where pkey=?", ownerListnameEA);
 				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 			if(!isEmailAddressUsed(conn, listnameOwnerEA)) {
-				conn.executeUpdate("delete from email_addresses where pkey=?", listnameOwnerEA);
+				conn.executeUpdate("delete from email.\"Address\" where pkey=?", listnameOwnerEA);
 				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 			if(!isEmailAddressUsed(conn, listnameApprovalEA)) {
-				conn.executeUpdate("delete from email_addresses where pkey=?", listnameApprovalEA);
+				conn.executeUpdate("delete from email.\"Address\" where pkey=?", listnameApprovalEA);
 				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 		}
@@ -1490,7 +1490,7 @@ final public class EmailHandler {
 			int address=addresses.getInt(c);
 			conn.executeUpdate("delete from email_list_addresses where email_address=? and email_list=?", address, pkey);
 			if(!isEmailAddressUsed(conn, address)) {
-				conn.executeUpdate("delete from email_addresses where pkey=?", address);
+				conn.executeUpdate("delete from email.\"Address\" where pkey=?", address);
 			}
 		}
 
@@ -1557,7 +1557,7 @@ final public class EmailHandler {
 			int address=addresses.getInt(c);
 			conn.executeUpdate("delete from email_pipe_addresses where email_address=? and email_pipe=?", address, pkey);
 			if(!isEmailAddressUsed(conn, address)) {
-				conn.executeUpdate("delete from email_addresses where pkey=?", address);
+				conn.executeUpdate("delete from email.\"Address\" where pkey=?", address);
 			}
 		}
 
@@ -1623,7 +1623,7 @@ final public class EmailHandler {
 		if(ms!=-1) removeMajordomoServer(conn, invalidateList, pkey);
 
 		// Get the list of all email addresses in the domain
-		IntList addresses=conn.executeIntListQuery("select pkey from email_addresses where domain=?", pkey);
+		IntList addresses=conn.executeIntListQuery("select pkey from email.\"Address\" where domain=?", pkey);
 
 		int len=addresses.size();
 		boolean eaMod=len>0;
@@ -1683,7 +1683,7 @@ final public class EmailHandler {
 			}
 
 			// Delete from the database
-			conn.executeUpdate("delete from email_addresses where pkey=?", address);
+			conn.executeUpdate("delete from email.\"Address\" where pkey=?", address);
 		}
 
 		// Remove the domain from the database
@@ -1777,7 +1777,7 @@ final public class EmailHandler {
 		conn.executeUpdate("delete from email_pipe_addresses where pkey=?", epa);
 		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
 		if(!isEmailAddressUsed(conn, ea)) {
-			conn.executeUpdate("delete from email_addresses where pkey=?", ea);
+			conn.executeUpdate("delete from email.\"Address\" where pkey=?", ea);
 			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 		}
 		conn.executeUpdate("delete from email_pipes where pkey=?", ep);
@@ -1785,11 +1785,11 @@ final public class EmailHandler {
 
 		// Remove the referenced email addresses if not used
 		if(!isEmailAddressUsed(conn, omEA)) {
-			conn.executeUpdate("delete from email_addresses where pkey=?", omEA);
+			conn.executeUpdate("delete from email.\"Address\" where pkey=?", omEA);
 			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 		}
 		if(!isEmailAddressUsed(conn, moEA)) {
-			conn.executeUpdate("delete from email_addresses where pkey=?", moEA);
+			conn.executeUpdate("delete from email.\"Address\" where pkey=?", moEA);
 			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 		}
 	}
@@ -1816,7 +1816,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailAddress(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email_addresses ea, email_domains sd, billing.\"Package\" pk where ea.domain=sd.pkey and sd.package=pk.name and ea.pkey=?",
+			"select pk.accounting from email.\"Address\" ea, email_domains sd, billing.\"Package\" pk where ea.domain=sd.pkey and sd.package=pk.name and ea.pkey=?",
 			pkey
 		);
 	}
@@ -1863,7 +1863,7 @@ final public class EmailHandler {
 
 	public static int getEmailAddress(DatabaseConnection conn, String address, int domain) throws IOException, SQLException {
 		return conn.executeIntQuery(
-			"select coalesce((select pkey from email_addresses where address=? and domain=?), -1)",
+			"select coalesce((select pkey from email.\"Address\" where address=? and domain=?), -1)",
 			address,
 			domain
 		);
@@ -1933,7 +1933,7 @@ final public class EmailHandler {
 	}
 
 	public static int getAOServerForEmailAddress(DatabaseConnection conn, int address) throws IOException, SQLException {
-		return conn.executeIntQuery("select ed.ao_server from email_addresses ea, email_domains ed where ea.domain=ed.pkey and ea.pkey=?", address);
+		return conn.executeIntQuery("select ed.ao_server from email.\"Address\" ea, email_domains ed where ea.domain=ed.pkey and ea.pkey=?", address);
 	}
 
 	public static int getAOServerForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {

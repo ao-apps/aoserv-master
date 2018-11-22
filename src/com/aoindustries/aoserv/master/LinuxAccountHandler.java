@@ -1659,7 +1659,7 @@ final public class LinuxAccountHandler {
 			int address=addresses.getInt(c);
 			conn.executeUpdate("delete from linux_acc_addresses where email_address=?", address);
 			if(!EmailHandler.isEmailAddressUsed(conn, address)) {
-				conn.executeUpdate("delete from email_addresses where pkey=?", address);
+				conn.executeUpdate("delete from email.\"Address\" where pkey=?", address);
 			}
 		}
 

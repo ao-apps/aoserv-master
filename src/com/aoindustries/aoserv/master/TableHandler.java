@@ -956,7 +956,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  email_domains ed,\n"
-						+ "  email_addresses ea,\n"
+						+ "  email.\"Address\" ea,\n"
 						+ "  email.\"BlackholeAddress\" bh\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -979,7 +979,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  email_domains ed,\n"
-					+ "  email_addresses ea,\n"
+					+ "  email.\"Address\" ea,\n"
 					+ "  email.\"BlackholeAddress\" bh\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -1935,7 +1935,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new EmailAddress(),
-						"select * from email_addresses"
+						"select * from email.\"Address\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -1947,7 +1947,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  email_domains ed,\n"
-						+ "  email_addresses ea\n"
+						+ "  email.\"Address\" ea\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ed.ao_server\n"
@@ -1968,7 +1968,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  email_domains ed,\n"
-					+ "  email_addresses ea\n"
+					+ "  email.\"Address\" ea\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -2069,7 +2069,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  email_domains ed,\n"
-						+ "  email_addresses ea,\n"
+						+ "  email.\"Address\" ea,\n"
 						+ "  email_forwarding ef\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -2092,7 +2092,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  email_domains ed,\n"
-					+ "  email_addresses ea,\n"
+					+ "  email.\"Address\" ea,\n"
 					+ "  email_forwarding ef\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -2128,7 +2128,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  email_domains ed,\n"
-						+ "  email_addresses ea,\n"
+						+ "  email.\"Address\" ea,\n"
 						+ "  email_list_addresses ela\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -2151,7 +2151,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  email_domains ed,\n"
-					+ "  email_addresses ea,\n"
+					+ "  email.\"Address\" ea,\n"
 					+ "  email_list_addresses ela\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -2244,7 +2244,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  email_domains ed,\n"
-						+ "  email_addresses ea,\n"
+						+ "  email.\"Address\" ea,\n"
 						+ "  email_pipe_addresses epa\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -2267,7 +2267,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  email_domains ed,\n"
-					+ "  email_addresses ea,\n"
+					+ "  email.\"Address\" ea,\n"
 					+ "  email_pipe_addresses epa\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -4609,7 +4609,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  email_domains ed,\n"
-						+ "  email_addresses ea,\n"
+						+ "  email.\"Address\" ea,\n"
 						+ "  linux_acc_addresses laa\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -4632,7 +4632,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  email_domains ed,\n"
-					+ "  email_addresses ea,\n"
+					+ "  email.\"Address\" ea,\n"
 					+ "  linux_acc_addresses laa\n"
 					+ "where\n"
 					+ "  un.username=?\n"
