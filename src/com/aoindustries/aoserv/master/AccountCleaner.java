@@ -146,7 +146,7 @@ final public class AccountCleaner implements CronJob {
                                 + "    from\n"
                                 + "      backup_reports br,\n"
                                 + "      packages pk,\n"
-                                + "      businesses bu\n"
+                                + "      account.\"Account\" bu\n"
                                 + "    where\n"
                                 + "      br.package=pk.pkey\n"
                                 + "      and pk.accounting=bu.accounting\n"
@@ -167,7 +167,7 @@ final public class AccountCleaner implements CronJob {
                                 + "    from\n"
                                 + "      backup_reports br,\n"
                                 + "      packages pk,\n"
-                                + "      businesses bu\n"
+                                + "      account.\"Account\" bu\n"
                                 + "    where\n"
                                 + "      br.package=pk.pkey\n"
                                 + "      and pk.accounting=bu.accounting\n"
@@ -206,19 +206,19 @@ final public class AccountCleaner implements CronJob {
                         }
                     }
 
-                // businesses
+                // account.Account
                 {
                     {
                         // look for any accounts that have been canceled but not disabled
                         List<AccountingCode> bus = conn.executeObjectListQuery(
 							ObjectFactories.accountingCodeFactory,
-                            "select accounting from businesses where parent=? and canceled is not null and disable_log is null",
+                            "select accounting from account.\"Account\" where parent=? and canceled is not null and disable_log is null",
                             BusinessHandler.getRootBusiness()
                         );
                         if(!bus.isEmpty()) {
                             message
-                                .append("The following ")
-                                .append(bus.size()==1?"business has":"businesses have")
+                                .append("The following account.Account ")
+                                .append(bus.size()==1?"has":"have")
                                 .append(" been canceled but not disabled:\n");
 							for (AccountingCode bu : bus) {
 								message.append(bu).append('\n');
@@ -234,7 +234,7 @@ final public class AccountCleaner implements CronJob {
                             "select\n"
                             + "  bu.accounting\n"
                             + "from\n"
-                            + "  businesses bu,\n"
+                            + "  account.\"Account\" bu,\n"
                             + "  disable_log dl\n"
                             + "where\n"
                             + "  bu.canceled is null\n"
@@ -244,8 +244,8 @@ final public class AccountCleaner implements CronJob {
                         );
                         if(bus.size()>0) {
                             message
-                                .append("The following ")
-                                .append(bus.size()==1?"business has":"businesses have")
+                                .append("The following account.Account ")
+                                .append(bus.size()==1?"has":"have")
                                 .append(" been disabled for over 60 days but not canceled:\n");
 							for (AccountingCode bu : bus) {
 								message.append(bu).append('\n');
@@ -262,7 +262,7 @@ final public class AccountCleaner implements CronJob {
                         + "  cc.pkey\n"
                         + "from\n"
                         + "  credit_cards cc,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  cc.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
@@ -282,10 +282,10 @@ final public class AccountCleaner implements CronJob {
                         "select\n"
                         + "  ba.username\n"
                         + "from\n"
-                        + "  account.\"Administrator\" ba\n"
-                        + "  inner join usernames      un on ba.username   = un.username\n"
-                        + "  inner join packages       pk on un.package    = pk.name\n"
-                        + "  inner join businesses     bu on pk.accounting = bu.accounting\n"
+                        + "  account.\"Administrator\"      ba\n"
+                        + "  inner join usernames           un on ba.username   = un.username\n"
+                        + "  inner join packages            pk on un.package    = pk.name\n"
+                        + "  inner join account.\"Account\" bu on pk.accounting = bu.accounting\n"
                         + "where\n"
                         + "  bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS + "\n"
@@ -339,7 +339,7 @@ final public class AccountCleaner implements CronJob {
                         + "  linux_server_accounts lsa,\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  cr.linux_server_account=lsa.pkey\n"
                         + "  and lsa.username=un.username\n"
@@ -362,7 +362,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  dns_zones dz,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  dz.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -385,7 +385,7 @@ final public class AccountCleaner implements CronJob {
                         + "  linux_server_groups lsg,\n"
                         + "  linux_groups lg,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  el.linux_server_group=lsg.pkey\n"
                         + "  and lsg.name=lg.name\n"
@@ -408,7 +408,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  email_domains ed,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  ed.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -429,7 +429,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  email_pipes ep,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  ep.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -450,7 +450,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  email_smtp_relays esr,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  esr.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -470,7 +470,7 @@ final public class AccountCleaner implements CronJob {
                         "select\n"
                         + "  fbs.pkey\n"
                         + "from\n"
-                        + "  businesses bu,\n"
+                        + "  account.\"Account\" bu,\n"
                         + "  packages pk,\n"
                         + "  file_backup_settings fbs\n"
                         + "where\n"
@@ -494,7 +494,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  httpd_sites hs,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  hs.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -517,7 +517,7 @@ final public class AccountCleaner implements CronJob {
                         + "  linux_server_groups lsg,\n"
                         + "  linux_groups lg,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  hst.linux_server_group=lsg.pkey\n"
                         + "  and lsg.name=lg.name\n"
@@ -541,7 +541,7 @@ final public class AccountCleaner implements CronJob {
                         + "  private_ftp_servers pfs,\n"
                         + "  net_binds nb,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  pfs.net_bind=nb.pkey\n"
                         + "  and nb.package=pk.name\n"
@@ -563,7 +563,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  net_binds nb,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  nb.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -585,7 +585,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  \"IPAddress\" ia,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  ia.package=pk.pkey\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -608,7 +608,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  httpd_servers hs,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  hs.package=pk.pkey\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -632,7 +632,7 @@ final public class AccountCleaner implements CronJob {
                         + "  linux_accounts la,\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  la.username=un.username\n"
                         + "  and un.package=pk.name\n"
@@ -660,7 +660,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  linux_groups lg,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  lg.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -686,7 +686,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  mysql_databases md,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  md.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -709,7 +709,7 @@ final public class AccountCleaner implements CronJob {
                         + "  mysql_users mu,\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  mu.username=un.username\n"
                         + "  and un.package=pk.name\n"
@@ -733,7 +733,7 @@ final public class AccountCleaner implements CronJob {
                         + "  postgres_server_users psu,\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  pd.datdba=psu.pkey\n"
                         + "  and psu.username=un.username\n"
@@ -758,7 +758,7 @@ final public class AccountCleaner implements CronJob {
                         + "  postgres_users pu,\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  pu.username=un.username\n"
                         + "  and un.package=pk.name\n"
@@ -782,7 +782,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  usernames un,\n"
                         + "  packages pk,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  un.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -803,13 +803,13 @@ final public class AccountCleaner implements CronJob {
                         + "  dl.pkey\n"
                         + "from\n"
                         + "  disable_log dl,\n"
-                        + "  businesses bu\n"
+                        + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  dl.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
                         + "  and (select ba.username from account.\"Administrator\" ba where ba.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select bu2.accounting from businesses bu2 where bu2.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select bu2.accounting from account.\"Account\" bu2 where bu2.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select cr.pkey from cvs_repositories cr where cr.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select el.pkey from email_lists el where el.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select ep.pkey from email_pipes ep where ep.disable_log=dl.pkey limit 1) is null\n"
@@ -831,7 +831,7 @@ final public class AccountCleaner implements CronJob {
                 }
 
                 // business_servers
-                // delete all business_servers for canceled businesses
+                // delete all business_servers for canceled account.Account
                 {
                     for(int depth = Business.MAXIMUM_BUSINESS_TREE_DEPTH; depth>=1; depth--) {
                         // non-default
@@ -840,7 +840,7 @@ final public class AccountCleaner implements CronJob {
                             + "  bs.pkey\n"
                             + "from\n"
                             + "  business_servers bs,\n"
-                            + "  businesses bu\n"
+                            + "  account.\"Account\" bu\n"
                             + "where\n"
                             + "  not bs.is_default\n"
                             + "  and bs.accounting=bu.accounting\n"
@@ -861,7 +861,7 @@ final public class AccountCleaner implements CronJob {
                             + "  bs.pkey\n"
                             + "from\n"
                             + "  business_servers bs,\n"
-                            + "  businesses bu\n"
+                            + "  account.\"Account\" bu\n"
                             + "where\n"
                             + "  bs.accounting=bu.accounting\n"
                             + "  and bu.canceled is not null\n"

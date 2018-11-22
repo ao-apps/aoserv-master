@@ -231,26 +231,26 @@ final public class TableHandler {
 	 */
 	public static final String
 		BU1_PARENTS_JOIN=
-			  "  businesses bu1\n"
-			+ "  left join businesses bu2 on bu1.parent=bu2.accounting\n"
-			+ "  left join businesses bu3 on bu2.parent=bu3.accounting\n"
-			+ "  left join businesses bu4 on bu3.parent=bu4.accounting\n"
-			+ "  left join businesses bu5 on bu4.parent=bu5.accounting\n"
-			+ "  left join businesses bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting,\n",
+			  "  account.\"Account\" bu1\n"
+			+ "  left join account.\"Account\" bu2 on bu1.parent=bu2.accounting\n"
+			+ "  left join account.\"Account\" bu3 on bu2.parent=bu3.accounting\n"
+			+ "  left join account.\"Account\" bu4 on bu3.parent=bu4.accounting\n"
+			+ "  left join account.\"Account\" bu5 on bu4.parent=bu5.accounting\n"
+			+ "  left join account.\"Account\" bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting,\n",
 		BU1_PARENTS_JOIN_NO_COMMA=
-			  "  businesses bu1\n"
-			+ "  left join businesses bu2 on bu1.parent=bu2.accounting\n"
-			+ "  left join businesses bu3 on bu2.parent=bu3.accounting\n"
-			+ "  left join businesses bu4 on bu3.parent=bu4.accounting\n"
-			+ "  left join businesses bu5 on bu4.parent=bu5.accounting\n"
-			+ "  left join businesses bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting\n",
+			  "  account.\"Account\" bu1\n"
+			+ "  left join account.\"Account\" bu2 on bu1.parent=bu2.accounting\n"
+			+ "  left join account.\"Account\" bu3 on bu2.parent=bu3.accounting\n"
+			+ "  left join account.\"Account\" bu4 on bu3.parent=bu4.accounting\n"
+			+ "  left join account.\"Account\" bu5 on bu4.parent=bu5.accounting\n"
+			+ "  left join account.\"Account\" bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting\n",
 		BU2_PARENTS_JOIN=
-			  "      businesses bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+"\n"
-			+ "      left join businesses bu8 on bu7.parent=bu8.accounting\n"
-			+ "      left join businesses bu9 on bu8.parent=bu9.accounting\n"
-			+ "      left join businesses bu10 on bu9.parent=bu10.accounting\n"
-			+ "      left join businesses bu11 on bu10.parent=bu11.accounting\n"
-			+ "      left join businesses bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+" on bu11.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".accounting,\n"
+			  "      account.\"Account\" bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+"\n"
+			+ "      left join account.\"Account\" bu8 on bu7.parent=bu8.accounting\n"
+			+ "      left join account.\"Account\" bu9 on bu8.parent=bu9.accounting\n"
+			+ "      left join account.\"Account\" bu10 on bu9.parent=bu10.accounting\n"
+			+ "      left join account.\"Account\" bu11 on bu10.parent=bu11.accounting\n"
+			+ "      left join account.\"Account\" bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+" on bu11.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".accounting,\n"
 	;
 
 	/**
@@ -1362,7 +1362,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new Business(),
-						"select * from businesses"
+						"select * from account.\"Account\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -1374,7 +1374,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  business_servers bs,\n"
-						+ "  businesses bu\n"
+						+ "  account.\"Account\" bu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=bs.server\n"

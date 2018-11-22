@@ -771,7 +771,7 @@ final public class PackageHandler {
             + "  bu.accounting\n"
             + "from\n"
             + "  packages pk,\n"
-            + "  businesses bu\n"
+            + "  account.\"Account\" bu\n"
             + "where\n"
             + "  pk.package_definition=?\n"
             + "  and pk.accounting=bu.accounting",

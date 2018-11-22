@@ -1306,7 +1306,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                 try {
                     boolean connRolledBack=false;
                     try {
-                        // Find the accounting code, credit_card pkey, and account balances of all businesses that have a credit card set for automatic payments (and is active)
+                        // Find the accounting code, credit_card pkey, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
                         List<AutomaticPayment> automaticPayments = conn.executeQuery(
 							(ResultSet results) -> {
 								try {
@@ -1398,14 +1398,14 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "  ccp.param3,\n"
                             + "  ccp.param4\n"
                             + "from\n"
-                            + "  businesses bu,\n"
+                            + "  account.\"Account\" bu,\n"
                             + "  (\n"
                             + "    select\n"
                             + "      bu.accounting,\n"
                             + "      coalesce(sum(cast((tr.rate*tr.quantity) as decimal(9,2))), 0) as balance\n"
                             + "    from\n"
-                            + "                businesses   bu\n"
-                            + "      left join transactions tr on bu.accounting = tr.accounting\n"
+                            + "                account.\"Account\" bu\n"
+                            + "      left join transactions        tr on bu.accounting = tr.accounting\n"
                             + "    where\n"
                             + "      tr.payment_confirmed!='N'\n"
                             + "      and tr.time<?\n"
@@ -1417,8 +1417,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "      bu.accounting,\n"
                             + "      coalesce(sum(cast((tr.rate*tr.quantity) as decimal(9,2))), 0) as balance\n"
                             + "    from\n"
-                            + "                businesses   bu\n"
-                            + "      left join transactions tr on bu.accounting = tr.accounting\n"
+                            + "                account.\"Account\" bu\n"
+                            + "      left join transactions        tr on bu.accounting = tr.accounting\n"
                             + "    where\n"
                             + "      tr.payment_confirmed!='N'\n"
                             + "    group by\n"

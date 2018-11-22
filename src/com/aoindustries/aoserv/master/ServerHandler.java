@@ -59,7 +59,7 @@ final public class ServerHandler {
 		// Security and validity checks
 		String accounting=UsernameHandler.getBusinessForUsername(conn, source.getUsername());
 		if(
-			!conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select can_add_backup_server from businesses where accounting=?", accounting)
+			!conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select can_add_backup_server from account.\"Account\" where accounting=?", accounting)
 		) throw new SQLException("Not allowed to add_backup_server: "+source.getUsername());
 
 		MasterServer.checkAccessHostname(conn, source, "addBackupServer", hostname);

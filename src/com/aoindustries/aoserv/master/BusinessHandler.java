@@ -103,7 +103,7 @@ final public class BusinessHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update businesses set canceled=now(), cancel_reason=? where accounting=?",
+			"update account.\"Account\" set canceled=now(), cancel_reason=? where accounting=?",
 			cancelReason,
 			accounting
 		);
@@ -164,7 +164,7 @@ final public class BusinessHandler {
 	}
 
 	public static void checkAddBusiness(DatabaseConnection conn, RequestSource source, String action, AccountingCode parent, int server) throws IOException, SQLException {
-		boolean canAdd = conn.executeBooleanQuery("select can_add_businesses from businesses where accounting=?", UsernameHandler.getBusinessForUsername(conn, source.getUsername()));
+		boolean canAdd = conn.executeBooleanQuery("select can_add_businesses from account.\"Account\" where accounting=?", UsernameHandler.getBusinessForUsername(conn, source.getUsername()));
 		if(canAdd) {
 			MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
 			if(mu!=null) {
@@ -251,7 +251,7 @@ final public class BusinessHandler {
 							+ "from\n"
 							+ "  master_servers ms,\n"
 							+ "  business_servers bs,\n"
-							+ "  businesses bu\n"
+							+ "  account.\"Account\" bu\n"
 							+ "where\n"
 							+ "  ms.username=?\n"
 							+ "  and ms.server=bs.server\n"
@@ -262,7 +262,7 @@ final public class BusinessHandler {
 						V=conn.executeObjectCollectionQuery(
 							new ArrayList<AccountingCode>(),
 							ObjectFactories.accountingCodeFactory,
-							"select accounting from businesses"
+							"select accounting from account.\"Account\""
 						);
 					}
 				} else {
@@ -323,7 +323,7 @@ final public class BusinessHandler {
 		if(newDepth>Business.MAXIMUM_BUSINESS_TREE_DEPTH) throw new SQLException("Unable to add Business '"+accounting+"', the maximum depth of the business tree ("+Business.MAXIMUM_BUSINESS_TREE_DEPTH+") would be exceeded.");
 
 		conn.executeUpdate(
-			"insert into businesses (\n"
+			"insert into account.\"Account\" (\n"
 			+ "  accounting,\n"
 			+ "  contract_version,\n"
 			+ "  parent,\n"
@@ -563,7 +563,7 @@ final public class BusinessHandler {
 				+ "    select\n"
 				+ "      bs.pkey\n"
 				+ "    from\n"
-				+ "      businesses bu,\n"
+				+ "      account.\"Account\" bu,\n"
 				+ "      business_servers bs\n"
 				+ "    where\n"
 				+ "      bu.accounting=?\n"
@@ -691,7 +691,7 @@ final public class BusinessHandler {
 		}
 
 		conn.executeUpdate(
-			"update businesses set disable_log=? where accounting=?",
+			"update account.\"Account\" set disable_log=? where accounting=?",
 			disableLog,
 			accounting
 		);
@@ -737,7 +737,7 @@ final public class BusinessHandler {
 		if(isBusinessCanceled(conn, accounting)) throw new SQLException("Unable to enable Business, Business canceled: "+accounting);
 
 		conn.executeUpdate(
-			"update businesses set disable_log=null where accounting=?",
+			"update account.\"Account\" set disable_log=null where accounting=?",
 			accounting
 		);
 
@@ -800,7 +800,7 @@ final public class BusinessHandler {
 		Set<AccountingCode> codes=conn.executeObjectCollectionQuery(
 			new HashSet<AccountingCode>(),
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from businesses"
+			"select accounting from account.\"Account\""
 		);
 		// Find one that is not used
 		for(int c=1;c<Integer.MAX_VALUE;c++) {
@@ -826,7 +826,7 @@ final public class BusinessHandler {
 		while(accounting!=null) {
 			AccountingCode parent=conn.executeObjectQuery(
 				ObjectFactories.accountingCodeFactory,
-				"select parent from businesses where accounting=?",
+				"select parent from account.\"Account\" where accounting=?",
 				accounting
 			);
 			depth++;
@@ -845,7 +845,7 @@ final public class BusinessHandler {
 	}
 
 	public static int getDisableLogForBusiness(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from businesses where accounting=?", accounting);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from account.\"Account\" where accounting=?", accounting);
 	}
 
 	final private static Map<UserId,Integer> businessAdministratorDisableLogs=new HashMap<>();
@@ -879,7 +879,7 @@ final public class BusinessHandler {
 		DatabaseConnection conn,
 		AccountingCode accounting
 	) throws IOException, SQLException {
-		return conn.executeIntQuery("select count(*) from businesses where accounting=?", accounting)==0;
+		return conn.executeIntQuery("select count(*) from account.\"Account\" where accounting=?", accounting)==0;
 	}
 
 	public static boolean isBusinessAdministratorPasswordSet(
@@ -976,7 +976,7 @@ final public class BusinessHandler {
 				+ "    select\n"
 				+ "      bs.pkey\n"
 				+ "    from\n"
-				+ "      businesses bu,\n"
+				+ "      account.\"Account\" bu,\n"
 				+ "      business_servers bs\n"
 				+ "    where\n"
 				+ "      bu.parent=?\n"
@@ -1310,7 +1310,7 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		checkAccessBusiness(conn, source, "setBusinessAccounting", oldAccounting);
 
-		conn.executeUpdate("update businesses set accounting=? where accounting=?", newAccounting, oldAccounting);
+		conn.executeUpdate("update account.\"Account\" set accounting=? where accounting=?", newAccounting, oldAccounting);
 
 		// Notify all clients of the update
 		Collection<AccountingCode> accts=InvalidateList.getCollection(oldAccounting, newAccounting);
@@ -1507,7 +1507,7 @@ final public class BusinessHandler {
 	public static AccountingCode getParentBusiness(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select parent from businesses where accounting=?",
+			"select parent from account.\"Account\" where accounting=?",
 			accounting
 		);
 	}
@@ -1547,11 +1547,11 @@ final public class BusinessHandler {
 	}
 
 	public static boolean isBusinessCanceled(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select canceled is not null from businesses where accounting=?", accounting);
+		return conn.executeBooleanQuery("select canceled is not null from account.\"Account\" where accounting=?", accounting);
 	}
 
 	public static boolean isBusinessBillParent(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select bill_parent from businesses where accounting=?", accounting);
+		return conn.executeBooleanQuery("select bill_parent from account.\"Account\" where accounting=?", accounting);
 	}
 
 	public static boolean canSeePrices(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
@@ -1559,7 +1559,7 @@ final public class BusinessHandler {
 	}
 
 	public static boolean canSeePrices(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select can_see_prices from businesses where accounting=?", accounting);
+		return conn.executeBooleanQuery("select can_see_prices from account.\"Account\" where accounting=?", accounting);
 	}
 
 	public static boolean isBusinessOrParent(DatabaseConnection conn, AccountingCode parentAccounting, AccountingCode accounting) throws IOException, SQLException {
@@ -1582,14 +1582,14 @@ final public class BusinessHandler {
 	}
 
 	/**
-	 * Gets the list of both technical and billing contacts for all not-canceled businesses.
+	 * Gets the list of both technical and billing contacts for all not-canceled account.Account.
 	 *
 	 * @return  a <code>HashMap</code> of <code>ArrayList</code>
 	 */
 	public static Map<AccountingCode,List<String>> getBusinessContacts(DatabaseConnection conn) throws IOException, SQLException {
 		return conn.executeQuery(
 			(ResultSet results) -> {
-				// Load the list of businesses and their contacts
+				// Load the list of account.Account and their contacts
 				Map<AccountingCode,List<String>> businessContacts = new HashMap<>();
 				List<String> foundAddresses = new SortedArrayList<>();
 				try {
@@ -1624,7 +1624,7 @@ final public class BusinessHandler {
 				}
 				return businessContacts;
 			},
-			"select bp.accounting, bp.billing_email, bp.technical_email from account.\"AccountProfile\" bp, businesses bu where bp.accounting=bu.accounting and bu.canceled is null order by bp.accounting, bp.priority desc"
+			"select bp.accounting, bp.billing_email, bp.technical_email from account.\"AccountProfile\" bp, account.\"Account\" bu where bp.accounting=bu.accounting and bu.canceled is null order by bp.accounting, bp.priority desc"
 		);
 	}
 
@@ -1642,7 +1642,7 @@ final public class BusinessHandler {
 	 * </ol>
 	 */
 	public static AccountingCode getBusinessFromEmailAddresses(DatabaseConnection conn, List<String> addresses) throws IOException, SQLException {
-		// Load the list of businesses and their contacts
+		// Load the list of account.Account and their contacts
 		Map<AccountingCode,List<String>> businessContacts=getBusinessContacts(conn);
 
 		// The cumulative weights are added up here, per business

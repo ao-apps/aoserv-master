@@ -46,7 +46,7 @@ final public class InvalidateList {
     // TODO: Unused 2018-11-18: final private static String[] tableNames=new String[numTables];
 
     /**
-     * Indicates that all servers or businesses should receive the invalidate signal.
+     * Indicates that all servers or account.Account should receive the invalidate signal.
      */
     public static final List<AccountingCode> allBusinesses=Collections.unmodifiableList(new ArrayList<AccountingCode>());
     public static final IntList allServers=new IntArrayList();
