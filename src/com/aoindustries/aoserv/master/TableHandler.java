@@ -2654,7 +2654,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new FileBackupSetting(),
-						"select * from file_backup_settings"
+						"select * from backup.\"FileReplicationSetting\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2666,7 +2666,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  backup.\"FileReplication\" ffr,\n"
-						+ "  file_backup_settings fbs\n"
+						+ "  backup.\"FileReplicationSetting\" fbs\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ffr.server\n"
@@ -2688,7 +2688,7 @@ final public class TableHandler {
 					+ "  packages pk2,\n"
 					+ "  servers se,\n"
 					+ "  backup.\"FileReplication\" ffr,\n"
-					+ "  file_backup_settings fbs\n"
+					+ "  backup.\"FileReplicationSetting\" fbs\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

@@ -195,13 +195,13 @@ final public class FailoverHandler implements CronJob {
 		int server=getFromServerForFailoverFileReplication(conn, replication);
 		AccountingCode userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
 		AccountingCode serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
-		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set file_backup_settings for servers that have the same package as the business_administrator making the settings");
+		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set backup.FileReplicationSetting for servers that have the same package as the business_administrator making the settings");
 
 		// If not modified, invalidation will not be performed
 		boolean modified = false;
 
 		// Get the list of all the pkeys that currently exist
-		IntList pkeys = conn.executeIntListQuery("select pkey from file_backup_settings where replication=?", replication);
+		IntList pkeys = conn.executeIntListQuery("select pkey from backup.\"FileReplicationSetting\" where replication=?", replication);
 		int size = paths.size();
 		for(int c=0;c<size;c++) {
 			// If it exists, remove pkey from the list, otherwise add
@@ -209,14 +209,14 @@ final public class FailoverHandler implements CronJob {
 			boolean backupEnabled = backupEnableds.get(c);
 			boolean required = requireds.get(c);
 			int existingPkey = conn.executeIntQuery(
-				"select coalesce((select pkey from file_backup_settings where replication=? and path=?), -1)",
+				"select coalesce((select pkey from backup.\"FileReplicationSetting\" where replication=? and path=?), -1)",
 				replication,
 				path
 			);
 			if(existingPkey==-1) {
 				// Doesn't exist, add
 				conn.executeUpdate(
-					"insert into file_backup_settings (replication, path, backup_enabled, required) values(?,?,?,?)",
+					"insert into backup.\"FileReplicationSetting\" (replication, path, backup_enabled, required) values(?,?,?,?)",
 					replication,
 					path,
 					backupEnabled,
@@ -227,7 +227,7 @@ final public class FailoverHandler implements CronJob {
 				// Update the flags if either doesn't match
 				if(
 					conn.executeUpdate(
-						"update file_backup_settings set backup_enabled=?, required=? where pkey=? and not (backup_enabled=? and required=?)",
+						"update backup.\"FileReplicationSetting\" set backup_enabled=?, required=? where pkey=? and not (backup_enabled=? and required=?)",
 						backupEnabled,
 						required,
 						existingPkey,
@@ -243,7 +243,7 @@ final public class FailoverHandler implements CronJob {
 		// Delete the unmatched pkeys
 		if(pkeys.size()>0) {
 			for(int c=0,len=pkeys.size(); c<len; c++) {
-				conn.executeUpdate("delete from file_backup_settings where pkey=?", pkeys.getInt(c));
+				conn.executeUpdate("delete from backup.\"FileReplicationSetting\" where pkey=?", pkeys.getInt(c));
 			}
 			modified = true;
 		}

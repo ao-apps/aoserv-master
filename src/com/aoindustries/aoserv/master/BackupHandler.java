@@ -45,7 +45,7 @@ public final class BackupHandler {
         // TODO: Check for windows roots: if(FilePathHandler.getRootNode(backupConn, path.substring(0, slashPos+1))==-1) throw new SQLException("Path does not start with a valid root: "+path);
 
         int pkey = conn.executeIntUpdate(
-            "INSERT INTO file_backup_settings (replication, \"path\", backup_enabled, required) VALUES (?,?,?,?) RETURNING pkey",
+            "INSERT INTO backup.\"FileReplicationSetting\" (replication, \"path\", backup_enabled, required) VALUES (?,?,?,?) RETURNING pkey",
             replication,
             path,
             backupEnabled,
@@ -69,7 +69,7 @@ public final class BackupHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
+        int server = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
         int packageNum=ServerHandler.getPackageForServer(conn, server);
         PackageHandler.checkAccessPackage(conn, source, "removeFileBackupSetting", packageNum);
 
@@ -81,10 +81,10 @@ public final class BackupHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
+        int server = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
         int packageNum=ServerHandler.getPackageForServer(conn, server);
 
-        conn.executeUpdate("delete from file_backup_settings where pkey=?", pkey);
+        conn.executeUpdate("delete from backup.\"FileReplicationSetting\" where pkey=?", pkey);
 
         // Notify all clients of the update
         invalidateList.addTable(
@@ -105,7 +105,7 @@ public final class BackupHandler {
         boolean backupEnabled,
         boolean required
     ) throws IOException, SQLException {
-        int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
+        int server = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
         int packageNum = ServerHandler.getPackageForServer(conn, server);
         PackageHandler.checkAccessPackage(conn, source, "setFileBackupSetting", packageNum);
 
@@ -117,7 +117,7 @@ public final class BackupHandler {
 
         conn.executeUpdate(
             "update\n"
-            + "  file_backup_settings\n"
+            + "  backup.\"FileReplicationSetting\"\n"
             + "set\n"
             + "  path=?,\n"
             + "  backup_enabled=?,\n"

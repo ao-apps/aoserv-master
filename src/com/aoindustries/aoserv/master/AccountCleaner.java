@@ -464,7 +464,7 @@ final public class AccountCleaner implements CronJob {
                 }
 
                 /*
-                // file_backup_settings
+                // backup.FileReplicationSetting
                 {
                     IntList fbss=conn.executeIntListQuery(
                         "select\n"
@@ -472,7 +472,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  account.\"Account\" bu,\n"
                         + "  packages pk,\n"
-                        + "  file_backup_settings fbs\n"
+                        + "  backup."FileReplicationSetting" fbs\n"
                         + "where\n"
                         + "  bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
