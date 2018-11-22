@@ -366,7 +366,7 @@ final public class EmailHandler {
 		if(domainAOServer!=listServer) throw new SQLException("List server ("+listServer+")!=Email address server ("+domainAOServer+')');
 
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO email_list_addresses (email_address, email_list) VALUES (?,?) RETURNING pkey",
+			"INSERT INTO email.\"ListAddress\" (email_address, email_list) VALUES (?,?) RETURNING pkey",
 			address,
 			email_list
 		);
@@ -1333,7 +1333,7 @@ final public class EmailHandler {
 		}
 
 		boolean isEmailForwarding = conn.executeUpdate("delete from email.\"Forwarding\" where email_address=?", address) > 0;
-		boolean isEmailListAddress = conn.executeUpdate("delete from email_list_addresses where email_address=?", address) > 0;
+		boolean isEmailListAddress = conn.executeUpdate("delete from email.\"ListAddress\" where email_address=?", address) > 0;
 		boolean isEmailPipeAddress = conn.executeUpdate("delete from email_pipe_addresses where email_address=?", address) > 0;
 
 		// Delete from the database
@@ -1374,7 +1374,7 @@ final public class EmailHandler {
 		InvalidateList invalidateList,
 		int ela
 	) throws IOException, SQLException {
-		int ea=conn.executeIntQuery("select email_address from email_list_addresses where pkey=?", ela);
+		int ea=conn.executeIntQuery("select email_address from email.\"ListAddress\" where pkey=?", ela);
 		checkAccessEmailAddress(conn, source, "removeEmailListAddress", ea);
 
 		// Get stuff for use after the try block
@@ -1382,7 +1382,7 @@ final public class EmailHandler {
 		int aoServer=getAOServerForEmailAddress(conn, ea);
 
 		// Delete from the database
-		conn.executeUpdate("delete from email_list_addresses where pkey=?", ela);
+		conn.executeUpdate("delete from email.\"ListAddress\" where pkey=?", ela);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
@@ -1421,7 +1421,7 @@ final public class EmailHandler {
 
 			// Get the listname_list_add and details
 			int listnameListELA=conn.executeIntQuery("select listname_list_add from majordomo_lists where email_list=?", pkey);
-			int listnameListEA=conn.executeIntQuery("select email_address from email_list_addresses where pkey=?", listnameListELA);
+			int listnameListEA=conn.executeIntQuery("select email_address from email.\"ListAddress\" where pkey=?", listnameListELA);
 
 			// Get the listname_request_pipe_add and details
 			int listnameRequestEPA=conn.executeIntQuery("select listname_request_pipe_add from majordomo_lists where email_list=?", pkey);
@@ -1447,7 +1447,7 @@ final public class EmailHandler {
 			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, aoServer, false);
 
 			// Delete the listname_list_add
-			conn.executeUpdate("delete from email_list_addresses where pkey=?", listnameListELA);
+			conn.executeUpdate("delete from email.\"ListAddress\" where pkey=?", listnameListELA);
 			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
 			if(!isEmailAddressUsed(conn, listnameListEA)) {
 				conn.executeUpdate("delete from email.\"Address\" where pkey=?", listnameListEA);
@@ -1480,12 +1480,12 @@ final public class EmailHandler {
 		}
 
 		// Delete the objects that depend on this one first
-		IntList addresses=conn.executeIntListQuery("select email_address from email_list_addresses where email_list=?", pkey);
+		IntList addresses=conn.executeIntListQuery("select email_address from email.\"ListAddress\" where email_list=?", pkey);
 		int size=addresses.size();
 		boolean addressesModified=size>0;
 		for(int c=0;c<size;c++) {
 			int address=addresses.getInt(c);
-			conn.executeUpdate("delete from email_list_addresses where email_address=? and email_list=?", address, pkey);
+			conn.executeUpdate("delete from email.\"ListAddress\" where email_address=? and email_list=?", address, pkey);
 			if(!isEmailAddressUsed(conn, address)) {
 				conn.executeUpdate("delete from email.\"Address\" where pkey=?", address);
 			}
@@ -1661,11 +1661,11 @@ final public class EmailHandler {
 
 			if(
 				conn.executeBooleanQuery(
-					"select (select pkey from email_list_addresses where email_address=? limit 1) is not null",
+					"select (select pkey from email.\"ListAddress\" where email_address=? limit 1) is not null",
 					address
 				)
 			) {
-				conn.executeUpdate("delete from email_list_addresses where email_address=?", address);
+				conn.executeUpdate("delete from email.\"ListAddress\" where email_address=?", address);
 				elaMod=true;
 			}
 
@@ -1959,7 +1959,7 @@ final public class EmailHandler {
 		return
 			conn.executeBooleanQuery("select (select email_address from email.\"BlackholeAddress\" where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery("select (select pkey from email.\"Forwarding\" where email_address=? limit 1) is not null", pkey)
-			|| conn.executeBooleanQuery("select (select pkey from email_list_addresses where email_address=? limit 1) is not null", pkey)
+			|| conn.executeBooleanQuery("select (select pkey from email.\"ListAddress\" where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery("select (select pkey from email_pipe_addresses where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery("select (select pkey from linux_acc_addresses where email_address=? limit 1) is not null", pkey)
 			|| conn.executeBooleanQuery(
@@ -1970,7 +1970,7 @@ final public class EmailHandler {
 				+ "    from\n"
 				+ "      majordomo_lists ml,\n"
 				+ "      email_pipe_addresses epa1,\n"
-				+ "      email_list_addresses ela,\n"
+				+ "      email.\"ListAddress\" ela,\n"
 				+ "      email_pipe_addresses epa2\n"
 				+ "    where\n"
 				+ "      ml.listname_pipe_add=epa1.pkey\n"
