@@ -2950,7 +2950,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new HttpdJKCode(),
-					"select * from httpd_jk_codes"
+					"select * from web.\"TomcatWorkerName\""
 				);
 				break;
 			case HTTPD_JK_PROTOCOLS :
