@@ -6975,7 +6975,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new Resource(),
-					"select * from resources"
+					"select * from billing.\"Resource\""
 				);
 				break;
 			case SCHEMA_COLUMNS :
