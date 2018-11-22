@@ -392,7 +392,7 @@ final public class DNSHandler implements CronJob {
 
 		// Add the entry
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO dns_records VALUES (default,?,?,?,?,?,?,null,?) RETURNING pkey",
+			"INSERT INTO dns.\"Record\" VALUES (default,?,?,?,?,?,?,null,?) RETURNING pkey",
 			zone,
 			domain,
 			type,
@@ -447,7 +447,7 @@ final public class DNSHandler implements CronJob {
 
 		// Add the MX entry
 		conn.executeUpdate(
-			"insert into dns_records(zone, domain, type, priority, destination) values(?,?,?,?,?)",
+			"insert into dns.\"Record\"(zone, domain, type, priority, destination) values(?,?,?,?,?)",
 			zone,
 			"@",
 			DNSType.MX,
@@ -455,7 +455,7 @@ final public class DNSHandler implements CronJob {
 			"mail"
 		);
 
-		final String INSERT_RECORD = "insert into dns_records(zone, domain, type, destination) values(?,?,?,?)";
+		final String INSERT_RECORD = "insert into dns.\"Record\"(zone, domain, type, destination) values(?,?,?,?)";
 		// TODO: Take a "mail exchanger" parameter to properly setup the default MX records.
 		//       If in this domain, sets up SPF like below.  If outside this domain (ends in .),
 		//       sets up MX to the mail exchanger, and CNAME "mail" to the mail exchanger.
@@ -511,8 +511,8 @@ final public class DNSHandler implements CronJob {
 		// Get the zone associated with the pkey
 		String zone=getDNSZoneForDNSRecord(conn, pkey);
 
-		// Remove the dns_records entry
-		conn.executeUpdate("delete from dns_records where pkey=?", pkey);
+		// Remove the dns.Record entry
+		conn.executeUpdate("delete from dns.\"Record\" where pkey=?", pkey);
 		invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
 		// Update the serial of the zone
@@ -542,8 +542,8 @@ final public class DNSHandler implements CronJob {
 		InvalidateList invalidateList,
 		String zone
 	) throws IOException, SQLException {
-		// Remove the dns_records entries
-		conn.executeUpdate("delete from dns_records where zone=?", zone);
+		// Remove the dns.Record entries
+		conn.executeUpdate("delete from dns.\"Record\" where zone=?", zone);
 
 		// Remove the dns.Zone entry
 		conn.executeUpdate("delete from dns.\"Zone\" where zone=?", zone);
@@ -586,7 +586,7 @@ final public class DNSHandler implements CronJob {
 		if (exists) {
 			String preTld = getPreTld(hostname, tld);
 			exists = conn.executeBooleanQuery(
-				"select (select pkey from dns_records where zone=? and type='A' and domain=?) is not null",
+				"select (select pkey from dns.\"Record\" where zone=? and type='A' and domain=?) is not null",
 				zone,
 				preTld
 			);
@@ -603,7 +603,7 @@ final public class DNSHandler implements CronJob {
 						throw new AssertionError();
 				}
 				conn.executeUpdate(
-					"insert into dns_records (zone, domain, type, destination) values (?,?,?,?)",
+					"insert into dns.\"Record\" (zone, domain, type, destination) values (?,?,?,?)",
 					zone,
 					preTld,
 					aType,
@@ -677,7 +677,7 @@ final public class DNSHandler implements CronJob {
 	public static AccountingCode getBusinessForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from dns_records nr, dns.\"Zone\" nz, billing.\"Package\" pk where nr.zone=nz.zone and nz.package=pk.name and nr.pkey=?",
+			"select pk.accounting from dns.\"Record\" nr, dns.\"Zone\" nz, billing.\"Package\" pk where nr.zone=nz.zone and nz.package=pk.name and nr.pkey=?",
 			pkey
 		);
 	}
@@ -710,7 +710,7 @@ final public class DNSHandler implements CronJob {
 				dnstldCache=conn.executeObjectCollectionQuery(
 					new ArrayList<DomainName>(),
 					ObjectFactories.domainNameFactory,
-					"select domain from dns_tlds"
+					"select domain from dns.\"TopLevelDomain\""
 				);
 			}
 			return dnstldCache;
@@ -718,7 +718,7 @@ final public class DNSHandler implements CronJob {
 	}
 
 	public static String getDNSZoneForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeStringQuery("select zone from dns_records where pkey=?", pkey);
+		return conn.executeStringQuery("select zone from dns.\"Record\" where pkey=?", pkey);
 	}
 
 	public static boolean isDNSZoneAvailable(DatabaseConnection conn, String zone) throws IOException, SQLException {
@@ -728,7 +728,7 @@ final public class DNSHandler implements CronJob {
 	public static AccountingCode getPackageForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select nz.package from dns_records nr, dns.\"Zone\" nz where nr.pkey=? and nr.zone=nz.zone",
+			"select nz.package from dns.\"Record\" nr, dns.\"Zone\" nz where nr.pkey=? and nr.zone=nz.zone",
 			pkey
 		);
 	}
@@ -751,6 +751,7 @@ final public class DNSHandler implements CronJob {
 		}
 	}
 
+	// TODO: Manage SPF records here
 	public static void removeUnusedDNSRecord(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
@@ -763,7 +764,7 @@ final public class DNSHandler implements CronJob {
 			if(conn.executeBooleanQuery("select (select zone from dns.\"Zone\" where zone=?) is not null", zone)) {
 				String preTld = getPreTld(hostname, tld);
 				int deleteCount = conn.executeUpdate(
-					"delete from dns_records where\n"
+					"delete from dns.\"Record\" where\n"
 					+ "  zone=?\n"
 					+ "  and type in (?,?)\n"
 					+ "  and domain=?",
@@ -818,7 +819,7 @@ final public class DNSHandler implements CronJob {
 		InetAddress dhcpAddress
 	) throws IOException, SQLException {
 		// Find the pkeys of the entries that should be changed
-		IntList pkeys=conn.executeIntListQuery("select pkey from dns_records where \"dhcpAddress\"=?", ipAddress);
+		IntList pkeys=conn.executeIntListQuery("select pkey from dns.\"Record\" where \"dhcpAddress\"=?", ipAddress);
 
 		// Build a list of affected zones
 		List<String> zones=new SortedArrayList<>();
@@ -827,7 +828,7 @@ final public class DNSHandler implements CronJob {
 			int pkey=pkeys.getInt(c);
 			String zone=getDNSZoneForDNSRecord(conn, pkey);
 			if(!zones.contains(zone)) zones.add(zone);
-			conn.executeUpdate("update dns_records set destination=? where pkey=?", dhcpAddress, pkey);
+			conn.executeUpdate("update dns.\"Record\" set destination=? where pkey=?", dhcpAddress, pkey);
 		}
 
 		// Invalidate the records
@@ -910,7 +911,7 @@ final public class DNSHandler implements CronJob {
 						String oct4=ipStr.substring(pos+1);
 						if(
 							conn.executeBooleanQuery(
-								"select (select pkey from dns_records where zone=? and domain=? and type=? limit 1) is not null",
+								"select (select pkey from dns.\"Record\" where zone=? and domain=? and type=? limit 1) is not null",
 								arpaZone,
 								oct4,
 								DNSType.PTR
@@ -919,7 +920,7 @@ final public class DNSHandler implements CronJob {
 							updateDNSZoneSerial(conn, invalidateList, arpaZone);
 
 							conn.executeUpdate(
-								"update dns_records set destination=? where zone=? and domain=? and type=?",
+								"update dns.\"Record\" set destination=? where zone=? and domain=? and type=?",
 								hostname.toString()+'.',
 								arpaZone,
 								oct4,

@@ -2474,7 +2474,7 @@ final public class HttpdHandler {
 	 *           |                + httpd_site_bind_headers
 	 *           |                + httpd_site_bind_redirects
 	 *           |                + httpd_site_urls
-	 *           |                |               + dns_records
+	 *           |                |               + dns.Record
 	 *           |                + httpd_binds
 	 *           |                            + net_binds
 	 *           + httpd_tomcat_sites
@@ -2554,7 +2554,7 @@ final public class HttpdHandler {
 				for(int d=0;d<httpdSiteURLs.size();d++) {
 					int httpdSiteURL=httpdSiteURLs.getInt(d);
 
-					// dns_records
+					// dns.Record
 					DomainName hostname = conn.executeObjectQuery(
 						ObjectFactories.domainNameFactory,
 						"select hostname from httpd_site_urls where pkey=?",

@@ -1835,7 +1835,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new DNSRecord(),
-						"select * from dns_records"
+						"select * from dns.\"Record\""
 					); else {
 						List<DNSRecord> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
@@ -1854,7 +1854,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  dns.\"Zone\" dz,\n"
-					+ "  dns_records dr\n"
+					+ "  dns.\"Record\" dr\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -1874,7 +1874,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new DNSTLD(),
-					"select * from dns_tlds"
+					"select * from dns.\"TopLevelDomain\""
 				);
 				break;
 			case DNS_TYPES :
