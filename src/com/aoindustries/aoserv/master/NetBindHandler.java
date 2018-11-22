@@ -424,8 +424,8 @@ final public class NetBindHandler {
 			);
 		}
 
-		if(conn.executeBooleanQuery("select (select net_bind from private_ftp_servers where net_bind=?) is not null", pkey)) {
-			conn.executeUpdate("delete from private_ftp_servers where net_bind=?", pkey);
+		if(conn.executeBooleanQuery("select (select net_bind from ftp.\"PrivateServer\" where net_bind=?) is not null", pkey)) {
+			conn.executeUpdate("delete from ftp.\"PrivateServer\" where net_bind=?", pkey);
 			invalidateList.addTable(
 				conn,
 				SchemaTable.TableID.PRIVATE_FTP_SERVERS,

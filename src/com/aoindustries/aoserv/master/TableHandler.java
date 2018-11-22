@@ -6809,7 +6809,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new PrivateFTPServer(),
-						"select * from private_ftp_servers"
+						"select * from ftp.\"PrivateServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -6821,7 +6821,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  net_binds nb,\n"
-						+ "  private_ftp_servers pfs\n"
+						+ "  ftp.\"PrivateServer\" pfs\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=nb.server\n"
@@ -6843,7 +6843,7 @@ final public class TableHandler {
 						+ BU1_PARENTS_JOIN
 						+ "  billing.\"Package\" pk2,\n"
 						+ "  net_binds nb,\n"
-						+ "  private_ftp_servers pfs\n"
+						+ "  ftp.\"PrivateServer\" pfs\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk1.name\n"

@@ -76,7 +76,7 @@ final public class FTPHandler {
 		InvalidateList invalidateList,
 		int net_bind
 	) throws IOException, SQLException {
-		conn.executeUpdate("delete from private_ftp_servers net_bind=?", net_bind);
+		conn.executeUpdate("delete from ftp.\"PrivateServer\" net_bind=?", net_bind);
 
 		// Notify all clients of the update
 		invalidateList.addTable(

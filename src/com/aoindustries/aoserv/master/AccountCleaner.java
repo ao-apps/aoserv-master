@@ -532,13 +532,13 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // private_ftp_servers
+                // ftp.PrivateServer
                 {
                     IntList pfss=conn.executeIntListQuery(
                         "select\n"
                         + "  pfs.net_bind\n"
                         + "from\n"
-                        + "  private_ftp_servers pfs,\n"
+                        + "  ftp.\"PrivateServer\" pfs,\n"
                         + "  net_binds nb,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
