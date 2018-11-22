@@ -551,7 +551,7 @@ final public class EmailHandler {
 		int pkey;
 		if(aoServer==-1) {
 			pkey = conn.executeIntUpdate(
-				"INSERT INTO email_smtp_relays values(default,?,null,?,?,now(),now(),0,?,null) RETURNING pkey",
+				"INSERT INTO email.\"SmtpRelay\" values(default,?,null,?,?,now(),now(),0,?,null) RETURNING pkey",
 				packageName,
 				host,
 				type,
@@ -559,7 +559,7 @@ final public class EmailHandler {
 			);
 		} else {
 			pkey = conn.executeIntUpdate(
-				"INSERT INTO email_smtp_relays VALUES (default,?,?,?,?,now(),now(),0,?,null) RETURNING pkey",
+				"INSERT INTO email.\"SmtpRelay\" VALUES (default,?,?,?,?,now(),now(),0,?,null) RETURNING pkey",
 				packageName,
 				aoServer,
 				host,
@@ -890,7 +890,7 @@ final public class EmailHandler {
 		checkAccessEmailSmtpRelay(conn, source, "disableEmailSmtpRelay", pkey);
 
 		conn.executeUpdate(
-			"update email_smtp_relays set disable_log=? where pkey=?",
+			"update email.\"SmtpRelay\" set disable_log=? where pkey=?",
 			disableLog,
 			pkey
 		);
@@ -975,7 +975,7 @@ final public class EmailHandler {
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable EmailSmtpRelay #"+pkey+", Package not enabled: "+pk);
 
 		conn.executeUpdate(
-			"update email_smtp_relays set disable_log=null where pkey=?",
+			"update email.\"SmtpRelay\" set disable_log=null where pkey=?",
 			pkey
 		);
 
@@ -998,7 +998,7 @@ final public class EmailHandler {
 	}
 
 	public static int getDisableLogForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from email_smtp_relays where pkey=?", pkey);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from email.\"SmtpRelay\" where pkey=?", pkey);
 	}
 
 	public static String getEmailListAddressList(
@@ -1091,7 +1091,7 @@ final public class EmailHandler {
 		DatabaseConnection conn,
 		AccountingCode name
 	) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from email_smtp_relays where package=?", name);
+		return conn.executeIntListQuery("select pkey from email.\"SmtpRelay\" where package=?", name);
 	}
 
 	public static int getEmailDomain(
@@ -1259,11 +1259,11 @@ final public class EmailHandler {
 		AccountingCode packageName=getPackageForEmailSmtpRelay(conn, pkey);
 		AccountingCode accounting = PackageHandler.getBusinessForPackage(conn, packageName);
 		int aoServer=getAOServerForEmailSmtpRelay(conn, pkey);
-		Timestamp expiration=conn.executeTimestampQuery("select expiration from email_smtp_relays where pkey=?", pkey);
+		Timestamp expiration=conn.executeTimestampQuery("select expiration from email.\"SmtpRelay\" where pkey=?", pkey);
 		long exp=expiration==null?-1:expiration.getTime();
 		long min=minDuration==-1?-1:(System.currentTimeMillis()+minDuration);
 		conn.executeUpdate(
-			"update email_smtp_relays set last_refreshed=now(), refresh_count=refresh_count+1, expiration=? where pkey=?",
+			"update email.\"SmtpRelay\" set last_refreshed=now(), refresh_count=refresh_count+1, expiration=? where pkey=?",
 			exp==-1 || min==-1
 			? null
 			: new Timestamp(Math.max(exp, min)),
@@ -1272,7 +1272,7 @@ final public class EmailHandler {
 
 		// Delete any old entries
 		conn.executeUpdate(
-			"delete from email_smtp_relays where package=? and (ao_server is null or ao_server=?) and expiration is not null and now()::date-expiration::date>"+EmailSmtpRelay.HISTORY_DAYS,
+			"delete from email.\"SmtpRelay\" where package=? and (ao_server is null or ao_server=?) and expiration is not null and now()::date-expiration::date>"+EmailSmtpRelay.HISTORY_DAYS,
 			packageName,
 			aoServer
 		);
@@ -1722,7 +1722,7 @@ final public class EmailHandler {
 		int aoServer=getAOServerForEmailSmtpRelay(conn, pkey);
 
 		conn.executeUpdate(
-			"delete from email_smtp_relays where pkey=?",
+			"delete from email.\"SmtpRelay\" where pkey=?",
 			pkey
 		);
 
@@ -1853,7 +1853,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email_smtp_relays esr, billing.\"Package\" pk where esr.package=pk.name and esr.pkey=?",
+			"select pk.accounting from email.\"SmtpRelay\" esr, billing.\"Package\" pk where esr.package=pk.name and esr.pkey=?",
 			pkey
 		);
 	}
@@ -1916,7 +1916,7 @@ final public class EmailHandler {
 	public static AccountingCode getPackageForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from email_smtp_relays where pkey=?",
+			"select package from email.\"SmtpRelay\" where pkey=?",
 			pkey
 		);
 	}
@@ -2025,7 +2025,7 @@ final public class EmailHandler {
 	}
 
 	public static int getAOServerForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from email_smtp_relays where pkey=?", pkey);
+		return conn.executeIntQuery("select ao_server from email.\"SmtpRelay\" where pkey=?", pkey);
 	}
 
 	public static boolean isEmailDomainAvailable(DatabaseConnection conn, RequestSource source, int ao_server, DomainName domain) throws IOException, SQLException {

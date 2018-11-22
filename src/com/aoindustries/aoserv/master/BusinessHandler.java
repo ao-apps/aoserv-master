@@ -1254,7 +1254,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one EmailDomain on Server="+server);
 
-		// email_smtp_relays
+		// email.SmtpRelay
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1263,7 +1263,7 @@ final public class BusinessHandler {
 				+ "      esr.pkey\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
-				+ "      email_smtp_relays esr\n"
+				+ "      email.\"SmtpRelay\" esr\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=esr.package\n"

@@ -7256,7 +7256,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new EmailSmtpRelay(),
-						"select * from email_smtp_relays"
+						"select * from email.\"SmtpRelay\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -7267,7 +7267,7 @@ final public class TableHandler {
 						+ "  esr.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  email_smtp_relays esr\n"
+						+ "  email.\"SmtpRelay\" esr\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and (\n"
@@ -7289,7 +7289,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  email_smtp_relays esr\n"
+					+ "  email.\"SmtpRelay\" esr\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
