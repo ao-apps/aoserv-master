@@ -70,7 +70,7 @@ final public class HttpdHandler {
 	private final static Map<Integer,Boolean> disabledHttpdSiteBinds = new HashMap<>();
 	private final static Map<Integer,Boolean> disabledHttpdSites = new HashMap<>();
 
-	public static int addHttpdWorker(
+	public static void addTomcatWorker(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
 		int netBindPKey,
@@ -79,13 +79,12 @@ final public class HttpdHandler {
 		int server=NetBindHandler.getServerForNetBind(conn, netBindPKey);
 		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
 		int aoServer = server;
-		int pkey;
-		if(httpdSitePKey==-1) {
-			pkey = conn.executeIntUpdate(
+		if(httpdSitePKey == -1) {
+			conn.executeIntUpdate(
 				"INSERT INTO\n"
 				+ "  web.\"TomcatWorker\"\n"
 				+ "VALUES (\n"
-				+ "  default,\n"
+				+ "  ?,\n"
 				+ "  (\n"
 				+ "    select\n"
 				+ "      hjc.code\n"
@@ -94,32 +93,31 @@ final public class HttpdHandler {
 				+ "    where\n"
 				+ "      (\n"
 				+ "        select\n"
-				+ "          hw.code\n"
+				+ "          hw.\"name\"\n"
 				+ "        from\n"
 				+ "          web.\"TomcatWorker\" hw,\n"
 				+ "          net_binds nb\n"
 				+ "        where\n"
-				+ "          hw.net_bind=nb.pkey\n"
+				+ "          hw.bind=nb.pkey\n"
 				+ "          and nb.server=?\n"
-				+ "          and hjc.code=hw.code\n"
+				+ "          and hjc.code=hw.\"name\"\n"
 				+ "        limit 1\n"
 				+ "      ) is null\n"
 				+ "    order by\n"
 				+ "      code\n"
 				+ "    limit 1\n"
 				+ "  ),\n"
-				+ "  ?,\n"
 				+ "  null\n"
-				+ ") RETURNING pkey",
-				aoServer,
-				netBindPKey
+				+ ")",
+				netBindPKey,
+				aoServer
 			);
 		} else {
-			pkey = conn.executeIntUpdate(
+			conn.executeIntUpdate(
 				"INSERT INTO\n"
 				+ "  web.\"TomcatWorker\"\n"
 				+ "VALUES (\n"
-				+ "  default,\n"
+				+ "  ?,\n"
 				+ "  (\n"
 				+ "    select\n"
 				+ "      hjc.code\n"
@@ -128,25 +126,24 @@ final public class HttpdHandler {
 				+ "    where\n"
 				+ "      (\n"
 				+ "        select\n"
-				+ "          hw.code\n"
+				+ "          hw.\"name\"\n"
 				+ "        from\n"
 				+ "          web.\"TomcatWorker\" hw,\n"
 				+ "          net_binds nb\n"
 				+ "        where\n"
-				+ "          hw.net_bind=nb.pkey\n"
+				+ "          hw.bind=nb.pkey\n"
 				+ "          and nb.server=?\n"
-				+ "          and hjc.code=hw.code\n"
+				+ "          and hjc.code=hw.\"name\"\n"
 				+ "        limit 1\n"
 				+ "      ) is null\n"
 				+ "    order by\n"
 				+ "      code\n"
 				+ "    limit 1\n"
 				+ "  ),\n"
-				+ "  ?,\n"
 				+ "  ?\n"
-				+ ") RETURNING pkey",
-				aoServer,
+				+ ")",
 				netBindPKey,
+				aoServer,
 				httpdSitePKey
 			);
 		}
@@ -157,7 +154,6 @@ final public class HttpdHandler {
 			aoServer,
 			false
 		);
-		return pkey;
 	}
 
 	public static int addHttpdSiteURL(
@@ -1176,7 +1172,7 @@ final public class HttpdHandler {
 				MINIMUM_AUTO_PORT_NUMBER
 			);
 			// Create the HttpdWorker
-			int httpdWorkerPKey=addHttpdWorker(
+			addTomcatWorker(
 				conn,
 				invalidateList,
 				netBindPKey,
@@ -1350,7 +1346,7 @@ final public class HttpdHandler {
 			);
 
 			// Create the HttpdWorker
-			int httpdWorkerPKey=addHttpdWorker(
+			addTomcatWorker(
 				conn,
 				invalidateList,
 				hwBindPKey,
@@ -1393,7 +1389,7 @@ final public class HttpdHandler {
 				version,
 				lsaPkey,
 				lsgPkey,
-				httpdWorkerPKey,
+				hwBindPKey,
 				shutdownBindPKey,
 				new Identifier(MasterServer.getRandom()).toString(),
 				HttpdSharedTomcat.DEFAULT_MAX_POST_SIZE
@@ -2437,11 +2433,11 @@ final public class HttpdHandler {
 		);
 
 		if(tomcat4Worker!=-1) {
-			int nb=conn.executeIntQuery("select net_bind from web.\"TomcatWorker\" where pkey=?", tomcat4Worker);
-			conn.executeUpdate("delete from web.\"TomcatWorker\" where pkey=?", tomcat4Worker);
+			int bind = conn.executeIntQuery("select bind from web.\"TomcatWorker\" where pkey=?", tomcat4Worker);
+			conn.executeUpdate("delete from web.\"TomcatWorker\" where bind=?", tomcat4Worker);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_WORKERS, accounting, aoServer, false);
 
-			conn.executeUpdate("delete from net_binds where pkey=?", nb);
+			conn.executeUpdate("delete from net_binds where pkey=?", bind);
 			invalidateList.addTable(conn, SchemaTable.TableID.NET_BINDS, accounting, aoServer, false);
 			invalidateList.addTable(conn, SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES, accounting, aoServer, false);
 		}
@@ -2641,13 +2637,12 @@ final public class HttpdHandler {
 			}
 
 			// web.TomcatWorker
-			IntList httpdWorkers=conn.executeIntListQuery("select pkey from web.\"TomcatWorker\" where tomcat_site=?", httpdSitePKey);
+			IntList httpdWorkers = conn.executeIntListQuery("select bind from web.\"TomcatWorker\" where \"tomcatSite\"=?", httpdSitePKey);
 			if(httpdWorkers.size() > 0) {
 				for(int c=0;c<httpdWorkers.size();c++) {
-					int httpdWorker=httpdWorkers.getInt(c);
-					int netBind=conn.executeIntQuery("select net_bind from web.\"TomcatWorker\" where pkey=?", httpdWorker);
-					conn.executeUpdate("delete from web.\"TomcatWorker\" where pkey=?", httpdWorker);
-					NetBindHandler.removeNetBind(conn, invalidateList, netBind);
+					int bind = httpdWorkers.getInt(c);
+					conn.executeUpdate("delete from web.\"TomcatWorker\" where bind=?", bind);
+					NetBindHandler.removeNetBind(conn, invalidateList, bind);
 				}
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_WORKERS, accounting, aoServer, false);
 			}

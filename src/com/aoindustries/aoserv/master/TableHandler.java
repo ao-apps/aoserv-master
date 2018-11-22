@@ -3909,7 +3909,13 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdWorker(),
-						"select * from web.\"TomcatWorker\""
+						"select\n"
+						+ "  bind as pkey,\n"
+						+ "  \"name\" as code,\n"
+						+ "  bind as net_bind,\n"
+						+ "  \"tomcatSite\" as tomcat_site\n"
+						+ "from\n"
+						+ "  web.\"TomcatWorker\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3917,7 +3923,10 @@ final public class TableHandler {
 						provideProgress,
 						new HttpdWorker(),
 						"select\n"
-						+ "  hw.*\n"
+						+ "  hw.bind as pkey,\n"
+						+ "  hw.\"name\" as code,\n"
+						+ "  hw.bind as net_bind,\n"
+						+ "  hw.\"tomcatSite\" as tomcat_site\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  net_binds nb,\n"
@@ -3925,7 +3934,7 @@ final public class TableHandler {
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=nb.server\n"
-						+ "  and nb.pkey=hw.net_bind",
+						+ "  and nb.pkey=hw.bind",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -3935,7 +3944,10 @@ final public class TableHandler {
 					provideProgress,
 					new HttpdWorker(),
 					"select\n"
-					+ "  hw.*\n"
+					+ "  hw.bind as pkey,\n"
+					+ "  hw.\"name\" as code,\n"
+					+ "  hw.bind as net_bind,\n"
+					+ "  hw.\"tomcatSite\" as tomcat_site\n"
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk1,\n"
@@ -3951,7 +3963,7 @@ final public class TableHandler {
 					+ "  )\n"
 					+ "  and bu1.accounting=pk2.accounting\n"
 					+ "  and pk2.name=nb.package\n"
-					+ "  and nb.pkey=hw.net_bind",
+					+ "  and nb.pkey=hw.bind",
 					username
 				);
 				break;
