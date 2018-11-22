@@ -3909,7 +3909,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdWorker(),
-						"select * from httpd_workers"
+						"select * from web.\"TomcatWorker\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3921,7 +3921,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  net_binds nb,\n"
-						+ "  httpd_workers hw\n"
+						+ "  web.\"TomcatWorker\" hw\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=nb.server\n"
@@ -3942,7 +3942,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  net_binds nb,\n"
-					+ "  httpd_workers hw\n"
+					+ "  web.\"TomcatWorker\" hw\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

@@ -83,7 +83,7 @@ final public class HttpdHandler {
 		if(httpdSitePKey==-1) {
 			pkey = conn.executeIntUpdate(
 				"INSERT INTO\n"
-				+ "  httpd_workers\n"
+				+ "  web.\"TomcatWorker\"\n"
 				+ "VALUES (\n"
 				+ "  default,\n"
 				+ "  (\n"
@@ -96,7 +96,7 @@ final public class HttpdHandler {
 				+ "        select\n"
 				+ "          hw.code\n"
 				+ "        from\n"
-				+ "          httpd_workers hw,\n"
+				+ "          web.\"TomcatWorker\" hw,\n"
 				+ "          net_binds nb\n"
 				+ "        where\n"
 				+ "          hw.net_bind=nb.pkey\n"
@@ -117,7 +117,7 @@ final public class HttpdHandler {
 		} else {
 			pkey = conn.executeIntUpdate(
 				"INSERT INTO\n"
-				+ "  httpd_workers\n"
+				+ "  web.\"TomcatWorker\"\n"
 				+ "VALUES (\n"
 				+ "  default,\n"
 				+ "  (\n"
@@ -130,7 +130,7 @@ final public class HttpdHandler {
 				+ "        select\n"
 				+ "          hw.code\n"
 				+ "        from\n"
-				+ "          httpd_workers hw,\n"
+				+ "          web.\"TomcatWorker\" hw,\n"
 				+ "          net_binds nb\n"
 				+ "        where\n"
 				+ "          hw.net_bind=nb.pkey\n"
@@ -2437,8 +2437,8 @@ final public class HttpdHandler {
 		);
 
 		if(tomcat4Worker!=-1) {
-			int nb=conn.executeIntQuery("select net_bind from httpd_workers where pkey=?", tomcat4Worker);
-			conn.executeUpdate("delete from httpd_workers where pkey=?", tomcat4Worker);
+			int nb=conn.executeIntQuery("select net_bind from web.\"TomcatWorker\" where pkey=?", tomcat4Worker);
+			conn.executeUpdate("delete from web.\"TomcatWorker\" where pkey=?", tomcat4Worker);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_WORKERS, accounting, aoServer, false);
 
 			conn.executeUpdate("delete from net_binds where pkey=?", nb);
@@ -2481,7 +2481,7 @@ final public class HttpdHandler {
 	 *           |                  + web.TomcatContext
 	 *           |                                        + web.TomcatContextDataSource
 	 *           |                                        + web.TomcatContextParameter
-	 *           |                  + httpd_workers
+	 *           |                  + web.TomcatWorker
 	 *           |                  |             + net_binds
 	 *           |                  + httpd_tomcat_shared_sites
 	 *           |                  |             + linux_group_accounts
@@ -2640,13 +2640,13 @@ final public class HttpdHandler {
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, aoServer, false);
 			}
 
-			// httpd_workers
-			IntList httpdWorkers=conn.executeIntListQuery("select pkey from httpd_workers where tomcat_site=?", httpdSitePKey);
+			// web.TomcatWorker
+			IntList httpdWorkers=conn.executeIntListQuery("select pkey from web.\"TomcatWorker\" where tomcat_site=?", httpdSitePKey);
 			if(httpdWorkers.size() > 0) {
 				for(int c=0;c<httpdWorkers.size();c++) {
 					int httpdWorker=httpdWorkers.getInt(c);
-					int netBind=conn.executeIntQuery("select net_bind from httpd_workers where pkey=?", httpdWorker);
-					conn.executeUpdate("delete from httpd_workers where pkey=?", httpdWorker);
+					int netBind=conn.executeIntQuery("select net_bind from web.\"TomcatWorker\" where pkey=?", httpdWorker);
+					conn.executeUpdate("delete from web.\"TomcatWorker\" where pkey=?", httpdWorker);
 					NetBindHandler.removeNetBind(conn, invalidateList, netBind);
 				}
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_WORKERS, accounting, aoServer, false);
