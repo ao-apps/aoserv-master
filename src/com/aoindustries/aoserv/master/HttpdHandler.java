@@ -878,7 +878,7 @@ final public class HttpdHandler {
 			if(tomcatVersion!=-1) throw new SQLException("TomcatVersion cannot be supplied for a TomcatShared site: "+tomcatVersion);
 			tomcatVersion = conn.executeIntQuery("select version from httpd_shared_tomcats where pkey=?", sharedTomcatPkey);
 		}
-		String tomcatVersionStr=conn.executeStringQuery("select version from technology_versions where pkey=?", tomcatVersion);
+		String tomcatVersionStr=conn.executeStringQuery("select version from distribution.\"SoftwareVersion\" where pkey=?", tomcatVersion);
 		boolean isTomcat4 =
 			!tomcatVersionStr.equals(HttpdTomcatVersion.VERSION_3_1)
 			&& !tomcatVersionStr.equals(HttpdTomcatVersion.VERSION_3_2_4)
@@ -896,7 +896,7 @@ final public class HttpdHandler {
 			// Version must be correct for this server
 			int tvOsv = conn.executeIntQuery(
 				"select coalesce(\n"
-				+ "  (select operating_system_version from technology_versions where pkey=? and name=?),\n"
+				+ "  (select operating_system_version from distribution.\"SoftwareVersion\" where pkey=? and name=?),\n"
 				+ "  -1\n"
 				+ ")",
 				phpVersion,
@@ -1326,7 +1326,7 @@ final public class HttpdHandler {
 		) throw new SQLException("Not allowed to add HttpdSharedTomcat for group '"+linuxServerGroup+'\'');
 
 		// Tomcat 4 version will start with "4."
-		String versionStr=conn.executeStringQuery("select version from technology_versions where pkey=?", version);
+		String versionStr=conn.executeStringQuery("select version from distribution.\"SoftwareVersion\" where pkey=?", version);
 		boolean isTomcat4 =
 			!versionStr.equals(HttpdTomcatVersion.VERSION_3_1)
 			&& !versionStr.equals(HttpdTomcatVersion.VERSION_3_2_4)
@@ -3094,7 +3094,7 @@ final public class HttpdHandler {
 				+ "  tv.version\n"
 				+ "from\n"
 				+ "  httpd_shared_tomcats hst\n"
-				+ "  inner join technology_versions tv on hst.version=tv.pkey\n"
+				+ "  inner join distribution.\"SoftwareVersion\" tv on hst.version=tv.pkey\n"
 				+ "where hst.pkey=?",
 				pkey
 			)
@@ -3105,7 +3105,7 @@ final public class HttpdHandler {
 				+ "  tv.version\n"
 				+ "from\n"
 				+ "  httpd_tomcat_versions htv\n"
-				+ "  inner join technology_versions tv on htv.version=tv.pkey\n"
+				+ "  inner join distribution.\"SoftwareVersion\" tv on htv.version=tv.pkey\n"
 				+ "where htv.version=?",
 				version
 			)
@@ -3115,13 +3115,13 @@ final public class HttpdHandler {
 		int aoServer = getAOServerForHttpdSharedTomcat(conn, pkey);
 		int fromOsv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
 		int toOsv = conn.executeIntQuery(
-			"select operating_system_version from technology_versions where pkey=?",
+			"select operating_system_version from distribution.\"SoftwareVersion\" where pkey=?",
 			version
 		);
 		if(fromOsv != toOsv) throw new SQLException("OperatingSystemVersion mismatch: " + fromOsv + " != " + toOsv);
 		// TODO: Check osv match on adding new sites (Tomcat versions)
 
-		// TODO: Check if disabled in technology_versions (do this in set PHP version, too)
+		// TODO: Check if disabled in distribution.SoftwareVersion (do this in set PHP version, too)
 		// TODO: Add update of this in end-of-life tasks
 		// TODO: Check this "disable_time" in control panels, too.
 		// TODO: Check this on add site (both PHP and Tomcat versions)
@@ -3391,7 +3391,7 @@ final public class HttpdHandler {
 			// Version must be correct for this server
 			int tvOsv = conn.executeIntQuery(
 				"select coalesce(\n"
-				+ "  (select operating_system_version from technology_versions where pkey=? and name=?),\n"
+				+ "  (select operating_system_version from distribution.\"SoftwareVersion\" where pkey=? and name=?),\n"
 				+ "  -1\n"
 				+ ")",
 				phpVersion,
@@ -3999,7 +3999,7 @@ final public class HttpdHandler {
 				+ "from\n"
 				+ "  httpd_tomcat_std_sites htss\n"
 				+ "  inner join httpd_tomcat_sites hts on htss.tomcat_site=hts.httpd_site\n"
-				+ "  inner join technology_versions tv on hts.version=tv.pkey\n"
+				+ "  inner join distribution.\"SoftwareVersion\" tv on hts.version=tv.pkey\n"
 				+ "where htss.tomcat_site=?",
 				pkey
 			)
@@ -4010,7 +4010,7 @@ final public class HttpdHandler {
 				+ "  tv.version\n"
 				+ "from\n"
 				+ "  httpd_tomcat_versions htv\n"
-				+ "  inner join technology_versions tv on htv.version=tv.pkey\n"
+				+ "  inner join distribution.\"SoftwareVersion\" tv on htv.version=tv.pkey\n"
 				+ "where htv.version=?",
 				version
 			)
@@ -4020,13 +4020,13 @@ final public class HttpdHandler {
 		int aoServer = getAOServerForHttpdSite(conn, pkey);
 		int fromOsv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
 		int toOsv = conn.executeIntQuery(
-			"select operating_system_version from technology_versions where pkey=?",
+			"select operating_system_version from distribution.\"SoftwareVersion\" where pkey=?",
 			version
 		);
 		if(fromOsv != toOsv) throw new SQLException("OperatingSystemVersion mismatch: " + fromOsv + " != " + toOsv);
 		// TODO: Check osv match on adding new sites (Tomcat versions)
 
-		// TODO: Check if disabled in technology_versions (do this in set PHP version, too)
+		// TODO: Check if disabled in distribution.SoftwareVersion (do this in set PHP version, too)
 		// TODO: Add update of this in end-of-life tasks
 		// TODO: Check this "disable_time" in control panels, too.
 		// TODO: Check this on add site (both PHP and Tomcat versions)

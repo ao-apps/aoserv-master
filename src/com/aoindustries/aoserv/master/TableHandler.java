@@ -8128,7 +8128,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new TechnologyVersion(),
-					"select * from technology_versions"
+					"select * from distribution.\"SoftwareVersion\""
 				); else MasterServer.writeObjects(
 					conn,
 					source,
@@ -8145,7 +8145,7 @@ final public class TableHandler {
 					+ "  disable_time,\n"
 					+ "  disable_reason\n"
 					+ "from\n"
-					+ "  technology_versions"
+					+ "  distribution.\"SoftwareVersion\""
 				);
 				break;
 			case TICKET_ACTION_TYPES :
