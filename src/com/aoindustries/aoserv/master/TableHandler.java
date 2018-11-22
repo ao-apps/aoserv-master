@@ -2536,7 +2536,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new FailoverFileSchedule(),
-						"select * from failover_file_schedule"
+						"select * from backup.\"FileReplicationSchedule\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2548,7 +2548,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  backup.\"FileReplication\" ffr,\n"
-						+ "  failover_file_schedule ffs\n"
+						+ "  backup.\"FileReplicationSchedule\" ffs\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ffr.server\n"
@@ -2568,7 +2568,7 @@ final public class TableHandler {
 					+ "  packages pk,\n"
 					+ "  business_servers bs,\n"
 					+ "  backup.\"FileReplication\" ffr,\n"
-					+ "  failover_file_schedule ffs\n"
+					+ "  backup.\"FileReplicationSchedule\" ffs\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"

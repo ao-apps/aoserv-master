@@ -135,27 +135,27 @@ final public class FailoverHandler implements CronJob {
 		int server=getFromServerForFailoverFileReplication(conn, replication);
 		AccountingCode userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
 		AccountingCode serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
-		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_schedule for servers that have the same package as the business_administrator setting the schedule");
+		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set backup.FileReplicationSchedule for servers that have the same package as the business_administrator setting the schedule");
 
 		// If not modified, invalidation will not be performed
 		boolean modified = false;
 
 		// Get the list of all the pkeys that currently exist
-		IntList pkeys = conn.executeIntListQuery("select pkey from failover_file_schedule where replication=?", replication);
+		IntList pkeys = conn.executeIntListQuery("select pkey from backup.\"FileReplicationSchedule\" where replication=?", replication);
 		int size = hours.size();
 		for(int c=0;c<size;c++) {
 			// If it exists, remove pkey from the list, otherwise add
 			short hour = hours.get(c);
 			short minute = minutes.get(c);
 			int existingPkey = conn.executeIntQuery(
-				"select coalesce((select pkey from failover_file_schedule where replication=? and hour=? and minute=?), -1)",
+				"select coalesce((select pkey from backup.\"FileReplicationSchedule\" where replication=? and hour=? and minute=?), -1)",
 				replication,
 				hour,
 				minute
 			);
 			if(existingPkey==-1) {
 				// Doesn't exist, add
-				conn.executeUpdate("insert into failover_file_schedule (replication, hour, minute, enabled) values(?,?,?,true)", replication, hour, minute);
+				conn.executeUpdate("insert into backup.\"FileReplicationSchedule\" (replication, hour, minute, enabled) values(?,?,?,true)", replication, hour, minute);
 				modified = true;
 			} else {
 				// Remove from the list that will be removed
@@ -165,7 +165,7 @@ final public class FailoverHandler implements CronJob {
 		// Delete the unmatched pkeys
 		if(pkeys.size()>0) {
 			for(int c=0,len=pkeys.size(); c<len; c++) {
-				conn.executeUpdate("delete from failover_file_schedule where pkey=?", pkeys.getInt(c));
+				conn.executeUpdate("delete from backup.\"FileReplicationSchedule\" where pkey=?", pkeys.getInt(c));
 			}
 			modified = true;
 		}
