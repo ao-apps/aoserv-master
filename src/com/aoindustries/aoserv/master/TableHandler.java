@@ -2408,7 +2408,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new FailoverFileLog(),
-						"select * from failover_file_log"
+						"select * from backup.\"FileReplicationLog\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2420,7 +2420,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  failover_file_replications ffr,\n"
-						+ "  failover_file_log ffl\n"
+						+ "  backup.\"FileReplicationLog\" ffl\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ffr.server\n"
@@ -2440,7 +2440,7 @@ final public class TableHandler {
 					+ "  packages pk,\n"
 					+ "  business_servers bs,\n"
 					+ "  failover_file_replications ffr,\n"
-					+ "  failover_file_log ffl\n"
+					+ "  backup.\"FileReplicationLog\" ffl\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"

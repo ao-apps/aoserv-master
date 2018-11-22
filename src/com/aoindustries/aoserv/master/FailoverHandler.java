@@ -50,18 +50,18 @@ final public class FailoverHandler implements CronJob {
 	) throws IOException, SQLException {
 		//String mustring = source.getUsername();
 		//MasterUser mu = MasterServer.getMasterUser(conn, mustring);
-		//if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not access failover_file_log.");
+		//if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not access backup.FileReplicationLog.");
 
 		// The server must be an exact package match to allow adding log entries
 		int server=getFromServerForFailoverFileReplication(conn, replication);
 		AccountingCode userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
 		AccountingCode serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
-		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_log for servers that have the same package as the business_administrator adding the log entry");
+		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set backup.FileReplicationLog for servers that have the same package as the business_administrator adding the log entry");
 		//ServerHandler.checkAccessServer(conn, source, "add_failover_file_log", server);
 
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  failover_file_log\n"
+			+ "  backup.\"FileReplicationLog\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -279,7 +279,7 @@ final public class FailoverHandler implements CronJob {
 		int fromServer = getFromServerForFailoverFileReplication(conn, replication);
 		ServerHandler.checkAccessServer(conn, source, "getFailoverFileLogs", fromServer);
 
-		MasterServer.writeObjects(conn, source, out, false, new FailoverFileLog(), "select * from failover_file_log where replication=? order by start_time desc limit ?", replication, maxRows);
+		MasterServer.writeObjects(conn, source, out, false, new FailoverFileLog(), "select * from backup.\"FileReplicationLog\" where replication=? order by start_time desc limit ?", replication, maxRows);
 	}
 
 	public static Tuple2<Long,String> getFailoverFileReplicationActivity(
@@ -343,7 +343,7 @@ final public class FailoverHandler implements CronJob {
 	@Override
 	public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 		try {
-			MasterDatabase.getDatabase().executeUpdate("delete from failover_file_log where end_time <= (now()-'1 year'::interval)");
+			MasterDatabase.getDatabase().executeUpdate("delete from backup.\"FileReplicationLog\" where end_time <= (now()-'1 year'::interval)");
 		} catch(ThreadDeath TD) {
 			throw TD;
 		} catch(Throwable T) {
