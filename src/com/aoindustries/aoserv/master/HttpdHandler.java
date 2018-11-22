@@ -1187,7 +1187,7 @@ final public class HttpdHandler {
 		// Create the HTTP HttpdSiteBind
 		String siteLogsDir = OperatingSystemVersion.getHttpdSiteLogsDirectory(osv).toString();
 		int httpSiteBindPKey = conn.executeIntUpdate(
-			"INSERT INTO httpd_site_binds (httpd_site, httpd_bind, access_log, error_log) VALUES (?,?,?,?) RETURNING pkey",
+			"INSERT INTO web.\"VirtualHost\" (httpd_site, httpd_bind, access_log, error_log) VALUES (?,?,?,?) RETURNING pkey",
 			httpdSitePKey,
 			httpNetBind,
 			siteLogsDir + '/' + siteName + "/http/access_log",
@@ -1613,11 +1613,11 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		if(isHttpdSiteBindDisabled(conn, pkey)) throw new SQLException("HttpdSiteBind is already disabled: "+pkey);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableHttpdSiteBind", disableLog, false);
-		int httpdSite=conn.executeIntQuery("select httpd_site from httpd_site_binds where pkey=?", pkey);
+		int httpdSite=conn.executeIntQuery("select httpd_site from web.\"VirtualHost\" where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "disableHttpdSiteBind", httpdSite);
 
 		conn.executeUpdate(
-			"update httpd_site_binds set disable_log=? where pkey=?",
+			"update web.\"VirtualHost\" set disable_log=? where pkey=?",
 			disableLog,
 			pkey
 		);
@@ -1706,7 +1706,7 @@ final public class HttpdHandler {
 		if(isHttpdSiteDisabled(conn, hs)) throw new SQLException("Unable to enable HttpdSiteBind #"+pkey+", HttpdSite not enabled: "+hs);
 
 		conn.executeUpdate(
-			"update httpd_site_binds set disable_log=null where pkey=?",
+			"update web.\"VirtualHost\" set disable_log=null where pkey=?",
 			pkey
 		);
 
@@ -1847,14 +1847,14 @@ final public class HttpdHandler {
 	}
 
 	public static int getDisableLogForHttpdSiteBind(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from httpd_site_binds where pkey=?", pkey);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from web.\"VirtualHost\" where pkey=?", pkey);
 	}
 
 	public static IntList getHttpdSiteBindsForHttpdSite(
 		DatabaseConnection conn,
 		int pkey
 	) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from httpd_site_binds where httpd_site=?", pkey);
+		return conn.executeIntListQuery("select pkey from web.\"VirtualHost\" where httpd_site=?", pkey);
 	}
 
 	public static int getHttpdSiteForHttpdSiteURL(
@@ -1866,7 +1866,7 @@ final public class HttpdHandler {
 			+ "  hsb.httpd_site\n"
 			+ "from\n"
 			+ "  httpd_site_urls hsu,\n"
-			+ "  httpd_site_binds hsb\n"
+			+ "  web.\"VirtualHost\" hsb\n"
 			+ "where\n"
 			+ "  hsu.pkey=?\n"
 			+ "  and hsu.httpd_site_bind=hsb.pkey",
@@ -1987,7 +1987,7 @@ final public class HttpdHandler {
 		DatabaseConnection conn,
 		int pkey
 	) throws IOException, SQLException {
-		return conn.executeIntQuery("select httpd_site from httpd_site_binds where pkey=?", pkey);
+		return conn.executeIntQuery("select httpd_site from web.\"VirtualHost\" where pkey=?", pkey);
 	}
 
 	public static int getLinuxServerAccountForHttpdSharedTomcat(
@@ -2320,7 +2320,7 @@ final public class HttpdHandler {
 				netBind
 			)
 		) {
-			// Get the list of web.HttpdServer and how many httpd_site_binds there are
+			// Get the list of web.HttpdServer and how many web.VirtualHost there are
 			int lowestPKey=-1;
 			int lowestCount=Integer.MAX_VALUE;
 			pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
@@ -2331,7 +2331,7 @@ final public class HttpdHandler {
 				+ "      count(*)\n"
 				+ "    from\n"
 				+ "      web.\"HttpdBind\" hb,\n"
-				+ "      httpd_site_binds hsb\n"
+				+ "      web.\"VirtualHost\" hsb\n"
 				+ "    where\n"
 				+ "      hs.pkey=hb.httpd_server\n"
 				+ "      and hb.net_bind=hsb.httpd_bind\n"
@@ -2470,7 +2470,7 @@ final public class HttpdHandler {
 
 	/**
 	 * web.Site
-	 *           + httpd_site_binds
+	 *           + web.VirtualHost
 	 *           |                + httpd_site_bind_headers
 	 *           |                + httpd_site_bind_redirects
 	 *           |                + httpd_site_urls
@@ -2541,8 +2541,8 @@ final public class HttpdHandler {
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS, accounting, aoServer, false);
 		}
 
-		// httpd_site_binds
-		IntList httpdSiteBinds=conn.executeIntListQuery("select pkey from httpd_site_binds where httpd_site=?", httpdSitePKey);
+		// web.VirtualHost
+		IntList httpdSiteBinds=conn.executeIntListQuery("select pkey from web.\"VirtualHost\" where httpd_site=?", httpdSitePKey);
 		if(httpdSiteBinds.size() > 0) {
 			List<DomainName> tlds=DNSHandler.getDNSTLDs(conn);
 			SortedIntArrayList httpdBinds=new SortedIntArrayList();
@@ -2565,10 +2565,10 @@ final public class HttpdHandler {
 					DNSHandler.removeUnusedDNSRecord(conn, invalidateList, hostname, tlds);
 				}
 
-				int hb=conn.executeIntQuery("select httpd_bind from httpd_site_binds where pkey=?", httpdSiteBind);
+				int hb=conn.executeIntQuery("select httpd_bind from web.\"VirtualHost\" where pkey=?", httpdSiteBind);
 				if(!httpdBinds.contains(hb)) httpdBinds.add(hb);
 			}
-			conn.executeUpdate("delete from httpd_site_binds where httpd_site=?", httpdSitePKey);
+			conn.executeUpdate("delete from web.\"VirtualHost\" where httpd_site=?", httpdSitePKey);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BINDS, accounting, aoServer, false);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BIND_HEADERS, accounting, aoServer, false);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_BIND_REDIRECTS, accounting, aoServer, false);
@@ -2582,7 +2582,7 @@ final public class HttpdHandler {
 						+ "    select\n"
 						+ "      pkey\n"
 						+ "    from\n"
-						+ "      httpd_site_binds\n"
+						+ "      web.\"VirtualHost\"\n"
 						+ "    where\n"
 						+ "      httpd_bind=?\n"
 						+ "    limit 1\n"
@@ -3248,7 +3248,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_site_binds set is_manual=? where pkey=?",
+			"update web.\"VirtualHost\" set is_manual=? where pkey=?",
 			isManual,
 			pkey
 		);
@@ -3275,7 +3275,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_site_binds set redirect_to_primary_hostname=? where pkey=?",
+			"update web.\"VirtualHost\" set redirect_to_primary_hostname=? where pkey=?",
 			redirect_to_primary_hostname,
 			pkey
 		);
@@ -3306,7 +3306,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update httpd_site_binds set predisable_config=? where pkey=?",
+			"update web.\"VirtualHost\" set predisable_config=? where pkey=?",
 			config,
 			hsb
 		);
@@ -3443,7 +3443,7 @@ final public class HttpdHandler {
 					+ "  select\n"
 					+ "    hs.pkey\n"
 					+ "  from\n"
-					+ "    httpd_site_binds hsb\n"
+					+ "    web.\"VirtualHost\" hsb\n"
 					+ "    inner join web.\"HttpdBind\" hb on hsb.httpd_bind=hb.net_bind\n"
 					+ "    inner join web.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
 					+ "  where\n"

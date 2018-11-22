@@ -318,7 +318,7 @@ final public class IPAddressHandler {
 			+ "            count(*)\n"
 			+ "          from\n"
 			+ "            net_binds nb2,\n"
-			+ "            httpd_site_binds hsb2\n"
+			+ "            web.\"VirtualHost\" hsb2\n"
 			+ "          where\n"
 			+ "            nb2.server=?\n"
 			+ "            and nb2.\"ipAddress\"=ia.id\n"

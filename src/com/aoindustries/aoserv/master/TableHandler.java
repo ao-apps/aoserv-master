@@ -2850,7 +2850,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  httpd_site_binds hsb,\n"
+					+ "  web.\"VirtualHost\" hsb,\n"
 					+ "  web.\"HttpdBind\" hb,\n"
 					+ "  net_binds nb\n"
 					+ "where\n"
@@ -3143,7 +3143,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  httpd_site_binds hsb,\n"
+						+ "  web.\"VirtualHost\" hsb,\n"
 						+ "  httpd_site_bind_headers hsbh\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3166,7 +3166,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  httpd_site_binds hsb,\n"
+					+ "  web.\"VirtualHost\" hsb,\n"
 					+ "  httpd_site_bind_headers hsbh\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3202,7 +3202,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  httpd_site_binds hsb,\n"
+						+ "  web.\"VirtualHost\" hsb,\n"
 						+ "  httpd_site_bind_redirects hsbr\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3225,7 +3225,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  httpd_site_binds hsb,\n"
+					+ "  web.\"VirtualHost\" hsb,\n"
 					+ "  httpd_site_bind_redirects hsbr\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3256,7 +3256,7 @@ final public class TableHandler {
 						+ "  sc.key_file   as ssl_cert_key_file,\n"
 						+ "  sc.chain_file as ssl_cert_chain_file\n"
 						+ "from\n"
-						+ "  httpd_site_binds hsb\n"
+						+ "  web.\"VirtualHost\" hsb\n"
 						// Protocol conversion
 						+ "  left join ssl_certificates sc on hsb.certificate=sc.pkey"
 					); else MasterServer.writeObjects(
@@ -3274,7 +3274,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  httpd_site_binds hsb\n"
+						+ "  web.\"VirtualHost\" hsb\n"
 						// Protocol conversion
 						+ "  left join ssl_certificates sc on hsb.certificate=sc.pkey\n"
 						+ "where\n"
@@ -3301,7 +3301,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  httpd_site_binds hsb\n"
+					+ "  web.\"VirtualHost\" hsb\n"
 					// Protocol conversion
 					+ "  left join ssl_certificates sc on hsb.certificate=sc.pkey\n"
 					+ "where\n"
@@ -3337,7 +3337,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  httpd_site_binds hsb,\n"
+						+ "  web.\"VirtualHost\" hsb,\n"
 						+ "  httpd_site_urls hsu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3360,7 +3360,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  httpd_site_binds hsb,\n"
+					+ "  web.\"VirtualHost\" hsb,\n"
 					+ "  httpd_site_urls hsu\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -4098,7 +4098,7 @@ final public class TableHandler {
 						+ BU2_PARENTS_JOIN
 						+ "      billing.\"Package\" pk4,\n"
 						+ "      web.\"Site\" hs,\n"
-						+ "      httpd_site_binds hsb,\n"
+						+ "      web.\"VirtualHost\" hsb,\n"
 						+ "      net_binds nb\n"
 						+ "    where\n"
 						+ "      un3.username=?\n"
@@ -5737,7 +5737,7 @@ final public class TableHandler {
 					+ BU2_PARENTS_JOIN
 					+ "      billing.\"Package\" pk4,\n"
 					+ "      web.\"Site\" hs,\n"
-					+ "      httpd_site_binds hsb,\n"
+					+ "      web.\"VirtualHost\" hsb,\n"
 					+ "      net_binds nb3\n"
 					+ "    where\n"
 					+ "      un3.username=?\n"
@@ -5915,7 +5915,7 @@ final public class TableHandler {
 					+ BU2_PARENTS_JOIN
 					+ "      billing.\"Package\" pk4,\n"
 					+ "      web.\"Site\" hs,\n"
-					+ "      httpd_site_binds hsb,\n"
+					+ "      web.\"VirtualHost\" hsb,\n"
 					+ "      net_binds nb3\n"
 					+ "    where\n"
 					+ "      un3.username=?\n"

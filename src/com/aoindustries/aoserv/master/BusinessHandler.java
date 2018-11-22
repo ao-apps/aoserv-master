@@ -1691,7 +1691,7 @@ final public class BusinessHandler {
 						+ "  pk.accounting\n"
 						+ "from\n"
 						+ "  httpd_site_urls hsu,\n"
-						+ "  httpd_site_binds hsb,\n"
+						+ "  web.\"VirtualHost\" hsb,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  billing.\"Package\" pk\n"
 						+ "where\n"

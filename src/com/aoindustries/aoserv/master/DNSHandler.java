@@ -314,7 +314,7 @@ final public class DNSHandler implements CronJob {
 			+ "  hsu.hostname||'.' as zone\n"
 			+ "from\n"
 			+ "  httpd_site_urls hsu\n"
-			+ "  inner join httpd_site_binds hsb on hsu.httpd_site_bind=hsb.pkey\n"
+			+ "  inner join web.\"VirtualHost\" hsb on hsu.httpd_site_bind=hsb.pkey\n"
 			+ "  inner join web.\"Site\" hs on hsb.httpd_site=hs.pkey\n"
 			+ "  inner join billing.\"Package\" pk on hs.package=pk.name\n"
 			+ "  inner join ao_servers ao on hs.ao_server=ao.server\n"

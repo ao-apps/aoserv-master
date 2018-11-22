@@ -10317,7 +10317,7 @@ public abstract class MasterServer {
 			+ "  hsb.httpd_site\n"
 			+ "from\n"
 			+ "  httpd_site_urls hsu,\n"
-			+ "  httpd_site_binds hsb\n"
+			+ "  web.\"VirtualHost\" hsb\n"
 			+ "where\n"
 			+ "  (hsu.hostname=? or hsu.hostname like ?)\n"
 			+ "  and hsu.httpd_site_bind=hsb.pkey",
