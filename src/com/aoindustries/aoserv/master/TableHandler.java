@@ -7244,7 +7244,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new EmailSmtpRelayType(),
-					"select * from email_smtp_relay_types"
+					"select * from email.\"SmtpRelayType\""
 				);
 				break;
 			case EMAIL_SMTP_RELAYS :
