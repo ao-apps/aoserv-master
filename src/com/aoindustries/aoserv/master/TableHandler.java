@@ -2232,7 +2232,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new EmailPipeAddress(),
-						"select * from email_pipe_addresses"
+						"select * from email.\"PipeAddress\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2245,7 +2245,7 @@ final public class TableHandler {
 						+ "  master_servers ms,\n"
 						+ "  email.\"Domain\" ed,\n"
 						+ "  email.\"Address\" ea,\n"
-						+ "  email_pipe_addresses epa\n"
+						+ "  email.\"PipeAddress\" epa\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ed.ao_server\n"
@@ -2268,7 +2268,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  email.\"Domain\" ed,\n"
 					+ "  email.\"Address\" ea,\n"
-					+ "  email_pipe_addresses epa\n"
+					+ "  email.\"PipeAddress\" epa\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
