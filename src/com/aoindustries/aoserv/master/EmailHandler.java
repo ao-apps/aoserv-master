@@ -795,7 +795,7 @@ final public class EmailHandler {
 
 		conn.executeUpdate(
 			"insert into\n"
-			+ "  majordomo_servers\n"
+			+ "  email.\"MajordomoServer\"\n"
 			+ "values(\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
@@ -1165,7 +1165,7 @@ final public class EmailHandler {
 			"select\n"
 			+ "  pkey\n"
 			+ "from\n"
-			+ "  majordomo_servers\n"
+			+ "  email.\"MajordomoServer\"\n"
 			+ "where\n"
 			+ "  domain=?",
 			emailDomain
@@ -1616,7 +1616,7 @@ final public class EmailHandler {
 		int aoServer=getAOServerForEmailDomain(conn, pkey);
 
 		// Remove any majordomo server
-		int ms=conn.executeIntQuery("select coalesce((select domain from majordomo_servers where domain=?), -1)", pkey);
+		int ms=conn.executeIntQuery("select coalesce((select domain from email.\"MajordomoServer\" where domain=?), -1)", pkey);
 		if(ms!=-1) removeMajordomoServer(conn, invalidateList, pkey);
 
 		// Get the list of all email addresses in the domain
@@ -1758,16 +1758,16 @@ final public class EmailHandler {
 		}
 
 		// Get the majordomo_pipe_address and details
-		int epa=conn.executeIntQuery("select majordomo_pipe_address from majordomo_servers where domain=?", domain);
+		int epa=conn.executeIntQuery("select majordomo_pipe_address from email.\"MajordomoServer\" where domain=?", domain);
 		int ea=conn.executeIntQuery("select email_address from email.\"PipeAddress\" where pkey=?", epa);
 		int ep=conn.executeIntQuery("select email_pipe from email.\"PipeAddress\" where pkey=?", epa);
 
 		// Get the other email addresses referenced
-		int omEA=conn.executeIntQuery("select owner_majordomo_add from majordomo_servers where domain=?", domain);
-		int moEA=conn.executeIntQuery("select majordomo_owner_add from majordomo_servers where domain=?", domain);
+		int omEA=conn.executeIntQuery("select owner_majordomo_add from email.\"MajordomoServer\" where domain=?", domain);
+		int moEA=conn.executeIntQuery("select majordomo_owner_add from email.\"MajordomoServer\" where domain=?", domain);
 
 		// Remove the domain from the database
-		conn.executeUpdate("delete from majordomo_servers where domain=?", domain);
+		conn.executeUpdate("delete from email.\"MajordomoServer\" where domain=?", domain);
 		invalidateList.addTable(conn, SchemaTable.TableID.MAJORDOMO_SERVERS, accounting, aoServer, false);
 
 		// Remove the majordomo pipe and address
@@ -1873,11 +1873,11 @@ final public class EmailHandler {
 	}
 
 	public static int getLinuxServerAccountForMajordomoServer(DatabaseConnection conn, int domain) throws IOException, SQLException {
-		return conn.executeIntQuery("select linux_server_account from majordomo_servers where domain=?", domain);
+		return conn.executeIntQuery("select linux_server_account from email.\"MajordomoServer\" where domain=?", domain);
 	}
 
 	public static int getLinuxServerGroupForMajordomoServer(DatabaseConnection conn, int domain) throws IOException, SQLException {
-		return conn.executeIntQuery("select linux_server_group from majordomo_servers where domain=?", domain);
+		return conn.executeIntQuery("select linux_server_group from email.\"MajordomoServer\" where domain=?", domain);
 	}
 
 	public static AccountingCode getPackageForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -1998,7 +1998,7 @@ final public class EmailHandler {
 				+ "    select\n"
 				+ "      ms.domain\n"
 				+ "    from\n"
-				+ "      majordomo_servers ms,\n"
+				+ "      email.\"MajordomoServer\" ms,\n"
 				+ "      email.\"PipeAddress\" epa\n"
 				+ "    where\n"
 				+ "      ms.majordomo_pipe_address=epa.pkey\n"
