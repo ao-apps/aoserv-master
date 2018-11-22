@@ -2175,7 +2175,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new EmailList(),
-						"select * from email_lists"
+						"select * from email.\"List\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2187,7 +2187,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  linux_server_groups lsg,\n"
-						+ "  email_lists el\n"
+						+ "  email.\"List\" el\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=lsg.ao_server\n"
@@ -2209,7 +2209,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  linux_groups lg,\n"
 					+ "  linux_server_groups lsg,\n"
-					+ "  email_lists el\n"
+					+ "  email.\"List\" el\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

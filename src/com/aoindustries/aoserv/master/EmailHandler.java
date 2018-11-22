@@ -123,7 +123,7 @@ final public class EmailHandler {
 					}
 				}
 			}
-			String message="email_lists.path="+path+" not allowed, '"+action+"'";
+			String message="email.List.path="+path+" not allowed, '"+action+"'";
 			throw new SQLException(message);
 		}
 	}
@@ -287,7 +287,7 @@ final public class EmailHandler {
 				+ "    select\n"
 				+ "      el.pkey\n"
 				+ "    from\n"
-				+ "      email_lists el,\n"
+				+ "      email.\"List\" el,\n"
 				+ "      linux_server_groups lsg\n"
 				+ "    where\n"
 				+ "      el.path=?\n"
@@ -301,7 +301,7 @@ final public class EmailHandler {
 		) throw new SQLException("EmailList path already used: "+path+" on "+groupAOServer);
 
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO email_lists (\n"
+			"INSERT INTO email.\"List\" (\n"
 			+ "  \"path\",\n"
 			+ "  linux_server_account,\n"
 			+ "  linux_server_group\n"
@@ -836,7 +836,7 @@ final public class EmailHandler {
 		checkAccessEmailList(conn, source, "disableEmailList", pkey);
 
 		conn.executeUpdate(
-			"update email_lists set disable_log=? where pkey=?",
+			"update email.\"List\" set disable_log=? where pkey=?",
 			disableLog,
 			pkey
 		);
@@ -919,7 +919,7 @@ final public class EmailHandler {
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable EmailList #"+pkey+", Package not enabled: "+pk);
 
 		conn.executeUpdate(
-			"update email_lists set disable_log=null where pkey=?",
+			"update email.\"List\" set disable_log=null where pkey=?",
 			pkey
 		);
 
@@ -990,7 +990,7 @@ final public class EmailHandler {
 	}
 
 	public static int getDisableLogForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from email_lists where pkey=?", pkey);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from email.\"List\" where pkey=?", pkey);
 	}
 
 	public static int getDisableLogForEmailPipe(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -1017,7 +1017,7 @@ final public class EmailHandler {
 		DatabaseConnection conn,
 		int pkey
 	) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from email_lists where linux_server_account=?", pkey);
+		return conn.executeIntListQuery("select pkey from email.\"List\" where linux_server_account=?", pkey);
 	}
 
 	public static IntList getEmailListsForPackage(
@@ -1030,7 +1030,7 @@ final public class EmailHandler {
 			+ "from\n"
 			+ "  linux_groups lg,\n"
 			+ "  linux_server_groups lsg,\n"
-			+ "  email_lists el\n"
+			+ "  email.\"List\" el\n"
 			+ "where\n"
 			+ "  lg.package=?\n"
 			+ "  and lg.name=lsg.name\n"
@@ -1103,7 +1103,7 @@ final public class EmailHandler {
 			"select\n"
 			+ "  el.pkey\n"
 			+ "from\n"
-			+ "  email_lists el,\n"
+			+ "  email.\"List\" el,\n"
 			+ "  linux_server_groups lsg\n"
 			+ "where\n"
 			+ "  el.path=path\n"
@@ -1409,7 +1409,7 @@ final public class EmailHandler {
 		int aoServer=getAOServerForEmailList(conn, pkey);
 		UnixPath path = conn.executeObjectQuery(
 			ObjectFactories.unixPathFactory,
-			"select path from email_lists where pkey=?",
+			"select path from email.\"List\" where pkey=?",
 			pkey
 		);
 		// Delete the majordomo_list that is attached to this email list
@@ -1492,7 +1492,7 @@ final public class EmailHandler {
 		}
 
 		// Delete from the database
-		conn.executeUpdate("delete from email_lists where pkey=?", pkey);
+		conn.executeUpdate("delete from email.\"List\" where pkey=?", pkey);
 
 		// Notify all clients of the update
 		if(addressesModified) {
@@ -1821,7 +1821,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email_lists el, linux_server_groups lsg, linux_groups lg, billing.\"Package\" pk where el.linux_server_group=lsg.pkey and lsg.name=lg.name and lg.package=pk.name and el.pkey=?",
+			"select pk.accounting from email.\"List\" el, linux_server_groups lsg, linux_groups lg, billing.\"Package\" pk where el.linux_server_group=lsg.pkey and lsg.name=lg.name and lg.package=pk.name and el.pkey=?",
 			pkey
 		);
 	}
@@ -1894,7 +1894,7 @@ final public class EmailHandler {
 			"select\n"
 			+ "  lg.package\n"
 			+ "from\n"
-			+ "  email_lists el,\n"
+			+ "  email.\"List\" el,\n"
 			+ "  linux_server_groups lsg,\n"
 			+ "  linux_groups lg\n"
 			+ "where\n"
@@ -1924,7 +1924,7 @@ final public class EmailHandler {
 	public static UnixPath getPathForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.unixPathFactory,
-			"select path from email_lists where pkey=?",
+			"select path from email.\"List\" where pkey=?",
 			pkey
 		);
 	}
@@ -1938,7 +1938,7 @@ final public class EmailHandler {
 			"select\n"
 			+ "  lsg.ao_server\n"
 			+ "from\n"
-			+ "  email_lists el,\n"
+			+ "  email.\"List\" el,\n"
 			+ "  linux_server_groups lsg\n"
 			+ "where\n"
 			+ "  el.pkey=?\n"
@@ -1948,11 +1948,11 @@ final public class EmailHandler {
 	}
 
 	public static int getLinuxServerAccountForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select linux_server_account from email_lists where pkey=?", pkey);
+		return conn.executeIntQuery("select linux_server_account from email.\"List\" where pkey=?", pkey);
 	}
 
 	public static int getLinuxServerGroupForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select linux_server_group from email_lists where pkey=?", pkey);
+		return conn.executeIntQuery("select linux_server_group from email.\"List\" where pkey=?", pkey);
 	}
 
 	public static boolean isEmailAddressUsed(DatabaseConnection conn, int pkey) throws IOException, SQLException {
