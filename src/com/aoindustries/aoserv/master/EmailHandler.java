@@ -598,7 +598,7 @@ final public class EmailHandler {
 		if(masterUser==null || masterServers.length!=0) throw new SQLException("Only master users may add spam email messages.");
 
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO spam_email_messages VALUES(default,?,now(),?) RETURNING pkey",
+			"INSERT INTO email.\"SpamMessage\" VALUES(default,?,now(),?) RETURNING pkey",
 			esr,
 			message
 		);
@@ -1188,9 +1188,9 @@ final public class EmailHandler {
 			out,
 			provideProgress,
 			new SpamEmailMessage(),
-			"select * from spam_email_messages where email_relay=?",
+			"select * from email.\"SpamMessage\" where email_relay=?",
 			esr
-		); else throw new SQLException("Only master users may access spam_email_messages.");
+		); else throw new SQLException("Only master users may access email.SpamMessage.");
 	}
 
 	public static void invalidateTable(SchemaTable.TableID tableID) {

@@ -407,11 +407,11 @@ final public class TableHandler {
 							source,
 							out,
 							new SpamEmailMessage(),
-							"select * from spam_email_messages where pkey=?",
+							"select * from email.\"SpamMessage\" where pkey=?",
 							pkey
 						);
 					} else {
-						throw new SQLException("Only master users may access spam_email_messages.");
+						throw new SQLException("Only master users may access email.SpamMessage.");
 					}
 				}
 				break;
@@ -7885,7 +7885,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new SpamEmailMessage(),
-					"select * from spam_email_messages"
+					"select * from email.\"SpamMessage\""
 				); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
 				break;
 			case SSL_CERTIFICATE_NAMES :
