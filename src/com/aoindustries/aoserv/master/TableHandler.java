@@ -6240,7 +6240,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new PackageCategory(),
-					"select * from package_categories"
+					"select * from billing.\"PackageCategory\""
 				);
 				break;
 			case PACKAGE_DEFINITION_LIMITS :
