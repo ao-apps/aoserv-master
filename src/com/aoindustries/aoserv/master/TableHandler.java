@@ -2045,7 +2045,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new EmailAttachmentType(),
-					"select * from email_attachment_types"
+					"select * from email.\"AttachmentType\""
 				);
 				break;
 			case EMAIL_FORWARDING :

@@ -496,7 +496,7 @@ final public class LinuxAccountHandler {
 				+ "  ?,\n"
 				+ "  extension\n"
 				+ "from\n"
-				+ "  email_attachment_types\n"
+				+ "  email.\"AttachmentType\"\n"
 				+ "where\n"
 				+ "  is_default_block",
 				pkey
