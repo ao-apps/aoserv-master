@@ -323,7 +323,7 @@ final public class TableHandler {
 						source,
 						out,
 						new BackupReport(),
-						"select * from backup_reports where pkey=?",
+						"select * from backup.\"BackupReport\" where pkey=?",
 						pkey
 					); else MasterServer.writeObject(
 						conn,
@@ -334,7 +334,7 @@ final public class TableHandler {
 						+ "  br.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  backup_reports br\n"
+						+ "  backup.\"BackupReport\" br\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=br.server\n"
@@ -355,7 +355,7 @@ final public class TableHandler {
 						+ "  packages pk1,\n"
 						+ BU1_PARENTS_JOIN
 						+ "  packages pk2,\n"
-						+ "  backup_reports br\n"
+						+ "  backup.\"BackupReport\" br\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk1.name\n"
@@ -811,7 +811,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new BackupReport(),
-						"select * from backup_reports"
+						"select * from backup.\"BackupReport\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -822,7 +822,7 @@ final public class TableHandler {
 						+ "  br.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  backup_reports br\n"
+						+ "  backup.\"BackupReport\" br\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=br.server",
@@ -841,7 +841,7 @@ final public class TableHandler {
 					+ "  packages pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  packages pk2,\n"
-					+ "  backup_reports br\n"
+					+ "  backup.\"BackupReport\" br\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

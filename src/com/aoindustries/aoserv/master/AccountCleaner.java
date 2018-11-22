@@ -134,7 +134,7 @@ final public class AccountCleaner implements CronJob {
 
                 Timestamp now=new Timestamp(System.currentTimeMillis());
 
-                    // backup_reports
+                    // backup.BackupReport
                     {
                         // Those that are part of canceled accounts
                         if(
@@ -144,7 +144,7 @@ final public class AccountCleaner implements CronJob {
                                 + "    select\n"
                                 + "      br.pkey\n"
                                 + "    from\n"
-                                + "      backup_reports br,\n"
+                                + "      backup.\"BackupReport\" br,\n"
                                 + "      packages pk,\n"
                                 + "      account.\"Account\" bu\n"
                                 + "    where\n"
@@ -159,13 +159,13 @@ final public class AccountCleaner implements CronJob {
                         ) {
                             conn.executeUpdate(
                                 "delete from\n"
-                                + "  backup_reports\n"
+                                + "  backup.\"BackupReport\"\n"
                                 + "where\n"
                                 + "  pkey in (\n"
                                 + "    select\n"
                                 + "      br.pkey\n"
                                 + "    from\n"
-                                + "      backup_reports br,\n"
+                                + "      backup.\"BackupReport\" br,\n"
                                 + "      packages pk,\n"
                                 + "      account.\"Account\" bu\n"
                                 + "    where\n"
@@ -187,7 +187,7 @@ final public class AccountCleaner implements CronJob {
                                 + "    select\n"
                                 + "      pkey\n"
                                 + "    from\n"
-                                + "      backup_reports\n"
+                                + "      backup.\"BackupReport\"\n"
                                 + "    where\n"
                                 + "      (?::date-date)>"+BackupReport.MAX_REPORT_AGE+"\n" // Convert to interval?
                                 + "    limit 1\n"
@@ -197,7 +197,7 @@ final public class AccountCleaner implements CronJob {
                         ) {
                             conn.executeUpdate(
                                 "delete from\n"
-                                + "  backup_reports\n"
+                                + "  backup.\"BackupReport\"\n"
                                 + "where\n"
                                 + "  (?::date-date)>"+BackupReport.MAX_REPORT_AGE, // Convert to interval?
                                 now

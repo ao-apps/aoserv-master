@@ -107,7 +107,7 @@ final public class ReportGenerator implements CronJob {
 				ReportGenerator.class.getName(),
 				"runCronJob",
 				"Backup Report Generator",
-				"Generating contents for backup_reports",
+				"Generating contents for backup.BackupReport",
 				BACKUP_REPORT_MAX_TIME,
 				TIMER_REMINDER_INTERVAL
 			);
@@ -131,7 +131,7 @@ final public class ReportGenerator implements CronJob {
 								+ "    select\n"
 								+ "      pkey\n"
 								+ "    from\n"
-								+ "      backup_reports\n"
+								+ "      backup.\"BackupReport\"\n"
 								+ "    where\n"
 								+ "      ?::date=date\n"
 								+ "    limit 1\n"
@@ -264,7 +264,7 @@ final public class ReportGenerator implements CronJob {
 							}*/
 
 							// Add these stats to the table
-							PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("INSERT INTO backup_reports VALUES (default,?,?,?::date,?,?::int8);");
+							PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("INSERT INTO backup.\"BackupReport\" VALUES (default,?,?,?::date,?,?::int8);");
 							try {
 								Iterator<Integer> serverKeys=stats.keySet().iterator();
 								while(serverKeys.hasNext()) {
