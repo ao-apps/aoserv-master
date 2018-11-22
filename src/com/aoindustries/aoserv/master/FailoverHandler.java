@@ -108,10 +108,10 @@ final public class FailoverHandler implements CronJob {
 		int server=getFromServerForFailoverFileReplication(conn, pkey);
 		AccountingCode userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
 		AccountingCode serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
-		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set failover_file_replications.max_bit_rate for servers that have the same package as the business_administrator setting the bit rate");
+		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set backup.FileReplication.max_bit_rate for servers that have the same package as the business_administrator setting the bit rate");
 
-		if(bitRate==null) conn.executeUpdate("update failover_file_replications set max_bit_rate=null where pkey=?", pkey);
-		else conn.executeUpdate("update failover_file_replications set max_bit_rate=? where pkey=?", bitRate, pkey);
+		if(bitRate==null) conn.executeUpdate("update backup.\"FileReplication\" set max_bit_rate=null where pkey=?", pkey);
+		else conn.executeUpdate("update backup.\"FileReplication\" set max_bit_rate=? where pkey=?", bitRate, pkey);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -261,11 +261,11 @@ final public class FailoverHandler implements CronJob {
 	}
 
 	public static int getFromServerForFailoverFileReplication(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select server from failover_file_replications where pkey=?", pkey);
+		return conn.executeIntQuery("select server from backup.\"FileReplication\" where pkey=?", pkey);
 	}
 
 	public static int getBackupPartitionForFailoverFileReplication(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select backup_partition from failover_file_replications where pkey=?", pkey);
+		return conn.executeIntQuery("select backup_partition from backup.\"FileReplication\" where pkey=?", pkey);
 	}
 
 	public static void getFailoverFileLogs(
@@ -385,19 +385,19 @@ final public class FailoverHandler implements CronJob {
 			;
 		}
 
-		int quota_gid = conn.executeIntQuery("select coalesce(quota_gid, -1) from failover_file_replications where pkey=?", pkey);
+		int quota_gid = conn.executeIntQuery("select coalesce(quota_gid, -1) from backup.\"FileReplication\" where pkey=?", pkey);
 
 		// Verify that the backup_partition is the correct type
-		boolean isQuotaEnabled = conn.executeBooleanQuery("select bp.quota_enabled from failover_file_replications ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey);
+		boolean isQuotaEnabled = conn.executeBooleanQuery("select bp.quota_enabled from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey);
 		if(quota_gid==-1) {
-			if(isQuotaEnabled) throw new SQLException("quota_gid is null when quota_enabled=true: failover_file_replications.pkey="+pkey);
+			if(isQuotaEnabled) throw new SQLException("quota_gid is null when quota_enabled=true: backup.FileReplication.pkey="+pkey);
 		} else {
-			if(!isQuotaEnabled) throw new SQLException("quota_gid is not null when quota_enabled=false: failover_file_replications.pkey="+pkey);
+			if(!isQuotaEnabled) throw new SQLException("quota_gid is not null when quota_enabled=false: backup.FileReplication.pkey="+pkey);
 		}
 
 		HostAddress connectAddress = conn.executeObjectQuery(
 			ObjectFactories.hostAddressFactory,
-			"select connect_address from failover_file_replications where pkey=?",
+			"select connect_address from backup.\"FileReplication\" where pkey=?",
 			pkey
 		);
 		return DaemonHandler.grantDaemonAccess(
@@ -407,7 +407,7 @@ final public class FailoverHandler implements CronJob {
 			AOServDaemonProtocol.FAILOVER_FILE_REPLICATION,
 			Integer.toString(pkey),
 			serverName,
-			conn.executeStringQuery("select bp.path from failover_file_replications ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey),
+			conn.executeStringQuery("select bp.path from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where ffr.pkey=?", pkey),
 			quota_gid==-1 ? null : Integer.toString(quota_gid)
 		);
 	}

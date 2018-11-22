@@ -566,7 +566,7 @@ final public class LinuxAccountHandler {
 			+ "        select\n"
 			+ "          ffr.pkey\n"
 			+ "        from\n"
-			+ "          failover_file_replications ffr\n"
+			+ "          backup.\"FileReplication\" ffr\n"
 			+ "        where\n"
 			+ "          ffr.quota_gid=li.id\n"
 			+ "        limit 1\n"

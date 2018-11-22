@@ -34,7 +34,7 @@ public final class BackupHandler {
         boolean backupEnabled,
         boolean required
     ) throws IOException, SQLException {
-        int server = conn.executeIntQuery("select server from failover_file_replications where pkey=?", replication);
+        int server = conn.executeIntQuery("select server from backup.\"FileReplication\" where pkey=?", replication);
         int packageNum = ServerHandler.getPackageForServer(conn, server);
         PackageHandler.checkAccessPackage(conn, source, "addFileBackupSetting", packageNum);
 
@@ -69,7 +69,7 @@ public final class BackupHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join failover_file_replications ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
+        int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
         int packageNum=ServerHandler.getPackageForServer(conn, server);
         PackageHandler.checkAccessPackage(conn, source, "removeFileBackupSetting", packageNum);
 
@@ -81,7 +81,7 @@ public final class BackupHandler {
         InvalidateList invalidateList,
         int pkey
     ) throws IOException, SQLException {
-        int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join failover_file_replications ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
+        int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
         int packageNum=ServerHandler.getPackageForServer(conn, server);
 
         conn.executeUpdate("delete from file_backup_settings where pkey=?", pkey);
@@ -105,7 +105,7 @@ public final class BackupHandler {
         boolean backupEnabled,
         boolean required
     ) throws IOException, SQLException {
-        int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join failover_file_replications ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
+        int server = conn.executeIntQuery("select ffr.server from file_backup_settings fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
         int packageNum = ServerHandler.getPackageForServer(conn, server);
         PackageHandler.checkAccessPackage(conn, source, "setFileBackupSetting", packageNum);
 
