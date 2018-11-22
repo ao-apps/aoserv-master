@@ -1279,8 +1279,8 @@ final public class HttpdHandler {
 					"select\n"
 					+ "  hs.mod_php_version is not null\n"
 					+ "from\n"
-					+ "  httpd.\"HttpdBind\" hb\n"
-					+ "  inner join httpd.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
+					+ "  web.\"HttpdBind\" hb\n"
+					+ "  inner join web.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
 					+ "where\n"
 					+ "  hb.net_bind=?",
 					httpNetBind
@@ -1974,7 +1974,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  httpd.\"HttpdServer\" hs,\n"
+			+ "  web.\"HttpdServer\" hs,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  hs.pkey=?\n"
@@ -2024,7 +2024,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  pk.name\n"
 			+ "from\n"
-			+ "  httpd.\"HttpdServer\" hs\n"
+			+ "  web.\"HttpdServer\" hs\n"
 			+ "  inner join billing.\"Package\" pk on hs.package=pk.pkey\n"
 			+ "where\n"
 			+ "  hs.pkey=?",
@@ -2072,7 +2072,7 @@ final public class HttpdHandler {
 	}
 
 	public static int getAOServerForHttpdServer(DatabaseConnection conn, int httpdServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from httpd.\"HttpdServer\" where pkey=?", httpdServer);
+		return conn.executeIntQuery("select ao_server from web.\"HttpdServer\" where pkey=?", httpdServer);
 	}
 
 	public static String getSiteNameForHttpdSite(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -2312,7 +2312,7 @@ final public class HttpdHandler {
 				+ "    select\n"
 				+ "      net_bind\n"
 				+ "    from\n"
-				+ "      httpd.\"HttpdBind\"\n"
+				+ "      web.\"HttpdBind\"\n"
 				+ "    where\n"
 				+ "      net_bind=?\n"
 				+ "    limit 1\n"
@@ -2320,7 +2320,7 @@ final public class HttpdHandler {
 				netBind
 			)
 		) {
-			// Get the list of httpd.HttpdServer and how many httpd_site_binds there are
+			// Get the list of web.HttpdServer and how many httpd_site_binds there are
 			int lowestPKey=-1;
 			int lowestCount=Integer.MAX_VALUE;
 			pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
@@ -2330,14 +2330,14 @@ final public class HttpdHandler {
 				+ "    select\n"
 				+ "      count(*)\n"
 				+ "    from\n"
-				+ "      httpd.\"HttpdBind\" hb,\n"
+				+ "      web.\"HttpdBind\" hb,\n"
 				+ "      httpd_site_binds hsb\n"
 				+ "    where\n"
 				+ "      hs.pkey=hb.httpd_server\n"
 				+ "      and hb.net_bind=hsb.httpd_bind\n"
 				+ "  )\n"
 				+ "from\n"
-				+ "  httpd.\"HttpdServer\" hs\n"
+				+ "  web.\"HttpdServer\" hs\n"
 				+ "where\n"
 				+ "  hs.can_add_sites\n"
 				+ "  and hs.ao_server=?\n"
@@ -2373,7 +2373,7 @@ final public class HttpdHandler {
 			if(lowestPKey==-1) throw new SQLException("Unable to determine which httpd_server to add the new httpd_bind to");
 			// Insert into the DB
 			conn.executeUpdate(
-				"insert into httpd.\"HttpdBind\" values(?,?)",
+				"insert into web.\"HttpdBind\" values(?,?)",
 				netBind,
 				lowestPKey
 			);
@@ -2475,7 +2475,7 @@ final public class HttpdHandler {
 	 *           |                + httpd_site_bind_redirects
 	 *           |                + httpd_site_urls
 	 *           |                |               + dns.Record
-	 *           |                + httpd.HttpdBind
+	 *           |                + web.HttpdBind
 	 *           |                            + net_binds
 	 *           + httpd_tomcat_sites
 	 *           |                  + httpd_tomcat_contexts
@@ -2590,7 +2590,7 @@ final public class HttpdHandler {
 						httpdBind
 					)
 				) {
-					// Do not clear up the httpd.HttpdBind for overflow IPs
+					// Do not clear up the web.HttpdBind for overflow IPs
 					if(
 						conn.executeBooleanQuery(
 							"select\n"
@@ -2604,7 +2604,7 @@ final public class HttpdHandler {
 							httpdBind
 						)
 					) {
-						conn.executeUpdate("delete from httpd.\"HttpdBind\" where net_bind=?", httpdBind);
+						conn.executeUpdate("delete from web.\"HttpdBind\" where net_bind=?", httpdBind);
 						conn.executeUpdate("delete from net_binds where pkey=?", httpdBind);
 					}
 				}
@@ -2712,7 +2712,7 @@ final public class HttpdHandler {
 		int aoServer = getAOServerForHttpdServer(conn, pkey);
 
 		// httpd_sites
-		conn.executeUpdate("delete from httpd.\"HttpdServer\" where pkey=?", pkey);
+		conn.executeUpdate("delete from web.\"HttpdServer\" where pkey=?", pkey);
 		invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SERVERS, accounting, aoServer, false);
 	}
 
@@ -3444,8 +3444,8 @@ final public class HttpdHandler {
 					+ "    hs.pkey\n"
 					+ "  from\n"
 					+ "    httpd_site_binds hsb\n"
-					+ "    inner join httpd.\"HttpdBind\" hb on hsb.httpd_bind=hb.net_bind\n"
-					+ "    inner join httpd.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
+					+ "    inner join web.\"HttpdBind\" hb on hsb.httpd_bind=hb.net_bind\n"
+					+ "    inner join web.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
 					+ "  where\n"
 					+ "    hsb.httpd_site=?\n"
 					+ "    and hs.mod_php_version is not null\n"
