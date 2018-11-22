@@ -2940,7 +2940,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new HttpdJBossVersion(),
-					"select * from httpd_jboss_versions"
+					"select * from web.\"JbossVersion\""
 				);
 				break;
 			case HTTPD_JK_CODES :

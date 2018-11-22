@@ -824,7 +824,7 @@ final public class HttpdHandler {
 		int sharedTomcatPkey = 0;
 		if ("jboss".equals(siteType)) {
 			if(tomcatVersion!=-1) throw new SQLException("TomcatVersion cannot be supplied for a JBoss site: "+tomcatVersion);
-			tomcatVersion=conn.executeIntQuery("select tomcat_version from httpd_jboss_versions where version=?", jBossVersion);
+			tomcatVersion=conn.executeIntQuery("select tomcat_version from web.\"JbossVersion\" where version=?", jBossVersion);
 		} else if ("tomcat_shared".equals(siteType)) {
 			// Get shared Tomcat pkey
 			sharedTomcatPkey = conn.executeIntQuery(
