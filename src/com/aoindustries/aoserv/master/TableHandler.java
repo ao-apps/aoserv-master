@@ -7427,7 +7427,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new SendmailBind(),
-						"select * from sendmail_binds"
+						"select * from email.\"SendmailBind\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -7439,7 +7439,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms\n"
 						+ "  inner join net_binds nb on ms.server=nb.server\n"
-						+ "  inner join sendmail_binds sb on nb.pkey=sb.net_bind\n"
+						+ "  inner join email.\"SendmailBind\" sb on nb.pkey=sb.net_bind\n"
 						+ "where\n"
 						+ "  ms.username=?",
 						username
@@ -7453,7 +7453,7 @@ final public class TableHandler {
 					"select\n"
 					+ "  *\n"
 					+ "from\n"
-					+ "  sendmail_binds\n"
+					+ "  email.\"SendmailBind\"\n"
 					+ "where\n"
 					// Allow by matching net_binds.package
 					+ "  net_bind in (\n"
@@ -7543,7 +7543,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "      billing.\"Package\" pk2,\n"
 					+ "      net_binds nb,\n"
-					+ "      sendmail_binds sb\n"
+					+ "      email.\"SendmailBind\" sb\n"
 					+ "    where\n"
 					+ "      un1.username=?\n"
 					+ "      and un1.package=pk1.name\n"
