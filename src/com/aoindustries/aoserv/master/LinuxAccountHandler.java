@@ -490,7 +490,7 @@ final public class LinuxAccountHandler {
 		if(!username.equals(LinuxAccount.EMAILMON) && isLinuxAccountEmailType(conn, username)) {
 			conn.executeUpdate(
 				"insert into\n"
-				+ "  email_attachment_blocks\n"
+				+ "  email.\"AttachmentBlocks\"\n"
 				+ "select\n"
 				+ "  default,\n"
 				+ "  ?,\n"
@@ -1666,7 +1666,7 @@ final public class LinuxAccountHandler {
 		AccountingCode accounting = getBusinessForLinuxServerAccount(conn, account);
 
 		// Delete the attachment blocks
-		conn.executeUpdate("delete from email_attachment_blocks where linux_server_account=?", account);
+		conn.executeUpdate("delete from email.\"AttachmentBlocks\" where linux_server_account=?", account);
 		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ATTACHMENT_BLOCKS, accounting, aoServer, false);
 
 		// Delete the account from the server
