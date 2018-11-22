@@ -10284,7 +10284,7 @@ public abstract class MasterServer {
 
 	/**
 	 * Determines if this hostname may be used by the source.  The <code>dns.ForbiddenZone</code>,
-	 * <code>dns.Zone</code>, httpd_site_urls, and email_domains tables are searched, in this order,
+	 * <code>dns.Zone</code>, httpd_site_urls, and <code>email.Domain</code> tables are searched, in this order,
 	 * for a match.  If a match is found with an owner of this source, then access is
 	 * granted.  If the source is not restricted by either server or business, then
 	 * access is granted and the previous checks are avoided.
@@ -10328,12 +10328,12 @@ public abstract class MasterServer {
 		for(int httpdSite : httpdSites) if(!HttpdHandler.canAccessHttpdSite(conn, source, httpdSite)) throw new SQLException("Access to this hostname forbidden: Exists in httpd_site_urls: "+hostname);
 
 		IntList emailDomains=conn.executeIntListQuery(
-			"select pkey from email_domains where (domain=? or domain like ?)",
+			"select pkey from email.\"Domain\" where (domain=? or domain like ?)",
 			domain,
 			"%."+domain
 		);
 		// Must be able to access all of the domains
-		for(int emailDomain : emailDomains) if(!EmailHandler.canAccessEmailDomain(conn, source, emailDomain)) throw new SQLException("Access to this hostname forbidden: Exists in email_domains: "+hostname);
+		for(int emailDomain : emailDomains) if(!EmailHandler.canAccessEmailDomain(conn, source, emailDomain)) throw new SQLException("Access to this hostname forbidden: Exists in email.Domain: "+hostname);
 	}
 
 	public static com.aoindustries.aoserv.client.MasterServer[] getMasterServers(DatabaseConnection conn, UserId username) throws IOException, SQLException {

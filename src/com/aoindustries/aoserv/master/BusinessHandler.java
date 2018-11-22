@@ -1232,7 +1232,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one PostgresServerUser on Server="+server);
 
-		// email_domains
+		// email.Domain
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1241,7 +1241,7 @@ final public class BusinessHandler {
 				+ "      ed.pkey\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
-				+ "      email_domains ed\n"
+				+ "      email.\"Domain\" ed\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=ed.package\n"
@@ -1633,7 +1633,7 @@ final public class BusinessHandler {
 	 * The algorithm takes these steps.
 	 * <ol>
 	 *   <li>Look for exact matches in billing and technical contacts, with a weight of 10.</li>
-	 *   <li>Look for matches in email_domains, with a weight of 5</li>
+	 *   <li>Look for matches in <code>email.Domain</code>, with a weight of 5</li>
 	 *   <li>Look for matches in httpd_site_urls with a weight of 1</li>
 	 *   <li>Look for matches in dns.Zone with a weight of 1</li>
 	 *   <li>Add up the weights per business</li>
@@ -1666,14 +1666,14 @@ final public class BusinessHandler {
 			if(pos!=-1) {
 				String domain=addy.substring(pos+1);
 				if(domain.length()>0) {
-					// Look for matches in email_domains, 5 points each
+					// Look for matches in email.Domain, 5 points each
 					List<AccountingCode> domains=conn.executeObjectCollectionQuery(
 						new ArrayList<AccountingCode>(),
 						ObjectFactories.accountingCodeFactory,
 						"select\n"
 						+ "  pk.accounting\n"
 						+ "from\n"
-						+ "  email_domains ed,\n"
+						+ "  email.\"Domain\" ed,\n"
 						+ "  billing.\"Package\" pk\n"
 						+ "where\n"
 						+ "  ed.domain=?\n"

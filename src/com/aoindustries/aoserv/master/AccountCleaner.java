@@ -400,13 +400,13 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // email_domains
+                // email.Domain
                 {
                     IntList eds=conn.executeIntListQuery(
                         "select\n"
                         + "  ed.pkey\n"
                         + "from\n"
-                        + "  email_domains ed,\n"
+                        + "  email.\"Domain\" ed,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"

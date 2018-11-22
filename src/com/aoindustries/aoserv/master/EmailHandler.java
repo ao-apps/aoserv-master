@@ -507,7 +507,7 @@ final public class EmailHandler {
 		PackageHandler.checkAccessPackage(conn, source, "addEmailDomain", packageName);
 		PackageHandler.checkPackageAccessServer(conn, source, "addEmailDomain", packageName, aoServer);
 
-		int pkey = conn.executeIntUpdate("INSERT INTO email_domains VALUES (default,?,?,?) RETURNING pkey", domain, aoServer, packageName);
+		int pkey = conn.executeIntUpdate("INSERT INTO email.\"Domain\" VALUES (default,?,?,?) RETURNING pkey", domain, aoServer, packageName);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -767,9 +767,9 @@ final public class EmailHandler {
 		// Data integrity checks
 		int domainAOServer=getAOServerForEmailDomain(conn, domain);
 		int lsaAOServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa);
-		if(domainAOServer!=lsaAOServer) throw new SQLException("((email_domains.pkey="+domain+").ao_server='"+domainAOServer+"')!=((linux_server_accounts.pkey="+lsa+").ao_server='"+lsaAOServer+"')");
+		if(domainAOServer!=lsaAOServer) throw new SQLException("((email.Domain.pkey="+domain+").ao_server='"+domainAOServer+"')!=((linux_server_accounts.pkey="+lsa+").ao_server='"+lsaAOServer+"')");
 		int lsgAOServer=LinuxAccountHandler.getAOServerForLinuxServerGroup(conn, lsg);
-		if(domainAOServer!=lsgAOServer) throw new SQLException("((email_domains.pkey="+domain+").ao_server='"+domainAOServer+"')!=((linux_server_groups.pkey="+lsg+").ao_server='"+lsgAOServer+"')");
+		if(domainAOServer!=lsgAOServer) throw new SQLException("((email.Domain.pkey="+domain+").ao_server='"+domainAOServer+"')!=((linux_server_groups.pkey="+lsg+").ao_server='"+lsgAOServer+"')");
 
 		// Disabled checks
 		AccountingCode packageName=getPackageForEmailDomain(conn, domain);
@@ -1687,7 +1687,7 @@ final public class EmailHandler {
 		}
 
 		// Remove the domain from the database
-		conn.executeUpdate("delete from email_domains where pkey=?", pkey);
+		conn.executeUpdate("delete from email.\"Domain\" where pkey=?", pkey);
 
 		// Notify all clients of the update
 		if(beaMod) invalidateList.addTable(conn, SchemaTable.TableID.BLACKHOLE_EMAIL_ADDRESSES, accounting, aoServer, false);
@@ -1816,7 +1816,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailAddress(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email.\"Address\" ea, email_domains sd, billing.\"Package\" pk where ea.domain=sd.pkey and sd.package=pk.name and ea.pkey=?",
+			"select pk.accounting from email.\"Address\" ea, email.\"Domain\" sd, billing.\"Package\" pk where ea.domain=sd.pkey and sd.package=pk.name and ea.pkey=?",
 			pkey
 		);
 	}
@@ -1840,7 +1840,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email_domains sd, billing.\"Package\" pk where sd.package=pk.name and sd.pkey=?",
+			"select pk.accounting from email.\"Domain\" sd, billing.\"Package\" pk where sd.package=pk.name and sd.pkey=?",
 			pkey
 		);
 	}
@@ -1848,7 +1848,7 @@ final public class EmailHandler {
 	public static DomainName getDomainForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.domainNameFactory,
-			"select domain from email_domains where pkey=?",
+			"select domain from email.\"Domain\" where pkey=?",
 			pkey
 		);
 	}
@@ -1886,7 +1886,7 @@ final public class EmailHandler {
 	public static AccountingCode getPackageForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from email_domains where pkey=?",
+			"select package from email.\"Domain\" where pkey=?",
 			pkey
 		);
 	}
@@ -1933,7 +1933,7 @@ final public class EmailHandler {
 	}
 
 	public static int getAOServerForEmailAddress(DatabaseConnection conn, int address) throws IOException, SQLException {
-		return conn.executeIntQuery("select ed.ao_server from email.\"Address\" ea, email_domains ed where ea.domain=ed.pkey and ea.pkey=?", address);
+		return conn.executeIntQuery("select ed.ao_server from email.\"Address\" ea, email.\"Domain\" ed where ea.domain=ed.pkey and ea.pkey=?", address);
 	}
 
 	public static int getAOServerForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -2024,7 +2024,7 @@ final public class EmailHandler {
 	}
 
 	public static int getAOServerForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from email_domains where pkey=?", pkey);
+		return conn.executeIntQuery("select ao_server from email.\"Domain\" where pkey=?", pkey);
 	}
 
 	public static int getAOServerForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -2035,7 +2035,7 @@ final public class EmailHandler {
 		ServerHandler.checkAccessServer(conn, source, "isEmailDomainAvailable", ao_server);
 
 		return conn.executeBooleanQuery(
-			"select (select pkey from email_domains where ao_server=? and domain=?) is null",
+			"select (select pkey from email.\"Domain\" where ao_server=? and domain=?) is null",
 			ao_server,
 			domain
 		);

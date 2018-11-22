@@ -307,7 +307,7 @@ final public class DNSHandler implements CronJob {
 			+ "  pk.accounting as accounting,\n"
 			+ "  ed.domain||'.' as zone\n"
 			+ "from\n"
-			+ "  email_domains ed\n"
+			+ "  email.\"Domain\" ed\n"
 			+ "  inner join billing.\"Package\" pk on ed.package=pk.name\n"
 			+ "union select distinct\n"
 			+ "  pk.accounting as accounting,\n"
