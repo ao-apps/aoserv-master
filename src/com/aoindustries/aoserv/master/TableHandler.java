@@ -3131,7 +3131,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdSiteBindHeader(),
-						"select * from httpd_site_bind_headers"
+						"select * from web.\"VirtualHostHeader\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3144,7 +3144,7 @@ final public class TableHandler {
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  web.\"VirtualHost\" hsb,\n"
-						+ "  httpd_site_bind_headers hsbh\n"
+						+ "  web.\"VirtualHostHeader\" hsbh\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3167,7 +3167,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
 					+ "  web.\"VirtualHost\" hsb,\n"
-					+ "  httpd_site_bind_headers hsbh\n"
+					+ "  web.\"VirtualHostHeader\" hsbh\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
