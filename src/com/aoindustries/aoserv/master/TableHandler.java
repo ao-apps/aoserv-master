@@ -8053,7 +8053,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new SystemEmailAlias(),
-						"select * from system_email_aliases"
+						"select * from email.\"SystemAlias\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -8064,7 +8064,7 @@ final public class TableHandler {
 						+ "  sea.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  system_email_aliases sea\n"
+						+ "  email.\"SystemAlias\" sea\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=sea.ao_server",
@@ -8082,7 +8082,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
 					+ "  business_servers bs,\n"
-					+ "  system_email_aliases sea\n"
+					+ "  email.\"SystemAlias\" sea\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
