@@ -341,7 +341,7 @@ final public class NetBindHandler {
 	) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from net_binds nb, packages pk where nb.pkey=? and nb.package=pk.name",
+			"select pk.accounting from net_binds nb, billing.\"Package\" pk where nb.pkey=? and nb.package=pk.name",
 			pkey
 		);
 	}

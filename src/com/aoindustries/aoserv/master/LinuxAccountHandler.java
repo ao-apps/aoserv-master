@@ -2247,7 +2247,7 @@ final public class LinuxAccountHandler {
 			+ "      lg.name\n"
 			+ "    from\n"
 			+ "      linux_groups lg,\n"
-			+ "      packages pk,\n"
+			+ "      billing.\"Package\" pk,\n"
 			+ "      business_servers bs\n"
 			+ "    where\n"
 			+ "      lg.name=?\n"
@@ -2280,7 +2280,7 @@ final public class LinuxAccountHandler {
 	public static AccountingCode getBusinessForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from linux_groups lg, packages pk where lg.package=pk.name and lg.name=?",
+			"select pk.accounting from linux_groups lg, billing.\"Package\" pk where lg.package=pk.name and lg.name=?",
 			name
 		);
 	}
@@ -2294,7 +2294,7 @@ final public class LinuxAccountHandler {
 			+ "from\n"
 			+ "  linux_group_accounts lga1\n"
 			+ "  inner join linux_groups lg1 on lga1.\"group\"=lg1.name\n"
-			+ "  inner join packages pk1 on lg1.package=pk1.name\n"
+			+ "  inner join billing.\"Package\" pk1 on lg1.package=pk1.name\n"
 			+ "where\n"
 			+ "  lga1.pkey=?\n"
 			+ "union select\n"
@@ -2302,7 +2302,7 @@ final public class LinuxAccountHandler {
 			+ "from\n"
 			+ "  linux_group_accounts lga2\n"
 			+ "  inner join account.\"Username\" un2 on lga2.username=un2.username\n"
-			+ "  inner join packages pk2 on un2.package=pk2.name\n"
+			+ "  inner join billing.\"Package\" pk2 on un2.package=pk2.name\n"
 			+ "where\n"
 			+ "  lga2.pkey=?",
 			pkey,
@@ -2318,7 +2318,7 @@ final public class LinuxAccountHandler {
 			+ "from\n"
 			+ "  linux_server_accounts lsa,\n"
 			+ "  account.\"Username\" un,\n"
-			+ "  packages pk\n"
+			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  lsa.pkey=?\n"
 			+ "  and lsa.username=un.username\n"
@@ -2335,7 +2335,7 @@ final public class LinuxAccountHandler {
 			+ "from\n"
 			+ "  linux_server_groups lsg,\n"
 			+ "  linux_groups lg,\n"
-			+ "  packages pk\n"
+			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  lsg.pkey=?\n"
 			+ "  and lsg.name=lg.name\n"

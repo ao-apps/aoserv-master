@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The <code>PackageHandler</code> handles all the accesses to the <code>packages</code> table.
+ * The <code>PackageHandler</code> handles all the accesses to the <code>billing.Package</code> table.
  *
  * @author  AO Industries, Inc.
  */
@@ -49,7 +49,7 @@ final public class PackageHandler {
             + "    select\n"
             + "      pk.pkey\n"
             + "    from\n"
-            + "      packages pk,\n"
+            + "      billing.\"Package\" pk,\n"
             + "      business_servers bs\n"
             + "    where\n"
             + "      pk.name=?\n"
@@ -142,7 +142,7 @@ final public class PackageHandler {
 
         int pkey = conn.executeIntUpdate(
             "INSERT INTO\n"
-            + "  packages\n"
+            + "  billing.\"Package\"\n"
             + "VALUES (\n"
             + "  default,\n"
             + "  ?,\n"
@@ -468,7 +468,7 @@ final public class PackageHandler {
         }
 
         conn.executeUpdate(
-            "update packages set disable_log=? where name=?",
+            "update billing.\"Package\" set disable_log=? where name=?",
             disableLog,
             name
         );
@@ -498,7 +498,7 @@ final public class PackageHandler {
         if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to enable Package '"+name+"', Business not enabled: "+accounting);
 
         conn.executeUpdate(
-            "update packages set disable_log=null where name=?",
+            "update billing.\"Package\" set disable_log=null where name=?",
             name
         );
 
@@ -520,7 +520,7 @@ final public class PackageHandler {
 		Set<AccountingCode> names = conn.executeObjectCollectionQuery(
 			new HashSet<>(),
 			ObjectFactories.accountingCodeFactory,
-			"select name from packages"
+			"select name from billing.\"Package\""
 		);
 		// Find one that is not used
 		for(int c=0;c<Integer.MAX_VALUE;c++) {
@@ -537,7 +537,7 @@ final public class PackageHandler {
     }
 
     public static int getDisableLogForPackage(DatabaseConnection conn, AccountingCode name) throws IOException, SQLException {
-        return conn.executeIntQuery("select coalesce(disable_log, -1) from packages where name=?", name);
+        return conn.executeIntQuery("select coalesce(disable_log, -1) from billing.\"Package\" where name=?", name);
     }
 
     public static List<String> getPackages(
@@ -548,14 +548,14 @@ final public class PackageHandler {
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
         if(masterUser!=null) {
-            if(masterServers.length==0) return conn.executeStringListQuery("select name from packages");
+            if(masterServers.length==0) return conn.executeStringListQuery("select name from billing.\"Package\"");
             else return conn.executeStringListQuery(
                 "select\n"
                 + "  pk.name\n"
                 + "from\n"
                 + "  master_servers ms,\n"
                 + "  business_servers bs,\n"
-                + "  packages pk\n"
+                + "  billing.\"Package\" pk\n"
                 + "where\n"
                 + "  ms.username=?\n"
                 + "  and ms.server=bs.server\n"
@@ -569,9 +569,9 @@ final public class PackageHandler {
             + "  pk2.name\n"
             + "from\n"
             + "  account.\"Username\" un,\n"
-            + "  packages pk1,\n"
+            + "  billing.\"Package\" pk1,\n"
             + TableHandler.BU1_PARENTS_JOIN
-            + "  packages pk2\n"
+            + "  billing.\"Package\" pk2\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and un.package=pk1.name\n"
@@ -591,14 +591,14 @@ final public class PackageHandler {
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
         if(masterUser!=null) {
-            if(masterServers.length==0) return conn.executeIntListQuery("select pkey from packages");
+            if(masterServers.length==0) return conn.executeIntListQuery("select pkey from billing.\"Package\"");
             else return conn.executeIntListQuery(
                 "select\n"
                 + "  pk.pkey\n"
                 + "from\n"
                 + "  master_servers ms,\n"
                 + "  business_servers bs,\n"
-                + "  packages pk\n"
+                + "  billing.\"Package\" pk\n"
                 + "where\n"
                 + "  ms.username=?\n"
                 + "  and ms.server=bs.server\n"
@@ -612,9 +612,9 @@ final public class PackageHandler {
             + "  pk2.pkey\n"
             + "from\n"
             + "  account.\"Username\" un,\n"
-            + "  packages pk1,\n"
+            + "  billing.\"Package\" pk1,\n"
             + TableHandler.BU1_PARENTS_JOIN
-            + "  packages pk2\n"
+            + "  billing.\"Package\" pk2\n"
             + "where\n"
             + "  un.username=?\n"
             + "  and un.package=pk1.name\n"
@@ -654,7 +654,7 @@ final public class PackageHandler {
     }
 
     public static boolean isPackageNameAvailable(DatabaseConnection conn, AccountingCode packageName) throws IOException, SQLException {
-        return conn.executeBooleanQuery("select (select pkey from packages where name=? limit 1) is null", packageName);
+        return conn.executeBooleanQuery("select (select pkey from billing.\"Package\" where name=? limit 1) is null", packageName);
     }
 
     public static int findActivePackageDefinition(DatabaseConnection conn, AccountingCode accounting, int rate, int userLimit, int popLimit) throws IOException, SQLException {
@@ -720,7 +720,7 @@ final public class PackageHandler {
             if(O!=null) return O;
             AccountingCode business = database.executeObjectQuery(
                 ObjectFactories.accountingCodeFactory,
-                "select accounting from packages where pkey=?",
+                "select accounting from billing.\"Package\" where pkey=?",
                 pkey
             );
             packageBusinesses.put(I, business);
@@ -736,7 +736,7 @@ final public class PackageHandler {
             if(O!=null) return O;
             AccountingCode name = conn.executeObjectQuery(
 				ObjectFactories.accountingCodeFactory,
-				"select name from packages where pkey=?",
+				"select name from billing.\"Package\" where pkey=?",
 				pkey
 			);
             packageNames.put(I, name);
@@ -749,7 +749,7 @@ final public class PackageHandler {
         synchronized(packagePKeys) {
             Integer O=packagePKeys.get(name);
             if(O!=null) return O;
-            int pkey=database.executeIntQuery("select pkey from packages where name=?", name);
+            int pkey=database.executeIntQuery("select pkey from billing.\"Package\" where name=?", name);
             packagePKeys.put(name, pkey);
             return pkey;
         }
@@ -770,7 +770,7 @@ final public class PackageHandler {
             "select distinct\n"
             + "  bu.accounting\n"
             + "from\n"
-            + "  packages pk,\n"
+            + "  billing.\"Package\" pk,\n"
             + "  account.\"Account\" bu\n"
             + "where\n"
             + "  pk.package_definition=?\n"

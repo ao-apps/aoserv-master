@@ -1937,7 +1937,7 @@ final public class HttpdHandler {
 			+ "  httpd_shared_tomcats hst,\n"
 			+ "  linux_server_groups lsg,\n"
 			+ "  linux_groups lg,\n"
-			+ "  packages pk\n"
+			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  hst.pkey=?\n"
 			+ "  and hst.linux_server_group=lsg.pkey\n"
@@ -1957,7 +1957,7 @@ final public class HttpdHandler {
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  httpd_sites hs,\n"
-			+ "  packages pk\n"
+			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  hs.pkey=?\n"
 			+ "  and hs.package=pk.name",
@@ -1975,7 +1975,7 @@ final public class HttpdHandler {
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  httpd_servers hs,\n"
-			+ "  packages pk\n"
+			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  hs.pkey=?\n"
 			+ "  and hs.package=pk.pkey",
@@ -2025,7 +2025,7 @@ final public class HttpdHandler {
 			+ "  pk.name\n"
 			+ "from\n"
 			+ "  httpd_servers hs\n"
-			+ "  inner join packages pk on hs.package=pk.pkey\n"
+			+ "  inner join billing.\"Package\" pk on hs.package=pk.pkey\n"
 			+ "where\n"
 			+ "  hs.pkey=?",
 			httpdServer
@@ -2345,8 +2345,8 @@ final public class HttpdHandler {
 				+ "    hs.is_shared\n"
 				+ "    or (\n"
 				+ "      account.is_account_or_parent(\n"
-				+ "        (select pk1.accounting from packages pk1 where hs.package=pk1.pkey),\n"
-				+ "        (select accounting from packages where name=?)\n"
+				+ "        (select pk1.accounting from billing.\"Package\" pk1 where hs.package=pk1.pkey),\n"
+				+ "        (select accounting from billing.\"Package\" where name=?)\n"
 				+ "      )\n"
 				+ "    )\n"
 				+ "  )"

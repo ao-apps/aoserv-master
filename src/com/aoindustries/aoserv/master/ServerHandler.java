@@ -72,7 +72,7 @@ final public class ServerHandler {
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  server_farms sf,\n"
-			+ "  packages pk\n"
+			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  sf.name=?\n"
 			+ "  and sf.owner=pk.pkey",
@@ -220,7 +220,7 @@ final public class ServerHandler {
 								+ "  bs.server\n"
 								+ "from\n"
 								+ "  account.\"Username\" un,\n"
-								+ "  packages pk,\n"
+								+ "  billing.\"Package\" pk,\n"
 								+ "  business_servers bs\n"
 								+ "where\n"
 								+ "  un.username=?\n"

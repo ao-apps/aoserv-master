@@ -1816,7 +1816,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailAddress(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email_addresses ea, email_domains sd, packages pk where ea.domain=sd.pkey and sd.package=pk.name and ea.pkey=?",
+			"select pk.accounting from email_addresses ea, email_domains sd, billing.\"Package\" pk where ea.domain=sd.pkey and sd.package=pk.name and ea.pkey=?",
 			pkey
 		);
 	}
@@ -1824,7 +1824,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email_lists el, linux_server_groups lsg, linux_groups lg, packages pk where el.linux_server_group=lsg.pkey and lsg.name=lg.name and lg.package=pk.name and el.pkey=?",
+			"select pk.accounting from email_lists el, linux_server_groups lsg, linux_groups lg, billing.\"Package\" pk where el.linux_server_group=lsg.pkey and lsg.name=lg.name and lg.package=pk.name and el.pkey=?",
 			pkey
 		);
 	}
@@ -1832,7 +1832,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailPipe(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email_pipes ep, packages pk where ep.package=pk.name and ep.pkey=?",
+			"select pk.accounting from email_pipes ep, billing.\"Package\" pk where ep.package=pk.name and ep.pkey=?",
 			pkey
 		);
 	}
@@ -1840,7 +1840,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailDomain(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email_domains sd, packages pk where sd.package=pk.name and sd.pkey=?",
+			"select pk.accounting from email_domains sd, billing.\"Package\" pk where sd.package=pk.name and sd.pkey=?",
 			pkey
 		);
 	}
@@ -1856,7 +1856,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailSmtpRelay(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email_smtp_relays esr, packages pk where esr.package=pk.name and esr.pkey=?",
+			"select pk.accounting from email_smtp_relays esr, billing.\"Package\" pk where esr.package=pk.name and esr.pkey=?",
 			pkey
 		);
 	}

@@ -639,7 +639,7 @@ final public class MySQLHandler {
 			+ "  mysql_db_users mdu,\n"
 			+ "  mysql_server_users msu,\n"
 			+ "  account.\"Username\" un,\n"
-			+ "  packages pk\n"
+			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  mdu.mysql_database=?\n"
 			+ "  and mdu.mysql_server_user=msu.pkey\n"
@@ -965,7 +965,7 @@ final public class MySQLHandler {
 	public static AccountingCode getBusinessForMySQLDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from mysql_databases md, packages pk where md.package=pk.name and md.pkey=?",
+			"select pk.accounting from mysql_databases md, billing.\"Package\" pk where md.package=pk.name and md.pkey=?",
 			pkey
 		);
 	}
@@ -979,7 +979,7 @@ final public class MySQLHandler {
 			+ "  mysql_db_users mdu,\n"
 			+ "  mysql_server_users msu,\n"
 			+ "  account.\"Username\" un,\n"
-			+ "  packages pk\n"
+			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  mdu.pkey=?\n"
 			+ "  and mdu.mysql_server_user=msu.pkey\n"
@@ -997,7 +997,7 @@ final public class MySQLHandler {
 			+ "from\n"
 			+ "  mysql_server_users msu,\n"
 			+ "  account.\"Username\" un,\n"
-			+ "  packages pk\n"
+			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  msu.username=un.username\n"
 			+ "  and un.package=pk.name\n"
@@ -1007,7 +1007,7 @@ final public class MySQLHandler {
 	}
 
 	public static int getPackageForMySQLDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select pk.pkey from mysql_databases md, packages pk where md.pkey=? and md.package=pk.name", pkey);
+		return conn.executeIntQuery("select pk.pkey from mysql_databases md, billing.\"Package\" pk where md.pkey=? and md.package=pk.name", pkey);
 	}
 
 	public static IntList getMySQLServerUsersForMySQLUser(DatabaseConnection conn, MySQLUserId username) throws IOException, SQLException {

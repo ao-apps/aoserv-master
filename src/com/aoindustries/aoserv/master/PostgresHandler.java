@@ -766,7 +766,7 @@ final public class PostgresHandler {
 			+ "  postgres_databases pd,\n"
 			+ "  postgres_server_users psu,\n"
 			+ "  account.\"Username\" un,\n"
-			+ "  packages pk\n"
+			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  pd.pkey=?\n"
 			+ "  and pd.datdba=psu.pkey\n"
@@ -784,7 +784,7 @@ final public class PostgresHandler {
 			+ "  postgres_databases pd,\n"
 			+ "  postgres_server_users psu,\n"
 			+ "  account.\"Username\" un,\n"
-			+ "  packages pk\n"
+			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  pd.pkey=?\n"
 			+ "  and pd.datdba=psu.pkey\n"
@@ -797,7 +797,7 @@ final public class PostgresHandler {
 	public static AccountingCode getBusinessForPostgresServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from postgres_server_users psu, account.\"Username\" un, packages pk where psu.username=un.username and un.package=pk.name and psu.pkey=?",
+			"select pk.accounting from postgres_server_users psu, account.\"Username\" un, billing.\"Package\" pk where psu.username=un.username and un.package=pk.name and psu.pkey=?",
 			pkey
 		);
 	}

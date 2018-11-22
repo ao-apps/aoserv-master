@@ -219,7 +219,7 @@ final public class UsernameHandler {
 			if(O!=null) return O;
 			AccountingCode accounting = conn.executeObjectQuery(
 				ObjectFactories.accountingCodeFactory,
-				"select pk.accounting from account.\"Username\" un, packages pk where un.username=? and un.package=pk.name",
+				"select pk.accounting from account.\"Username\" un, billing.\"Package\" pk where un.username=? and un.package=pk.name",
 				username
 			);
 			usernameBusinesses.put(username, accounting);
@@ -241,7 +241,7 @@ final public class UsernameHandler {
 			+ "  bs.server\n"
 			+ "from\n"
 			+ "  account.\"Username\" un,\n"
-			+ "  packages pk,\n"
+			+ "  billing.\"Package\" pk,\n"
 			+ "  business_servers bs\n"
 			+ "where\n"
 			+ "  un.username=?\n"
@@ -267,7 +267,7 @@ final public class UsernameHandler {
 			+ "      un.username\n"
 			+ "    from\n"
 			+ "      account.\"Username\" un,\n"
-			+ "      packages pk,\n"
+			+ "      billing.\"Package\" pk,\n"
 			+ "      business_servers bs\n"
 			+ "    where\n"
 			+ "      un.username=?\n"

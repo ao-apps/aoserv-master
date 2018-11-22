@@ -279,7 +279,7 @@ final public class IPAddressHandler {
 		if(count!=0) throw new SQLException("Unable to set Package, IPAddress in use by "+count+(count==1?" row":" rows")+" in net_binds: "+ipAddress);
 
 		// Update the table
-		conn.executeUpdate("update \"IPAddress\" set package=(select pkey from packages where name=?), available=false where id=?", newPackage, ipAddress);
+		conn.executeUpdate("update \"IPAddress\" set package=(select pkey from billing.\"Package\" where name=?), available=false where id=?", newPackage, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -343,7 +343,7 @@ final public class IPAddressHandler {
 			+ "  pk.name\n"
 			+ "from\n"
 			+ "  \"IPAddress\" ia\n"
-			+ "  inner join packages pk on ia.package=pk.pkey\n"
+			+ "  inner join billing.\"Package\" pk on ia.package=pk.pkey\n"
 			+ "where\n"
 			+ "  ia.id=?",
 			ipAddress
@@ -357,7 +357,7 @@ final public class IPAddressHandler {
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  \"IPAddress\" ia\n"
-			+ "  inner join packages pk on ia.package=pk.pkey\n"
+			+ "  inner join billing.\"Package\" pk on ia.package=pk.pkey\n"
 			+ "where\n"
 			+ "  ia.id=?",
 			ipAddress

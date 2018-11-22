@@ -300,7 +300,7 @@ final public class DNSHandler implements CronJob {
 			+ "  dz.zone as zone\n"
 			+ "from\n"
 			+ "  dns_zones dz\n"
-			+ "  inner join packages pk on dz.package=pk.name\n"
+			+ "  inner join billing.\"Package\" pk on dz.package=pk.name\n"
 			+ "where\n"
 			+ "  dz.zone not like '%.in-addr.arpa'\n"
 			+ "union select distinct\n"
@@ -308,7 +308,7 @@ final public class DNSHandler implements CronJob {
 			+ "  ed.domain||'.' as zone\n"
 			+ "from\n"
 			+ "  email_domains ed\n"
-			+ "  inner join packages pk on ed.package=pk.name\n"
+			+ "  inner join billing.\"Package\" pk on ed.package=pk.name\n"
 			+ "union select distinct\n"
 			+ "  pk.accounting as accounting,\n"
 			+ "  hsu.hostname||'.' as zone\n"
@@ -316,7 +316,7 @@ final public class DNSHandler implements CronJob {
 			+ "  httpd_site_urls hsu\n"
 			+ "  inner join httpd_site_binds hsb on hsu.httpd_site_bind=hsb.pkey\n"
 			+ "  inner join httpd_sites hs on hsb.httpd_site=hs.pkey\n"
-			+ "  inner join packages pk on hs.package=pk.name\n"
+			+ "  inner join billing.\"Package\" pk on hs.package=pk.name\n"
 			+ "  inner join ao_servers ao on hs.ao_server=ao.server\n"
 			+ "where\n"
 			// Is not "localhost"
@@ -677,7 +677,7 @@ final public class DNSHandler implements CronJob {
 	public static AccountingCode getBusinessForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from dns_records nr, dns_zones nz, packages pk where nr.zone=nz.zone and nz.package=pk.name and nr.pkey=?",
+			"select pk.accounting from dns_records nr, dns_zones nz, billing.\"Package\" pk where nr.zone=nz.zone and nz.package=pk.name and nr.pkey=?",
 			pkey
 		);
 	}
@@ -685,7 +685,7 @@ final public class DNSHandler implements CronJob {
 	public static AccountingCode getBusinessForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from dns_zones nz, packages pk where nz.package=pk.name and nz.zone=?",
+			"select pk.accounting from dns_zones nz, billing.\"Package\" pk where nz.package=pk.name and nz.zone=?",
 			zone
 		);
 	}
