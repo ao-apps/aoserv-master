@@ -553,7 +553,7 @@ final public class HttpdHandler {
 
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  httpd_tomcat_parameters\n"
+			+ "  web.\"TomcatContextParameter\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -2480,7 +2480,7 @@ final public class HttpdHandler {
 	 *           + web.TomcatSite
 	 *           |                  + httpd_tomcat_contexts
 	 *           |                                        + httpd_tomcat_data_sources
-	 *           |                                        + httpd_tomcat_parameters
+	 *           |                                        + web.TomcatContextParameter
 	 *           |                  + httpd_workers
 	 *           |                  |             + net_binds
 	 *           |                  + httpd_tomcat_shared_sites
@@ -2622,11 +2622,11 @@ final public class HttpdHandler {
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES, accounting, aoServer, false);
 			}
 
-			// httpd_tomcat_parameters
-			IntList htps=conn.executeIntListQuery("select htp.pkey from httpd_tomcat_contexts htc, httpd_tomcat_parameters htp where htc.tomcat_site=? and htc.pkey=htp.tomcat_context", httpdSitePKey);
+			// web.TomcatContextParameter
+			IntList htps=conn.executeIntListQuery("select htp.pkey from httpd_tomcat_contexts htc, web.\"TomcatContextParameter\" htp where htc.tomcat_site=? and htc.pkey=htp.tomcat_context", httpdSitePKey);
 			if(htps.size() > 0) {
 				for(int c=0;c<htps.size();c++) {
-					conn.executeUpdate("delete from httpd_tomcat_parameters where pkey=?", htps.getInt(c));
+					conn.executeUpdate("delete from web.\"TomcatContextParameter\" where pkey=?", htps.getInt(c));
 				}
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS, accounting, aoServer, false);
 			}
@@ -2794,7 +2794,7 @@ final public class HttpdHandler {
 			);
 		}
 
-		if(conn.executeUpdate("delete from httpd_tomcat_parameters where tomcat_context=?", pkey) > 0) {
+		if(conn.executeUpdate("delete from web.\"TomcatContextParameter\" where tomcat_context=?", pkey) > 0) {
 			invalidateList.addTable(
 				conn,
 				SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS,
@@ -2860,14 +2860,14 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int pkey
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from httpd_tomcat_parameters where pkey=?", pkey);
+		int tomcat_context=conn.executeIntQuery("select tomcat_context from web.\"TomcatContextParameter\" where pkey=?", pkey);
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatParameter", tomcat_site);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
-		conn.executeUpdate("delete from httpd_tomcat_parameters where pkey=?", pkey);
+		conn.executeUpdate("delete from web.\"TomcatContextParameter\" where pkey=?", pkey);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS,
@@ -2931,7 +2931,7 @@ final public class HttpdHandler {
 		boolean override,
 		String description
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from httpd_tomcat_parameters where pkey=?", pkey);
+		int tomcat_context=conn.executeIntQuery("select tomcat_context from web.\"TomcatContextParameter\" where pkey=?", pkey);
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from httpd_tomcat_contexts where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "updateHttpdTomcatParameter", tomcat_site);
 
@@ -2939,7 +2939,7 @@ final public class HttpdHandler {
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
 		conn.executeUpdate(
-			"update httpd_tomcat_parameters set name=?, value=?, override=?, description=? where pkey=?",
+			"update web.\"TomcatContextParameter\" set name=?, value=?, override=?, description=? where pkey=?",
 			name,
 			value,
 			override,
