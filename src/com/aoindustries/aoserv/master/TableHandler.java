@@ -8704,7 +8704,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new USState(),
-					"select * from us_states"
+					"select * from account.\"UsState\""
 				);
 				break;
 			case VIRTUAL_DISKS :

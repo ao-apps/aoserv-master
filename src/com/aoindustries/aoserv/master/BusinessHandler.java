@@ -457,7 +457,7 @@ final public class BusinessHandler {
 
 	public static String convertUSState(DatabaseConnection conn, String state) throws IOException, SQLException {
 		String newState = conn.executeStringQuery(
-			"select coalesce((select code from us_states where upper(name)=upper(?) or code=upper(?)),'')",
+			"select coalesce((select code from account.\"UsState\" where upper(name)=upper(?) or code=upper(?)),'')",
 			state,
 			state
 		);
