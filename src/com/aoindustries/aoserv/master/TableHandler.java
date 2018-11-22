@@ -860,7 +860,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new BackupRetention(),
-					"select * from backup_retentions"
+					"select * from backup.\"BackupRetention\""
 				);
 				break;
 			case BANK_ACCOUNTS :
