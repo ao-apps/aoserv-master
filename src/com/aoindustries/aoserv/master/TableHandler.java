@@ -3076,7 +3076,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdSiteAuthenticatedLocation(),
-						"select * from httpd_site_authenticated_locations"
+						"select * from web.\"Location\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3088,7 +3088,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  httpd_site_authenticated_locations hsal\n"
+						+ "  web.\"Location\" hsal\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3109,7 +3109,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  httpd_site_authenticated_locations hsal\n"
+					+ "  web.\"Location\" hsal\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

@@ -316,7 +316,7 @@ final public class HttpdHandler {
 
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  httpd_site_authenticated_locations\n"
+			+ "  web.\"Location\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n" // pkey
 			+ "  ?,\n" // httpd_site
@@ -2536,8 +2536,8 @@ final public class HttpdHandler {
 			);
 		}
 
-		// httpd_site_authenticated_locations
-		if(conn.executeUpdate("delete from httpd_site_authenticated_locations where httpd_site=?", httpdSitePKey) > 0) {
+		// web.Location
+		if(conn.executeUpdate("delete from web.\"Location\" where httpd_site=?", httpdSitePKey) > 0) {
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS, accounting, aoServer, false);
 		}
 
@@ -2722,13 +2722,13 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int pkey
 	) throws IOException, SQLException {
-		int httpd_site=conn.executeIntQuery("select httpd_site from httpd_site_authenticated_locations where pkey=?", pkey);
+		int httpd_site=conn.executeIntQuery("select httpd_site from web.\"Location\" where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "removeHttpdSiteAuthenticatedLocation", httpd_site);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, httpd_site);
 		int aoServer=getAOServerForHttpdSite(conn, httpd_site);
 
-		conn.executeUpdate("delete from httpd_site_authenticated_locations where pkey=?", pkey);
+		conn.executeUpdate("delete from web.\"Location\" where pkey=?", pkey);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
@@ -3171,7 +3171,7 @@ final public class HttpdHandler {
 		String require,
 		String handler
 	) throws IOException, SQLException {
-		int httpd_site=conn.executeIntQuery("select httpd_site from httpd_site_authenticated_locations where pkey=?", pkey);
+		int httpd_site=conn.executeIntQuery("select httpd_site from web.\"Location\" where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "setHttpdSiteAuthenticatedLocationAttributes", httpd_site);
 		if(isHttpdSiteDisabled(conn, httpd_site)) throw new SQLException("Unable to set HttpdSiteAuthenticatedLocation attributes, HttpdSite disabled: "+httpd_site);
 		String error = HttpdSiteAuthenticatedLocation.validatePath(path);
@@ -3183,7 +3183,7 @@ final public class HttpdHandler {
 		if(HttpdSiteAuthenticatedLocation.Handler.CURRENT.equals(handler)) {
 			conn.executeUpdate(
 				"update\n"
-				+ "  httpd_site_authenticated_locations\n"
+				+ "  web.\"Location\"\n"
 				+ "set\n"
 				+ "  path=?,\n"
 				+ "  is_regular_expression=?,\n"
@@ -3204,7 +3204,7 @@ final public class HttpdHandler {
 		} else {
 			conn.executeUpdate(
 				"update\n"
-				+ "  httpd_site_authenticated_locations\n"
+				+ "  web.\"Location\"\n"
 				+ "set\n"
 				+ "  path=?,\n"
 				+ "  is_regular_expression=?,\n"
