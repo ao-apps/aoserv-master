@@ -694,14 +694,14 @@ final public class HttpdHandler {
 				"select\n"
 				+ "  htv.install_dir || '/webapps/examples'\n"
 				+ "from\n"
-				+ "  httpd_tomcat_sites hts\n"
+				+ "  web.\"TomcatSite\" hts\n"
 				+ "  inner join httpd_tomcat_versions htv on hts.version=htv.version\n"
 				+ "where\n"
 				+ "  hts.httpd_site=?\n"
 				+ "union select\n"
 				+ "  htv.install_dir || '/webapps/manager'\n"
 				+ "from\n"
-				+ "  httpd_tomcat_sites hts\n"
+				+ "  web.\"TomcatSite\" hts\n"
 				+ "  inner join httpd_tomcat_versions htv on hts.version=htv.version\n"
 				+ "where\n"
 				+ "  hts.httpd_site=?\n",
@@ -987,7 +987,7 @@ final public class HttpdHandler {
 
 		// Create the HttpdTomcatSite
 		conn.executeUpdate(
-			"INSERT INTO httpd_tomcat_sites (httpd_site, version) VALUES (?,?)",
+			"INSERT INTO web.\"TomcatSite\" (httpd_site, version) VALUES (?,?)",
 			httpdSitePKey,
 			tomcatVersion
 		);
@@ -2477,7 +2477,7 @@ final public class HttpdHandler {
 	 *           |                |               + dns.Record
 	 *           |                + web.HttpdBind
 	 *           |                            + net_binds
-	 *           + httpd_tomcat_sites
+	 *           + web.TomcatSite
 	 *           |                  + httpd_tomcat_contexts
 	 *           |                                        + httpd_tomcat_data_sources
 	 *           |                                        + httpd_tomcat_parameters
@@ -2611,8 +2611,8 @@ final public class HttpdHandler {
 			}
 		}
 
-		// httpd_tomcat_sites
-		if(conn.executeBooleanQuery("select (select httpd_site from httpd_tomcat_sites where httpd_site=? limit 1) is not null", httpdSitePKey)) {
+		// web.TomcatSite
+		if(conn.executeBooleanQuery("select (select httpd_site from web.\"TomcatSite\" where httpd_site=? limit 1) is not null", httpdSitePKey)) {
 			// httpd_tomcat_data_sources
 			IntList htdss=conn.executeIntListQuery("select htds.pkey from httpd_tomcat_contexts htc, httpd_tomcat_data_sources htds where htc.tomcat_site=? and htc.pkey=htds.tomcat_context", httpdSitePKey);
 			if(htdss.size() > 0) {
@@ -2689,7 +2689,7 @@ final public class HttpdHandler {
 				NetBindHandler.removeNetBind(conn, invalidateList, jmx_bind);
 			}
 
-			conn.executeUpdate("delete from httpd_tomcat_sites where httpd_site=?", httpdSitePKey);
+			conn.executeUpdate("delete from web.\"TomcatSite\" where httpd_site=?", httpdSitePKey);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITES, accounting, aoServer, false);
 		}
 
@@ -3135,7 +3135,7 @@ final public class HttpdHandler {
 		// TODO: Update the context paths to an webapps in /opt/apache-tomcat.../webpaps to the new version
 		// TODO: See httpd_tomcat_versions table
 		conn.executeUpdate(
-			"update httpd_tomcat_sites set version=? where httpd_site in (\n"
+			"update web.\"TomcatSite\" set version=? where httpd_site in (\n"
 			+ "  select tomcat_site from httpd_tomcat_shared_sites where httpd_shared_tomcat=?\n"
 			+ ")",
 			version,
@@ -3998,7 +3998,7 @@ final public class HttpdHandler {
 				+ "  tv.version\n"
 				+ "from\n"
 				+ "  httpd_tomcat_std_sites htss\n"
-				+ "  inner join httpd_tomcat_sites hts on htss.tomcat_site=hts.httpd_site\n"
+				+ "  inner join web.\"TomcatSite\" hts on htss.tomcat_site=hts.httpd_site\n"
 				+ "  inner join distribution.\"SoftwareVersion\" tv on hts.version=tv.pkey\n"
 				+ "where htss.tomcat_site=?",
 				pkey
@@ -4035,7 +4035,7 @@ final public class HttpdHandler {
 		// TODO: Update the context paths to an webapps in /opt/apache-tomcat.../webpaps to the new version
 		// TODO: See httpd_tomcat_versions table (might shared with the same code above)
 		conn.executeUpdate(
-			"update httpd_tomcat_sites set version=? where httpd_site=?",
+			"update web.\"TomcatSite\" set version=? where httpd_site=?",
 			version,
 			pkey
 		);
@@ -4080,7 +4080,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
-			"update httpd_tomcat_sites set block_webinf=? where httpd_site=?",
+			"update web.\"TomcatSite\" set block_webinf=? where httpd_site=?",
 			blockWebinf,
 			pkey
 		);
