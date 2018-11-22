@@ -7313,7 +7313,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new EmailSmtpSmartHostDomain(),
-						"select * from email_smtp_smart_host_domains"
+						"select * from email.\"SmtpSmartHostDomain\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -7325,7 +7325,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  net_binds nb,\n"
-						+ "  email_smtp_smart_host_domains esshd\n"
+						+ "  email.\"SmtpSmartHostDomain\" esshd\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=nb.server\n"
@@ -7347,7 +7347,7 @@ final public class TableHandler {
 						+ BU1_PARENTS_JOIN
 						+ "  billing.\"Package\" pk2,\n"
 						+ "  net_binds nb,\n"
-						+ "  email_smtp_smart_host_domains esshd\n"
+						+ "  email.\"SmtpSmartHostDomain\" esshd\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk1.name\n"
