@@ -689,7 +689,7 @@ final public class EmailHandler {
 
 		// Add the majordomo_list
 		conn.executeUpdate(
-			"insert into majordomo_lists values(?,?,?,?,?,?,?,?,?)",
+			"insert into email.\"MajordomoList\" values(?,?,?,?,?,?,?,?,?)",
 			pkey,
 			majordomoServer,
 			listName,
@@ -1415,25 +1415,25 @@ final public class EmailHandler {
 		// Delete the majordomo_list that is attached to this email list
 		if(isMajordomoList(conn, pkey)) {
 			// Get the listname_pipe_add and details
-			int listnameEPA=conn.executeIntQuery("select listname_pipe_add from majordomo_lists where email_list=?", pkey);
+			int listnameEPA=conn.executeIntQuery("select listname_pipe_add from email.\"MajordomoList\" where email_list=?", pkey);
 			int listnameEA=conn.executeIntQuery("select email_address from email.\"PipeAddress\" where pkey=?", listnameEPA);
 			int listnameEP=conn.executeIntQuery("select email_pipe from email.\"PipeAddress\" where pkey=?", listnameEPA);
 
 			// Get the listname_list_add and details
-			int listnameListELA=conn.executeIntQuery("select listname_list_add from majordomo_lists where email_list=?", pkey);
+			int listnameListELA=conn.executeIntQuery("select listname_list_add from email.\"MajordomoList\" where email_list=?", pkey);
 			int listnameListEA=conn.executeIntQuery("select email_address from email.\"ListAddress\" where pkey=?", listnameListELA);
 
 			// Get the listname_request_pipe_add and details
-			int listnameRequestEPA=conn.executeIntQuery("select listname_request_pipe_add from majordomo_lists where email_list=?", pkey);
+			int listnameRequestEPA=conn.executeIntQuery("select listname_request_pipe_add from email.\"MajordomoList\" where email_list=?", pkey);
 			int listnameRequestEA=conn.executeIntQuery("select email_address from email.\"PipeAddress\" where pkey=?", listnameRequestEPA);
 			int listnameRequestEP=conn.executeIntQuery("select email_pipe from email.\"PipeAddress\" where pkey=?", listnameRequestEPA);
 
 			// Other direct email addresses
-			int ownerListnameEA=conn.executeIntQuery("select owner_listname_add from majordomo_lists where email_list=?", pkey);
-			int listnameOwnerEA=conn.executeIntQuery("select listname_owner_add from majordomo_lists where email_list=?", pkey);
-			int listnameApprovalEA=conn.executeIntQuery("select listname_approval_add from majordomo_lists where email_list=?", pkey);
+			int ownerListnameEA=conn.executeIntQuery("select owner_listname_add from email.\"MajordomoList\" where email_list=?", pkey);
+			int listnameOwnerEA=conn.executeIntQuery("select listname_owner_add from email.\"MajordomoList\" where email_list=?", pkey);
+			int listnameApprovalEA=conn.executeIntQuery("select listname_approval_add from email.\"MajordomoList\" where email_list=?", pkey);
 
-			conn.executeUpdate("delete from majordomo_lists where email_list=?", pkey);
+			conn.executeUpdate("delete from email.\"MajordomoList\" where email_list=?", pkey);
 			invalidateList.addTable(conn, SchemaTable.TableID.MAJORDOMO_LISTS, accounting, aoServer, false);
 
 			// Delete the listname_pipe_add
@@ -1750,7 +1750,7 @@ final public class EmailHandler {
 		int aoServer=getAOServerForEmailDomain(conn, domain);
 
 		// Remove any majordomo lists
-		IntList mls=conn.executeIntListQuery("select email_list from majordomo_lists where majordomo_server=?", domain);
+		IntList mls=conn.executeIntListQuery("select email_list from email.\"MajordomoList\" where majordomo_server=?", domain);
 		if(mls.size()>0) {
 			for(int c=0;c<mls.size();c++) {
 				removeEmailList(conn, invalidateList, mls.getInt(c));
@@ -1968,7 +1968,7 @@ final public class EmailHandler {
 				+ "    select\n"
 				+ "      ml.email_list\n"
 				+ "    from\n"
-				+ "      majordomo_lists ml,\n"
+				+ "      email.\"MajordomoList\" ml,\n"
 				+ "      email.\"PipeAddress\" epa1,\n"
 				+ "      email.\"ListAddress\" ela,\n"
 				+ "      email.\"PipeAddress\" epa2\n"
@@ -2039,7 +2039,7 @@ final public class EmailHandler {
 	}
 
 	public static boolean isMajordomoList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select (select email_list from majordomo_lists where email_list=?) is not null", pkey);
+		return conn.executeBooleanQuery("select (select email_list from email.\"MajordomoList\" where email_list=?) is not null", pkey);
 	}
 
 	public static void setMajordomoInfoFile(

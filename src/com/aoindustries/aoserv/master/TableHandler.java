@@ -5040,7 +5040,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new MajordomoList(),
-						"select * from majordomo_lists"
+						"select * from email.\"MajordomoList\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5052,7 +5052,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  email.\"Domain\" ed,\n"
-						+ "  majordomo_lists ml\n"
+						+ "  email.\"MajordomoList\" ml\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ed.ao_server\n"
@@ -5073,7 +5073,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  email.\"Domain\" ed,\n"
-					+ "  majordomo_lists ml\n"
+					+ "  email.\"MajordomoList\" ml\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
