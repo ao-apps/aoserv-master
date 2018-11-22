@@ -6210,7 +6210,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new NoticeType(),
-					"select * from notice_types"
+					"select * from billing.\"NoticeType\""
 				);
 				break;
 			case OPERATING_SYSTEM_VERSIONS :
