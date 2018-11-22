@@ -2587,7 +2587,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new FailoverMySQLReplication(),
-						"select * from failover_mysql_replications"
+						"select * from backup.\"MysqlReplication\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2599,7 +2599,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  backup.\"FileReplication\" ffr,\n"
-						+ "  failover_mysql_replications fmr\n"
+						+ "  backup.\"MysqlReplication\" fmr\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and (\n"
@@ -2627,7 +2627,7 @@ final public class TableHandler {
 					+ "  packages pk,\n"
 					+ "  business_servers bs,\n"
 					+ "  backup.\"FileReplication\" ffr,\n"
-					+ "  failover_mysql_replications fmr\n"
+					+ "  backup.\"MysqlReplication\" fmr\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"

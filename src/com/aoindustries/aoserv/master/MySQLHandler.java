@@ -1039,7 +1039,7 @@ final public class MySQLHandler {
 	}
 
 	public static int getMySQLServerForFailoverMySQLReplication(DatabaseConnection conn, int failoverMySQLReplication) throws IOException, SQLException {
-		return conn.executeIntQuery("select mysql_server from failover_mysql_replications where pkey=?", failoverMySQLReplication);
+		return conn.executeIntQuery("select mysql_server from backup.\"MysqlReplication\" where pkey=?", failoverMySQLReplication);
 	}
 
 	public static int getMySQLServerForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -1125,18 +1125,18 @@ final public class MySQLHandler {
 		int daemonServer;
 		UnixPath chrootPath;
 		int osv;
-		if(conn.executeBooleanQuery("select ao_server is not null from failover_mysql_replications where pkey=?", failoverMySQLReplication)) {
+		if(conn.executeBooleanQuery("select ao_server is not null from backup.\"MysqlReplication\" where pkey=?", failoverMySQLReplication)) {
 			// ao_server-based
-			daemonServer = conn.executeIntQuery("select ao_server from failover_mysql_replications where pkey=?", failoverMySQLReplication);
+			daemonServer = conn.executeIntQuery("select ao_server from backup.\"MysqlReplication\" where pkey=?", failoverMySQLReplication);
 			chrootPath = null;
 			osv = ServerHandler.getOperatingSystemVersionForServer(conn, daemonServer);
 			if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+daemonServer);
 		} else {
 			// replication-based
-			daemonServer = conn.executeIntQuery("select bp.ao_server from failover_mysql_replications fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", failoverMySQLReplication);
+			daemonServer = conn.executeIntQuery("select bp.ao_server from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", failoverMySQLReplication);
 			UnixPath toPath = conn.executeObjectQuery(
 				ObjectFactories.unixPathFactory,
-				"select bp.path from failover_mysql_replications fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?",
+				"select bp.path from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?",
 				failoverMySQLReplication
 			);
 			int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
@@ -1197,18 +1197,18 @@ final public class MySQLHandler {
 			// Query the slave
 			int slaveMySQLServer = getMySQLServerForFailoverMySQLReplication(conn, mysqlSlave);
 			if(slaveMySQLServer!=mysqlServer) throw new SQLException("slaveMySQLServer!=mysqlServer");
-			if(conn.executeBooleanQuery("select ao_server is not null from failover_mysql_replications where pkey=?", mysqlSlave)) {
+			if(conn.executeBooleanQuery("select ao_server is not null from backup.\"MysqlReplication\" where pkey=?", mysqlSlave)) {
 				// ao_server-based
-				daemonServer = conn.executeIntQuery("select ao_server from failover_mysql_replications where pkey=?", mysqlSlave);
+				daemonServer = conn.executeIntQuery("select ao_server from backup.\"MysqlReplication\" where pkey=?", mysqlSlave);
 				chrootPath = null;
 				osv = ServerHandler.getOperatingSystemVersionForServer(conn, daemonServer);
 				if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+daemonServer);
 			} else {
 				// replication-based
-				daemonServer = conn.executeIntQuery("select bp.ao_server from failover_mysql_replications fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", mysqlSlave);
+				daemonServer = conn.executeIntQuery("select bp.ao_server from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", mysqlSlave);
 				UnixPath toPath = conn.executeObjectQuery(
 					ObjectFactories.unixPathFactory,
-					"select bp.path from failover_mysql_replications fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?",
+					"select bp.path from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?",
 					mysqlSlave
 				);
 				int aoServer = getAOServerForMySQLServer(conn, slaveMySQLServer);
@@ -1278,18 +1278,18 @@ final public class MySQLHandler {
 			// Query the slave
 			int slaveMySQLServer = getMySQLServerForFailoverMySQLReplication(conn, mysqlSlave);
 			if(slaveMySQLServer!=mysqlServer) throw new SQLException("slaveMySQLServer!=mysqlServer");
-			if(conn.executeBooleanQuery("select ao_server is not null from failover_mysql_replications where pkey=?", mysqlSlave)) {
+			if(conn.executeBooleanQuery("select ao_server is not null from backup.\"MysqlReplication\" where pkey=?", mysqlSlave)) {
 				// ao_server-based
-				daemonServer = conn.executeIntQuery("select ao_server from failover_mysql_replications where pkey=?", mysqlSlave);
+				daemonServer = conn.executeIntQuery("select ao_server from backup.\"MysqlReplication\" where pkey=?", mysqlSlave);
 				chrootPath = null;
 				osv = ServerHandler.getOperatingSystemVersionForServer(conn, daemonServer);
 				if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+daemonServer);
 			} else {
 				// replication-based
-				daemonServer = conn.executeIntQuery("select bp.ao_server from failover_mysql_replications fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", mysqlSlave);
+				daemonServer = conn.executeIntQuery("select bp.ao_server from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?", mysqlSlave);
 				UnixPath toPath = conn.executeObjectQuery(
 					ObjectFactories.unixPathFactory,
-					"select bp.path from failover_mysql_replications fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?",
+					"select bp.path from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.pkey inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey where fmr.pkey=?",
 					mysqlSlave
 				);
 				int aoServer = getAOServerForMySQLServer(conn, slaveMySQLServer);
