@@ -8600,7 +8600,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new TransactionType(),
-					"select * from transaction_types"
+					"select * from billing.\"TransactionType\""
 				);
 				break;
 			case TRANSACTIONS :
