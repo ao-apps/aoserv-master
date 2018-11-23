@@ -6898,7 +6898,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new Rack(),
-						"select * from racks"
+						"select * from infrastructure.\"Rack\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -6910,7 +6910,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms\n"
 						+ "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
-						+ "  inner join racks ra on ps.rack=ra.pkey\n"
+						+ "  inner join infrastructure.\"Rack\" ra on ps.rack=ra.pkey\n"
 						+ "where\n"
 						+ "  ms.username=?",
 						username
@@ -6931,7 +6931,7 @@ final public class TableHandler {
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
 					+ "  infrastructure.\"PhysicalServer\" ps,\n"
-					+ "  racks ra\n"
+					+ "  infrastructure.\"Rack\" ra\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
