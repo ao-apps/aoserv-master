@@ -213,7 +213,8 @@ final public class MySQLHandler {
 		// Must also have matching servers
 		int dbServer=getMySQLServerForMySQLDatabase(conn, mysql_database);
 		int userServer=getMySQLServerForMySQLServerUser(conn, mysql_server_user);
-		if(dbServer!=userServer) throw new SQLException("Mismatched mysql.MysqlServer for mysql.MysqlDatabase and mysql_server_users");
+		// TODO: Enforce this with PostgreSQL trigger
+		if(dbServer!=userServer) throw new SQLException("Mismatched mysql.MysqlServer for mysql.MysqlDatabase and mysql.MysqlServerUser");
 
 		// Add the entry to the database
 		int pkey = conn.executeIntUpdate(
@@ -272,7 +273,7 @@ final public class MySQLHandler {
 
 		boolean isSystemUser = username.equals(MySQLUser.ROOT) || username.equals(MySQLUser.MYSQL_SYS);
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO mysql_server_users VALUES(default,?,?,?,null,null,?,?,?,?) RETURNING pkey",
+			"INSERT INTO mysql.\"MysqlServerUser\" VALUES(default,?,?,?,null,null,?,?,?,?) RETURNING pkey",
 			username,
 			mysqlServer,
 			host,
@@ -334,7 +335,7 @@ final public class MySQLHandler {
 		checkAccessMySQLServerUser(conn, source, "disableMySQLServerUser", pkey);
 
 		conn.executeUpdate(
-			"update mysql_server_users set disable_log=? where pkey=?",
+			"update mysql.\"MysqlServerUser\" set disable_log=? where pkey=?",
 			disableLog,
 			pkey
 		);
@@ -423,7 +424,7 @@ final public class MySQLHandler {
 		if(isMySQLUserDisabled(conn, mu)) throw new SQLException("Unable to enable MySQLServerUser #"+pkey+", MySQLUser not enabled: "+mu);
 
 		conn.executeUpdate(
-			"update mysql_server_users set disable_log=null where pkey=?",
+			"update mysql.\"MysqlServerUser\" set disable_log=null where pkey=?",
 			pkey
 		);
 
@@ -493,7 +494,7 @@ final public class MySQLHandler {
 	}
 
 	public static int getDisableLogForMySQLServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql_server_users where pkey=?", pkey);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql.\"MysqlServerUser\" where pkey=?", pkey);
 	}
 
 	public static int getDisableLogForMySQLUser(DatabaseConnection conn, MySQLUserId username) throws IOException, SQLException {
@@ -503,7 +504,7 @@ final public class MySQLHandler {
 	public static MySQLUserId getUsernameForMySQLServerUser(DatabaseConnection conn, int msu) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.mySQLUserIdFactory,
-			"select username from mysql_server_users where pkey=?",
+			"select username from mysql.\"MysqlServerUser\" where pkey=?",
 			msu
 		);
 	}
@@ -637,7 +638,7 @@ final public class MySQLHandler {
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  mysql.\"MysqlDatabaseUser\" mdu,\n"
-			+ "  mysql_server_users msu,\n"
+			+ "  mysql.\"MysqlServerUser\" msu,\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
@@ -725,7 +726,7 @@ final public class MySQLHandler {
 		AccountingCode accounting = getBusinessForMySQLServerUser(conn, pkey);
 		int mysqlServer=getMySQLServerForMySQLServerUser(conn, pkey);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-		conn.executeUpdate("delete from mysql_server_users where pkey=?", pkey);
+		conn.executeUpdate("delete from mysql.\"MysqlServerUser\" where pkey=?", pkey);
 
 		// Notify all clients of the updates
 		if(dbUsersExist) invalidateList.addTable(
@@ -778,7 +779,7 @@ final public class MySQLHandler {
 			"select\n"
 			+ "  md.mysql_server\n"
 			+ "from\n"
-			+ "  mysql_server_users msu,\n"
+			+ "  mysql.\"MysqlServerUser\" msu,\n"
 			+ "  mysql.\"MysqlDatabaseUser\" mdu,\n"
 			+ "  mysql.\"MysqlDatabase\" md\n"
 			+ "where\n"
@@ -798,7 +799,7 @@ final public class MySQLHandler {
 				+ "    select\n"
 				+ "      mdu.pkey\n"
 				+ "    from\n"
-				+ "      mysql_server_users msu,\n"
+				+ "      mysql.\"MysqlServerUser\" msu,\n"
 				+ "      mysql.\"MysqlDatabaseUser\" mdu\n"
 				+ "    where\n"
 				+ "      msu.username=?\n"
@@ -818,9 +819,9 @@ final public class MySQLHandler {
 		}
 
 		// Remove the mysql_server_user
-		IntList mysqlServers=conn.executeIntListQuery("select mysql_server from mysql_server_users where username=?", username);
+		IntList mysqlServers=conn.executeIntListQuery("select mysql_server from mysql.\"MysqlServerUser\" where username=?", username);
 		if(mysqlServers.size()>0) {
-			conn.executeUpdate("delete from mysql_server_users where username=?", username);
+			conn.executeUpdate("delete from mysql.\"MysqlServerUser\" where username=?", username);
 			for(int mysqlServer : mysqlServers) {
 				invalidateList.addTable(
 					conn,
@@ -897,7 +898,7 @@ final public class MySQLHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update mysql_server_users set predisable_password=? where pkey=?",
+			"update mysql.\"MysqlServerUser\" set predisable_password=? where pkey=?",
 			password,
 			msu
 		);
@@ -977,7 +978,7 @@ final public class MySQLHandler {
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  mysql.\"MysqlDatabaseUser\" mdu,\n"
-			+ "  mysql_server_users msu,\n"
+			+ "  mysql.\"MysqlServerUser\" msu,\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
@@ -995,7 +996,7 @@ final public class MySQLHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  mysql_server_users msu,\n"
+			+ "  mysql.\"MysqlServerUser\" msu,\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
@@ -1011,7 +1012,7 @@ final public class MySQLHandler {
 	}
 
 	public static IntList getMySQLServerUsersForMySQLUser(DatabaseConnection conn, MySQLUserId username) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from mysql_server_users where username=?", username);
+		return conn.executeIntListQuery("select pkey from mysql.\"MysqlServerUser\" where username=?", username);
 	}
 
 	public static int getMySQLServerForMySQLDatabase(DatabaseConnection conn, int mysql_database) throws IOException, SQLException {
@@ -1056,7 +1057,7 @@ final public class MySQLHandler {
 	}
 
 	public static int getMySQLServerForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select msu.mysql_server from mysql.\"MysqlDatabaseUser\" mdu, mysql_server_users msu where mdu.pkey=? and mdu.mysql_server_user=msu.pkey", pkey);
+		return conn.executeIntQuery("select msu.mysql_server from mysql.\"MysqlDatabaseUser\" mdu, mysql.\"MysqlServerUser\" msu where mdu.pkey=? and mdu.mysql_server_user=msu.pkey", pkey);
 	}
 
 	public static int getMySQLDatabaseForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -1068,7 +1069,7 @@ final public class MySQLHandler {
 	}
 
 	public static int getMySQLServerForMySQLServerUser(DatabaseConnection conn, int mysql_server_user) throws IOException, SQLException {
-		return conn.executeIntQuery("select mysql_server from mysql_server_users where pkey=?", mysql_server_user);
+		return conn.executeIntQuery("select mysql_server from mysql.\"MysqlServerUser\" where pkey=?", mysql_server_user);
 	}
 
 	public static void restartMySQL(
