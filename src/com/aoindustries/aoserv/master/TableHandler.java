@@ -1757,7 +1757,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new DistroFileType(),
-					"select * from distro_file_types"
+					"select * from management.\"DistroFileType\""
 				);
 				break;
 			case DISTRO_FILES :
