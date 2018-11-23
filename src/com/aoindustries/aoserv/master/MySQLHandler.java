@@ -1019,13 +1019,13 @@ final public class MySQLHandler {
 	}
 
 	public static int getAOServerForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from mysql.\"MysqlServer\" where pkey=?", mysqlServer);
+		return conn.executeIntQuery("select ao_server from mysql.\"MysqlServer\" where net_bind=?", mysqlServer);
 	}
 
 	public static AccountingCode getPackageForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from mysql.\"MysqlServer\" where pkey=?",
+			"select package from mysql.\"MysqlServer\" where net_bind=?",
 			mysqlServer
 		);
 	}
@@ -1033,7 +1033,7 @@ final public class MySQLHandler {
 	public static Port getPortForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.portFactory,
-			"select nb.port, nb.net_protocol from mysql.\"MysqlServer\" ms inner join net_binds nb on ms.net_bind=nb.pkey where ms.pkey=?",
+			"select nb.port, nb.net_protocol from mysql.\"MysqlServer\" ms inner join net_binds nb on ms.net_bind=nb.pkey where ms.net_bind=?",
 			mysqlServer
 		);
 	}

@@ -5427,7 +5427,7 @@ final public class TableHandler {
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=mys.ao_server\n"
-						+ "  and mys.pkey=md.mysql_server",
+						+ "  and mys.net_bind=md.mysql_server",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -5481,7 +5481,7 @@ final public class TableHandler {
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=mys.ao_server\n"
-						+ "  and mys.pkey=md.mysql_server\n"
+						+ "  and mys.net_bind=md.mysql_server\n"
 						+ "  and md.pkey=mdu.mysql_database",
 						username
 					);
@@ -5537,7 +5537,7 @@ final public class TableHandler {
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=mys.ao_server\n"
-						+ "  and mys.pkey=msu.mysql_server",
+						+ "  and mys.net_bind=msu.mysql_server",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -5585,7 +5585,16 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new MySQLServer(),
-						"select * from mysql.\"MysqlServer\""
+						"select\n"
+						+ "  net_bind as pkey,\n"
+						+ "  \"name\",\n"
+						+ "  ao_server,\n"
+						+ "  version,\n"
+						+ "  max_connections,\n"
+						+ "  net_bind,\n"
+						+ "  package\n"
+						+ "from\n"
+						+ "  mysql.\"MysqlServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5593,7 +5602,13 @@ final public class TableHandler {
 						provideProgress,
 						new MySQLServer(),
 						"select\n"
-						+ "  ps.*\n"
+						+ "  ps.net_bind as pkey,\n"
+						+ "  ps.\"name\",\n"
+						+ "  ps.ao_server,\n"
+						+ "  ps.version,\n"
+						+ "  ps.max_connections,\n"
+						+ "  ps.net_bind,\n"
+						+ "  ps.package\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  mysql.\"MysqlServer\" ps\n"
@@ -5609,7 +5624,13 @@ final public class TableHandler {
 					provideProgress,
 					new MySQLServer(),
 					"select\n"
-					+ "  ps.*\n"
+					+ "  ps.net_bind as pkey,\n"
+					+ "  ps.\"name\",\n"
+					+ "  ps.ao_server,\n"
+					+ "  ps.version,\n"
+					+ "  ps.max_connections,\n"
+					+ "  ps.net_bind,\n"
+					+ "  ps.package\n"
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
