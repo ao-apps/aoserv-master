@@ -304,8 +304,8 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select mc.pkey from billing.\"MonthlyCharge\" mc where mc.created_by=ba.username limit 1) is null\n"
 						// billing.Package
                         + "  and (select pk2.pkey from billing.\"Package\" pk2 where pk2.created_by=ba.username limit 1) is null\n"
-						// signup_requests
-                        + "  and (select sr.pkey from signup_requests sr where sr.completed_by=ba.username limit 1) is null\n"
+						// signup.SignupRequest
+                        + "  and (select sr.pkey from signup.\"SignupRequest\" sr where sr.completed_by=ba.username limit 1) is null\n"
 						// ticket_actions
 						// PostgresSQL 8.3 doing sequential scan on "or":
 						// + "  and (select ta.pkey from ticket_actions ta where ta.administrator=ba.username or ta.old_assigned_to=ba.username or ta.new_assigned_to=ba.username limit 1) is null\n"

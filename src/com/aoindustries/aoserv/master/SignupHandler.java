@@ -83,7 +83,7 @@ final public class SignupHandler {
 
         // Add the entry
         int pkey = conn.executeIntUpdate(
-			"INSERT INTO signup_requests VALUES (default,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null) RETURNING pkey",
+			"INSERT INTO signup.\"SignupRequest\" VALUES (default,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null) RETURNING pkey",
             accounting.toString(),
             ip_address.toString(),
             package_definition,
@@ -174,7 +174,7 @@ final public class SignupHandler {
                             try {
                                 InvalidateList invalidateList = new InvalidateList();
                                 MasterDatabase database = MasterDatabase.getDatabase();
-                                if(database.executeUpdate("delete from signup_requests where completed_time is not null and (now()::date-completed_time::date)>31")>0) {
+                                if(database.executeUpdate("delete from signup.\"SignupRequest\" where completed_time is not null and (now()::date-completed_time::date)>31")>0) {
                                     invalidateList.addTable(
                                         database,
                                         SchemaTable.TableID.SIGNUP_REQUESTS,

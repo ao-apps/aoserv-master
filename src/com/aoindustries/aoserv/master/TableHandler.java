@@ -7781,7 +7781,7 @@ final public class TableHandler {
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk1,\n"
 						+ BU1_PARENTS_JOIN
-						+ "  signup_requests sr,\n"
+						+ "  signup.\"SignupRequest\" sr,\n"
 						+ "  signup_request_options sro\n"
 						+ "where\n"
 						+ "  un.username=?\n"
@@ -7844,7 +7844,7 @@ final public class TableHandler {
 							+ "  completed_by,\n"
 							+ "  completed_time\n"
 							+ "from\n"
-							+ "  signup_requests"
+							+ "  signup.\"SignupRequest\""
 						);
 					} else {
 						List<SignupRequest> emptyList = Collections.emptyList();
@@ -7899,7 +7899,7 @@ final public class TableHandler {
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk1,\n"
 						+ BU1_PARENTS_JOIN
-						+ "  signup_requests sr\n"
+						+ "  signup.\"SignupRequest\" sr\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk1.name\n"
