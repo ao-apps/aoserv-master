@@ -154,7 +154,7 @@ final public class MySQLHandler {
 		// Add the entry to the database
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  mysql_databases\n"
+			+ "  mysql.\"MysqlDatabase\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -213,7 +213,7 @@ final public class MySQLHandler {
 		// Must also have matching servers
 		int dbServer=getMySQLServerForMySQLDatabase(conn, mysql_database);
 		int userServer=getMySQLServerForMySQLServerUser(conn, mysql_server_user);
-		if(dbServer!=userServer) throw new SQLException("Mismatched mysql.MysqlServer for mysql_databases and mysql_server_users");
+		if(dbServer!=userServer) throw new SQLException("Mismatched mysql.MysqlServer for mysql.MysqlDatabase and mysql_server_users");
 
 		// Add the entry to the database
 		int pkey = conn.executeIntUpdate(
@@ -476,7 +476,7 @@ final public class MySQLHandler {
 		Set<MySQLDatabaseName> names = conn.executeObjectCollectionQuery(
 			new HashSet<>(),
 			ObjectFactories.mySQLDatabaseNameFactory,
-			"select name from mysql_databases group by name"
+			"select name from mysql.\"MysqlDatabase\" group by name"
 		);
 		// Find one that is not used
 		for(int c=0;c<Integer.MAX_VALUE;c++) {
@@ -511,7 +511,7 @@ final public class MySQLHandler {
 	public static MySQLDatabaseName getMySQLDatabaseName(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.mySQLDatabaseNameFactory,
-			"select name from mysql_databases where pkey=?",
+			"select name from mysql.\"MysqlDatabase\" where pkey=?",
 			pkey
 		);
 	}
@@ -579,7 +579,7 @@ final public class MySQLHandler {
 	) throws IOException, SQLException {
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		ServerHandler.checkAccessServer(conn, source, "isMySQLDatabaseNameAvailable", aoServer);
-		return conn.executeBooleanQuery("select (select pkey from mysql_databases where name=? and mysql_server=?) is null", name, mysqlServer);
+		return conn.executeBooleanQuery("select (select pkey from mysql.\"MysqlDatabase\" where name=? and mysql_server=?) is null", name, mysqlServer);
 	}
 
 	public static boolean isMySQLServerUserPasswordSet(
@@ -655,7 +655,7 @@ final public class MySQLHandler {
 		AccountingCode accounting = getBusinessForMySQLDatabase(conn, pkey);
 		int mysqlServer=getMySQLServerForMySQLDatabase(conn, pkey);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-		conn.executeUpdate("delete from mysql_databases where pkey=?", pkey);
+		conn.executeUpdate("delete from mysql.\"MysqlDatabase\" where pkey=?", pkey);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -780,7 +780,7 @@ final public class MySQLHandler {
 			+ "from\n"
 			+ "  mysql_server_users msu,\n"
 			+ "  mysql_db_users mdu,\n"
-			+ "  mysql_databases md\n"
+			+ "  mysql.\"MysqlDatabase\" md\n"
 			+ "where\n"
 			+ "  msu.username=?\n"
 			+ "  and msu.pkey=mdu.mysql_server_user\n"
@@ -965,7 +965,7 @@ final public class MySQLHandler {
 	public static AccountingCode getBusinessForMySQLDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from mysql_databases md, billing.\"Package\" pk where md.package=pk.name and md.pkey=?",
+			"select pk.accounting from mysql.\"MysqlDatabase\" md, billing.\"Package\" pk where md.package=pk.name and md.pkey=?",
 			pkey
 		);
 	}
@@ -1007,7 +1007,7 @@ final public class MySQLHandler {
 	}
 
 	public static int getPackageForMySQLDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select pk.pkey from mysql_databases md, billing.\"Package\" pk where md.pkey=? and md.package=pk.name", pkey);
+		return conn.executeIntQuery("select pk.pkey from mysql.\"MysqlDatabase\" md, billing.\"Package\" pk where md.pkey=? and md.package=pk.name", pkey);
 	}
 
 	public static IntList getMySQLServerUsersForMySQLUser(DatabaseConnection conn, MySQLUserId username) throws IOException, SQLException {
@@ -1015,7 +1015,7 @@ final public class MySQLHandler {
 	}
 
 	public static int getMySQLServerForMySQLDatabase(DatabaseConnection conn, int mysql_database) throws IOException, SQLException {
-		return conn.executeIntQuery("select mysql_server from mysql_databases where pkey=?", mysql_database);
+		return conn.executeIntQuery("select mysql_server from mysql.\"MysqlDatabase\" where pkey=?", mysql_database);
 	}
 
 	public static int getAOServerForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
