@@ -5586,15 +5586,15 @@ final public class TableHandler {
 						provideProgress,
 						new MySQLServer(),
 						"select\n"
-						+ "  net_bind as pkey,\n"
-						+ "  \"name\",\n"
-						+ "  ao_server,\n"
-						+ "  version,\n"
-						+ "  max_connections,\n"
-						+ "  net_bind,\n"
-						+ "  package\n"
+						+ "  ms.net_bind as pkey,\n"
+						+ "  ms.\"name\",\n"
+						+ "  ms.ao_server,\n"
+						+ "  ms.version,\n"
+						+ "  ms.max_connections,\n"
+						+ "  ms.net_bind,\n"
+						+ "  (select nb.package from net_binds nb where ms.net_bind=nb.pkey)\n"
 						+ "from\n"
-						+ "  mysql.\"MysqlServer\""
+						+ "  mysql.\"MysqlServer\" ms"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5608,7 +5608,7 @@ final public class TableHandler {
 						+ "  ps.version,\n"
 						+ "  ps.max_connections,\n"
 						+ "  ps.net_bind,\n"
-						+ "  ps.package\n"
+						+ "  (select nb.package from net_binds nb where ps.net_bind=nb.pkey)\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  mysql.\"MysqlServer\" ps\n"
@@ -5630,7 +5630,7 @@ final public class TableHandler {
 					+ "  ps.version,\n"
 					+ "  ps.max_connections,\n"
 					+ "  ps.net_bind,\n"
-					+ "  ps.package\n"
+					+ "  (select nb.package from net_binds nb where ps.net_bind=nb.pkey)\n"
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
