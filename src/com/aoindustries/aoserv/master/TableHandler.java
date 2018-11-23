@@ -506,7 +506,7 @@ final public class TableHandler {
 							return 0;
 						} else {
 							return conn.executeIntQuery(
-								"select count(*) from distro_files"
+								"select count(*) from management.\"DistroFile\""
 							);
 						}
 					} else {
@@ -514,7 +514,7 @@ final public class TableHandler {
 						IntList osVersions=getOperatingSystemVersions(conn, source);
 						if(osVersions.size()==0) return 0;
 						StringBuilder sql=new StringBuilder();
-						sql.append("select count(*) from distro_files where operating_system_version in (");
+						sql.append("select count(*) from management.\"DistroFile\" where operating_system_version in (");
 						for(int c=0;c<osVersions.size();c++) {
 							if(c>0) sql.append(',');
 							sql.append(osVersions.getInt(c));
@@ -1774,7 +1774,7 @@ final public class TableHandler {
 								source,
 								out,
 								new DistroFile(),
-								"select * from distro_files"
+								"select * from management.\"DistroFile\""
 							);
 						}
 					} else {
@@ -1786,7 +1786,7 @@ final public class TableHandler {
 						} else {
 							if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.DISTRO_FILES));
 							StringBuilder sql=new StringBuilder();
-							sql.append("select * from distro_files where operating_system_version in (");
+							sql.append("select * from management.\"DistroFile\" where operating_system_version in (");
 							for(int c=0;c<osVersions.size();c++) {
 								if(c>0) sql.append(',');
 								sql.append(osVersions.getInt(c));
