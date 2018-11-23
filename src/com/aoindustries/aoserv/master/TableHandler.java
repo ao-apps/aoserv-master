@@ -4902,7 +4902,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new LinuxGroupType(),
-					"select * from linux_group_types"
+					"select * from linux.\"LinuxGroupType\""
 				);
 				break;
 			case LINUX_SERVER_ACCOUNTS :
