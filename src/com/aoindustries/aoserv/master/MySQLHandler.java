@@ -217,7 +217,7 @@ final public class MySQLHandler {
 
 		// Add the entry to the database
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO mysql_db_users VALUES (default,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING pkey",
+			"INSERT INTO mysql.\"MysqlDatabaseUser\" VALUES (default,?,?,?,?,?,?,?,?,false,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING pkey",
 			mysql_database,
 			mysql_server_user,
 			canSelect,
@@ -636,7 +636,7 @@ final public class MySQLHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  mysql_db_users mdu,\n"
+			+ "  mysql.\"MysqlDatabaseUser\" mdu,\n"
 			+ "  mysql_server_users msu,\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
@@ -649,7 +649,7 @@ final public class MySQLHandler {
 			+ "  pk.accounting",
 			pkey
 		);
-		if(dbUserAccounts.size()>0) conn.executeUpdate("delete from mysql_db_users where mysql_database=?", pkey);
+		if(dbUserAccounts.size()>0) conn.executeUpdate("delete from mysql.\"MysqlDatabaseUser\" where mysql_database=?", pkey);
 
 		// Remove the database entry
 		AccountingCode accounting = getBusinessForMySQLDatabase(conn, pkey);
@@ -689,7 +689,7 @@ final public class MySQLHandler {
 		AccountingCode accounting = getBusinessForMySQLDBUser(conn, pkey);
 		int mysqlServer=getMySQLServerForMySQLDBUser(conn, pkey);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-		conn.executeUpdate("delete from mysql_db_users where pkey=?", pkey);
+		conn.executeUpdate("delete from mysql.\"MysqlDatabaseUser\" where pkey=?", pkey);
 
 		invalidateList.addTable(
 			conn,
@@ -718,8 +718,8 @@ final public class MySQLHandler {
 		) throw new SQLException("Not allowed to remove MySQLServerUser for user '" + username + '\'');
 
 		// Remove the mysql_db_user
-		boolean dbUsersExist=conn.executeBooleanQuery("select (select pkey from mysql_db_users where mysql_server_user=? limit 1) is not null", pkey);
-		if(dbUsersExist) conn.executeUpdate("delete from mysql_db_users where mysql_server_user=?", pkey);
+		boolean dbUsersExist=conn.executeBooleanQuery("select (select pkey from mysql.\"MysqlDatabaseUser\" where mysql_server_user=? limit 1) is not null", pkey);
+		if(dbUsersExist) conn.executeUpdate("delete from mysql.\"MysqlDatabaseUser\" where mysql_server_user=?", pkey);
 
 		// Remove the mysql_server_user
 		AccountingCode accounting = getBusinessForMySQLServerUser(conn, pkey);
@@ -779,7 +779,7 @@ final public class MySQLHandler {
 			+ "  md.mysql_server\n"
 			+ "from\n"
 			+ "  mysql_server_users msu,\n"
-			+ "  mysql_db_users mdu,\n"
+			+ "  mysql.\"MysqlDatabaseUser\" mdu,\n"
 			+ "  mysql.\"MysqlDatabase\" md\n"
 			+ "where\n"
 			+ "  msu.username=?\n"
@@ -792,14 +792,14 @@ final public class MySQLHandler {
 		if(dbUserServers.size()>0) {
 			conn.executeUpdate(
 				"delete from\n"
-				+ "  mysql_db_users\n"
+				+ "  mysql.\"MysqlDatabaseUser\"\n"
 				+ "where\n"
 				+ "  pkey in (\n"
 				+ "    select\n"
 				+ "      mdu.pkey\n"
 				+ "    from\n"
 				+ "      mysql_server_users msu,\n"
-				+ "      mysql_db_users mdu\n"
+				+ "      mysql.\"MysqlDatabaseUser\" mdu\n"
 				+ "    where\n"
 				+ "      msu.username=?\n"
 				+ "      and msu.pkey=mdu.mysql_server_user"
@@ -976,7 +976,7 @@ final public class MySQLHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  mysql_db_users mdu,\n"
+			+ "  mysql.\"MysqlDatabaseUser\" mdu,\n"
 			+ "  mysql_server_users msu,\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
@@ -1056,15 +1056,15 @@ final public class MySQLHandler {
 	}
 
 	public static int getMySQLServerForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select msu.mysql_server from mysql_db_users mdu, mysql_server_users msu where mdu.pkey=? and mdu.mysql_server_user=msu.pkey", pkey);
+		return conn.executeIntQuery("select msu.mysql_server from mysql.\"MysqlDatabaseUser\" mdu, mysql_server_users msu where mdu.pkey=? and mdu.mysql_server_user=msu.pkey", pkey);
 	}
 
 	public static int getMySQLDatabaseForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select mysql_database from mysql_db_users where pkey=?", pkey);
+		return conn.executeIntQuery("select mysql_database from mysql.\"MysqlDatabaseUser\" where pkey=?", pkey);
 	}
 
 	public static int getMySQLServerUserForMySQLDBUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select mysql_server_user from mysql_db_users where pkey=?", pkey);
+		return conn.executeIntQuery("select mysql_server_user from mysql.\"MysqlDatabaseUser\" where pkey=?", pkey);
 	}
 
 	public static int getMySQLServerForMySQLServerUser(DatabaseConnection conn, int mysql_server_user) throws IOException, SQLException {

@@ -5464,7 +5464,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new MySQLDBUser(),
-						"select * from mysql_db_users"
+						"select * from mysql.\"MysqlDatabaseUser\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5477,7 +5477,7 @@ final public class TableHandler {
 						+ "  master_servers ms,\n"
 						+ "  mysql.\"MysqlServer\" mys,\n"
 						+ "  mysql.\"MysqlDatabase\" md,\n"
-						+ "  mysql_db_users mdu\n"
+						+ "  mysql.\"MysqlDatabaseUser\" mdu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=mys.ao_server\n"
@@ -5499,7 +5499,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  mysql.\"MysqlDatabase\" md,\n"
-					+ "  mysql_db_users mdu\n"
+					+ "  mysql.\"MysqlDatabaseUser\" mdu\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
