@@ -442,7 +442,7 @@ final public class HttpdHandler {
 		// Initial HttpdTomcatSiteJkMounts
 		boolean useApache = conn.executeBooleanQuery(
 			"select (\n"
-			+ "  select pkey from httpd_tomcat_site_jk_mounts\n"
+			+ "  select pkey from web.\"TomcatJkMount\"\n"
 			+ "  where (httpd_tomcat_site, path)=(?, '/*')\n"
 			+ ") is null",
 			tomcat_site
@@ -450,12 +450,12 @@ final public class HttpdHandler {
 
 		if(useApache) {
 			conn.executeUpdate(
-				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				tomcat_site,
 				checkJkMountPath(path + "/j_security_check")
 			);
 			conn.executeUpdate(
-				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				tomcat_site,
 				checkJkMountPath(path + "/servlet/*")
 			);
@@ -464,7 +464,7 @@ final public class HttpdHandler {
 			boolean enableCgi = conn.executeBooleanQuery("select enable_cgi from web.\"Site\" where pkey=?", tomcat_site);
 			if(enableCgi) {
 				conn.executeUpdate(
-					"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
+					"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
 					tomcat_site,
 					checkJkMountPath(path + "/cgi-bin/*")
 				);
@@ -587,7 +587,7 @@ final public class HttpdHandler {
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatSiteJkMount", tomcat_site);
 
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO httpd_tomcat_site_jk_mounts (httpd_tomcat_site, \"path\", mount) VALUES (?,?,?) RETURNING pkey",
+			"INSERT INTO web.\"TomcatJkMount\" (httpd_tomcat_site, \"path\", mount) VALUES (?,?,?) RETURNING pkey",
 			tomcat_site,
 			checkJkMountPath(path),
 			mount
@@ -610,10 +610,10 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int pkey
 	) throws IOException, SQLException {
-		int tomcat_site = conn.executeIntQuery("select httpd_tomcat_site from httpd_tomcat_site_jk_mounts where pkey=?", pkey);
+		int tomcat_site = conn.executeIntQuery("select httpd_tomcat_site from web.\"TomcatJkMount\" where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatSiteJkMount", tomcat_site);
 
-		conn.executeUpdate("delete from httpd_tomcat_site_jk_mounts where pkey=?", pkey);
+		conn.executeUpdate("delete from web.\"TomcatJkMount\" where pkey=?", pkey);
 
 		invalidateList.addTable(
 			conn,
@@ -1213,54 +1213,54 @@ final public class HttpdHandler {
 		// Initial HttpdTomcatSiteJkMounts
 		if(useApache) {
 			conn.executeUpdate(
-				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/j_security_check")
 			);
 			conn.executeUpdate(
-				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/servlet/*")
 			);
 			conn.executeUpdate(
-				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.do")
 			);
 			conn.executeUpdate(
-				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.jsp")
 			);
 			conn.executeUpdate(
-				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.jspa")
 			);
 			conn.executeUpdate(
-				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.jspx")
 			);
 			conn.executeUpdate(
-				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.vm")
 			);
 			conn.executeUpdate(
-				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.xml")
 			);
 		} else {
 			conn.executeUpdate(
-				"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*")
 			);
 			if(enableCgi) {
 				conn.executeUpdate(
-					"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
+					"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
 					httpdSitePKey,
 					checkJkMountPath("/cgi-bin/*")
 				);
@@ -1284,7 +1284,7 @@ final public class HttpdHandler {
 			}
 			if(hasPhp) {
 				conn.executeUpdate(
-					"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
+					"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
 					httpdSitePKey
 				);
 			}
@@ -2810,7 +2810,7 @@ final public class HttpdHandler {
 
 		if(
 			conn.executeUpdate(
-				"delete from httpd_tomcat_site_jk_mounts where httpd_tomcat_site=? and substring(path from 1 for ?)=?",
+				"delete from web.\"TomcatJkMount\" where httpd_tomcat_site=? and substring(path from 1 for ?)=?",
 				tomcat_site,
 				path.length() + 1,
 				path + '/'
@@ -3422,7 +3422,7 @@ final public class HttpdHandler {
 
 			boolean useApache = conn.executeBooleanQuery(
 				"select (\n"
-				+ "  select pkey from httpd_tomcat_site_jk_mounts\n"
+				+ "  select pkey from web.\"TomcatJkMount\"\n"
 				+ "  where (httpd_tomcat_site, path)=(?, '/*')\n"
 				+ ") is null",
 				pkey
@@ -3453,7 +3453,7 @@ final public class HttpdHandler {
 				if(
 					conn.executeBooleanQuery(
 						"select (\n"
-						+ "  select pkey from httpd_tomcat_site_jk_mounts\n"
+						+ "  select pkey from web.\"TomcatJkMount\"\n"
 						+ "  where (httpd_tomcat_site, path)=(?, '/*.php')\n"
 						+ ") is null",
 						pkey
@@ -3461,7 +3461,7 @@ final public class HttpdHandler {
 				) {
 					// Add /*.php to JkUnMounts
 					conn.executeUpdate(
-						"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
+						"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
 						pkey
 					);
 					invalidateList.addTable(
@@ -3476,7 +3476,7 @@ final public class HttpdHandler {
 				// Remove /*.php from JkUnMounts
 				if(
 					conn.executeUpdate(
-						"delete from httpd_tomcat_site_jk_mounts where (httpd_tomcat_site, path, mount)=(?,'/*.php',FALSE)",
+						"delete from web.\"TomcatJkMount\" where (httpd_tomcat_site, path, mount)=(?,'/*.php',FALSE)",
 						pkey
 					) > 0
 				) {
@@ -3530,14 +3530,14 @@ final public class HttpdHandler {
 					if(enableCgi) {
 						// Add /cgi-bin to JkUnMounts
 						conn.executeUpdate(
-							"insert into httpd_tomcat_site_jk_mounts (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
+							"insert into web.\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
 							pkey,
 							checkJkMountPath(path + "/cgi-bin/*")
 						);
 					} else {
 						// Remove /cgi-bin from JkUnMounts
 						conn.executeUpdate(
-							"delete from httpd_tomcat_site_jk_mounts where (httpd_tomcat_site, path, mount)=(?,?,FALSE)",
+							"delete from web.\"TomcatJkMount\" where (httpd_tomcat_site, path, mount)=(?,?,FALSE)",
 							pkey,
 							checkJkMountPath(path + "/cgi-bin/*")
 						);
@@ -3869,7 +3869,7 @@ final public class HttpdHandler {
 		if(
 			!path.equals(oldPath)
 			&& conn.executeUpdate(
-				"update httpd_tomcat_site_jk_mounts\n"
+				"update web.\"TomcatJkMount\"\n"
 				+ "set path = ? || substring(path from ?)\n"
 				+ "where httpd_tomcat_site=? and substring(path from 1 for ?)=?",
 				path,

@@ -3663,7 +3663,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatSiteJkMount(),
-						"select * from httpd_tomcat_site_jk_mounts"
+						"select * from web.\"TomcatJkMount\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3675,7 +3675,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  httpd_tomcat_site_jk_mounts htsjm\n"
+						+ "  web.\"TomcatJkMount\" htsjm\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3696,7 +3696,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  httpd_tomcat_site_jk_mounts htsjm\n"
+					+ "  web.\"TomcatJkMount\" htsjm\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3721,7 +3721,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  hts.*,\n"
 						+ "  (\n"
-						+ "    select htsjm.pkey from httpd_tomcat_site_jk_mounts htsjm\n"
+						+ "    select htsjm.pkey from web.\"TomcatJkMount\" htsjm\n"
 						+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
 						+ "  ) is null as use_apache\n"
 						+ "from\n"
@@ -3735,7 +3735,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  hts.*,\n"
 						+ "  (\n"
-						+ "    select htsjm.pkey from httpd_tomcat_site_jk_mounts htsjm\n"
+						+ "    select htsjm.pkey from web.\"TomcatJkMount\" htsjm\n"
 						+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
 						+ "  ) is null as use_apache\n"
 						+ "from\n"
@@ -3757,7 +3757,7 @@ final public class TableHandler {
 					"select\n"
 					+ "  hts.*,\n"
 					+ "  (\n"
-					+ "    select htsjm.pkey from httpd_tomcat_site_jk_mounts htsjm\n"
+					+ "    select htsjm.pkey from web.\"TomcatJkMount\" htsjm\n"
 					+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
 					+ "  ) is null as use_apache\n"
 					+ "from\n"
