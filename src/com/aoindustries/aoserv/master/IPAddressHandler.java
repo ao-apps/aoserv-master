@@ -225,7 +225,7 @@ final public class IPAddressHandler {
 		// Update the table
 		// TODO: Add row when first enabled or column set to non-default
 		// TODO: Remove row when disabled and other columns match defaults
-		conn.executeUpdate("update monitoring.\"IPAddressMonitoring\" set enabled=? where id=?", enabled, ipAddress);
+		conn.executeUpdate("update monitoring.\"IpAddressMonitoring\" set enabled=? where id=?", enabled, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -413,7 +413,7 @@ final public class IPAddressHandler {
 			ipAddress
 		);
 		conn.executeUpdate(
-			"update monitoring.\"IPAddressMonitoring\" set enabled=true, \"pingMonitorEnabled\"=false, \"checkBlacklistsOverSmtp\"=false, \"verifyDnsPtr\"=true, \"verifyDnsA\"=false where id=?",
+			"update monitoring.\"IpAddressMonitoring\" set enabled=true, \"pingMonitorEnabled\"=false, \"checkBlacklistsOverSmtp\"=false, \"verifyDnsPtr\"=true, \"verifyDnsA\"=false where id=?",
 			ipAddress
 		);
 		invalidateList.addTable(
