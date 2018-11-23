@@ -3258,7 +3258,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  web.\"VirtualHost\" hsb\n"
 						// Protocol conversion
-						+ "  left join ssl_certificates sc on hsb.certificate=sc.pkey"
+						+ "  left join pki.\"Certificate\" sc on hsb.certificate=sc.pkey"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3276,7 +3276,7 @@ final public class TableHandler {
 						+ "  web.\"Site\" hs,\n"
 						+ "  web.\"VirtualHost\" hsb\n"
 						// Protocol conversion
-						+ "  left join ssl_certificates sc on hsb.certificate=sc.pkey\n"
+						+ "  left join pki.\"Certificate\" sc on hsb.certificate=sc.pkey\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3303,7 +3303,7 @@ final public class TableHandler {
 					+ "  web.\"Site\" hs,\n"
 					+ "  web.\"VirtualHost\" hsb\n"
 					// Protocol conversion
-					+ "  left join ssl_certificates sc on hsb.certificate=sc.pkey\n"
+					+ "  left join pki.\"Certificate\" sc on hsb.certificate=sc.pkey\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -7941,7 +7941,7 @@ final public class TableHandler {
 						+ "  scn.*\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  inner join ssl_certificates sc on ms.server=sc.ao_server\n"
+						+ "  inner join pki.\"Certificate\" sc on ms.server=sc.ao_server\n"
 						+ "  inner join ssl_certificate_names scn on sc.pkey=scn.ssl_certificate\n"
 						+ "where\n"
 						+ "  ms.username=?",
@@ -7960,7 +7960,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  ssl_certificates sc,\n"
+					+ "  pki.\"Certificate\" sc,\n"
 					+ "  ssl_certificate_names scn\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -7994,7 +7994,7 @@ final public class TableHandler {
 						+ "  scou.*\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  inner join ssl_certificates sc on ms.server=sc.ao_server\n"
+						+ "  inner join pki.\"Certificate\" sc on ms.server=sc.ao_server\n"
 						+ "  inner join ssl_certificate_other_uses scou on sc.pkey=scou.ssl_certificate\n"
 						+ "where\n"
 						+ "  ms.username=?",
@@ -8013,7 +8013,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  ssl_certificates sc,\n"
+					+ "  pki.\"Certificate\" sc,\n"
 					+ "  ssl_certificate_other_uses scou\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -8036,7 +8036,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new SslCertificate(),
-						"select * from ssl_certificates"
+						"select * from pki.\"Certificate\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -8047,7 +8047,7 @@ final public class TableHandler {
 						+ "  sc.*\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  inner join ssl_certificates sc on ms.server=sc.ao_server\n"
+						+ "  inner join pki.\"Certificate\" sc on ms.server=sc.ao_server\n"
 						+ "where\n"
 						+ "  ms.username=?",
 						username
@@ -8065,7 +8065,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  ssl_certificates sc\n"
+					+ "  pki.\"Certificate\" sc\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

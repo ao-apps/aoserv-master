@@ -36,14 +36,14 @@ final public class SslCertificateHandler {
 	public static AccountingCode getPackageForSslCertificate(DatabaseConnection conn, int sslCertificate) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from ssl_certificates where pkey=?",
+			"select package from pki.\"Certificate\" where pkey=?",
 			sslCertificate
 		);
 	}
 
 	public static int getAOServerForSslCertificate(DatabaseConnection conn, int sslCertificate) throws IOException, SQLException {
 		return conn.executeIntQuery(
-			"select ao_server from ssl_certificates where pkey=?",
+			"select ao_server from pki.\"Certificate\" where pkey=?",
 			sslCertificate
 		);
 	}
