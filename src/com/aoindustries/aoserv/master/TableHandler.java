@@ -3896,7 +3896,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new HttpdTomcatVersion(),
-					"select * from httpd_tomcat_versions"
+					"select * from web.\"TomcatVersion\""
 				);
 				break;
 			// <editor-fold defaultstate="collapsed" desc="Httpd Workers">

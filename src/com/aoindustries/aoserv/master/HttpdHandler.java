@@ -691,14 +691,14 @@ final public class HttpdHandler {
 				+ "  htv.install_dir || '/webapps/examples'\n"
 				+ "from\n"
 				+ "  web.\"TomcatSite\" hts\n"
-				+ "  inner join httpd_tomcat_versions htv on hts.version=htv.version\n"
+				+ "  inner join web.\"TomcatVersion\" htv on hts.version=htv.version\n"
 				+ "where\n"
 				+ "  hts.httpd_site=?\n"
 				+ "union select\n"
 				+ "  htv.install_dir || '/webapps/manager'\n"
 				+ "from\n"
 				+ "  web.\"TomcatSite\" hts\n"
-				+ "  inner join httpd_tomcat_versions htv on hts.version=htv.version\n"
+				+ "  inner join web.\"TomcatVersion\" htv on hts.version=htv.version\n"
 				+ "where\n"
 				+ "  hts.httpd_site=?\n",
 				tomcat_site,
@@ -1046,7 +1046,7 @@ final public class HttpdHandler {
 				+ "  "+HttpdTomcatContext.DEFAULT_SERVER_XML_CONFIGURED+"\n"
 				+ ")",
 				httpdSitePKey,
-				conn.executeStringQuery("select install_dir from httpd_tomcat_versions where version=?", tomcatVersion)+"/webapps/examples"
+				conn.executeStringQuery("select install_dir from web.\"TomcatVersion\" where version=?", tomcatVersion)+"/webapps/examples"
 			);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, aoServer, false);
 		}
@@ -3099,7 +3099,7 @@ final public class HttpdHandler {
 				"select\n"
 				+ "  tv.version\n"
 				+ "from\n"
-				+ "  httpd_tomcat_versions htv\n"
+				+ "  web.\"TomcatVersion\" htv\n"
 				+ "  inner join distribution.\"SoftwareVersion\" tv on htv.version=tv.pkey\n"
 				+ "where htv.version=?",
 				version
@@ -3128,7 +3128,7 @@ final public class HttpdHandler {
 			pkey
 		);
 		// TODO: Update the context paths to an webapps in /opt/apache-tomcat.../webpaps to the new version
-		// TODO: See httpd_tomcat_versions table
+		// TODO: See web.TomcatVersion table
 		conn.executeUpdate(
 			"update web.\"TomcatSite\" set version=? where httpd_site in (\n"
 			+ "  select tomcat_site from web.\"SharedTomcatSite\" where httpd_shared_tomcat=?\n"
@@ -4004,7 +4004,7 @@ final public class HttpdHandler {
 				"select\n"
 				+ "  tv.version\n"
 				+ "from\n"
-				+ "  httpd_tomcat_versions htv\n"
+				+ "  web.\"TomcatVersion\" htv\n"
 				+ "  inner join distribution.\"SoftwareVersion\" tv on htv.version=tv.pkey\n"
 				+ "where htv.version=?",
 				version
@@ -4028,7 +4028,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		// TODO: Update the context paths to an webapps in /opt/apache-tomcat.../webpaps to the new version
-		// TODO: See httpd_tomcat_versions table (might shared with the same code above)
+		// TODO: See web.TomcatVersion table (might shared with the same code above)
 		conn.executeUpdate(
 			"update web.\"TomcatSite\" set version=? where httpd_site=?",
 			version,
