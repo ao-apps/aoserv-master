@@ -209,7 +209,7 @@ final public class ReportGenerator implements CronJob {
 									+ "      mb.backup_data\n"
 									+ "    from\n"
 									+ "      mysql_backups mb,\n"
-									+ "      mysql_servers ms\n"
+									+ "      mysql.\"MysqlServer\" ms\n"
 									+ "    where\n"
 									+ "      mb.mysql_server=ms.pkey\n"
 									+ "    union select\n"

@@ -5422,7 +5422,7 @@ final public class TableHandler {
 						+ "  md.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  mysql_servers mys,\n"
+						+ "  mysql.\"MysqlServer\" mys,\n"
 						+ "  mysql_databases md\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -5475,7 +5475,7 @@ final public class TableHandler {
 						+ "  mdu.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  mysql_servers mys,\n"
+						+ "  mysql.\"MysqlServer\" mys,\n"
 						+ "  mysql_databases md,\n"
 						+ "  mysql_db_users mdu\n"
 						+ "where\n"
@@ -5532,7 +5532,7 @@ final public class TableHandler {
 						+ "  msu.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  mysql_servers mys,\n"
+						+ "  mysql.\"MysqlServer\" mys,\n"
 						+ "  mysql_server_users msu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -5585,7 +5585,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new MySQLServer(),
-						"select * from mysql_servers"
+						"select * from mysql.\"MysqlServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5596,7 +5596,7 @@ final public class TableHandler {
 						+ "  ps.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  mysql_servers ps\n"
+						+ "  mysql.\"MysqlServer\" ps\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ps.ao_server",
@@ -5614,7 +5614,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
 					+ "  business_servers bs,\n"
-					+ "  mysql_servers ps\n"
+					+ "  mysql.\"MysqlServer\" ps\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -5768,7 +5768,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
 					+ "      business_servers bs4,\n"
-					+ "      mysql_servers ms4\n"
+					+ "      mysql.\"MysqlServer\" ms4\n"
 					+ "    where\n"
 					+ "      un4.username=?\n"
 					+ "      and un4.package=pk4.name\n"
@@ -5946,7 +5946,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
 					+ "      business_servers bs4,\n"
-					+ "      mysql_servers ms4\n"
+					+ "      mysql.\"MysqlServer\" ms4\n"
 					+ "    where\n"
 					+ "      un4.username=?\n"
 					+ "      and un4.package=pk4.name\n"
