@@ -8728,7 +8728,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new VirtualDisk(),
-						"select * from virtual_disks"
+						"select * from infrastructure.\"VirtualDisk\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -8739,7 +8739,7 @@ final public class TableHandler {
 						+ "  vd.*\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  inner join virtual_disks vd on ms.server=vd.virtual_server\n"
+						+ "  inner join infrastructure.\"VirtualDisk\" vd on ms.server=vd.virtual_server\n"
 						+ "where\n"
 						+ "  ms.username=?",
 						username
@@ -8759,7 +8759,7 @@ final public class TableHandler {
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
-					+ "  virtual_disks vd\n"
+					+ "  infrastructure.\"VirtualDisk\" vd\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"

@@ -45,11 +45,11 @@ final public class VirtualServerHandler {
 	 */
 
 	public static int getVirtualServerForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
-		return conn.executeIntQuery("select virtual_server from virtual_disks where pkey=?", virtualDisk);
+		return conn.executeIntQuery("select virtual_server from infrastructure.\"VirtualDisk\" where pkey=?", virtualDisk);
 	}
 
 	public static String getDeviceForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
-		return conn.executeStringQuery("select device from virtual_disks where pkey=?", virtualDisk);
+		return conn.executeStringQuery("select device from infrastructure.\"VirtualDisk\" where pkey=?", virtualDisk);
 	}
 
 	public static AOServer.DaemonAccess requestVncConsoleDaemonAccess(
