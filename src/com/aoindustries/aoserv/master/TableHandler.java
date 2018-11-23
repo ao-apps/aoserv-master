@@ -7983,7 +7983,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new SslCertificateOtherUse(),
-						"select * from ssl_certificate_other_uses"
+						"select * from pki.\"CertificateOtherUse\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -7995,7 +7995,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms\n"
 						+ "  inner join pki.\"Certificate\" sc on ms.server=sc.ao_server\n"
-						+ "  inner join ssl_certificate_other_uses scou on sc.pkey=scou.ssl_certificate\n"
+						+ "  inner join pki.\"CertificateOtherUse\" scou on sc.pkey=scou.ssl_certificate\n"
 						+ "where\n"
 						+ "  ms.username=?",
 						username
@@ -8014,7 +8014,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  pki.\"Certificate\" sc,\n"
-					+ "  ssl_certificate_other_uses scou\n"
+					+ "  pki.\"CertificateOtherUse\" scou\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
