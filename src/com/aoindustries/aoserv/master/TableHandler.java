@@ -676,7 +676,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new AOServPermission(),
-					"select * from aoserv_permissions"
+					"select * from master.\"Permission\""
 				);
 				break;
 			case AOSERV_PROTOCOLS :
