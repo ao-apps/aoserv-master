@@ -7930,7 +7930,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new SslCertificateName(),
-						"select * from ssl_certificate_names"
+						"select * from pki.\"CertificateName\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -7942,7 +7942,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms\n"
 						+ "  inner join pki.\"Certificate\" sc on ms.server=sc.ao_server\n"
-						+ "  inner join ssl_certificate_names scn on sc.pkey=scn.ssl_certificate\n"
+						+ "  inner join pki.\"CertificateName\" scn on sc.pkey=scn.ssl_certificate\n"
 						+ "where\n"
 						+ "  ms.username=?",
 						username
@@ -7961,7 +7961,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  pki.\"Certificate\" sc,\n"
-					+ "  ssl_certificate_names scn\n"
+					+ "  pki.\"CertificateName\" scn\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
