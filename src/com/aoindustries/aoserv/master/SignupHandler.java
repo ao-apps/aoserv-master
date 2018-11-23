@@ -120,7 +120,7 @@ final public class SignupHandler {
 		);
 
         // Add the signup_options
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup_request_options values(default,?,?,?)");
+		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup.\"SignupOption\" values(default,?,?,?)");
         try {
             for(String name : options.keySet()) {
                 String value = options.get(name);

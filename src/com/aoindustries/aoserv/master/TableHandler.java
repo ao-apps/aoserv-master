@@ -7762,7 +7762,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new SignupRequestOption(),
-							"select * from signup_request_options"
+							"select * from signup.\"SignupOption\""
 						);
 					} else {
 						List<SignupRequestOption> emptyList = Collections.emptyList();
@@ -7782,7 +7782,7 @@ final public class TableHandler {
 						+ "  billing.\"Package\" pk1,\n"
 						+ BU1_PARENTS_JOIN
 						+ "  signup.\"SignupRequest\" sr,\n"
-						+ "  signup_request_options sro\n"
+						+ "  signup.\"SignupOption\" sro\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk1.name\n"
