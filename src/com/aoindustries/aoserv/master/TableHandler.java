@@ -4731,7 +4731,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new LinuxAccountType(),
-					"select * from linux_account_types"
+					"select * from linux.\"LinuxUserType\""
 				);
 				break;
 			case LINUX_GROUP_ACCOUNTS :

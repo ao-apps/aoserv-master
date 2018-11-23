@@ -1311,7 +1311,7 @@ final public class LinuxAccountHandler {
 			+ "  lat.is_email\n"
 			+ "from\n"
 			+ "  linux_accounts la,\n"
-			+ "  linux_account_types lat\n"
+			+ "  linux.\"LinuxUserType\" lat\n"
 			+ "where\n"
 			+ "  la.username=?\n"
 			+ "  and la.type=lat.name",
