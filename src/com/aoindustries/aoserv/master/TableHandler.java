@@ -2353,7 +2353,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new EncryptionKey(),
-							"select * from account.\"EncryptionKey\""
+							"select * from pki.\"EncryptionKey\""
 						);
 					} else {
 						List<EncryptionKey> emptyList = Collections.emptyList();
@@ -2372,7 +2372,7 @@ final public class TableHandler {
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk1,\n"
 						+ BU1_PARENTS_JOIN
-						+ "  account.\"EncryptionKey\" ek\n"
+						+ "  pki.\"EncryptionKey\" ek\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk1.name\n"

@@ -311,7 +311,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     public static AccountingCode getBusinessForEncryptionKey(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeObjectQuery(
             ObjectFactories.accountingCodeFactory,
-            "select accounting from account.\"EncryptionKey\" where pkey=?",
+            "select accounting from pki.\"EncryptionKey\" where pkey=?",
             pkey);
     }
 
