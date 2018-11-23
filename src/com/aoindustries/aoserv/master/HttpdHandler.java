@@ -1143,7 +1143,7 @@ final public class HttpdHandler {
 					MINIMUM_AUTO_PORT_NUMBER
 				);
 				conn.executeUpdate(
-					"insert into httpd_tomcat_std_sites values(?,?,?,?,true,true)",
+					"insert into web.\"PrivateTomcatSite\" values(?,?,?,?,true,true)",
 					httpdSitePKey,
 					shutdownPort,
 					new Identifier(MasterServer.getRandom()).toString(),
@@ -1151,7 +1151,7 @@ final public class HttpdHandler {
 				);
 			} else {
 				conn.executeUpdate(
-					"insert into httpd_tomcat_std_sites values(?,null,null,?,true,true)",
+					"insert into web.\"PrivateTomcatSite\" values(?,null,null,?,true,true)",
 					httpdSitePKey,
 					HttpdSharedTomcat.DEFAULT_MAX_POST_SIZE
 				);
@@ -2481,7 +2481,7 @@ final public class HttpdHandler {
 	 *           |                  |             + net_binds
 	 *           |                  + web.SharedTomcatSite
 	 *           |                  |             + linux_group_accounts
-	 *           |                  + httpd_tomcat_std_sites
+	 *           |                  + web.PrivateTomcatSite
 	 *           |                                         + net_binds
 	 *           |                  + web.JbossSite
 	 *           |                                   + net_binds
@@ -2652,11 +2652,11 @@ final public class HttpdHandler {
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SHARED_SITES, accounting, aoServer, false);
 			}
 
-			// httpd_tomcat_std_sites
-			if(conn.executeBooleanQuery("select (select tomcat_site from httpd_tomcat_std_sites where tomcat_site=? limit 1) is not null", httpdSitePKey)) {
-				int tomcat4ShutdownPort=conn.executeIntQuery("select coalesce(tomcat4_shutdown_port, -1) from httpd_tomcat_std_sites where tomcat_site=?", httpdSitePKey);
+			// web.PrivateTomcatSite
+			if(conn.executeBooleanQuery("select (select tomcat_site from web.\"PrivateTomcatSite\" where tomcat_site=? limit 1) is not null", httpdSitePKey)) {
+				int tomcat4ShutdownPort=conn.executeIntQuery("select coalesce(tomcat4_shutdown_port, -1) from web.\"PrivateTomcatSite\" where tomcat_site=?", httpdSitePKey);
 
-				conn.executeUpdate("delete from httpd_tomcat_std_sites where tomcat_site=?", httpdSitePKey);
+				conn.executeUpdate("delete from web.\"PrivateTomcatSite\" where tomcat_site=?", httpdSitePKey);
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES, accounting, aoServer, false);
 
 				if(tomcat4ShutdownPort!=-1) {
@@ -3910,7 +3910,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
-			"update httpd_tomcat_std_sites set max_post_size=? where httpd_site=?",
+			"update web.\"PrivateTomcatSite\" set max_post_size=? where httpd_site=?",
 			maxPostSize==-1 ? DatabaseAccess.Null.INTEGER : maxPostSize,
 			pkey
 		);
@@ -3936,7 +3936,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
-			"update httpd_tomcat_std_sites set unpack_wars=? where httpd_site=?",
+			"update web.\"PrivateTomcatSite\" set unpack_wars=? where httpd_site=?",
 			unpackWARs,
 			pkey
 		);
@@ -3962,7 +3962,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
-			"update httpd_tomcat_std_sites set auto_deploy=? where httpd_site=?",
+			"update web.\"PrivateTomcatSite\" set auto_deploy=? where httpd_site=?",
 			autoDeploy,
 			pkey
 		);
@@ -3992,7 +3992,7 @@ final public class HttpdHandler {
 				"select\n"
 				+ "  tv.version\n"
 				+ "from\n"
-				+ "  httpd_tomcat_std_sites htss\n"
+				+ "  web.\"PrivateTomcatSite\" htss\n"
 				+ "  inner join web.\"TomcatSite\" hts on htss.tomcat_site=hts.httpd_site\n"
 				+ "  inner join distribution.\"SoftwareVersion\" tv on hts.version=tv.pkey\n"
 				+ "where htss.tomcat_site=?",
