@@ -146,7 +146,7 @@ final public class ServerHandler {
 			null,
 			null
 		);
-		conn.executeUpdate("insert into master_users values(?,true,false,false,false,false,false,false)", username);
+		conn.executeUpdate("insert into master.\"MasterUser\" values(?,true,false,false,false,false,false,false)", username);
 		invalidateList.addTable(conn, SchemaTable.TableID.MASTER_USERS, packageAccounting, InvalidateList.allServers, false);
 		conn.executeUpdate("insert into master_servers(username, server) values(?,?)", username, serverPKey);
 		invalidateList.addTable(conn, SchemaTable.TableID.MASTER_SERVERS, packageAccounting, InvalidateList.allServers, false);
