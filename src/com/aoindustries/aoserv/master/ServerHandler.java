@@ -333,7 +333,7 @@ final public class ServerHandler {
 	 */
 	public static IntList getEnabledXenPhysicalServers(DatabaseAccess database) throws IOException, SQLException {
 		return database.executeIntListQuery(
-			"select se.pkey from servers se inner join physical_servers ps on se.pkey=ps.server where se.operating_system_version in (?,?,?) and se.monitoring_enabled",
+			"select se.pkey from servers se inner join infrastructure.\"PhysicalServer\" ps on se.pkey=ps.server where se.operating_system_version in (?,?,?) and se.monitoring_enabled",
 			OperatingSystemVersion.CENTOS_5_DOM0_I686,
 			OperatingSystemVersion.CENTOS_5_DOM0_X86_64,
 			OperatingSystemVersion.CENTOS_7_DOM0_X86_64

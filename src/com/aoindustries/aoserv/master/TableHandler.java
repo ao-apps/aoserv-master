@@ -6526,7 +6526,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new PhysicalServer(),
-						"select * from physical_servers"
+						"select * from infrastructure.\"PhysicalServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -6537,7 +6537,7 @@ final public class TableHandler {
 						+ "  ps.*\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  inner join physical_servers ps on ms.server=ps.server\n"
+						+ "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
 						+ "where\n"
 						+ "  ms.username=?",
 						username
@@ -6557,7 +6557,7 @@ final public class TableHandler {
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
-					+ "  physical_servers ps\n"
+					+ "  infrastructure.\"PhysicalServer\" ps\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -6909,7 +6909,7 @@ final public class TableHandler {
 						+ "  ra.*\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  inner join physical_servers ps on ms.server=ps.server\n"
+						+ "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
 						+ "  inner join racks ra on ps.rack=ra.pkey\n"
 						+ "where\n"
 						+ "  ms.username=?",
@@ -6930,7 +6930,7 @@ final public class TableHandler {
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
-					+ "  physical_servers ps,\n"
+					+ "  infrastructure.\"PhysicalServer\" ps,\n"
 					+ "  racks ra\n"
 					+ "where\n"
 					+ "  un.username=?\n"
