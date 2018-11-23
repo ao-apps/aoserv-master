@@ -64,7 +64,7 @@ final public class VirtualServerHandler {
 		if(!canVncConsole) throw new SQLException("Not allowed to VNC console to "+virtualServer);
 		// TODO: Must not be a disabled server
 		// Must be a virtual server with VNC enabled
-		String vncPassword = conn.executeStringQuery("select vnc_password from virtual_servers where server=?", virtualServer);
+		String vncPassword = conn.executeStringQuery("select vnc_password from infrastructure.\"VirtualServer\" where server=?", virtualServer);
 		if(vncPassword==null) throw new SQLException("Virtual server VNC is disabled: "+virtualServer);
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
