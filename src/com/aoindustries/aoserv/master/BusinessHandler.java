@@ -213,7 +213,7 @@ final public class BusinessHandler {
 						}
 						return newCache;
 					},
-					"select username, permission from business_administrator_permissions"
+					"select username, permission from master.\"AdministratorPermission\""
 				);
 			}
 			Set<String> permissions = cachedPermissions.get(source.getUsername());
@@ -443,7 +443,7 @@ final public class BusinessHandler {
 
 		// administrators default to having the same permissions as the person who created them
 		conn.executeUpdate(
-			"insert into business_administrator_permissions (username, permission) select ?, permission from business_administrator_permissions where username=?",
+			"insert into master.\"AdministratorPermission\" (username, permission) select ?, permission from master.\"AdministratorPermission\" where username=?",
 			username,
 			source.getUsername()
 		);
@@ -912,7 +912,7 @@ final public class BusinessHandler {
 
 		AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
 
-		conn.executeUpdate("delete from business_administrator_permissions where username=?", username);
+		conn.executeUpdate("delete from master.\"AdministratorPermission\" where username=?", username);
 		conn.executeUpdate("delete from account.\"Administrator\" where username=?", username);
 
 		// Notify all clients of the update
