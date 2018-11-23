@@ -1499,7 +1499,7 @@ final public class LinuxAccountHandler {
 			"select count(*) from linux_group_accounts lga, "+
 					"linux_server_accounts lsa, "+
 					"web.\"SharedTomcat\" hst, "+
-					"httpd_tomcat_shared_sites htss, "+
+					"web.\"SharedTomcatSite\" htss, "+
 					"web.\"Site\" hs "+
 						"where lga.username = lsa.username and "+
 						"lsa.pkey           = hst.linux_server_account and "+
@@ -1514,7 +1514,7 @@ final public class LinuxAccountHandler {
 				"select count(*) from linux_group_accounts lga, "+
 						"linux_server_groups lsg, "+
 						"web.\"SharedTomcat\" hst, "+
-						"httpd_tomcat_shared_sites htss, "+
+						"web.\"SharedTomcatSite\" htss, "+
 						"web.\"Site\" hs "+
 							"where lga.\"group\" = lsg.name and "+
 							"lsg.pkey            = hst.linux_server_group and "+
@@ -1525,7 +1525,7 @@ final public class LinuxAccountHandler {
 				pkey
 			);
 		}
-		if (useCount>0) throw new SQLException("linux_group_account("+pkey+") has been used by "+useCount+" httpd_tomcat_shared_sites.");
+		if (useCount>0) throw new SQLException("linux_group_account("+pkey+") has been used by "+useCount+" web.SharedTomcatSite.");
 
 		// Get the values for later use
 		List<AccountingCode> accountings=getBusinessesForLinuxGroupAccount(conn, pkey);
@@ -1561,7 +1561,7 @@ final public class LinuxAccountHandler {
 			+ "          from\n"
 			+ "            linux_server_accounts lsa,\n"
 			+ "            web.\"SharedTomcat\" hst,\n"
-			+ "            httpd_tomcat_shared_sites htss,\n"
+			+ "            web.\"SharedTomcatSite\" htss,\n"
 			+ "            web.\"Site\" hs\n"
 			+ "          where\n"
 			+ "            lga.username=lsa.username\n"
@@ -1577,7 +1577,7 @@ final public class LinuxAccountHandler {
 			+ "          from\n"
 			+ "            linux_server_groups lsg,\n"
 			+ "            web.\"SharedTomcat\" hst,\n"
-			+ "            httpd_tomcat_shared_sites htss,\n"
+			+ "            web.\"SharedTomcatSite\" htss,\n"
 			+ "            web.\"Site\" hs\n"
 			+ "          where\n"
 			+ "            lga.\"group\"=lsg.name\n"

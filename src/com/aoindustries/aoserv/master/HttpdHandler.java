@@ -1124,7 +1124,7 @@ final public class HttpdHandler {
 		} else if ("tomcat_shared".equals(siteType)) {
 			// Create the HttpdTomcatSharedSite
 			conn.executeUpdate(
-				"insert into httpd_tomcat_shared_sites values(?,?)",
+				"insert into web.\"SharedTomcatSite\" values(?,?)",
 				httpdSitePKey,
 				sharedTomcatPkey
 			);
@@ -2180,12 +2180,12 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		checkAccessHttpdSite(conn, source, "stopJVM", tomcat_site);
 		// Can only stop the daemon if can access the shared linux account
-		if(conn.executeBooleanQuery("select (select tomcat_site from httpd_tomcat_shared_sites where tomcat_site=?) is not null", tomcat_site)) {
+		if(conn.executeBooleanQuery("select (select tomcat_site from web.\"SharedTomcatSite\" where tomcat_site=?) is not null", tomcat_site)) {
 			int lsa=conn.executeIntQuery(
 				"select\n"
 				+ "  hst.linux_server_account\n"
 				+ "from\n"
-				+ "  httpd_tomcat_shared_sites htss,\n"
+				+ "  web.\"SharedTomcatSite\" htss,\n"
 				+ "  web.\"SharedTomcat\" hst\n"
 				+ "where\n"
 				+ "  htss.tomcat_site=?\n"
@@ -2479,7 +2479,7 @@ final public class HttpdHandler {
 	 *           |                                        + web.TomcatContextParameter
 	 *           |                  + web.TomcatWorker
 	 *           |                  |             + net_binds
-	 *           |                  + httpd_tomcat_shared_sites
+	 *           |                  + web.SharedTomcatSite
 	 *           |                  |             + linux_group_accounts
 	 *           |                  + httpd_tomcat_std_sites
 	 *           |                                         + net_binds
@@ -2647,8 +2647,8 @@ final public class HttpdHandler {
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_WORKERS, accounting, aoServer, false);
 			}
 
-			// httpd_tomcat_shared_sites
-			if(conn.executeUpdate("delete from httpd_tomcat_shared_sites where tomcat_site=?", httpdSitePKey) > 0) {
+			// web.SharedTomcatSite
+			if(conn.executeUpdate("delete from web.\"SharedTomcatSite\" where tomcat_site=?", httpdSitePKey) > 0) {
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SHARED_SITES, accounting, aoServer, false);
 			}
 
@@ -3131,7 +3131,7 @@ final public class HttpdHandler {
 		// TODO: See httpd_tomcat_versions table
 		conn.executeUpdate(
 			"update web.\"TomcatSite\" set version=? where httpd_site in (\n"
-			+ "  select tomcat_site from httpd_tomcat_shared_sites where httpd_shared_tomcat=?\n"
+			+ "  select tomcat_site from web.\"SharedTomcatSite\" where httpd_shared_tomcat=?\n"
 			+ ")",
 			version,
 			pkey

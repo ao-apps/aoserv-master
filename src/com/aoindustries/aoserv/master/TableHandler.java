@@ -3788,7 +3788,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatSharedSite(),
-						"select * from httpd_tomcat_shared_sites"
+						"select * from web.\"SharedTomcatSite\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3800,7 +3800,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  httpd_tomcat_shared_sites htss\n"
+						+ "  web.\"SharedTomcatSite\" htss\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3821,7 +3821,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  httpd_tomcat_shared_sites htss\n"
+					+ "  web.\"SharedTomcatSite\" htss\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
