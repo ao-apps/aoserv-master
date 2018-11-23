@@ -1813,7 +1813,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new DistroReportType(),
-					"select * from distro_report_types"
+					"select * from management.\"DistroReportType\""
 				);
 				break;
 			case DNS_FORBIDDEN_ZONES :
