@@ -71,7 +71,7 @@ final public class ServerHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  server_farms sf,\n"
+			+ "  infrastructure."ServerFarm" sf,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  sf.name=?\n"

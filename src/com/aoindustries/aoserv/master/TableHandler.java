@@ -7598,7 +7598,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new ServerFarm(),
-						"select * from server_farms"
+						"select * from infrastructure.\"ServerFarm\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -7613,7 +7613,7 @@ final public class TableHandler {
 						+ "  left join backup.\"FileReplication\" ffr on  se.pkey             = ffr.server\n"
 						+ "  left join backup.\"BackupPartition\"  bp on ffr.backup_partition =  bp.pkey\n"
 						+ "  left join servers                     fs on  bp.ao_server        =  fs.pkey,\n"
-						+ "  server_farms sf\n"
+						+ "  infrastructure.\"ServerFarm\" sf\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=se.pkey\n"
@@ -7636,7 +7636,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk,\n"
 					+ "  business_servers bs,\n"
 					+ "  servers se,\n"
-					+ "  server_farms sf\n"
+					+ "  infrastructure.\"ServerFarm\" sf\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
