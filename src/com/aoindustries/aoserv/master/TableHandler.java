@@ -6876,7 +6876,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new ProcessorType(),
-					"select * from processor_types"
+					"select * from infrastructure.\"ProcessorType\""
 				);
 				break;
 			case PROTOCOLS :
