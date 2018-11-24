@@ -555,7 +555,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new AOServerDaemonHost(),
-						"select * from ao_server_daemon_hosts"
+						"select * from linux.\"LinuxServerDaemonHost\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -566,7 +566,7 @@ final public class TableHandler {
 						+ "  sdh.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  ao_server_daemon_hosts sdh\n"
+						+ "  linux.\"LinuxServerDaemonHost\" sdh\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=sdh.ao_server",
