@@ -347,7 +347,7 @@ final public class LinuxAccountHandler {
 			// Make sure no conflicting /home/u/username account exists.
 			String prefix = home + "/";
 			List<String> conflicting = conn.executeStringListQuery(
-				"select distinct home from linux_server_accounts where ao_server=? and substring(home from 1 for " + prefix.length() + ")=? order by home",
+				"select distinct home from linux.\"LinuxUserServer\" where ao_server=? and substring(home from 1 for " + prefix.length() + ")=? order by home",
 				aoServer,
 				prefix
 			);
@@ -357,7 +357,7 @@ final public class LinuxAccountHandler {
 			String conflictHome = "/home/" + username.toString().charAt(0);
 			if(
 				conn.executeBooleanQuery(
-					"select (select pkey from linux_server_accounts where ao_server=? and home=? limit 1) is not null",
+					"select (select pkey from linux.\"LinuxUserServer\" where ao_server=? and home=? limit 1) is not null",
 					aoServer,
 					conflictHome
 				)
@@ -425,7 +425,7 @@ final public class LinuxAccountHandler {
 		//String farm=ServerHandler.getFarmForServer(conn, aoServer);
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  linux_server_accounts\n"
+			+ "  linux.\"LinuxUserServer\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -571,7 +571,7 @@ final public class LinuxAccountHandler {
 			true,
 			false,
 			ObjectFactories.userIdFactory,
-			"select username from linux_server_accounts where ao_server=? and uid=?",
+			"select username from linux.\"LinuxUserServer\" where ao_server=? and uid=?",
 			aoServer,
 			uid
 		);
@@ -896,7 +896,7 @@ final public class LinuxAccountHandler {
 			// Add to database
 			int pkey = conn.executeIntUpdate(
 				"INSERT INTO\n"
-				+ "  linux_server_accounts\n"
+				+ "  linux.\"LinuxUserServer\"\n"
 				+ "VALUES (\n"
 				+ "  default,\n" // pkey
 				+ "  ?,\n" // username
@@ -953,7 +953,7 @@ final public class LinuxAccountHandler {
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to copy LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 		int from_server=getAOServerForLinuxServerAccount(conn, from_lsa);
 		int to_lsa=conn.executeIntQuery(
-			"select pkey from linux_server_accounts where username=? and ao_server=?",
+			"select pkey from linux.\"LinuxUserServer\" where username=? and ao_server=?",
 			username,
 			to_server
 		);
@@ -1096,7 +1096,7 @@ final public class LinuxAccountHandler {
 		}
 
 		conn.executeUpdate(
-			"update linux_server_accounts set disable_log=? where pkey=?",
+			"update linux.\"LinuxUserServer\" set disable_log=? where pkey=?",
 			disableLog,
 			pkey
 		);
@@ -1152,7 +1152,7 @@ final public class LinuxAccountHandler {
 		if(isLinuxAccountDisabled(conn, la)) throw new SQLException("Unable to enable LinuxServerAccount #"+pkey+", LinuxAccount not enabled: "+la);
 
 		conn.executeUpdate(
-			"update linux_server_accounts set disable_log=null where pkey=?",
+			"update linux.\"LinuxUserServer\" set disable_log=null where pkey=?",
 			pkey
 		);
 
@@ -1175,7 +1175,7 @@ final public class LinuxAccountHandler {
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to get the autoresponder content for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
 		UnixPath path = conn.executeObjectQuery(
 			ObjectFactories.unixPathFactory,
-			"select autoresponder_path from linux_server_accounts where pkey=?",
+			"select autoresponder_path from linux.\"LinuxUserServer\" where pkey=?",
 			lsa
 		);
 		String content;
@@ -1209,7 +1209,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static int getDisableLogForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from linux_server_accounts where pkey=?", pkey);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from linux.\"LinuxUserServer\" where pkey=?", pkey);
 	}
 
 	public static void invalidateTable(SchemaTable.TableID tableID) {
@@ -1360,7 +1360,7 @@ final public class LinuxAccountHandler {
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
 		for(int c=0;c<aoServers.size();c++) {
 			int aoServer=aoServers.getInt(c);
-			conn.executeUpdate("update linux_server_accounts set autoresponder_from=null where username=? and ao_server=?", username, aoServer);
+			conn.executeUpdate("update linux.\"LinuxUserServer\" set autoresponder_from=null where username=? and ao_server=?", username, aoServer);
 		}
 		// Delete any FTP guest user info attached to this account
 		boolean ftpModified = conn.executeUpdate("delete from ftp.\"GuestUser\" where username=?", username) > 0;
@@ -1368,7 +1368,7 @@ final public class LinuxAccountHandler {
 		// Get the values for later use
 		for(int c=0;c<aoServers.size();c++) {
 			int aoServer=aoServers.getInt(c);
-			int pkey=conn.executeIntQuery("select pkey from linux_server_accounts where username=? and ao_server=?", username, aoServer);
+			int pkey=conn.executeIntQuery("select pkey from linux.\"LinuxUserServer\" where username=? and ao_server=?", username, aoServer);
 			removeLinuxServerAccount(conn, invalidateList, pkey);
 		}
 		// Delete the group relations for this account
@@ -1442,7 +1442,7 @@ final public class LinuxAccountHandler {
 		// Must be needingful not by HttpdTomcatSharedSite to be tying to HttpdSharedTomcat please
 		int useCount = conn.executeIntQuery(
 			"select count(*) from linux_group_accounts lga, "+
-					"linux_server_accounts lsa, "+
+					"linux.\"LinuxUserServer\" lsa, "+
 					"web.\"SharedTomcat\" hst, "+
 					"web.\"SharedTomcatSite\" htss, "+
 					"web.\"Site\" hs "+
@@ -1504,7 +1504,7 @@ final public class LinuxAccountHandler {
 			+ "          select\n"
 			+ "            htss.tomcat_site\n"
 			+ "          from\n"
-			+ "            linux_server_accounts lsa,\n"
+			+ "            linux.\"LinuxUserServer\" lsa,\n"
 			+ "            web.\"SharedTomcat\" hst,\n"
 			+ "            web.\"SharedTomcatSite\" htss,\n"
 			+ "            web.\"Site\" hs\n"
@@ -1576,7 +1576,7 @@ final public class LinuxAccountHandler {
 		if(uid < uidMin) throw new SQLException("Not allowed to remove a system LinuxServerAccount: pkey="+account+", uid="+uid);
 
 		// Must not contain a CVS repository
-		String home=conn.executeStringQuery("select home from linux_server_accounts where pkey=?", account);
+		String home=conn.executeStringQuery("select home from linux.\"LinuxUserServer\" where pkey=?", account);
 		int count=conn.executeIntQuery(
 			"select\n"
 			+ "  count(*)\n"
@@ -1613,7 +1613,7 @@ final public class LinuxAccountHandler {
 		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ATTACHMENT_BLOCKS, accounting, aoServer, false);
 
 		// Delete the account from the server
-		conn.executeUpdate("delete from linux_server_accounts where pkey=?", account);
+		conn.executeUpdate("delete from linux.\"LinuxUserServer\" where pkey=?", account);
 		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, accounting, aoServer, true);
 
 		// Notify all clients of the update
@@ -1656,7 +1656,7 @@ final public class LinuxAccountHandler {
 			+ "from\n"
 			+ "  linux.\"LinuxGroupServer\" lsg\n"
 			+ "  inner join linux_group_accounts lga on lsg.name=lga.\"group\"\n"
-			+ "  inner join linux_server_accounts lsa on lga.username=lsa.username\n"
+			+ "  inner join linux.\"LinuxUserServer\" lsa on lga.username=lsa.username\n"
 			+ "  inner join servers se on lsg.ao_server=se.pkey\n"
 			+ "where\n"
 			+ "  lsg.pkey=?\n"
@@ -1711,7 +1711,7 @@ final public class LinuxAccountHandler {
 		} else {
 			path = conn.executeObjectQuery(
 				ObjectFactories.unixPathFactory,
-				"select coalesce(autoresponder_path, home || '/.autorespond.txt') from linux_server_accounts where pkey=?",
+				"select coalesce(autoresponder_path, home || '/.autorespond.txt') from linux.\"LinuxUserServer\" where pkey=?",
 				pkey
 			);
 		}
@@ -1726,7 +1726,7 @@ final public class LinuxAccountHandler {
 				"select\n"
 				+ "  lsg.gid\n"
 				+ "from\n"
-				+ "  linux_server_accounts lsa\n"
+				+ "  linux.\"LinuxUserServer\" lsa\n"
 				+ "  inner join linux_group_accounts lga on lsa.username=lga.username\n"
 				+ "  inner join linux.\"LinuxGroupServer\" lsg on lga.\"group\"=lsg.name\n"
 				+ "  inner join servers se on lsa.ao_server=se.pkey\n"
@@ -1744,7 +1744,7 @@ final public class LinuxAccountHandler {
 		try (
 			PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
 				"update\n"
-				+ "  linux_server_accounts\n"
+				+ "  linux.\"LinuxUserServer\"\n"
 				+ "set\n"
 				+ "  autoresponder_from=?,\n"
 				+ "  autoresponder_subject=?,\n"
@@ -1966,7 +1966,7 @@ final public class LinuxAccountHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update linux_server_accounts set predisable_password=? where pkey=?",
+			"update linux.\"LinuxUserServer\" set predisable_password=? where pkey=?",
 			password,
 			lsa
 		);
@@ -1995,12 +1995,12 @@ final public class LinuxAccountHandler {
 		// Update the database
 		if(days==-1) {
 			conn.executeUpdate(
-				"update linux_server_accounts set junk_email_retention=null where pkey=?",
+				"update linux.\"LinuxUserServer\" set junk_email_retention=null where pkey=?",
 				pkey
 			);
 		} else {
 			conn.executeUpdate(
-				"update linux_server_accounts set junk_email_retention=? where pkey=?",
+				"update linux.\"LinuxUserServer\" set junk_email_retention=? where pkey=?",
 				days,
 				pkey
 			);
@@ -2029,7 +2029,7 @@ final public class LinuxAccountHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update linux_server_accounts set sa_integration_mode=? where pkey=?",
+			"update linux.\"LinuxUserServer\" set sa_integration_mode=? where pkey=?",
 			mode,
 			pkey
 		);
@@ -2057,7 +2057,7 @@ final public class LinuxAccountHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update linux_server_accounts set sa_required_score=? where pkey=?",
+			"update linux.\"LinuxUserServer\" set sa_required_score=? where pkey=?",
 			required_score,
 			pkey
 		);
@@ -2086,12 +2086,12 @@ final public class LinuxAccountHandler {
 		// Update the database
 		if(discard_score==-1) {
 			conn.executeUpdate(
-				"update linux_server_accounts set sa_discard_score=null where pkey=?",
+				"update linux.\"LinuxUserServer\" set sa_discard_score=null where pkey=?",
 				pkey
 			);
 		} else {
 			conn.executeUpdate(
-				"update linux_server_accounts set sa_discard_score=? where pkey=?",
+				"update linux.\"LinuxUserServer\" set sa_discard_score=? where pkey=?",
 				discard_score,
 				pkey
 			);
@@ -2121,12 +2121,12 @@ final public class LinuxAccountHandler {
 		// Update the database
 		if(days==-1) {
 			conn.executeUpdate(
-				"update linux_server_accounts set trash_email_retention=null where pkey=?",
+				"update linux.\"LinuxUserServer\" set trash_email_retention=null where pkey=?",
 				pkey
 			);
 		} else {
 			conn.executeUpdate(
-				"update linux_server_accounts set trash_email_retention=? where pkey=?",
+				"update linux.\"LinuxUserServer\" set trash_email_retention=? where pkey=?",
 				days,
 				pkey
 			);
@@ -2155,7 +2155,7 @@ final public class LinuxAccountHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update linux_server_accounts set use_inbox=? where pkey=?",
+			"update linux.\"LinuxUserServer\" set use_inbox=? where pkey=?",
 			useInbox,
 			pkey
 		);
@@ -2259,7 +2259,7 @@ final public class LinuxAccountHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  linux_server_accounts lsa,\n"
+			+ "  linux.\"LinuxUserServer\" lsa,\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
@@ -2296,7 +2296,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static int getAOServerForLinuxServerAccount(DatabaseConnection conn, int account) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from linux_server_accounts where pkey=?", account);
+		return conn.executeIntQuery("select ao_server from linux.\"LinuxUserServer\" where pkey=?", account);
 	}
 
 	public static int getAOServerForLinuxServerGroup(DatabaseConnection conn, int group) throws IOException, SQLException {
@@ -2304,7 +2304,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static IntList getAOServersForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
-		return conn.executeIntListQuery("select ao_server from linux_server_accounts where username=?", username);
+		return conn.executeIntListQuery("select ao_server from linux.\"LinuxUserServer\" where username=?", username);
 	}
 
 	public static IntList getAOServersForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
@@ -2318,7 +2318,7 @@ final public class LinuxAccountHandler {
 			+ "from\n"
 			+ "  linux_group_accounts lga\n"
 			+ "  inner join linux.\"LinuxGroupServer\" lsg on lga.\"group\"=lsg.name\n"
-			+ "  inner join linux_server_accounts lsa on lga.username=lsa.username\n"
+			+ "  inner join linux.\"LinuxUserServer\" lsa on lga.username=lsa.username\n"
 			+ "  inner join servers se on lsg.ao_server=se.pkey\n"
 			+ "where\n"
 			+ "  lga.pkey=?\n"
@@ -2340,7 +2340,7 @@ final public class LinuxAccountHandler {
 			"select\n"
 			+ "  la.type\n"
 			+ "from\n"
-			+ "  linux_server_accounts lsa,\n"
+			+ "  linux.\"LinuxUserServer\" lsa,\n"
 			+ "  linux.\"LinuxUser\" la\n"
 			+ "where\n"
 			+ "  lsa.pkey=?\n"
@@ -2370,7 +2370,7 @@ final public class LinuxAccountHandler {
 			+ "    select\n"
 			+ "      pkey\n"
 			+ "    from\n"
-			+ "      linux_server_accounts\n"
+			+ "      linux.\"LinuxUserServer\"\n"
 			+ "    where\n"
 			+ "      username=?\n"
 			+ "      and ao_server=?\n"
@@ -2384,7 +2384,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static IntList getLinuxServerAccountsForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from linux_server_accounts where username=?", username);
+		return conn.executeIntListQuery("select pkey from linux.\"LinuxUserServer\" where username=?", username);
 	}
 
 	public static IntList getLinuxServerGroupsForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
@@ -2424,7 +2424,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static int getUIDForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select uid from linux_server_accounts where pkey=?", pkey);
+		return conn.executeIntQuery("select uid from linux.\"LinuxUserServer\" where pkey=?", pkey);
 	}
 
 	public static UserId getLinuxAccountForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
@@ -2446,7 +2446,7 @@ final public class LinuxAccountHandler {
 	public static UserId getUsernameForLinuxServerAccount(DatabaseConnection conn, int account) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.userIdFactory,
-			"select username from linux_server_accounts where pkey=?",
+			"select username from linux.\"LinuxUserServer\" where pkey=?",
 			account
 		);
 	}

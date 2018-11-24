@@ -1606,7 +1606,7 @@ final public class TableHandler {
 						+ "  cr.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux_server_accounts lsa,\n"
+						+ "  linux.\"LinuxUserServer\" lsa,\n"
 						+ "  cvs_repositories cr\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -1628,7 +1628,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
-					+ "  linux_server_accounts lsa,\n"
+					+ "  linux.\"LinuxUserServer\" lsa,\n"
 					+ "  cvs_repositories cr\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
@@ -2046,7 +2046,7 @@ final public class TableHandler {
 						+ "  eab.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux_server_accounts lsa,\n"
+						+ "  linux.\"LinuxUserServer\" lsa,\n"
 						+ "  email.\"AttachmentBlocks\" eab\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -2068,7 +2068,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
-					+ "  linux_server_accounts lsa,\n"
+					+ "  linux.\"LinuxUserServer\" lsa,\n"
 					+ "  email.\"AttachmentBlocks\" eab\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
@@ -4815,7 +4815,7 @@ final public class TableHandler {
 						+ "      lsa.username\n"
 						+ "      from\n"
 						+ "        master_servers ms2,\n"
-						+ "        linux_server_accounts lsa\n"
+						+ "        linux.\"LinuxUserServer\" lsa\n"
 						+ "      where\n"
 						+ "        ms2.username=?\n"
 						+ "        and ms2.server=lsa.ao_server\n"
@@ -4959,7 +4959,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new LinuxServerAccount(),
-						"select * from linux_server_accounts"
+						"select * from linux.\"LinuxUserServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -4971,7 +4971,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms\n"
 						+ "  left join linux.\"LinuxServer\" ff on ms.server=ff.failover_server,\n"
-						+ "  linux_server_accounts lsa\n"
+						+ "  linux.\"LinuxUserServer\" lsa\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and (\n"
@@ -5013,7 +5013,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
 					+ "  business_servers bs,\n"
-					+ "  linux_server_accounts lsa\n"
+					+ "  linux.\"LinuxUserServer\" lsa\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"

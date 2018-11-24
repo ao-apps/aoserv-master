@@ -278,7 +278,7 @@ final public class EmailHandler {
 		// The server for both account and group must be the same
 		int accountAOServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, linuxServerAccount);
 		int groupAOServer=LinuxAccountHandler.getAOServerForLinuxServerGroup(conn, linuxServerGroup);
-		if(accountAOServer!=groupAOServer) throw new SQLException("(linux_server_accounts.pkey="+linuxServerAccount+").ao_server!=(linux.LinuxGroupServer.pkey="+linuxServerGroup+").ao_server");
+		if(accountAOServer!=groupAOServer) throw new SQLException("(linux.LinuxUserServer.pkey="+linuxServerAccount+").ao_server!=(linux.LinuxGroupServer.pkey="+linuxServerGroup+").ao_server");
 		// Must not already have this path on this server
 		if(
 			conn.executeBooleanQuery(
@@ -767,7 +767,7 @@ final public class EmailHandler {
 		// Data integrity checks
 		int domainAOServer=getAOServerForEmailDomain(conn, domain);
 		int lsaAOServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa);
-		if(domainAOServer!=lsaAOServer) throw new SQLException("((email.Domain.pkey="+domain+").ao_server='"+domainAOServer+"')!=((linux_server_accounts.pkey="+lsa+").ao_server='"+lsaAOServer+"')");
+		if(domainAOServer!=lsaAOServer) throw new SQLException("((email.Domain.pkey="+domain+").ao_server='"+domainAOServer+"')!=((linux.LinuxUserServer.pkey="+lsa+").ao_server='"+lsaAOServer+"')");
 		int lsgAOServer=LinuxAccountHandler.getAOServerForLinuxServerGroup(conn, lsg);
 		if(domainAOServer!=lsgAOServer) throw new SQLException("((email.Domain.pkey="+domain+").ao_server='"+domainAOServer+"')!=((linux.LinuxGroupServer.pkey="+lsg+").ao_server='"+lsgAOServer+"')");
 
@@ -1327,7 +1327,7 @@ final public class EmailHandler {
 		if(isLinuxAccAddress) {
 			for(int d=0;d<pkeys.size();d++) {
 				int laaPkey=pkeys.getInt(d);
-				conn.executeUpdate("update linux_server_accounts set autoresponder_from=null where autoresponder_from=?", laaPkey);
+				conn.executeUpdate("update linux.\"LinuxUserServer\" set autoresponder_from=null where autoresponder_from=?", laaPkey);
 				conn.executeUpdate("delete from email.\"InboxAddress\" where pkey=?", laaPkey);
 			}
 		}
@@ -1519,7 +1519,7 @@ final public class EmailHandler {
 		int aoServer=getAOServerForEmailAddress(conn, ea);
 
 		// Delete from the database
-		conn.executeUpdate("update linux_server_accounts set autoresponder_from=null where autoresponder_from=?", laa);
+		conn.executeUpdate("update linux.\"LinuxUserServer\" set autoresponder_from=null where autoresponder_from=?", laa);
 		conn.executeUpdate("delete from email.\"InboxAddress\" where pkey=?", laa);
 
 		// Notify all clients of the update
@@ -1642,7 +1642,7 @@ final public class EmailHandler {
 	if(pkeys.size()>0) {
 		for(int d=0;d<pkeys.size();d++) {
 		int laaPkey=pkeys.getInt(d);
-		conn.executeUpdate("update linux_server_accounts set autoresponder_from=null where autoresponder_from=?", laaPkey);
+		conn.executeUpdate("update linux.\"LinuxUserServer\" set autoresponder_from=null where autoresponder_from=?", laaPkey);
 		conn.executeUpdate("delete from email.\"InboxAddress\" where pkey=?", laaPkey);
 		}
 				laaMod=true;

@@ -54,7 +54,7 @@ final public class CvsHandler {
 			if(!CvsRepository.isValidPath(path)) throw new SQLException("Invalid path: "+path);
 			String pathStr = path.toString();
 			if(pathStr.startsWith("/home/")) {
-				// Must be able to access one of the linux_server_accounts with that home directory
+				// Must be able to access one of the linux.LinuxUserServer with that home directory
 				//
 				// This means there must be an accessible account that has a home directory that is a prefix of this docbase.
 				// Such as /home/e/example/ being a prefix of /home/e/example/my-webapp
@@ -62,7 +62,7 @@ final public class CvsHandler {
 					"select\n"
 					+ "  pkey\n"
 					+ "from\n"
-					+ "  linux_server_accounts\n"
+					+ "  linux.\"LinuxUserServer\"\n"
 					+ "where\n"
 					+ "  ao_server=?\n"
 					+ "  and (home || '/')=substring(? from 1 for (length(home) + 1))",
@@ -106,7 +106,7 @@ final public class CvsHandler {
 					+ "      cr.pkey\n"
 					+ "    from\n"
 					+ "      cvs_repositories cr,\n"
-					+ "      linux_server_accounts lsa\n"
+					+ "      linux.\"LinuxUserServer\" lsa\n"
 					+ "    where\n"
 					+ "      cr.path=?\n"
 					+ "      and cr.linux_server_account=lsa.pkey\n"

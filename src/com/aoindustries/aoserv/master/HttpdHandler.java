@@ -648,7 +648,7 @@ final public class HttpdHandler {
 
 		String docBaseStr = docBase.toString();
 		if(docBaseStr.startsWith("/home/")) {
-			// Must be able to access one of the linux_server_accounts with that home directory
+			// Must be able to access one of the linux.LinuxUserServer with that home directory
 			//
 			// This means there must be an accessible account that has a home directory that is a prefix of this docbase.
 			// Such as /home/e/example/ being a prefix of /home/e/example/my-webapp
@@ -656,7 +656,7 @@ final public class HttpdHandler {
 				"select\n"
 				+ "  pkey\n"
 				+ "from\n"
-				+ "  linux_server_accounts\n"
+				+ "  linux.\"LinuxUserServer\"\n"
 				+ "where\n"
 				+ "  ao_server=?\n"
 				+ "  and (home || '/')=substring(? from 1 for (length(home) + 1))",
@@ -830,7 +830,7 @@ final public class HttpdHandler {
 			);
 
 			// Check for ties between jvm and site in linux_group_accounts
-			String sharedTomcatUsername = conn.executeStringQuery("select lsa.username from web.\"SharedTomcat\" hst, linux_server_accounts lsa where hst.linux_server_account = lsa.pkey and hst.pkey=?", sharedTomcatPkey);
+			String sharedTomcatUsername = conn.executeStringQuery("select lsa.username from web.\"SharedTomcat\" hst, linux.\"LinuxUserServer\" lsa where hst.linux_server_account = lsa.pkey and hst.pkey=?", sharedTomcatPkey);
 			String sharedTomcatLinuxGroup = conn.executeStringQuery("select lsg.name from web.\"SharedTomcat\" hst, linux.\"LinuxGroupServer\" lsg where hst.linux_server_group = lsg.pkey and hst.pkey=?", sharedTomcatPkey);
 			boolean hasAccess = conn.executeBooleanQuery(
 				"select (\n"
@@ -1744,12 +1744,12 @@ final public class HttpdHandler {
 					throw new SQLException(e);
 				}
 				if(
-					// Must also not be found in linux_server_accounts.home
+					// Must also not be found in linux.LinuxUserServer.home
 					conn.executeIntQuery(
 						"select\n"
 						+ "  count(*)\n"
 						+ "from\n"
-						+ "  linux_server_accounts\n"
+						+ "  linux.\"LinuxUserServer\"\n"
 						+ "where\n"
 						+ "  home=?\n"
 						+ "  or substring(home from 1 for " + (wwwgroupDirCentOS5.toString().length() + 1) + ")=?\n"
@@ -1798,7 +1798,7 @@ final public class HttpdHandler {
 			String name=template+c;
 			if(!HttpdSite.isValidSiteName(name)) throw new SQLException("Invalid site name: "+name);
 			if(!sorted.contains(name)) {
-				// Must also not be found in linux_server_accounts.home on CentOS 5 or CentOS 7
+				// Must also not be found in linux.LinuxUserServer.home on CentOS 5 or CentOS 7
 				UnixPath wwwDirCentOS5;
 				UnixPath wwwDirCentOS7;
 				try {
@@ -1811,7 +1811,7 @@ final public class HttpdHandler {
 					"select\n"
 					+ "  count(*)\n"
 					+ "from\n"
-					+ "  linux_server_accounts\n"
+					+ "  linux.\"LinuxUserServer\"\n"
 					+ "where\n"
 					+ "  home=?\n"
 					+ "  or substring(home from 1 for " + (wwwDirCentOS5.toString().length() + 1) + ")=?\n"
@@ -1911,7 +1911,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  hs.pkey\n"
 			+ "from\n"
-			+ "  linux_server_accounts lsa,\n"
+			+ "  linux.\"LinuxUserServer\" lsa,\n"
 			+ "  web.\"Site\" hs\n"
 			+ "where\n"
 			+ "  lsa.pkey=?\n"
@@ -2002,7 +2002,7 @@ final public class HttpdHandler {
 			+ "  lsa.pkey\n"
 			+ "from\n"
 			+ "  web.\"Site\" hs,\n"
-			+ "  linux_server_accounts lsa\n"
+			+ "  linux.\"LinuxUserServer\" lsa\n"
 			+ "where\n"
 			+ "  hs.pkey=?\n"
 			+ "  and hs.linux_account=lsa.username\n"
@@ -2512,7 +2512,7 @@ final public class HttpdHandler {
 			+ "  count(*)\n"
 			+ "from\n"
 			+ "  cvs_repositories cr,\n"
-			+ "  linux_server_accounts lsa\n"
+			+ "  linux.\"LinuxUserServer\" lsa\n"
 			+ "where\n"
 			+ "  cr.linux_server_account=lsa.pkey\n"
 			+ "  and lsa.ao_server=?\n"

@@ -1060,7 +1060,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one IPAddress on Server="+server);
 
-		// linux_server_accounts
+		// linux.LinuxUserServer
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1070,7 +1070,7 @@ final public class BusinessHandler {
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
-				+ "      linux_server_accounts lsa\n"
+				+ "      linux.\"LinuxUserServer\" lsa\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=un.package\n"
