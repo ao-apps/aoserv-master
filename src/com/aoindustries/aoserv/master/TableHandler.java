@@ -2756,7 +2756,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new FirewalldZone(),
-						"select * from firewalld_zones"
+						"select * from net.\"FirewallZone\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2767,7 +2767,7 @@ final public class TableHandler {
 						+ "  fz.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  firewalld_zones fz\n"
+						+ "  net.\"FirewallZone\" fz\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=fz.server",
@@ -2785,7 +2785,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
 					+ "  business_servers bs,\n"
-					+ "  firewalld_zones fz\n"
+					+ "  net.\"FirewallZone\" fz\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -5877,7 +5877,7 @@ final public class TableHandler {
 						+ "      nbfz.pkey\n"
 						+ "    from\n"
 						+ "      net_bind_firewalld_zones nbfz\n"
-						+ "      inner join firewalld_zones fz on nbfz.firewalld_zone=fz.pkey\n"
+						+ "      inner join net.\"FirewallZone\" fz on nbfz.firewalld_zone=fz.pkey\n"
 						+ "    where\n"
 						+ "      nb.pkey=nbfz.net_bind\n"
 						+ "      and fz.\"name\"=?\n"
@@ -5906,7 +5906,7 @@ final public class TableHandler {
 						+ "      nbfz.pkey\n"
 						+ "    from\n"
 						+ "      net_bind_firewalld_zones nbfz\n"
-						+ "      inner join firewalld_zones fz on nbfz.firewalld_zone=fz.pkey\n"
+						+ "      inner join net.\"FirewallZone\" fz on nbfz.firewalld_zone=fz.pkey\n"
 						+ "    where\n"
 						+ "      nb.pkey=nbfz.net_bind\n"
 						+ "      and fz.\"name\"=?\n"
@@ -5958,7 +5958,7 @@ final public class TableHandler {
 					+ "      nbfz.pkey\n"
 					+ "    from\n"
 					+ "      net_bind_firewalld_zones nbfz\n"
-					+ "      inner join firewalld_zones fz on nbfz.firewalld_zone=fz.pkey\n"
+					+ "      inner join net.\"FirewallZone\" fz on nbfz.firewalld_zone=fz.pkey\n"
 					+ "    where\n"
 					+ "      nb.pkey=nbfz.net_bind\n"
 					+ "      and fz.\"name\"=?\n"
