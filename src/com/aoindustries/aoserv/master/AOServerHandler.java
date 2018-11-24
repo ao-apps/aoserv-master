@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * The <code>AOServerHandler</code> handles all the accesses to the ao_servers table.
+ * The <code>AOServerHandler</code> handles all the accesses to the server.AoServer table.
  *
  * @author  AO Industries, Inc.
  */
@@ -34,15 +34,23 @@ final public class AOServerHandler {
 	}
 
 	public static IntList getAOServers(DatabaseConnection conn) throws SQLException {
-		return conn.executeIntListQuery("select server from ao_servers");
+		return conn.executeIntListQuery("select server from server.\"AoServer\"");
 	}
 
 	public static int getUidMin(DatabaseConnection conn, int aoServer) throws SQLException {
-		return conn.executeIntQuery("select uid_min from ao_servers where server=?", aoServer);
+		return conn.executeIntQuery("select \"uidMin\" from server.\"AoServer\" where server=?", aoServer);
+	}
+
+	public static int getUidMax(DatabaseConnection conn, int aoServer) throws SQLException {
+		return conn.executeIntQuery("select \"uidMax\" from server.\"AoServer\" where server=?", aoServer);
 	}
 
 	public static int getGidMin(DatabaseConnection conn, int aoServer) throws SQLException {
-		return conn.executeIntQuery("select gid_min from ao_servers where server=?", aoServer);
+		return conn.executeIntQuery("select \"gidMin\" from server.\"AoServer\" where server=?", aoServer);
+	}
+
+	public static int getGidMax(DatabaseConnection conn, int aoServer) throws SQLException {
+		return conn.executeIntQuery("select \"gidMax\" from server.\"AoServer\" where server=?", aoServer);
 	}
 
 	private static final Map<Integer,Object> mrtgLocks = new HashMap<>();
@@ -108,7 +116,7 @@ final public class AOServerHandler {
 		if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not set the last distro time");
 		ServerHandler.checkAccessServer(conn, source, "setLastDistroTime", aoServer);
 		conn.executeUpdate(
-			"update ao_servers set last_distro_time=? where server=?",
+			"update server.\"AoServer\" set last_distro_time=? where server=?",
 			new Timestamp(time),
 			aoServer
 		);

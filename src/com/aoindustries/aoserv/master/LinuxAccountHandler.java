@@ -430,30 +430,7 @@ final public class LinuxAccountHandler {
 			+ "  default,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
-			+ "  (\n"
-			+ "    select\n"
-			+ "      li.id\n"
-			+ "    from\n"
-			+ "      linux_ids li\n"
-			+ "    where\n"
-			+ "      li.id >= (select uid_min from ao_servers where server=?)\n"
-			+ "      and li.id <= " + LinuxAccount.UID_MAX + "\n"
-			+ "      and (\n"
-			+ "        select\n"
-			+ "          lsa.pkey\n"
-			+ "        from\n"
-			+ "          linux_server_accounts lsa,\n"
-			+ "          servers se\n"
-			+ "        where\n"
-			+ "          lsa.ao_server=se.pkey\n"
-			//+ "          and se.farm=?\n"
-			+ "          and li.id=lsa.uid\n"
-			+ "        limit 1\n"
-			+ "      ) is null\n"
-			+ "    order by\n"
-			+ "      id\n"
-			+ "    limit 1\n"
-			+ "  ),\n"
+			+ "  linux.get_next_uid(?),\n"
 			+ "  ?,\n"
 			+ "  null,\n"
 			+ "  null,\n"
@@ -473,7 +450,6 @@ final public class LinuxAccountHandler {
 			username,
 			aoServer,
 			aoServer,
-			//farm,
 			home,
 			EmailSpamAssassinIntegrationMode.DEFAULT_SPAMASSASSIN_INTEGRATION_MODE
 		);
@@ -542,45 +518,12 @@ final public class LinuxAccountHandler {
 			+ "  default,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
-			+ "  (\n"
-			+ "    select\n"
-			+ "      li.id\n"
-			+ "    from\n"
-			+ "      linux_ids li\n"
-			+ "    where\n"
-			+ "      li.id >= (select gid_min from ao_servers where server=?)\n"
-			+ "      and li.id <= " + LinuxGroup.GID_MAX + "\n"
-			+ "      and (\n"
-			+ "        select\n"
-			+ "          lsg.pkey\n"
-			+ "        from\n"
-			+ "          linux_server_groups lsg,\n"
-			+ "          servers se\n"
-			+ "        where\n"
-			+ "          lsg.ao_server=se.pkey\n"
-			//+ "          and se.farm=?\n"
-			+ "          and li.id=lsg.gid\n"
-			+ "        limit 1\n"
-			+ "      ) is null\n"
-			+ "      and (\n"
-			+ "        select\n"
-			+ "          ffr.pkey\n"
-			+ "        from\n"
-			+ "          backup.\"FileReplication\" ffr\n"
-			+ "        where\n"
-			+ "          ffr.quota_gid=li.id\n"
-			+ "        limit 1\n"
-			+ "      ) is null\n"
-			+ "    order by\n"
-			+ "      id\n"
-			+ "    limit 1\n"
-			+ "  ),\n"
+			+ "  linux.get_next_gid(?),\n"
 			+ "  now()\n"
 			+ ") RETURNING pkey",
 			groupName,
 			aoServer,
 			aoServer
-			//farm
 		);
 
 		// Notify all clients of the update
@@ -648,7 +591,8 @@ final public class LinuxAccountHandler {
 		ServerHandler.checkAccessServer(conn, source, "addSystemGroup", aoServer);
 		// The group ID must be in the system group range
 		if(gid < 0) throw new SQLException("Invalid gid: " + gid);
-		int gid_min = AOServerHandler.getGidMin(conn, aoServer);
+		int gidMin = AOServerHandler.getGidMin(conn, aoServer);
+		int gidMax = AOServerHandler.getGidMax(conn, aoServer);
 		// The group ID must not already exist on this server
 		{
 			GroupId existing = getGroupNameByGid(conn, aoServer, gid);
@@ -710,9 +654,9 @@ final public class LinuxAccountHandler {
 				|| (groupName.equals(LinuxGroup.SYSTEMD_NETWORK) && gid == 192)
 				|| (groupName.equals(LinuxGroup.NFSNOBODY)       && gid == 65534)
 				|| (
-					// System groups in range 201 through gid_min - 1
+					// System groups in range 201 through gidMin - 1
 					gid >= CENTOS_7_SYS_GID_MIN
-					&& gid < gid_min
+					&& gid < gidMin
 					&& (
 						   groupName.equals(LinuxGroup.AOSERV_JILTER)
 						|| groupName.equals(LinuxGroup.AOSERV_XEN_MIGRATION)
@@ -731,9 +675,9 @@ final public class LinuxAccountHandler {
 						|| groupName.equals(LinuxGroup.VIRUSGROUP)
 					)
 				) || (
-					// Regular user groups in range gid_min through LinuxGroup.GID_MAX
-					gid >= gid_min
-					&& gid <= LinuxGroup.GID_MAX
+					// Regular user groups in range gidMin through LinuxGroup.GID_MAX
+					gid >= gidMin
+					&& gid <= gidMax
 					&& groupName.equals(LinuxGroup.AOADMIN)
 				)
 			)
@@ -914,7 +858,8 @@ final public class LinuxAccountHandler {
 		ServerHandler.checkAccessServer(conn, source, "addSystemUser", aoServer);
 		// The user ID must be in the system user range
 		if(uid < 0) throw new SQLException("Invalid uid: " + uid);
-		int uid_min = AOServerHandler.getUidMin(conn, aoServer);
+		int uidMin = AOServerHandler.getUidMin(conn, aoServer);
+		int uidMax = AOServerHandler.getUidMax(conn, aoServer);
 		// The user ID must not already exist on this server
 		{
 			UserId existing = getUsernameByUid(conn, aoServer, uid);
@@ -931,11 +876,11 @@ final public class LinuxAccountHandler {
 			&& (systemUser = SystemUser.centos7SystemUsers.get(username)) != null
 		) {
 			if(systemUser.uid == SystemUser.ANY_SYSTEM_UID) {
-				// System users in range 201 through uid_min - 1
-				if(uid < CENTOS_7_SYS_UID_MIN || uid >= uid_min) throw new SQLException("Invalid system uid: " + uid);
+				// System users in range 201 through uidMin - 1
+				if(uid < CENTOS_7_SYS_UID_MIN || uid >= uidMin) throw new SQLException("Invalid system uid: " + uid);
 			} else if(systemUser.uid == SystemUser.ANY_USER_UID) {
-				// Regular users in range uid_min through LinuxAccount.UID_MAX
-				if(uid < uid_min || uid > LinuxAccount.UID_MAX) throw new SQLException("Invalid regular user uid: " + uid);
+				// Regular users in range uidMin through LinuxAccount.UID_MAX
+				if(uid < uidMin || uid > uidMax) throw new SQLException("Invalid regular user uid: " + uid);
 			} else {
 				// UID must match exactly
 				if(uid != systemUser.uid) throw new SQLException("Unexpected system uid: " + uid + " != " + systemUser.uid);
@@ -1115,11 +1060,11 @@ final public class LinuxAccountHandler {
 		checkAccessLinuxServerAccount(conn, source, "disableLinuxServerAccount", pkey);
 
 		int aoServer = getAOServerForLinuxServerAccount(conn, pkey);
-		int uid_min = AOServerHandler.getUidMin(conn, aoServer);
+		int uidMin = AOServerHandler.getUidMin(conn, aoServer);
 
 		// The UID must be a user UID
 		int uid=getUIDForLinuxServerAccount(conn, pkey);
-		if(uid < uid_min) throw new SQLException("Not allowed to disable a system LinuxServerAccount: pkey="+pkey+", uid="+uid);
+		if(uid < uidMin) throw new SQLException("Not allowed to disable a system LinuxServerAccount: pkey="+pkey+", uid="+uid);
 
 		IntList crs=CvsHandler.getCvsRepositoriesForLinuxServerAccount(conn, pkey);
 		for(int c=0;c<crs.size();c++) {
@@ -1624,11 +1569,11 @@ final public class LinuxAccountHandler {
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove LinuxServerAccount for user '"+LinuxAccount.MAIL+'\'');
 
 		int aoServer = getAOServerForLinuxServerAccount(conn, account);
-		int uid_min = AOServerHandler.getUidMin(conn, aoServer);
+		int uidMin = AOServerHandler.getUidMin(conn, aoServer);
 
 		// The UID must be a user UID
 		int uid=getUIDForLinuxServerAccount(conn, account);
-		if(uid < uid_min) throw new SQLException("Not allowed to remove a system LinuxServerAccount: pkey="+account+", uid="+uid);
+		if(uid < uidMin) throw new SQLException("Not allowed to remove a system LinuxServerAccount: pkey="+account+", uid="+uid);
 
 		// Must not contain a CVS repository
 		String home=conn.executeStringQuery("select home from linux_server_accounts where pkey=?", account);
@@ -1995,12 +1940,12 @@ final public class LinuxAccountHandler {
 			throw err;
 		}
 
-		// Update the ao_servers table for emailmon and ftpmon
+		// Update the server.AoServer table for emailmon and ftpmon
 		/*if(username.equals(LinuxAccount.EMAILMON)) {
-			conn.executeUpdate("update ao_servers set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
+			conn.executeUpdate("update server."AoServer" set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
 			invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
 		} else if(username.equals(LinuxAccount.FTPMON)) {
-			conn.executeUpdate("update ao_servers set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
+			conn.executeUpdate("update server."AoServer" set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
 			invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
 		}*/
 	}
