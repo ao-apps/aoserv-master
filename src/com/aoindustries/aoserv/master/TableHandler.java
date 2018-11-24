@@ -8975,7 +8975,7 @@ final public class TableHandler {
 		String tableName
 	) throws IOException, SQLException {
 		switch(tableName) {
-			case "mysql_reserved_words" :
+			case "mysql.mysql_reserved_words" :
 				if(
 					source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_100) >= 0
 					&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80) <= 0
@@ -9002,7 +9002,7 @@ final public class TableHandler {
 				}
 				// fall-through to empty response
 				break;
-			case "net_protocols" :
+			case "net.net_protocols" :
 				if(
 					source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_100) >= 0
 					&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80) <= 0
@@ -9030,7 +9030,7 @@ final public class TableHandler {
 				}
 				// fall-through to empty response
 				break;
-			case "postgres_reserved_words" :
+			case "postgresql.postgres_reserved_words" :
 				if(
 					source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_100) >= 0
 					&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80) <= 0
