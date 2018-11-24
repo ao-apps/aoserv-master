@@ -699,7 +699,7 @@ final public class DNSHandler implements CronJob {
 	}
 
 	public static IntList getDNSAOServers(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntListQuery("select distinct server from net_binds where app_protocol=? and server in (select server from linux.\"LinuxServer\")", Protocol.DNS);
+		return conn.executeIntListQuery("select distinct server from net.\"Bind\" where app_protocol=? and server in (select server from linux.\"LinuxServer\")", Protocol.DNS);
 	}
 
 	private static final Object dnstldLock=new Object();

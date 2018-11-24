@@ -96,7 +96,7 @@ final public class HttpdHandler {
 				+ "          hw.\"name\"\n"
 				+ "        from\n"
 				+ "          web.\"TomcatWorker\" hw,\n"
-				+ "          net_binds nb\n"
+				+ "          net.\"Bind\" nb\n"
 				+ "        where\n"
 				+ "          hw.bind=nb.pkey\n"
 				+ "          and nb.server=?\n"
@@ -129,7 +129,7 @@ final public class HttpdHandler {
 				+ "          hw.\"name\"\n"
 				+ "        from\n"
 				+ "          web.\"TomcatWorker\" hw,\n"
-				+ "          net_binds nb\n"
+				+ "          net.\"Bind\" nb\n"
 				+ "        where\n"
 				+ "          hw.bind=nb.pkey\n"
 				+ "          and nb.server=?\n"
@@ -2229,7 +2229,7 @@ final public class HttpdHandler {
 		PreparedStatement pstmt = conn.getConnection(
 			Connection.TRANSACTION_READ_COMMITTED,
 			true
-		).prepareStatement("select pkey, app_protocol from net_binds where server=? and \"ipAddress\"=? and port=? and net_protocol=?");
+		).prepareStatement("select pkey, app_protocol from net.\"Bind\" where server=? and \"ipAddress\"=? and port=? and net_protocol=?");
 		try {
 			pstmt.setInt(1, aoServer);
 			pstmt.setInt(2, ipAddress);
@@ -2240,7 +2240,7 @@ final public class HttpdHandler {
 					netBind=results.getInt(1);
 					String bindProtocol=results.getString(2);
 					if(!protocol.equals(bindProtocol)) throw new SQLException(
-						"Protocol mismatch on net_binds(pkey="
+						"Protocol mismatch on net.\"Bind\"(pkey="
 						+netBind
 						+" ao_server="
 						+aoServer
@@ -2265,7 +2265,7 @@ final public class HttpdHandler {
 		// Allocate the net_bind, if needed
 		if(netBind == -1) {
 			netBind = conn.executeIntUpdate(
-				"INSERT INTO net_binds VALUES (default,?,?,?,?,?,?,true) RETURNING pkey",
+				"INSERT INTO net.\"Bind\" VALUES (default,?,?,?,?,?,?,true) RETURNING pkey",
 				packageName.toString(),
 				aoServer,
 				ipAddress,
@@ -2437,13 +2437,13 @@ final public class HttpdHandler {
 			conn.executeUpdate("delete from web.\"TomcatWorker\" where bind=?", tomcat4Worker);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_WORKERS, accounting, aoServer, false);
 
-			conn.executeUpdate("delete from net_binds where pkey=?", bind);
+			conn.executeUpdate("delete from net.\"Bind\" where pkey=?", bind);
 			invalidateList.addTable(conn, SchemaTable.TableID.NET_BINDS, accounting, aoServer, false);
 			invalidateList.addTable(conn, SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES, accounting, aoServer, false);
 		}
 
 		if(tomcat4ShutdownPort!=-1) {
-			conn.executeUpdate("delete from net_binds where pkey=?", tomcat4ShutdownPort);
+			conn.executeUpdate("delete from net.\"Bind\" where pkey=?", tomcat4ShutdownPort);
 			invalidateList.addTable(conn, SchemaTable.TableID.NET_BINDS, accounting, aoServer, false);
 			invalidateList.addTable(conn, SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES, accounting, aoServer, false);
 		}
@@ -2472,19 +2472,19 @@ final public class HttpdHandler {
 	 *           |                + web.VirtualHostName
 	 *           |                |               + dns.Record
 	 *           |                + web.HttpdBind
-	 *           |                            + net_binds
+	 *           |                            + net.Bind
 	 *           + web.TomcatSite
 	 *           |                  + web.TomcatContext
 	 *           |                                        + web.TomcatContextDataSource
 	 *           |                                        + web.TomcatContextParameter
 	 *           |                  + web.TomcatWorker
-	 *           |                  |             + net_binds
+	 *           |                  |             + net.Bind
 	 *           |                  + web.SharedTomcatSite
 	 *           |                  |             + linux.LinuxGroupUser
 	 *           |                  + web.PrivateTomcatSite
-	 *           |                                         + net_binds
+	 *           |                                         + net.Bind
 	 *           |                  + web.JbossSite
-	 *           |                                   + net_binds
+	 *           |                                   + net.Bind
 	 *           + web.StaticSite
 	 */
 	public static void removeHttpdSite(
@@ -2592,7 +2592,7 @@ final public class HttpdHandler {
 							"select\n"
 							+ "  not ia.\"isOverflow\"\n"
 							+ "from\n"
-							+ "  net_binds nb,\n"
+							+ "  net.\"Bind\" nb,\n"
 							+ "  net.\"IpAddress\" ia\n"
 							+ "where\n"
 							+ "  nb.pkey=?\n"
@@ -2601,7 +2601,7 @@ final public class HttpdHandler {
 						)
 					) {
 						conn.executeUpdate("delete from web.\"HttpdBind\" where net_bind=?", httpdBind);
-						conn.executeUpdate("delete from net_binds where pkey=?", httpdBind);
+						conn.executeUpdate("delete from net.\"Bind\" where pkey=?", httpdBind);
 					}
 				}
 			}
@@ -2660,7 +2660,7 @@ final public class HttpdHandler {
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_STD_SITES, accounting, aoServer, false);
 
 				if(tomcat4ShutdownPort!=-1) {
-					conn.executeUpdate("delete from net_binds where pkey=?", tomcat4ShutdownPort);
+					conn.executeUpdate("delete from net.\"Bind\" where pkey=?", tomcat4ShutdownPort);
 					invalidateList.addTable(conn, SchemaTable.TableID.NET_BINDS, accounting, aoServer, false);
 					invalidateList.addTable(conn, SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES, accounting, aoServer, false);
 				}
@@ -2668,7 +2668,7 @@ final public class HttpdHandler {
 
 			// web.JbossSite
 			if(conn.executeBooleanQuery("select (select tomcat_site from web.\"JbossSite\" where tomcat_site=? limit 1) is not null", httpdSitePKey)) {
-				// net_binds
+				// net.Bind
 				int jnp_bind=conn.executeIntQuery("select jnp_bind from web.\"JbossSite\" where tomcat_site=?", httpdSitePKey);
 				int webserver_bind=conn.executeIntQuery("select webserver_bind from web.\"JbossSite\" where tomcat_site=?", httpdSitePKey);
 				int rmi_bind=conn.executeIntQuery("select rmi_bind from web.\"JbossSite\" where tomcat_site=?", httpdSitePKey);

@@ -1030,7 +1030,7 @@ final public class MySQLHandler {
 			+ "  nb.package\n"
 			+ "from\n"
 			+ "  mysql.\"MysqlServer\" ms\n"
-			+ "  inner join net_binds nb on ms.net_bind=nb.pkey\n"
+			+ "  inner join net.\"Bind\" nb on ms.net_bind=nb.pkey\n"
 			+ "where\n"
 			+ "  ms.net_bind=?",
 			mysqlServer
@@ -1045,7 +1045,7 @@ final public class MySQLHandler {
 			+ "  nb.net_protocol\n"
 			+ "from\n"
 			+ "  mysql.\"MysqlServer\" ms\n"
-			+ "  inner join net_binds nb on ms.net_bind=nb.pkey\n"
+			+ "  inner join net.\"Bind\" nb on ms.net_bind=nb.pkey\n"
 			+ "where\n"
 			+ "  ms.net_bind=?",
 			mysqlServer

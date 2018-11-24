@@ -1158,7 +1158,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one MySQLServerUser on Server="+server);
 
-		// net_binds
+		// net.Bind
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1167,7 +1167,7 @@ final public class BusinessHandler {
 				+ "      nb.pkey\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
-				+ "      net_binds nb\n"
+				+ "      net.\"Bind\" nb\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=nb.package\n"

@@ -807,7 +807,7 @@ final public class PostgresHandler {
 	}
 
 	public static int getPortForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select nb.port from postgres_servers ps, net_binds nb where ps.pkey=? and ps.net_bind=nb.pkey", postgresServer);
+		return conn.executeIntQuery("select nb.port from postgres_servers ps, net.\"Bind\" nb where ps.pkey=? and ps.net_bind=nb.pkey", postgresServer);
 	}
 
 	public static String getMinorVersionForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {

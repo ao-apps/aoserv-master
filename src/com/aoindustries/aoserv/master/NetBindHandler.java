@@ -23,7 +23,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * The <code>NetBindHandler</code> handles all the accesses to the <code>net_binds</code> table.
+ * The <code>NetBindHandler</code> handles all the accesses to the <code>net.Bind</code> table.
  *
  * @author  AO Industries, Inc.
  */
@@ -33,7 +33,7 @@ final public class NetBindHandler {
 	}
 
 	/**
-	 * This lock is used to avoid a race condition between check and insert when allocating net_binds.
+	 * This lock is used to avoid a race condition between check and insert when allocating net.Bind.
 	 */
 	private static final Object netBindLock = new Object();
 
@@ -58,7 +58,7 @@ final public class NetBindHandler {
 			// Must be a user service
 			if(
 				!conn.executeBooleanQuery("select is_user_service from net.\"AppProtocol\" where protocol=?", appProtocol)
-			) throw new SQLException("Only master users may add non-user net_binds.");
+			) throw new SQLException("Only master users may add non-user net.Bind.");
 
 			// Must match the default port
 			Port defaultPort = conn.executeObjectQuery(
@@ -86,7 +86,7 @@ final public class NetBindHandler {
 						+ "    select\n"
 						+ "      pkey\n"
 						+ "    from\n"
-						+ "      net_binds\n"
+						+ "      net.\"Bind\"\n"
 						+ "    where\n"
 						+ "      server=?\n"
 						+ "      and port=?\n"
@@ -107,7 +107,7 @@ final public class NetBindHandler {
 						+ "    select\n"
 						+ "      nb.pkey\n"
 						+ "    from\n"
-						+ "      net_binds nb\n"
+						+ "      net.\"Bind\" nb\n"
 						+ "      inner join net.\"IpAddress\" ia on nb.\"ipAddress\"=ia.id\n"
 						+ "    where\n"
 						+ "      nb.server=?\n"
@@ -132,7 +132,7 @@ final public class NetBindHandler {
 						+ "    select\n"
 						+ "      nb.pkey\n"
 						+ "    from\n"
-						+ "      net_binds nb\n"
+						+ "      net.\"Bind\" nb\n"
 						+ "      inner join net.\"IpAddress\" ia on nb.\"ipAddress\"=ia.id\n"
 						+ "    where\n"
 						+ "      nb.server=?\n"
@@ -156,7 +156,7 @@ final public class NetBindHandler {
 			// Add the port to the DB
 			pkey = conn.executeIntUpdate(
 				"INSERT INTO\n"
-				+ "  net_binds\n"
+				+ "  net.\"Bind\"\n"
 				+ "VALUES (\n"
 				+ "  DEFAULT,\n"
 				+ "  ?,\n"
@@ -223,7 +223,7 @@ final public class NetBindHandler {
 			if(inetAddress.isUnspecified()) {
 				pkey = conn.executeIntUpdate(
 					"INSERT INTO\n"
-					+ "  net_binds\n"
+					+ "  net.\"Bind\"\n"
 					+ "VALUES (\n"
 					+ "  default,\n"
 					+ "  ?,\n"
@@ -242,7 +242,7 @@ final public class NetBindHandler {
 					+ "        select\n"
 					+ "          nb.pkey\n"
 					+ "        from\n"
-					+ "          net_binds nb\n"
+					+ "          net.\"Bind\" nb\n"
 					+ "        where\n"
 					+ "          nb.server=?\n"
 					+ "          and np.port=nb.port\n"
@@ -271,7 +271,7 @@ final public class NetBindHandler {
 			} else {
 				pkey = conn.executeIntUpdate(
 					"INSERT INTO\n"
-					+ "  net_binds\n"
+					+ "  net.\"Bind\"\n"
 					+ "VALUES (\n"
 					+ "  default,\n"
 					+ "  ?,\n"
@@ -290,7 +290,7 @@ final public class NetBindHandler {
 					+ "        select\n"
 					+ "          nb.pkey\n"
 					+ "        from\n"
-					+ "          net_binds nb\n"
+					+ "          net.\"Bind\" nb\n"
 					+ "          inner join net.\"IpAddress\" ia on nb.\"ipAddress\"=ia.id\n"
 					+ "        where\n"
 					+ "          nb.server=?\n"
@@ -341,7 +341,7 @@ final public class NetBindHandler {
 	) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from net_binds nb, billing.\"Package\" pk where nb.pkey=? and nb.package=pk.name",
+			"select pk.accounting from net.\"Bind\" nb, billing.\"Package\" pk where nb.pkey=? and nb.package=pk.name",
 			pkey
 		);
 	}
@@ -359,7 +359,7 @@ final public class NetBindHandler {
 			+ "      select\n"
 			+ "        pkey\n"
 			+ "      from\n"
-			+ "        net_binds\n"
+			+ "        net.\"Bind\"\n"
 			+ "      where\n"
 			+ "        server=?\n"
 			+ "        and \"ipAddress\"=?\n"
@@ -378,7 +378,7 @@ final public class NetBindHandler {
 		DatabaseConnection conn,
 		int pkey
 	) throws IOException, SQLException {
-		return conn.executeIntQuery("select server from net_binds where pkey=?", pkey);
+		return conn.executeIntQuery("select server from net.\"Bind\" where pkey=?", pkey);
 	}
 
 	public static AccountingCode getPackageForNetBind(
@@ -387,7 +387,7 @@ final public class NetBindHandler {
 	) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from net_binds where pkey=?",
+			"select package from net.\"Bind\" where pkey=?",
 			pkey
 		);
 	}
@@ -435,7 +435,7 @@ final public class NetBindHandler {
 			);
 		}
 
-		conn.executeUpdate("delete from net_binds where pkey=?", pkey);
+		conn.executeUpdate("delete from net.\"Bind\" where pkey=?", pkey);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.NET_BINDS,
@@ -545,7 +545,7 @@ final public class NetBindHandler {
 	) throws IOException, SQLException {
 		PackageHandler.checkAccessPackage(conn, source, "setNetBindMonitoringEnabled", getPackageForNetBind(conn, pkey));
 
-		conn.executeUpdate("update net_binds set monitoring_enabled=? where pkey=?", enabled, pkey);
+		conn.executeUpdate("update net.\"Bind\" set monitoring_enabled=? where pkey=?", enabled, pkey);
 
 		invalidateList.addTable(
 			conn,

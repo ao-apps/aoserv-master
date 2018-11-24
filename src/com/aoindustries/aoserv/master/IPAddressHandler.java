@@ -271,12 +271,12 @@ final public class IPAddressHandler {
 			  "select\n"
 			+ "  count(*)\n"
 			+ "from\n"
-			+ "  net_binds\n"
+			+ "  net.\"Bind\"\n"
 			+ "where\n"
 			+ "  \"ipAddress\"=?",
 			ipAddress
 		);
-		if(count!=0) throw new SQLException("Unable to set Package, net.IpAddress in use by "+count+(count==1?" row":" rows")+" in net_binds: "+ipAddress);
+		if(count!=0) throw new SQLException("Unable to set Package, net.IpAddress in use by "+count+(count==1?" row":" rows")+" in net.Bind: "+ipAddress);
 
 		// Update the table
 		conn.executeUpdate("update net.\"IpAddress\" set package=(select pkey from billing.\"Package\" where name=?), available=false where id=?", newPackage, ipAddress);
@@ -301,7 +301,7 @@ final public class IPAddressHandler {
 			+ "      from\n"
 			+ "        net.\"IpAddress\" ia,\n"
 			+ "        net_devices nd\n"
-			+ "        left join net_binds nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?\n"
+			+ "        left join net.\"Bind\" nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?\n"
 			+ "        left join web.\"HttpdBind\" hb on nb.pkey=hb.net_bind\n"
 			+ "        left join web.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
 			+ "      where\n"
@@ -317,7 +317,7 @@ final public class IPAddressHandler {
 			+ "          select\n"
 			+ "            count(*)\n"
 			+ "          from\n"
-			+ "            net_binds nb2,\n"
+			+ "            net.\"Bind\" nb2,\n"
 			+ "            web.\"VirtualHost\" hsb2\n"
 			+ "          where\n"
 			+ "            nb2.server=?\n"

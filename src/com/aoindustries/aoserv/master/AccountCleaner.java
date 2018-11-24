@@ -539,7 +539,7 @@ final public class AccountCleaner implements CronJob {
                         + "  pfs.net_bind\n"
                         + "from\n"
                         + "  ftp.\"PrivateServer\" pfs,\n"
-                        + "  net_binds nb,\n"
+                        + "  net.\"Bind\" nb,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -555,13 +555,13 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // net_binds
+                // net.Bind
                 {
                     IntList nbs=conn.executeIntListQuery(
                         "select\n"
                         + "  nb.pkey\n"
                         + "from\n"
-                        + "  net_binds nb,\n"
+                        + "  net.\"Bind\" nb,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
