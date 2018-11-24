@@ -7794,7 +7794,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new Shell(),
-					"select * from shells"
+					"select * from linux.\"Shell\""
 				);
 				break;
 			case SIGNUP_REQUEST_OPTIONS :
