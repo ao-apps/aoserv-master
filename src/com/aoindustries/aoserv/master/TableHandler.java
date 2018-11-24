@@ -6069,7 +6069,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new NetDeviceID(),
-					"select * from net_device_ids"
+					"select * from net.\"DeviceId\""
 				);
 				break;
 			case NET_DEVICES :
