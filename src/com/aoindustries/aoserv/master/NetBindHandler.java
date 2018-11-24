@@ -217,113 +217,33 @@ final public class NetBindHandler {
 		AccountingCode pack,
 		int minimumPort
 	) throws IOException, SQLException {
-		InetAddress inetAddress = IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress);
 		int pkey;
 		synchronized(netBindLock) {
-			if(inetAddress.isUnspecified()) {
-				pkey = conn.executeIntUpdate(
-					"INSERT INTO\n"
-					+ "  net.\"Bind\"\n"
-					+ "VALUES (\n"
-					+ "  default,\n"
-					+ "  ?,\n"
-					+ "  ?,\n"
-					+ "  ?,\n"
-					+ "  (\n"
-					+ "    select\n"
-					+ "      np.port\n"
-					+ "    from\n"
-					+ "      net_ports np\n"
-					+ "    where\n"
-					+ "      np.is_user\n"
-					+ "      and np.port != ?\n"
-					+ "      and np.port >= ?\n"
-					+ "      and (\n"
-					+ "        select\n"
-					+ "          nb.pkey\n"
-					+ "        from\n"
-					+ "          net.\"Bind\" nb\n"
-					+ "        where\n"
-					+ "          nb.server=?\n"
-					+ "          and np.port=nb.port\n"
-					+ "          and nb.net_protocol=?\n"
-					+ "        limit 1\n"
-					+ "      ) is null\n"
-					+ "    order by\n"
-					+ "      port\n"
-					+ "    limit 1\n"
-					+ "  ),\n"
-					+ "  ?,\n"
-					+ "  ?,\n"
-					+ "  true,\n"
-					+ "  null\n"
-					+ ") RETURNING pkey",
-					pack,
-					server,
-					ipAddress,
-					HttpdWorker.ERROR_CAUSING_PORT,
-					minimumPort,
-					server,
-					netProtocol.name().toLowerCase(Locale.ROOT),
-					netProtocol.name().toLowerCase(Locale.ROOT),
-					appProtocol
-				);
-			} else {
-				pkey = conn.executeIntUpdate(
-					"INSERT INTO\n"
-					+ "  net.\"Bind\"\n"
-					+ "VALUES (\n"
-					+ "  default,\n"
-					+ "  ?,\n"
-					+ "  ?,\n"
-					+ "  ?,\n"
-					+ "  (\n"
-					+ "    select\n"
-					+ "      np.port\n"
-					+ "    from\n"
-					+ "      net_ports np\n"
-					+ "    where\n"
-					+ "      np.is_user\n"
-					+ "      and np.port != ?\n"
-					+ "      and np.port >= ?\n"
-					+ "      and (\n"
-					+ "        select\n"
-					+ "          nb.pkey\n"
-					+ "        from\n"
-					+ "          net.\"Bind\" nb\n"
-					+ "          inner join net.\"IpAddress\" ia on nb.\"ipAddress\"=ia.id\n"
-					+ "        where\n"
-					+ "          nb.server=?\n"
-					+ "          and ia.\"inetAddress\" in (\n"
-					+ "            (select \"inetAddress\" from net.\"IpAddress\" where id=?),\n"
-					+ "            ?\n"
-					+ "          )\n"
-					+ "          and np.port=nb.port\n"
-					+ "          and nb.net_protocol=?\n"
-					+ "        limit 1\n"
-					+ "      ) is null\n"
-					+ "    order by\n"
-					+ "      port\n"
-					+ "    limit 1\n"
-					+ "  ),\n"
-					+ "  ?,\n"
-					+ "  ?,\n"
-					+ "  true,\n"
-					+ "  null\n"
-					+ ") RETURNING pkey",
-					pack,
-					server,
-					ipAddress,
-					HttpdWorker.ERROR_CAUSING_PORT,
-					minimumPort,
-					server,
-					ipAddress,
-					IPAddress.WILDCARD_IP,
-					netProtocol.name().toLowerCase(Locale.ROOT),
-					netProtocol.name().toLowerCase(Locale.ROOT),
-					appProtocol
-				);
-			}
+			pkey = conn.executeIntUpdate(
+				"INSERT INTO\n"
+				+ "  net.\"Bind\"\n"
+				+ "VALUES (\n"
+				+ "  default,\n"
+				+ "  ?,\n" // package
+				+ "  ?,\n" // server
+				+ "  ?,\n" // ipAddress
+				+ "  net.find_unused_port(?, ?, ?, ?, ?),\n" // port
+				+ "  ?,\n" // net_protocol
+				+ "  ?,\n" // app_protocol
+				+ "  true,\n" // monitoring_enabled
+				+ "  null\n" // monitoring_parameters
+				+ ") RETURNING pkey",
+				pack,
+				server,
+				ipAddress,
+				server,
+				ipAddress,
+				minimumPort,
+				netProtocol.name().toLowerCase(Locale.ROOT),
+				appProtocol,
+				netProtocol.name().toLowerCase(Locale.ROOT),
+				appProtocol
+			);
 		}
 		invalidateList.addTable(
 			conn,
