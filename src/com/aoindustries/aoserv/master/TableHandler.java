@@ -6198,7 +6198,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new NetTcpRedirect(),
-						"select * from net_tcp_redirects"
+						"select * from net.\"TcpRedirect\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -6210,7 +6210,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  net.\"Bind\" nb,\n"
-						+ "  net_tcp_redirects ntr\n"
+						+ "  net.\"TcpRedirect\" ntr\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=nb.server\n"
@@ -6231,7 +6231,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  net.\"Bind\" nb,\n"
-					+ "  net_tcp_redirects ntr\n"
+					+ "  net.\"TcpRedirect\" ntr\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"

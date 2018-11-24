@@ -413,8 +413,7 @@ final public class NetBindHandler {
 		AccountingCode business = getBusinessForNetBind(conn, pkey);
 		int server=getServerForNetBind(conn, pkey);
 
-		if(conn.executeBooleanQuery("select (select net_bind from net_tcp_redirects where net_bind=?) is not null", pkey)) {
-			conn.executeUpdate("delete from net_tcp_redirects where net_bind=?", pkey);
+		if(conn.executeUpdate("delete from net.\"TcpRedirect\" where net_bind=?", pkey) > 0) {
 			invalidateList.addTable(
 				conn,
 				SchemaTable.TableID.NET_TCP_REDIRECTS,
@@ -424,8 +423,7 @@ final public class NetBindHandler {
 			);
 		}
 
-		if(conn.executeBooleanQuery("select (select net_bind from ftp.\"PrivateServer\" where net_bind=?) is not null", pkey)) {
-			conn.executeUpdate("delete from ftp.\"PrivateServer\" where net_bind=?", pkey);
+		if(conn.executeUpdate("delete from ftp.\"PrivateServer\" where net_bind=?", pkey) > 0) {
 			invalidateList.addTable(
 				conn,
 				SchemaTable.TableID.PRIVATE_FTP_SERVERS,
