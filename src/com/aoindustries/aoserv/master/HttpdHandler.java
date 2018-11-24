@@ -829,7 +829,7 @@ final public class HttpdHandler {
 				sharedTomcatName
 			);
 
-			// Check for ties between jvm and site in linux_group_accounts
+			// Check for ties between jvm and site in linux.LinuxGroupUser
 			String sharedTomcatUsername = conn.executeStringQuery("select lsa.username from web.\"SharedTomcat\" hst, linux.\"LinuxUserServer\" lsa where hst.linux_server_account = lsa.pkey and hst.pkey=?", sharedTomcatPkey);
 			String sharedTomcatLinuxGroup = conn.executeStringQuery("select lsg.name from web.\"SharedTomcat\" hst, linux.\"LinuxGroupServer\" lsg where hst.linux_server_group = lsg.pkey and hst.pkey=?", sharedTomcatPkey);
 			boolean hasAccess = conn.executeBooleanQuery(
@@ -837,7 +837,7 @@ final public class HttpdHandler {
 				+ "  select\n"
 				+ "    pkey\n"
 				+ "  from\n"
-				+ "    linux_group_accounts\n"
+				+ "    linux.\"LinuxGroupUser\"\n"
 				+ "  where\n"
 				+ "    \"group\"=?\n"
 				+ "    and username=?\n"
@@ -856,7 +856,7 @@ final public class HttpdHandler {
 				+ "  select\n"
 				+ "    pkey\n"
 				+ "  from\n"
-				+ "    linux_group_accounts\n"
+				+ "    linux.\"LinuxGroupUser\"\n"
 				+ "  where\n"
 				+ "    \"group\"=?\n"
 				+ "    and username=?\n"
@@ -2480,7 +2480,7 @@ final public class HttpdHandler {
 	 *           |                  + web.TomcatWorker
 	 *           |                  |             + net_binds
 	 *           |                  + web.SharedTomcatSite
-	 *           |                  |             + linux_group_accounts
+	 *           |                  |             + linux.LinuxGroupUser
 	 *           |                  + web.PrivateTomcatSite
 	 *           |                                         + net_binds
 	 *           |                  + web.JbossSite

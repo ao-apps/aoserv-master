@@ -4788,7 +4788,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new LinuxGroupAccount(),
-						"select * from linux_group_accounts"
+						"select * from linux.\"LinuxGroupUser\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -4798,7 +4798,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  *\n"
 						+ "from\n"
-						+ "  linux_group_accounts\n"
+						+ "  linux.\"LinuxGroupUser\"\n"
 						+ "where\n"
 						+ "  \"group\" in (\n"
 						+ "    select\n"
@@ -4832,7 +4832,7 @@ final public class TableHandler {
 					"select\n"
 					+ " *\n"
 					+ "from\n"
-					+ "  linux_group_accounts\n"
+					+ "  linux.\"LinuxGroupUser\"\n"
 					+ "where\n"
 					+ "  \"group\" in (\n"
 					+ "    select\n"
