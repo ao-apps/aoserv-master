@@ -187,7 +187,7 @@ final public class NetBindHandler {
 		if(!firewalldZones.isEmpty()) {
 			for(FirewalldZoneName firewalldZone : firewalldZones) {
 				conn.executeUpdate(
-					"insert into net_bind_firewalld_zones (net_bind, firewalld_zone) values (\n"
+					"insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (\n"
 					+ "  ?,\n"
 					+ "  (select pkey from net.\"FirewallZone\" where server=? and \"name\"=?)\n"
 					+ ")",
@@ -464,7 +464,7 @@ final public class NetBindHandler {
 		boolean updated = false;
 		int server = getServerForNetBind(conn, pkey);
 		if(firewalldZones.isEmpty()) {
-			if(conn.executeUpdate("delete from net_bind_firewalld_zones where net_bind=?", pkey) != 0) {
+			if(conn.executeUpdate("delete from net.\"BindFirewallZone\" where net_bind=?", pkey) != 0) {
 				updated = true;
 			}
 		} else {
@@ -475,7 +475,7 @@ final public class NetBindHandler {
 				"select\n"
 				+ "  fz.\"name\"\n"
 				+ "from\n"
-				+ "  net_bind_firewalld_zones nbfz\n"
+				+ "  net.\"BindFirewallZone\" nbfz\n"
 				+ "  inner join net.\"FirewallZone\" fz on nbfz.firewalld_zone=fz.pkey\n"
 				+ "where\n"
 				+ "  nbfz.net_bind=?",
@@ -485,11 +485,11 @@ final public class NetBindHandler {
 			for(FirewalldZoneName name : existing) {
 				if(!firewalldZones.contains(name)) {
 					conn.executeUpdate(
-						"delete from net_bind_firewalld_zones where pkey=(\n"
+						"delete from net.\"BindFirewallZone\" where pkey=(\n"
 						+ "  select\n"
 						+ "    nbfz.pkey\n"
 						+ "  from\n"
-						+ "    net_bind_firewalld_zones nbfz\n"
+						+ "    net.\"BindFirewallZone\" nbfz\n"
 						+ "    inner join net.\"FirewallZone\" fz on nbfz.firewalld_zone=fz.pkey\n"
 						+ "  where\n"
 						+ "    nbfz.net_bind=?\n"
@@ -505,7 +505,7 @@ final public class NetBindHandler {
 			for(FirewalldZoneName name : firewalldZones) {
 				if(!existing.contains(name)) {
 					conn.executeUpdate(
-						"insert into net_bind_firewalld_zones (net_bind, firewalld_zone) values (\n"
+						"insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (\n"
 						+ "  ?,\n"
 						+ "  (select pkey from net.\"FirewallZone\" where server=? and \"name\"=?)\n"
 						+ ")",
@@ -581,9 +581,9 @@ final public class NetBindHandler {
 			boolean updated;
 			synchronized(netBindLock) {
 				if(
-					conn.executeBooleanQuery("select (select pkey from net_bind_firewalld_zones where net_bind=? and firewalld_zone=?) is null", pkey, fz)
+					conn.executeBooleanQuery("select (select pkey from net.\"BindFirewallZone\" where net_bind=? and firewalld_zone=?) is null", pkey, fz)
 				) {
-					conn.executeUpdate("insert into net_bind_firewalld_zones (net_bind, firewalld_zone) values (?,?)", pkey, fz);
+					conn.executeUpdate("insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (?,?)", pkey, fz);
 					updated = true;
 				} else {
 					updated = false;
@@ -610,7 +610,7 @@ final public class NetBindHandler {
 			// Remove the public zone if present
 			if(
 				conn.executeUpdate(
-					"delete from net_bind_firewalld_zones where net_bind=? and firewalld_zone=(select pkey from net.\"FirewallZone\" where server=? and \"name\"=?)",
+					"delete from net.\"BindFirewallZone\" where net_bind=? and firewalld_zone=(select pkey from net.\"FirewallZone\" where server=? and \"name\"=?)",
 					pkey,
 					server,
 					FirewalldZone.PUBLIC

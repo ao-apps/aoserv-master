@@ -5757,7 +5757,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new NetBindFirewalldZone(),
-						"select * from net_bind_firewalld_zones"
+						"select * from net.\"BindFirewallZone\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5769,7 +5769,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  net.\"Bind\" nb,\n"
-						+ "  net_bind_firewalld_zones nbfz\n"
+						+ "  net.\"BindFirewallZone\" nbfz\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=nb.server\n"
@@ -5786,7 +5786,7 @@ final public class TableHandler {
 					+ "  nbfz.*\n"
 					+ "from\n"
 					+ "  net.\"Bind\" nb\n"
-					+ "  inner join net_bind_firewalld_zones nbfz on nb.pkey=nbfz.net_bind\n"
+					+ "  inner join net.\"BindFirewallZone\" nbfz on nb.pkey=nbfz.net_bind\n"
 					+ "where\n"
 					+ "  nb.pkey in (\n"
 					+ "    select\n"
@@ -5876,7 +5876,7 @@ final public class TableHandler {
 						+ "    select\n"
 						+ "      nbfz.pkey\n"
 						+ "    from\n"
-						+ "      net_bind_firewalld_zones nbfz\n"
+						+ "      net.\"BindFirewallZone\" nbfz\n"
 						+ "      inner join net.\"FirewallZone\" fz on nbfz.firewalld_zone=fz.pkey\n"
 						+ "    where\n"
 						+ "      nb.pkey=nbfz.net_bind\n"
@@ -5905,7 +5905,7 @@ final public class TableHandler {
 						+ "    select\n"
 						+ "      nbfz.pkey\n"
 						+ "    from\n"
-						+ "      net_bind_firewalld_zones nbfz\n"
+						+ "      net.\"BindFirewallZone\" nbfz\n"
 						+ "      inner join net.\"FirewallZone\" fz on nbfz.firewalld_zone=fz.pkey\n"
 						+ "    where\n"
 						+ "      nb.pkey=nbfz.net_bind\n"
@@ -5957,7 +5957,7 @@ final public class TableHandler {
 					+ "    select\n"
 					+ "      nbfz.pkey\n"
 					+ "    from\n"
-					+ "      net_bind_firewalld_zones nbfz\n"
+					+ "      net.\"BindFirewallZone\" nbfz\n"
 					+ "      inner join net.\"FirewallZone\" fz on nbfz.firewalld_zone=fz.pkey\n"
 					+ "    where\n"
 					+ "      nb.pkey=nbfz.net_bind\n"

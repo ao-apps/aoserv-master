@@ -2283,7 +2283,7 @@ final public class HttpdHandler {
 			);
 			// Default to open in public firewalld zone
 			conn.executeUpdate(
-				"insert into net_bind_firewalld_zones (net_bind, firewalld_zone) values (\n"
+				"insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (\n"
 				+ "  ?,\n"
 				+ "  (select pkey from net.\"FirewallZone\" where server=? and \"name\"=?)\n"
 				+ ")",
