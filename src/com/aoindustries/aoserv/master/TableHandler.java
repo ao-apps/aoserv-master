@@ -6952,7 +6952,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new Protocol(),
-					"select * from protocols"
+					"select * from net.\"AppProtocol\""
 				);
 				break;
 			case RACKS :

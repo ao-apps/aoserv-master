@@ -50,20 +50,20 @@ final public class NetBindHandler {
 		Set<FirewalldZoneName> firewalldZones
 	) throws IOException, SQLException {
 		if(
-			conn.executeBooleanQuery("select (select protocol from protocols where protocol=?) is null", appProtocol)
-		) throw new SQLException("Unable to find in table protocols: "+appProtocol);
+			conn.executeBooleanQuery("select (select protocol from net.\"AppProtocol\" where protocol=?) is null", appProtocol)
+		) throw new SQLException("Unable to find in table net.AppProtocol: "+appProtocol);
 
 		MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
 		if(mu==null) {
 			// Must be a user service
 			if(
-				!conn.executeBooleanQuery("select is_user_service from protocols where protocol=?", appProtocol)
+				!conn.executeBooleanQuery("select is_user_service from net.\"AppProtocol\" where protocol=?", appProtocol)
 			) throw new SQLException("Only master users may add non-user net_binds.");
 
 			// Must match the default port
 			Port defaultPort = conn.executeObjectQuery(
 				ObjectFactories.portFactory,
-				"select port, net_protocol from protocols where protocol=?",
+				"select port, net_protocol from net.\"AppProtocol\" where protocol=?",
 				appProtocol
 			);
 			if(port != defaultPort) throw new SQLException("Only master users may override the port for a service.");
