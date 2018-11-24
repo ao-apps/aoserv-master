@@ -8668,7 +8668,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new TimeZone(),
-					"select * from time_zones"
+					"select * from linux.\"TimeZone\""
 				);
 				break;
 			case TRANSACTION_TYPES :
