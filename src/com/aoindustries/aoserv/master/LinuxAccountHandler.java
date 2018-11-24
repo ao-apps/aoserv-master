@@ -203,7 +203,7 @@ final public class LinuxAccountHandler {
 		}
 
 		conn.executeUpdate(
-			"insert into linux_accounts values(?,?,?,?,?,?,?,now(),null)",
+			"insert into linux.\"LinuxUser\" values(?,?,?,?,?,?,?,now(),null)",
 			username,
 			name,
 			office_location,
@@ -1033,7 +1033,7 @@ final public class LinuxAccountHandler {
 		}
 
 		conn.executeUpdate(
-			"update linux_accounts set disable_log=? where username=?",
+			"update linux.\"LinuxUser\" set disable_log=? where username=?",
 			disableLog,
 			username
 		);
@@ -1124,7 +1124,7 @@ final public class LinuxAccountHandler {
 		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable LinuxAccount '"+username+"', Username not enabled: "+username);
 
 		conn.executeUpdate(
-			"update linux_accounts set disable_log=null where username=?",
+			"update linux.\"LinuxUser\" set disable_log=null where username=?",
 			username
 		);
 
@@ -1205,7 +1205,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static int getDisableLogForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from linux_accounts where username=?", username);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from linux.\"LinuxUser\" where username=?", username);
 	}
 
 	public static int getDisableLogForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -1231,7 +1231,7 @@ final public class LinuxAccountHandler {
 			+ "    select\n"
 			+ "      username\n"
 			+ "    from\n"
-			+ "      linux_accounts\n"
+			+ "      linux.\"LinuxUser\"\n"
 			+ "    where\n"
 			+ "      username=?\n"
 			+ "    limit 1\n"
@@ -1255,7 +1255,7 @@ final public class LinuxAccountHandler {
 			"select\n"
 			+ "  lat.is_email\n"
 			+ "from\n"
-			+ "  linux_accounts la,\n"
+			+ "  linux.\"LinuxUser\" la,\n"
 			+ "  linux.\"LinuxUserType\" lat\n"
 			+ "where\n"
 			+ "  la.username=?\n"
@@ -1374,7 +1374,7 @@ final public class LinuxAccountHandler {
 		// Delete the group relations for this account
 		boolean groupAccountModified = conn.executeUpdate("delete from linux_group_accounts where username=?", username) > 0;
 		// Delete from the database
-		conn.executeUpdate("delete from linux_accounts where username=?", username);
+		conn.executeUpdate("delete from linux.\"LinuxUser\" where username=?", username);
 
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
@@ -1819,7 +1819,7 @@ final public class LinuxAccountHandler {
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
-		conn.executeUpdate("update linux_accounts set home_phone=? where username=?", phone, username);
+		conn.executeUpdate("update linux.\"LinuxUser\" set home_phone=? where username=?", phone, username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
@@ -1839,7 +1839,7 @@ final public class LinuxAccountHandler {
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
-		conn.executeUpdate("update linux_accounts set name=? where username=?", name, username);
+		conn.executeUpdate("update linux.\"LinuxUser\" set name=? where username=?", name, username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
@@ -1859,7 +1859,7 @@ final public class LinuxAccountHandler {
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
-		conn.executeUpdate("update linux_accounts set office_location=? where username=?", location, username);
+		conn.executeUpdate("update linux.\"LinuxUser\" set office_location=? where username=?", location, username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
@@ -1879,7 +1879,7 @@ final public class LinuxAccountHandler {
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
-		conn.executeUpdate("update linux_accounts set office_phone=? where username=?", phone, username);
+		conn.executeUpdate("update linux.\"LinuxUser\" set office_phone=? where username=?", phone, username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
@@ -1901,7 +1901,7 @@ final public class LinuxAccountHandler {
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
-		conn.executeUpdate("update linux_accounts set shell=? where username=?", shell, username);
+		conn.executeUpdate("update linux.\"LinuxUser\" set shell=? where username=?", shell, username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
@@ -1920,7 +1920,7 @@ final public class LinuxAccountHandler {
 
 		UserId username=getUsernameForLinuxServerAccount(conn, pkey);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set password for LinuxServerAccount named '"+LinuxAccount.MAIL+"': "+pkey);
-		String type=conn.executeStringQuery("select type from linux_accounts where username=?", username);
+		String type=conn.executeStringQuery("select type from linux.\"LinuxUser\" where username=?", username);
 
 		// Make sure passwords can be set before doing a strength check
 		if(!LinuxAccountType.canSetPassword(type)) throw new SQLException("Passwords may not be set for LinuxAccountType="+type);
@@ -2332,7 +2332,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static String getTypeForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
-		return conn.executeStringQuery("select type from linux_accounts where username=?", username);
+		return conn.executeStringQuery("select type from linux.\"LinuxUser\" where username=?", username);
 	}
 
 	public static String getTypeForLinuxServerAccount(DatabaseConnection conn, int account) throws IOException, SQLException {
@@ -2341,7 +2341,7 @@ final public class LinuxAccountHandler {
 			+ "  la.type\n"
 			+ "from\n"
 			+ "  linux_server_accounts lsa,\n"
-			+ "  linux_accounts la\n"
+			+ "  linux.\"LinuxUser\" la\n"
 			+ "where\n"
 			+ "  lsa.pkey=?\n"
 			+ "  and lsa.username=la.username",
@@ -2462,7 +2462,7 @@ final public class LinuxAccountHandler {
 
 		UserId username=getUsernameForLinuxServerAccount(conn, pkey);
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to compare password for LinuxServerAccount named '"+LinuxAccount.MAIL+"': "+pkey);
-		String type=conn.executeStringQuery("select type from linux_accounts where username=?", username);
+		String type=conn.executeStringQuery("select type from linux.\"LinuxUser\" where username=?", username);
 
 		// Make sure passwords can be set before doing a comparison
 		if(!LinuxAccountType.canSetPassword(type)) throw new SQLException("Passwords may not be compared for LinuxAccountType="+type);

@@ -622,14 +622,14 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // linux_accounts
+                // linux.LinuxUser
                 {
                     List<UserId> las=conn.executeObjectListQuery(
 						ObjectFactories.userIdFactory,
                         "select\n"
                         + "  la.username\n"
                         + "from\n"
-                        + "  linux_accounts la,\n"
+                        + "  linux.\"LinuxUser\" la,\n"
                         + "  account.\"Username\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
@@ -817,7 +817,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select hst.pkey from web.\"SharedTomcat\" hst where hst.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select hsb.pkey from web.\"VirtualHost\" hsb where hsb.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select hs.pkey from web.\"Site\" hs where hs.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select la.username from linux_accounts la where la.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select la.username from linux.\"LinuxUser\" la where la.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select lsa.pkey from linux_server_accounts lsa where lsa.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select msu.pkey from mysql.\"MysqlServerUser\" msu where msu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select mu.username from mysql.\"MysqlUser\" mu where mu.disable_log=dl.pkey limit 1) is null\n"
