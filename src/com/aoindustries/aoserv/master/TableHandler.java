@@ -4074,7 +4074,7 @@ final public class TableHandler {
 						+ "    from\n"
 						+ "      master_servers ms\n"
 						+ "      left join linux.\"LinuxServer\" ff on ms.server=ff.failover_server,\n"
-						+ "      net_devices nd\n"
+						+ "      net.\"Device\" nd\n"
 						+ "      right outer join net.\"IpAddress\" ia2 on nd.pkey=ia2.\"netDevice\"\n"
 						+ "    where\n"
 						+ "      ia2.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"' or (\n"
@@ -4174,7 +4174,7 @@ final public class TableHandler {
 						+ "      account.\"Username\" un5,\n"
 						+ "      billing.\"Package\" pk5,\n"
 						+ "      business_servers bs5,\n"
-						+ "      net_devices nd5,\n"
+						+ "      net.\"Device\" nd5,\n"
 						+ "      net.\"IpAddress\" ia5\n"
 						+ "    where\n"
 						+ "      un5.username=?\n"
@@ -4193,7 +4193,7 @@ final public class TableHandler {
 						+ "      backup.\"FileReplication\" ffr6,\n"
 						+ "      backup.\"BackupPartition\" bp6,\n"
 						+ "      linux.\"LinuxServer\" ao6,\n"
-						+ "      net_devices nd6,\n"
+						+ "      net.\"Device\" nd6,\n"
 						+ "      net.\"IpAddress\" ia6\n"
 						+ "    where\n"
 						+ "      un6.username=?\n"
@@ -4241,7 +4241,7 @@ final public class TableHandler {
 							+ "  master_servers ms\n"
 							+ "  inner join servers se on ms.server=se.pkey\n"                            // Find all servers can access
 							+ "  inner join servers se2 on se.farm=se2.farm\n"                            // Find all servers in the same farm
-							+ "  inner join net_devices nd on se2.pkey=nd.server\n"                       // Find all net_devices in the same farm
+							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"                    // Find all net.Device in the same farm
 							+ "  inner join ip_reputation_limiters irl on nd.pkey=irl.net_device\n"       // Find all limiters in the same farm
 							+ "  inner join ip_reputation_limiter_limits irll on irl.pkey=irll.limiter\n" // Find all limiters limits in the same farm
 							+ "where\n"
@@ -4267,7 +4267,7 @@ final public class TableHandler {
 						+ "             account.\"Username\"         un\n"
 						+ "  inner join billing.\"Package\"          pk   on  un.package    =   pk.name\n"
 						+ "  inner join business_servers             bs   on  pk.accounting =   bs.accounting\n"
-						+ "  inner join net_devices                  nd   on  bs.server     =   nd.server\n"
+						+ "  inner join net.\"Device\"               nd   on  bs.server     =   nd.server\n"
 						+ "  inner join ip_reputation_limiters       irl  on  nd.pkey       =  irl.net_device\n"
 						+ "  inner join ip_reputation_limiter_limits irll on irl.pkey       = irll.limiter\n"
 						+ "where\n"
@@ -4305,7 +4305,7 @@ final public class TableHandler {
 							+ "  master_servers ms\n"
 							+ "  inner join servers se on ms.server=se.pkey\n"                          // Find all servers can access
 							+ "  inner join servers se2 on se.farm=se2.farm\n"                          // Find all servers in the same farm
-							+ "  inner join net_devices nd on se2.pkey=nd.server\n"                     // Find all net_devices in the same farm
+							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"                  // Find all net.Device in the same farm
 							+ "  inner join ip_reputation_limiters irl on nd.pkey=irl.net_device\n"     // Find all limiters in the same farm
 							+ "  inner join ip_reputation_limiter_sets irls on irl.pkey=irls.limiter\n" // Find all limiters sets in the same farm
 							+ "where\n"
@@ -4331,7 +4331,7 @@ final public class TableHandler {
 						+ "             account.\"Username\"       un\n"
 						+ "  inner join billing.\"Package\"        pk   on  un.package    =   pk.name\n"
 						+ "  inner join business_servers           bs   on  pk.accounting =   bs.accounting\n"
-						+ "  inner join net_devices                nd   on  bs.server     =   nd.server\n"
+						+ "  inner join net.\"Device\"             nd   on  bs.server     =   nd.server\n"
 						+ "  inner join ip_reputation_limiters     irl  on  nd.pkey       =  irl.net_device\n"
 						+ "  inner join ip_reputation_limiter_sets irls on irl.pkey       = irls.limiter\n"
 						+ "where\n"
@@ -4369,7 +4369,7 @@ final public class TableHandler {
 							+ "  master_servers ms\n"
 							+ "  inner join servers se on ms.server=se.pkey\n"                      // Find all servers can access
 							+ "  inner join servers se2 on se.farm=se2.farm\n"                      // Find all servers in the same farm
-							+ "  inner join net_devices nd on se2.pkey=nd.server\n"                 // Find all net_devices in the same farm
+							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"              // Find all net.Device in the same farm
 							+ "  inner join ip_reputation_limiters irl on nd.pkey=irl.net_device\n" // Find all limiters in the same farm
 							+ "where\n"
 							+ "  ms.username=?",
@@ -4394,7 +4394,7 @@ final public class TableHandler {
 						+ "             account.\"Username\"   un\n"
 						+ "  inner join billing.\"Package\"    pk  on un.package    =  pk.name\n"
 						+ "  inner join business_servers       bs  on pk.accounting =  bs.accounting\n"
-						+ "  inner join net_devices            nd  on bs.server     =  nd.server\n"
+						+ "  inner join net.\"Device\"         nd  on bs.server     =  nd.server\n"
 						+ "  inner join ip_reputation_limiters irl on nd.pkey       = irl.net_device\n"
 						+ "where\n"
 						+ "  un.username=?",
@@ -4431,7 +4431,7 @@ final public class TableHandler {
 							+ "  master_servers ms\n"
 							+ "  inner join servers                    se   on ms.server     = se.pkey\n"        // Find all servers can access
 							+ "  inner join servers                    se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
-							+ "  inner join net_devices                nd   on se2.pkey      = nd.server\n"      // Find all net_devices in the same farm
+							+ "  inner join net.\"Device\"             nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
 							+ "  inner join ip_reputation_limiters     irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
 							+ "  inner join ip_reputation_limiter_sets irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
 							+ "  inner join ip_reputation_sets         irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
@@ -4502,7 +4502,7 @@ final public class TableHandler {
 							+ "  master_servers ms\n"
 							+ "  inner join servers                    se   on ms.server     = se.pkey\n"        // Find all servers can access
 							+ "  inner join servers                    se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
-							+ "  inner join net_devices                nd   on se2.pkey      = nd.server\n"      // Find all net_devices in the same farm
+							+ "  inner join net.\"Device\"             nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
 							+ "  inner join ip_reputation_limiters     irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
 							+ "  inner join ip_reputation_limiter_sets irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
 							+ "  inner join ip_reputation_sets         irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
@@ -4573,7 +4573,7 @@ final public class TableHandler {
 							+ "  master_servers ms\n"
 							+ "  inner join servers                    se   on ms.server     = se.pkey\n"        // Find all servers can access
 							+ "  inner join servers                    se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
-							+ "  inner join net_devices                nd   on se2.pkey      = nd.server\n"      // Find all net_devices in the same farm
+							+ "  inner join net.\"Device\"             nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
 							+ "  inner join ip_reputation_limiters     irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
 							+ "  inner join ip_reputation_limiter_sets irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
 							+ "  inner join ip_reputation_sets         irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
@@ -6098,7 +6098,7 @@ final public class TableHandler {
 						+ "  monitoring_bit_rate_critical,\n"
 						+ "  monitoring_enabled\n"
 						+ "from\n"
-						+ "  net_devices"
+						+ "  net.\"Device\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -6124,7 +6124,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms\n"
 						+ "  left join linux.\"LinuxServer\" ff on ms.server=ff.failover_server,\n"
-						+ "  net_devices nd\n"
+						+ "  net.\"Device\" nd\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and (\n"
@@ -6176,7 +6176,7 @@ final public class TableHandler {
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey\n"
 					//+ "  left join linux.\"LinuxServer\" bpao on bp.ao_server=bpao.server,\n"
-					+ "  net_devices nd\n"
+					+ "  net.\"Device\" nd\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"

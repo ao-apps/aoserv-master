@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 /**
- * The <code>NetDeviceHandler</code> handles all the accesses to the <code>net_devices</code> table.
+ * The <code>NetDeviceHandler</code> handles all the accesses to the <code>net.Device</code> table.
  *
  * @author  AO Industries, Inc.
  */
@@ -36,6 +36,6 @@ final public class NetDeviceHandler {
 	}
 
 	public static int getServerForNetDevice(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select server from net_devices where pkey=?", pkey);
+		return conn.executeIntQuery("select server from net.\"Device\" where pkey=?", pkey);
 	}
 }

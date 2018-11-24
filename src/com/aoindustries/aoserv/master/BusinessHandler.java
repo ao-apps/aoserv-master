@@ -1046,7 +1046,7 @@ final public class BusinessHandler {
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      net.\"IpAddress\" ia,\n"
-				+ "      net_devices nd\n"
+				+ "      net.\"Device\" nd\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.pkey=ia.package\n"

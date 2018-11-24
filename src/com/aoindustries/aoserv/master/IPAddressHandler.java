@@ -94,7 +94,7 @@ final public class IPAddressHandler {
 
 		// Update net.IpAddress
 		int netDevice=conn.executeIntQuery(
-			"select pkey from net_devices where server=? and \"deviceID\"=?",
+			"select pkey from net.\"Device\" where server=? and \"deviceID\"=?",
 			toServer,
 			NetDeviceID.ETH0
 		);
@@ -300,7 +300,7 @@ final public class IPAddressHandler {
 			+ "        ia.id\n"
 			+ "      from\n"
 			+ "        net.\"IpAddress\" ia,\n"
-			+ "        net_devices nd\n"
+			+ "        net.\"Device\" nd\n"
 			+ "        left join net.\"Bind\" nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?\n"
 			+ "        left join web.\"HttpdBind\" hb on nb.pkey=hb.net_bind\n"
 			+ "        left join web.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
@@ -365,7 +365,7 @@ final public class IPAddressHandler {
 	}
 
 	public static int getServerForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net_devices nd where ia.id=? and ia.\"netDevice\"=nd.pkey", ipAddress);
+		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net.\"Device\" nd where ia.id=? and ia.\"netDevice\"=nd.pkey", ipAddress);
 	}
 
 	public static InetAddress getInetAddressForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
@@ -385,7 +385,7 @@ final public class IPAddressHandler {
 			+ "  ia.id\n"
 			+ "from\n"
 			+ "  net.\"IpAddress\" ia,\n"
-			+ "  net_devices nd\n"
+			+ "  net.\"Device\" nd\n"
 			+ "where\n"
 			+ "  ia.\"inetAddress\"=?\n"
 			+ "  and ia.\"netDevice\"=nd.pkey\n"

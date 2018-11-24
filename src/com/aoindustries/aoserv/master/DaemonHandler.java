@@ -91,7 +91,7 @@ final public class DaemonHandler {
 				+ "  linux.\"LinuxServer\" ao,\n"
 				+ "  net.\"Bind\" nb,\n"
 				+ "  linux.\"LinuxServer\" ao2,\n"
-				+ "  net_devices nd,\n"
+				+ "  net.\"Device\" nd,\n"
 				+ "  net.\"IpAddress\" ia\n"
 				+ "where\n"
 				+ "  ao.server=?\n"
