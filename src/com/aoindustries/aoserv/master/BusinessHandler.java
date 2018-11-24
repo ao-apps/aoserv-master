@@ -1084,7 +1084,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one LinuxServerAccount on Server="+server);
 
-		// linux.LinuxGroupAoServer
+		// linux.LinuxGroupServer
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1094,7 +1094,7 @@ final public class BusinessHandler {
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      linux.\"LinuxGroup\" lg,\n"
-				+ "      linux.\"LinuxGroupAoServer\" lsg\n"
+				+ "      linux.\"LinuxGroupServer\" lsg\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=lg.package\n"
