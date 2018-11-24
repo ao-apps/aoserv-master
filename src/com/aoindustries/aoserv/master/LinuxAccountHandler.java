@@ -1940,12 +1940,12 @@ final public class LinuxAccountHandler {
 			throw err;
 		}
 
-		// Update the server.AoServer table for emailmon and ftpmon
+		// Update the linux.LinuxServer table for emailmon and ftpmon
 		/*if(username.equals(LinuxAccount.EMAILMON)) {
-			conn.executeUpdate("update server."AoServer" set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
+			conn.executeUpdate("update linux."LinuxServer" set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
 			invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
 		} else if(username.equals(LinuxAccount.FTPMON)) {
-			conn.executeUpdate("update server."AoServer" set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
+			conn.executeUpdate("update linux."LinuxServer" set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
 			invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
 		}*/
 	}

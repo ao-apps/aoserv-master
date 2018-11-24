@@ -65,7 +65,7 @@ final public class DaemonHandler {
 	public static HostAddress getDaemonConnectAddress(DatabaseAccess database, int aoServer) throws IOException, SQLException {
 		HostAddress address = database.executeObjectQuery(
 			ObjectFactories.hostAddressFactory,
-			"select daemon_connect_address from server.\"AoServer\" where server=?",
+			"select daemon_connect_address from linux.\"LinuxServer\" where server=?",
 			aoServer
 		);
 		if(address!=null) return address;
@@ -73,7 +73,7 @@ final public class DaemonHandler {
 			"select\n"
 			+ "  host(ia.\"inetAddress\")\n"
 			+ "from\n"
-			+ "  server.\"AoServer\" ao,\n"
+			+ "  linux.\"LinuxServer\" ao,\n"
 			+ "  net_binds nb,\n"
 			+ "  \"IPAddress\" ia\n"
 			+ "where\n"
@@ -88,9 +88,9 @@ final public class DaemonHandler {
 				"select\n"
 				+ "  host(ia.\"inetAddress\")\n"
 				+ "from\n"
-				+ "  server.\"AoServer\" ao,\n"
+				+ "  linux.\"LinuxServer\" ao,\n"
 				+ "  net_binds nb,\n"
-				+ "  server.\"AoServer\" ao2,\n"
+				+ "  linux.\"LinuxServer\" ao2,\n"
 				+ "  net_devices nd,\n"
 				+ "  \"IPAddress\" ia\n"
 				+ "where\n"
@@ -116,7 +116,7 @@ final public class DaemonHandler {
 			+ "  nb.port,\n"
 			+ "  nb.net_protocol\n"
 			+ "from\n"
-			+ "  server.\"AoServer\" ao,\n"
+			+ "  linux.\"LinuxServer\" ao,\n"
 			+ "  net_binds nb\n"
 			+ "where\n"
 			+ "  ao.server=?\n"
@@ -130,7 +130,7 @@ final public class DaemonHandler {
 			"select\n"
 			+ "  nb.app_protocol\n"
 			+ "from\n"
-			+ "  server.\"AoServer\" ao,\n"
+			+ "  linux.\"LinuxServer\" ao,\n"
 			+ "  net_binds nb\n"
 			+ "where\n"
 			+ "  ao.server=?\n"
@@ -144,7 +144,7 @@ final public class DaemonHandler {
 			"select\n"
 			+ "  pool_size\n"
 			+ "from\n"
-			+ "  server.\"AoServer\"\n"
+			+ "  linux.\"LinuxServer\"\n"
 			+ "where\n"
 			+ "  server=?",
 			aoServer
