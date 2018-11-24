@@ -278,7 +278,7 @@ final public class EmailHandler {
 		// The server for both account and group must be the same
 		int accountAOServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, linuxServerAccount);
 		int groupAOServer=LinuxAccountHandler.getAOServerForLinuxServerGroup(conn, linuxServerGroup);
-		if(accountAOServer!=groupAOServer) throw new SQLException("(linux_server_accounts.pkey="+linuxServerAccount+").ao_server!=(linux_server_groups.pkey="+linuxServerGroup+").ao_server");
+		if(accountAOServer!=groupAOServer) throw new SQLException("(linux_server_accounts.pkey="+linuxServerAccount+").ao_server!=(linux.LinuxGroupAoServer.pkey="+linuxServerGroup+").ao_server");
 		// Must not already have this path on this server
 		if(
 			conn.executeBooleanQuery(
@@ -288,7 +288,7 @@ final public class EmailHandler {
 				+ "      el.pkey\n"
 				+ "    from\n"
 				+ "      email.\"List\" el,\n"
-				+ "      linux_server_groups lsg\n"
+				+ "      linux.\"LinuxGroupAoServer\" lsg\n"
 				+ "    where\n"
 				+ "      el.path=?\n"
 				+ "      and el.linux_server_group=lsg.pkey\n"
@@ -769,7 +769,7 @@ final public class EmailHandler {
 		int lsaAOServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa);
 		if(domainAOServer!=lsaAOServer) throw new SQLException("((email.Domain.pkey="+domain+").ao_server='"+domainAOServer+"')!=((linux_server_accounts.pkey="+lsa+").ao_server='"+lsaAOServer+"')");
 		int lsgAOServer=LinuxAccountHandler.getAOServerForLinuxServerGroup(conn, lsg);
-		if(domainAOServer!=lsgAOServer) throw new SQLException("((email.Domain.pkey="+domain+").ao_server='"+domainAOServer+"')!=((linux_server_groups.pkey="+lsg+").ao_server='"+lsgAOServer+"')");
+		if(domainAOServer!=lsgAOServer) throw new SQLException("((email.Domain.pkey="+domain+").ao_server='"+domainAOServer+"')!=((linux.LinuxGroupAoServer.pkey="+lsg+").ao_server='"+lsgAOServer+"')");
 
 		// Disabled checks
 		AccountingCode packageName=getPackageForEmailDomain(conn, domain);
@@ -1029,7 +1029,7 @@ final public class EmailHandler {
 			+ "  el.pkey\n"
 			+ "from\n"
 			+ "  linux.\"LinuxGroup\" lg,\n"
-			+ "  linux_server_groups lsg,\n"
+			+ "  linux.\"LinuxGroupAoServer\" lsg,\n"
 			+ "  email.\"List\" el\n"
 			+ "where\n"
 			+ "  lg.package=?\n"
@@ -1104,7 +1104,7 @@ final public class EmailHandler {
 			+ "  el.pkey\n"
 			+ "from\n"
 			+ "  email.\"List\" el,\n"
-			+ "  linux_server_groups lsg\n"
+			+ "  linux.\"LinuxGroupAoServer\" lsg\n"
 			+ "where\n"
 			+ "  el.path=path\n"
 			+ "  and el.linux_server_group=lsg.pkey\n"
@@ -1821,7 +1821,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email.\"List\" el, linux_server_groups lsg, linux.\"LinuxGroup\" lg, billing.\"Package\" pk where el.linux_server_group=lsg.pkey and lsg.name=lg.name and lg.package=pk.name and el.pkey=?",
+			"select pk.accounting from email.\"List\" el, linux.\"LinuxGroupAoServer\" lsg, linux.\"LinuxGroup\" lg, billing.\"Package\" pk where el.linux_server_group=lsg.pkey and lsg.name=lg.name and lg.package=pk.name and el.pkey=?",
 			pkey
 		);
 	}
@@ -1895,7 +1895,7 @@ final public class EmailHandler {
 			+ "  lg.package\n"
 			+ "from\n"
 			+ "  email.\"List\" el,\n"
-			+ "  linux_server_groups lsg,\n"
+			+ "  linux.\"LinuxGroupAoServer\" lsg,\n"
 			+ "  linux.\"LinuxGroup\" lg\n"
 			+ "where\n"
 			+ "  el.pkey=?\n"
@@ -1939,7 +1939,7 @@ final public class EmailHandler {
 			+ "  lsg.ao_server\n"
 			+ "from\n"
 			+ "  email.\"List\" el,\n"
-			+ "  linux_server_groups lsg\n"
+			+ "  linux.\"LinuxGroupAoServer\" lsg\n"
 			+ "where\n"
 			+ "  el.pkey=?\n"
 			+ "  and el.linux_server_group=lsg.pkey",

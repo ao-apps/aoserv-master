@@ -2231,7 +2231,7 @@ final public class TableHandler {
 						+ "  el.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux_server_groups lsg,\n"
+						+ "  linux.\"LinuxGroupAoServer\" lsg,\n"
 						+ "  email.\"List\" el\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -2253,7 +2253,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  linux.\"LinuxGroup\" lg,\n"
-					+ "  linux_server_groups lsg,\n"
+					+ "  linux.\"LinuxGroupAoServer\" lsg,\n"
 					+ "  email.\"List\" el\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3097,7 +3097,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  linux.\"LinuxGroup\" lg,\n"
-					+ "  linux_server_groups lsg,\n"
+					+ "  linux.\"LinuxGroupAoServer\" lsg,\n"
 					+ "  web.\"SharedTomcat\" hst\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -4805,7 +4805,7 @@ final public class TableHandler {
 						+ "      lsg.name\n"
 						+ "      from\n"
 						+ "        master_servers ms1,\n"
-						+ "        linux_server_groups lsg\n"
+						+ "        linux.\"LinuxGroupAoServer\" lsg\n"
 						+ "      where\n"
 						+ "        ms1.username=?\n"
 						+ "        and ms1.server=lsg.ao_server\n"
@@ -5038,7 +5038,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new LinuxServerGroup(),
-						"select * from linux_server_groups"
+						"select * from linux.\"LinuxGroupAoServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5049,7 +5049,7 @@ final public class TableHandler {
 						+ "  lsg.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux_server_groups lsg\n"
+						+ "  linux.\"LinuxGroupAoServer\" lsg\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=lsg.ao_server",
@@ -5070,7 +5070,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  linux.\"LinuxGroup\" lg,\n"
 					+ "  business_servers bs,\n"
-					+ "  linux_server_groups lsg\n"
+					+ "  linux.\"LinuxGroupAoServer\" lsg\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"

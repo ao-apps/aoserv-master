@@ -513,7 +513,7 @@ final public class LinuxAccountHandler {
 		//String farm=ServerHandler.getFarmForServer(conn, aoServer);
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  linux_server_groups\n"
+			+ "  linux.\"LinuxGroupAoServer\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -551,7 +551,7 @@ final public class LinuxAccountHandler {
 			true,
 			false,
 			ObjectFactories.groupIdFactory,
-			"select name from linux_server_groups where ao_server=? and gid=?",
+			"select name from linux.\"LinuxGroupAoServer\" where ao_server=? and gid=?",
 			aoServer,
 			gid
 		);
@@ -684,7 +684,7 @@ final public class LinuxAccountHandler {
 		) {
 			int pkey = conn.executeIntUpdate(
 				"INSERT INTO\n"
-				+ "  linux_server_groups\n"
+				+ "  linux.\"LinuxGroupAoServer\"\n"
 				+ "VALUES (\n"
 				+ "  default,\n"
 				+ "  ?,\n"
@@ -1280,7 +1280,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static int getLinuxServerGroup(DatabaseConnection conn, GroupId group, int aoServer) throws IOException, SQLException {
-		int pkey=conn.executeIntQuery("select coalesce((select pkey from linux_server_groups where name=? and ao_server=?), -1)", group, aoServer);
+		int pkey=conn.executeIntQuery("select coalesce((select pkey from linux.\"LinuxGroupAoServer\" where name=? and ao_server=?), -1)", group, aoServer);
 		if(pkey==-1) throw new SQLException("Unable to find LinuxServerGroup "+group+" on "+aoServer);
 		return pkey;
 	}
@@ -1413,7 +1413,7 @@ final public class LinuxAccountHandler {
 		IntList aoServers=getAOServersForLinuxGroup(conn, name);
 		for(int c=0;c<aoServers.size();c++) {
 			int aoServer=aoServers.getInt(c);
-			conn.executeUpdate("delete from linux_server_groups where name=? and ao_server=?", name, aoServer);
+			conn.executeUpdate("delete from linux.\"LinuxGroupAoServer\" where name=? and ao_server=?", name, aoServer);
 		}
 		// Delete the group relations for this group
 		boolean groupAccountsModified=conn.executeIntQuery("select count(*) from linux_group_accounts where \"group\"=? limit 1", name)>0;
@@ -1457,7 +1457,7 @@ final public class LinuxAccountHandler {
 		if (useCount==0) {
 			useCount = conn.executeIntQuery(
 				"select count(*) from linux_group_accounts lga, "+
-						"linux_server_groups lsg, "+
+						"linux.\"LinuxGroupAoServer\" lsg, "+
 						"web.\"SharedTomcat\" hst, "+
 						"web.\"SharedTomcatSite\" htss, "+
 						"web.\"Site\" hs "+
@@ -1520,7 +1520,7 @@ final public class LinuxAccountHandler {
 			+ "          select\n"
 			+ "            htss.tomcat_site\n"
 			+ "          from\n"
-			+ "            linux_server_groups lsg,\n"
+			+ "            linux.\"LinuxGroupAoServer\" lsg,\n"
 			+ "            web.\"SharedTomcat\" hst,\n"
 			+ "            web.\"SharedTomcatSite\" htss,\n"
 			+ "            web.\"Site\" hs\n"
@@ -1654,7 +1654,7 @@ final public class LinuxAccountHandler {
 			"select\n"
 			+ "  count(*)\n"
 			+ "from\n"
-			+ "  linux_server_groups lsg\n"
+			+ "  linux.\"LinuxGroupAoServer\" lsg\n"
 			+ "  inner join linux_group_accounts lga on lsg.name=lga.\"group\"\n"
 			+ "  inner join linux_server_accounts lsa on lga.username=lsa.username\n"
 			+ "  inner join servers se on lsg.ao_server=se.pkey\n"
@@ -1671,7 +1671,7 @@ final public class LinuxAccountHandler {
 
 		if(primaryCount>0) throw new SQLException("linux_server_group.pkey="+group+" is the primary group for "+primaryCount+" Linux server "+(primaryCount==1?"account":"accounts")+" on "+aoServer);
 		// Delete from the database
-		conn.executeUpdate("delete from linux_server_groups where pkey=?", group);
+		conn.executeUpdate("delete from linux.\"LinuxGroupAoServer\" where pkey=?", group);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, accounting, aoServer, true);
@@ -1728,7 +1728,7 @@ final public class LinuxAccountHandler {
 				+ "from\n"
 				+ "  linux_server_accounts lsa\n"
 				+ "  inner join linux_group_accounts lga on lsa.username=lga.username\n"
-				+ "  inner join linux_server_groups lsg on lga.\"group\"=lsg.name\n"
+				+ "  inner join linux.\"LinuxGroupAoServer\" lsg on lga.\"group\"=lsg.name\n"
 				+ "  inner join servers se on lsa.ao_server=se.pkey\n"
 				+ "where\n"
 				+ "  lsa.pkey=?\n"
@@ -2276,7 +2276,7 @@ final public class LinuxAccountHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  linux_server_groups lsg,\n"
+			+ "  linux.\"LinuxGroupAoServer\" lsg,\n"
 			+ "  linux.\"LinuxGroup\" lg,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
@@ -2290,7 +2290,7 @@ final public class LinuxAccountHandler {
 	public static GroupId getGroupNameForLinuxServerGroup(DatabaseConnection conn, int lsgPKey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.groupIdFactory,
-			"select name from linux_server_groups where pkey=?",
+			"select name from linux.\"LinuxGroupAoServer\" where pkey=?",
 			lsgPKey
 		);
 	}
@@ -2300,7 +2300,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static int getAOServerForLinuxServerGroup(DatabaseConnection conn, int group) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from linux_server_groups where pkey=?", group);
+		return conn.executeIntQuery("select ao_server from linux.\"LinuxGroupAoServer\" where pkey=?", group);
 	}
 
 	public static IntList getAOServersForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
@@ -2308,7 +2308,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static IntList getAOServersForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
-		return conn.executeIntListQuery("select ao_server from linux_server_groups where name=?", name);
+		return conn.executeIntListQuery("select ao_server from linux.\"LinuxGroupAoServer\" where name=?", name);
 	}
 
 	public static IntList getAOServersForLinuxGroupAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -2317,7 +2317,7 @@ final public class LinuxAccountHandler {
 			+ "  lsg.ao_server\n"
 			+ "from\n"
 			+ "  linux_group_accounts lga\n"
-			+ "  inner join linux_server_groups lsg on lga.\"group\"=lsg.name\n"
+			+ "  inner join linux.\"LinuxGroupAoServer\" lsg on lga.\"group\"=lsg.name\n"
 			+ "  inner join linux_server_accounts lsa on lga.username=lsa.username\n"
 			+ "  inner join servers se on lsg.ao_server=se.pkey\n"
 			+ "where\n"
@@ -2354,7 +2354,7 @@ final public class LinuxAccountHandler {
 			"select\n"
 			+ "  lg.type\n"
 			+ "from\n"
-			+ "  linux_server_groups lsg,\n"
+			+ "  linux.\"LinuxGroupAoServer\" lsg,\n"
 			+ "  linux.\"LinuxGroup\" lg\n"
 			+ "where\n"
 			+ "  lsg.pkey=?\n"
@@ -2388,7 +2388,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static IntList getLinuxServerGroupsForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from linux_server_groups where name=?", name);
+		return conn.executeIntListQuery("select pkey from linux.\"LinuxGroupAoServer\" where name=?", name);
 	}
 
 	public static AccountingCode getPackageForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
@@ -2410,7 +2410,7 @@ final public class LinuxAccountHandler {
 			"select\n"
 			+ "  lg.package\n"
 			+ "from\n"
-			+ "  linux_server_groups lsg,\n"
+			+ "  linux.\"LinuxGroupAoServer\" lsg,\n"
 			+ "  linux.\"LinuxGroup\" lg\n"
 			+ "where\n"
 			+ "  lsg.pkey=?\n"
@@ -2420,7 +2420,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static int getGIDForLinuxServerGroup(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select gid from linux_server_groups where pkey=?", pkey);
+		return conn.executeIntQuery("select gid from linux.\"LinuxGroupAoServer\" where pkey=?", pkey);
 	}
 
 	public static int getUIDForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {

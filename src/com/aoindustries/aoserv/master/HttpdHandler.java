@@ -831,7 +831,7 @@ final public class HttpdHandler {
 
 			// Check for ties between jvm and site in linux_group_accounts
 			String sharedTomcatUsername = conn.executeStringQuery("select lsa.username from web.\"SharedTomcat\" hst, linux_server_accounts lsa where hst.linux_server_account = lsa.pkey and hst.pkey=?", sharedTomcatPkey);
-			String sharedTomcatLinuxGroup = conn.executeStringQuery("select lsg.name from web.\"SharedTomcat\" hst, linux_server_groups lsg where hst.linux_server_group = lsg.pkey and hst.pkey=?", sharedTomcatPkey);
+			String sharedTomcatLinuxGroup = conn.executeStringQuery("select lsg.name from web.\"SharedTomcat\" hst, linux.\"LinuxGroupAoServer\" lsg where hst.linux_server_group = lsg.pkey and hst.pkey=?", sharedTomcatPkey);
 			boolean hasAccess = conn.executeBooleanQuery(
 				"select (\n"
 				+ "  select\n"
@@ -1886,7 +1886,7 @@ final public class HttpdHandler {
 			+ "  hst.pkey\n"
 			+ "from\n"
 			+ "  linux.\"LinuxGroup\" lg,\n"
-			+ "  linux_server_groups lsg,\n"
+			+ "  linux.\"LinuxGroupAoServer\" lsg,\n"
 			+ "  web.\"SharedTomcat\" hst\n"
 			+ "where\n"
 			+ "  lg.package=?\n"
@@ -1931,7 +1931,7 @@ final public class HttpdHandler {
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  web.\"SharedTomcat\" hst,\n"
-			+ "  linux_server_groups lsg,\n"
+			+ "  linux.\"LinuxGroupAoServer\" lsg,\n"
 			+ "  linux.\"LinuxGroup\" lg,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
@@ -2038,7 +2038,7 @@ final public class HttpdHandler {
 			+ "  lg.package\n"
 			+ "from\n"
 			+ "  web.\"SharedTomcat\" hst,\n"
-			+ "  linux_server_groups lsg,\n"
+			+ "  linux.\"LinuxGroupAoServer\" lsg,\n"
 			+ "  linux.\"LinuxGroup\" lg\n"
 			+ "where\n"
 			+ "  hst.pkey=?\n"
