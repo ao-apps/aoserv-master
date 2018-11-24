@@ -251,7 +251,7 @@ final public class LinuxAccountHandler {
 			|| groupName.equals(LinuxGroup.MAILONLY)
 		) throw new SQLException("Not allowed to add LinuxGroup: "+groupName);
 
-		conn.executeUpdate("insert into linux_groups values(?,?,?)", groupName, packageName, type);
+		conn.executeUpdate("insert into linux.\"LinuxGroup\" values(?,?,?)", groupName, packageName, type);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -1276,7 +1276,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static boolean isLinuxGroupNameAvailable(DatabaseConnection conn, GroupId groupname) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select (select name from linux_groups where name=?) is null", groupname);
+		return conn.executeBooleanQuery("select (select name from linux.\"LinuxGroup\" where name=?) is null", groupname);
 	}
 
 	public static int getLinuxServerGroup(DatabaseConnection conn, GroupId group, int aoServer) throws IOException, SQLException {
@@ -1419,7 +1419,7 @@ final public class LinuxAccountHandler {
 		boolean groupAccountsModified=conn.executeIntQuery("select count(*) from linux_group_accounts where \"group\"=? limit 1", name)>0;
 		if(groupAccountsModified) conn.executeUpdate("delete from linux_group_accounts where \"group\"=?", name);
 		// Delete from the database
-		conn.executeUpdate("delete from linux_groups where name=?", name);
+		conn.executeUpdate("delete from linux.\"LinuxGroup\" where name=?", name);
 
 		// Notify all clients of the update
 		if(aoServers.size()>0) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, accounting, aoServers, false);
@@ -2189,7 +2189,7 @@ final public class LinuxAccountHandler {
 			+ "    select\n"
 			+ "      lg.name\n"
 			+ "    from\n"
-			+ "      linux_groups lg,\n"
+			+ "      linux.\"LinuxGroup\" lg,\n"
 			+ "      billing.\"Package\" pk,\n"
 			+ "      business_servers bs\n"
 			+ "    where\n"
@@ -2223,7 +2223,7 @@ final public class LinuxAccountHandler {
 	public static AccountingCode getBusinessForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from linux_groups lg, billing.\"Package\" pk where lg.package=pk.name and lg.name=?",
+			"select pk.accounting from linux.\"LinuxGroup\" lg, billing.\"Package\" pk where lg.package=pk.name and lg.name=?",
 			name
 		);
 	}
@@ -2236,7 +2236,7 @@ final public class LinuxAccountHandler {
 			+ "  pk1.accounting\n"
 			+ "from\n"
 			+ "  linux_group_accounts lga1\n"
-			+ "  inner join linux_groups lg1 on lga1.\"group\"=lg1.name\n"
+			+ "  inner join linux.\"LinuxGroup\" lg1 on lga1.\"group\"=lg1.name\n"
 			+ "  inner join billing.\"Package\" pk1 on lg1.package=pk1.name\n"
 			+ "where\n"
 			+ "  lga1.pkey=?\n"
@@ -2277,7 +2277,7 @@ final public class LinuxAccountHandler {
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  linux_server_groups lsg,\n"
-			+ "  linux_groups lg,\n"
+			+ "  linux.\"LinuxGroup\" lg,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  lsg.pkey=?\n"
@@ -2355,7 +2355,7 @@ final public class LinuxAccountHandler {
 			+ "  lg.type\n"
 			+ "from\n"
 			+ "  linux_server_groups lsg,\n"
-			+ "  linux_groups lg\n"
+			+ "  linux.\"LinuxGroup\" lg\n"
 			+ "where\n"
 			+ "  lsg.pkey=?\n"
 			+ "  and lsg.name=lg.name",
@@ -2397,7 +2397,7 @@ final public class LinuxAccountHandler {
 			"select\n"
 			+ "  package\n"
 			+ "from\n"
-			+ "  linux_groups\n"
+			+ "  linux.\"LinuxGroup\"\n"
 			+ "where\n"
 			+ "  name=?",
 			name
@@ -2411,7 +2411,7 @@ final public class LinuxAccountHandler {
 			+ "  lg.package\n"
 			+ "from\n"
 			+ "  linux_server_groups lsg,\n"
-			+ "  linux_groups lg\n"
+			+ "  linux.\"LinuxGroup\" lg\n"
 			+ "where\n"
 			+ "  lsg.pkey=?\n"
 			+ "  and lsg.name=lg.name",

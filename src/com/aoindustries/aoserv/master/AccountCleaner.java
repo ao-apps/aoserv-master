@@ -383,7 +383,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  email.\"List\" el,\n"
                         + "  linux_server_groups lsg,\n"
-                        + "  linux_groups lg,\n"
+                        + "  linux.\"LinuxGroup\" lg,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -515,7 +515,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  web.\"SharedTomcat\" hst,\n"
                         + "  linux_server_groups lsg,\n"
-                        + "  linux_groups lg,\n"
+                        + "  linux.\"LinuxGroup\" lg,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -651,14 +651,14 @@ final public class AccountCleaner implements CronJob {
 					}
                 }
 
-                // linux_groups
+                // linux.LinuxGroup
                 {
                     List<GroupId> lgs=conn.executeObjectListQuery(
 						ObjectFactories.groupIdFactory,
                         "select\n"
                         + "  lg.name\n"
                         + "from\n"
-                        + "  linux_groups lg,\n"
+                        + "  linux.\"LinuxGroup\" lg,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"

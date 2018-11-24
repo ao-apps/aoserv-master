@@ -1028,7 +1028,7 @@ final public class EmailHandler {
 			"select\n"
 			+ "  el.pkey\n"
 			+ "from\n"
-			+ "  linux_groups lg,\n"
+			+ "  linux.\"LinuxGroup\" lg,\n"
 			+ "  linux_server_groups lsg,\n"
 			+ "  email.\"List\" el\n"
 			+ "where\n"
@@ -1821,7 +1821,7 @@ final public class EmailHandler {
 	public static AccountingCode getBusinessForEmailList(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from email.\"List\" el, linux_server_groups lsg, linux_groups lg, billing.\"Package\" pk where el.linux_server_group=lsg.pkey and lsg.name=lg.name and lg.package=pk.name and el.pkey=?",
+			"select pk.accounting from email.\"List\" el, linux_server_groups lsg, linux.\"LinuxGroup\" lg, billing.\"Package\" pk where el.linux_server_group=lsg.pkey and lsg.name=lg.name and lg.package=pk.name and el.pkey=?",
 			pkey
 		);
 	}
@@ -1896,7 +1896,7 @@ final public class EmailHandler {
 			+ "from\n"
 			+ "  email.\"List\" el,\n"
 			+ "  linux_server_groups lsg,\n"
-			+ "  linux_groups lg\n"
+			+ "  linux.\"LinuxGroup\" lg\n"
 			+ "where\n"
 			+ "  el.pkey=?\n"
 			+ "  and el.linux_server_group=lsg.pkey\n"

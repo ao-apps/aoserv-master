@@ -1762,8 +1762,8 @@ final public class HttpdHandler {
 					) == 0
 					// Must also not be found in account.Username.username
 					&& conn.executeIntQuery("select count(*) from account.\"Username\" where username=?", name) == 0
-					// Must also not be found in linux_groups.name
-					&& conn.executeIntQuery("select count(*) from linux_groups where name=?", name) == 0
+					// Must also not be found in linux.LinuxGroup.name
+					&& conn.executeIntQuery("select count(*) from linux.\"LinuxGroup\" where name=?", name) == 0
 				) {
 					goodOne = name;
 					break;
@@ -1885,7 +1885,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  hst.pkey\n"
 			+ "from\n"
-			+ "  linux_groups lg,\n"
+			+ "  linux.\"LinuxGroup\" lg,\n"
 			+ "  linux_server_groups lsg,\n"
 			+ "  web.\"SharedTomcat\" hst\n"
 			+ "where\n"
@@ -1932,7 +1932,7 @@ final public class HttpdHandler {
 			+ "from\n"
 			+ "  web.\"SharedTomcat\" hst,\n"
 			+ "  linux_server_groups lsg,\n"
-			+ "  linux_groups lg,\n"
+			+ "  linux.\"LinuxGroup\" lg,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  hst.pkey=?\n"
@@ -2039,7 +2039,7 @@ final public class HttpdHandler {
 			+ "from\n"
 			+ "  web.\"SharedTomcat\" hst,\n"
 			+ "  linux_server_groups lsg,\n"
-			+ "  linux_groups lg\n"
+			+ "  linux.\"LinuxGroup\" lg\n"
 			+ "where\n"
 			+ "  hst.pkey=?\n"
 			+ "  and hst.linux_server_group=lsg.pkey\n"

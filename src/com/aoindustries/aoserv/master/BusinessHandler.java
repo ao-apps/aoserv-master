@@ -1093,7 +1093,7 @@ final public class BusinessHandler {
 				+ "      lsg.pkey\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
-				+ "      linux_groups lg,\n"
+				+ "      linux.\"LinuxGroup\" lg,\n"
 				+ "      linux_server_groups lsg\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"

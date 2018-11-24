@@ -2252,7 +2252,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  linux_groups lg,\n"
+					+ "  linux.\"LinuxGroup\" lg,\n"
 					+ "  linux_server_groups lsg,\n"
 					+ "  email.\"List\" el\n"
 					+ "where\n"
@@ -3096,7 +3096,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  linux_groups lg,\n"
+					+ "  linux.\"LinuxGroup\" lg,\n"
 					+ "  linux_server_groups lsg,\n"
 					+ "  web.\"SharedTomcat\" hst\n"
 					+ "where\n"
@@ -4842,7 +4842,7 @@ final public class TableHandler {
 					+ "      billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "      billing.\"Package\" pk2,\n"
-					+ "      linux_groups lg\n"
+					+ "      linux.\"LinuxGroup\" lg\n"
 					+ "    where\n"
 					+ "      un1.username=?\n"
 					+ "      and un1.package=pk1.name\n"
@@ -4889,7 +4889,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new LinuxGroup(),
-						"select * from linux_groups"
+						"select * from linux.\"LinuxGroup\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -4903,7 +4903,7 @@ final public class TableHandler {
 						+ "  server.\"AoServer\" ao,\n"
 						+ "  business_servers bs,\n"
 						+ "  billing.\"Package\" pk,\n"
-						+ "  linux_groups lg\n"
+						+ "  linux.\"LinuxGroup\" lg\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ao.server\n"
@@ -4925,7 +4925,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  linux_groups lg\n"
+					+ "  linux.\"LinuxGroup\" lg\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -5068,7 +5068,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  linux_groups lg,\n"
+					+ "  linux.\"LinuxGroup\" lg,\n"
 					+ "  business_servers bs,\n"
 					+ "  linux_server_groups lsg\n"
 					+ "where\n"
