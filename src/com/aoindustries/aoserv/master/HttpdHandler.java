@@ -2593,7 +2593,7 @@ final public class HttpdHandler {
 							+ "  not ia.\"isOverflow\"\n"
 							+ "from\n"
 							+ "  net_binds nb,\n"
-							+ "  \"IPAddress\" ia\n"
+							+ "  net.\"IpAddress\" ia\n"
 							+ "where\n"
 							+ "  nb.pkey=?\n"
 							+ "  and nb.\"ipAddress\"=ia.id",

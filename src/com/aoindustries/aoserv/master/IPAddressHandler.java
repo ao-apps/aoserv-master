@@ -21,7 +21,7 @@ import java.sql.SQLException;
 import java.util.Locale;
 
 /**
- * The <code>IPAddressHandler</code> handles all the accesses to the <code>IPAddress</code> table.
+ * The <code>IPAddressHandler</code> handles all the accesses to the <code>net.IpAddress</code> table.
  *
  * @author  AO Industries, Inc.
  */
@@ -40,7 +40,7 @@ final public class IPAddressHandler {
 
 	public static boolean isDHCPAddress(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
-			"select \"isDhcp\" from \"IPAddress\" where id=?",
+			"select \"isDhcp\" from net.\"IpAddress\" where id=?",
 			id
 		);
 	}
@@ -92,14 +92,14 @@ final public class IPAddressHandler {
 
 		AccountingCode accounting=getBusinessForIPAddress(conn, ipAddress);
 
-		// Update IPAddress
+		// Update net.IpAddress
 		int netDevice=conn.executeIntQuery(
 			"select pkey from net_devices where server=? and \"deviceID\"=?",
 			toServer,
 			NetDeviceID.ETH0
 		);
 		conn.executeUpdate(
-			"update \"IPAddress\" set \"netDevice\"=? where id=?",
+			"update net.\"IpAddress\" set \"netDevice\"=? where id=?",
 			netDevice,
 			ipAddress
 		);
@@ -132,13 +132,13 @@ final public class IPAddressHandler {
 		InetAddress dhcpAddress
 	) throws IOException, SQLException {
 		checkAccessIPAddress(conn, source, "setIPAddressDHCPAddress", ipAddress);
-		if(!isDHCPAddress(conn, ipAddress)) throw new SQLException("IPAddress is not DHCP-enabled: "+ipAddress);
+		if(!isDHCPAddress(conn, ipAddress)) throw new SQLException("net.IpAddress is not DHCP-enabled: "+ipAddress);
 
 		AccountingCode accounting=getBusinessForIPAddress(conn, ipAddress);
 		int server=getServerForIPAddress(conn, ipAddress);
 
 		// Update the table
-		conn.executeUpdate("update \"IPAddress\" set \"inetAddress\"=? where id=?", dhcpAddress, ipAddress);
+		conn.executeUpdate("update net.\"IpAddress\" set \"inetAddress\"=? where id=?", dhcpAddress, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -189,7 +189,7 @@ final public class IPAddressHandler {
 		) throw new SQLException("Not allowed to set the hostname for "+ip);
 
 		// Update the table
-		conn.executeUpdate("update \"IPAddress\" set hostname=? where id=?", hostname.toString(), ipAddress);
+		conn.executeUpdate("update net.\"IpAddress\" set hostname=? where id=?", hostname.toString(), ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -238,7 +238,7 @@ final public class IPAddressHandler {
 	}
 
 	/**
-	 * Sets the Package owner of an IPAddress.
+	 * Sets the Package owner of an net.IpAddress.
 	 */
 	public static void setIPAddressPackage(
 		DatabaseConnection conn,
@@ -254,7 +254,7 @@ final public class IPAddressHandler {
 	}
 
 	/**
-	 * Sets the Package owner of an IPAddress.
+	 * Sets the Package owner of an net.IpAddress.
 	 */
 	public static void setIPAddressPackage(
 		DatabaseConnection conn,
@@ -276,10 +276,10 @@ final public class IPAddressHandler {
 			+ "  \"ipAddress\"=?",
 			ipAddress
 		);
-		if(count!=0) throw new SQLException("Unable to set Package, IPAddress in use by "+count+(count==1?" row":" rows")+" in net_binds: "+ipAddress);
+		if(count!=0) throw new SQLException("Unable to set Package, net.IpAddress in use by "+count+(count==1?" row":" rows")+" in net_binds: "+ipAddress);
 
 		// Update the table
-		conn.executeUpdate("update \"IPAddress\" set package=(select pkey from billing.\"Package\" where name=?), available=false where id=?", newPackage, ipAddress);
+		conn.executeUpdate("update net.\"IpAddress\" set package=(select pkey from billing.\"Package\" where name=?), available=false where id=?", newPackage, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -299,7 +299,7 @@ final public class IPAddressHandler {
 			+ "      select\n"
 			+ "        ia.id\n"
 			+ "      from\n"
-			+ "        \"IPAddress\" ia,\n"
+			+ "        net.\"IpAddress\" ia,\n"
 			+ "        net_devices nd\n"
 			+ "        left join net_binds nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?\n"
 			+ "        left join web.\"HttpdBind\" hb on nb.pkey=hb.net_bind\n"
@@ -342,7 +342,7 @@ final public class IPAddressHandler {
 			"select\n"
 			+ "  pk.name\n"
 			+ "from\n"
-			+ "  \"IPAddress\" ia\n"
+			+ "  net.\"IpAddress\" ia\n"
 			+ "  inner join billing.\"Package\" pk on ia.package=pk.pkey\n"
 			+ "where\n"
 			+ "  ia.id=?",
@@ -356,7 +356,7 @@ final public class IPAddressHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  \"IPAddress\" ia\n"
+			+ "  net.\"IpAddress\" ia\n"
 			+ "  inner join billing.\"Package\" pk on ia.package=pk.pkey\n"
 			+ "where\n"
 			+ "  ia.id=?",
@@ -365,18 +365,18 @@ final public class IPAddressHandler {
 	}
 
 	public static int getServerForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-		return conn.executeIntQuery("select nd.server from \"IPAddress\" ia, net_devices nd where ia.id=? and ia.\"netDevice\"=nd.pkey", ipAddress);
+		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net_devices nd where ia.id=? and ia.\"netDevice\"=nd.pkey", ipAddress);
 	}
 
 	public static InetAddress getInetAddressForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.inetAddressFactory,
-			"select host(\"inetAddress\") from \"IPAddress\" where id=?",
+			"select host(\"inetAddress\") from net.\"IpAddress\" where id=?",
 			ipAddress
 		);
 	}
 
 	public static int getWildcardIPAddress(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntQuery("select id from \"IPAddress\" where \"inetAddress\"=?", IPAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
+		return conn.executeIntQuery("select id from net.\"IpAddress\" where \"inetAddress\"=?", IPAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
 	}
 
 	public static int getLoopbackIPAddress(DatabaseConnection conn, int server) throws IOException, SQLException {
@@ -384,7 +384,7 @@ final public class IPAddressHandler {
 			"select\n"
 			+ "  ia.id\n"
 			+ "from\n"
-			+ "  \"IPAddress\" ia,\n"
+			+ "  net.\"IpAddress\" ia,\n"
 			+ "  net_devices nd\n"
 			+ "where\n"
 			+ "  ia.\"inetAddress\"=?\n"
@@ -409,7 +409,7 @@ final public class IPAddressHandler {
 		);
 
 		conn.executeUpdate(
-			"update \"IPAddress\" set available=true, \"isOverflow\"=false where id=?",
+			"update net.\"IpAddress\" set available=true, \"isOverflow\"=false where id=?",
 			ipAddress
 		);
 		conn.executeUpdate(

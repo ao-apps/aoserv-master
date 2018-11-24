@@ -577,13 +577,13 @@ final public class AccountCleaner implements CronJob {
 
                 }
 
-                // IPAddress
+                // net.IpAddress
                 {
                     IntList ias=conn.executeIntListQuery(
                         "select\n"
                         + "  ia.id\n"
                         + "from\n"
-                        + "  \"IPAddress\" ia,\n"
+                        + "  net.\"IpAddress\" ia,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"

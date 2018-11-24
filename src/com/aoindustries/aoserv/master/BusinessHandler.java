@@ -1036,7 +1036,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one HttpdSite on Server="+server);
 
-		// IPAddress
+		// net.IpAddress
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1045,7 +1045,7 @@ final public class BusinessHandler {
 				+ "      ia.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
-				+ "      \"IPAddress\" ia,\n"
+				+ "      net.\"IpAddress\" ia,\n"
 				+ "      net_devices nd\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
@@ -1058,7 +1058,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one IPAddress on Server="+server);
+		) throw new SQLException("Business="+accounting+" still owns at least one net.IpAddress on Server="+server);
 
 		// linux.LinuxUserServer
 		if(
