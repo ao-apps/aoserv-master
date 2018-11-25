@@ -90,7 +90,7 @@ final public class ServerHandler {
 
 		int serverPKey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  servers\n"
+			+ "  server."Server"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -148,7 +148,7 @@ final public class ServerHandler {
 		);
 		conn.executeUpdate("insert into master.\"User\" values(?,true,false,false,false,false,false,false)", username);
 		invalidateList.addTable(conn, SchemaTable.TableID.MASTER_USERS, packageAccounting, InvalidateList.allServers, false);
-		conn.executeUpdate("insert into master_servers(username, server) values(?,?)", username, serverPKey);
+		conn.executeUpdate("insert into server.\"MasterServer\"(username, server) values(?,?)", username, serverPKey);
 		invalidateList.addTable(conn, SchemaTable.TableID.MASTER_SERVERS, packageAccounting, InvalidateList.allServers, false);
 		BusinessHandler.setBusinessAdministratorPassword(conn, source, invalidateList, username, password);
 
@@ -211,7 +211,7 @@ final public class ServerHandler {
 								SV.add(masterServer.getServerPKey());
 							}
 						} else {
-							SV.addAll(conn.executeIntListQuery("select pkey from servers"));
+							SV.addAll(conn.executeIntListQuery("select pkey from server.\"Server\""));
 						}
 					} else {
 						SV.addAll(
@@ -221,7 +221,7 @@ final public class ServerHandler {
 								+ "from\n"
 								+ "  account.\"Username\" un,\n"
 								+ "  billing.\"Package\" pk,\n"
-								+ "  business_servers bs\n"
+								+ "  server.\"AccountServer\" bs\n"
 								+ "where\n"
 								+ "  un.username=?\n"
 								+ "  and un.package=pk.name\n"
@@ -240,7 +240,7 @@ final public class ServerHandler {
 		return conn.executeObjectCollectionQuery(
 			new ArrayList<AccountingCode>(),
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from business_servers where server=?",
+			"select accounting from server.\"AccountServer\" where server=?",
 			server
 		);
 	}
@@ -274,7 +274,7 @@ final public class ServerHandler {
 		synchronized(farmsForServers) {
 			String farm=farmsForServers.get(I);
 			if(farm==null) {
-				farm=conn.executeStringQuery("select farm from servers where pkey=?", server);
+				farm=conn.executeStringQuery("select farm from server.\"Server\" where pkey=?", server);
 				farmsForServers.put(I, farm);
 			}
 			return farm;
@@ -302,7 +302,7 @@ final public class ServerHandler {
 	 * Gets the operating system version for a server or <code>-1</code> if not available.
 	 */
 	public static int getOperatingSystemVersionForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce((select operating_system_version from servers where pkey=?), -1)", server);
+		return conn.executeIntQuery("select coalesce((select operating_system_version from server.\"Server\" where pkey=?), -1)", server);
 	}
 
 	final private static Map<DomainName,Integer> serversForAOServers = new HashMap<>();
@@ -321,11 +321,11 @@ final public class ServerHandler {
 	}
 
 	public static int getServerForPackageAndName(DatabaseAccess database, int pack, String name) throws IOException, SQLException {
-		return database.executeIntQuery("select pkey from servers where package=? and name=?", pack, name);
+		return database.executeIntQuery("select pkey from server.\"Server\" where package=? and name=?", pack, name);
 	}
 
 	public static IntList getServers(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from servers");
+		return conn.executeIntListQuery("select pkey from server.\"Server\"");
 	}
 
 	/**
@@ -333,7 +333,7 @@ final public class ServerHandler {
 	 */
 	public static IntList getEnabledXenPhysicalServers(DatabaseAccess database) throws IOException, SQLException {
 		return database.executeIntListQuery(
-			"select se.pkey from servers se inner join infrastructure.\"PhysicalServer\" ps on se.pkey=ps.server where se.operating_system_version in (?,?,?) and se.monitoring_enabled",
+			"select se.pkey from server.\"Server\" se inner join infrastructure.\"PhysicalServer\" ps on se.pkey=ps.server where se.operating_system_version in (?,?,?) and se.monitoring_enabled",
 			OperatingSystemVersion.CENTOS_5_DOM0_I686,
 			OperatingSystemVersion.CENTOS_5_DOM0_X86_64,
 			OperatingSystemVersion.CENTOS_7_DOM0_X86_64
@@ -485,13 +485,13 @@ final public class ServerHandler {
 	 * Gets the package that owns the server.
 	 */
 	public static int getPackageForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		return conn.executeIntQuery("select package from servers where pkey=?", server);
+		return conn.executeIntQuery("select package from server.\"Server\" where pkey=?", server);
 	}
 
 	/**
 	 * Gets the per-package unique name of the server.
 	 */
 	public static String getNameForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		return conn.executeStringQuery("select name from servers where pkey=?", server);
+		return conn.executeStringQuery("select name from server.\"Server\" where pkey=?", server);
 	}
 }

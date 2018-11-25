@@ -275,7 +275,7 @@ final public class AccountCleaner implements CronJob {
                 }
 
                 // account.Administrator over CANCELED_KEEP_DAYS days
-                // remove if balance is zero and has not been used in ticket_actions or billing.Transaction
+                // remove if balance is zero and has not been used in ticket.Action or billing.Transaction
                 {
                     List<UserId> bas=conn.executeObjectListQuery(
 						ObjectFactories.userIdFactory,
@@ -306,16 +306,16 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select pk2.pkey from billing.\"Package\" pk2 where pk2.created_by=ba.username limit 1) is null\n"
 						// signup.Request
                         + "  and (select sr.pkey from signup.\"Request\" sr where sr.completed_by=ba.username limit 1) is null\n"
-						// ticket_actions
+						// ticket.Action
 						// PostgresSQL 8.3 doing sequential scan on "or":
-						// + "  and (select ta.pkey from ticket_actions ta where ta.administrator=ba.username or ta.old_assigned_to=ba.username or ta.new_assigned_to=ba.username limit 1) is null\n"
-						+ "  and (select ta1.pkey from ticket_actions ta1 where ta1.administrator   = ba.username limit 1) is null\n"
-						+ "  and (select ta2.pkey from ticket_actions ta2 where ta2.old_assigned_to = ba.username limit 1) is null\n"
-						+ "  and (select ta3.pkey from ticket_actions ta3 where ta3.new_assigned_to = ba.username limit 1) is null\n"
-						// ticket_assignments
-                        + "  and (select ta4.pkey from ticket_assignments ta4 where ta4.administrator=ba.username limit 1) is null\n"
-						// tickets
-                        + "  and (select ti.pkey from tickets ti where ti.created_by=ba.username limit 1) is null\n"
+						// + "  and (select ta.pkey from ticket.Action ta where ta.administrator=ba.username or ta.old_assigned_to=ba.username or ta.new_assigned_to=ba.username limit 1) is null\n"
+						+ "  and (select ta1.pkey from ticket.\"Action\" ta1 where ta1.administrator   = ba.username limit 1) is null\n"
+						+ "  and (select ta2.pkey from ticket.\"Action\" ta2 where ta2.old_assigned_to = ba.username limit 1) is null\n"
+						+ "  and (select ta3.pkey from ticket.\"Action\" ta3 where ta3.new_assigned_to = ba.username limit 1) is null\n"
+						// ticket.Assignment
+                        + "  and (select ta4.pkey from ticket.\"Assignment\" ta4 where ta4.administrator=ba.username limit 1) is null\n"
+						// ticket.Ticket
+                        + "  and (select ti.pkey from ticket.\"Ticket\" ti where ti.created_by=ba.username limit 1) is null\n"
 						// billing.Transaction
                         + "  and (select tr.transid from billing.\"Transaction\" tr where tr.username=ba.username limit 1) is null",
                         now
@@ -329,13 +329,13 @@ final public class AccountCleaner implements CronJob {
 					}
                 }
 
-                // cvs_repositories
+                // scm.CvsRepository
                 {
                     IntList crs=conn.executeIntListQuery(
                         "select\n"
                         + "  cr.pkey\n"
                         + "from\n"
-                        + "  cvs_repositories cr,\n"
+                        + "  scm.\"CvsRepository\" cr,\n"
                         + "  linux.\"UserServer\" lsa,\n"
                         + "  account.\"Username\" un,\n"
                         + "  billing.\"Package\" pk,\n"
@@ -810,7 +810,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
                         + "  and (select ba.username from account.\"Administrator\" ba where ba.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select bu2.accounting from account.\"Account\" bu2 where bu2.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select cr.pkey from cvs_repositories cr where cr.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select cr.pkey from scm.\"CvsRepository\" cr where cr.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select el.pkey from email.\"List\" el where el.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select ep.pkey from email.\"Pipe\" ep where ep.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select esr.pkey from email.\"SmtpRelay\" esr where esr.disable_log=dl.pkey limit 1) is null\n"
@@ -830,8 +830,8 @@ final public class AccountCleaner implements CronJob {
                     for(int c=0;c<dls.size();c++) BusinessHandler.removeDisableLog(conn, invalidateList, dls.getInt(c));
                 }
 
-                // business_servers
-                // delete all business_servers for canceled account.Account
+                // server.AccountServer
+                // delete all server.AccountServer for canceled account.Account
                 {
                     for(int depth = Business.MAXIMUM_BUSINESS_TREE_DEPTH; depth>=1; depth--) {
                         // non-default
@@ -839,7 +839,7 @@ final public class AccountCleaner implements CronJob {
                             "select\n"
                             + "  bs.pkey\n"
                             + "from\n"
-                            + "  business_servers bs,\n"
+                            + "  server.\"AccountServer\" bs,\n"
                             + "  account.\"Account\" bu\n"
                             + "where\n"
                             + "  not bs.is_default\n"
@@ -850,7 +850,7 @@ final public class AccountCleaner implements CronJob {
                         );
                         for(int c=0;c<bss.size();c++) {
                             int bs = bss.getInt(c);
-                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from business_servers where pkey=?", bs));
+                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from server.\"AccountServer\" where pkey=?", bs));
                             int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
                             if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
                         }
@@ -860,7 +860,7 @@ final public class AccountCleaner implements CronJob {
                             "select\n"
                             + "  bs.pkey\n"
                             + "from\n"
-                            + "  business_servers bs,\n"
+                            + "  server.\"AccountServer\" bs,\n"
                             + "  account.\"Account\" bu\n"
                             + "where\n"
                             + "  bs.accounting=bu.accounting\n"
@@ -870,7 +870,7 @@ final public class AccountCleaner implements CronJob {
                         );
                         for(int c=0;c<bss.size();c++) {
                             int bs = bss.getInt(c);
-                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from business_servers where pkey=?", bs));
+                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from server.\"AccountServer\" where pkey=?", bs));
                             int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
                             if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
                         }

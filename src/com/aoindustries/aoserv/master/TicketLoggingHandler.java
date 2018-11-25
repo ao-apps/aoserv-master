@@ -92,7 +92,7 @@ final public class TicketLoggingHandler extends QueuedHandler {
 						+ "      select\n"
 						+ "        pkey\n"
 						+ "      from\n"
-						+ "        tickets\n"
+						+ "        ticket.\"Ticket\"\n"
 						+ "      where\n"
 						+ "        status in (?,?,?)\n"
 						+ "        and brand=?\n"

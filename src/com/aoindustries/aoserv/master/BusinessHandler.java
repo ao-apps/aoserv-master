@@ -124,7 +124,7 @@ final public class BusinessHandler {
 			+ "from\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
-			+ "  business_servers bs\n"
+			+ "  server.\"AccountServer\" bs\n"
 			+ "where\n"
 			+ "  un.username=?\n"
 			+ "  and un.package=pk.name\n"
@@ -249,8 +249,8 @@ final public class BusinessHandler {
 							"select distinct\n"
 							+ "  bu.accounting\n"
 							+ "from\n"
-							+ "  master_servers ms,\n"
-							+ "  business_servers bs,\n"
+							+ "  server.\"MasterServer\" ms,\n"
+							+ "  server.\"AccountServer\" bs,\n"
 							+ "  account.\"Account\" bu\n"
 							+ "where\n"
 							+ "  ms.username=?\n"
@@ -351,7 +351,7 @@ final public class BusinessHandler {
 			billParent
 		);
 		conn.executeUpdate(
-			"insert into business_servers(\n"
+			"insert into server.\"AccountServer\"(\n"
 			+ "  accounting,\n"
 			+ "  server,\n"
 			+ "  is_default,\n"
@@ -564,7 +564,7 @@ final public class BusinessHandler {
 				+ "      bs.pkey\n"
 				+ "    from\n"
 				+ "      account.\"Account\" bu,\n"
-				+ "      business_servers bs\n"
+				+ "      server.\"AccountServer\" bs\n"
 				+ "    where\n"
 				+ "      bu.accounting=?\n"
 				+ "      and bu.parent=bs.accounting\n"
@@ -575,10 +575,10 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Unable to add business_server, parent does not have access to server.  accounting="+accounting+", server="+server);
 
-		boolean hasDefault=conn.executeBooleanQuery("select (select pkey from business_servers where accounting=? and is_default limit 1) is not null", accounting);
+		boolean hasDefault=conn.executeBooleanQuery("select (select pkey from server.\"AccountServer\" where accounting=? and is_default limit 1) is not null", accounting);
 
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO business_servers (accounting, server, is_default) VALUES (?,?,?) RETURNING pkey",
+			"INSERT INTO server.\"AccountServer\" (accounting, server, is_default) VALUES (?,?,?) RETURNING pkey",
 			accounting,
 			server,
 			!hasDefault
@@ -868,7 +868,7 @@ final public class BusinessHandler {
 	}
 
 	public static IntList getServersForBusiness(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
-		return conn.executeIntListQuery("select server from business_servers where accounting=?", accounting);
+		return conn.executeIntListQuery("select server from server.\"AccountServer\" where accounting=?", accounting);
 	}
 
 	public static AccountingCode getRootBusiness() throws IOException {
@@ -930,18 +930,18 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		AccountingCode accounting = conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from business_servers where pkey=?",
+			"select accounting from server.\"AccountServer\" where pkey=?",
 			pkey
 		);
-		int server=conn.executeIntQuery("select server from business_servers where pkey=?", pkey);
+		int server=conn.executeIntQuery("select server from server.\"AccountServer\" where pkey=?", pkey);
 
 		// Must be allowed to access this Business
 		checkAccessBusiness(conn, source, "removeBusinessServer", accounting);
 
 		// Do not remove the default unless it is the only one left
 		if(
-			conn.executeBooleanQuery("select is_default from business_servers where pkey=?", pkey)
-			&& conn.executeIntQuery("select count(*) from business_servers where accounting=?", accounting)>1
+			conn.executeBooleanQuery("select is_default from server.\"AccountServer\" where pkey=?", pkey)
+			&& conn.executeIntQuery("select count(*) from server.\"AccountServer\" where accounting=?", accounting)>1
 		) {
 			throw new SQLException("Cannot remove the default business_server unless it is the last business_server for a business: "+pkey);
 		}
@@ -963,10 +963,10 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		AccountingCode accounting = conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from business_servers where pkey=?",
+			"select accounting from server.\"AccountServer\" where pkey=?",
 			pkey
 		);
-		int server=conn.executeIntQuery("select server from business_servers where pkey=?", pkey);
+		int server=conn.executeIntQuery("select server from server.\"AccountServer\" where pkey=?", pkey);
 
 		// No children should be able to access the server
 		if(
@@ -977,7 +977,7 @@ final public class BusinessHandler {
 				+ "      bs.pkey\n"
 				+ "    from\n"
 				+ "      account.\"Account\" bu,\n"
-				+ "      business_servers bs\n"
+				+ "      server.\"AccountServer\" bs\n"
 				+ "    where\n"
 				+ "      bu.parent=?\n"
 				+ "      and bu.accounting=bs.accounting\n"
@@ -1277,7 +1277,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one EmailSmtpRelay on Server="+server);
 
-		conn.executeUpdate("delete from business_servers where pkey=?", pkey);
+		conn.executeUpdate("delete from server.\"AccountServer\" where pkey=?", pkey);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
@@ -1430,7 +1430,7 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		AccountingCode accounting = conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from business_servers where pkey=?",
+			"select accounting from server.\"AccountServer\" where pkey=?",
 			pkey
 		);
 
@@ -1440,11 +1440,11 @@ final public class BusinessHandler {
 
 		// Update the table
 		conn.executeUpdate(
-			"update business_servers set is_default=true where pkey=?",
+			"update server.\"AccountServer\" set is_default=true where pkey=?",
 			pkey
 		);
 		conn.executeUpdate(
-			"update business_servers set is_default=false where accounting=? and pkey!=?",
+			"update server.\"AccountServer\" set is_default=false where accounting=? and pkey!=?",
 			accounting,
 			pkey
 		);
@@ -1769,7 +1769,7 @@ final public class BusinessHandler {
 			+ "    select\n"
 			+ "      pkey\n"
 			+ "    from\n"
-			+ "      business_servers\n"
+			+ "      server.\"AccountServer\"\n"
 			+ "    where\n"
 			+ "      accounting=?\n"
 			+ "      and server=?\n"

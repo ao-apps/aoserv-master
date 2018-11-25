@@ -819,7 +819,7 @@ public abstract class MasterServer {
 														:true
 													;
 													boolean billParent=in.readBoolean();
-													// Convert old hostname to servers.pkey
+													// Convert old hostname to server.Server.pkey
 													if(defaultServer==-1) {
 														defaultServer = ServerHandler.getServerForAOServerHostname(conn, hostname);
 													}
@@ -10341,7 +10341,7 @@ public abstract class MasterServer {
 			if(masterServers==null) masterServers=new HashMap<>();
 			com.aoindustries.aoserv.client.MasterServer[] mss=masterServers.get(username);
 			if(mss!=null) return mss;
-			try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master.\"User\" mu, master_servers ms where mu.is_active and mu.username=? and mu.username=ms.username")) {
+			try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master.\"User\" mu, server.\"MasterServer\" ms where mu.is_active and mu.username=? and mu.username=ms.username")) {
 				try {
 					List<com.aoindustries.aoserv.client.MasterServer> v=new ArrayList<>();
 					pstmt.setString(1, username.toString());

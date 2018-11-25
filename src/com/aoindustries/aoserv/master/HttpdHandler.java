@@ -82,20 +82,20 @@ final public class HttpdHandler {
 		if(httpdSitePKey == -1) {
 			conn.executeIntUpdate(
 				"INSERT INTO\n"
-				+ "  \"web/tomcat\".\"TomcatWorker\"\n"
+				+ "  \"web/tomcat\".\"Worker\"\n"
 				+ "VALUES (\n"
 				+ "  ?,\n"
 				+ "  (\n"
 				+ "    select\n"
 				+ "      hjc.code\n"
 				+ "    from\n"
-				+ "      \"web/tomcat\".\"TomcatWorkerName\" hjc\n"
+				+ "      \"web/tomcat\".\"WorkerName\" hjc\n"
 				+ "    where\n"
 				+ "      (\n"
 				+ "        select\n"
 				+ "          hw.\"name\"\n"
 				+ "        from\n"
-				+ "          \"web/tomcat\".\"TomcatWorker\" hw,\n"
+				+ "          \"web/tomcat\".\"Worker\" hw,\n"
 				+ "          net.\"Bind\" nb\n"
 				+ "        where\n"
 				+ "          hw.bind=nb.pkey\n"
@@ -115,20 +115,20 @@ final public class HttpdHandler {
 		} else {
 			conn.executeIntUpdate(
 				"INSERT INTO\n"
-				+ "  \"web/tomcat\".\"TomcatWorker\"\n"
+				+ "  \"web/tomcat\".\"Worker\"\n"
 				+ "VALUES (\n"
 				+ "  ?,\n"
 				+ "  (\n"
 				+ "    select\n"
 				+ "      hjc.code\n"
 				+ "    from\n"
-				+ "      \"web/tomcat\".\"TomcatWorkerName\" hjc\n"
+				+ "      \"web/tomcat\".\"WorkerName\" hjc\n"
 				+ "    where\n"
 				+ "      (\n"
 				+ "        select\n"
 				+ "          hw.\"name\"\n"
 				+ "        from\n"
-				+ "          \"web/tomcat\".\"TomcatWorker\" hw,\n"
+				+ "          \"web/tomcat\".\"Worker\" hw,\n"
 				+ "          net.\"Bind\" nb\n"
 				+ "        where\n"
 				+ "          hw.bind=nb.pkey\n"
@@ -397,7 +397,7 @@ final public class HttpdHandler {
 
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  \"web/tomcat\".\"TomcatContext\"\n"
+			+ "  \"web/tomcat\".\"Context\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -442,7 +442,7 @@ final public class HttpdHandler {
 		// Initial HttpdTomcatSiteJkMounts
 		boolean useApache = conn.executeBooleanQuery(
 			"select (\n"
-			+ "  select pkey from \"web/tomcat\".\"TomcatJkMount\"\n"
+			+ "  select pkey from \"web/tomcat\".\"JkMount\"\n"
 			+ "  where (httpd_tomcat_site, path)=(?, '/*')\n"
 			+ ") is null",
 			tomcat_site
@@ -450,12 +450,12 @@ final public class HttpdHandler {
 
 		if(useApache) {
 			conn.executeUpdate(
-				"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				tomcat_site,
 				checkJkMountPath(path + "/j_security_check")
 			);
 			conn.executeUpdate(
-				"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				tomcat_site,
 				checkJkMountPath(path + "/servlet/*")
 			);
@@ -464,7 +464,7 @@ final public class HttpdHandler {
 			boolean enableCgi = conn.executeBooleanQuery("select enable_cgi from web.\"Site\" where pkey=?", tomcat_site);
 			if(enableCgi) {
 				conn.executeUpdate(
-					"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
+					"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
 					tomcat_site,
 					checkJkMountPath(path + "/cgi-bin/*")
 				);
@@ -490,13 +490,13 @@ final public class HttpdHandler {
 		int maxWait,
 		String validationQuery
 	) throws IOException, SQLException {
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"TomcatContext\" where pkey=?", tomcat_context);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"Context\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatDataSource", tomcat_site);
 		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add HttpdTomcatDataSource, HttpdSite disabled: "+tomcat_site);
 
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  \"web/tomcat\".\"TomcatContextDataSource\"\n"
+			+ "  \"web/tomcat\".\"ContextDataSource\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -543,13 +543,13 @@ final public class HttpdHandler {
 		boolean override,
 		String description
 	) throws IOException, SQLException {
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"TomcatContext\" where pkey=?", tomcat_context);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"Context\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatParameter", tomcat_site);
 		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add HttpdTomcatParameter, HttpdSite disabled: "+tomcat_site);
 
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  \"web/tomcat\".\"TomcatContextParameter\"\n"
+			+ "  \"web/tomcat\".\"ContextParameter\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -587,7 +587,7 @@ final public class HttpdHandler {
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatSiteJkMount", tomcat_site);
 
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, \"path\", mount) VALUES (?,?,?) RETURNING pkey",
+			"INSERT INTO \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, \"path\", mount) VALUES (?,?,?) RETURNING pkey",
 			tomcat_site,
 			checkJkMountPath(path),
 			mount
@@ -610,10 +610,10 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int pkey
 	) throws IOException, SQLException {
-		int tomcat_site = conn.executeIntQuery("select httpd_tomcat_site from \"web/tomcat\".\"TomcatJkMount\" where pkey=?", pkey);
+		int tomcat_site = conn.executeIntQuery("select httpd_tomcat_site from \"web/tomcat\".\"JkMount\" where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatSiteJkMount", tomcat_site);
 
-		conn.executeUpdate("delete from \"web/tomcat\".\"TomcatJkMount\" where pkey=?", pkey);
+		conn.executeUpdate("delete from \"web/tomcat\".\"JkMount\" where pkey=?", pkey);
 
 		invalidateList.addTable(
 			conn,
@@ -690,15 +690,15 @@ final public class HttpdHandler {
 				"select\n"
 				+ "  htv.install_dir || '/webapps/examples'\n"
 				+ "from\n"
-				+ "  \"web/tomcat\".\"TomcatSite\" hts\n"
-				+ "  inner join \"web/tomcat\".\"TomcatVersion\" htv on hts.version=htv.version\n"
+				+ "  \"web/tomcat\".\"Site\" hts\n"
+				+ "  inner join \"web/tomcat\".\"Version\" htv on hts.version=htv.version\n"
 				+ "where\n"
 				+ "  hts.httpd_site=?\n"
 				+ "union select\n"
 				+ "  htv.install_dir || '/webapps/manager'\n"
 				+ "from\n"
-				+ "  \"web/tomcat\".\"TomcatSite\" hts\n"
-				+ "  inner join \"web/tomcat\".\"TomcatVersion\" htv on hts.version=htv.version\n"
+				+ "  \"web/tomcat\".\"Site\" hts\n"
+				+ "  inner join \"web/tomcat\".\"Version\" htv on hts.version=htv.version\n"
 				+ "where\n"
 				+ "  hts.httpd_site=?\n",
 				tomcat_site,
@@ -983,7 +983,7 @@ final public class HttpdHandler {
 
 		// Create the HttpdTomcatSite
 		conn.executeUpdate(
-			"INSERT INTO \"web/tomcat\".\"TomcatSite\" (httpd_site, version) VALUES (?,?)",
+			"INSERT INTO \"web/tomcat\".\"Site\" (httpd_site, version) VALUES (?,?)",
 			httpdSitePKey,
 			tomcatVersion
 		);
@@ -1001,7 +1001,7 @@ final public class HttpdHandler {
 		// Add the default httpd_tomcat_context
 		conn.executeUpdate(
 			"INSERT INTO\n"
-			+ "  \"web/tomcat\".\"TomcatContext\"\n"
+			+ "  \"web/tomcat\".\"Context\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -1027,7 +1027,7 @@ final public class HttpdHandler {
 		if(!isTomcat4) {
 			conn.executeUpdate(
 				"INSERT INTO\n"
-				+ "  \"web/tomcat\".\"TomcatContext\"\n"
+				+ "  \"web/tomcat\".\"Context\"\n"
 				+ "VALUES (\n"
 				+ "  default,\n"
 				+ "  ?,\n"
@@ -1046,7 +1046,7 @@ final public class HttpdHandler {
 				+ "  "+HttpdTomcatContext.DEFAULT_SERVER_XML_CONFIGURED+"\n"
 				+ ")",
 				httpdSitePKey,
-				conn.executeStringQuery("select install_dir from \"web/tomcat\".\"TomcatVersion\" where version=?", tomcatVersion)+"/webapps/examples"
+				conn.executeStringQuery("select install_dir from \"web/tomcat\".\"Version\" where version=?", tomcatVersion)+"/webapps/examples"
 			);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, aoServer, false);
 		}
@@ -1213,54 +1213,54 @@ final public class HttpdHandler {
 		// Initial HttpdTomcatSiteJkMounts
 		if(useApache) {
 			conn.executeUpdate(
-				"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/j_security_check")
 			);
 			conn.executeUpdate(
-				"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/servlet/*")
 			);
 			conn.executeUpdate(
-				"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.do")
 			);
 			conn.executeUpdate(
-				"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.jsp")
 			);
 			conn.executeUpdate(
-				"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.jspa")
 			);
 			conn.executeUpdate(
-				"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.jspx")
 			);
 			conn.executeUpdate(
-				"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.vm")
 			);
 			conn.executeUpdate(
-				"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*.xml")
 			);
 		} else {
 			conn.executeUpdate(
-				"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
+				"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
 				httpdSitePKey,
 				checkJkMountPath("/*")
 			);
 			if(enableCgi) {
 				conn.executeUpdate(
-					"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
+					"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
 					httpdSitePKey,
 					checkJkMountPath("/cgi-bin/*")
 				);
@@ -1284,7 +1284,7 @@ final public class HttpdHandler {
 			}
 			if(hasPhp) {
 				conn.executeUpdate(
-					"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
+					"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
 					httpdSitePKey
 				);
 			}
@@ -2433,8 +2433,8 @@ final public class HttpdHandler {
 		);
 
 		if(tomcat4Worker!=-1) {
-			int bind = conn.executeIntQuery("select bind from \"web/tomcat\".\"TomcatWorker\" where pkey=?", tomcat4Worker);
-			conn.executeUpdate("delete from \"web/tomcat\".\"TomcatWorker\" where bind=?", tomcat4Worker);
+			int bind = conn.executeIntQuery("select bind from \"web/tomcat\".\"Worker\" where pkey=?", tomcat4Worker);
+			conn.executeUpdate("delete from \"web/tomcat\".\"Worker\" where bind=?", tomcat4Worker);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_WORKERS, accounting, aoServer, false);
 
 			conn.executeUpdate("delete from net.\"Bind\" where pkey=?", bind);
@@ -2473,11 +2473,11 @@ final public class HttpdHandler {
 	 *           |                |               + dns.Record
 	 *           |                + web.HttpdBind
 	 *           |                            + net.Bind
-	 *           + web/tomcat.TomcatSite
-	 *           |                  + web/tomcat.TomcatContext
-	 *           |                                        + web/tomcat.TomcatContextDataSource
-	 *           |                                        + web/tomcat.TomcatContextParameter
-	 *           |                  + web/tomcat.TomcatWorker
+	 *           + web/tomcat.Site
+	 *           |                  + web/tomcat.Context
+	 *           |                                        + web/tomcat.ContextDataSource
+	 *           |                                        + web/tomcat.ContextParameter
+	 *           |                  + web/tomcat.Worker
 	 *           |                  |             + net.Bind
 	 *           |                  + web/tomcat.SharedTomcatSite
 	 *           |                  |             + linux.GroupUser
@@ -2511,7 +2511,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  count(*)\n"
 			+ "from\n"
-			+ "  cvs_repositories cr,\n"
+			+ "  scm.\"CvsRepository\" cr,\n"
 			+ "  linux.\"UserServer\" lsa\n"
 			+ "where\n"
 			+ "  cr.linux_server_account=lsa.pkey\n"
@@ -2607,41 +2607,41 @@ final public class HttpdHandler {
 			}
 		}
 
-		// web/tomcat.TomcatSite
-		if(conn.executeBooleanQuery("select (select httpd_site from \"web/tomcat\".\"TomcatSite\" where httpd_site=? limit 1) is not null", httpdSitePKey)) {
-			// web/tomcat.TomcatContextDataSource
-			IntList htdss=conn.executeIntListQuery("select htds.pkey from \"web/tomcat\".\"TomcatContext\" htc, \"web/tomcat\".\"TomcatContextDataSource\" htds where htc.tomcat_site=? and htc.pkey=htds.tomcat_context", httpdSitePKey);
+		// web/tomcat.Site
+		if(conn.executeBooleanQuery("select (select httpd_site from \"web/tomcat\".\"Site\" where httpd_site=? limit 1) is not null", httpdSitePKey)) {
+			// web/tomcat.ContextDataSource
+			IntList htdss=conn.executeIntListQuery("select htds.pkey from \"web/tomcat\".\"Context\" htc, \"web/tomcat\".\"ContextDataSource\" htds where htc.tomcat_site=? and htc.pkey=htds.tomcat_context", httpdSitePKey);
 			if(htdss.size() > 0) {
 				for(int c=0;c<htdss.size();c++) {
-					conn.executeUpdate("delete from \"web/tomcat\".\"TomcatContextDataSource\" where pkey=?", htdss.getInt(c));
+					conn.executeUpdate("delete from \"web/tomcat\".\"ContextDataSource\" where pkey=?", htdss.getInt(c));
 				}
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES, accounting, aoServer, false);
 			}
 
-			// web/tomcat.TomcatContextParameter
-			IntList htps=conn.executeIntListQuery("select htp.pkey from \"web/tomcat\".\"TomcatContext\" htc, \"web/tomcat\".\"TomcatContextParameter\" htp where htc.tomcat_site=? and htc.pkey=htp.tomcat_context", httpdSitePKey);
+			// web/tomcat.ContextParameter
+			IntList htps=conn.executeIntListQuery("select htp.pkey from \"web/tomcat\".\"Context\" htc, \"web/tomcat\".\"ContextParameter\" htp where htc.tomcat_site=? and htc.pkey=htp.tomcat_context", httpdSitePKey);
 			if(htps.size() > 0) {
 				for(int c=0;c<htps.size();c++) {
-					conn.executeUpdate("delete from \"web/tomcat\".\"TomcatContextParameter\" where pkey=?", htps.getInt(c));
+					conn.executeUpdate("delete from \"web/tomcat\".\"ContextParameter\" where pkey=?", htps.getInt(c));
 				}
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS, accounting, aoServer, false);
 			}
 
-			// web/tomcat.TomcatContext
-			IntList htcs=conn.executeIntListQuery("select pkey from \"web/tomcat\".\"TomcatContext\" where tomcat_site=?", httpdSitePKey);
+			// web/tomcat.Context
+			IntList htcs=conn.executeIntListQuery("select pkey from \"web/tomcat\".\"Context\" where tomcat_site=?", httpdSitePKey);
 			if(htcs.size() > 0) {
 				for(int c=0;c<htcs.size();c++) {
-					conn.executeUpdate("delete from \"web/tomcat\".\"TomcatContext\" where pkey=?", htcs.getInt(c));
+					conn.executeUpdate("delete from \"web/tomcat\".\"Context\" where pkey=?", htcs.getInt(c));
 				}
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, aoServer, false);
 			}
 
-			// web/tomcat.TomcatWorker
-			IntList httpdWorkers = conn.executeIntListQuery("select bind from \"web/tomcat\".\"TomcatWorker\" where \"tomcatSite\"=?", httpdSitePKey);
+			// web/tomcat.Worker
+			IntList httpdWorkers = conn.executeIntListQuery("select bind from \"web/tomcat\".\"Worker\" where \"tomcatSite\"=?", httpdSitePKey);
 			if(httpdWorkers.size() > 0) {
 				for(int c=0;c<httpdWorkers.size();c++) {
 					int bind = httpdWorkers.getInt(c);
-					conn.executeUpdate("delete from \"web/tomcat\".\"TomcatWorker\" where bind=?", bind);
+					conn.executeUpdate("delete from \"web/tomcat\".\"Worker\" where bind=?", bind);
 					NetBindHandler.removeNetBind(conn, invalidateList, bind);
 				}
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_WORKERS, accounting, aoServer, false);
@@ -2684,7 +2684,7 @@ final public class HttpdHandler {
 				NetBindHandler.removeNetBind(conn, invalidateList, jmx_bind);
 			}
 
-			conn.executeUpdate("delete from \"web/tomcat\".\"TomcatSite\" where httpd_site=?", httpdSitePKey);
+			conn.executeUpdate("delete from \"web/tomcat\".\"Site\" where httpd_site=?", httpdSitePKey);
 			invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITES, accounting, aoServer, false);
 		}
 
@@ -2771,15 +2771,15 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int pkey
 	) throws IOException, SQLException {
-		int tomcat_site = conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"TomcatContext\" where pkey=?", pkey);
+		int tomcat_site = conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"Context\" where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatContext", tomcat_site);
-		String path = conn.executeStringQuery("select path from \"web/tomcat\".\"TomcatContext\" where pkey=?", pkey);
+		String path = conn.executeStringQuery("select path from \"web/tomcat\".\"Context\" where pkey=?", pkey);
 		if(path.isEmpty()) throw new SQLException("Not allowed to remove the default context: " + pkey);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
-		if(conn.executeUpdate("delete from \"web/tomcat\".\"TomcatContextDataSource\" where tomcat_context=?", pkey) > 0) {
+		if(conn.executeUpdate("delete from \"web/tomcat\".\"ContextDataSource\" where tomcat_context=?", pkey) > 0) {
 			invalidateList.addTable(
 				conn,
 				SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES,
@@ -2789,7 +2789,7 @@ final public class HttpdHandler {
 			);
 		}
 
-		if(conn.executeUpdate("delete from \"web/tomcat\".\"TomcatContextParameter\" where tomcat_context=?", pkey) > 0) {
+		if(conn.executeUpdate("delete from \"web/tomcat\".\"ContextParameter\" where tomcat_context=?", pkey) > 0) {
 			invalidateList.addTable(
 				conn,
 				SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS,
@@ -2799,7 +2799,7 @@ final public class HttpdHandler {
 			);
 		}
 
-		conn.executeUpdate("delete from \"web/tomcat\".\"TomcatContext\" where pkey=?", pkey);
+		conn.executeUpdate("delete from \"web/tomcat\".\"Context\" where pkey=?", pkey);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_TOMCAT_CONTEXTS,
@@ -2810,7 +2810,7 @@ final public class HttpdHandler {
 
 		if(
 			conn.executeUpdate(
-				"delete from \"web/tomcat\".\"TomcatJkMount\" where httpd_tomcat_site=? and substring(path from 1 for ?)=?",
+				"delete from \"web/tomcat\".\"JkMount\" where httpd_tomcat_site=? and substring(path from 1 for ?)=?",
 				tomcat_site,
 				path.length() + 1,
 				path + '/'
@@ -2832,14 +2832,14 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int pkey
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web/tomcat\".\"TomcatContextDataSource\" where pkey=?", pkey);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"TomcatContext\" where pkey=?", tomcat_context);
+		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web/tomcat\".\"ContextDataSource\" where pkey=?", pkey);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"Context\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatDataSource", tomcat_site);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
-		conn.executeUpdate("delete from \"web/tomcat\".\"TomcatContextDataSource\" where pkey=?", pkey);
+		conn.executeUpdate("delete from \"web/tomcat\".\"ContextDataSource\" where pkey=?", pkey);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_TOMCAT_DATA_SOURCES,
@@ -2855,14 +2855,14 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int pkey
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web/tomcat\".\"TomcatContextParameter\" where pkey=?", pkey);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"TomcatContext\" where pkey=?", tomcat_context);
+		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web/tomcat\".\"ContextParameter\" where pkey=?", pkey);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"Context\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatParameter", tomcat_site);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
-		conn.executeUpdate("delete from \"web/tomcat\".\"TomcatContextParameter\" where pkey=?", pkey);
+		conn.executeUpdate("delete from \"web/tomcat\".\"ContextParameter\" where pkey=?", pkey);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.HTTPD_TOMCAT_PARAMETERS,
@@ -2887,15 +2887,15 @@ final public class HttpdHandler {
 		int maxWait,
 		String validationQuery
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web/tomcat\".\"TomcatContextDataSource\" where pkey=?", pkey);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"TomcatContext\" where pkey=?", tomcat_context);
+		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web/tomcat\".\"ContextDataSource\" where pkey=?", pkey);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"Context\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "updateHttpdTomcatDataSource", tomcat_site);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
 		conn.executeUpdate(
-			"update \"web/tomcat\".\"TomcatContextDataSource\" set name=?, driver_class_name=?, url=?, username=?, password=?, max_active=?, max_idle=?, max_wait=?, validation_query=? where pkey=?",
+			"update \"web/tomcat\".\"ContextDataSource\" set name=?, driver_class_name=?, url=?, username=?, password=?, max_active=?, max_idle=?, max_wait=?, validation_query=? where pkey=?",
 			name,
 			driverClassName,
 			url,
@@ -2926,15 +2926,15 @@ final public class HttpdHandler {
 		boolean override,
 		String description
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web/tomcat\".\"TomcatContextParameter\" where pkey=?", pkey);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"TomcatContext\" where pkey=?", tomcat_context);
+		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web/tomcat\".\"ContextParameter\" where pkey=?", pkey);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"Context\" where pkey=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "updateHttpdTomcatParameter", tomcat_site);
 
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
 		conn.executeUpdate(
-			"update \"web/tomcat\".\"TomcatContextParameter\" set name=?, value=?, override=?, description=? where pkey=?",
+			"update \"web/tomcat\".\"ContextParameter\" set name=?, value=?, override=?, description=? where pkey=?",
 			name,
 			value,
 			override,
@@ -3099,7 +3099,7 @@ final public class HttpdHandler {
 				"select\n"
 				+ "  tv.version\n"
 				+ "from\n"
-				+ "  \"web/tomcat\".\"TomcatVersion\" htv\n"
+				+ "  \"web/tomcat\".\"Version\" htv\n"
 				+ "  inner join distribution.\"SoftwareVersion\" tv on htv.version=tv.pkey\n"
 				+ "where htv.version=?",
 				version
@@ -3128,9 +3128,9 @@ final public class HttpdHandler {
 			pkey
 		);
 		// TODO: Update the context paths to an webapps in /opt/apache-tomcat.../webpaps to the new version
-		// TODO: See web/tomcat.TomcatVersion table
+		// TODO: See web/tomcat.Version table
 		conn.executeUpdate(
-			"update \"web/tomcat\".\"TomcatSite\" set version=? where httpd_site in (\n"
+			"update \"web/tomcat\".\"Site\" set version=? where httpd_site in (\n"
 			+ "  select tomcat_site from \"web/tomcat\".\"SharedTomcatSite\" where httpd_shared_tomcat=?\n"
 			+ ")",
 			version,
@@ -3422,7 +3422,7 @@ final public class HttpdHandler {
 
 			boolean useApache = conn.executeBooleanQuery(
 				"select (\n"
-				+ "  select pkey from \"web/tomcat\".\"TomcatJkMount\"\n"
+				+ "  select pkey from \"web/tomcat\".\"JkMount\"\n"
 				+ "  where (httpd_tomcat_site, path)=(?, '/*')\n"
 				+ ") is null",
 				pkey
@@ -3453,7 +3453,7 @@ final public class HttpdHandler {
 				if(
 					conn.executeBooleanQuery(
 						"select (\n"
-						+ "  select pkey from \"web/tomcat\".\"TomcatJkMount\"\n"
+						+ "  select pkey from \"web/tomcat\".\"JkMount\"\n"
 						+ "  where (httpd_tomcat_site, path)=(?, '/*.php')\n"
 						+ ") is null",
 						pkey
@@ -3461,7 +3461,7 @@ final public class HttpdHandler {
 				) {
 					// Add /*.php to JkUnMounts
 					conn.executeUpdate(
-						"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
+						"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
 						pkey
 					);
 					invalidateList.addTable(
@@ -3476,7 +3476,7 @@ final public class HttpdHandler {
 				// Remove /*.php from JkUnMounts
 				if(
 					conn.executeUpdate(
-						"delete from \"web/tomcat\".\"TomcatJkMount\" where (httpd_tomcat_site, path, mount)=(?,'/*.php',FALSE)",
+						"delete from \"web/tomcat\".\"JkMount\" where (httpd_tomcat_site, path, mount)=(?,'/*.php',FALSE)",
 						pkey
 					) > 0
 				) {
@@ -3524,20 +3524,20 @@ final public class HttpdHandler {
 				aoServer,
 				false
 			);
-			List<String> paths = conn.executeStringListQuery("select path from \"web/tomcat\".\"TomcatContext\" where tomcat_site=?", pkey);
+			List<String> paths = conn.executeStringListQuery("select path from \"web/tomcat\".\"Context\" where tomcat_site=?", pkey);
 			if(!paths.isEmpty()) {
 				for(String path : paths) {
 					if(enableCgi) {
 						// Add /cgi-bin to JkUnMounts
 						conn.executeUpdate(
-							"insert into \"web/tomcat\".\"TomcatJkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
+							"insert into \"web/tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
 							pkey,
 							checkJkMountPath(path + "/cgi-bin/*")
 						);
 					} else {
 						// Remove /cgi-bin from JkUnMounts
 						conn.executeUpdate(
-							"delete from \"web/tomcat\".\"TomcatJkMount\" where (httpd_tomcat_site, path, mount)=(?,?,FALSE)",
+							"delete from \"web/tomcat\".\"JkMount\" where (httpd_tomcat_site, path, mount)=(?,?,FALSE)",
 							pkey,
 							checkJkMountPath(path + "/cgi-bin/*")
 						);
@@ -3799,7 +3799,7 @@ final public class HttpdHandler {
 		UnixPath workDir,
 		boolean serverXmlConfigured
 	) throws IOException, SQLException {
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"TomcatContext\" where pkey=?", pkey);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web/tomcat\".\"Context\" where pkey=?", pkey);
 		checkAccessHttpdSite(conn, source, "setHttpdTomcatContextAttributes", tomcat_site);
 		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to set HttpdTomcatContext attributes, HttpdSite disabled: "+tomcat_site);
 		checkHttpdTomcatContext(
@@ -3820,12 +3820,12 @@ final public class HttpdHandler {
 		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
-		String oldPath=conn.executeStringQuery("select path from \"web/tomcat\".\"TomcatContext\" where pkey=?", pkey);
+		String oldPath=conn.executeStringQuery("select path from \"web/tomcat\".\"Context\" where pkey=?", pkey);
 		if(oldPath.length()==0 && path.length() > 0) throw new SQLException("Not allowed to change the path of the default context: "+path);
 
 		try (PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
 			"update\n"
-			+ "  \"web/tomcat\".\"TomcatContext\"\n"
+			+ "  \"web/tomcat\".\"Context\"\n"
 			+ "set\n"
 			+ "  class_name=?,\n"
 			+ "  cookies=?,\n"
@@ -3869,7 +3869,7 @@ final public class HttpdHandler {
 		if(
 			!path.equals(oldPath)
 			&& conn.executeUpdate(
-				"update \"web/tomcat\".\"TomcatJkMount\"\n"
+				"update \"web/tomcat\".\"JkMount\"\n"
 				+ "set path = ? || substring(path from ?)\n"
 				+ "where httpd_tomcat_site=? and substring(path from 1 for ?)=?",
 				path,
@@ -3993,7 +3993,7 @@ final public class HttpdHandler {
 				+ "  tv.version\n"
 				+ "from\n"
 				+ "  \"web/tomcat\".\"PrivateTomcatSite\" htss\n"
-				+ "  inner join \"web/tomcat\".\"TomcatSite\" hts on htss.tomcat_site=hts.httpd_site\n"
+				+ "  inner join \"web/tomcat\".\"Site\" hts on htss.tomcat_site=hts.httpd_site\n"
 				+ "  inner join distribution.\"SoftwareVersion\" tv on hts.version=tv.pkey\n"
 				+ "where htss.tomcat_site=?",
 				pkey
@@ -4004,7 +4004,7 @@ final public class HttpdHandler {
 				"select\n"
 				+ "  tv.version\n"
 				+ "from\n"
-				+ "  \"web/tomcat\".\"TomcatVersion\" htv\n"
+				+ "  \"web/tomcat\".\"Version\" htv\n"
 				+ "  inner join distribution.\"SoftwareVersion\" tv on htv.version=tv.pkey\n"
 				+ "where htv.version=?",
 				version
@@ -4028,9 +4028,9 @@ final public class HttpdHandler {
 
 		// Update the database
 		// TODO: Update the context paths to an webapps in /opt/apache-tomcat.../webpaps to the new version
-		// TODO: See web/tomcat.TomcatVersion table (might shared with the same code above)
+		// TODO: See web/tomcat.Version table (might shared with the same code above)
 		conn.executeUpdate(
-			"update \"web/tomcat\".\"TomcatSite\" set version=? where httpd_site=?",
+			"update \"web/tomcat\".\"Site\" set version=? where httpd_site=?",
 			version,
 			pkey
 		);
@@ -4075,7 +4075,7 @@ final public class HttpdHandler {
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
-			"update \"web/tomcat\".\"TomcatSite\" set block_webinf=? where httpd_site=?",
+			"update \"web/tomcat\".\"Site\" set block_webinf=? where httpd_site=?",
 			blockWebinf,
 			pkey
 		);

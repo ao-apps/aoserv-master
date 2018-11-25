@@ -460,7 +460,7 @@ final public class DNSHandler implements CronJob {
 		//       If in this domain, sets up SPF like below.  If outside this domain (ends in .),
 		//       sets up MX to the mail exchanger, and CNAME "mail" to the mail exchanger.
 
-		// TODO: Take nameservers from brands
+		// TODO: Take nameservers from reseller.Brand
 
 		String aType;
 		switch(ip.getAddressFamily()) {

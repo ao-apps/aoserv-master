@@ -333,7 +333,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  br.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  backup.\"BackupReport\" br\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -565,7 +565,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  sdh.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  linux.\"ServerDaemonHost\" sdh\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -641,7 +641,7 @@ final public class TableHandler {
 						+ "  ao2.\"gidMin\",\n"
 						+ "  ao2.sftp_umask\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join linux.\"Server\" ao on ms.server=ao.server\n"
 						// Allow its failover parent
 						+ "  left join linux.\"Server\" ff on ao.failover_server=ff.server\n"
@@ -697,7 +697,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
@@ -793,7 +793,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  bp.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  backup.\"BackupPartition\" bp\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -824,7 +824,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					+ "  backup.\"BackupPartition\" bp\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -866,7 +866,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  br.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  backup.\"BackupReport\" br\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -999,7 +999,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  bh.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"Domain\" ed,\n"
 						+ "  email.\"Address\" ea,\n"
 						+ "  email.\"BlackholeAddress\" bh\n"
@@ -1049,7 +1049,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new Brand(),
-							"select * from brands"
+							"select * from reseller.\"Brand\""
 						);
 					} else {
 						// Limited access to its own brand only
@@ -1102,7 +1102,7 @@ final public class TableHandler {
 							+ "from\n"
 							+ "  account.\"Username\" un,\n"
 							+ "  billing.\"Package\" pk,\n"
-							+ "  brands br\n"
+							+ "  reseller.\"Brand\" br\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk.name\n"
@@ -1123,7 +1123,7 @@ final public class TableHandler {
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ BU1_PARENTS_JOIN
-						+ "  brands br\n"
+						+ "  reseller.\"Brand\" br\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk.name\n"
@@ -1174,8 +1174,8 @@ final public class TableHandler {
 						+ "  ba.can_switch_users,\n"
 						+ "  null\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
 						+ "  account.\"Administrator\" ba\n"
@@ -1257,8 +1257,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  bp.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
 						+ "  master.\"AdministratorPermission\" bp\n"
@@ -1317,8 +1317,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  bp.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  account.\"Profile\" bp\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -1358,7 +1358,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new BusinessServer(),
-						"select * from business_servers"
+						"select * from server.\"AccountServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -1368,8 +1368,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  bs.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=bs.server",
@@ -1387,7 +1387,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
 					+ BU1_PARENTS_JOIN
-					+ "  business_servers bs\n"
+					+ "  server.\"AccountServer\" bs\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -1417,8 +1417,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  bu.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  account.\"Account\" bu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -1595,7 +1595,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new CvsRepository(),
-						"select * from cvs_repositories"
+						"select * from scm.\"CvsRepository\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -1605,9 +1605,9 @@ final public class TableHandler {
 						"select\n"
 						+ "  cr.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  linux.\"UserServer\" lsa,\n"
-						+ "  cvs_repositories cr\n"
+						+ "  scm.\"CvsRepository\" cr\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=lsa.ao_server\n"
@@ -1629,7 +1629,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
 					+ "  linux.\"UserServer\" lsa,\n"
-					+ "  cvs_repositories cr\n"
+					+ "  scm.\"CvsRepository\" cr\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"
@@ -1662,7 +1662,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  cib.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join net.\"Bind\" nb on ms.server=nb.server\n"
 						+ "  inner join email.\"CyrusImapdBind\" cib on nb.pkey=cib.net_bind\n"
 						+ "where\n"
@@ -1715,7 +1715,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  cis.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join email.\"CyrusImapdServer\" cis on ms.server=cis.ao_server\n"
 						+ "where\n"
 						+ "  ms.username=?",
@@ -1732,7 +1732,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un\n"
 					+ "  inner join billing.\"Package\"        pk  on un.package    = pk.name\n"
-					+ "  inner join business_servers           bs  on pk.accounting = bs.accounting\n"
+					+ "  inner join server.\"AccountServer\"   bs  on pk.accounting = bs.accounting\n"
 					+ "  inner join email.\"CyrusImapdServer\" cis on bs.server     = cis.ao_server\n"
 					+ "where\n"
 					+ "  un.username=?",
@@ -1758,10 +1758,10 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  dl.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  linux.\"Server\" ao\n"
 						+ "  left join linux.\"Server\" ff on ao.server=ff.failover_server,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  account.\"DisableLog\" dl\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -1990,7 +1990,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ea.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"Domain\" ed,\n"
 						+ "  email.\"Address\" ea\n"
 						+ "where\n"
@@ -2045,7 +2045,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  eab.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  linux.\"UserServer\" lsa,\n"
 						+ "  email.\"AttachmentBlocks\" eab\n"
 						+ "where\n"
@@ -2112,7 +2112,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ef.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"Domain\" ed,\n"
 						+ "  email.\"Address\" ea,\n"
 						+ "  email.\"Forwarding\" ef\n"
@@ -2171,7 +2171,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ela.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"Domain\" ed,\n"
 						+ "  email.\"Address\" ea,\n"
 						+ "  email.\"ListAddress\" ela\n"
@@ -2230,7 +2230,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  el.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  linux.\"GroupServer\" lsg,\n"
 						+ "  email.\"List\" el\n"
 						+ "where\n"
@@ -2287,7 +2287,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  epa.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"Domain\" ed,\n"
 						+ "  email.\"Address\" ea,\n"
 						+ "  email.\"PipeAddress\" epa\n"
@@ -2346,7 +2346,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ep.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"Pipe\" ep\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -2463,7 +2463,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ffl.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  backup.\"FileReplication\" ffr,\n"
 						+ "  backup.\"FileReplicationLog\" ffl\n"
 						+ "where\n"
@@ -2483,7 +2483,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					+ "  backup.\"FileReplication\" ffr,\n"
 					+ "  backup.\"FileReplicationLog\" ffl\n"
 					+ "where\n"
@@ -2535,7 +2535,7 @@ final public class TableHandler {
 						+ "  ffr.enabled,\n"
 						+ "  ffr.quota_gid\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  backup.\"FileReplication\" ffr\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -2562,7 +2562,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					+ "  backup.\"FileReplication\" ffr\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -2591,7 +2591,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ffs.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  backup.\"FileReplication\" ffr,\n"
 						+ "  backup.\"FileReplicationSchedule\" ffs\n"
 						+ "where\n"
@@ -2611,7 +2611,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					+ "  backup.\"FileReplication\" ffr,\n"
 					+ "  backup.\"FileReplicationSchedule\" ffs\n"
 					+ "where\n"
@@ -2642,7 +2642,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  fmr.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  backup.\"FileReplication\" ffr,\n"
 						+ "  backup.\"MysqlReplication\" fmr\n"
 						+ "where\n"
@@ -2670,7 +2670,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					+ "  backup.\"FileReplication\" ffr,\n"
 					+ "  backup.\"MysqlReplication\" fmr\n"
 					+ "where\n"
@@ -2709,7 +2709,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  fbs.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  backup.\"FileReplication\" ffr,\n"
 						+ "  backup.\"FileReplicationSetting\" fbs\n"
 						+ "where\n"
@@ -2731,7 +2731,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  servers se,\n"
+					+ "  server.\"Server\" se,\n"
 					+ "  backup.\"FileReplication\" ffr,\n"
 					+ "  backup.\"FileReplicationSetting\" fbs\n"
 					+ "where\n"
@@ -2766,7 +2766,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  fz.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  net.\"FirewallZone\" fz\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -2784,7 +2784,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					+ "  net.\"FirewallZone\" fz\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -2813,8 +2813,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  fgu.username\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
 						+ "  ftp.\"GuestUser\" fgu\n"
@@ -2872,7 +2872,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  hb.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  net.\"Bind\" nb,\n"
 						+ "  web.\"HttpdBind\" hb\n"
 						+ "where\n"
@@ -2941,7 +2941,7 @@ final public class TableHandler {
 							"select\n"
 							+ "  hjs.*\n"
 							+ "from\n"
-							+ "  master_servers ms,\n"
+							+ "  server.\"MasterServer\" ms,\n"
 							+ "  web.\"Site\" hs,\n"
 							+ "  \"web/jboss\".\"Site\" hjs\n"
 							+ "where\n"
@@ -2995,7 +2995,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new HttpdJKCode(),
-					"select * from \"web/tomcat\".\"TomcatWorkerName\""
+					"select * from \"web/tomcat\".\"WorkerName\""
 				);
 				break;
 			case HTTPD_JK_PROTOCOLS :
@@ -3005,7 +3005,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new HttpdJKProtocol(),
-					"select * from \"web/tomcat\".\"TomcatJkProtocol\""
+					"select * from \"web/tomcat\".\"JkProtocol\""
 				);
 				break;
 			case HTTPD_SERVERS :
@@ -3027,7 +3027,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  hs.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"HttpdServer\" hs\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3046,7 +3046,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  web.\"HttpdServer\" hs\n"
 						+ "where\n"
 						+ "  un.username=?\n"
@@ -3076,7 +3076,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  hst.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  \"web/tomcat\".\"SharedTomcat\" hst\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3131,7 +3131,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  hsal.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  web.\"Location\" hsal\n"
 						+ "where\n"
@@ -3186,7 +3186,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  hsbh.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  web.\"VirtualHost\" hsb,\n"
 						+ "  web.\"Header\" hsbh\n"
@@ -3245,7 +3245,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  hsbr.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  web.\"VirtualHost\" hsb,\n"
 						+ "  web.\"Redirect\" hsbr\n"
@@ -3317,7 +3317,7 @@ final public class TableHandler {
 						+ "  sc.key_file   as ssl_cert_key_file,\n"
 						+ "  sc.chain_file as ssl_cert_chain_file\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  web.\"VirtualHost\" hsb\n"
 						// Protocol conversion
@@ -3380,7 +3380,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  hsu.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  web.\"VirtualHost\" hsb,\n"
 						+ "  web.\"VirtualHostName\" hsu\n"
@@ -3439,7 +3439,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  hs.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -3490,7 +3490,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  hss.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  web.\"StaticSite\" hss\n"
 						+ "where\n"
@@ -3535,7 +3535,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatContext(),
-						"select * from \"web/tomcat\".\"TomcatContext\""
+						"select * from \"web/tomcat\".\"Context\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3545,9 +3545,9 @@ final public class TableHandler {
 						"select\n"
 						+ "  htc.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"TomcatContext\" htc\n"
+						+ "  \"web/tomcat\".\"Context\" htc\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3568,7 +3568,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"TomcatContext\" htc\n"
+					+ "  \"web/tomcat\".\"Context\" htc\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3590,7 +3590,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatDataSource(),
-						"select * from \"web/tomcat\".\"TomcatContextDataSource\""
+						"select * from \"web/tomcat\".\"ContextDataSource\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3600,10 +3600,10 @@ final public class TableHandler {
 						"select\n"
 						+ "  htds.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"TomcatContext\" htc,\n"
-						+ "  \"web/tomcat\".\"TomcatContextDataSource\" htds\n"
+						+ "  \"web/tomcat\".\"Context\" htc,\n"
+						+ "  \"web/tomcat\".\"ContextDataSource\" htds\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3625,8 +3625,8 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"TomcatContext\" htc,\n"
-					+ "  \"web/tomcat\".\"TomcatContextDataSource\" htds\n"
+					+ "  \"web/tomcat\".\"Context\" htc,\n"
+					+ "  \"web/tomcat\".\"ContextDataSource\" htds\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3649,7 +3649,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatParameter(),
-						"select * from \"web/tomcat\".\"TomcatContextParameter\""
+						"select * from \"web/tomcat\".\"ContextParameter\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3659,10 +3659,10 @@ final public class TableHandler {
 						"select\n"
 						+ "  htp.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"TomcatContext\" htc,\n"
-						+ "  \"web/tomcat\".\"TomcatContextParameter\" htp\n"
+						+ "  \"web/tomcat\".\"Context\" htc,\n"
+						+ "  \"web/tomcat\".\"ContextParameter\" htp\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3684,8 +3684,8 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"TomcatContext\" htc,\n"
-					+ "  \"web/tomcat\".\"TomcatContextParameter\" htp\n"
+					+ "  \"web/tomcat\".\"Context\" htc,\n"
+					+ "  \"web/tomcat\".\"ContextParameter\" htp\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3708,7 +3708,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatSiteJkMount(),
-						"select * from \"web/tomcat\".\"TomcatJkMount\""
+						"select * from \"web/tomcat\".\"JkMount\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3718,9 +3718,9 @@ final public class TableHandler {
 						"select\n"
 						+ "  htsjm.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"TomcatJkMount\" htsjm\n"
+						+ "  \"web/tomcat\".\"JkMount\" htsjm\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3741,7 +3741,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"TomcatJkMount\" htsjm\n"
+					+ "  \"web/tomcat\".\"JkMount\" htsjm\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3766,11 +3766,11 @@ final public class TableHandler {
 						"select\n"
 						+ "  hts.*,\n"
 						+ "  (\n"
-						+ "    select htsjm.pkey from \"web/tomcat\".\"TomcatJkMount\" htsjm\n"
+						+ "    select htsjm.pkey from \"web/tomcat\".\"JkMount\" htsjm\n"
 						+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
 						+ "  ) is null as use_apache\n"
 						+ "from\n"
-						+ "  \"web/tomcat\".\"TomcatSite\" hts"
+						+ "  \"web/tomcat\".\"Site\" hts"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3780,13 +3780,13 @@ final public class TableHandler {
 						"select\n"
 						+ "  hts.*,\n"
 						+ "  (\n"
-						+ "    select htsjm.pkey from \"web/tomcat\".\"TomcatJkMount\" htsjm\n"
+						+ "    select htsjm.pkey from \"web/tomcat\".\"JkMount\" htsjm\n"
 						+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
 						+ "  ) is null as use_apache\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"TomcatSite\" hts\n"
+						+ "  \"web/tomcat\".\"Site\" hts\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3802,7 +3802,7 @@ final public class TableHandler {
 					"select\n"
 					+ "  hts.*,\n"
 					+ "  (\n"
-					+ "    select htsjm.pkey from \"web/tomcat\".\"TomcatJkMount\" htsjm\n"
+					+ "    select htsjm.pkey from \"web/tomcat\".\"JkMount\" htsjm\n"
 					+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
 					+ "  ) is null as use_apache\n"
 					+ "from\n"
@@ -3811,7 +3811,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"TomcatSite\" hts\n"
+					+ "  \"web/tomcat\".\"Site\" hts\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3843,7 +3843,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  htss.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  \"web/tomcat\".\"SharedTomcatSite\" htss\n"
 						+ "where\n"
@@ -3898,7 +3898,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  htss.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
 						+ "  \"web/tomcat\".\"PrivateTomcatSite\" htss\n"
 						+ "where\n"
@@ -3941,7 +3941,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new HttpdTomcatVersion(),
-					"select * from \"web/tomcat\".\"TomcatVersion\""
+					"select * from \"web/tomcat\".\"Version\""
 				);
 				break;
 			// <editor-fold defaultstate="collapsed" desc="Httpd Workers">
@@ -3960,7 +3960,7 @@ final public class TableHandler {
 						+ "  bind as net_bind,\n"
 						+ "  \"tomcatSite\" as tomcat_site\n"
 						+ "from\n"
-						+ "  \"web/tomcat\".\"TomcatWorker\""
+						+ "  \"web/tomcat\".\"Worker\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3973,9 +3973,9 @@ final public class TableHandler {
 						+ "  hw.bind as net_bind,\n"
 						+ "  hw.\"tomcatSite\" as tomcat_site\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  net.\"Bind\" nb,\n"
-						+ "  \"web/tomcat\".\"TomcatWorker\" hw\n"
+						+ "  \"web/tomcat\".\"Worker\" hw\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=nb.server\n"
@@ -3999,7 +3999,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  net.\"Bind\" nb,\n"
-					+ "  \"web/tomcat\".\"TomcatWorker\" hw\n"
+					+ "  \"web/tomcat\".\"Worker\" hw\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -4072,7 +4072,7 @@ final public class TableHandler {
 						+ "    select\n"
 						+ "      ia2.id\n"
 						+ "    from\n"
-						+ "      master_servers ms\n"
+						+ "      server.\"MasterServer\" ms\n"
 						+ "      left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "      net.\"Device\" nd\n"
 						+ "      right outer join net.\"IpAddress\" ia2 on nd.pkey=ia2.\"netDevice\"\n"
@@ -4173,7 +4173,7 @@ final public class TableHandler {
 						+ "    from\n"
 						+ "      account.\"Username\" un5,\n"
 						+ "      billing.\"Package\" pk5,\n"
-						+ "      business_servers bs5,\n"
+						+ "      server.\"AccountServer\" bs5,\n"
 						+ "      net.\"Device\" nd5,\n"
 						+ "      net.\"IpAddress\" ia5\n"
 						+ "    where\n"
@@ -4189,7 +4189,7 @@ final public class TableHandler {
 						+ "    from\n"
 						+ "      account.\"Username\" un6,\n"
 						+ "      billing.\"Package\" pk6,\n"
-						+ "      business_servers bs6,\n"
+						+ "      server.\"AccountServer\" bs6,\n"
 						+ "      backup.\"FileReplication\" ffr6,\n"
 						+ "      backup.\"BackupPartition\" bp6,\n"
 						+ "      linux.\"Server\" ao6,\n"
@@ -4238,9 +4238,9 @@ final public class TableHandler {
 							"select distinct\n"
 							+ "  irll.*\n"
 							+ "from\n"
-							+ "  master_servers ms\n"
-							+ "  inner join servers se on ms.server=se.pkey\n"                                   // Find all servers can access
-							+ "  inner join servers se2 on se.farm=se2.farm\n"                                   // Find all servers in the same farm
+							+ "  server.\"MasterServer\" ms\n"
+							+ "  inner join server.\"Server\" se on ms.server=se.pkey\n"                         // Find all servers can access
+							+ "  inner join server.\"Server\" se2 on se.farm=se2.farm\n"                         // Find all servers in the same farm
 							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"                           // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\" irl on nd.pkey=irl.net_device\n"      // Find all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"LimiterClass\" irll on irl.pkey=irll.limiter\n" // Find all limiters limits in the same farm
@@ -4266,7 +4266,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "             account.\"Username\"                un\n"
 						+ "  inner join billing.\"Package\"                 pk   on  un.package    =   pk.name\n"
-						+ "  inner join business_servers                    bs   on  pk.accounting =   bs.accounting\n"
+						+ "  inner join server.\"AccountServer\"            bs   on  pk.accounting =   bs.accounting\n"
 						+ "  inner join net.\"Device\"                      nd   on  bs.server     =   nd.server\n"
 						+ "  inner join \"net/reputation\".\"Limiter\"      irl  on  nd.pkey       =  irl.net_device\n"
 						+ "  inner join \"net/reputation\".\"LimiterClass\" irll on irl.pkey       = irll.limiter\n"
@@ -4302,9 +4302,9 @@ final public class TableHandler {
 							"select distinct\n"
 							+ "  irls.*\n"
 							+ "from\n"
-							+ "  master_servers ms\n"
-							+ "  inner join servers se on ms.server=se.pkey\n"                                 // Find all servers can access
-							+ "  inner join servers se2 on se.farm=se2.farm\n"                                 // Find all servers in the same farm
+							+ "  server.\"MasterServer\" ms\n"
+							+ "  inner join server.\"Server\" se on ms.server=se.pkey\n"                       // Find all servers can access
+							+ "  inner join server.\"Server\" se2 on se.farm=se2.farm\n"                       // Find all servers in the same farm
 							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"                         // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\" irl on nd.pkey=irl.net_device\n"    // Find all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.pkey=irls.limiter\n" // Find all limiters sets in the same farm
@@ -4330,7 +4330,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "             account.\"Username\"              un\n"
 						+ "  inner join billing.\"Package\"               pk   on  un.package    =   pk.name\n"
-						+ "  inner join business_servers                  bs   on  pk.accounting =   bs.accounting\n"
+						+ "  inner join server.\"AccountServer\"          bs   on  pk.accounting =   bs.accounting\n"
 						+ "  inner join net.\"Device\"                    nd   on  bs.server     =   nd.server\n"
 						+ "  inner join \"net/reputation\".\"Limiter\"    irl  on  nd.pkey       =  irl.net_device\n"
 						+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.pkey       = irls.limiter\n"
@@ -4366,9 +4366,9 @@ final public class TableHandler {
 							"select distinct\n"
 							+ "  irl.*\n"
 							+ "from\n"
-							+ "  master_servers ms\n"
-							+ "  inner join servers se on ms.server=se.pkey\n"                              // Find all servers can access
-							+ "  inner join servers se2 on se.farm=se2.farm\n"                              // Find all servers in the same farm
+							+ "  server.\"MasterServer\" ms\n"
+							+ "  inner join server.\"Server\" se on ms.server=se.pkey\n"                    // Find all servers can access
+							+ "  inner join server.\"Server\" se2 on se.farm=se2.farm\n"                    // Find all servers in the same farm
 							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"                      // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\" irl on nd.pkey=irl.net_device\n" // Find all limiters in the same farm
 							+ "where\n"
@@ -4393,7 +4393,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "             account.\"Username\"           un\n"
 						+ "  inner join billing.\"Package\"            pk  on un.package    =  pk.name\n"
-						+ "  inner join business_servers               bs  on pk.accounting =  bs.accounting\n"
+						+ "  inner join server.\"AccountServer\"       bs  on pk.accounting =  bs.accounting\n"
 						+ "  inner join net.\"Device\"                 nd  on bs.server     =  nd.server\n"
 						+ "  inner join \"net/reputation\".\"Limiter\" irl on nd.pkey       = irl.net_device\n"
 						+ "where\n"
@@ -4428,9 +4428,9 @@ final public class TableHandler {
 							"select distinct\n"
 							+ "  irsh.*\n"
 							+ "from\n"
-							+ "  master_servers ms\n"
-							+ "  inner join servers                           se   on ms.server     = se.pkey\n"        // Find all servers can access
-							+ "  inner join servers                           se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+							+ "  server.\"MasterServer\" ms\n"
+							+ "  inner join server.\"Server\"                 se   on ms.server     = se.pkey\n"        // Find all servers can access
+							+ "  inner join server.\"Server\"                 se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
 							+ "  inner join net.\"Device\"                    nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\"    irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
@@ -4499,9 +4499,9 @@ final public class TableHandler {
 							"select distinct\n"
 							+ "  irsn.*\n"
 							+ "from\n"
-							+ "  master_servers ms\n"
-							+ "  inner join servers                           se   on ms.server     = se.pkey\n"        // Find all servers can access
-							+ "  inner join servers                           se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+							+ "  server.\"MasterServer\" ms\n"
+							+ "  inner join server.\"Server\"                 se   on ms.server     = se.pkey\n"        // Find all servers can access
+							+ "  inner join server.\"Server\"                 se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
 							+ "  inner join net.\"Device\"                    nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\"    irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
@@ -4570,9 +4570,9 @@ final public class TableHandler {
 							"select distinct\n"
 							+ "  irs.*\n"
 							+ "from\n"
-							+ "  master_servers ms\n"
-							+ "  inner join servers                           se   on ms.server     = se.pkey\n"        // Find all servers can access
-							+ "  inner join servers                           se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+							+ "  server.\"MasterServer\" ms\n"
+							+ "  inner join server.\"Server\"                 se   on ms.server     = se.pkey\n"        // Find all servers can access
+							+ "  inner join server.\"Server\"                 se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
 							+ "  inner join net.\"Device\"                    nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\"    irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
@@ -4641,7 +4641,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new Language(),
-					"select * from languages"
+					"select * from ticket.\"Language\""
 				);
 				break;
 			// </editor-fold>
@@ -4664,7 +4664,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  laa.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"Domain\" ed,\n"
 						+ "  email.\"Address\" ea,\n"
 						+ "  email.\"InboxAddress\" laa\n"
@@ -4723,10 +4723,10 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  la.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  linux.\"Server\" ao\n"
 						+ "  left join linux.\"Server\" ff on ao.server=ff.failover_server,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
 						+ "  linux.\"User\" la\n"
@@ -4804,7 +4804,7 @@ final public class TableHandler {
 						+ "    select\n"
 						+ "      lsg.name\n"
 						+ "      from\n"
-						+ "        master_servers ms1,\n"
+						+ "        server.\"MasterServer\" ms1,\n"
 						+ "        linux.\"GroupServer\" lsg\n"
 						+ "      where\n"
 						+ "        ms1.username=?\n"
@@ -4814,7 +4814,7 @@ final public class TableHandler {
 						+ "    select\n"
 						+ "      lsa.username\n"
 						+ "      from\n"
-						+ "        master_servers ms2,\n"
+						+ "        server.\"MasterServer\" ms2,\n"
 						+ "        linux.\"UserServer\" lsa\n"
 						+ "      where\n"
 						+ "        ms2.username=?\n"
@@ -4899,9 +4899,9 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  lg.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  linux.\"Server\" ao,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  linux.\"Group\" lg\n"
 						+ "where\n"
@@ -4969,7 +4969,7 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  lsa.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "  linux.\"UserServer\" lsa\n"
 						+ "where\n"
@@ -5012,7 +5012,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					+ "  linux.\"UserServer\" lsa\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
@@ -5048,7 +5048,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  lsg.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  linux.\"GroupServer\" lsg\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -5069,7 +5069,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  linux.\"Group\" lg,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					+ "  linux.\"GroupServer\" lsg\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -5107,7 +5107,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ml.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"Domain\" ed,\n"
 						+ "  email.\"MajordomoList\" ml\n"
 						+ "where\n"
@@ -5162,7 +5162,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  mjs.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"Domain\" ed,\n"
 						+ "  email.\"MajordomoServer\" mjs\n"
 						+ "where\n"
@@ -5227,8 +5227,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  mh.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
 						+ "  master.\"UserHost\" mh\n"
@@ -5294,7 +5294,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new com.aoindustries.aoserv.client.MasterServer(),
-						"select * from master_servers"
+						"select * from server.\"MasterServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5304,8 +5304,8 @@ final public class TableHandler {
 						"select\n"
 						+ "  ms2.*\n"
 						+ "from\n"
-						+ "  master_servers ms1,\n"
-						+ "  master_servers ms2\n"
+						+ "  server.\"MasterServer\" ms1,\n"
+						+ "  server.\"MasterServer\" ms2\n"
 						+ "where\n"
 						+ "  ms1.username=?\n"
 						+ "  and ms1.server=ms2.server",
@@ -5325,7 +5325,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
-					+ "  master_servers ms\n"
+					+ "  server.\"MasterServer\" ms\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"
@@ -5358,8 +5358,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  mu.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
 						+ "  master.\"User\" mu\n"
@@ -5466,7 +5466,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  md.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  mysql.\"Server\" mys,\n"
 						+ "  mysql.\"Database\" md\n"
 						+ "where\n"
@@ -5519,7 +5519,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  mdu.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  mysql.\"Server\" mys,\n"
 						+ "  mysql.\"Database\" md,\n"
 						+ "  mysql.\"DatabaseUser\" mdu\n"
@@ -5576,7 +5576,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  msu.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  mysql.\"Server\" mys,\n"
 						+ "  mysql.\"UserServer\" msu\n"
 						+ "where\n"
@@ -5655,7 +5655,7 @@ final public class TableHandler {
 						+ "  ps.net_bind,\n"
 						+ "  (select nb.package from net.\"Bind\" nb where ps.net_bind=nb.pkey)\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  mysql.\"Server\" ps\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -5679,7 +5679,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					+ "  mysql.\"Server\" ps\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -5708,8 +5708,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  mu.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
 						+ "  mysql.\"User\" mu\n"
@@ -5767,7 +5767,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  nbfz.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  net.\"Bind\" nb,\n"
 						+ "  net.\"BindFirewallZone\" nbfz\n"
 						+ "where\n"
@@ -5833,7 +5833,7 @@ final public class TableHandler {
 					+ "    from\n"
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
-					+ "      business_servers bs4,\n"
+					+ "      server.\"AccountServer\" bs4,\n"
 					+ "      mysql.\"Server\" ms4\n"
 					+ "    where\n"
 					+ "      un4.username=?\n"
@@ -5846,7 +5846,7 @@ final public class TableHandler {
 					+ "    from\n"
 					+ "      account.\"Username\" un5,\n"
 					+ "      billing.\"Package\" pk5,\n"
-					+ "      business_servers bs5,\n"
+					+ "      server.\"AccountServer\" bs5,\n"
 					+ "      postgresql.\"Server\" ps5\n"
 					+ "    where\n"
 					+ "      un5.username=?\n"
@@ -5912,7 +5912,7 @@ final public class TableHandler {
 						+ "      and fz.\"name\"=?\n"
 						+ "  ) is not null as open_firewall\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  net.\"Bind\" nb\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -6011,7 +6011,7 @@ final public class TableHandler {
 					+ "    from\n"
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
-					+ "      business_servers bs4,\n"
+					+ "      server.\"AccountServer\" bs4,\n"
 					+ "      mysql.\"Server\" ms4\n"
 					+ "    where\n"
 					+ "      un4.username=?\n"
@@ -6024,7 +6024,7 @@ final public class TableHandler {
 					+ "    from\n"
 					+ "      account.\"Username\" un5,\n"
 					+ "      billing.\"Package\" pk5,\n"
-					+ "      business_servers bs5,\n"
+					+ "      server.\"AccountServer\" bs5,\n"
 					+ "      postgresql.\"Server\" ps5\n"
 					+ "    where\n"
 					+ "      un5.username=?\n"
@@ -6038,7 +6038,7 @@ final public class TableHandler {
 					+ "    from\n"
 					+ "      account.\"Username\" un6,\n"
 					+ "      billing.\"Package\" pk6,\n"
-					+ "      servers se6,\n"
+					+ "      server.\"Server\" se6,\n"
 					+ "      backup.\"FileReplication\" ffr6,\n"
 					+ "      backup.\"BackupPartition\" bp6,\n"
 					+ "      net.\"Bind\" nb6\n"
@@ -6122,7 +6122,7 @@ final public class TableHandler {
 						+ "  nd.monitoring_bit_rate_critical,\n"
 						+ "  nd.monitoring_enabled\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "  net.\"Device\" nd\n"
 						+ "where\n"
@@ -6171,7 +6171,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					// Allow failover destinations
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey\n"
@@ -6208,7 +6208,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ntr.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  net.\"Bind\" nb,\n"
 						+ "  net.\"TcpRedirect\" ntr\n"
 						+ "where\n"
@@ -6340,8 +6340,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  pdl.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  billing.\"PackageDefinitionLimit\" pdl\n"
 						+ "where\n"
@@ -6438,8 +6438,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  pd.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  billing.\"PackageDefinition\" pd\n"
 						+ "where\n"
@@ -6539,8 +6539,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  pk.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -6602,7 +6602,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ps.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
 						+ "where\n"
 						+ "  ms.username=?",
@@ -6619,7 +6619,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
@@ -6655,7 +6655,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  pd.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  postgresql.\"Server\" ps,\n"
 						+ "  postgresql.\"Database\" pd\n"
 						+ "where\n"
@@ -6722,7 +6722,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  psu.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  postgresql.\"Server\" ps,\n"
 						+ "  postgresql.\"UserServer\" psu\n"
 						+ "where\n"
@@ -6781,7 +6781,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ps.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  postgresql.\"Server\" ps\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -6799,7 +6799,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					+ "  postgresql.\"Server\" ps\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -6828,8 +6828,8 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  pu.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
 						+ "  postgresql.\"User\" pu\n"
@@ -6897,7 +6897,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  pfs.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  net.\"Bind\" nb,\n"
 						+ "  ftp.\"PrivateServer\" pfs\n"
 						+ "where\n"
@@ -6974,7 +6974,7 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  ra.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
 						+ "  inner join infrastructure.\"Rack\" ra on ps.rack=ra.pkey\n"
 						+ "where\n"
@@ -6992,7 +6992,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
@@ -7019,7 +7019,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new Reseller(),
-						"select * from resellers"
+						"select * from reseller.\"Reseller\""
 					); else {
 						List<Brand> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
@@ -7036,7 +7036,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
 					+ BU1_PARENTS_JOIN
-					+ "  resellers re\n"
+					+ "  reseller.\"Reseller\" re\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -7283,7 +7283,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ed.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"Domain\" ed\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -7344,7 +7344,7 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  esr.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"SmtpRelay\" esr\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -7401,7 +7401,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  esshd.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  net.\"Bind\" nb,\n"
 						+ "  email.\"SmtpSmartHostDomain\" esshd\n"
 						+ "where\n"
@@ -7458,7 +7458,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  essh.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  net.\"Bind\" nb,\n"
 						+ "  email.\"SmtpSmartHost\" essh\n"
 						+ "where\n"
@@ -7515,7 +7515,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  sb.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join net.\"Bind\" nb on ms.server=nb.server\n"
 						+ "  inner join email.\"SendmailBind\" sb on nb.pkey=sb.net_bind\n"
 						+ "where\n"
@@ -7594,7 +7594,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  ss.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join email.\"SendmailServer\" ss on ms.server=ss.ao_server\n"
 						+ "where\n"
 						+ "  ms.username=?",
@@ -7674,11 +7674,11 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  sf.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
-						+ "  servers se\n"
+						+ "  server.\"MasterServer\" ms,\n"
+						+ "            server.\"Server\"          se\n"
 						+ "  left join backup.\"FileReplication\" ffr on  se.pkey             = ffr.server\n"
-						+ "  left join backup.\"BackupPartition\"  bp on ffr.backup_partition =  bp.pkey\n"
-						+ "  left join servers                     fs on  bp.ao_server        =  fs.pkey,\n"
+						+ "  left join backup.\"BackupPartition\" bp  on ffr.backup_partition =  bp.pkey\n"
+						+ "  left join server.\"Server\"          fs  on  bp.ao_server        =  fs.pkey,\n"
 						+ "  infrastructure.\"ServerFarm\" sf\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -7700,8 +7700,8 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
-					+ "  servers se,\n"
+					+ "  server.\"AccountServer\" bs,\n"
+					+ "  server.\"Server\" se,\n"
 					+ "  infrastructure.\"ServerFarm\" sf\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -7725,7 +7725,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new Server(),
-						"select * from servers"
+						"select * from server.\"Server\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -7735,7 +7735,7 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  se.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  left join linux.\"Server\" ao on ms.server=ao.server\n"
 						// Allow its failover parent
 						+ "  left join linux.\"Server\" ff on ao.failover_server=ff.server\n"
@@ -7744,7 +7744,7 @@ final public class TableHandler {
 						// Allow servers it replicates to
 						+ "  left join backup.\"FileReplication\" ffr on ms.server=ffr.server\n"
 						+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
-						+ "  servers se\n"
+						+ "  server.\"Server\" se\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and (\n"
@@ -7770,11 +7770,11 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
-					+ "  servers se\n"
+					+ "  server.\"Server\" se\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -7985,7 +7985,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  scn.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join pki.\"Certificate\" sc on ms.server=sc.ao_server\n"
 						+ "  inner join pki.\"CertificateName\" scn on sc.pkey=scn.ssl_certificate\n"
 						+ "where\n"
@@ -8038,7 +8038,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  scou.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join pki.\"Certificate\" sc on ms.server=sc.ao_server\n"
 						+ "  inner join pki.\"CertificateOtherUse\" scou on sc.pkey=scou.ssl_certificate\n"
 						+ "where\n"
@@ -8091,7 +8091,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  sc.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join pki.\"Certificate\" sc on ms.server=sc.ao_server\n"
 						+ "where\n"
 						+ "  ms.username=?",
@@ -8141,7 +8141,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  sea.*\n"
 						+ "from\n"
-						+ "  master_servers ms,\n"
+						+ "  server.\"MasterServer\" ms,\n"
 						+ "  email.\"SystemAlias\" sea\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -8159,7 +8159,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					+ "  email.\"SystemAlias\" sea\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -8233,7 +8233,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new TicketActionType(),
-					"select * from ticket_action_types"
+					"select * from ticket.\"ActionType\""
 				);
 				break;
 			case TICKET_ACTIONS :
@@ -8266,14 +8266,14 @@ final public class TableHandler {
 						+ "  from_address,\n"
 						+ "  summary\n"
 						+ "from\n"
-						+ "  ticket_actions"
+						+ "  ticket.\"Action\""
 					); else {
 						List<TicketAction> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else {
 					if(TicketHandler.isTicketAdmin(conn, source)) {
-						// If a ticket admin, can see all ticket_actions
+						// If a ticket admin, can see all ticket.Action
 						MasterServer.writeObjects(
 							conn,
 							source,
@@ -8304,8 +8304,8 @@ final public class TableHandler {
 							+ "  account.\"Username\" un,\n"
 							+ "  billing.\"Package\" pk1,\n"
 							+ BU1_PARENTS_JOIN
-							+ "  tickets ti,\n"
-							+ "  ticket_actions ta\n"
+							+ "  ticket.\"Ticket\" ti,\n"
+							+ "  ticket.\"Action\" ta\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk1.name\n"
@@ -8352,9 +8352,9 @@ final public class TableHandler {
 							+ "  account.\"Username\" un,\n"
 							+ "  billing.\"Package\" pk1,\n"
 							+ BU1_PARENTS_JOIN
-							+ "  tickets ti,\n"
-							+ "  ticket_actions ta,\n"
-							+ "  ticket_action_types tat\n"
+							+ "  ticket.\"Ticket\" ti,\n"
+							+ "  ticket.\"Action\" ta,\n"
+							+ "  ticket.\"ActionType\" tat\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk1.name\n"
@@ -8380,7 +8380,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new TicketAssignment(),
-						"select * from ticket_assignments"
+						"select * from ticket.\"Assignment\""
 					); else {
 						List<TicketAssignment> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
@@ -8400,8 +8400,8 @@ final public class TableHandler {
 							+ "  account.\"Username\" un,\n"
 							+ "  billing.\"Package\" pk1,\n"
 							+ BU1_PARENTS_JOIN
-							+ "  tickets ti,\n"
-							+ "  ticket_assignments ta\n"
+							+ "  ticket.\"Ticket\" ti,\n"
+							+ "  ticket.\"Assignment\" ta\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk1.name\n"
@@ -8432,7 +8432,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new TicketBrandCategory(),
-						"select * from ticket_brand_categories"
+						"select * from reseller.\"BrandCategory\""
 					); else {
 						List<TicketBrandCategory> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
@@ -8449,7 +8449,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
 					+ BU1_PARENTS_JOIN
-					+ "  ticket_brand_categories tbc\n"
+					+ "  reseller.\"BrandCategory\" tbc\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -8466,7 +8466,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new TicketCategory(),
-					"select * from ticket_categories"
+					"select * from reseller.\"Category\""
 				);
 				break;
 			case TICKET_PRIORITIES :
@@ -8476,7 +8476,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new TicketPriority(),
-					"select * from ticket_priorities"
+					"select * from ticket.\"Priority\""
 				);
 				break;
 			case TICKET_STATI :
@@ -8486,7 +8486,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new TicketStatus(),
-					"select * from ticket_stati"
+					"select * from ticket.\"Status\""
 				);
 				break;
 			case TICKET_TYPES :
@@ -8496,7 +8496,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new TicketType(),
-					"select * from ticket_types"
+					"select * from ticket.\"TicketType\""
 				);
 				break;
 			case TICKETS :
@@ -8528,10 +8528,10 @@ final public class TableHandler {
 							+ "  contact_emails,\n"
 							+ "  contact_phone_numbers\n"
 							+ "from\n"
-							+ "  tickets"
+							+ "  ticket.\"Ticket\""
 						);
 					} else {
-						// AOServDaemon only needs access to its own open logs tickets
+						// AOServDaemon only needs access to its own open logs ticket.Ticket
 						MasterServer.writeObjects(
 							conn,
 							source,
@@ -8559,7 +8559,7 @@ final public class TableHandler {
 							+ "from\n"
 							+ "  account.\"Username\" un,\n"
 							+ "  billing.\"Package\" pk,\n"
-							+ "  tickets ti\n"
+							+ "  ticket.\"Ticket\" ti\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk.name\n"
@@ -8604,7 +8604,7 @@ final public class TableHandler {
 							+ "  account.\"Username\" un,\n"
 							+ "  billing.\"Package\" pk1,\n"
 							+ BU1_PARENTS_JOIN
-							+ "  tickets ti\n"
+							+ "  ticket.\"Ticket\" ti\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk1.name\n"
@@ -8647,7 +8647,7 @@ final public class TableHandler {
 							+ "  account.\"Username\" un,\n"
 							+ "  billing.\"Package\" pk1,\n"
 							+ BU1_PARENTS_JOIN
-							+ "  tickets ti\n"
+							+ "  ticket.\"Ticket\" ti\n"
 							+ "where\n"
 							+ "  un.username=?\n"
 							+ "  and un.package=pk1.name\n"
@@ -8734,9 +8734,9 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  un.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
-						+ "  business_servers bs,\n"
+						+ "  server.\"AccountServer\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un\n"
 						+ "where\n"
@@ -8804,7 +8804,7 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  vd.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join infrastructure.\"VirtualDisk\" vd on ms.server=vd.virtual_server\n"
 						+ "where\n"
 						+ "  ms.username=?",
@@ -8821,7 +8821,7 @@ final public class TableHandler {
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
@@ -8857,7 +8857,7 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  vs.*\n"
 						+ "from\n"
-						+ "  master_servers ms\n"
+						+ "  server.\"MasterServer\" ms\n"
 						+ "  inner join infrastructure.\"VirtualServer\" vs on ms.server=vs.server\n"
 						+ "where\n"
 						+ "  ms.username=?",
@@ -8890,14 +8890,14 @@ final public class TableHandler {
 					+ "    when vs.vnc_password is null then null\n"
 					// Only provide the password when the user can connect to VNC console
 					+ "    when (\n"
-					+ "      select bs2.pkey from business_servers bs2 where bs2.accounting=pk.accounting and bs2.server=vs.server and bs2.can_vnc_console limit 1\n"
+					+ "      select bs2.pkey from server.\"AccountServer\" bs2 where bs2.accounting=pk.accounting and bs2.server=vs.server and bs2.can_vnc_console limit 1\n"
 					+ "    ) is not null then vs.vnc_password\n"
 					+ "    else '"+AOServProtocol.FILTERED+"'::text\n"
 					+ "  end\n"
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
-					+ "  business_servers bs,\n"
+					+ "  server.\"AccountServer\" bs,\n"
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
@@ -9330,9 +9330,9 @@ final public class TableHandler {
 			"select distinct\n"
 			+ "  se.operating_system_version\n"
 			+ "from\n"
-			+ "  master_servers ms,\n"
+			+ "  server.\"MasterServer\" ms,\n"
 			+ "  linux.\"Server\" ao,\n"
-			+ "  servers se,\n"
+			+ "  server.\"Server\" se,\n"
 			+ "  distribution.\"OperatingSystemVersion\" osv\n"
 			+ "where\n"
 			+ "  ms.username=?\n"

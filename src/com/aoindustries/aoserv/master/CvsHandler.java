@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The <code>CvsHandler</code> handles all the accesses to the <code>cvs_repositories</code> table.
+ * The <code>CvsHandler</code> handles all the accesses to the <code>scm.CvsRepository</code> table.
  *
  * @author  AO Industries, Inc.
  */
@@ -105,7 +105,7 @@ final public class CvsHandler {
 					+ "    select\n"
 					+ "      cr.pkey\n"
 					+ "    from\n"
-					+ "      cvs_repositories cr,\n"
+					+ "      scm.\"CvsRepository\" cr,\n"
 					+ "      linux.\"UserServer\" lsa\n"
 					+ "    where\n"
 					+ "      cr.path=?\n"
@@ -143,7 +143,7 @@ final public class CvsHandler {
 
 			// Update the database
 			int pkey = conn.executeIntUpdate(
-				"INSERT INTO cvs_repositories (\n"
+				"INSERT INTO scm.\"CvsRepository\" (\n"
 				+ "  \"path\",\n"
 				+ "  linux_server_account,\n"
 				+ "  linux_server_group,\n"
@@ -186,7 +186,7 @@ final public class CvsHandler {
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "disableCvsRepository", lsa);
 
 		conn.executeUpdate(
-			"update cvs_repositories set disable_log=? where pkey=?",
+			"update scm.\"CvsRepository\" set disable_log=? where pkey=?",
 			disableLog,
 			pkey
 		);
@@ -215,7 +215,7 @@ final public class CvsHandler {
 		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable CvsRepository #"+pkey+", LinuxServerAccount not enabled: "+lsa);
 
 		conn.executeUpdate(
-			"update cvs_repositories set disable_log=null where pkey=?",
+			"update scm.\"CvsRepository\" set disable_log=null where pkey=?",
 			pkey
 		);
 
@@ -230,11 +230,11 @@ final public class CvsHandler {
 	}
 
 	public static IntList getCvsRepositoriesForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from cvs_repositories where linux_server_account=?", pkey);
+		return conn.executeIntListQuery("select pkey from scm.\"CvsRepository\" where linux_server_account=?", pkey);
 	}
 
 	public static int getLinuxServerAccountForCvsRepository(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select linux_server_account from cvs_repositories where pkey=?", pkey);
+		return conn.executeIntQuery("select linux_server_account from scm.\"CvsRepository\" where pkey=?", pkey);
 	}
 
 	public static void invalidateTable(SchemaTable.TableID tableID) {
@@ -246,7 +246,7 @@ final public class CvsHandler {
 	}
 
 	public static int getDisableLogForCvsRepository(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from cvs_repositories where pkey=?", pkey);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from scm.\"CvsRepository\" where pkey=?", pkey);
 	}
 
 	public static boolean isCvsRepositoryDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -283,7 +283,7 @@ final public class CvsHandler {
 		int aoServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa);
 
 		// Update the database
-		conn.executeUpdate("delete from cvs_repositories where pkey=?", pkey);
+		conn.executeUpdate("delete from scm.\"CvsRepository\" where pkey=?", pkey);
 
 		invalidateList.addTable(
 			conn,
@@ -318,7 +318,7 @@ final public class CvsHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update cvs_repositories set mode=? where pkey=?",
+			"update scm.\"CvsRepository\" set mode=? where pkey=?",
 			mode,
 			pkey
 		);

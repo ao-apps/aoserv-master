@@ -22,7 +22,7 @@ final public class ResellerHandler {
 
     /**
      * Gets the lowest-level reseller that is at or above the provided business.
-     * Will skip past resellers that are flagged as auto-escalate.
+     * Will skip past reseller.Reseller that are flagged as auto-escalate.
      */
     public static AccountingCode getResellerForBusinessAutoEscalate(
         DatabaseConnection conn,
@@ -30,7 +30,7 @@ final public class ResellerHandler {
     ) throws IOException, SQLException {
         AccountingCode accounting = originalAccounting;
         while(accounting!=null) {
-            if(conn.executeBooleanQuery("select (select accounting from resellers where accounting=? and not ticket_auto_escalate) is not null", accounting)) return accounting;
+            if(conn.executeBooleanQuery("select (select accounting from reseller.\"Reseller\" where accounting=? and not ticket_auto_escalate) is not null", accounting)) return accounting;
             accounting = BusinessHandler.getParentBusiness(conn, accounting);
         }
         throw new SQLException("Unable to find Reseller for Business: "+originalAccounting);
