@@ -499,10 +499,10 @@ final public class BusinessHandler {
 
 		if (country.equals(CountryCode.US)) state=convertUSState(conn, state);
 
-		int priority=conn.executeIntQuery("select coalesce(max(priority)+1, 1) from account.\"AccountProfile\" where accounting=?", accounting);
+		int priority=conn.executeIntQuery("select coalesce(max(priority)+1, 1) from account.\"Profile\" where accounting=?", accounting);
 
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO account.\"AccountProfile\" VALUES (default,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?) RETURNING pkey",
+			"INSERT INTO account.\"Profile\" VALUES (default,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?) RETURNING pkey",
 			accounting.toString(),
 			priority,
 			name,
@@ -1514,7 +1514,7 @@ final public class BusinessHandler {
 
 	public static String getTechnicalEmail(DatabaseConnection conn, String accountingCode) throws IOException, SQLException {
 		return conn.executeStringQuery(
-			"select technical_email from account.\"AccountProfile\" where accounting=? order by priority desc limit 1",
+			"select technical_email from account.\"Profile\" where accounting=? order by priority desc limit 1",
 			accountingCode
 		);
 	}
@@ -1624,7 +1624,7 @@ final public class BusinessHandler {
 				}
 				return businessContacts;
 			},
-			"select bp.accounting, bp.billing_email, bp.technical_email from account.\"AccountProfile\" bp, account.\"Account\" bu where bp.accounting=bu.accounting and bu.canceled is null order by bp.accounting, bp.priority desc"
+			"select bp.accounting, bp.billing_email, bp.technical_email from account.\"Profile\" bp, account.\"Account\" bu where bp.accounting=bu.accounting and bu.canceled is null order by bp.accounting, bp.priority desc"
 		);
 	}
 
