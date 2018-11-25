@@ -699,14 +699,14 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // mysql.MysqlUser
+                // mysql.User
                 {
                     List<MySQLUserId> mus=conn.executeObjectListQuery(
 						ObjectFactories.mySQLUserIdFactory,
                         "select\n"
                         + "  mu.username\n"
                         + "from\n"
-                        + "  mysql.\"MysqlUser\" mu,\n"
+                        + "  mysql.\"User\" mu,\n"
                         + "  account.\"Username\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
@@ -820,7 +820,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select la.username from linux.\"LinuxUser\" la where la.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select lsa.pkey from linux.\"LinuxUserServer\" lsa where lsa.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select msu.pkey from mysql.\"MysqlUserServer\" msu where msu.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select mu.username from mysql.\"MysqlUser\" mu where mu.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select mu.username from mysql.\"User\" mu where mu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select pk.name from billing.\"Package\" pk where pk.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select psu.pkey from postgresql.\"UserServer\" psu where psu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select pu.username from postgresql.\"User\" pu where pu.disable_log=dl.pkey limit 1) is null\n"

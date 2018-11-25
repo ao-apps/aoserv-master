@@ -309,7 +309,7 @@ final public class MySQLHandler {
 		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add MySQLUser for user '"+LinuxAccount.MAIL+'\'');
 
 		conn.executeUpdate(
-			"insert into mysql.\"MysqlUser\"(username) values(?)",
+			"insert into mysql.\"User\"(username) values(?)",
 			username
 		);
 
@@ -369,7 +369,7 @@ final public class MySQLHandler {
 		}
 
 		conn.executeUpdate(
-			"update mysql.\"MysqlUser\" set disable_log=? where username=?",
+			"update mysql.\"User\" set disable_log=? where username=?",
 			disableLog,
 			username
 		);
@@ -451,7 +451,7 @@ final public class MySQLHandler {
 		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable MySQLUser '"+username+"', Username not enabled: "+username);
 
 		conn.executeUpdate(
-			"update mysql.\"MysqlUser\" set disable_log=null where username=?",
+			"update mysql.\"User\" set disable_log=null where username=?",
 			username
 		);
 
@@ -498,7 +498,7 @@ final public class MySQLHandler {
 	}
 
 	public static int getDisableLogForMySQLUser(DatabaseConnection conn, MySQLUserId username) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql.\"MysqlUser\" where username=?", username);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql.\"User\" where username=?", username);
 	}
 
 	public static MySQLUserId getUsernameForMySQLServerUser(DatabaseConnection conn, int msu) throws IOException, SQLException {
@@ -550,7 +550,7 @@ final public class MySQLHandler {
 			+ "    select\n"
 			+ "      username\n"
 			+ "    from\n"
-			+ "      mysql.\"MysqlUser\"\n"
+			+ "      mysql.\"User\"\n"
 			+ "    where\n"
 			+ "      username=?\n"
 			+ "    limit 1\n"
@@ -834,7 +834,7 @@ final public class MySQLHandler {
 		}
 
 		// Remove the mysql_user
-		conn.executeUpdate("delete from mysql.\"MysqlUser\" where username=?", username);
+		conn.executeUpdate("delete from mysql.\"User\" where username=?", username);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.MYSQL_USERS,
