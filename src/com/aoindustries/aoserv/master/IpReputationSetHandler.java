@@ -97,7 +97,12 @@ final public class IpReputationSetHandler {
     private static void lockForUpdate(
         DatabaseConnection conn
     ) throws SQLException {
-        conn.executeUpdate("LOCK TABLE \"net/reputation\".\"ReputationSet\", ip_reputation_set_hosts, ip_reputation_set_networks IN EXCLUSIVE MODE");
+        conn.executeUpdate(
+			"LOCK TABLE\n"
+			+ "  \"net/reputation\".\"ReputationSet\",\n"
+			+ "  ip_reputation_set_hosts,\n"
+			+ "  \"net/reputation\".\"ReputationSetNetwork\"\n"
+			+ "IN EXCLUSIVE MODE");
     }
 
     /* TODO: Do in batches
@@ -327,7 +332,7 @@ final public class IpReputationSetHandler {
 							obj.init(result);
 							return obj;
 						},
-                        "select * from ip_reputation_set_networks where \"set\"=? and network=?",
+                        "select * from \"net/reputation\".\"ReputationSetNetwork\" where \"set\"=? and network=?",
                         ipReputationSet,
                         network
                     );
@@ -336,7 +341,7 @@ final public class IpReputationSetHandler {
                         int networkCounter = positiveChange;
                         if(networkCounter>maxNetworkCounter) networkCounter = maxNetworkCounter;
                         int rowCount = conn.executeUpdate(
-                            "INSERT INTO ip_reputation_set_networks (\"set\", network, counter) VALUES (?,?,?)",
+                            "INSERT INTO \"net/reputation\".\"ReputationSetNetwork\" (\"set\", network, counter) VALUES (?,?,?)",
                             ipReputationSet,
                             network,
                             networkCounter
@@ -350,7 +355,7 @@ final public class IpReputationSetHandler {
                         int newCounter = newCounterLong <= maxNetworkCounter ? (int)newCounterLong : maxNetworkCounter;
                         if(newCounter!=oldCounter) {
                             int rowCount = conn.executeUpdate(
-                                "UPDATE ip_reputation_set_networks SET counter=? WHERE \"set\"=? AND network=?",
+                                "UPDATE \"net/reputation\".\"ReputationSetNetwork\" SET counter=? WHERE \"set\"=? AND network=?",
                                 newCounter,
                                 ipReputationSet,
                                 network
