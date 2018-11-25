@@ -4225,7 +4225,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new IpReputationLimiterLimit(),
-							"select * from \"net/reputation\".\"ReputationLimiterClass\""
+							"select * from \"net/reputation\".\"LimiterClass\""
 						);
 					} else if(masterUser.isRouter()) {
 						// Router may access all limiters in the same server farm
@@ -4239,11 +4239,11 @@ final public class TableHandler {
 							+ "  irll.*\n"
 							+ "from\n"
 							+ "  master_servers ms\n"
-							+ "  inner join servers se on ms.server=se.pkey\n"                                             // Find all servers can access
-							+ "  inner join servers se2 on se.farm=se2.farm\n"                                             // Find all servers in the same farm
-							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"                                     // Find all net.Device in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationLimiter\" irl on nd.pkey=irl.net_device\n"      // Find all limiters in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationLimiterClass\" irll on irl.pkey=irll.limiter\n" // Find all limiters limits in the same farm
+							+ "  inner join servers se on ms.server=se.pkey\n"                                   // Find all servers can access
+							+ "  inner join servers se2 on se.farm=se2.farm\n"                                   // Find all servers in the same farm
+							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"                           // Find all net.Device in the same farm
+							+ "  inner join \"net/reputation\".\"Limiter\" irl on nd.pkey=irl.net_device\n"      // Find all limiters in the same farm
+							+ "  inner join \"net/reputation\".\"LimiterClass\" irll on irl.pkey=irll.limiter\n" // Find all limiters limits in the same farm
 							+ "where\n"
 							+ "  ms.username=?",
 							username
@@ -4264,12 +4264,12 @@ final public class TableHandler {
 						"select\n"
 						+ "  irll.*\n"
 						+ "from\n"
-						+ "             account.\"Username\"                          un\n"
-						+ "  inner join billing.\"Package\"                           pk   on  un.package    =   pk.name\n"
-						+ "  inner join business_servers                              bs   on  pk.accounting =   bs.accounting\n"
-						+ "  inner join net.\"Device\"                                nd   on  bs.server     =   nd.server\n"
-						+ "  inner join \"net/reputation\".\"ReputationLimiter\"      irl  on  nd.pkey       =  irl.net_device\n"
-						+ "  inner join \"net/reputation\".\"ReputationLimiterClass\" irll on irl.pkey       = irll.limiter\n"
+						+ "             account.\"Username\"                un\n"
+						+ "  inner join billing.\"Package\"                 pk   on  un.package    =   pk.name\n"
+						+ "  inner join business_servers                    bs   on  pk.accounting =   bs.accounting\n"
+						+ "  inner join net.\"Device\"                      nd   on  bs.server     =   nd.server\n"
+						+ "  inner join \"net/reputation\".\"Limiter\"      irl  on  nd.pkey       =  irl.net_device\n"
+						+ "  inner join \"net/reputation\".\"LimiterClass\" irll on irl.pkey       = irll.limiter\n"
 						+ "where\n"
 						+ "  un.username=?",
 						username
@@ -4289,7 +4289,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new IpReputationLimiterSet(),
-							"select * from \"net/reputation\".\"ReputationLimiterSet\""
+							"select * from \"net/reputation\".\"LimiterSet\""
 						);
 					} else if(masterUser.isRouter()) {
 						// Router may access all limiters in the same server farm
@@ -4303,11 +4303,11 @@ final public class TableHandler {
 							+ "  irls.*\n"
 							+ "from\n"
 							+ "  master_servers ms\n"
-							+ "  inner join servers se on ms.server=se.pkey\n"                                           // Find all servers can access
-							+ "  inner join servers se2 on se.farm=se2.farm\n"                                           // Find all servers in the same farm
-							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"                                   // Find all net.Device in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationLimiter\" irl on nd.pkey=irl.net_device\n"    // Find all limiters in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationLimiterSet\" irls on irl.pkey=irls.limiter\n" // Find all limiters sets in the same farm
+							+ "  inner join servers se on ms.server=se.pkey\n"                                 // Find all servers can access
+							+ "  inner join servers se2 on se.farm=se2.farm\n"                                 // Find all servers in the same farm
+							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"                         // Find all net.Device in the same farm
+							+ "  inner join \"net/reputation\".\"Limiter\" irl on nd.pkey=irl.net_device\n"    // Find all limiters in the same farm
+							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.pkey=irls.limiter\n" // Find all limiters sets in the same farm
 							+ "where\n"
 							+ "  ms.username=?",
 							username
@@ -4328,12 +4328,12 @@ final public class TableHandler {
 						"select\n"
 						+ "  irls.*\n"
 						+ "from\n"
-						+ "             account.\"Username\"                        un\n"
-						+ "  inner join billing.\"Package\"                         pk   on  un.package    =   pk.name\n"
-						+ "  inner join business_servers                            bs   on  pk.accounting =   bs.accounting\n"
-						+ "  inner join net.\"Device\"                              nd   on  bs.server     =   nd.server\n"
-						+ "  inner join \"net/reputation\".\"ReputationLimiter\"    irl  on  nd.pkey       =  irl.net_device\n"
-						+ "  inner join \"net/reputation\".\"ReputationLimiterSet\" irls on irl.pkey       = irls.limiter\n"
+						+ "             account.\"Username\"              un\n"
+						+ "  inner join billing.\"Package\"               pk   on  un.package    =   pk.name\n"
+						+ "  inner join business_servers                  bs   on  pk.accounting =   bs.accounting\n"
+						+ "  inner join net.\"Device\"                    nd   on  bs.server     =   nd.server\n"
+						+ "  inner join \"net/reputation\".\"Limiter\"    irl  on  nd.pkey       =  irl.net_device\n"
+						+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.pkey       = irls.limiter\n"
 						+ "where\n"
 						+ "  un.username=?",
 						username
@@ -4353,7 +4353,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new IpReputationLimiter(),
-							"select * from \"net/reputation\".\"ReputationLimiter\""
+							"select * from \"net/reputation\".\"Limiter\""
 						);
 					} else if(masterUser.isRouter()) {
 						// Router may access all limiters in the same server farm
@@ -4367,10 +4367,10 @@ final public class TableHandler {
 							+ "  irl.*\n"
 							+ "from\n"
 							+ "  master_servers ms\n"
-							+ "  inner join servers se on ms.server=se.pkey\n"                                        // Find all servers can access
-							+ "  inner join servers se2 on se.farm=se2.farm\n"                                        // Find all servers in the same farm
-							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"                                // Find all net.Device in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationLimiter\" irl on nd.pkey=irl.net_device\n" // Find all limiters in the same farm
+							+ "  inner join servers se on ms.server=se.pkey\n"                              // Find all servers can access
+							+ "  inner join servers se2 on se.farm=se2.farm\n"                              // Find all servers in the same farm
+							+ "  inner join net.\"Device\" nd on se2.pkey=nd.server\n"                      // Find all net.Device in the same farm
+							+ "  inner join \"net/reputation\".\"Limiter\" irl on nd.pkey=irl.net_device\n" // Find all limiters in the same farm
 							+ "where\n"
 							+ "  ms.username=?",
 							username
@@ -4391,11 +4391,11 @@ final public class TableHandler {
 						"select\n"
 						+ "  irl.*\n"
 						+ "from\n"
-						+ "             account.\"Username\"                     un\n"
-						+ "  inner join billing.\"Package\"                      pk  on un.package    =  pk.name\n"
-						+ "  inner join business_servers                         bs  on pk.accounting =  bs.accounting\n"
-						+ "  inner join net.\"Device\"                           nd  on bs.server     =  nd.server\n"
-						+ "  inner join \"net/reputation\".\"ReputationLimiter\" irl on nd.pkey       = irl.net_device\n"
+						+ "             account.\"Username\"           un\n"
+						+ "  inner join billing.\"Package\"            pk  on un.package    =  pk.name\n"
+						+ "  inner join business_servers               bs  on pk.accounting =  bs.accounting\n"
+						+ "  inner join net.\"Device\"                 nd  on bs.server     =  nd.server\n"
+						+ "  inner join \"net/reputation\".\"Limiter\" irl on nd.pkey       = irl.net_device\n"
 						+ "where\n"
 						+ "  un.username=?",
 						username
@@ -4415,7 +4415,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new IpReputationSetHost(),
-							"select * from \"net/reputation\".\"ReputationSetHost\""
+							"select * from \"net/reputation\".\"SetHost\""
 						);
 					} else if(masterUser.isRouter()) {
 						// Router may access all sets used by any limiters in the same server farm
@@ -4429,13 +4429,13 @@ final public class TableHandler {
 							+ "  irsh.*\n"
 							+ "from\n"
 							+ "  master_servers ms\n"
-							+ "  inner join servers                                     se   on ms.server     = se.pkey\n"        // Find all servers can access
-							+ "  inner join servers                                     se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
-							+ "  inner join net.\"Device\"                              nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationLimiter\"    irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationLimiterSet\" irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationSet\"        irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationSetHost\"    irsh on irs.pkey      = irsh.\"set\"\n"   // Find all hosts belonging to these sets
+							+ "  inner join servers                           se   on ms.server     = se.pkey\n"        // Find all servers can access
+							+ "  inner join servers                           se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+							+ "  inner join net.\"Device\"                    nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
+							+ "  inner join \"net/reputation\".\"Limiter\"    irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
+							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
+							+ "  inner join \"net/reputation\".\"Set\"        irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
+							+ "  inner join \"net/reputation\".\"SetHost\"    irsh on irs.pkey      = irsh.\"set\"\n"   // Find all hosts belonging to these sets
 							+ "where\n"
 							+ "  ms.username=?",
 							username
@@ -4459,8 +4459,8 @@ final public class TableHandler {
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ BU1_PARENTS_JOIN
-						+ "  \"net/reputation\".\"ReputationSet\" irs,\n"
-						+ "  \"net/reputation\".\"ReputationSetHost\" irsh\n"
+						+ "  \"net/reputation\".\"Set\" irs,\n"
+						+ "  \"net/reputation\".\"SetHost\" irsh\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk.name\n"
@@ -4486,7 +4486,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new IpReputationSetNetwork(),
-							"select * from \"net/reputation\".\"ReputationSetNetwork\""
+							"select * from \"net/reputation\".\"SetNetwork\""
 						);
 					} else if(masterUser.isRouter()) {
 						// Router may access all sets used by any limiters in the same server farm
@@ -4500,13 +4500,13 @@ final public class TableHandler {
 							+ "  irsn.*\n"
 							+ "from\n"
 							+ "  master_servers ms\n"
-							+ "  inner join servers                                     se   on ms.server     = se.pkey\n"        // Find all servers can access
-							+ "  inner join servers                                     se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
-							+ "  inner join net.\"Device\"                              nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationLimiter\"    irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationLimiterSet\" irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationSet\"        irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationSetNetwork\" irsn on irs.pkey      = irsn.\"set\"\n"   // Find all networks belonging to these sets
+							+ "  inner join servers                           se   on ms.server     = se.pkey\n"        // Find all servers can access
+							+ "  inner join servers                           se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+							+ "  inner join net.\"Device\"                    nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
+							+ "  inner join \"net/reputation\".\"Limiter\"    irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
+							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
+							+ "  inner join \"net/reputation\".\"Set\"        irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
+							+ "  inner join \"net/reputation\".\"SetNetwork\" irsn on irs.pkey      = irsn.\"set\"\n"   // Find all networks belonging to these sets
 							+ "where\n"
 							+ "  ms.username=?",
 							username
@@ -4530,8 +4530,8 @@ final public class TableHandler {
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ BU1_PARENTS_JOIN
-						+ "  \"net/reputation\".\"ReputationSet\" irs,\n"
-						+ "  \"net/reputation\".\"ReputationSetNetwork\" irsn\n"
+						+ "  \"net/reputation\".\"Set\" irs,\n"
+						+ "  \"net/reputation\".\"SetNetwork\" irsn\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk.name\n"
@@ -4557,7 +4557,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new IpReputationSet(),
-							"select * from \"net/reputation\".\"ReputationSet\""
+							"select * from \"net/reputation\".\"Set\""
 						);
 					} else if(masterUser.isRouter()) {
 						// Router may access all sets used by any limiters in the same server farm
@@ -4571,12 +4571,12 @@ final public class TableHandler {
 							+ "  irs.*\n"
 							+ "from\n"
 							+ "  master_servers ms\n"
-							+ "  inner join servers                                     se   on ms.server     = se.pkey\n"        // Find all servers can access
-							+ "  inner join servers                                     se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
-							+ "  inner join net.\"Device\"                              nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationLimiter\"    irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationLimiterSet\" irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
-							+ "  inner join \"net/reputation\".\"ReputationSet\"        irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
+							+ "  inner join servers                           se   on ms.server     = se.pkey\n"        // Find all servers can access
+							+ "  inner join servers                           se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+							+ "  inner join net.\"Device\"                    nd   on se2.pkey      = nd.server\n"      // Find all net.Device in the same farm
+							+ "  inner join \"net/reputation\".\"Limiter\"    irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
+							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
+							+ "  inner join \"net/reputation\".\"Set\"        irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
 							+ "where\n"
 							+ "  ms.username=?",
 							username
@@ -4598,7 +4598,7 @@ final public class TableHandler {
 						"select\n"
 						+ "  irs.*\n"
 						+ "from\n"
-						+ "  \"net/reputation\".\"ReputationSet\" irs\n"
+						+ "  \"net/reputation\".\"Set\" irs\n"
 						+ "where\n"
 						// Allow own and any subaccount
 						+ "  irs.pkey in (\n"
@@ -4608,7 +4608,7 @@ final public class TableHandler {
 						+ "      account.\"Username\" un,\n"
 						+ "      billing.\"Package\" pk,\n"
 						+ BU1_PARENTS_JOIN
-						+ "      \"net/reputation\".\"ReputationSet\" irs2\n"
+						+ "      \"net/reputation\".\"Set\" irs2\n"
 						+ "    where\n"
 						+ "      un.username=?\n"
 						+ "      and un.package=pk.name\n"
@@ -4622,7 +4622,7 @@ final public class TableHandler {
 						+ "    select\n"
 						+ "      irs3.pkey\n"
 						+ "    from\n"
-						+ "      \"net/reputation\".\"ReputationSet\" irs3\n"
+						+ "      \"net/reputation\".\"Set\" irs3\n"
 						+ "    where\n"
 						+ "      irs3.allow_subaccount_use\n"
 						+ "      and account.is_account_or_parent(irs3.accounting, ?)\n"

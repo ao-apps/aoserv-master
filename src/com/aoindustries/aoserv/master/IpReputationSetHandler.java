@@ -21,7 +21,7 @@ import java.util.Map;
 
 /**
  * The <code>IpReputationSetHandler</code> handles all the accesses to the
- * <code>net/reputation.ReputationSet</code> tables.
+ * <code>net/reputation.Set</code> tables.
  *
  * @author  AO Industries, Inc.
  */
@@ -36,7 +36,7 @@ final public class IpReputationSetHandler {
     public static AccountingCode getBusinessForIpReputationSet(DatabaseConnection conn, int ipReputationSet) throws IOException, SQLException {
         return conn.executeObjectQuery(
             ObjectFactories.accountingCodeFactory,
-            "select accounting from \"net/reputation\".\"ReputationSet\" where pkey=?",
+            "select accounting from \"net/reputation\".\"Set\" where pkey=?",
             ipReputationSet
         );
     }
@@ -99,9 +99,9 @@ final public class IpReputationSetHandler {
     ) throws SQLException {
         conn.executeUpdate(
 			"LOCK TABLE\n"
-			+ "  \"net/reputation\".\"ReputationSet\",\n"
-			+ "  \"net/reputation\".\"ReputationSetHost\",\n"
-			+ "  \"net/reputation\".\"ReputationSetNetwork\"\n"
+			+ "  \"net/reputation\".\"Set\",\n"
+			+ "  \"net/reputation\".\"SetHost\",\n"
+			+ "  \"net/reputation\".\"SetNetwork\"\n"
 			+ "IN EXCLUSIVE MODE");
     }
 
@@ -213,10 +213,10 @@ final public class IpReputationSetHandler {
 
         if(addReputations.length>0) {
             // Get the settings
-            final short maxUncertainReputation = conn.executeShortQuery("SELECT max_uncertain_reputation FROM \"net/reputation\".\"ReputationSet\" WHERE pkey=?", ipReputationSet);
-            final short maxDefiniteReputation  = conn.executeShortQuery("SELECT max_definite_reputation  FROM \"net/reputation\".\"ReputationSet\" WHERE pkey=?", ipReputationSet);
-            final short networkPrefix          = conn.executeShortQuery("SELECT network_prefix           FROM \"net/reputation\".\"ReputationSet\" WHERE pkey=?", ipReputationSet);
-            final short maxNetworkReputation   = conn.executeShortQuery("SELECT max_network_reputation   FROM \"net/reputation\".\"ReputationSet\" WHERE pkey=?", ipReputationSet);
+            final short maxUncertainReputation = conn.executeShortQuery("SELECT max_uncertain_reputation FROM \"net/reputation\".\"Set\" WHERE pkey=?", ipReputationSet);
+            final short maxDefiniteReputation  = conn.executeShortQuery("SELECT max_definite_reputation  FROM \"net/reputation\".\"Set\" WHERE pkey=?", ipReputationSet);
+            final short networkPrefix          = conn.executeShortQuery("SELECT network_prefix           FROM \"net/reputation\".\"Set\" WHERE pkey=?", ipReputationSet);
+            final short maxNetworkReputation   = conn.executeShortQuery("SELECT max_network_reputation   FROM \"net/reputation\".\"Set\" WHERE pkey=?", ipReputationSet);
             final int   maxNetworkCounter        = ((maxNetworkReputation + 1) << (32 - networkPrefix)) - 1;
 
             // Will only send signals when changed
@@ -229,7 +229,7 @@ final public class IpReputationSetHandler {
             lockForUpdate(conn);
 
             // Flag as rep added
-            conn.executeUpdate("UPDATE \"net/reputation\".\"ReputationSet\" SET last_reputation_added=now() WHERE pkey=?", ipReputationSet);
+            conn.executeUpdate("UPDATE \"net/reputation\".\"Set\" SET last_reputation_added=now() WHERE pkey=?", ipReputationSet);
 
             for(IpReputationSet.AddReputation addRep : addReputations) {
                 int host = addRep.getHost();
@@ -245,7 +245,7 @@ final public class IpReputationSetHandler {
 						obj.init(result);
 						return obj;
 					},
-                    "select * from \"net/reputation\".\"ReputationSetHost\" where \"set\"=? and host=?",
+                    "select * from \"net/reputation\".\"SetHost\" where \"set\"=? and host=?",
                     ipReputationSet,
                     host
                 );
@@ -268,7 +268,7 @@ final public class IpReputationSetHandler {
                     }
                     if(goodReputation!=0 || badReputation!=0) {
                         int rowCount = conn.executeUpdate(
-                            "INSERT INTO \"net/reputation\".\"ReputationSetHost\" (\"set\", host, good_reputation, bad_reputation) VALUES (?,?,?,?)",
+                            "INSERT INTO \"net/reputation\".\"SetHost\" (\"set\", host, good_reputation, bad_reputation) VALUES (?,?,?,?)",
                             ipReputationSet,
                             host,
                             goodReputation,
@@ -288,7 +288,7 @@ final public class IpReputationSetHandler {
                         );
                         if(newGoodReputation!=oldGoodReputation) {
                             int rowCount = conn.executeUpdate(
-                                "UPDATE \"net/reputation\".\"ReputationSetHost\" SET good_reputation=? WHERE \"set\"=? AND host=?",
+                                "UPDATE \"net/reputation\".\"SetHost\" SET good_reputation=? WHERE \"set\"=? AND host=?",
                                 newGoodReputation,
                                 ipReputationSet,
                                 host
@@ -308,7 +308,7 @@ final public class IpReputationSetHandler {
                         );
                         if(newBadReputation!=oldBadReputation) {
                             int rowCount = conn.executeUpdate(
-                                "UPDATE \"net/reputation\".\"ReputationSetHost\" SET bad_reputation=? WHERE \"set\"=? AND host=?",
+                                "UPDATE \"net/reputation\".\"SetHost\" SET bad_reputation=? WHERE \"set\"=? AND host=?",
                                 newBadReputation,
                                 ipReputationSet,
                                 host
@@ -332,7 +332,7 @@ final public class IpReputationSetHandler {
 							obj.init(result);
 							return obj;
 						},
-                        "select * from \"net/reputation\".\"ReputationSetNetwork\" where \"set\"=? and network=?",
+                        "select * from \"net/reputation\".\"SetNetwork\" where \"set\"=? and network=?",
                         ipReputationSet,
                         network
                     );
@@ -341,7 +341,7 @@ final public class IpReputationSetHandler {
                         int networkCounter = positiveChange;
                         if(networkCounter>maxNetworkCounter) networkCounter = maxNetworkCounter;
                         int rowCount = conn.executeUpdate(
-                            "INSERT INTO \"net/reputation\".\"ReputationSetNetwork\" (\"set\", network, counter) VALUES (?,?,?)",
+                            "INSERT INTO \"net/reputation\".\"SetNetwork\" (\"set\", network, counter) VALUES (?,?,?)",
                             ipReputationSet,
                             network,
                             networkCounter
@@ -355,7 +355,7 @@ final public class IpReputationSetHandler {
                         int newCounter = newCounterLong <= maxNetworkCounter ? (int)newCounterLong : maxNetworkCounter;
                         if(newCounter!=oldCounter) {
                             int rowCount = conn.executeUpdate(
-                                "UPDATE \"net/reputation\".\"ReputationSetNetwork\" SET counter=? WHERE \"set\"=? AND network=?",
+                                "UPDATE \"net/reputation\".\"SetNetwork\" SET counter=? WHERE \"set\"=? AND network=?",
                                 newCounter,
                                 ipReputationSet,
                                 network
