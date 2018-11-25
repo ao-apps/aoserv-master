@@ -218,7 +218,7 @@ final public class ReportGenerator implements CronJob {
 									+ "      pb.backup_data\n"
 									+ "    from\n"
 									+ "      postgres_backups pb,\n"
-									+ "      postgres_servers ps\n"
+									+ "      postgresql.\"Server\" ps\n"
 									+ "    where\n"
 									+ "      pb.postgres_server=ps.pkey\n"
 									+ "  ) as fb,\n"

@@ -5847,7 +5847,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un5,\n"
 					+ "      billing.\"Package\" pk5,\n"
 					+ "      business_servers bs5,\n"
-					+ "      postgres_servers ps5\n"
+					+ "      postgresql.\"Server\" ps5\n"
 					+ "    where\n"
 					+ "      un5.username=?\n"
 					+ "      and un5.package=pk5.name\n"
@@ -6025,7 +6025,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un5,\n"
 					+ "      billing.\"Package\" pk5,\n"
 					+ "      business_servers bs5,\n"
-					+ "      postgres_servers ps5\n"
+					+ "      postgresql.\"Server\" ps5\n"
 					+ "    where\n"
 					+ "      un5.username=?\n"
 					+ "      and un5.package=pk5.name\n"
@@ -6656,7 +6656,7 @@ final public class TableHandler {
 						+ "  pd.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  postgres_servers ps,\n"
+						+ "  postgresql.\"Server\" ps,\n"
 						+ "  postgres_databases pd\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -6723,7 +6723,7 @@ final public class TableHandler {
 						+ "  psu.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  postgres_servers ps,\n"
+						+ "  postgresql.\"Server\" ps,\n"
 						+ "  postgres_server_users psu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -6771,7 +6771,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new PostgresServer(),
-						"select * from postgres_servers"
+						"select * from postgresql.\"Server\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -6782,7 +6782,7 @@ final public class TableHandler {
 						+ "  ps.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  postgres_servers ps\n"
+						+ "  postgresql.\"Server\" ps\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ps.ao_server",
@@ -6800,7 +6800,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
 					+ "  business_servers bs,\n"
-					+ "  postgres_servers ps\n"
+					+ "  postgresql.\"Server\" ps\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
