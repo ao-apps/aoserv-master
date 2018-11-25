@@ -289,13 +289,13 @@ final public class AccountCleaner implements CronJob {
                         + "where\n"
                         + "  bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS + "\n"
-						// credit_card_transactions
+						// payment.Payment
 						// PostgresSQL 8.3 doing sequential scan on "or":
-                        // + "  and (select cct.pkey from credit_card_transactions cct where cct.credit_card_created_by=ba.username or cct.authorization_username=ba.username or cct.capture_username=ba.username or cct.void_username=ba.username limit 1) is null\n"
-						+ "  and (select cct1.pkey from credit_card_transactions cct1 where cct1.credit_card_created_by = ba.username limit 1) is null\n"
-						+ "  and (select cct2.pkey from credit_card_transactions cct2 where cct2.authorization_username = ba.username limit 1) is null\n"
-						+ "  and (select cct3.pkey from credit_card_transactions cct3 where cct3.capture_username       = ba.username limit 1) is null\n"
-						+ "  and (select cct4.pkey from credit_card_transactions cct4 where cct4.void_username          = ba.username limit 1) is null\n"
+                        // + "  and (select cct.pkey from payment.\"Payment\" cct where cct.credit_card_created_by=ba.username or cct.authorization_username=ba.username or cct.capture_username=ba.username or cct.void_username=ba.username limit 1) is null\n"
+						+ "  and (select cct1.pkey from payment.\"Payment\" cct1 where cct1.credit_card_created_by = ba.username limit 1) is null\n"
+						+ "  and (select cct2.pkey from payment.\"Payment\" cct2 where cct2.authorization_username = ba.username limit 1) is null\n"
+						+ "  and (select cct3.pkey from payment.\"Payment\" cct3 where cct3.capture_username       = ba.username limit 1) is null\n"
+						+ "  and (select cct4.pkey from payment.\"Payment\" cct4 where cct4.void_username          = ba.username limit 1) is null\n"
 						// payment.CreditCard
                         + "  and (select cc.pkey from payment.\"CreditCard\" cc where cc.created_by=ba.username limit 1) is null\n"
 						// account.DisableLog

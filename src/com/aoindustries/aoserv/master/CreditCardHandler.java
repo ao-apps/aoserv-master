@@ -305,7 +305,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static String getCreditCardProcessorForCreditCardTransaction(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        return conn.executeStringQuery("select processor_id from credit_card_transactions where pkey=?", pkey);
+        return conn.executeStringQuery("select processor_id from payment.\"Payment\" where pkey=?", pkey);
     }
 
     public static AccountingCode getBusinessForEncryptionKey(DatabaseConnection conn, int pkey) throws IOException, SQLException {
@@ -772,7 +772,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String authorizationPrincipalName
     ) throws IOException, SQLException {
         int pkey = conn.executeIntUpdate(
-            "INSERT INTO credit_card_transactions (\n"
+            "INSERT INTO payment.\"Payment\" (\n"
             + "  processor_id,\n"
             + "  accounting,\n"
             + "  group_name,\n"
@@ -991,7 +991,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 
         int updated = conn.executeUpdate(
             "update\n"
-            + "  credit_card_transactions\n"
+            + "  payment.\"Payment\"\n"
             + "set\n"
             + "  authorization_communication_result=?,\n"
             + "  authorization_provider_error_code=?,\n"
@@ -1048,7 +1048,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             status,
             pkey
         );
-        if(updated!=1) throw new SQLException("Unable to find credit_card_transactions with pkey="+pkey+" and status='PROCESSING'");
+        if(updated!=1) throw new SQLException("Unable to find payment.Payment with pkey="+pkey+" and status='PROCESSING'");
 
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
@@ -1134,7 +1134,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 
         int updated = conn.executeUpdate(
             "update\n"
-            + "  credit_card_transactions\n"
+            + "  payment.\"Payment\"\n"
             + "set\n"
             + "  authorization_communication_result=?,\n"
             + "  authorization_provider_error_code=?,\n"
@@ -1175,7 +1175,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             status,
             pkey
         );
-        if(updated!=1) throw new SQLException("Unable to find credit_card_transactions with pkey="+pkey+" and status='PROCESSING'");
+        if(updated!=1) throw new SQLException("Unable to find payment.Payment with pkey="+pkey+" and status='PROCESSING'");
 
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
