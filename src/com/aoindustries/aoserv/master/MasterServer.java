@@ -10341,7 +10341,7 @@ public abstract class MasterServer {
 			if(masterServers==null) masterServers=new HashMap<>();
 			com.aoindustries.aoserv.client.MasterServer[] mss=masterServers.get(username);
 			if(mss!=null) return mss;
-			try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master.\"MasterUser\" mu, master_servers ms where mu.is_active and mu.username=? and mu.username=ms.username")) {
+			try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master.\"User\" mu, master_servers ms where mu.is_active and mu.username=? and mu.username=ms.username")) {
 				try {
 					List<com.aoindustries.aoserv.client.MasterServer> v=new ArrayList<>();
 					pstmt.setString(1, username.toString());
@@ -10368,7 +10368,7 @@ public abstract class MasterServer {
 			if(masterUsers==null) {
 				try (Statement stmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement()) {
 					Map<UserId,MasterUser> table=new HashMap<>();
-					ResultSet results=stmt.executeQuery("select * from master.\"MasterUser\" where is_active");
+					ResultSet results=stmt.executeQuery("select * from master.\"User\" where is_active");
 					while(results.next()) {
 						MasterUser mu=new MasterUser();
 						mu.init(results);
@@ -10394,7 +10394,7 @@ public abstract class MasterServer {
 			if(masterHosts==null) {
 				try (Statement stmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement()) {
 					Map<UserId,List<HostAddress>> table=new HashMap<>();
-					ResultSet results=stmt.executeQuery("select mh.username, mh.host from master.\"MasterHost\" mh, master.\"MasterUser\" mu where mh.username=mu.username and mu.is_active");
+					ResultSet results=stmt.executeQuery("select mh.username, mh.host from master.\"MasterHost\" mh, master.\"User\" mu where mh.username=mu.username and mu.is_active");
 					while(results.next()) {
 						UserId un;
 						HostAddress ho;
