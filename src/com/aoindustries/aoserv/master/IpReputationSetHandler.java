@@ -100,7 +100,7 @@ final public class IpReputationSetHandler {
         conn.executeUpdate(
 			"LOCK TABLE\n"
 			+ "  \"net/reputation\".\"ReputationSet\",\n"
-			+ "  ip_reputation_set_hosts,\n"
+			+ "  \"net/reputation\".\"ReputationSetHost\",\n"
 			+ "  \"net/reputation\".\"ReputationSetNetwork\"\n"
 			+ "IN EXCLUSIVE MODE");
     }
@@ -245,7 +245,7 @@ final public class IpReputationSetHandler {
 						obj.init(result);
 						return obj;
 					},
-                    "select * from ip_reputation_set_hosts where \"set\"=? and host=?",
+                    "select * from \"net/reputation\".\"ReputationSetHost\" where \"set\"=? and host=?",
                     ipReputationSet,
                     host
                 );
@@ -268,7 +268,7 @@ final public class IpReputationSetHandler {
                     }
                     if(goodReputation!=0 || badReputation!=0) {
                         int rowCount = conn.executeUpdate(
-                            "INSERT INTO ip_reputation_set_hosts (\"set\", host, good_reputation, bad_reputation) VALUES (?,?,?,?)",
+                            "INSERT INTO \"net/reputation\".\"ReputationSetHost\" (\"set\", host, good_reputation, bad_reputation) VALUES (?,?,?,?)",
                             ipReputationSet,
                             host,
                             goodReputation,
@@ -288,7 +288,7 @@ final public class IpReputationSetHandler {
                         );
                         if(newGoodReputation!=oldGoodReputation) {
                             int rowCount = conn.executeUpdate(
-                                "UPDATE ip_reputation_set_hosts SET good_reputation=? WHERE \"set\"=? AND host=?",
+                                "UPDATE \"net/reputation\".\"ReputationSetHost\" SET good_reputation=? WHERE \"set\"=? AND host=?",
                                 newGoodReputation,
                                 ipReputationSet,
                                 host
@@ -308,7 +308,7 @@ final public class IpReputationSetHandler {
                         );
                         if(newBadReputation!=oldBadReputation) {
                             int rowCount = conn.executeUpdate(
-                                "UPDATE ip_reputation_set_hosts SET bad_reputation=? WHERE \"set\"=? AND host=?",
+                                "UPDATE \"net/reputation\".\"ReputationSetHost\" SET bad_reputation=? WHERE \"set\"=? AND host=?",
                                 newBadReputation,
                                 ipReputationSet,
                                 host
