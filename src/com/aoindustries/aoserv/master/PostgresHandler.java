@@ -110,7 +110,7 @@ final public class PostgresHandler {
 		// If requesting PostGIS, make sure the version of PostgreSQL supports it.
 		if(
 			enable_postgis
-			&& conn.executeBooleanQuery("select pv.postgis_version is null from postgres_servers ps inner join postgres_versions pv on ps.version=pv.version where ps.pkey=?", postgresServer)
+			&& conn.executeBooleanQuery("select pv.postgis_version is null from postgres_servers ps inner join postgresql.\"Version\" pv on ps.version=pv.version where ps.pkey=?", postgresServer)
 		) throw new SQLException("This version of PostgreSQL doesn't support PostGIS");
 
 		// datdba must be on the same server and not be 'mail'
@@ -816,7 +816,7 @@ final public class PostgresHandler {
 			+ "  pv.minor_version\n"
 			+ "from\n"
 			+ "  postgres_servers ps,\n"
-			+ "  postgres_versions pv\n"
+			+ "  postgresql.\"Version\" pv\n"
 			+ "where\n"
 			+ "  ps.pkey=?\n"
 			+ "  and ps.version=pv.version",

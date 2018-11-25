@@ -6875,7 +6875,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new PostgresVersion(),
-					"select * from postgres_versions"
+					"select * from postgresql.\"Version\""
 				);
 				break;
 			case PRIVATE_FTP_SERVERS :
