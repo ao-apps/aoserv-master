@@ -101,7 +101,7 @@ final public class IpReputationSetHandler {
 			"LOCK TABLE\n"
 			+ "  \"net/reputation\".\"Set\",\n"
 			+ "  \"net/reputation\".\"Host\",\n"
-			+ "  \"net/reputation\".\"SetNetwork\"\n"
+			+ "  \"net/reputation\".\"Network\"\n"
 			+ "IN EXCLUSIVE MODE");
     }
 
@@ -332,7 +332,7 @@ final public class IpReputationSetHandler {
 							obj.init(result);
 							return obj;
 						},
-                        "select * from \"net/reputation\".\"SetNetwork\" where \"set\"=? and network=?",
+                        "select * from \"net/reputation\".\"Network\" where \"set\"=? and network=?",
                         ipReputationSet,
                         network
                     );
@@ -341,7 +341,7 @@ final public class IpReputationSetHandler {
                         int networkCounter = positiveChange;
                         if(networkCounter>maxNetworkCounter) networkCounter = maxNetworkCounter;
                         int rowCount = conn.executeUpdate(
-                            "INSERT INTO \"net/reputation\".\"SetNetwork\" (\"set\", network, counter) VALUES (?,?,?)",
+                            "INSERT INTO \"net/reputation\".\"Network\" (\"set\", network, counter) VALUES (?,?,?)",
                             ipReputationSet,
                             network,
                             networkCounter
@@ -355,7 +355,7 @@ final public class IpReputationSetHandler {
                         int newCounter = newCounterLong <= maxNetworkCounter ? (int)newCounterLong : maxNetworkCounter;
                         if(newCounter!=oldCounter) {
                             int rowCount = conn.executeUpdate(
-                                "UPDATE \"net/reputation\".\"SetNetwork\" SET counter=? WHERE \"set\"=? AND network=?",
+                                "UPDATE \"net/reputation\".\"Network\" SET counter=? WHERE \"set\"=? AND network=?",
                                 newCounter,
                                 ipReputationSet,
                                 network
