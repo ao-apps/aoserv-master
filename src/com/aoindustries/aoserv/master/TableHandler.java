@@ -4415,7 +4415,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new IpReputationSetHost(),
-							"select * from \"net/reputation\".\"SetHost\""
+							"select * from \"net/reputation\".\"Host\""
 						);
 					} else if(masterUser.isRouter()) {
 						// Router may access all sets used by any limiters in the same server farm
@@ -4435,7 +4435,7 @@ final public class TableHandler {
 							+ "  inner join \"net/reputation\".\"Limiter\"    irl  on nd.pkey       = irl.net_device\n" // Find all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.pkey      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"Set\"        irs  on irls.\"set\"  = irs.pkey\n"       // Find all sets used by any limiter in the same farm
-							+ "  inner join \"net/reputation\".\"SetHost\"    irsh on irs.pkey      = irsh.\"set\"\n"   // Find all hosts belonging to these sets
+							+ "  inner join \"net/reputation\".\"Host\"       irsh on irs.pkey      = irsh.\"set\"\n"   // Find all hosts belonging to these sets
 							+ "where\n"
 							+ "  ms.username=?",
 							username
@@ -4460,7 +4460,7 @@ final public class TableHandler {
 						+ "  billing.\"Package\" pk,\n"
 						+ BU1_PARENTS_JOIN
 						+ "  \"net/reputation\".\"Set\" irs,\n"
-						+ "  \"net/reputation\".\"SetHost\" irsh\n"
+						+ "  \"net/reputation\".\"Host\" irsh\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk.name\n"
