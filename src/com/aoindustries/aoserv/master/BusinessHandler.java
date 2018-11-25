@@ -1132,7 +1132,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one MySQLDatabase on Server="+server);
 
-		// mysql.MysqlUserServer
+		// mysql.UserServer
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1142,7 +1142,7 @@ final public class BusinessHandler {
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
-				+ "      mysql.\"MysqlUserServer\" msu,\n"
+				+ "      mysql.\"UserServer\" msu,\n"
 				+ "      mysql.\"Server\" ms\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"

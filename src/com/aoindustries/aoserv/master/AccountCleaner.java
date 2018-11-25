@@ -819,7 +819,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select hs.pkey from web.\"Site\" hs where hs.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select la.username from linux.\"LinuxUser\" la where la.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select lsa.pkey from linux.\"LinuxUserServer\" lsa where lsa.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select msu.pkey from mysql.\"MysqlUserServer\" msu where msu.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select msu.pkey from mysql.\"UserServer\" msu where msu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select mu.username from mysql.\"User\" mu where mu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select pk.name from billing.\"Package\" pk where pk.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select psu.pkey from postgresql.\"UserServer\" psu where psu.disable_log=dl.pkey limit 1) is null\n"
