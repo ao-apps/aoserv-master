@@ -6580,7 +6580,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new PaymentType(),
-					"select * from payment_types"
+					"select * from payment.\"PaymentType\""
 				);
 				break;
 			case PHYSICAL_SERVERS :
