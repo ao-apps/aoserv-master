@@ -1443,8 +1443,8 @@ final public class LinuxAccountHandler {
 		int useCount = conn.executeIntQuery(
 			"select count(*) from linux.\"GroupUser\" lga, "+
 					"linux.\"UserServer\" lsa, "+
-					"web.\"SharedTomcat\" hst, "+
-					"web.\"SharedTomcatSite\" htss, "+
+					"\"web/tomcat\".\"SharedTomcat\" hst, "+
+					"\"web/tomcat\".\"SharedTomcatSite\" htss, "+
 					"web.\"Site\" hs "+
 						"where lga.username = lsa.username and "+
 						"lsa.pkey           = hst.linux_server_account and "+
@@ -1458,8 +1458,8 @@ final public class LinuxAccountHandler {
 			useCount = conn.executeIntQuery(
 				"select count(*) from linux.\"GroupUser\" lga, "+
 						"linux.\"GroupServer\" lsg, "+
-						"web.\"SharedTomcat\" hst, "+
-						"web.\"SharedTomcatSite\" htss, "+
+						"\"web/tomcat\".\"SharedTomcat\" hst, "+
+						"\"web/tomcat\".\"SharedTomcatSite\" htss, "+
 						"web.\"Site\" hs "+
 							"where lga.\"group\" = lsg.name and "+
 							"lsg.pkey            = hst.linux_server_group and "+
@@ -1470,7 +1470,7 @@ final public class LinuxAccountHandler {
 				pkey
 			);
 		}
-		if (useCount>0) throw new SQLException("linux_group_account("+pkey+") has been used by "+useCount+" web.SharedTomcatSite.");
+		if (useCount>0) throw new SQLException("linux_group_account("+pkey+") has been used by "+useCount+" web/tomcat.SharedTomcatSite.");
 
 		// Get the values for later use
 		List<AccountingCode> accountings=getBusinessesForLinuxGroupAccount(conn, pkey);
@@ -1505,8 +1505,8 @@ final public class LinuxAccountHandler {
 			+ "            htss.tomcat_site\n"
 			+ "          from\n"
 			+ "            linux.\"UserServer\" lsa,\n"
-			+ "            web.\"SharedTomcat\" hst,\n"
-			+ "            web.\"SharedTomcatSite\" htss,\n"
+			+ "            \"web/tomcat\".\"SharedTomcat\" hst,\n"
+			+ "            \"web/tomcat\".\"SharedTomcatSite\" htss,\n"
 			+ "            web.\"Site\" hs\n"
 			+ "          where\n"
 			+ "            lga.username=lsa.username\n"
@@ -1521,8 +1521,8 @@ final public class LinuxAccountHandler {
 			+ "            htss.tomcat_site\n"
 			+ "          from\n"
 			+ "            linux.\"GroupServer\" lsg,\n"
-			+ "            web.\"SharedTomcat\" hst,\n"
-			+ "            web.\"SharedTomcatSite\" htss,\n"
+			+ "            \"web/tomcat\".\"SharedTomcat\" hst,\n"
+			+ "            \"web/tomcat\".\"SharedTomcatSite\" htss,\n"
 			+ "            web.\"Site\" hs\n"
 			+ "          where\n"
 			+ "            lga.\"group\"=lsg.name\n"

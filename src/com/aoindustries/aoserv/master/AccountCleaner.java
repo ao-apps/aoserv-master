@@ -507,13 +507,13 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // web.SharedTomcat
+                // web/tomcat.SharedTomcat
                 {
                     IntList hsts=conn.executeIntListQuery(
                         "select\n"
                         + "  hst.pkey\n"
                         + "from\n"
-                        + "  web.\"SharedTomcat\" hst,\n"
+                        + "  \"web/tomcat\".\"SharedTomcat\" hst,\n"
                         + "  linux.\"GroupServer\" lsg,\n"
                         + "  linux.\"Group\" lg,\n"
                         + "  billing.\"Package\" pk,\n"
@@ -814,7 +814,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select el.pkey from email.\"List\" el where el.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select ep.pkey from email.\"Pipe\" ep where ep.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select esr.pkey from email.\"SmtpRelay\" esr where esr.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select hst.pkey from web.\"SharedTomcat\" hst where hst.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select hst.pkey from \"web/tomcat\".\"SharedTomcat\" hst where hst.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select hsb.pkey from web.\"VirtualHost\" hsb where hsb.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select hs.pkey from web.\"Site\" hs where hs.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select la.username from linux.\"User\" la where la.disable_log=dl.pkey limit 1) is null\n"
