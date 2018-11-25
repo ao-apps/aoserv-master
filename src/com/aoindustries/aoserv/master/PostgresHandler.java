@@ -201,7 +201,7 @@ final public class PostgresHandler {
 		UsernameHandler.checkUsernameAccessServer(conn, source, "addPostgresServerUser", username, aoServer);
 
 		int pkey = conn.executeIntUpdate(
-			"INSERT INTO postgres_server_users VALUES (default,?,?,null,null) RETURNING pkey",
+			"INSERT INTO postgresql.\"UserServer\" VALUES (default,?,?,null,null) RETURNING pkey",
 			username,
 			postgresServer
 		);
@@ -257,7 +257,7 @@ final public class PostgresHandler {
 		checkAccessPostgresServerUser(conn, source, "disablePostgresServerUser", pkey);
 
 		conn.executeUpdate(
-			"update postgres_server_users set disable_log=? where pkey=?",
+			"update postgresql.\"UserServer\" set disable_log=? where pkey=?",
 			disableLog,
 			pkey
 		);
@@ -345,7 +345,7 @@ final public class PostgresHandler {
 		if(isPostgresUserDisabled(conn, pu)) throw new SQLException("Unable to enable PostgresServerUser #"+pkey+", PostgresUser not enabled: "+pu);
 
 		conn.executeUpdate(
-			"update postgres_server_users set disable_log=null where pkey=?",
+			"update postgresql.\"UserServer\" set disable_log=null where pkey=?",
 			pkey
 		);
 
@@ -415,7 +415,7 @@ final public class PostgresHandler {
 	}
 
 	public static int getDisableLogForPostgresServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from postgres_server_users where pkey=?", pkey);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from postgresql.\"UserServer\" where pkey=?", pkey);
 	}
 
 	public static int getDisableLogForPostgresUser(DatabaseConnection conn, PostgresUserId username) throws IOException, SQLException {
@@ -423,13 +423,13 @@ final public class PostgresHandler {
 	}
 
 	public static IntList getPostgresServerUsersForPostgresUser(DatabaseConnection conn, PostgresUserId username) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from postgres_server_users where username=?", username);
+		return conn.executeIntListQuery("select pkey from postgresql.\"UserServer\" where username=?", username);
 	}
 
 	public static PostgresUserId getUsernameForPostgresServerUser(DatabaseConnection conn, int psu) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.postgresUserIdFactory,
-			"select username from postgres_server_users where pkey=?",
+			"select username from postgresql.\"UserServer\" where pkey=?",
 			psu
 		);
 	}
@@ -606,7 +606,7 @@ final public class PostgresHandler {
 		if(count>0) throw new SQLException("PostgresServerUser #"+pkey+" cannot be removed because it is the datdba for "+count+(count==1?" database":" databases"));
 
 		// Remove the postgres_server_user
-		conn.executeUpdate("delete from postgres_server_users where pkey=?", pkey);
+		conn.executeUpdate("delete from postgresql.\"UserServer\" where pkey=?", pkey);
 
 		// Notify all clients of the updates
 		invalidateList.addTable(
@@ -644,9 +644,9 @@ final public class PostgresHandler {
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
 		// Remove the postgres_server_user
-		IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgres_server_users psu, postgresql.\"Server\" ps where psu.username=? and psu.postgres_server=ps.pkey", username);
+		IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgresql.\"UserServer\" psu, postgresql.\"Server\" ps where psu.username=? and psu.postgres_server=ps.pkey", username);
 		if(aoServers.size()>0) {
-			conn.executeUpdate("delete from postgres_server_users where username=?", username);
+			conn.executeUpdate("delete from postgresql.\"UserServer\" where username=?", username);
 			invalidateList.addTable(
 				conn,
 				SchemaTable.TableID.POSTGRES_SERVER_USERS,
@@ -713,7 +713,7 @@ final public class PostgresHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update postgres_server_users set predisable_password=? where pkey=?",
+			"update postgresql.\"UserServer\" set predisable_password=? where pkey=?",
 			password,
 			psu
 		);
@@ -764,7 +764,7 @@ final public class PostgresHandler {
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  postgresql.\"Database\" pd,\n"
-			+ "  postgres_server_users psu,\n"
+			+ "  postgresql.\"UserServer\" psu,\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
@@ -782,7 +782,7 @@ final public class PostgresHandler {
 			+ "  pk.pkey\n"
 			+ "from\n"
 			+ "  postgresql.\"Database\" pd,\n"
-			+ "  postgres_server_users psu,\n"
+			+ "  postgresql.\"UserServer\" psu,\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
@@ -797,7 +797,7 @@ final public class PostgresHandler {
 	public static AccountingCode getBusinessForPostgresServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from postgres_server_users psu, account.\"Username\" un, billing.\"Package\" pk where psu.username=un.username and un.package=pk.name and psu.pkey=?",
+			"select pk.accounting from postgresql.\"UserServer\" psu, account.\"Username\" un, billing.\"Package\" pk where psu.username=un.username and un.package=pk.name and psu.pkey=?",
 			pkey
 		);
 	}
@@ -832,7 +832,7 @@ final public class PostgresHandler {
 	}
 
 	public static int getPostgresServerForPostgresServerUser(DatabaseConnection conn, int postgres_server_user) throws IOException, SQLException {
-		return conn.executeIntQuery("select postgres_server from postgres_server_users where pkey=?", postgres_server_user);
+		return conn.executeIntQuery("select postgres_server from postgresql.\"UserServer\" where pkey=?", postgres_server_user);
 	}
 
 	public static int getAOServerForPostgresDatabase(DatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
@@ -866,7 +866,7 @@ final public class PostgresHandler {
 			"select\n"
 			+ "  ps.ao_server\n"
 			+ "from\n"
-			+ "  postgres_server_users psu,\n"
+			+ "  postgresql.\"UserServer\" psu,\n"
 			+ "  postgresql.\"Server\" ps\n"
 			+ "where\n"
 			+ "  psu.pkey=?\n"

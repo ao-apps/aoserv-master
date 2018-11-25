@@ -1191,7 +1191,7 @@ final public class BusinessHandler {
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
 				+ "      postgresql.\"Server\" ps,\n"
-				+ "      postgres_server_users psu,\n"
+				+ "      postgresql.\"UserServer\" psu,\n"
 				+ "      postgresql.\"Database\" pd\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
@@ -1207,7 +1207,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one PostgresDatabase on Server="+server);
 
-		// postgres_server_users
+		// postgresql.UserServer
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1218,7 +1218,7 @@ final public class BusinessHandler {
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
 				+ "      postgresql.\"Server\" ps,\n"
-				+ "      postgres_server_users psu\n"
+				+ "      postgresql.\"UserServer\" psu\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=un.package\n"

@@ -730,7 +730,7 @@ final public class AccountCleaner implements CronJob {
                         + "  pd.pkey\n"
                         + "from\n"
                         + "  postgresql.\"Database\" pd,\n"
-                        + "  postgres_server_users psu,\n"
+                        + "  postgresql.\"UserServer\" psu,\n"
                         + "  account.\"Username\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
@@ -822,7 +822,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select msu.pkey from mysql.\"MysqlUserServer\" msu where msu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select mu.username from mysql.\"MysqlUser\" mu where mu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select pk.name from billing.\"Package\" pk where pk.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select psu.pkey from postgres_server_users psu where psu.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select psu.pkey from postgresql.\"UserServer\" psu where psu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select pu.username from postgresql.\"User\" pu where pu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select un.username from account.\"Username\" un where un.disable_log=dl.pkey limit 1) is null",
                         now
