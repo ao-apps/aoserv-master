@@ -748,14 +748,14 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // postgres_users
+                // postgresql.User
                 {
                     List<PostgresUserId> pus=conn.executeObjectListQuery(
 						ObjectFactories.postgresUserIdFactory,
                         "select\n"
                         + "  pu.username\n"
                         + "from\n"
-                        + "  postgres_users pu,\n"
+                        + "  postgresql.\"User\" pu,\n"
                         + "  account.\"Username\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
@@ -823,7 +823,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select mu.username from mysql.\"MysqlUser\" mu where mu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select pk.name from billing.\"Package\" pk where pk.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select psu.pkey from postgres_server_users psu where psu.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select pu.username from postgres_users pu where pu.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select pu.username from postgresql.\"User\" pu where pu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select un.username from account.\"Username\" un where un.disable_log=dl.pkey limit 1) is null",
                         now
                     );

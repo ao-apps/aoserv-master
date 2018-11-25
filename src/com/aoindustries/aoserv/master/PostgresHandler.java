@@ -231,7 +231,7 @@ final public class PostgresHandler {
 		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add PostgresUser, Username disabled: "+username);
 
 		conn.executeUpdate(
-			"insert into postgres_users(username) values(?)",
+			"insert into postgresql.\"User\"(username) values(?)",
 			username
 		);
 
@@ -291,7 +291,7 @@ final public class PostgresHandler {
 		}
 
 		conn.executeUpdate(
-			"update postgres_users set disable_log=? where username=?",
+			"update postgresql.\"User\" set disable_log=? where username=?",
 			disableLog,
 			username
 		);
@@ -372,7 +372,7 @@ final public class PostgresHandler {
 		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable PostgresUser '"+username+"', Username not enabled: "+username);
 
 		conn.executeUpdate(
-			"update postgres_users set disable_log=null where username=?",
+			"update postgresql.\"User\" set disable_log=null where username=?",
 			username
 		);
 
@@ -419,7 +419,7 @@ final public class PostgresHandler {
 	}
 
 	public static int getDisableLogForPostgresUser(DatabaseConnection conn, PostgresUserId username) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from postgres_users where username=?", username);
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from postgresql.\"User\" where username=?", username);
 	}
 
 	public static IntList getPostgresServerUsersForPostgresUser(DatabaseConnection conn, PostgresUserId username) throws IOException, SQLException {
@@ -467,7 +467,7 @@ final public class PostgresHandler {
 			+ "    select\n"
 			+ "      username\n"
 			+ "    from\n"
-			+ "      postgres_users\n"
+			+ "      postgresql.\"User\"\n"
 			+ "    where\n"
 			+ "      username=?\n"
 			+ "    limit 1\n"
@@ -657,7 +657,7 @@ final public class PostgresHandler {
 		}
 
 		// Remove the postgres_user
-		conn.executeUpdate("delete from postgres_users where username=?", username);
+		conn.executeUpdate("delete from postgresql.\"User\" where username=?", username);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.POSTGRES_USERS,
