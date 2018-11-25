@@ -214,7 +214,7 @@ final public class MySQLHandler {
 		int dbServer=getMySQLServerForMySQLDatabase(conn, mysql_database);
 		int userServer=getMySQLServerForMySQLServerUser(conn, mysql_server_user);
 		// TODO: Enforce this with PostgreSQL trigger
-		if(dbServer!=userServer) throw new SQLException("Mismatched mysql.MysqlServer for mysql.Database and mysql.MysqlUserServer");
+		if(dbServer!=userServer) throw new SQLException("Mismatched mysql.Server for mysql.Database and mysql.MysqlUserServer");
 
 		// Add the entry to the database
 		int pkey = conn.executeIntUpdate(
@@ -1020,7 +1020,7 @@ final public class MySQLHandler {
 	}
 
 	public static int getAOServerForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from mysql.\"MysqlServer\" where net_bind=?", mysqlServer);
+		return conn.executeIntQuery("select ao_server from mysql.\"Server\" where net_bind=?", mysqlServer);
 	}
 
 	public static AccountingCode getPackageForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
@@ -1029,7 +1029,7 @@ final public class MySQLHandler {
 			"select\n"
 			+ "  nb.package\n"
 			+ "from\n"
-			+ "  mysql.\"MysqlServer\" ms\n"
+			+ "  mysql.\"Server\" ms\n"
 			+ "  inner join net.\"Bind\" nb on ms.net_bind=nb.pkey\n"
 			+ "where\n"
 			+ "  ms.net_bind=?",
@@ -1044,7 +1044,7 @@ final public class MySQLHandler {
 			+ "  nb.port,\n"
 			+ "  nb.net_protocol\n"
 			+ "from\n"
-			+ "  mysql.\"MysqlServer\" ms\n"
+			+ "  mysql.\"Server\" ms\n"
 			+ "  inner join net.\"Bind\" nb on ms.net_bind=nb.pkey\n"
 			+ "where\n"
 			+ "  ms.net_bind=?",
