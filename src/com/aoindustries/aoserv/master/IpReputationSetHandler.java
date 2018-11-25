@@ -21,7 +21,7 @@ import java.util.Map;
 
 /**
  * The <code>IpReputationSetHandler</code> handles all the accesses to the
- * <code>ip_reputation_sets</code> tables.
+ * <code>net/reputation.ReputationSet</code> tables.
  *
  * @author  AO Industries, Inc.
  */
@@ -36,7 +36,7 @@ final public class IpReputationSetHandler {
     public static AccountingCode getBusinessForIpReputationSet(DatabaseConnection conn, int ipReputationSet) throws IOException, SQLException {
         return conn.executeObjectQuery(
             ObjectFactories.accountingCodeFactory,
-            "select accounting from ip_reputation_sets where pkey=?",
+            "select accounting from \"net/reputation\".\"ReputationSet\" where pkey=?",
             ipReputationSet
         );
     }
@@ -97,7 +97,7 @@ final public class IpReputationSetHandler {
     private static void lockForUpdate(
         DatabaseConnection conn
     ) throws SQLException {
-        conn.executeUpdate("LOCK TABLE ip_reputation_sets, ip_reputation_set_hosts, ip_reputation_set_networks IN EXCLUSIVE MODE");
+        conn.executeUpdate("LOCK TABLE \"net/reputation\".\"ReputationSet\", ip_reputation_set_hosts, ip_reputation_set_networks IN EXCLUSIVE MODE");
     }
 
     /* TODO: Do in batches
@@ -208,10 +208,10 @@ final public class IpReputationSetHandler {
 
         if(addReputations.length>0) {
             // Get the settings
-            final short maxUncertainReputation = conn.executeShortQuery("SELECT max_uncertain_reputation FROM ip_reputation_sets WHERE pkey=?", ipReputationSet);
-            final short maxDefiniteReputation  = conn.executeShortQuery("SELECT max_definite_reputation  FROM ip_reputation_sets WHERE pkey=?", ipReputationSet);
-            final short networkPrefix          = conn.executeShortQuery("SELECT network_prefix           FROM ip_reputation_sets WHERE pkey=?", ipReputationSet);
-            final short maxNetworkReputation   = conn.executeShortQuery("SELECT max_network_reputation   FROM ip_reputation_sets WHERE pkey=?", ipReputationSet);
+            final short maxUncertainReputation = conn.executeShortQuery("SELECT max_uncertain_reputation FROM \"net/reputation\".\"ReputationSet\" WHERE pkey=?", ipReputationSet);
+            final short maxDefiniteReputation  = conn.executeShortQuery("SELECT max_definite_reputation  FROM \"net/reputation\".\"ReputationSet\" WHERE pkey=?", ipReputationSet);
+            final short networkPrefix          = conn.executeShortQuery("SELECT network_prefix           FROM \"net/reputation\".\"ReputationSet\" WHERE pkey=?", ipReputationSet);
+            final short maxNetworkReputation   = conn.executeShortQuery("SELECT max_network_reputation   FROM \"net/reputation\".\"ReputationSet\" WHERE pkey=?", ipReputationSet);
             final int   maxNetworkCounter        = ((maxNetworkReputation + 1) << (32 - networkPrefix)) - 1;
 
             // Will only send signals when changed
@@ -224,7 +224,7 @@ final public class IpReputationSetHandler {
             lockForUpdate(conn);
 
             // Flag as rep added
-            conn.executeUpdate("UPDATE ip_reputation_sets SET last_reputation_added=now() WHERE pkey=?", ipReputationSet);
+            conn.executeUpdate("UPDATE \"net/reputation\".\"ReputationSet\" SET last_reputation_added=now() WHERE pkey=?", ipReputationSet);
 
             for(IpReputationSet.AddReputation addRep : addReputations) {
                 int host = addRep.getHost();
