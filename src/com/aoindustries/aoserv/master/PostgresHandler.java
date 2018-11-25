@@ -130,7 +130,7 @@ final public class PostgresHandler {
 				+ "      pe.pkey\n"
 				+ "    from\n"
 				+ "      postgres_servers ps,\n"
-				+ "      postgres_encodings pe\n"
+				+ "      postgresql.\"Encoding\" pe\n"
 				+ "    where\n"
 				+ "      ps.pkey=?\n"
 				+ "      and ps.version=pe.postgres_version\n"

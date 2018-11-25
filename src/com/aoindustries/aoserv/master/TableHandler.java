@@ -6700,7 +6700,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new PostgresEncoding(),
-					"select * from postgres_encodings"
+					"select * from postgresql.\"Encoding\""
 				);
 				break;
 			case POSTGRES_SERVER_USERS :
