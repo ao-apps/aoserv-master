@@ -10394,7 +10394,7 @@ public abstract class MasterServer {
 			if(masterHosts==null) {
 				try (Statement stmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement()) {
 					Map<UserId,List<HostAddress>> table=new HashMap<>();
-					ResultSet results=stmt.executeQuery("select mh.username, mh.host from master.\"MasterHost\" mh, master.\"User\" mu where mh.username=mu.username and mu.is_active");
+					ResultSet results=stmt.executeQuery("select mh.username, mh.host from master.\"UserHost\" mh, master.\"User\" mu where mh.username=mu.username and mu.is_active");
 					while(results.next()) {
 						UserId un;
 						HostAddress ho;

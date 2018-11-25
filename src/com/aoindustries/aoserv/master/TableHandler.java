@@ -5217,7 +5217,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new MasterHost(),
-						"select * from master.\"MasterHost\""
+						"select * from master.\"UserHost\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5231,7 +5231,7 @@ final public class TableHandler {
 						+ "  business_servers bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
-						+ "  master.\"MasterHost\" mh\n"
+						+ "  master.\"UserHost\" mh\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=bs.server\n"
@@ -5254,7 +5254,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
-					+ "  master.\"MasterHost\" mh\n"
+					+ "  master.\"UserHost\" mh\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"
