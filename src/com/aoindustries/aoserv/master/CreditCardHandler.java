@@ -299,7 +299,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     public static AccountingCode getBusinessForCreditCardProcessor(DatabaseConnection conn, String processor) throws IOException, SQLException {
         return conn.executeObjectQuery(
             ObjectFactories.accountingCodeFactory,
-            "select accounting from payment.\"PaymentProcessor\" where provider_id=?",
+            "select accounting from payment.\"Processor\" where provider_id=?",
             processor
         );
     }
@@ -1425,7 +1425,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "      bu.accounting\n"
                             + "  ) as current,\n"
                             + "  payment.\"CreditCard\" cc,\n"
-                            + "  payment.\"PaymentProcessor\" ccp\n"
+                            + "  payment.\"Processor\" ccp\n"
                             + "where\n"
                             + "  bu.accounting=cc.accounting\n"
                             + "  and bu.accounting=endofmonth.accounting\n"
