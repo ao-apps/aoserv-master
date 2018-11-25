@@ -648,7 +648,7 @@ final public class HttpdHandler {
 
 		String docBaseStr = docBase.toString();
 		if(docBaseStr.startsWith("/home/")) {
-			// Must be able to access one of the linux.LinuxUserServer with that home directory
+			// Must be able to access one of the linux.UserServer with that home directory
 			//
 			// This means there must be an accessible account that has a home directory that is a prefix of this docbase.
 			// Such as /home/e/example/ being a prefix of /home/e/example/my-webapp
@@ -656,7 +656,7 @@ final public class HttpdHandler {
 				"select\n"
 				+ "  pkey\n"
 				+ "from\n"
-				+ "  linux.\"LinuxUserServer\"\n"
+				+ "  linux.\"UserServer\"\n"
 				+ "where\n"
 				+ "  ao_server=?\n"
 				+ "  and (home || '/')=substring(? from 1 for (length(home) + 1))",
@@ -829,15 +829,15 @@ final public class HttpdHandler {
 				sharedTomcatName
 			);
 
-			// Check for ties between jvm and site in linux.LinuxGroupUser
-			String sharedTomcatUsername = conn.executeStringQuery("select lsa.username from web.\"SharedTomcat\" hst, linux.\"LinuxUserServer\" lsa where hst.linux_server_account = lsa.pkey and hst.pkey=?", sharedTomcatPkey);
-			String sharedTomcatLinuxGroup = conn.executeStringQuery("select lsg.name from web.\"SharedTomcat\" hst, linux.\"LinuxGroupServer\" lsg where hst.linux_server_group = lsg.pkey and hst.pkey=?", sharedTomcatPkey);
+			// Check for ties between jvm and site in linux.GroupUser
+			String sharedTomcatUsername = conn.executeStringQuery("select lsa.username from web.\"SharedTomcat\" hst, linux.\"UserServer\" lsa where hst.linux_server_account = lsa.pkey and hst.pkey=?", sharedTomcatPkey);
+			String sharedTomcatLinuxGroup = conn.executeStringQuery("select lsg.name from web.\"SharedTomcat\" hst, linux.\"GroupServer\" lsg where hst.linux_server_group = lsg.pkey and hst.pkey=?", sharedTomcatPkey);
 			boolean hasAccess = conn.executeBooleanQuery(
 				"select (\n"
 				+ "  select\n"
 				+ "    pkey\n"
 				+ "  from\n"
-				+ "    linux.\"LinuxGroupUser\"\n"
+				+ "    linux.\"GroupUser\"\n"
 				+ "  where\n"
 				+ "    \"group\"=?\n"
 				+ "    and username=?\n"
@@ -850,13 +850,13 @@ final public class HttpdHandler {
 				username,
 				osv
 			);
-			if (!hasAccess) throw new SQLException("Linux_account ("+username+") does not have access to linux_group ("+sharedTomcatLinuxGroup+")");
+			if (!hasAccess) throw new SQLException("linux.User ("+username+") does not have access to linux.Group ("+sharedTomcatLinuxGroup+")");
 			hasAccess = conn.executeBooleanQuery(
 				"select (\n"
 				+ "  select\n"
 				+ "    pkey\n"
 				+ "  from\n"
-				+ "    linux.\"LinuxGroupUser\"\n"
+				+ "    linux.\"GroupUser\"\n"
 				+ "  where\n"
 				+ "    \"group\"=?\n"
 				+ "    and username=?\n"
@@ -869,7 +869,7 @@ final public class HttpdHandler {
 				sharedTomcatUsername,
 				osv
 			);
-			if (!hasAccess) throw new SQLException("Linux_account ("+sharedTomcatName+") does not have access to linux_group ("+group+")");
+			if (!hasAccess) throw new SQLException("linux.User ("+sharedTomcatName+") does not have access to linux.Group ("+group+")");
 
 			if(tomcatVersion!=-1) throw new SQLException("TomcatVersion cannot be supplied for a TomcatShared site: "+tomcatVersion);
 			tomcatVersion = conn.executeIntQuery("select version from web.\"SharedTomcat\" where pkey=?", sharedTomcatPkey);
@@ -1744,12 +1744,12 @@ final public class HttpdHandler {
 					throw new SQLException(e);
 				}
 				if(
-					// Must also not be found in linux.LinuxUserServer.home
+					// Must also not be found in linux.UserServer.home
 					conn.executeIntQuery(
 						"select\n"
 						+ "  count(*)\n"
 						+ "from\n"
-						+ "  linux.\"LinuxUserServer\"\n"
+						+ "  linux.\"UserServer\"\n"
 						+ "where\n"
 						+ "  home=?\n"
 						+ "  or substring(home from 1 for " + (wwwgroupDirCentOS5.toString().length() + 1) + ")=?\n"
@@ -1762,8 +1762,8 @@ final public class HttpdHandler {
 					) == 0
 					// Must also not be found in account.Username.username
 					&& conn.executeIntQuery("select count(*) from account.\"Username\" where username=?", name) == 0
-					// Must also not be found in linux.LinuxGroup.name
-					&& conn.executeIntQuery("select count(*) from linux.\"LinuxGroup\" where name=?", name) == 0
+					// Must also not be found in linux.Group.name
+					&& conn.executeIntQuery("select count(*) from linux.\"Group\" where name=?", name) == 0
 				) {
 					goodOne = name;
 					break;
@@ -1798,7 +1798,7 @@ final public class HttpdHandler {
 			String name=template+c;
 			if(!HttpdSite.isValidSiteName(name)) throw new SQLException("Invalid site name: "+name);
 			if(!sorted.contains(name)) {
-				// Must also not be found in linux.LinuxUserServer.home on CentOS 5 or CentOS 7
+				// Must also not be found in linux.UserServer.home on CentOS 5 or CentOS 7
 				UnixPath wwwDirCentOS5;
 				UnixPath wwwDirCentOS7;
 				try {
@@ -1811,7 +1811,7 @@ final public class HttpdHandler {
 					"select\n"
 					+ "  count(*)\n"
 					+ "from\n"
-					+ "  linux.\"LinuxUserServer\"\n"
+					+ "  linux.\"UserServer\"\n"
 					+ "where\n"
 					+ "  home=?\n"
 					+ "  or substring(home from 1 for " + (wwwDirCentOS5.toString().length() + 1) + ")=?\n"
@@ -1885,8 +1885,8 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  hst.pkey\n"
 			+ "from\n"
-			+ "  linux.\"LinuxGroup\" lg,\n"
-			+ "  linux.\"LinuxGroupServer\" lsg,\n"
+			+ "  linux.\"Group\" lg,\n"
+			+ "  linux.\"GroupServer\" lsg,\n"
 			+ "  web.\"SharedTomcat\" hst\n"
 			+ "where\n"
 			+ "  lg.package=?\n"
@@ -1911,7 +1911,7 @@ final public class HttpdHandler {
 			"select\n"
 			+ "  hs.pkey\n"
 			+ "from\n"
-			+ "  linux.\"LinuxUserServer\" lsa,\n"
+			+ "  linux.\"UserServer\" lsa,\n"
 			+ "  web.\"Site\" hs\n"
 			+ "where\n"
 			+ "  lsa.pkey=?\n"
@@ -1931,8 +1931,8 @@ final public class HttpdHandler {
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  web.\"SharedTomcat\" hst,\n"
-			+ "  linux.\"LinuxGroupServer\" lsg,\n"
-			+ "  linux.\"LinuxGroup\" lg,\n"
+			+ "  linux.\"GroupServer\" lsg,\n"
+			+ "  linux.\"Group\" lg,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  hst.pkey=?\n"
@@ -2002,7 +2002,7 @@ final public class HttpdHandler {
 			+ "  lsa.pkey\n"
 			+ "from\n"
 			+ "  web.\"Site\" hs,\n"
-			+ "  linux.\"LinuxUserServer\" lsa\n"
+			+ "  linux.\"UserServer\" lsa\n"
 			+ "where\n"
 			+ "  hs.pkey=?\n"
 			+ "  and hs.linux_account=lsa.username\n"
@@ -2038,8 +2038,8 @@ final public class HttpdHandler {
 			+ "  lg.package\n"
 			+ "from\n"
 			+ "  web.\"SharedTomcat\" hst,\n"
-			+ "  linux.\"LinuxGroupServer\" lsg,\n"
-			+ "  linux.\"LinuxGroup\" lg\n"
+			+ "  linux.\"GroupServer\" lsg,\n"
+			+ "  linux.\"Group\" lg\n"
 			+ "where\n"
 			+ "  hst.pkey=?\n"
 			+ "  and hst.linux_server_group=lsg.pkey\n"
@@ -2480,7 +2480,7 @@ final public class HttpdHandler {
 	 *           |                  + web.TomcatWorker
 	 *           |                  |             + net.Bind
 	 *           |                  + web.SharedTomcatSite
-	 *           |                  |             + linux.LinuxGroupUser
+	 *           |                  |             + linux.GroupUser
 	 *           |                  + web.PrivateTomcatSite
 	 *           |                                         + net.Bind
 	 *           |                  + web.JbossSite
@@ -2512,7 +2512,7 @@ final public class HttpdHandler {
 			+ "  count(*)\n"
 			+ "from\n"
 			+ "  cvs_repositories cr,\n"
-			+ "  linux.\"LinuxUserServer\" lsa\n"
+			+ "  linux.\"UserServer\" lsa\n"
 			+ "where\n"
 			+ "  cr.linux_server_account=lsa.pkey\n"
 			+ "  and lsa.ao_server=?\n"
@@ -2748,7 +2748,7 @@ final public class HttpdHandler {
 				+ "  (\n"
 				+ "    select hostname from web.\"VirtualHostName\" where pkey=?\n"
 				+ "  )=(\n"
-				+ "    select hs.\"name\"||'.'||ao.hostname from web.\"Site\" hs, linux.\"LinuxServer\" ao where hs.pkey=? and hs.ao_server=ao.server\n"
+				+ "    select hs.\"name\"||'.'||ao.hostname from web.\"Site\" hs, linux.\"Server\" ao where hs.pkey=? and hs.ao_server=ao.server\n"
 				+ "  )",
 				pkey,
 				hs

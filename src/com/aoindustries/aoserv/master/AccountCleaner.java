@@ -336,7 +336,7 @@ final public class AccountCleaner implements CronJob {
                         + "  cr.pkey\n"
                         + "from\n"
                         + "  cvs_repositories cr,\n"
-                        + "  linux.\"LinuxUserServer\" lsa,\n"
+                        + "  linux.\"UserServer\" lsa,\n"
                         + "  account.\"Username\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
@@ -382,8 +382,8 @@ final public class AccountCleaner implements CronJob {
                         + "  el.pkey\n"
                         + "from\n"
                         + "  email.\"List\" el,\n"
-                        + "  linux.\"LinuxGroupServer\" lsg,\n"
-                        + "  linux.\"LinuxGroup\" lg,\n"
+                        + "  linux.\"GroupServer\" lsg,\n"
+                        + "  linux.\"Group\" lg,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -514,8 +514,8 @@ final public class AccountCleaner implements CronJob {
                         + "  hst.pkey\n"
                         + "from\n"
                         + "  web.\"SharedTomcat\" hst,\n"
-                        + "  linux.\"LinuxGroupServer\" lsg,\n"
-                        + "  linux.\"LinuxGroup\" lg,\n"
+                        + "  linux.\"GroupServer\" lsg,\n"
+                        + "  linux.\"Group\" lg,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -622,14 +622,14 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // linux.LinuxUser
+                // linux.User
                 {
                     List<UserId> las=conn.executeObjectListQuery(
 						ObjectFactories.userIdFactory,
                         "select\n"
                         + "  la.username\n"
                         + "from\n"
-                        + "  linux.\"LinuxUser\" la,\n"
+                        + "  linux.\"User\" la,\n"
                         + "  account.\"Username\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
@@ -651,14 +651,14 @@ final public class AccountCleaner implements CronJob {
 					}
                 }
 
-                // linux.LinuxGroup
+                // linux.Group
                 {
                     List<GroupId> lgs=conn.executeObjectListQuery(
 						ObjectFactories.groupIdFactory,
                         "select\n"
                         + "  lg.name\n"
                         + "from\n"
-                        + "  linux.\"LinuxGroup\" lg,\n"
+                        + "  linux.\"Group\" lg,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -817,8 +817,8 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select hst.pkey from web.\"SharedTomcat\" hst where hst.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select hsb.pkey from web.\"VirtualHost\" hsb where hsb.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select hs.pkey from web.\"Site\" hs where hs.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select la.username from linux.\"LinuxUser\" la where la.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select lsa.pkey from linux.\"LinuxUserServer\" lsa where lsa.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select la.username from linux.\"User\" la where la.disable_log=dl.pkey limit 1) is null\n"
+                        + "  and (select lsa.pkey from linux.\"UserServer\" lsa where lsa.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select msu.pkey from mysql.\"UserServer\" msu where msu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select mu.username from mysql.\"User\" mu where mu.disable_log=dl.pkey limit 1) is null\n"
                         + "  and (select pk.name from billing.\"Package\" pk where pk.disable_log=dl.pkey limit 1) is null\n"

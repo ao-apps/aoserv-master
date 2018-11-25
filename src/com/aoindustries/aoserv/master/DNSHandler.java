@@ -317,7 +317,7 @@ final public class DNSHandler implements CronJob {
 			+ "  inner join web.\"VirtualHost\" hsb on hsu.httpd_site_bind=hsb.pkey\n"
 			+ "  inner join web.\"Site\" hs on hsb.httpd_site=hs.pkey\n"
 			+ "  inner join billing.\"Package\" pk on hs.package=pk.name\n"
-			+ "  inner join linux.\"LinuxServer\" ao on hs.ao_server=ao.server\n"
+			+ "  inner join linux.\"Server\" ao on hs.ao_server=ao.server\n"
 			+ "where\n"
 			// Is not "localhost"
 			+ "  hsu.hostname!='localhost'\n"
@@ -699,7 +699,7 @@ final public class DNSHandler implements CronJob {
 	}
 
 	public static IntList getDNSAOServers(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntListQuery("select distinct server from net.\"Bind\" where app_protocol=? and server in (select server from linux.\"LinuxServer\")", Protocol.DNS);
+		return conn.executeIntListQuery("select distinct server from net.\"Bind\" where app_protocol=? and server in (select server from linux.\"Server\")", Protocol.DNS);
 	}
 
 	private static final Object dnstldLock=new Object();

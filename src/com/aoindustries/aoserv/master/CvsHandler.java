@@ -54,7 +54,7 @@ final public class CvsHandler {
 			if(!CvsRepository.isValidPath(path)) throw new SQLException("Invalid path: "+path);
 			String pathStr = path.toString();
 			if(pathStr.startsWith("/home/")) {
-				// Must be able to access one of the linux.LinuxUserServer with that home directory
+				// Must be able to access one of the linux.UserServer with that home directory
 				//
 				// This means there must be an accessible account that has a home directory that is a prefix of this docbase.
 				// Such as /home/e/example/ being a prefix of /home/e/example/my-webapp
@@ -62,7 +62,7 @@ final public class CvsHandler {
 					"select\n"
 					+ "  pkey\n"
 					+ "from\n"
-					+ "  linux.\"LinuxUserServer\"\n"
+					+ "  linux.\"UserServer\"\n"
 					+ "where\n"
 					+ "  ao_server=?\n"
 					+ "  and (home || '/')=substring(? from 1 for (length(home) + 1))",
@@ -106,7 +106,7 @@ final public class CvsHandler {
 					+ "      cr.pkey\n"
 					+ "    from\n"
 					+ "      cvs_repositories cr,\n"
-					+ "      linux.\"LinuxUserServer\" lsa\n"
+					+ "      linux.\"UserServer\" lsa\n"
 					+ "    where\n"
 					+ "      cr.path=?\n"
 					+ "      and cr.linux_server_account=lsa.pkey\n"
@@ -119,7 +119,7 @@ final public class CvsHandler {
 			) throw new SQLException("CvsRepository already exists: "+path+" on AOServer #"+aoServer);
 
 			int lsaAOServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa);
-			if(lsaAOServer!=aoServer) throw new SQLException("LinuxServerAccount "+lsa+" is not located on AOServer #"+aoServer);
+			if(lsaAOServer!=aoServer) throw new SQLException("linux.UserServer "+lsa+" is not located on AOServer #"+aoServer);
 			String type=LinuxAccountHandler.getTypeForLinuxServerAccount(conn, lsa);
 			if(
 				!(
@@ -129,7 +129,7 @@ final public class CvsHandler {
 			) throw new SQLException("CVS repositories must be owned by a linux account of type '"+LinuxAccountType.USER+"' or '"+LinuxAccountType.APPLICATION+'\'');
 
 			int lsgAOServer=LinuxAccountHandler.getAOServerForLinuxServerGroup(conn, lsg);
-			if(lsgAOServer!=aoServer) throw new SQLException("LinuxServerGroup "+lsg+" is not located on AOServer #"+aoServer);
+			if(lsgAOServer!=aoServer) throw new SQLException("linux.GroupServer "+lsg+" is not located on AOServer #"+aoServer);
 
 			long[] modes=CvsRepository.getValidModes();
 			boolean found=false;

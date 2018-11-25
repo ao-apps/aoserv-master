@@ -555,7 +555,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new AOServerDaemonHost(),
-						"select * from linux.\"LinuxServerDaemonHost\""
+						"select * from linux.\"ServerDaemonHost\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -566,7 +566,7 @@ final public class TableHandler {
 						+ "  sdh.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux.\"LinuxServerDaemonHost\" sdh\n"
+						+ "  linux.\"ServerDaemonHost\" sdh\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=sdh.ao_server",
@@ -610,7 +610,7 @@ final public class TableHandler {
 						+ "  \"gidMin\",\n"
 						+ "  sftp_umask\n"
 						+ "from\n"
-						+ "  linux.\"LinuxServer\""
+						+ "  linux.\"Server\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -642,15 +642,15 @@ final public class TableHandler {
 						+ "  ao2.sftp_umask\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  inner join linux.\"LinuxServer\" ao on ms.server=ao.server\n"
+						+ "  inner join linux.\"Server\" ao on ms.server=ao.server\n"
 						// Allow its failover parent
-						+ "  left join linux.\"LinuxServer\" ff on ao.failover_server=ff.server\n"
+						+ "  left join linux.\"Server\" ff on ao.failover_server=ff.server\n"
 						// Allow its failover children
-						+ "  left join linux.\"LinuxServer\" fs on ao.server=fs.failover_server\n"
+						+ "  left join linux.\"Server\" fs on ao.server=fs.failover_server\n"
 						// Allow servers it replicates to
 						+ "  left join backup.\"FileReplication\" ffr on ms.server=ffr.server\n"
 						+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
-						+ "  linux.\"LinuxServer\" ao2\n"
+						+ "  linux.\"Server\" ao2\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and (\n"
@@ -701,7 +701,7 @@ final public class TableHandler {
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
-					+ "  linux.\"LinuxServer\" ao\n"
+					+ "  linux.\"Server\" ao\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -1606,7 +1606,7 @@ final public class TableHandler {
 						+ "  cr.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux.\"LinuxUserServer\" lsa,\n"
+						+ "  linux.\"UserServer\" lsa,\n"
 						+ "  cvs_repositories cr\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -1628,7 +1628,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
-					+ "  linux.\"LinuxUserServer\" lsa,\n"
+					+ "  linux.\"UserServer\" lsa,\n"
 					+ "  cvs_repositories cr\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
@@ -1759,8 +1759,8 @@ final public class TableHandler {
 						+ "  dl.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux.\"LinuxServer\" ao\n"
-						+ "  left join linux.\"LinuxServer\" ff on ao.server=ff.failover_server,\n"
+						+ "  linux.\"Server\" ao\n"
+						+ "  left join linux.\"Server\" ff on ao.server=ff.failover_server,\n"
 						+ "  business_servers bs,\n"
 						+ "  account.\"DisableLog\" dl\n"
 						+ "where\n"
@@ -2046,7 +2046,7 @@ final public class TableHandler {
 						+ "  eab.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux.\"LinuxUserServer\" lsa,\n"
+						+ "  linux.\"UserServer\" lsa,\n"
 						+ "  email.\"AttachmentBlocks\" eab\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -2068,7 +2068,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
-					+ "  linux.\"LinuxUserServer\" lsa,\n"
+					+ "  linux.\"UserServer\" lsa,\n"
 					+ "  email.\"AttachmentBlocks\" eab\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
@@ -2231,7 +2231,7 @@ final public class TableHandler {
 						+ "  el.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux.\"LinuxGroupServer\" lsg,\n"
+						+ "  linux.\"GroupServer\" lsg,\n"
 						+ "  email.\"List\" el\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -2252,8 +2252,8 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  linux.\"LinuxGroup\" lg,\n"
-					+ "  linux.\"LinuxGroupServer\" lsg,\n"
+					+ "  linux.\"Group\" lg,\n"
+					+ "  linux.\"GroupServer\" lsg,\n"
 					+ "  email.\"List\" el\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -3096,8 +3096,8 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  linux.\"LinuxGroup\" lg,\n"
-					+ "  linux.\"LinuxGroupServer\" lsg,\n"
+					+ "  linux.\"Group\" lg,\n"
+					+ "  linux.\"GroupServer\" lsg,\n"
 					+ "  web.\"SharedTomcat\" hst\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -4073,7 +4073,7 @@ final public class TableHandler {
 						+ "      ia2.id\n"
 						+ "    from\n"
 						+ "      master_servers ms\n"
-						+ "      left join linux.\"LinuxServer\" ff on ms.server=ff.failover_server,\n"
+						+ "      left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "      net.\"Device\" nd\n"
 						+ "      right outer join net.\"IpAddress\" ia2 on nd.pkey=ia2.\"netDevice\"\n"
 						+ "    where\n"
@@ -4088,7 +4088,7 @@ final public class TableHandler {
 						+ "            from\n"
 						+ "              backup.\"FileReplication\" ffr\n"
 						+ "              inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey\n"
-						+ "              inner join linux.\"LinuxServer\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
+						+ "              inner join linux.\"Server\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
 						+ "            where\n"
 						+ "              ms.server=ffr.server\n"
 						+ "              and bp.ao_server=nd.server\n"
@@ -4192,7 +4192,7 @@ final public class TableHandler {
 						+ "      business_servers bs6,\n"
 						+ "      backup.\"FileReplication\" ffr6,\n"
 						+ "      backup.\"BackupPartition\" bp6,\n"
-						+ "      linux.\"LinuxServer\" ao6,\n"
+						+ "      linux.\"Server\" ao6,\n"
 						+ "      net.\"Device\" nd6,\n"
 						+ "      net.\"IpAddress\" ia6\n"
 						+ "    where\n"
@@ -4713,7 +4713,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new LinuxAccount(),
-						"select * from linux.\"LinuxUser\""
+						"select * from linux.\"User\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -4724,12 +4724,12 @@ final public class TableHandler {
 						+ "  la.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux.\"LinuxServer\" ao\n"
-						+ "  left join linux.\"LinuxServer\" ff on ao.server=ff.failover_server,\n"
+						+ "  linux.\"Server\" ao\n"
+						+ "  left join linux.\"Server\" ff on ao.server=ff.failover_server,\n"
 						+ "  business_servers bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
-						+ "  linux.\"LinuxUser\" la\n"
+						+ "  linux.\"User\" la\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ao.server\n"
@@ -4755,7 +4755,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
-					+ "  linux.\"LinuxUser\" la\n"
+					+ "  linux.\"User\" la\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"
@@ -4776,7 +4776,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new LinuxAccountType(),
-					"select * from linux.\"LinuxUserType\""
+					"select * from linux.\"UserType\""
 				);
 				break;
 			case LINUX_GROUP_ACCOUNTS :
@@ -4788,7 +4788,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new LinuxGroupAccount(),
-						"select * from linux.\"LinuxGroupUser\""
+						"select * from linux.\"GroupUser\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -4798,14 +4798,14 @@ final public class TableHandler {
 						"select\n"
 						+ "  *\n"
 						+ "from\n"
-						+ "  linux.\"LinuxGroupUser\"\n"
+						+ "  linux.\"GroupUser\"\n"
 						+ "where\n"
 						+ "  \"group\" in (\n"
 						+ "    select\n"
 						+ "      lsg.name\n"
 						+ "      from\n"
 						+ "        master_servers ms1,\n"
-						+ "        linux.\"LinuxGroupServer\" lsg\n"
+						+ "        linux.\"GroupServer\" lsg\n"
 						+ "      where\n"
 						+ "        ms1.username=?\n"
 						+ "        and ms1.server=lsg.ao_server\n"
@@ -4815,7 +4815,7 @@ final public class TableHandler {
 						+ "      lsa.username\n"
 						+ "      from\n"
 						+ "        master_servers ms2,\n"
-						+ "        linux.\"LinuxUserServer\" lsa\n"
+						+ "        linux.\"UserServer\" lsa\n"
 						+ "      where\n"
 						+ "        ms2.username=?\n"
 						+ "        and ms2.server=lsa.ao_server\n"
@@ -4832,7 +4832,7 @@ final public class TableHandler {
 					"select\n"
 					+ " *\n"
 					+ "from\n"
-					+ "  linux.\"LinuxGroupUser\"\n"
+					+ "  linux.\"GroupUser\"\n"
 					+ "where\n"
 					+ "  \"group\" in (\n"
 					+ "    select\n"
@@ -4842,7 +4842,7 @@ final public class TableHandler {
 					+ "      billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "      billing.\"Package\" pk2,\n"
-					+ "      linux.\"LinuxGroup\" lg\n"
+					+ "      linux.\"Group\" lg\n"
 					+ "    where\n"
 					+ "      un1.username=?\n"
 					+ "      and un1.package=pk1.name\n"
@@ -4864,7 +4864,7 @@ final public class TableHandler {
 					+ BU2_PARENTS_JOIN
 					+ "      billing.\"Package\" pk4,\n"
 					+ "      account.\"Username\" un3,\n"
-					+ "      linux.\"LinuxUser\" la\n"
+					+ "      linux.\"User\" la\n"
 					+ "    where\n"
 					+ "      un2.username=?\n"
 					+ "      and un2.package=pk3.name\n"
@@ -4889,7 +4889,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new LinuxGroup(),
-						"select * from linux.\"LinuxGroup\""
+						"select * from linux.\"Group\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -4900,10 +4900,10 @@ final public class TableHandler {
 						+ "  lg.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux.\"LinuxServer\" ao,\n"
+						+ "  linux.\"Server\" ao,\n"
 						+ "  business_servers bs,\n"
 						+ "  billing.\"Package\" pk,\n"
-						+ "  linux.\"LinuxGroup\" lg\n"
+						+ "  linux.\"Group\" lg\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ao.server\n"
@@ -4925,7 +4925,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  linux.\"LinuxGroup\" lg\n"
+					+ "  linux.\"Group\" lg\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -4947,7 +4947,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new LinuxGroupType(),
-					"select * from linux.\"LinuxGroupType\""
+					"select * from linux.\"GroupType\""
 				);
 				break;
 			case LINUX_SERVER_ACCOUNTS :
@@ -4959,7 +4959,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new LinuxServerAccount(),
-						"select * from linux.\"LinuxUserServer\""
+						"select * from linux.\"UserServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -4970,8 +4970,8 @@ final public class TableHandler {
 						+ "  lsa.*\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  left join linux.\"LinuxServer\" ff on ms.server=ff.failover_server,\n"
-						+ "  linux.\"LinuxUserServer\" lsa\n"
+						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
+						+ "  linux.\"UserServer\" lsa\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and (\n"
@@ -5013,7 +5013,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
 					+ "  business_servers bs,\n"
-					+ "  linux.\"LinuxUserServer\" lsa\n"
+					+ "  linux.\"UserServer\" lsa\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"
@@ -5038,7 +5038,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new LinuxServerGroup(),
-						"select * from linux.\"LinuxGroupServer\""
+						"select * from linux.\"GroupServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5049,7 +5049,7 @@ final public class TableHandler {
 						+ "  lsg.*\n"
 						+ "from\n"
 						+ "  master_servers ms,\n"
-						+ "  linux.\"LinuxGroupServer\" lsg\n"
+						+ "  linux.\"GroupServer\" lsg\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=lsg.ao_server",
@@ -5068,9 +5068,9 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  linux.\"LinuxGroup\" lg,\n"
+					+ "  linux.\"Group\" lg,\n"
 					+ "  business_servers bs,\n"
-					+ "  linux.\"LinuxGroupServer\" lsg\n"
+					+ "  linux.\"GroupServer\" lsg\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -6123,7 +6123,7 @@ final public class TableHandler {
 						+ "  nd.monitoring_enabled\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  left join linux.\"LinuxServer\" ff on ms.server=ff.failover_server,\n"
+						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "  net.\"Device\" nd\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -6136,7 +6136,7 @@ final public class TableHandler {
 						+ "      from\n"
 						+ "        backup.\"FileReplication\" ffr\n"
 						+ "        inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey\n"
-						+ "        inner join linux.\"LinuxServer\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
+						+ "        inner join linux.\"Server\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
 						+ "      where\n"
 						+ "        ms.server=ffr.server\n"
 						+ "        and bp.ao_server=nd.server\n"
@@ -6175,7 +6175,7 @@ final public class TableHandler {
 					// Allow failover destinations
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey\n"
-					//+ "  left join linux.\"LinuxServer\" bpao on bp.ao_server=bpao.server,\n"
+					//+ "  left join linux.\"Server\" bpao on bp.ao_server=bpao.server,\n"
 					+ "  net.\"Device\" nd\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -7736,11 +7736,11 @@ final public class TableHandler {
 						+ "  se.*\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  left join linux.\"LinuxServer\" ao on ms.server=ao.server\n"
+						+ "  left join linux.\"Server\" ao on ms.server=ao.server\n"
 						// Allow its failover parent
-						+ "  left join linux.\"LinuxServer\" ff on ao.failover_server=ff.server\n"
+						+ "  left join linux.\"Server\" ff on ao.failover_server=ff.server\n"
 						// Allow its failover children
-						+ "  left join linux.\"LinuxServer\" fs on ao.server=fs.failover_server\n"
+						+ "  left join linux.\"Server\" fs on ao.server=fs.failover_server\n"
 						// Allow servers it replicates to
 						+ "  left join backup.\"FileReplication\" ffr on ms.server=ffr.server\n"
 						+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.pkey,\n"
@@ -8735,7 +8735,7 @@ final public class TableHandler {
 						+ "  un.*\n"
 						+ "from\n"
 						+ "  master_servers ms\n"
-						+ "  left join linux.\"LinuxServer\" ff on ms.server=ff.failover_server,\n"
+						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "  business_servers bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un\n"
@@ -9331,7 +9331,7 @@ final public class TableHandler {
 			+ "  se.operating_system_version\n"
 			+ "from\n"
 			+ "  master_servers ms,\n"
-			+ "  linux.\"LinuxServer\" ao,\n"
+			+ "  linux.\"Server\" ao,\n"
 			+ "  servers se,\n"
 			+ "  distribution.\"OperatingSystemVersion\" osv\n"
 			+ "where\n"

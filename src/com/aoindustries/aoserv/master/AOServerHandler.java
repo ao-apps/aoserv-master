@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * The <code>AOServerHandler</code> handles all the accesses to the linux.LinuxServer table.
+ * The <code>AOServerHandler</code> handles all the accesses to the linux.Server table.
  *
  * @author  AO Industries, Inc.
  */
@@ -34,23 +34,23 @@ final public class AOServerHandler {
 	}
 
 	public static IntList getAOServers(DatabaseConnection conn) throws SQLException {
-		return conn.executeIntListQuery("select server from linux.\"LinuxServer\"");
+		return conn.executeIntListQuery("select server from linux.\"Server\"");
 	}
 
 	public static int getUidMin(DatabaseConnection conn, int aoServer) throws SQLException {
-		return conn.executeIntQuery("select \"uidMin\" from linux.\"LinuxServer\" where server=?", aoServer);
+		return conn.executeIntQuery("select \"uidMin\" from linux.\"Server\" where server=?", aoServer);
 	}
 
 	public static int getUidMax(DatabaseConnection conn, int aoServer) throws SQLException {
-		return conn.executeIntQuery("select \"uidMax\" from linux.\"LinuxServer\" where server=?", aoServer);
+		return conn.executeIntQuery("select \"uidMax\" from linux.\"Server\" where server=?", aoServer);
 	}
 
 	public static int getGidMin(DatabaseConnection conn, int aoServer) throws SQLException {
-		return conn.executeIntQuery("select \"gidMin\" from linux.\"LinuxServer\" where server=?", aoServer);
+		return conn.executeIntQuery("select \"gidMin\" from linux.\"Server\" where server=?", aoServer);
 	}
 
 	public static int getGidMax(DatabaseConnection conn, int aoServer) throws SQLException {
-		return conn.executeIntQuery("select \"gidMax\" from linux.\"LinuxServer\" where server=?", aoServer);
+		return conn.executeIntQuery("select \"gidMax\" from linux.\"Server\" where server=?", aoServer);
 	}
 
 	private static final Map<Integer,Object> mrtgLocks = new HashMap<>();
@@ -116,7 +116,7 @@ final public class AOServerHandler {
 		if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not set the last distro time");
 		ServerHandler.checkAccessServer(conn, source, "setLastDistroTime", aoServer);
 		conn.executeUpdate(
-			"update linux.\"LinuxServer\" set last_distro_time=? where server=?",
+			"update linux.\"Server\" set last_distro_time=? where server=?",
 			new Timestamp(time),
 			aoServer
 		);

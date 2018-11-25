@@ -1060,7 +1060,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one net.IpAddress on Server="+server);
 
-		// linux.LinuxUserServer
+		// linux.UserServer
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1070,7 +1070,7 @@ final public class BusinessHandler {
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
-				+ "      linux.\"LinuxUserServer\" lsa\n"
+				+ "      linux.\"UserServer\" lsa\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=un.package\n"
@@ -1084,7 +1084,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one LinuxServerAccount on Server="+server);
 
-		// linux.LinuxGroupServer
+		// linux.GroupServer
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1093,8 +1093,8 @@ final public class BusinessHandler {
 				+ "      lsg.pkey\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
-				+ "      linux.\"LinuxGroup\" lg,\n"
-				+ "      linux.\"LinuxGroupServer\" lsg\n"
+				+ "      linux.\"Group\" lg,\n"
+				+ "      linux.\"GroupServer\" lsg\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=lg.package\n"
