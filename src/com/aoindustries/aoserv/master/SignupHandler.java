@@ -32,7 +32,7 @@ final public class SignupHandler {
     }
 
     /**
-     * Creates a new <code>SignupRequest</code>.
+     * Creates a new <code>signup.Request</code>.
      */
     public static int addSignupRequest(
         DatabaseConnection conn,
@@ -83,7 +83,7 @@ final public class SignupHandler {
 
         // Add the entry
         int pkey = conn.executeIntUpdate(
-			"INSERT INTO signup.\"SignupRequest\" VALUES (default,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null) RETURNING pkey",
+			"INSERT INTO signup.\"Request\" VALUES (default,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null) RETURNING pkey",
             accounting.toString(),
             ip_address.toString(),
             package_definition,
@@ -120,7 +120,7 @@ final public class SignupHandler {
 		);
 
         // Add the signup_options
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup.\"SignupOption\" values(default,?,?,?)");
+		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup.\"Option\" values(default,?,?,?)");
         try {
             for(String name : options.keySet()) {
                 String value = options.get(name);
@@ -174,7 +174,7 @@ final public class SignupHandler {
                             try {
                                 InvalidateList invalidateList = new InvalidateList();
                                 MasterDatabase database = MasterDatabase.getDatabase();
-                                if(database.executeUpdate("delete from signup.\"SignupRequest\" where completed_time is not null and (now()::date-completed_time::date)>31")>0) {
+                                if(database.executeUpdate("delete from signup.\"Request\" where completed_time is not null and (now()::date-completed_time::date)>31")>0) {
                                     invalidateList.addTable(
                                         database,
                                         SchemaTable.TableID.SIGNUP_REQUESTS,

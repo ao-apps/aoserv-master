@@ -7807,7 +7807,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new SignupRequestOption(),
-							"select * from signup.\"SignupOption\""
+							"select * from signup.\"Option\""
 						);
 					} else {
 						List<SignupRequestOption> emptyList = Collections.emptyList();
@@ -7826,8 +7826,8 @@ final public class TableHandler {
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk1,\n"
 						+ BU1_PARENTS_JOIN
-						+ "  signup.\"SignupRequest\" sr,\n"
-						+ "  signup.\"SignupOption\" sro\n"
+						+ "  signup.\"Request\" sr,\n"
+						+ "  signup.\"Option\" sro\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk1.name\n"
@@ -7889,7 +7889,7 @@ final public class TableHandler {
 							+ "  completed_by,\n"
 							+ "  completed_time\n"
 							+ "from\n"
-							+ "  signup.\"SignupRequest\""
+							+ "  signup.\"Request\""
 						);
 					} else {
 						List<SignupRequest> emptyList = Collections.emptyList();
@@ -7944,7 +7944,7 @@ final public class TableHandler {
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk1,\n"
 						+ BU1_PARENTS_JOIN
-						+ "  signup.\"SignupRequest\" sr\n"
+						+ "  signup.\"Request\" sr\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk1.name\n"
