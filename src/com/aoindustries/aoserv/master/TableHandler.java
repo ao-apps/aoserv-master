@@ -1583,7 +1583,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new CountryCode(),
-					"select * from country_codes"
+					"select * from payment.\"CountryCode\""
 				);
 				break;
 			case CVS_REPOSITORIES :
