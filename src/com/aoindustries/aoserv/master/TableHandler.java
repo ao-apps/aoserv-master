@@ -5456,7 +5456,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new MySQLDatabase(),
-						"select * from mysql.\"MysqlDatabase\""
+						"select * from mysql.\"Database\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5468,7 +5468,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  mysql.\"MysqlServer\" mys,\n"
-						+ "  mysql.\"MysqlDatabase\" md\n"
+						+ "  mysql.\"Database\" md\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=mys.ao_server\n"
@@ -5488,7 +5488,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  mysql.\"MysqlDatabase\" md\n"
+					+ "  mysql.\"Database\" md\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -5521,7 +5521,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  mysql.\"MysqlServer\" mys,\n"
-						+ "  mysql.\"MysqlDatabase\" md,\n"
+						+ "  mysql.\"Database\" md,\n"
 						+ "  mysql.\"MysqlDatabaseUser\" mdu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -5543,7 +5543,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  mysql.\"MysqlDatabase\" md,\n"
+					+ "  mysql.\"Database\" md,\n"
 					+ "  mysql.\"MysqlDatabaseUser\" mdu\n"
 					+ "where\n"
 					+ "  un.username=?\n"

@@ -678,13 +678,13 @@ final public class AccountCleaner implements CronJob {
 					}
                 }
 
-                // mysql.MysqlDatabase
+                // mysql.Database
                 {
                     IntList mds=conn.executeIntListQuery(
                         "select\n"
                         + "  md.pkey\n"
                         + "from\n"
-                        + "  mysql.\"MysqlDatabase\" md,\n"
+                        + "  mysql.\"Database\" md,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"

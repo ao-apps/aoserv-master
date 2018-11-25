@@ -1108,7 +1108,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one LinuxServerGroup on Server="+server);
 
-		// mysql.MysqlDatabase
+		// mysql.Database
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1117,7 +1117,7 @@ final public class BusinessHandler {
 				+ "      md.pkey\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
-				+ "      mysql.\"MysqlDatabase\" md,\n"
+				+ "      mysql.\"Database\" md,\n"
 				+ "      mysql.\"MysqlServer\" ms\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
