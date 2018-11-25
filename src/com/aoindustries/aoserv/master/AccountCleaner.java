@@ -723,13 +723,13 @@ final public class AccountCleaner implements CronJob {
 					}
                 }
 
-                // postgres_databases
+                // postgresql.Database
                 {
                     IntList pds=conn.executeIntListQuery(
                         "select\n"
                         + "  pd.pkey\n"
                         + "from\n"
-                        + "  postgres_databases pd,\n"
+                        + "  postgresql.\"Database\" pd,\n"
                         + "  postgres_server_users psu,\n"
                         + "  account.\"Username\" un,\n"
                         + "  billing.\"Package\" pk,\n"

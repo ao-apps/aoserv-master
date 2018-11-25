@@ -152,7 +152,7 @@ final public class PostgresHandler {
 		// Add the entry to the database
 		int pkey = conn.executeIntUpdate(
 			"INSERT INTO\n"
-			+ "  postgres_databases\n"
+			+ "  postgresql.\"Database\"\n"
 			+ "VALUES (\n"
 			+ "  default,\n"
 			+ "  ?,\n"
@@ -398,7 +398,7 @@ final public class PostgresHandler {
 		Set<PostgresDatabaseName> names = conn.executeObjectCollectionQuery(
 			new HashSet<>(),
 			ObjectFactories.postgresDatabaseNameFactory,
-			"select name from postgres_databases group by name"
+			"select name from postgresql.\"Database\" group by name"
 		);
 		// Find one that is not used
 		for(int c=0;c<Integer.MAX_VALUE;c++) {
@@ -508,7 +508,7 @@ final public class PostgresHandler {
 			+ "    select\n"
 			+ "      pkey\n"
 			+ "    from\n"
-			+ "      postgres_databases\n"
+			+ "      postgresql.\"Database\"\n"
 			+ "    where\n"
 			+ "      name=?\n"
 			+ "      and postgres_server=?\n"
@@ -571,7 +571,7 @@ final public class PostgresHandler {
 		// Remove the database entry
 		AccountingCode accounting = getBusinessForPostgresDatabase(conn, pkey);
 		int aoServer=getAOServerForPostgresDatabase(conn, pkey);
-		conn.executeUpdate("delete from postgres_databases where pkey=?", pkey);
+		conn.executeUpdate("delete from postgresql.\"Database\" where pkey=?", pkey);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -602,7 +602,7 @@ final public class PostgresHandler {
 		AccountingCode accounting = getBusinessForPostgresServerUser(conn, pkey);
 
 		// Make sure that this is not the DBA for any databases
-		int count=conn.executeIntQuery("select count(*) from postgres_databases where datdba=?", pkey);
+		int count=conn.executeIntQuery("select count(*) from postgresql.\"Database\" where datdba=?", pkey);
 		if(count>0) throw new SQLException("PostgresServerUser #"+pkey+" cannot be removed because it is the datdba for "+count+(count==1?" database":" databases"));
 
 		// Remove the postgres_server_user
@@ -763,7 +763,7 @@ final public class PostgresHandler {
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
-			+ "  postgres_databases pd,\n"
+			+ "  postgresql.\"Database\" pd,\n"
 			+ "  postgres_server_users psu,\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
@@ -781,7 +781,7 @@ final public class PostgresHandler {
 			"select\n"
 			+ "  pk.pkey\n"
 			+ "from\n"
-			+ "  postgres_databases pd,\n"
+			+ "  postgresql.\"Database\" pd,\n"
 			+ "  postgres_server_users psu,\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
@@ -826,7 +826,7 @@ final public class PostgresHandler {
 
 	public static int getPostgresServerForPostgresDatabase(DatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
 		return conn.executeIntQuery(
-			"select postgres_server from postgres_databases where pkey=?",
+			"select postgres_server from postgresql.\"Database\" where pkey=?",
 			postgresDatabase
 		);
 	}
@@ -840,7 +840,7 @@ final public class PostgresHandler {
 			"select\n"
 			+ "  ps.ao_server\n"
 			+ "from\n"
-			+ "  postgres_databases pd,\n"
+			+ "  postgresql.\"Database\" pd,\n"
 			+ "  postgresql.\"Server\" ps\n"
 			+ "where\n"
 			+ "  pd.pkey=?\n"
@@ -854,7 +854,7 @@ final public class PostgresHandler {
 			"select\n"
 			+ "  datdba\n"
 			+ "from\n"
-			+ "  postgres_databases\n"
+			+ "  postgresql.\"Database\"\n"
 			+ "where\n"
 			+ "  pkey=?",
 			postgresDatabase

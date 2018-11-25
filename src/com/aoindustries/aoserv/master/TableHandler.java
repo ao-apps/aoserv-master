@@ -6645,7 +6645,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new PostgresDatabase(),
-						"select * from postgres_databases"
+						"select * from postgresql.\"Database\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -6657,7 +6657,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master_servers ms,\n"
 						+ "  postgresql.\"Server\" ps,\n"
-						+ "  postgres_databases pd\n"
+						+ "  postgresql.\"Database\" pd\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=ps.ao_server\n"
@@ -6679,7 +6679,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
 					+ "  postgres_server_users psu,\n"
-					+ "  postgres_databases pd\n"
+					+ "  postgresql.\"Database\" pd\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"

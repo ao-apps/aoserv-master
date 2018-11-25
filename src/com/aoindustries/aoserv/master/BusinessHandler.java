@@ -1180,7 +1180,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one NetBind on Server="+server);
 
-		// postgres_databases
+		// postgresql.Database
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -1192,7 +1192,7 @@ final public class BusinessHandler {
 				+ "      account.\"Username\" un,\n"
 				+ "      postgresql.\"Server\" ps,\n"
 				+ "      postgres_server_users psu,\n"
-				+ "      postgres_databases pd\n"
+				+ "      postgresql.\"Database\" pd\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=un.package\n"
