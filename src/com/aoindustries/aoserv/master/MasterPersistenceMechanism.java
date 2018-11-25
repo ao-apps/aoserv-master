@@ -97,12 +97,12 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
             // Get the createdBy from the credit card persistence mechanism
             UserId creditCardCreatedBy = conn.executeObjectQuery(
 				ObjectFactories.userIdFactory,
-				"select created_by from credit_cards where pkey=?::integer",
+				"select created_by from payment.\"CreditCard\" where pkey=?::integer",
 				creditCard.getPersistenceUniqueId()
 			);
             AccountingCode ccBusiness = conn.executeObjectQuery(
                 ObjectFactories.accountingCodeFactory,
-                "select accounting from credit_cards where pkey=?::integer",
+                "select accounting from payment.\"CreditCard\" where pkey=?::integer",
                 creditCard.getPersistenceUniqueId()
             );
             int pkey = CreditCardHandler.addCreditCardTransaction(

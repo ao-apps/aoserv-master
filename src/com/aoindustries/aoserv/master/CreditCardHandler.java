@@ -34,7 +34,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The <code>CreditCardHandler</code> handles all the accesses to the <code>credit_cards</code> table.
+ * The <code>CreditCardHandler</code> handles all the accesses to the <code>payment.CreditCard</code> table.
  *
  * TODO: Deactivate immediately on expired card
  * TODO: Retry failed cards on the 7th and 14th, then deactivate.
@@ -150,7 +150,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         int pkey;
         if(encryptedCardNumber==null && encryptedExpiration==null && encryptionFrom==-1 && encryptionRecipient==-1) {
 	        pkey = conn.executeIntUpdate(
-                "INSERT INTO credit_cards (\n"
+                "INSERT INTO payment.\"CreditCard\" (\n"
 				+ "  processor_id,\n"
 				+ "  accounting,\n"
 				+ "  group_name,\n"
@@ -197,7 +197,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             );
         } else if(encryptedCardNumber!=null && encryptedExpiration!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
 	        pkey = conn.executeIntUpdate(
-                "INSERT INTO credit_cards (\n"
+                "INSERT INTO payment.\"CreditCard\" (\n"
 				+ "  processor_id,\n"
 				+ "  accounting,\n"
 				+ "  group_name,\n"
@@ -273,7 +273,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         checkAccessCreditCard(conn, source, "creditCardDeclined", pkey);
 
         conn.executeUpdate(
-            "update credit_cards set active=false, deactivated_on=now(), deactivate_reason=? where credit_cards.pkey=?",
+            "update payment.\"CreditCard\" set active=false, deactivated_on=now(), deactivate_reason=? where pkey=?",
             reason,
             pkey
         );
@@ -291,7 +291,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     public static AccountingCode getBusinessForCreditCard(DatabaseConnection conn, int pkey) throws IOException, SQLException {
         return conn.executeObjectQuery(
             ObjectFactories.accountingCodeFactory,
-            "select accounting from credit_cards where pkey=?",
+            "select accounting from payment.\"CreditCard\" where pkey=?",
             pkey
         );
     }
@@ -336,7 +336,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         AccountingCode business=getBusinessForCreditCard(conn, pkey);
 
         // Update the database
-        conn.executeUpdate("delete from credit_cards where pkey=?", pkey);
+        conn.executeUpdate("delete from payment.\"CreditCard\" where pkey=?", pkey);
 
         invalidateList.addTable(
             conn,
@@ -374,7 +374,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         // Update row
         conn.executeUpdate(
             "update\n"
-            + "  credit_cards\n"
+            + "  payment.\"CreditCard\"\n"
             + "set\n"
             + "  first_name=?,\n"
             + "  last_name=?,\n"
@@ -441,7 +441,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             // Update row
             conn.executeUpdate(
                 "update\n"
-                + "  credit_cards\n"
+                + "  payment.\"CreditCard\"\n"
                 + "set\n"
                 + "  card_info=?,\n"
                 + "  encrypted_card_number=null,\n"
@@ -459,7 +459,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             // Update row
             conn.executeUpdate(
                 "update\n"
-                + "  credit_cards\n"
+                + "  payment.\"CreditCard\"\n"
                 + "set\n"
                 + "  card_info=?,\n"
                 + "  encrypted_card_number=?,\n"
@@ -510,7 +510,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         // Update row
         conn.executeUpdate(
             "update\n"
-            + "  credit_cards\n"
+            + "  payment.\"CreditCard\"\n"
             + "set\n"
             + "  encrypted_expiration=?,\n"
             + "  encryption_expiration_from=?,\n"
@@ -546,7 +546,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         // Update row
         conn.executeUpdate(
             "update\n"
-            + "  credit_cards\n"
+            + "  payment.\"CreditCard\"\n"
             + "set\n"
             + "  active=true,\n"
             + "  deactivated_on=null,\n"
@@ -578,7 +578,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 
         if(pkey==-1) {
             // Clear only
-            conn.executeUpdate("update credit_cards set use_monthly=false where accounting=? and use_monthly", accounting);
+            conn.executeUpdate("update payment.\"CreditCard\" set use_monthly=false where accounting=? and use_monthly", accounting);
         } else {
             checkAccessCreditCard(conn, source, "setCreditCardUseMonthly", pkey);
 
@@ -586,7 +586,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             if(!accounting.equals(getBusinessForCreditCard(conn, pkey))) throw new SQLException("credit card and business accounting codes do not match");
 
             // Perform clear and set in one SQL statement - I thinks myself clever right now.
-            conn.executeUpdate("update credit_cards set use_monthly=(pkey=?) where accounting=? and use_monthly!=(pkey=?)", pkey, accounting, pkey);
+            conn.executeUpdate("update payment.\"CreditCard\" set use_monthly=(pkey=?) where accounting=? and use_monthly!=(pkey=?)", pkey, accounting, pkey);
         }
 
         invalidateList.addTable(
@@ -1424,7 +1424,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "    group by\n"
                             + "      bu.accounting\n"
                             + "  ) as current,\n"
-                            + "  credit_cards cc,\n"
+                            + "  payment.\"CreditCard\" cc,\n"
                             + "  payment.\"PaymentProcessor\" ccp\n"
                             + "where\n"
                             + "  bu.accounting=cc.accounting\n"

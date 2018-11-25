@@ -1500,7 +1500,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new CreditCard(),
-							"select * from credit_cards"
+							"select * from payment.\"CreditCard\""
 						); else {
 							List<CreditCard> emptyList = Collections.emptyList();
 							MasterServer.writeObjects(source, out, provideProgress, emptyList);
@@ -1517,7 +1517,7 @@ final public class TableHandler {
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ BU1_PARENTS_JOIN
-						+ "  credit_cards cc\n"
+						+ "  payment.\"CreditCard\" cc\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk.name\n"

@@ -255,13 +255,13 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // credit_cards
+                // payment.CreditCard
                 {
                     IntList ccs=conn.executeIntListQuery(
                         "select\n"
                         + "  cc.pkey\n"
                         + "from\n"
-                        + "  credit_cards cc,\n"
+                        + "  payment.\"CreditCard\" cc,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
                         + "  cc.accounting=bu.accounting\n"
@@ -296,8 +296,8 @@ final public class AccountCleaner implements CronJob {
 						+ "  and (select cct2.pkey from credit_card_transactions cct2 where cct2.authorization_username = ba.username limit 1) is null\n"
 						+ "  and (select cct3.pkey from credit_card_transactions cct3 where cct3.capture_username       = ba.username limit 1) is null\n"
 						+ "  and (select cct4.pkey from credit_card_transactions cct4 where cct4.void_username          = ba.username limit 1) is null\n"
-						// credit_cards
-                        + "  and (select cc.pkey from credit_cards cc where cc.created_by=ba.username limit 1) is null\n"
+						// payment.CreditCard
+                        + "  and (select cc.pkey from payment.\"CreditCard\" cc where cc.created_by=ba.username limit 1) is null\n"
 						// account.DisableLog
                         + "  and (select dl.pkey from account.\"DisableLog\" dl where dl.disabled_by=ba.username limit 1) is null\n"
 						// billing.MonthlyCharge
