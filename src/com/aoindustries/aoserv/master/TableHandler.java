@@ -1457,7 +1457,7 @@ final public class TableHandler {
 							out,
 							provideProgress,
 							new CreditCardProcessor(),
-							"select * from credit_card_processors"
+							"select * from payment.\"PaymentProcessor\""
 						); else {
 							List<CreditCardProcessor> emptyList = Collections.emptyList();
 							MasterServer.writeObjects(source, out, provideProgress, emptyList);
@@ -1474,7 +1474,7 @@ final public class TableHandler {
 						+ "  account.\"Username\" un,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ BU1_PARENTS_JOIN
-						+ "  credit_card_processors ccp\n"
+						+ "  payment.\"PaymentProcessor\" ccp\n"
 						+ "where\n"
 						+ "  un.username=?\n"
 						+ "  and un.package=pk.name\n"
