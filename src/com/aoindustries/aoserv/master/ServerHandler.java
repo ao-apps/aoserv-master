@@ -148,7 +148,7 @@ final public class ServerHandler {
 		);
 		conn.executeUpdate("insert into master.\"User\" values(?,true,false,false,false,false,false,false)", username);
 		invalidateList.addTable(conn, SchemaTable.TableID.MASTER_USERS, packageAccounting, InvalidateList.allServers, false);
-		conn.executeUpdate("insert into server.\"MasterServer\"(username, server) values(?,?)", username, serverPKey);
+		conn.executeUpdate("insert into master.\"UserHost\"(username, server) values(?,?)", username, serverPKey);
 		invalidateList.addTable(conn, SchemaTable.TableID.MASTER_SERVERS, packageAccounting, InvalidateList.allServers, false);
 		BusinessHandler.setBusinessAdministratorPassword(conn, source, invalidateList, username, password);
 

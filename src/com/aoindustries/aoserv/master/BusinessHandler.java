@@ -249,7 +249,7 @@ final public class BusinessHandler {
 							"select distinct\n"
 							+ "  bu.accounting\n"
 							+ "from\n"
-							+ "  server.\"MasterServer\" ms,\n"
+							+ "  master.\"UserHost\" ms,\n"
 							+ "  account.\"AccountHost\" bs,\n"
 							+ "  account.\"Account\" bu\n"
 							+ "where\n"
