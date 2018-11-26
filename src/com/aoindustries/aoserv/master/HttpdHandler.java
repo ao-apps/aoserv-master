@@ -820,7 +820,7 @@ final public class HttpdHandler {
 		int sharedTomcatPkey = 0;
 		if ("jboss".equals(siteType)) {
 			if(tomcatVersion!=-1) throw new SQLException("TomcatVersion cannot be supplied for a JBoss site: "+tomcatVersion);
-			tomcatVersion=conn.executeIntQuery("select tomcat_version from \"web/jboss\".\"Version\" where version=?", jBossVersion);
+			tomcatVersion=conn.executeIntQuery("select tomcat_version from \"web.jboss\".\"Version\" where version=?", jBossVersion);
 		} else if ("tomcat_shared".equals(siteType)) {
 			// Get shared Tomcat id
 			sharedTomcatPkey = conn.executeIntQuery(
@@ -1104,7 +1104,7 @@ final public class HttpdHandler {
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
 			);
-			PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into \"web/jboss\".\"Site\" values(?,?,?,?,?,?,?)");
+			PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into \"web.jboss\".\"Site\" values(?,?,?,?,?,?,?)");
 			try {
 				pstmt.setInt(1, httpdSitePKey);
 				pstmt.setInt(2, jBossVersion);
@@ -2483,7 +2483,7 @@ final public class HttpdHandler {
 	 *           |                  |             + linux.GroupUser
 	 *           |                  + web/tomcat.PrivateTomcatSite
 	 *           |                                         + net.Bind
-	 *           |                  + web/jboss.Site
+	 *           |                  + web.jboss.Site
 	 *           |                                   + net.Bind
 	 *           + web.StaticSite
 	 */
@@ -2666,16 +2666,16 @@ final public class HttpdHandler {
 				}
 			}
 
-			// web/jboss.Site
-			if(conn.executeBooleanQuery("select (select tomcat_site from \"web/jboss\".\"Site\" where tomcat_site=? limit 1) is not null", httpdSitePKey)) {
+			// web.jboss.Site
+			if(conn.executeBooleanQuery("select (select tomcat_site from \"web.jboss\".\"Site\" where tomcat_site=? limit 1) is not null", httpdSitePKey)) {
 				// net.Bind
-				int jnp_bind=conn.executeIntQuery("select jnp_bind from \"web/jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
-				int webserver_bind=conn.executeIntQuery("select webserver_bind from \"web/jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
-				int rmi_bind=conn.executeIntQuery("select rmi_bind from \"web/jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
-				int hypersonic_bind=conn.executeIntQuery("select hypersonic_bind from \"web/jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
-				int jmx_bind=conn.executeIntQuery("select jmx_bind from \"web/jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
+				int jnp_bind=conn.executeIntQuery("select jnp_bind from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
+				int webserver_bind=conn.executeIntQuery("select webserver_bind from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
+				int rmi_bind=conn.executeIntQuery("select rmi_bind from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
+				int hypersonic_bind=conn.executeIntQuery("select hypersonic_bind from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
+				int jmx_bind=conn.executeIntQuery("select jmx_bind from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
 
-				conn.executeUpdate("delete from \"web/jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
+				conn.executeUpdate("delete from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
 				invalidateList.addTable(conn, SchemaTable.TableID.HTTPD_JBOSS_SITES, accounting, aoServer, false);
 				NetBindHandler.removeNetBind(conn, invalidateList, jnp_bind);
 				NetBindHandler.removeNetBind(conn, invalidateList, webserver_bind);
