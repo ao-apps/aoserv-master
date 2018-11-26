@@ -21,7 +21,7 @@ import java.util.Map;
 
 /**
  * The <code>IpReputationSetHandler</code> handles all the accesses to the
- * <code>net/reputation.Set</code> tables.
+ * <code>net.reputation.Set</code> tables.
  *
  * @author  AO Industries, Inc.
  */
