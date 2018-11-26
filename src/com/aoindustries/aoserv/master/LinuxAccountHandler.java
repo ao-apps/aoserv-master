@@ -1443,8 +1443,8 @@ final public class LinuxAccountHandler {
 		int useCount = conn.executeIntQuery(
 			"select count(*) from linux.\"GroupUser\" lga, "+
 					"linux.\"UserServer\" lsa, "+
-					"\"web/tomcat\".\"SharedTomcat\" hst, "+
-					"\"web/tomcat\".\"SharedTomcatSite\" htss, "+
+					"\"web.tomcat\".\"SharedTomcat\" hst, "+
+					"\"web.tomcat\".\"SharedTomcatSite\" htss, "+
 					"web.\"Site\" hs "+
 						"where lga.username = lsa.username and "+
 						"lsa.id           = hst.linux_server_account and "+
@@ -1458,8 +1458,8 @@ final public class LinuxAccountHandler {
 			useCount = conn.executeIntQuery(
 				"select count(*) from linux.\"GroupUser\" lga, "+
 						"linux.\"GroupServer\" lsg, "+
-						"\"web/tomcat\".\"SharedTomcat\" hst, "+
-						"\"web/tomcat\".\"SharedTomcatSite\" htss, "+
+						"\"web.tomcat\".\"SharedTomcat\" hst, "+
+						"\"web.tomcat\".\"SharedTomcatSite\" htss, "+
 						"web.\"Site\" hs "+
 							"where lga.\"group\" = lsg.name and "+
 							"lsg.id            = hst.linux_server_group and "+
@@ -1470,7 +1470,7 @@ final public class LinuxAccountHandler {
 				id
 			);
 		}
-		if (useCount>0) throw new SQLException("linux_group_account("+id+") has been used by "+useCount+" web/tomcat.SharedTomcatSite.");
+		if (useCount>0) throw new SQLException("linux_group_account("+id+") has been used by "+useCount+" web.tomcat.SharedTomcatSite.");
 
 		// Get the values for later use
 		List<AccountingCode> accountings=getBusinessesForLinuxGroupAccount(conn, id);
@@ -1505,8 +1505,8 @@ final public class LinuxAccountHandler {
 			+ "            htss.tomcat_site\n"
 			+ "          from\n"
 			+ "            linux.\"UserServer\" lsa,\n"
-			+ "            \"web/tomcat\".\"SharedTomcat\" hst,\n"
-			+ "            \"web/tomcat\".\"SharedTomcatSite\" htss,\n"
+			+ "            \"web.tomcat\".\"SharedTomcat\" hst,\n"
+			+ "            \"web.tomcat\".\"SharedTomcatSite\" htss,\n"
 			+ "            web.\"Site\" hs\n"
 			+ "          where\n"
 			+ "            lga.username=lsa.username\n"
@@ -1521,8 +1521,8 @@ final public class LinuxAccountHandler {
 			+ "            htss.tomcat_site\n"
 			+ "          from\n"
 			+ "            linux.\"GroupServer\" lsg,\n"
-			+ "            \"web/tomcat\".\"SharedTomcat\" hst,\n"
-			+ "            \"web/tomcat\".\"SharedTomcatSite\" htss,\n"
+			+ "            \"web.tomcat\".\"SharedTomcat\" hst,\n"
+			+ "            \"web.tomcat\".\"SharedTomcatSite\" htss,\n"
 			+ "            web.\"Site\" hs\n"
 			+ "          where\n"
 			+ "            lga.\"group\"=lsg.name\n"

@@ -507,13 +507,13 @@ final public class AccountCleaner implements CronJob {
                     }
                 }
 
-                // web/tomcat.SharedTomcat
+                // web.tomcat.SharedTomcat
                 {
                     IntList hsts=conn.executeIntListQuery(
                         "select\n"
                         + "  hst.id\n"
                         + "from\n"
-                        + "  \"web/tomcat\".\"SharedTomcat\" hst,\n"
+                        + "  \"web.tomcat\".\"SharedTomcat\" hst,\n"
                         + "  linux.\"GroupServer\" lsg,\n"
                         + "  linux.\"Group\" lg,\n"
                         + "  billing.\"Package\" pk,\n"
@@ -814,7 +814,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select el.id from email.\"List\" el where el.disable_log=dl.id limit 1) is null\n"
                         + "  and (select ep.id from email.\"Pipe\" ep where ep.disable_log=dl.id limit 1) is null\n"
                         + "  and (select esr.id from email.\"SmtpRelay\" esr where esr.disable_log=dl.id limit 1) is null\n"
-                        + "  and (select hst.id from \"web/tomcat\".\"SharedTomcat\" hst where hst.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select hst.id from \"web.tomcat\".\"SharedTomcat\" hst where hst.disable_log=dl.id limit 1) is null\n"
                         + "  and (select hsb.id from web.\"VirtualHost\" hsb where hsb.disable_log=dl.id limit 1) is null\n"
                         + "  and (select hs.id from web.\"Site\" hs where hs.disable_log=dl.id limit 1) is null\n"
                         + "  and (select la.username from linux.\"User\" la where la.disable_log=dl.id limit 1) is null\n"

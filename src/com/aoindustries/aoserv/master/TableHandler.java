@@ -2995,7 +2995,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new HttpdJKCode(),
-					"select * from \"web/tomcat\".\"WorkerName\""
+					"select * from \"web.tomcat\".\"WorkerName\""
 				);
 				break;
 			case HTTPD_JK_PROTOCOLS :
@@ -3005,7 +3005,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new HttpdJKProtocol(),
-					"select * from \"web/tomcat\".\"JkProtocol\""
+					"select * from \"web.tomcat\".\"JkProtocol\""
 				);
 				break;
 			case HTTPD_SERVERS :
@@ -3066,7 +3066,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdSharedTomcat(),
-						"select * from \"web/tomcat\".\"SharedTomcat\""
+						"select * from \"web.tomcat\".\"SharedTomcat\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3077,7 +3077,7 @@ final public class TableHandler {
 						+ "  hst.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  \"web/tomcat\".\"SharedTomcat\" hst\n"
+						+ "  \"web.tomcat\".\"SharedTomcat\" hst\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hst.ao_server",
@@ -3098,7 +3098,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  linux.\"Group\" lg,\n"
 					+ "  linux.\"GroupServer\" lsg,\n"
-					+ "  \"web/tomcat\".\"SharedTomcat\" hst\n"
+					+ "  \"web.tomcat\".\"SharedTomcat\" hst\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3535,7 +3535,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatContext(),
-						"select * from \"web/tomcat\".\"Context\""
+						"select * from \"web.tomcat\".\"Context\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3547,7 +3547,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"Context\" htc\n"
+						+ "  \"web.tomcat\".\"Context\" htc\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3568,7 +3568,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"Context\" htc\n"
+					+ "  \"web.tomcat\".\"Context\" htc\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3590,7 +3590,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatDataSource(),
-						"select * from \"web/tomcat\".\"ContextDataSource\""
+						"select * from \"web.tomcat\".\"ContextDataSource\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3602,8 +3602,8 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"Context\" htc,\n"
-						+ "  \"web/tomcat\".\"ContextDataSource\" htds\n"
+						+ "  \"web.tomcat\".\"Context\" htc,\n"
+						+ "  \"web.tomcat\".\"ContextDataSource\" htds\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3625,8 +3625,8 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"Context\" htc,\n"
-					+ "  \"web/tomcat\".\"ContextDataSource\" htds\n"
+					+ "  \"web.tomcat\".\"Context\" htc,\n"
+					+ "  \"web.tomcat\".\"ContextDataSource\" htds\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3649,7 +3649,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatParameter(),
-						"select * from \"web/tomcat\".\"ContextParameter\""
+						"select * from \"web.tomcat\".\"ContextParameter\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3661,8 +3661,8 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"Context\" htc,\n"
-						+ "  \"web/tomcat\".\"ContextParameter\" htp\n"
+						+ "  \"web.tomcat\".\"Context\" htc,\n"
+						+ "  \"web.tomcat\".\"ContextParameter\" htp\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3684,8 +3684,8 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"Context\" htc,\n"
-					+ "  \"web/tomcat\".\"ContextParameter\" htp\n"
+					+ "  \"web.tomcat\".\"Context\" htc,\n"
+					+ "  \"web.tomcat\".\"ContextParameter\" htp\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3708,7 +3708,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatSiteJkMount(),
-						"select * from \"web/tomcat\".\"JkMount\""
+						"select * from \"web.tomcat\".\"JkMount\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3720,7 +3720,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"JkMount\" htsjm\n"
+						+ "  \"web.tomcat\".\"JkMount\" htsjm\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3741,7 +3741,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"JkMount\" htsjm\n"
+					+ "  \"web.tomcat\".\"JkMount\" htsjm\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3766,11 +3766,11 @@ final public class TableHandler {
 						"select\n"
 						+ "  hts.*,\n"
 						+ "  (\n"
-						+ "    select htsjm.id from \"web/tomcat\".\"JkMount\" htsjm\n"
+						+ "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
 						+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
 						+ "  ) is null as use_apache\n"
 						+ "from\n"
-						+ "  \"web/tomcat\".\"Site\" hts"
+						+ "  \"web.tomcat\".\"Site\" hts"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3780,13 +3780,13 @@ final public class TableHandler {
 						"select\n"
 						+ "  hts.*,\n"
 						+ "  (\n"
-						+ "    select htsjm.id from \"web/tomcat\".\"JkMount\" htsjm\n"
+						+ "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
 						+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
 						+ "  ) is null as use_apache\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"Site\" hts\n"
+						+ "  \"web.tomcat\".\"Site\" hts\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3802,7 +3802,7 @@ final public class TableHandler {
 					"select\n"
 					+ "  hts.*,\n"
 					+ "  (\n"
-					+ "    select htsjm.id from \"web/tomcat\".\"JkMount\" htsjm\n"
+					+ "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
 					+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
 					+ "  ) is null as use_apache\n"
 					+ "from\n"
@@ -3811,7 +3811,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"Site\" hts\n"
+					+ "  \"web.tomcat\".\"Site\" hts\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3833,7 +3833,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatSharedSite(),
-						"select * from \"web/tomcat\".\"SharedTomcatSite\""
+						"select * from \"web.tomcat\".\"SharedTomcatSite\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3845,7 +3845,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"SharedTomcatSite\" htss\n"
+						+ "  \"web.tomcat\".\"SharedTomcatSite\" htss\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3866,7 +3866,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"SharedTomcatSite\" htss\n"
+					+ "  \"web.tomcat\".\"SharedTomcatSite\" htss\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3888,7 +3888,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new HttpdTomcatStdSite(),
-						"select * from \"web/tomcat\".\"PrivateTomcatSite\""
+						"select * from \"web.tomcat\".\"PrivateTomcatSite\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3900,7 +3900,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
 						+ "  web.\"Site\" hs,\n"
-						+ "  \"web/tomcat\".\"PrivateTomcatSite\" htss\n"
+						+ "  \"web.tomcat\".\"PrivateTomcatSite\" htss\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=hs.ao_server\n"
@@ -3921,7 +3921,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  web.\"Site\" hs,\n"
-					+ "  \"web/tomcat\".\"PrivateTomcatSite\" htss\n"
+					+ "  \"web.tomcat\".\"PrivateTomcatSite\" htss\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
@@ -3941,7 +3941,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new HttpdTomcatVersion(),
-					"select * from \"web/tomcat\".\"Version\""
+					"select * from \"web.tomcat\".\"Version\""
 				);
 				break;
 			// <editor-fold defaultstate="collapsed" desc="Httpd Workers">
@@ -3960,7 +3960,7 @@ final public class TableHandler {
 						+ "  bind as net_bind,\n"
 						+ "  \"tomcatSite\" as tomcat_site\n"
 						+ "from\n"
-						+ "  \"web/tomcat\".\"Worker\""
+						+ "  \"web.tomcat\".\"Worker\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -3975,7 +3975,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
 						+ "  net.\"Bind\" nb,\n"
-						+ "  \"web/tomcat\".\"Worker\" hw\n"
+						+ "  \"web.tomcat\".\"Worker\" hw\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=nb.server\n"
@@ -3999,7 +3999,7 @@ final public class TableHandler {
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  net.\"Bind\" nb,\n"
-					+ "  \"web/tomcat\".\"Worker\" hw\n"
+					+ "  \"web.tomcat\".\"Worker\" hw\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
