@@ -2731,7 +2731,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk1,\n"
 					+ BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
-					+ "  server.\"Server\" se,\n"
+					+ "  net.\"Host\" se,\n"
 					+ "  backup.\"FileReplication\" ffr,\n"
 					+ "  backup.\"FileReplicationSetting\" fbs\n"
 					+ "where\n"
@@ -4239,8 +4239,8 @@ final public class TableHandler {
 							+ "  irll.*\n"
 							+ "from\n"
 							+ "  master.\"UserHost\" ms\n"
-							+ "  inner join server.\"Server\" se on ms.server=se.id\n"                         // Find all servers can access
-							+ "  inner join server.\"Server\" se2 on se.farm=se2.farm\n"                         // Find all servers in the same farm
+							+ "  inner join net.\"Host\" se on ms.server=se.id\n"                         // Find all servers can access
+							+ "  inner join net.\"Host\" se2 on se.farm=se2.farm\n"                         // Find all servers in the same farm
 							+ "  inner join net.\"Device\" nd on se2.id=nd.server\n"                           // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\" irl on nd.id=irl.net_device\n"      // Find all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"LimiterClass\" irll on irl.id=irll.limiter\n" // Find all limiters limits in the same farm
@@ -4303,8 +4303,8 @@ final public class TableHandler {
 							+ "  irls.*\n"
 							+ "from\n"
 							+ "  master.\"UserHost\" ms\n"
-							+ "  inner join server.\"Server\" se on ms.server=se.id\n"                       // Find all servers can access
-							+ "  inner join server.\"Server\" se2 on se.farm=se2.farm\n"                       // Find all servers in the same farm
+							+ "  inner join net.\"Host\" se on ms.server=se.id\n"                       // Find all servers can access
+							+ "  inner join net.\"Host\" se2 on se.farm=se2.farm\n"                       // Find all servers in the same farm
 							+ "  inner join net.\"Device\" nd on se2.id=nd.server\n"                         // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\" irl on nd.id=irl.net_device\n"    // Find all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.id=irls.limiter\n" // Find all limiters sets in the same farm
@@ -4367,8 +4367,8 @@ final public class TableHandler {
 							+ "  irl.*\n"
 							+ "from\n"
 							+ "  master.\"UserHost\" ms\n"
-							+ "  inner join server.\"Server\" se on ms.server=se.id\n"                    // Find all servers can access
-							+ "  inner join server.\"Server\" se2 on se.farm=se2.farm\n"                    // Find all servers in the same farm
+							+ "  inner join net.\"Host\" se on ms.server=se.id\n"                    // Find all servers can access
+							+ "  inner join net.\"Host\" se2 on se.farm=se2.farm\n"                    // Find all servers in the same farm
 							+ "  inner join net.\"Device\" nd on se2.id=nd.server\n"                      // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\" irl on nd.id=irl.net_device\n" // Find all limiters in the same farm
 							+ "where\n"
@@ -4429,8 +4429,8 @@ final public class TableHandler {
 							+ "  irsh.*\n"
 							+ "from\n"
 							+ "  master.\"UserHost\" ms\n"
-							+ "  inner join server.\"Server\"                 se   on ms.server     = se.id\n"        // Find all servers can access
-							+ "  inner join server.\"Server\"                 se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+							+ "  inner join net.\"Host\"                 se   on ms.server     = se.id\n"        // Find all servers can access
+							+ "  inner join net.\"Host\"                 se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
 							+ "  inner join net.\"Device\"                    nd   on se2.id      = nd.server\n"      // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\"    irl  on nd.id       = irl.net_device\n" // Find all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.id      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
@@ -4500,8 +4500,8 @@ final public class TableHandler {
 							+ "  irsn.*\n"
 							+ "from\n"
 							+ "  master.\"UserHost\" ms\n"
-							+ "  inner join server.\"Server\"                 se   on ms.server     = se.id\n"        // Find all servers can access
-							+ "  inner join server.\"Server\"                 se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+							+ "  inner join net.\"Host\"                 se   on ms.server     = se.id\n"        // Find all servers can access
+							+ "  inner join net.\"Host\"                 se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
 							+ "  inner join net.\"Device\"                    nd   on se2.id      = nd.server\n"      // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\"    irl  on nd.id       = irl.net_device\n" // Find all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.id      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
@@ -4571,8 +4571,8 @@ final public class TableHandler {
 							+ "  irs.*\n"
 							+ "from\n"
 							+ "  master.\"UserHost\" ms\n"
-							+ "  inner join server.\"Server\"                 se   on ms.server     = se.id\n"        // Find all servers can access
-							+ "  inner join server.\"Server\"                 se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
+							+ "  inner join net.\"Host\"                 se   on ms.server     = se.id\n"        // Find all servers can access
+							+ "  inner join net.\"Host\"                 se2  on se.farm       = se2.farm\n"       // Find all servers in the same farm
 							+ "  inner join net.\"Device\"                    nd   on se2.id      = nd.server\n"      // Find all net.Device in the same farm
 							+ "  inner join \"net/reputation\".\"Limiter\"    irl  on nd.id       = irl.net_device\n" // Find all limiters in the same farm
 							+ "  inner join \"net/reputation\".\"LimiterSet\" irls on irl.id      = irls.limiter\n"   // Find all sets used by all limiters in the same farm
@@ -6038,7 +6038,7 @@ final public class TableHandler {
 					+ "    from\n"
 					+ "      account.\"Username\" un6,\n"
 					+ "      billing.\"Package\" pk6,\n"
-					+ "      server.\"Server\" se6,\n"
+					+ "      net.\"Host\" se6,\n"
 					+ "      backup.\"FileReplication\" ffr6,\n"
 					+ "      backup.\"BackupPartition\" bp6,\n"
 					+ "      net.\"Bind\" nb6\n"
@@ -7675,10 +7675,10 @@ final public class TableHandler {
 						+ "  sf.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "            server.\"Server\"          se\n"
+						+ "            net.\"Host\"          se\n"
 						+ "  left join backup.\"FileReplication\" ffr on  se.id             = ffr.server\n"
 						+ "  left join backup.\"BackupPartition\" bp  on ffr.backup_partition =  bp.id\n"
-						+ "  left join server.\"Server\"          fs  on  bp.ao_server        =  fs.id,\n"
+						+ "  left join net.\"Host\"          fs  on  bp.ao_server        =  fs.id,\n"
 						+ "  infrastructure.\"ServerFarm\" sf\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -7701,7 +7701,7 @@ final public class TableHandler {
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
 					+ "  account.\"AccountHost\" bs,\n"
-					+ "  server.\"Server\" se,\n"
+					+ "  net.\"Host\" se,\n"
 					+ "  infrastructure.\"ServerFarm\" sf\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -7725,7 +7725,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new Server(),
-						"select * from server.\"Server\""
+						"select * from net.\"Host\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -7744,7 +7744,7 @@ final public class TableHandler {
 						// Allow servers it replicates to
 						+ "  left join backup.\"FileReplication\" ffr on ms.server=ffr.server\n"
 						+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
-						+ "  server.\"Server\" se\n"
+						+ "  net.\"Host\" se\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and (\n"
@@ -7774,7 +7774,7 @@ final public class TableHandler {
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
-					+ "  server.\"Server\" se\n"
+					+ "  net.\"Host\" se\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -9332,7 +9332,7 @@ final public class TableHandler {
 			+ "from\n"
 			+ "  master.\"UserHost\" ms,\n"
 			+ "  linux.\"Server\" ao,\n"
-			+ "  server.\"Server\" se,\n"
+			+ "  net.\"Host\" se,\n"
 			+ "  distribution.\"OperatingSystemVersion\" osv\n"
 			+ "where\n"
 			+ "  ms.username=?\n"

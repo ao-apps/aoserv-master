@@ -819,7 +819,7 @@ public abstract class MasterServer {
 														:true
 													;
 													boolean billParent=in.readBoolean();
-													// Convert old hostname to server.Server.id
+													// Convert old hostname to net.Host.id
 													if(defaultServer==-1) {
 														defaultServer = ServerHandler.getServerForAOServerHostname(conn, hostname);
 													}
