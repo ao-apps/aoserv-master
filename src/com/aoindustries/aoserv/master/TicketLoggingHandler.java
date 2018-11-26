@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2009-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -90,7 +90,7 @@ final public class TicketLoggingHandler extends QueuedHandler {
 						+ "  coalesce(\n"
 						+ "    (\n"
 						+ "      select\n"
-						+ "        pkey\n"
+						+ "        id\n"
 						+ "      from\n"
 						+ "        ticket.\"Ticket\"\n"
 						+ "      where\n"
@@ -103,7 +103,7 @@ final public class TicketLoggingHandler extends QueuedHandler {
 						+ "        and category=?\n"
 						+ "      order by\n"
 						+ "        open_date desc,\n"
-						+ "        pkey desc\n"
+						+ "        id desc\n"
 						+ "      limit 1\n"
 						+ "    ), -1\n"
 						+ "  )",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, 2013, 2014, 2015 by AO Industries, Inc.,
+ * Copyright 2012, 2013, 2014, 2015, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -44,12 +44,12 @@ final public class VirtualServerHandler {
 	}
 	 */
 
-	public static int getVirtualServerForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
-		return conn.executeIntQuery("select virtual_server from infrastructure.\"VirtualDisk\" where pkey=?", virtualDisk);
+	public static int getVirtualServerForVirtualDisk(DatabaseConnection conn, int virtualDiskId) throws IOException, SQLException {
+		return conn.executeIntQuery("select virtual_server from infrastructure.\"VirtualDisk\" where id=?", virtualDiskId);
 	}
 
-	public static String getDeviceForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
-		return conn.executeStringQuery("select device from infrastructure.\"VirtualDisk\" where pkey=?", virtualDisk);
+	public static String getDeviceForVirtualDisk(DatabaseConnection conn, int virtualDiskId) throws IOException, SQLException {
+		return conn.executeStringQuery("select device from infrastructure.\"VirtualDisk\" where id=?", virtualDiskId);
 	}
 
 	public static AOServer.DaemonAccess requestVncConsoleDaemonAccess(

@@ -287,7 +287,7 @@ final public class UsernameHandler {
 			String message=
 			"username="
 			+username
-			+" is not allowed to access server.pkey="
+			+" is not allowed to access server.id="
 			+server
 			+": action='"
 			+action

@@ -130,9 +130,9 @@ final public class InvalidateList {
             else {
                 List<Integer> SV=serverLists.get(tableID);
                 if(SV==null) serverLists.put(tableID, SV=new SortedArrayList<>());
-                for(Integer pkey : servers) {
-                    if(pkey==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: pkey is null"));
-                    else if(!SV.contains(pkey)) SV.add(pkey);
+                for(Integer id : servers) {
+                    if(id==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: id is null"));
+                    else if(!SV.contains(id)) SV.add(id);
                 }
             }
         }
@@ -314,7 +314,7 @@ final public class InvalidateList {
     public static IntCollection getServerCollection(int ... serverPKeys) throws IOException, SQLException {
         if(serverPKeys.length==0) return new IntArrayList(0);
         IntCollection coll = new IntArrayList(serverPKeys.length);
-        for(int pkey : serverPKeys) coll.add(pkey);
+        for(int id : serverPKeys) coll.add(id);
         return coll;
     }
 }

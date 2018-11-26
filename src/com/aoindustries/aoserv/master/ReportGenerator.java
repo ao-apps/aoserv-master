@@ -127,15 +127,14 @@ final public class ReportGenerator implements CronJob {
 						if(
 							conn.executeBooleanQuery(
 								"select\n"
-								+ "  (\n"
+								+ "  not exists (\n"
 								+ "    select\n"
-								+ "      pkey\n"
+								+ "      *\n"
 								+ "    from\n"
 								+ "      backup.\"BackupReport\"\n"
 								+ "    where\n"
 								+ "      ?::date=date\n"
-								+ "    limit 1\n"
-								+ "  ) is null",
+								+ "  )",
 								now
 							)
 						) {
@@ -220,11 +219,11 @@ final public class ReportGenerator implements CronJob {
 									+ "      postgres_backups pb,\n"
 									+ "      postgresql.\"Server\" ps\n"
 									+ "    where\n"
-									+ "      pb.postgres_server=ps.pkey\n"
+									+ "      pb.postgres_server=ps.id\n"
 									+ "  ) as fb,\n"
 									+ "  backup_data bd\n"
 									+ "where\n"
-									+ "  fb.backup_data=bd.pkey\n"
+									+ "  fb.backup_data=bd.id\n"
 									+ "  and bd.is_stored\n"
 									+ "group by\n"
 									+ "  fb.server,\n"

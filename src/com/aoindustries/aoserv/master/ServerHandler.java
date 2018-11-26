@@ -75,7 +75,7 @@ final public class ServerHandler {
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  sf.name=?\n"
-			+ "  and sf.owner=pk.pkey",
+			+ "  and sf.owner=pk.id",
 			farm
 		);
 		if(!BusinessHandler.isBusinessOrParent(conn, accounting, farm_owner)) throw new SQLException("Not able to access farm: "+farm);
@@ -101,7 +101,7 @@ final public class ServerHandler {
 			+ "  null,\n"
 			+ "  ?,\n"
 			+ "  null\n"
-			+ ") RETURNING pkey",
+			+ ") RETURNING id",
 			hostname,
 			farm,
 			PackageHandler.getBusinessForPackage(conn, owner),
@@ -177,7 +177,7 @@ final public class ServerHandler {
 				+source.getUsername()
 				+" is not allowed to access server: action='"
 				+action
-				+", server.pkey="
+				+", server.id="
 				+server
 			;
 			throw new SQLException(message);
@@ -211,7 +211,7 @@ final public class ServerHandler {
 								SV.add(masterServer.getServerPKey());
 							}
 						} else {
-							SV.addAll(conn.executeIntListQuery("select pkey from server.\"Server\""));
+							SV.addAll(conn.executeIntListQuery("select id from server.\"Server\""));
 						}
 					} else {
 						SV.addAll(
@@ -274,7 +274,7 @@ final public class ServerHandler {
 		synchronized(farmsForServers) {
 			String farm=farmsForServers.get(I);
 			if(farm==null) {
-				farm=conn.executeStringQuery("select farm from server.\"Server\" where pkey=?", server);
+				farm=conn.executeStringQuery("select farm from server.\"Server\" where id=?", server);
 				farmsForServers.put(I, farm);
 			}
 			return farm;
@@ -302,7 +302,7 @@ final public class ServerHandler {
 	 * Gets the operating system version for a server or <code>-1</code> if not available.
 	 */
 	public static int getOperatingSystemVersionForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce((select operating_system_version from server.\"Server\" where pkey=?), -1)", server);
+		return conn.executeIntQuery("select coalesce((select operating_system_version from server.\"Server\" where id=?), -1)", server);
 	}
 
 	final private static Map<DomainName,Integer> serversForAOServers = new HashMap<>();
@@ -321,11 +321,11 @@ final public class ServerHandler {
 	}
 
 	public static int getServerForPackageAndName(DatabaseAccess database, int pack, String name) throws IOException, SQLException {
-		return database.executeIntQuery("select pkey from server.\"Server\" where package=? and name=?", pack, name);
+		return database.executeIntQuery("select id from server.\"Server\" where package=? and name=?", pack, name);
 	}
 
 	public static IntList getServers(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from server.\"Server\"");
+		return conn.executeIntListQuery("select id from server.\"Server\"");
 	}
 
 	/**
@@ -333,7 +333,7 @@ final public class ServerHandler {
 	 */
 	public static IntList getEnabledXenPhysicalServers(DatabaseAccess database) throws IOException, SQLException {
 		return database.executeIntListQuery(
-			"select se.pkey from server.\"Server\" se inner join infrastructure.\"PhysicalServer\" ps on se.pkey=ps.server where se.operating_system_version in (?,?,?) and se.monitoring_enabled",
+			"select se.id from server.\"Server\" se inner join infrastructure.\"PhysicalServer\" ps on se.id=ps.server where se.operating_system_version in (?,?,?) and se.monitoring_enabled",
 			OperatingSystemVersion.CENTOS_5_DOM0_I686,
 			OperatingSystemVersion.CENTOS_5_DOM0_X86_64,
 			OperatingSystemVersion.CENTOS_7_DOM0_X86_64
@@ -341,13 +341,13 @@ final public class ServerHandler {
 	}
 
 	final private static Map<Integer,Boolean> aoServers=new HashMap<>();
-	public static boolean isAOServer(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		Integer I=pkey;
+	public static boolean isAOServer(DatabaseConnection conn, int id) throws IOException, SQLException {
+		Integer I=id;
 		synchronized(aoServers) {
 			if(aoServers.containsKey(I)) return aoServers.get(I);
 			boolean isAOServer=conn.executeBooleanQuery(
 				"select (select server from linux.\"Server\" where server=?) is not null",
-				pkey
+				id
 			);
 			aoServers.put(I, isAOServer);
 			return isAOServer;
@@ -485,13 +485,13 @@ final public class ServerHandler {
 	 * Gets the package that owns the server.
 	 */
 	public static int getPackageForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		return conn.executeIntQuery("select package from server.\"Server\" where pkey=?", server);
+		return conn.executeIntQuery("select package from server.\"Server\" where id=?", server);
 	}
 
 	/**
 	 * Gets the per-package unique name of the server.
 	 */
 	public static String getNameForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		return conn.executeStringQuery("select name from server.\"Server\" where pkey=?", server);
+		return conn.executeStringQuery("select name from server.\"Server\" where id=?", server);
 	}
 }

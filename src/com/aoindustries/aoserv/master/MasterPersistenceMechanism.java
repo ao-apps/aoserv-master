@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -97,15 +97,15 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
             // Get the createdBy from the credit card persistence mechanism
             UserId creditCardCreatedBy = conn.executeObjectQuery(
 				ObjectFactories.userIdFactory,
-				"select created_by from payment.\"CreditCard\" where pkey=?::integer",
+				"select created_by from payment.\"CreditCard\" where id=?::integer",
 				creditCard.getPersistenceUniqueId()
 			);
             AccountingCode ccBusiness = conn.executeObjectQuery(
                 ObjectFactories.accountingCodeFactory,
-                "select accounting from payment.\"CreditCard\" where pkey=?::integer",
+                "select accounting from payment.\"CreditCard\" where id=?::integer",
                 creditCard.getPersistenceUniqueId()
             );
-            int pkey = CreditCardHandler.addCreditCardTransaction(
+            int id = CreditCardHandler.addCreditCardTransaction(
                 conn,
                 invalidateList,
                 transaction.getProviderId(),
@@ -159,7 +159,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 principal==null ? null : principal.getName()
             );
             conn.commit();
-            return Integer.toString(pkey);
+            return Integer.toString(id);
         } catch(IOException err) {
             throw new SQLException(err);
         }

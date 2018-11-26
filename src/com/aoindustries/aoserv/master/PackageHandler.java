@@ -47,7 +47,7 @@ final public class PackageHandler {
             "select\n"
             + "  (\n"
             + "    select\n"
-            + "      pk.pkey\n"
+            + "      pk.id\n"
             + "    from\n"
             + "      billing.\"Package\" pk,\n"
             + "      server.\"AccountServer\" bs\n"
@@ -67,12 +67,12 @@ final public class PackageHandler {
         return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackage(conn, packageName));
     }
 
-    public static boolean canAccessPackage(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
-        return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackage(conn, pkey));
+    public static boolean canAccessPackage(DatabaseConnection conn, RequestSource source, int packageId) throws IOException, SQLException {
+        return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackage(conn, packageId));
     }
 
-    public static boolean canAccessPackageDefinition(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
-        return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackageDefinition(conn, pkey));
+    public static boolean canAccessPackageDefinition(DatabaseConnection conn, RequestSource source, int packageId) throws IOException, SQLException {
+        return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackageDefinition(conn, packageId));
     }
 
     public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, AccountingCode packageName) throws IOException, SQLException {
@@ -89,29 +89,29 @@ final public class PackageHandler {
         }
     }
 
-    public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
-        if(!canAccessPackage(conn, source, pkey)) {
+    public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, int packageId) throws IOException, SQLException {
+        if(!canAccessPackage(conn, source, packageId)) {
             String message=
                 "business_administrator.username="
                 +source.getUsername()
                 +" is not allowed to access package: action='"
                 +action
-                +", pkey="
-                +pkey
+                +", id="
+                +packageId
             ;
             throw new SQLException(message);
         }
     }
 
-    public static void checkAccessPackageDefinition(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
-        if(!canAccessPackageDefinition(conn, source, pkey)) {
+    public static void checkAccessPackageDefinition(DatabaseConnection conn, RequestSource source, String action, int packageId) throws IOException, SQLException {
+        if(!canAccessPackageDefinition(conn, source, packageId)) {
             String message=
                 "business_administrator.username="
                 +source.getUsername()
                 +" is not allowed to access package: action='"
                 +action
-                +", pkey="
-                +pkey
+                +", id="
+                +packageId
             ;
             throw new SQLException(message);
         }
@@ -140,7 +140,7 @@ final public class PackageHandler {
         if(!isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not approved: "+packageDefinition);
         //if(!isPackageDefinitionActive(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not active: "+packageDefinition);
 
-        int pkey = conn.executeIntUpdate(
+        int packageId = conn.executeIntUpdate(
             "INSERT INTO\n"
             + "  billing.\"Package\"\n"
             + "VALUES (\n"
@@ -157,7 +157,7 @@ final public class PackageHandler {
             + "  ?,\n"
             + "  ?,\n"
             + "  ?\n"
-            + ") RETURNING pkey",
+            + ") RETURNING id",
             packageName.toString(),
             accounting.toString(),
             packageDefinition,
@@ -173,7 +173,7 @@ final public class PackageHandler {
         // Notify all clients of the update
         invalidateList.addTable(conn, SchemaTable.TableID.PACKAGES, accounting, InvalidateList.allServers, false);
 
-        return pkey;
+        return packageId;
     }
 
     /**
@@ -197,7 +197,7 @@ final public class PackageHandler {
         BusinessHandler.checkAccessBusiness(conn, source, "addPackageDefinition", accounting);
         if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add PackageDefinition, Business disabled: "+accounting);
 
-        int pkey = conn.executeIntUpdate(
+        int packageDefinition = conn.executeIntUpdate(
             "INSERT INTO\n"
             + "  billing.\"PackageDefinition\"\n"
             + "VALUES (\n"
@@ -214,7 +214,7 @@ final public class PackageHandler {
             + "  ?,\n"
             + "  false,\n"
             + "  false\n"
-            + ") RETURNING pkey",
+            + ") RETURNING id",
             accounting.toString(),
             category,
             name,
@@ -236,7 +236,7 @@ final public class PackageHandler {
             false
         );
 
-        return pkey;
+        return packageDefinition;
     }
 
     /**
@@ -246,20 +246,20 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int pkey
+        int packageDefinition
     ) throws IOException, SQLException {
-        checkAccessPackageDefinition(conn, source, "copyPackageDefinition", pkey);
-        AccountingCode accounting = getBusinessForPackageDefinition(conn, pkey);
+        checkAccessPackageDefinition(conn, source, "copyPackageDefinition", packageDefinition);
+        AccountingCode accounting = getBusinessForPackageDefinition(conn, packageDefinition);
         if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to copy PackageDefinition, Business disabled: "+accounting);
-        String category=conn.executeStringQuery("select category from billing.\"PackageDefinition\" where pkey=?", pkey);
-        String name=conn.executeStringQuery("select name from billing.\"PackageDefinition\" where pkey=?", pkey);
-        String version=conn.executeStringQuery("select version from billing.\"PackageDefinition\" where pkey=?", pkey);
+        String category=conn.executeStringQuery("select category from billing.\"PackageDefinition\" where id=?", packageDefinition);
+        String name=conn.executeStringQuery("select name from billing.\"PackageDefinition\" where id=?", packageDefinition);
+        String version=conn.executeStringQuery("select version from billing.\"PackageDefinition\" where id=?", packageDefinition);
         String newVersion=null;
         for(int c=1;c<Integer.MAX_VALUE;c++) {
             String temp=version+"."+c;
             if(
                 conn.executeBooleanQuery(
-                    "select (select pkey from billing.\"PackageDefinition\" where accounting=? and category=? and name=? and version=? limit 1) is null",
+                    "select (select id from billing.\"PackageDefinition\" where accounting=? and category=? and name=? and version=? limit 1) is null",
                     accounting,
                     category,
                     name,
@@ -270,7 +270,7 @@ final public class PackageHandler {
                 break;
             }
         }
-        if(newVersion==null) throw new SQLException("Unable to generate new version for copy PackageDefinition: "+pkey);
+        if(newVersion==null) throw new SQLException("Unable to generate new version for copy PackageDefinition: "+packageDefinition);
 
         int newPKey = conn.executeIntUpdate(
             "INSERT INTO billing.\"PackageDefinition\" (\n"
@@ -298,10 +298,10 @@ final public class PackageHandler {
             + "FROM\n"
             + "  billing.\"PackageDefinition\"\n"
             + "WHERE\n"
-            + "  pkey=?\n"
-			+ "RETURNING pkey",
+            + "  id=?\n"
+			+ "RETURNING id",
             newVersion,
-            pkey
+            packageDefinition
         );
         conn.executeUpdate(
             "insert into\n"
@@ -325,7 +325,7 @@ final public class PackageHandler {
             + "where\n"
             + "  package_definition=?",
             newPKey,
-            pkey
+            packageDefinition
         );
 
         // Notify all clients of the update
@@ -352,7 +352,7 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int pkey,
+        int packageDefinition,
         AccountingCode accounting,
         String category,
         String name,
@@ -365,9 +365,9 @@ final public class PackageHandler {
         String monthlyRateTransactionType
     ) throws IOException, SQLException {
         // Security checks
-        checkAccessPackageDefinition(conn, source, "updatePackageDefinition", pkey);
+        checkAccessPackageDefinition(conn, source, "updatePackageDefinition", packageDefinition);
         BusinessHandler.checkAccessBusiness(conn, source, "updatePackageDefinition", accounting);
-        if(isPackageDefinitionApproved(conn, pkey)) throw new SQLException("Not allowed to update an approved PackageDefinition: "+pkey);
+        if(isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("Not allowed to update an approved PackageDefinition: "+packageDefinition);
 
         PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
             "update\n"
@@ -384,7 +384,7 @@ final public class PackageHandler {
             + "  monthly_rate=?,\n"
             + "  monthly_rate_transaction_type=?\n"
             + "where\n"
-            + "  pkey=?"
+            + "  id=?"
         );
         try {
             pstmt.setString(1, accounting.toString());
@@ -397,7 +397,7 @@ final public class PackageHandler {
             pstmt.setString(8, setupFeeTransactionType);
             pstmt.setBigDecimal(9, new BigDecimal(SQLUtility.getDecimal(monthlyRate)));
             pstmt.setString(10, monthlyRateTransactionType);
-            pstmt.setInt(11, pkey);
+            pstmt.setInt(11, packageDefinition);
             pstmt.executeUpdate();
         } catch(SQLException err) {
             throw new WrappedSQLException(err, pstmt);
@@ -591,10 +591,10 @@ final public class PackageHandler {
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
         com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
         if(masterUser!=null) {
-            if(masterServers.length==0) return conn.executeIntListQuery("select pkey from billing.\"Package\"");
+            if(masterServers.length==0) return conn.executeIntListQuery("select id from billing.\"Package\"");
             else return conn.executeIntListQuery(
                 "select\n"
-                + "  pk.pkey\n"
+                + "  pk.id\n"
                 + "from\n"
                 + "  server.\"MasterServer\" ms,\n"
                 + "  server.\"AccountServer\" bs,\n"
@@ -604,12 +604,12 @@ final public class PackageHandler {
                 + "  and ms.server=bs.server\n"
                 + "  and bs.accounting=pk.accounting\n"
                 + "group by\n"
-                + "  pk.pkey",
+                + "  pk.id",
                 username
             );
         } else return conn.executeIntListQuery(
             "select\n"
-            + "  pk2.pkey\n"
+            + "  pk2.id\n"
             + "from\n"
             + "  account.\"Username\" un,\n"
             + "  billing.\"Package\" pk1,\n"
@@ -654,7 +654,7 @@ final public class PackageHandler {
     }
 
     public static boolean isPackageNameAvailable(DatabaseConnection conn, AccountingCode packageName) throws IOException, SQLException {
-        return conn.executeBooleanQuery("select (select pkey from billing.\"Package\" where name=? limit 1) is null", packageName);
+        return conn.executeBooleanQuery("select (select id from billing.\"Package\" where name=? limit 1) is null", packageName);
     }
 
     public static int findActivePackageDefinition(DatabaseConnection conn, AccountingCode accounting, int rate, int userLimit, int popLimit) throws IOException, SQLException {
@@ -663,7 +663,7 @@ final public class PackageHandler {
             + "  coalesce(\n"
             + "    (\n"
             + "      select\n"
-            + "        pd.pkey\n"
+            + "        pd.id\n"
             + "      from\n"
             + "        billing.\"PackageDefinition\" pd,\n"
             + "        package_definitions_limits user_pdl,\n"
@@ -671,9 +671,9 @@ final public class PackageHandler {
             + "      where\n"
             + "        pd.accounting=?\n"
             + "        and pd.monthly_rate=?\n"
-            + "        and pd.pkey=user_pdl.package_definition\n"
+            + "        and pd.id=user_pdl.package_definition\n"
             + "        and user_pdl.resource=?\n"
-            + "        and pd.pkey=pop_pdl.package_definition\n"
+            + "        and pd.id=pop_pdl.package_definition\n"
             + "        and pop_pdl.resource=?\n"
             + "      limit 1\n"
             + "    ), -1\n"
@@ -686,11 +686,11 @@ final public class PackageHandler {
     }
 
     public static boolean isPackageDefinitionApproved(DatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
-        return conn.executeBooleanQuery("select approved from billing.\"PackageDefinition\" where pkey=?", packageDefinition);
+        return conn.executeBooleanQuery("select approved from billing.\"PackageDefinition\" where id=?", packageDefinition);
     }
 
     public static boolean isPackageDefinitionActive(DatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
-        return conn.executeBooleanQuery("select active from billing.\"PackageDefinition\" where pkey=?", packageDefinition);
+        return conn.executeBooleanQuery("select active from billing.\"PackageDefinition\" where id=?", packageDefinition);
     }
 
     public static void checkPackageAccessServer(DatabaseConnection conn, RequestSource source, String action, AccountingCode packageName, int server) throws IOException, SQLException {
@@ -698,7 +698,7 @@ final public class PackageHandler {
             String message=
                 "package.name="
                 +packageName
-                +" is not allowed to access server.pkey="
+                +" is not allowed to access server.id="
                 +server
                 +": action='"
                 +action
@@ -713,15 +713,15 @@ final public class PackageHandler {
     }
 
     private static final Map<Integer,AccountingCode> packageBusinesses=new HashMap<>();
-    public static AccountingCode getBusinessForPackage(DatabaseAccess database, int pkey) throws IOException, SQLException {
-        Integer I = pkey;
+    public static AccountingCode getBusinessForPackage(DatabaseAccess database, int packageId) throws IOException, SQLException {
+        Integer I = packageId;
         synchronized(packageBusinesses) {
             AccountingCode O=packageBusinesses.get(I);
             if(O!=null) return O;
             AccountingCode business = database.executeObjectQuery(
                 ObjectFactories.accountingCodeFactory,
-                "select accounting from billing.\"Package\" where pkey=?",
-                pkey
+                "select accounting from billing.\"Package\" where id=?",
+                packageId
             );
             packageBusinesses.put(I, business);
             return business;
@@ -729,15 +729,15 @@ final public class PackageHandler {
     }
 
     private static final Map<Integer,AccountingCode> packageNames=new HashMap<>();
-    public static AccountingCode getNameForPackage(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-        Integer I = pkey;
+    public static AccountingCode getNameForPackage(DatabaseConnection conn, int packageId) throws IOException, SQLException {
+        Integer I = packageId;
         synchronized(packageNames) {
             AccountingCode O=packageNames.get(I);
             if(O!=null) return O;
             AccountingCode name = conn.executeObjectQuery(
 				ObjectFactories.accountingCodeFactory,
-				"select name from billing.\"Package\" where pkey=?",
-				pkey
+				"select name from billing.\"Package\" where id=?",
+				packageId
 			);
             packageNames.put(I, name);
             return name;
@@ -749,21 +749,21 @@ final public class PackageHandler {
         synchronized(packagePKeys) {
             Integer O=packagePKeys.get(name);
             if(O!=null) return O;
-            int pkey=database.executeIntQuery("select pkey from billing.\"Package\" where name=?", name);
-            packagePKeys.put(name, pkey);
-            return pkey;
+            int packageId = database.executeIntQuery("select id from billing.\"Package\" where name=?", name);
+            packagePKeys.put(name, packageId);
+            return packageId;
         }
     }
 
-    public static AccountingCode getBusinessForPackageDefinition(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static AccountingCode getBusinessForPackageDefinition(DatabaseConnection conn, int packageId) throws IOException, SQLException {
         return conn.executeObjectQuery(
             ObjectFactories.accountingCodeFactory,
-            "select accounting from billing.\"PackageDefinition\" where pkey=?",
-            pkey
+            "select accounting from billing.\"PackageDefinition\" where id=?",
+            packageId
         );
     }
 
-    public static List<AccountingCode> getBusinessesForPackageDefinition(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static List<AccountingCode> getBusinessesForPackageDefinition(DatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
         return conn.executeObjectCollectionQuery(
             new ArrayList<AccountingCode>(),
             ObjectFactories.accountingCodeFactory,
@@ -775,7 +775,7 @@ final public class PackageHandler {
             + "where\n"
             + "  pk.package_definition=?\n"
             + "  and pk.accounting=bu.accounting",
-            pkey
+            packageDefinition
         );
     }
 
@@ -783,31 +783,31 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int pkey,
+        int packageDefinition,
         boolean isActive
     ) throws IOException, SQLException {
-        checkAccessPackageDefinition(conn, source, "setPackageDefinitionActive", pkey);
+        checkAccessPackageDefinition(conn, source, "setPackageDefinitionActive", packageDefinition);
         // Must be approved to be activated
-        if(isActive && !isPackageDefinitionApproved(conn, pkey)) throw new SQLException("PackageDefinition must be approved before it may be activated: "+pkey);
+        if(isActive && !isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("PackageDefinition must be approved before it may be activated: "+packageDefinition);
 
         // Update the database
         conn.executeUpdate(
-            "update billing.\"PackageDefinition\" set active=? where pkey=?",
+            "update billing.\"PackageDefinition\" set active=? where id=?",
             isActive,
-            pkey
+            packageDefinition
         );
 
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.PACKAGE_DEFINITIONS,
-            getBusinessForPackageDefinition(conn, pkey),
+            getBusinessForPackageDefinition(conn, packageDefinition),
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.PACKAGE_DEFINITIONS,
-            getBusinessesForPackageDefinition(conn, pkey),
+            getBusinessesForPackageDefinition(conn, packageDefinition),
             InvalidateList.allServers,
             false
         );
@@ -817,19 +817,19 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int pkey,
+        int packageDefinition,
         String[] resources,
         int[] soft_limits,
         int[] hard_limits,
         int[] additional_rates,
         String[] additional_transaction_types
     ) throws IOException, SQLException {
-        checkAccessPackageDefinition(conn, source, "setPackageDefinitionLimits", pkey);
+        checkAccessPackageDefinition(conn, source, "setPackageDefinitionLimits", packageDefinition);
         // Must not be approved to be edited
-        if(isPackageDefinitionApproved(conn, pkey)) throw new SQLException("PackageDefinition may not have its limits set after it is approved: "+pkey);
+        if(isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("PackageDefinition may not have its limits set after it is approved: "+packageDefinition);
 
         // Update the database
-        conn.executeUpdate("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", pkey);
+        conn.executeUpdate("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", packageDefinition);
         for(int c=0;c<resources.length;c++) {
             conn.executeUpdate(
                 "insert into\n"
@@ -849,7 +849,7 @@ final public class PackageHandler {
                 + "  ?::decimal(9,2),\n"
                 + "  ?\n"
                 + ")",
-                pkey,
+                packageDefinition,
                 resources[c],
                 soft_limits[c]==-1 ? null : Integer.toString(soft_limits[c]),
                 hard_limits[c]==-1 ? null : Integer.toString(hard_limits[c]),
@@ -861,14 +861,14 @@ final public class PackageHandler {
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
-            getBusinessForPackageDefinition(conn, pkey),
+            getBusinessForPackageDefinition(conn, packageDefinition),
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
-            getBusinessesForPackageDefinition(conn, pkey),
+            getBusinessesForPackageDefinition(conn, packageDefinition),
             InvalidateList.allServers,
             false
         );
@@ -878,23 +878,23 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int pkey
+        int packageDefinition
     ) throws IOException, SQLException {
         // Security checks
-        PackageHandler.checkAccessPackageDefinition(conn, source, "removePackageDefinition", pkey);
+        PackageHandler.checkAccessPackageDefinition(conn, source, "removePackageDefinition", packageDefinition);
 
         // Do the remove
-        removePackageDefinition(conn, invalidateList, pkey);
+        removePackageDefinition(conn, invalidateList, packageDefinition);
     }
 
     public static void removePackageDefinition(
         DatabaseConnection conn,
         InvalidateList invalidateList,
-        int pkey
+        int id
     ) throws IOException, SQLException {
-        AccountingCode accounting = getBusinessForPackageDefinition(conn, pkey);
+        AccountingCode accounting = getBusinessForPackageDefinition(conn, id);
         IntList servers=BusinessHandler.getServersForBusiness(conn, accounting);
-        if(conn.executeUpdate("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", pkey)>0) {
+        if(conn.executeUpdate("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", id)>0) {
             invalidateList.addTable(
                 conn,
                 SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
@@ -904,7 +904,7 @@ final public class PackageHandler {
             );
         }
 
-        conn.executeUpdate("delete from billing.\"PackageDefinition\" where pkey=?", pkey);
+        conn.executeUpdate("delete from billing.\"PackageDefinition\" where id=?", id);
         invalidateList.addTable(
             conn,
             SchemaTable.TableID.PACKAGE_DEFINITIONS,

@@ -21,43 +21,42 @@ final public class SslCertificateHandler {
 	private SslCertificateHandler() {
 	}
 
-	public static void checkAccessSslCertificate(DatabaseConnection conn, RequestSource source, String action, int sslCertificate) throws IOException, SQLException {
+	public static void checkAccessCertificate(DatabaseConnection conn, RequestSource source, String action, int sslCertificate) throws IOException, SQLException {
 		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
 		if(mu != null) {
 			if(MasterServer.getMasterServers(conn, source.getUsername()).length != 0) {
-				int aoServer = getAOServerForSslCertificate(conn, sslCertificate);
+				int aoServer = getLinuxServerForCertificate(conn, sslCertificate);
 				ServerHandler.checkAccessServer(conn, source, action, aoServer);
 			}
 		} else {
-			PackageHandler.checkAccessPackage(conn, source, action, getPackageForSslCertificate(conn, sslCertificate));
+			PackageHandler.checkAccessPackage(conn, source, action, getPackageForCertificate(conn, sslCertificate));
 		}
 	}
 
-	public static AccountingCode getPackageForSslCertificate(DatabaseConnection conn, int sslCertificate) throws IOException, SQLException {
+	public static AccountingCode getPackageForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select package from pki.\"Certificate\" where pkey=?",
-			sslCertificate
+			"select package from pki.\"Certificate\" where id=?",
+			certificate
 		);
 	}
 
-	public static int getAOServerForSslCertificate(DatabaseConnection conn, int sslCertificate) throws IOException, SQLException {
+	public static int getLinuxServerForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
 		return conn.executeIntQuery(
-			"select ao_server from pki.\"Certificate\" where pkey=?",
-			sslCertificate
+			"select ao_server from pki.\"Certificate\" where id=?",
+			certificate
 		);
 	}
 
 	public static List<SslCertificate.Check> check(
 		DatabaseConnection conn,
 		RequestSource source,
-		int sslCertificate
+		int certificate
 	) throws IOException, SQLException {
 		// Check access
-		checkAccessSslCertificate(conn, source, "check", sslCertificate);
-		return DaemonHandler.getDaemonConnector(
-			conn,
-			getAOServerForSslCertificate(conn, sslCertificate)
-		).checkSslCertificate(sslCertificate);
+		checkAccessCertificate(conn, source, "check", certificate);
+		return DaemonHandler.getDaemonConnector(conn,
+			getLinuxServerForCertificate(conn, certificate)
+		).checkSslCertificate(certificate);
 	}
 }

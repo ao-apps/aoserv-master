@@ -50,8 +50,8 @@ final public class PostgresHandler {
 		}
 	}
 
-	public static void checkAccessPostgresServer(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
-		ServerHandler.checkAccessServer(conn, source, action, getAOServerForPostgresServer(conn, pkey));
+	public static void checkAccessPostgresServer(DatabaseConnection conn, RequestSource source, String action, int id) throws IOException, SQLException {
+		ServerHandler.checkAccessServer(conn, source, action, getAOServerForPostgresServer(conn, id));
 	}
 
 	public static void checkAccessPostgresServerUser(DatabaseConnection conn, RequestSource source, String action, int postgres_server_user) throws IOException, SQLException {
@@ -110,7 +110,7 @@ final public class PostgresHandler {
 		// If requesting PostGIS, make sure the version of PostgreSQL supports it.
 		if(
 			enable_postgis
-			&& conn.executeBooleanQuery("select pv.postgis_version is null from postgresql.\"Server\" ps inner join postgresql.\"Version\" pv on ps.version=pv.version where ps.pkey=?", postgresServer)
+			&& conn.executeBooleanQuery("select pv.postgis_version is null from postgresql.\"Server\" ps inner join postgresql.\"Version\" pv on ps.version=pv.version where ps.id=?", postgresServer)
 		) throw new SQLException("This version of PostgreSQL doesn't support PostGIS");
 
 		// datdba must be on the same server and not be 'mail'
@@ -127,14 +127,14 @@ final public class PostgresHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      pe.pkey\n"
+				+ "      pe.id\n"
 				+ "    from\n"
 				+ "      postgresql.\"Server\" ps,\n"
 				+ "      postgresql.\"Encoding\" pe\n"
 				+ "    where\n"
-				+ "      ps.pkey=?\n"
+				+ "      ps.id=?\n"
 				+ "      and ps.version=pe.postgres_version\n"
-				+ "      and pe.pkey=?\n"
+				+ "      and pe.id=?\n"
 				+ "    limit 1\n"
 				+ "  ) is not null",
 				postgresServer,
@@ -150,7 +150,7 @@ final public class PostgresHandler {
 		BusinessHandler.checkBusinessAccessServer(conn, source, "addPostgresDatabase", accounting, aoServer);
 
 		// Add the entry to the database
-		int pkey = conn.executeIntUpdate(
+		int id = conn.executeIntUpdate(
 			"INSERT INTO\n"
 			+ "  postgresql.\"Database\"\n"
 			+ "VALUES (\n"
@@ -162,7 +162,7 @@ final public class PostgresHandler {
 			+ "  false,\n"
 			+ "  true,\n"
 			+ "  ?\n"
-			+ ") RETURNING pkey",
+			+ ") RETURNING id",
 			name,
 			postgresServer,
 			datdba,
@@ -178,7 +178,7 @@ final public class PostgresHandler {
 			aoServer,
 			false
 		);
-		return pkey;
+		return id;
 	}
 
 	/**
@@ -200,8 +200,8 @@ final public class PostgresHandler {
 		// This sub-account must have access to the server
 		UsernameHandler.checkUsernameAccessServer(conn, source, "addPostgresServerUser", username, aoServer);
 
-		int pkey = conn.executeIntUpdate(
-			"INSERT INTO postgresql.\"UserServer\" VALUES (default,?,?,null,null) RETURNING pkey",
+		int id = conn.executeIntUpdate(
+			"INSERT INTO postgresql.\"UserServer\" VALUES (default,?,?,null,null) RETURNING id",
 			username,
 			postgresServer
 		);
@@ -214,7 +214,7 @@ final public class PostgresHandler {
 			aoServer,
 			true
 		);
-		return pkey;
+		return id;
 	}
 
 	/**
@@ -250,24 +250,24 @@ final public class PostgresHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int disableLog,
-		int pkey
+		int id
 	) throws IOException, SQLException {
-		if(isPostgresServerUserDisabled(conn, pkey)) throw new SQLException("PostgresServerUser is already disabled: "+pkey);
+		if(isPostgresServerUserDisabled(conn, id)) throw new SQLException("PostgresServerUser is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disablePostgresServerUser", disableLog, false);
-		checkAccessPostgresServerUser(conn, source, "disablePostgresServerUser", pkey);
+		checkAccessPostgresServerUser(conn, source, "disablePostgresServerUser", id);
 
 		conn.executeUpdate(
-			"update postgresql.\"UserServer\" set disable_log=? where pkey=?",
+			"update postgresql.\"UserServer\" set disable_log=? where id=?",
 			disableLog,
-			pkey
+			id
 		);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.POSTGRES_SERVER_USERS,
-			getBusinessForPostgresServerUser(conn, pkey),
-			getAOServerForPostgresServerUser(conn, pkey),
+			getBusinessForPostgresServerUser(conn, id),
+			getAOServerForPostgresServerUser(conn, id),
 			false
 		);
 	}
@@ -335,18 +335,18 @@ final public class PostgresHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
-		int disableLog=getDisableLogForPostgresServerUser(conn, pkey);
-		if(disableLog==-1) throw new SQLException("PostgresServerUser is already enabled: "+pkey);
+		int disableLog=getDisableLogForPostgresServerUser(conn, id);
+		if(disableLog==-1) throw new SQLException("PostgresServerUser is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enablePostgresServerUser", disableLog, true);
-		checkAccessPostgresServerUser(conn, source, "enablePostgresServerUser", pkey);
-		PostgresUserId pu=getUsernameForPostgresServerUser(conn, pkey);
-		if(isPostgresUserDisabled(conn, pu)) throw new SQLException("Unable to enable PostgresServerUser #"+pkey+", PostgresUser not enabled: "+pu);
+		checkAccessPostgresServerUser(conn, source, "enablePostgresServerUser", id);
+		PostgresUserId pu=getUsernameForPostgresServerUser(conn, id);
+		if(isPostgresUserDisabled(conn, pu)) throw new SQLException("Unable to enable PostgresServerUser #"+id+", PostgresUser not enabled: "+pu);
 
 		conn.executeUpdate(
-			"update postgresql.\"UserServer\" set disable_log=null where pkey=?",
-			pkey
+			"update postgresql.\"UserServer\" set disable_log=null where id=?",
+			id
 		);
 
 		// Notify all clients of the update
@@ -354,7 +354,7 @@ final public class PostgresHandler {
 			conn,
 			SchemaTable.TableID.POSTGRES_SERVER_USERS,
 			UsernameHandler.getBusinessForUsername(conn, pu),
-			getAOServerForPostgresServerUser(conn, pkey),
+			getAOServerForPostgresServerUser(conn, id),
 			false
 		);
 	}
@@ -414,8 +414,8 @@ final public class PostgresHandler {
 		throw new SQLException("Unable to find available PostgreSQL database name for template_base="+template_base+" and template_added="+template_added);
 	}
 
-	public static int getDisableLogForPostgresServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from postgresql.\"UserServer\" where pkey=?", pkey);
+	public static int getDisableLogForPostgresServerUser(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from postgresql.\"UserServer\" where id=?", id);
 	}
 
 	public static int getDisableLogForPostgresUser(DatabaseConnection conn, PostgresUserId username) throws IOException, SQLException {
@@ -423,13 +423,13 @@ final public class PostgresHandler {
 	}
 
 	public static IntList getPostgresServerUsersForPostgresUser(DatabaseConnection conn, PostgresUserId username) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from postgresql.\"UserServer\" where username=?", username);
+		return conn.executeIntListQuery("select id from postgresql.\"UserServer\" where username=?", username);
 	}
 
 	public static PostgresUserId getUsernameForPostgresServerUser(DatabaseConnection conn, int psu) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.postgresUserIdFactory,
-			"select username from postgresql.\"UserServer\" where pkey=?",
+			"select username from postgresql.\"UserServer\" where id=?",
 			psu
 		);
 	}
@@ -449,12 +449,12 @@ final public class PostgresHandler {
 		}
 	}
 
-	public static boolean isPostgresServerUserDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+	public static boolean isPostgresServerUserDisabled(DatabaseConnection conn, int id) throws IOException, SQLException {
 		synchronized(PostgresHandler.class) {
-			Integer I = pkey;
+			Integer I = id;
 			Boolean O=disabledPostgresServerUsers.get(I);
 			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForPostgresServerUser(conn, pkey)!=-1;
+			boolean isDisabled=getDisableLogForPostgresServerUser(conn, id)!=-1;
 			disabledPostgresServerUsers.put(I, isDisabled);
 			return isDisabled;
 		}
@@ -506,7 +506,7 @@ final public class PostgresHandler {
 			"select\n"
 			+ "  (\n"
 			+ "    select\n"
-			+ "      pkey\n"
+			+ "      id\n"
 			+ "    from\n"
 			+ "      postgresql.\"Database\"\n"
 			+ "    where\n"
@@ -529,7 +529,7 @@ final public class PostgresHandler {
 		int aoServer
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "isPostgresServerNameAvailable", aoServer);
-		return conn.executeBooleanQuery("select (select pkey from postgresql.\"Server\" where name=? and ao_server=? limit 1) is null", name, aoServer);
+		return conn.executeBooleanQuery("select (select id from postgresql.\"Server\" where name=? and ao_server=? limit 1) is null", name, aoServer);
 	}
 
 	public static boolean isPostgresServerUserPasswordSet(
@@ -553,11 +553,11 @@ final public class PostgresHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
-		checkAccessPostgresDatabase(conn, source, "removePostgresDatabase", pkey);
+		checkAccessPostgresDatabase(conn, source, "removePostgresDatabase", id);
 
-		removePostgresDatabase(conn, invalidateList, pkey);
+		removePostgresDatabase(conn, invalidateList, id);
 	}
 
 	/**
@@ -566,12 +566,12 @@ final public class PostgresHandler {
 	public static void removePostgresDatabase(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
 		// Remove the database entry
-		AccountingCode accounting = getBusinessForPostgresDatabase(conn, pkey);
-		int aoServer=getAOServerForPostgresDatabase(conn, pkey);
-		conn.executeUpdate("delete from postgresql.\"Database\" where pkey=?", pkey);
+		AccountingCode accounting = getBusinessForPostgresDatabase(conn, id);
+		int aoServer=getAOServerForPostgresDatabase(conn, id);
+		conn.executeUpdate("delete from postgresql.\"Database\" where id=?", id);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -590,23 +590,23 @@ final public class PostgresHandler {
 		DatabaseConnection conn,
 		RequestSource source, 
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
-		checkAccessPostgresServerUser(conn, source, "removePostgresServerUser", pkey);
+		checkAccessPostgresServerUser(conn, source, "removePostgresServerUser", id);
 
-		PostgresUserId username=getUsernameForPostgresServerUser(conn, pkey);
+		PostgresUserId username=getUsernameForPostgresServerUser(conn, id);
 		if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("Not allowed to remove PostgresUser for user '"+PostgresUser.POSTGRES+'\'');
 
 		// Get the details for later use
-		int aoServer=getAOServerForPostgresServerUser(conn, pkey);
-		AccountingCode accounting = getBusinessForPostgresServerUser(conn, pkey);
+		int aoServer=getAOServerForPostgresServerUser(conn, id);
+		AccountingCode accounting = getBusinessForPostgresServerUser(conn, id);
 
 		// Make sure that this is not the DBA for any databases
-		int count=conn.executeIntQuery("select count(*) from postgresql.\"Database\" where datdba=?", pkey);
-		if(count>0) throw new SQLException("PostgresServerUser #"+pkey+" cannot be removed because it is the datdba for "+count+(count==1?" database":" databases"));
+		int count=conn.executeIntQuery("select count(*) from postgresql.\"Database\" where datdba=?", id);
+		if(count>0) throw new SQLException("PostgresServerUser #"+id+" cannot be removed because it is the datdba for "+count+(count==1?" database":" databases"));
 
 		// Remove the postgres_server_user
-		conn.executeUpdate("delete from postgresql.\"UserServer\" where pkey=?", pkey);
+		conn.executeUpdate("delete from postgresql.\"UserServer\" where id=?", id);
 
 		// Notify all clients of the updates
 		invalidateList.addTable(
@@ -644,7 +644,7 @@ final public class PostgresHandler {
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
 		// Remove the postgres_server_user
-		IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgresql.\"UserServer\" psu, postgresql.\"Server\" ps where psu.username=? and psu.postgres_server=ps.pkey", username);
+		IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgresql.\"UserServer\" psu, postgresql.\"Server\" ps where psu.username=? and psu.postgres_server=ps.id", username);
 		if(aoServers.size()>0) {
 			conn.executeUpdate("delete from postgresql.\"UserServer\" where username=?", username);
 			invalidateList.addTable(
@@ -713,7 +713,7 @@ final public class PostgresHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update postgresql.\"UserServer\" set predisable_password=? where pkey=?",
+			"update postgresql.\"UserServer\" set predisable_password=? where id=?",
 			password,
 			psu
 		);
@@ -757,7 +757,7 @@ final public class PostgresHandler {
 		DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresUserRebuild();
 	}
 
-	public static AccountingCode getBusinessForPostgresDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+	public static AccountingCode getBusinessForPostgresDatabase(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
 			"select\n"
@@ -768,46 +768,46 @@ final public class PostgresHandler {
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
-			+ "  pd.pkey=?\n"
-			+ "  and pd.datdba=psu.pkey\n"
+			+ "  pd.id=?\n"
+			+ "  and pd.datdba=psu.id\n"
 			+ "  and psu.username=un.username\n"
 			+ "  and un.package=pk.name",
-			pkey
+			id
 		);
 	}
 
-	public static int getPackageForPostgresDatabase(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+	public static int getPackageForPostgresDatabase(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select\n"
-			+ "  pk.pkey\n"
+			+ "  pk.id\n"
 			+ "from\n"
 			+ "  postgresql.\"Database\" pd,\n"
 			+ "  postgresql.\"UserServer\" psu,\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
-			+ "  pd.pkey=?\n"
-			+ "  and pd.datdba=psu.pkey\n"
+			+ "  pd.id=?\n"
+			+ "  and pd.datdba=psu.id\n"
 			+ "  and psu.username=un.username\n"
 			+ "  and un.package=pk.name",
-			pkey
+			id
 		);
 	}
 
-	public static AccountingCode getBusinessForPostgresServerUser(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+	public static AccountingCode getBusinessForPostgresServerUser(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from postgresql.\"UserServer\" psu, account.\"Username\" un, billing.\"Package\" pk where psu.username=un.username and un.package=pk.name and psu.pkey=?",
-			pkey
+			"select pk.accounting from postgresql.\"UserServer\" psu, account.\"Username\" un, billing.\"Package\" pk where psu.username=un.username and un.package=pk.name and psu.id=?",
+			id
 		);
 	}
 
 	public static int getAOServerForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from postgresql.\"Server\" where pkey=?", postgresServer);
+		return conn.executeIntQuery("select ao_server from postgresql.\"Server\" where id=?", postgresServer);
 	}
 
 	public static int getPortForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select nb.port from postgresql.\"Server\" ps, net.\"Bind\" nb where ps.pkey=? and ps.net_bind=nb.pkey", postgresServer);
+		return conn.executeIntQuery("select nb.port from postgresql.\"Server\" ps, net.\"Bind\" nb where ps.id=? and ps.net_bind=nb.id", postgresServer);
 	}
 
 	public static String getMinorVersionForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
@@ -818,7 +818,7 @@ final public class PostgresHandler {
 			+ "  postgresql.\"Server\" ps,\n"
 			+ "  postgresql.\"Version\" pv\n"
 			+ "where\n"
-			+ "  ps.pkey=?\n"
+			+ "  ps.id=?\n"
 			+ "  and ps.version=pv.version",
 			postgresServer
 		);
@@ -826,13 +826,13 @@ final public class PostgresHandler {
 
 	public static int getPostgresServerForPostgresDatabase(DatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
 		return conn.executeIntQuery(
-			"select postgres_server from postgresql.\"Database\" where pkey=?",
+			"select postgres_server from postgresql.\"Database\" where id=?",
 			postgresDatabase
 		);
 	}
 
 	public static int getPostgresServerForPostgresServerUser(DatabaseConnection conn, int postgres_server_user) throws IOException, SQLException {
-		return conn.executeIntQuery("select postgres_server from postgresql.\"UserServer\" where pkey=?", postgres_server_user);
+		return conn.executeIntQuery("select postgres_server from postgresql.\"UserServer\" where id=?", postgres_server_user);
 	}
 
 	public static int getAOServerForPostgresDatabase(DatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
@@ -843,8 +843,8 @@ final public class PostgresHandler {
 			+ "  postgresql.\"Database\" pd,\n"
 			+ "  postgresql.\"Server\" ps\n"
 			+ "where\n"
-			+ "  pd.pkey=?\n"
-			+ "  and pd.postgres_server=ps.pkey",
+			+ "  pd.id=?\n"
+			+ "  and pd.postgres_server=ps.id",
 			postgresDatabase
 		);
 	}
@@ -856,7 +856,7 @@ final public class PostgresHandler {
 			+ "from\n"
 			+ "  postgresql.\"Database\"\n"
 			+ "where\n"
-			+ "  pkey=?",
+			+ "  id=?",
 			postgresDatabase
 		);
 	}
@@ -869,8 +869,8 @@ final public class PostgresHandler {
 			+ "  postgresql.\"UserServer\" psu,\n"
 			+ "  postgresql.\"Server\" ps\n"
 			+ "where\n"
-			+ "  psu.pkey=?\n"
-			+ "  and psu.postgres_server=ps.pkey",
+			+ "  psu.id=?\n"
+			+ "  and psu.postgres_server=ps.id",
 			postgres_server_user
 		);
 	}

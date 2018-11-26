@@ -82,8 +82,8 @@ final public class SignupHandler {
         CreditCardHandler.checkAccessEncryptionKey(conn, source, "addSignupRequest", recipient);
 
         // Add the entry
-        int pkey = conn.executeIntUpdate(
-			"INSERT INTO signup.\"Request\" VALUES (default,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null) RETURNING pkey",
+        int requestId = conn.executeIntUpdate(
+			"INSERT INTO signup.\"Request\" VALUES (default,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null) RETURNING id",
             accounting.toString(),
             ip_address.toString(),
             package_definition,
@@ -124,7 +124,7 @@ final public class SignupHandler {
         try {
             for(String name : options.keySet()) {
                 String value = options.get(name);
-                pstmt.setInt(1, pkey);
+                pstmt.setInt(1, requestId);
                 pstmt.setString(2, name);
                 pstmt.setString(3, value);
 
@@ -141,7 +141,7 @@ final public class SignupHandler {
         invalidateList.addTable(conn, SchemaTable.TableID.SIGNUP_REQUESTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
         invalidateList.addTable(conn, SchemaTable.TableID.SIGNUP_REQUEST_OPTIONS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
-        return pkey;
+        return requestId;
     }
 
     private static boolean cronDaemonAdded = false;

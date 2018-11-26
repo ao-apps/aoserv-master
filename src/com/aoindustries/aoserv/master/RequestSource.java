@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -33,10 +33,10 @@ public interface RequestSource {
 	boolean isClosed();
 
 	/**
-	 * Gets the pkey of the server that this connection is created from.  This
+	 * Gets the id of the server that this connection is created from.  This
 	 * is only used by connections initiated by daemons.
 	 *
-	 * @return  the pkey of the server or <code>-1</code> for none
+	 * @return  the id of the server or <code>-1</code> for none
 	 */
 	int getDaemonServer();
 

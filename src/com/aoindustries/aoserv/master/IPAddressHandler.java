@@ -82,26 +82,26 @@ final public class IPAddressHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ipAddress,
+		int ipAddressId,
 		int toServer
 	) throws IOException, SQLException {
-		checkAccessIPAddress(conn, source, "moveIPAddress", ipAddress);
+		checkAccessIPAddress(conn, source, "moveIPAddress", ipAddressId);
 		ServerHandler.checkAccessServer(conn, source, "moveIPAddress", toServer);
-		int fromServer=getServerForIPAddress(conn, ipAddress);
+		int fromServer=getServerForIPAddress(conn, ipAddressId);
 		ServerHandler.checkAccessServer(conn, source, "moveIPAddress", fromServer);
 
-		AccountingCode accounting=getBusinessForIPAddress(conn, ipAddress);
+		AccountingCode accounting=getBusinessForIPAddress(conn, ipAddressId);
 
 		// Update net.IpAddress
-		int netDevice=conn.executeIntQuery(
-			"select pkey from net.\"Device\" where server=? and \"deviceID\"=?",
+		int netDeviceId = conn.executeIntQuery(
+			"select id from net.\"Device\" where server=? and \"deviceID\"=?",
 			toServer,
 			NetDeviceID.ETH0
 		);
 		conn.executeUpdate(
 			"update net.\"IpAddress\" set \"netDevice\"=? where id=?",
-			netDevice,
-			ipAddress
+			netDeviceId,
+			ipAddressId
 		);
 
 		// Notify all clients of the update
@@ -259,12 +259,12 @@ final public class IPAddressHandler {
 	public static void setIPAddressPackage(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int ipAddress,
+		int ipAddressId,
 		AccountingCode newPackage
 	) throws IOException, SQLException {
-		AccountingCode oldAccounting = getBusinessForIPAddress(conn, ipAddress);
+		AccountingCode oldAccounting = getBusinessForIPAddress(conn, ipAddressId);
 		AccountingCode newAccounting = PackageHandler.getBusinessForPackage(conn, newPackage);
-		int server=getServerForIPAddress(conn, ipAddress);
+		int server=getServerForIPAddress(conn, ipAddressId);
 
 		// Make sure that the IP Address is not in use
 		int count=conn.executeIntQuery(
@@ -274,12 +274,12 @@ final public class IPAddressHandler {
 			+ "  net.\"Bind\"\n"
 			+ "where\n"
 			+ "  \"ipAddress\"=?",
-			ipAddress
+			ipAddressId
 		);
-		if(count!=0) throw new SQLException("Unable to set Package, net.IpAddress in use by "+count+(count==1?" row":" rows")+" in net.Bind: "+ipAddress);
+		if(count!=0) throw new SQLException("Unable to set Package, net.IpAddress in use by "+count+(count==1?" row":" rows")+" in net.Bind: "+ipAddressId);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set package=(select pkey from billing.\"Package\" where name=?), available=false where id=?", newPackage, ipAddress);
+		conn.executeUpdate("update net.\"IpAddress\" set package=(select id from billing.\"Package\" where name=?), available=false where id=?", newPackage, ipAddressId);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -291,7 +291,7 @@ final public class IPAddressHandler {
 		);
 	}
 
-	public static int getSharedHttpdIP(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
+	public static int getSharedHttpdIP(DatabaseConnection conn, int serverId) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select\n"
 			+ "  coalesce(\n"
@@ -302,11 +302,11 @@ final public class IPAddressHandler {
 			+ "        net.\"IpAddress\" ia,\n"
 			+ "        net.\"Device\" nd\n"
 			+ "        left join net.\"Bind\" nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?\n"
-			+ "        left join web.\"HttpdBind\" hb on nb.pkey=hb.net_bind\n"
-			+ "        left join web.\"HttpdServer\" hs on hb.httpd_server=hs.pkey\n"
+			+ "        left join web.\"HttpdBind\" hb on nb.id=hb.net_bind\n"
+			+ "        left join web.\"HttpdServer\" hs on hb.httpd_server=hs.id\n"
 			+ "      where\n"
 			+ "        ia.\"isOverflow\"\n"
-			+ "        and ia.\"netDevice\"=nd.pkey\n"
+			+ "        and ia.\"netDevice\"=nd.id\n"
 			+ "        and nd.server=?\n"
 			+ "        and (\n"
 			+ "          nb.\"ipAddress\" is null\n"
@@ -325,53 +325,53 @@ final public class IPAddressHandler {
 			+ "            and (\n"
 			+ "              nb2.port=80\n"
 			+ "              or nb2.port=443\n"
-			+ "            ) and nb2.pkey=hsb2.httpd_bind\n"
+			+ "            ) and nb2.id=hsb2.httpd_bind\n"
 			+ "        )\n"
 			+ "      limit 1\n"
 			+ "    ), -1\n"
 			+ "  )",
 			com.aoindustries.net.Protocol.TCP.name().toLowerCase(Locale.ROOT),
-			aoServer,
-			aoServer
+			serverId,
+			serverId
 		);
 	}
 
-	public static AccountingCode getPackageForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
+	public static AccountingCode getPackageForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
 			"select\n"
 			+ "  pk.name\n"
 			+ "from\n"
 			+ "  net.\"IpAddress\" ia\n"
-			+ "  inner join billing.\"Package\" pk on ia.package=pk.pkey\n"
+			+ "  inner join billing.\"Package\" pk on ia.package=pk.id\n"
 			+ "where\n"
 			+ "  ia.id=?",
-			ipAddress
+			ipAddressId
 		);
 	}
 
-	public static AccountingCode getBusinessForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
+	public static AccountingCode getBusinessForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  net.\"IpAddress\" ia\n"
-			+ "  inner join billing.\"Package\" pk on ia.package=pk.pkey\n"
+			+ "  inner join billing.\"Package\" pk on ia.package=pk.id\n"
 			+ "where\n"
 			+ "  ia.id=?",
-			ipAddress
+			ipAddressId
 		);
 	}
 
-	public static int getServerForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net.\"Device\" nd where ia.id=? and ia.\"netDevice\"=nd.pkey", ipAddress);
+	public static int getServerForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
+		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net.\"Device\" nd where ia.id=? and ia.\"netDevice\"=nd.id", ipAddressId);
 	}
 
-	public static InetAddress getInetAddressForIPAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
+	public static InetAddress getInetAddressForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.inetAddressFactory,
 			"select host(\"inetAddress\") from net.\"IpAddress\" where id=?",
-			ipAddress
+			ipAddressId
 		);
 	}
 
@@ -379,7 +379,7 @@ final public class IPAddressHandler {
 		return conn.executeIntQuery("select id from net.\"IpAddress\" where \"inetAddress\"=?", IPAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
 	}
 
-	public static int getLoopbackIPAddress(DatabaseConnection conn, int server) throws IOException, SQLException {
+	public static int getLoopbackIPAddress(DatabaseConnection conn, int serverId) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select\n"
 			+ "  ia.id\n"
@@ -388,39 +388,39 @@ final public class IPAddressHandler {
 			+ "  net.\"Device\" nd\n"
 			+ "where\n"
 			+ "  ia.\"inetAddress\"=?\n"
-			+ "  and ia.\"netDevice\"=nd.pkey\n"
+			+ "  and ia.\"netDevice\"=nd.id\n"
 			+ "  and nd.server=?\n"
 			+ "limit 1",
 			IPAddress.LOOPBACK_IP,
-			server
+			serverId
 		);
 	}
 
 	public static void releaseIPAddress(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int ipAddress
+		int ipAddressId
 	) throws IOException, SQLException {
 		setIPAddressHostname(
 			conn,
 			invalidateList,
-			ipAddress,
-			getUnassignedHostname(conn, ipAddress)
+			ipAddressId,
+			getUnassignedHostname(conn, ipAddressId)
 		);
 
 		conn.executeUpdate(
 			"update net.\"IpAddress\" set available=true, \"isOverflow\"=false where id=?",
-			ipAddress
+			ipAddressId
 		);
 		conn.executeUpdate(
 			"update monitoring.\"IpAddressMonitoring\" set enabled=true, \"pingMonitorEnabled\"=false, \"checkBlacklistsOverSmtp\"=false, \"verifyDnsPtr\"=true, \"verifyDnsA\"=false where id=?",
-			ipAddress
+			ipAddressId
 		);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.IP_ADDRESSES,
-			getBusinessForIPAddress(conn, ipAddress),
-			getServerForIPAddress(conn, ipAddress),
+			getBusinessForIPAddress(conn, ipAddressId),
+			getServerForIPAddress(conn, ipAddressId),
 			false
 		);
 	}
