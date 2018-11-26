@@ -68,9 +68,9 @@ final public class BusinessHandler {
 		;
 	}
 
-	public static boolean canAccessDisableLog(DatabaseConnection conn, RequestSource source, int pkey, boolean enabling) throws IOException, SQLException {
+	public static boolean canAccessDisableLog(DatabaseConnection conn, RequestSource source, int id, boolean enabling) throws IOException, SQLException {
 		UserId username=source.getUsername();
-		UserId disabledBy=getDisableLogDisabledBy(conn, pkey);
+		UserId disabledBy=getDisableLogDisabledBy(conn, id);
 		if(enabling) {
 			AccountingCode baAccounting = UsernameHandler.getBusinessForUsername(conn, username);
 			AccountingCode dlAccounting = UsernameHandler.getBusinessForUsername(conn, disabledBy);
@@ -149,15 +149,15 @@ final public class BusinessHandler {
 		}
 	}
 
-	public static void checkAccessDisableLog(DatabaseConnection conn, RequestSource source, String action, int pkey, boolean enabling) throws IOException, SQLException {
-		if(!canAccessDisableLog(conn, source, pkey, enabling)) {
+	public static void checkAccessDisableLog(DatabaseConnection conn, RequestSource source, String action, int id, boolean enabling) throws IOException, SQLException {
+		if(!canAccessDisableLog(conn, source, id, enabling)) {
 			String message=
 				"business_administrator.username="
 				+source.getUsername()
 				+" is not allowed to access account.DisableLog: action='"
 				+action
-				+"', pkey="
-				+pkey
+				+"', id="
+				+id
 			;
 			throw new SQLException(message);
 		}
@@ -294,8 +294,8 @@ final public class BusinessHandler {
 		}
 	}
 
-	public static AccountingCode getBusinessForDisableLog(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountingCodeFactory, "select accounting from account.\"DisableLog\" where pkey=?", pkey);
+	public static AccountingCode getBusinessForDisableLog(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountingCodeFactory, "select accounting from account.\"DisableLog\" where id=?", id);
 	}
 
 	/**
@@ -501,8 +501,8 @@ final public class BusinessHandler {
 
 		int priority=conn.executeIntQuery("select coalesce(max(priority)+1, 1) from account.\"Profile\" where accounting=?", accounting);
 
-		int pkey = conn.executeIntUpdate(
-			"INSERT INTO account.\"Profile\" VALUES (default,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?) RETURNING pkey",
+		int id = conn.executeIntUpdate(
+			"INSERT INTO account.\"Profile\" VALUES (default,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?) RETURNING id",
 			accounting.toString(),
 			priority,
 			name,
@@ -523,7 +523,7 @@ final public class BusinessHandler {
 		);
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_PROFILES, accounting, InvalidateList.allServers, false);
-		return pkey;
+		return id;
 	}
 
 	/**
@@ -561,7 +561,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      bs.pkey\n"
+				+ "      bs.id\n"
 				+ "    from\n"
 				+ "      account.\"Account\" bu,\n"
 				+ "      server.\"AccountServer\" bs\n"
@@ -575,10 +575,10 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Unable to add business_server, parent does not have access to server.  accounting="+accounting+", server="+server);
 
-		boolean hasDefault=conn.executeBooleanQuery("select (select pkey from server.\"AccountServer\" where accounting=? and is_default limit 1) is not null", accounting);
+		boolean hasDefault=conn.executeBooleanQuery("select (select id from server.\"AccountServer\" where accounting=? and is_default limit 1) is not null", accounting);
 
-		int pkey = conn.executeIntUpdate(
-			"INSERT INTO server.\"AccountServer\" (accounting, server, is_default) VALUES (?,?,?) RETURNING pkey",
+		int id = conn.executeIntUpdate(
+			"INSERT INTO server.\"AccountServer\" (accounting, server, is_default) VALUES (?,?,?) RETURNING id",
 			accounting,
 			server,
 			!hasDefault
@@ -591,7 +591,7 @@ final public class BusinessHandler {
 		invalidateList.addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
 		invalidateList.addTable(conn, SchemaTable.TableID.NET_DEVICES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
 		invalidateList.addTable(conn, SchemaTable.TableID.IP_ADDRESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		return pkey;
+		return id;
 	}
 
 	/**
@@ -607,8 +607,8 @@ final public class BusinessHandler {
 		checkAccessBusiness(conn, source, "addDisableLog", accounting);
 
 		UserId username=source.getUsername();
-		int pkey = conn.executeIntUpdate(
-			"INSERT INTO account.\"DisableLog\" (accounting, disabled_by, disable_reason) VALUES (?,?,?) RETURNING pkey",
+		int id = conn.executeIntUpdate(
+			"INSERT INTO account.\"DisableLog\" (accounting, disabled_by, disable_reason) VALUES (?,?,?) RETURNING id",
 			accounting,
 			username,
 			disableReason
@@ -622,7 +622,7 @@ final public class BusinessHandler {
 			InvalidateList.allServers,
 			false
 		);
-		return pkey;
+		return id;
 	}
 
 	/**
@@ -836,11 +836,11 @@ final public class BusinessHandler {
 		return depth;
 	}
 
-	public static UserId getDisableLogDisabledBy(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+	public static UserId getDisableLogDisabledBy(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.userIdFactory,
-			"select disabled_by from account.\"DisableLog\" where pkey=?",
-			pkey
+			"select disabled_by from account.\"DisableLog\" where id=?",
+			id
 		);
 	}
 
@@ -926,30 +926,30 @@ final public class BusinessHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
 		AccountingCode accounting = conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from server.\"AccountServer\" where pkey=?",
-			pkey
+			"select accounting from server.\"AccountServer\" where id=?",
+			id
 		);
-		int server=conn.executeIntQuery("select server from server.\"AccountServer\" where pkey=?", pkey);
+		int server=conn.executeIntQuery("select server from server.\"AccountServer\" where id=?", id);
 
 		// Must be allowed to access this Business
 		checkAccessBusiness(conn, source, "removeBusinessServer", accounting);
 
 		// Do not remove the default unless it is the only one left
 		if(
-			conn.executeBooleanQuery("select is_default from server.\"AccountServer\" where pkey=?", pkey)
+			conn.executeBooleanQuery("select is_default from server.\"AccountServer\" where id=?", id)
 			&& conn.executeIntQuery("select count(*) from server.\"AccountServer\" where accounting=?", accounting)>1
 		) {
-			throw new SQLException("Cannot remove the default business_server unless it is the last business_server for a business: "+pkey);
+			throw new SQLException("Cannot remove the default business_server unless it is the last business_server for a business: "+id);
 		}
 
 		removeBusinessServer(
 			conn,
 			invalidateList,
-			pkey
+			id
 		);
 	}
 
@@ -959,14 +959,14 @@ final public class BusinessHandler {
 	public static void removeBusinessServer(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
 		AccountingCode accounting = conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from server.\"AccountServer\" where pkey=?",
-			pkey
+			"select accounting from server.\"AccountServer\" where id=?",
+			id
 		);
-		int server=conn.executeIntQuery("select server from server.\"AccountServer\" where pkey=?", pkey);
+		int server=conn.executeIntQuery("select server from server.\"AccountServer\" where id=?", id);
 
 		// No children should be able to access the server
 		if(
@@ -974,7 +974,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      bs.pkey\n"
+				+ "      bs.id\n"
 				+ "    from\n"
 				+ "      account.\"Account\" bu,\n"
 				+ "      server.\"AccountServer\" bs\n"
@@ -998,7 +998,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      ep.pkey\n"
+				+ "      ep.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      email.\"Pipe\" ep\n"
@@ -1020,7 +1020,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      hs.pkey\n"
+				+ "      hs.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      web.\"Site\" hs\n"
@@ -1049,8 +1049,8 @@ final public class BusinessHandler {
 				+ "      net.\"Device\" nd\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
-				+ "      and pk.pkey=ia.package\n"
-				+ "      and ia.\"netDevice\"=nd.pkey\n"
+				+ "      and pk.id=ia.package\n"
+				+ "      and ia.\"netDevice\"=nd.id\n"
 				+ "      and nd.server=?\n"
 				+ "    limit 1\n"
 				+ "  )\n"
@@ -1066,7 +1066,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      lsa.pkey\n"
+				+ "      lsa.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
@@ -1090,7 +1090,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      lsg.pkey\n"
+				+ "      lsg.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      linux.\"Group\" lg,\n"
@@ -1114,7 +1114,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      md.pkey\n"
+				+ "      md.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      mysql.\"Database\" md,\n"
@@ -1138,7 +1138,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      msu.pkey\n"
+				+ "      msu.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
@@ -1164,7 +1164,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      nb.pkey\n"
+				+ "      nb.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      net.\"Bind\" nb\n"
@@ -1186,7 +1186,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      pd.pkey\n"
+				+ "      pd.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
@@ -1197,8 +1197,8 @@ final public class BusinessHandler {
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=un.package\n"
 				+ "      and ps.ao_server=?\n"
-				+ "      and un.username=psu.username and ps.pkey=psu.postgres_server\n"
-				+ "      and pd.datdba=psu.pkey\n"
+				+ "      and un.username=psu.username and ps.id=psu.postgres_server\n"
+				+ "      and pd.datdba=psu.id\n"
 				+ "    limit 1\n"
 				+ "  )\n"
 				+ "  is not null\n",
@@ -1213,7 +1213,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      psu.pkey\n"
+				+ "      psu.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
@@ -1223,7 +1223,7 @@ final public class BusinessHandler {
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=un.package\n"
 				+ "      and ps.ao_server=?\n"
-				+ "      and un.username=psu.username and ps.pkey=psu.postgres_server\n"
+				+ "      and un.username=psu.username and ps.id=psu.postgres_server\n"
 				+ "    limit 1\n"
 				+ "  )\n"
 				+ "  is not null\n",
@@ -1238,7 +1238,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      ed.pkey\n"
+				+ "      ed.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      email.\"Domain\" ed\n"
@@ -1260,7 +1260,7 @@ final public class BusinessHandler {
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
-				+ "      esr.pkey\n"
+				+ "      esr.id\n"
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      email.\"SmtpRelay\" esr\n"
@@ -1277,7 +1277,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one EmailSmtpRelay on Server="+server);
 
-		conn.executeUpdate("delete from server.\"AccountServer\" where pkey=?", pkey);
+		conn.executeUpdate("delete from server.\"AccountServer\" where id=?", id);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
@@ -1291,11 +1291,11 @@ final public class BusinessHandler {
 	public static void removeDisableLog(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
-		AccountingCode accounting=getBusinessForDisableLog(conn, pkey);
+		AccountingCode accounting=getBusinessForDisableLog(conn, id);
 
-		conn.executeUpdate("delete from account.\"DisableLog\" where pkey=?", pkey);
+		conn.executeUpdate("delete from account.\"DisableLog\" where id=?", id);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.DISABLE_LOG, accounting, InvalidateList.allServers, false);
@@ -1426,12 +1426,12 @@ final public class BusinessHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
 		AccountingCode accounting = conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from server.\"AccountServer\" where pkey=?",
-			pkey
+			"select accounting from server.\"AccountServer\" where id=?",
+			id
 		);
 
 		checkAccessBusiness(conn, source, "setDefaultBusinessServer", accounting);
@@ -1440,13 +1440,13 @@ final public class BusinessHandler {
 
 		// Update the table
 		conn.executeUpdate(
-			"update server.\"AccountServer\" set is_default=true where pkey=?",
-			pkey
+			"update server.\"AccountServer\" set is_default=true where id=?",
+			id
 		);
 		conn.executeUpdate(
-			"update server.\"AccountServer\" set is_default=false where accounting=? and pkey!=?",
+			"update server.\"AccountServer\" set is_default=false where accounting=? and id!=?",
 			accounting,
-			pkey
+			id
 		);
 
 		// Notify all clients of the update
@@ -1696,8 +1696,8 @@ final public class BusinessHandler {
 						+ "  billing.\"Package\" pk\n"
 						+ "where\n"
 						+ "  hsu.hostname=?\n"
-						+ "  and hsu.httpd_site_bind=hsb.pkey\n"
-						+ "  and hsb.httpd_site=hs.pkey\n"
+						+ "  and hsu.httpd_site_bind=hsb.id\n"
+						+ "  and hsb.httpd_site=hs.id\n"
 						+ "  and hs.package=pk.name",
 						domain
 					);
@@ -1767,7 +1767,7 @@ final public class BusinessHandler {
 			"select\n"
 			+ "  (\n"
 			+ "    select\n"
-			+ "      pkey\n"
+			+ "      id\n"
 			+ "    from\n"
 			+ "      server.\"AccountServer\"\n"
 			+ "    where\n"
@@ -1786,7 +1786,7 @@ final public class BusinessHandler {
 			String message=
 			"accounting="
 			+accounting
-			+" is not allowed to access server.pkey="
+			+" is not allowed to access server.id="
 			+server
 			+": action='"
 			+action

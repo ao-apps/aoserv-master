@@ -27,36 +27,36 @@ import java.util.Locale;
  */
 final public class IPAddressHandler {
 
-	public static void checkAccessIPAddress(DatabaseConnection conn, RequestSource source, String action, int ipAddress) throws IOException, SQLException {
+	public static void checkAccessIPAddress(DatabaseConnection conn, RequestSource source, String action, int ipAddressId) throws IOException, SQLException {
 		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
 		if(mu!=null) {
 			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
-				ServerHandler.checkAccessServer(conn, source, action, getServerForIPAddress(conn, ipAddress));
+				ServerHandler.checkAccessServer(conn, source, action, getServerForIPAddress(conn, ipAddressId));
 			}
 		} else {
-			PackageHandler.checkAccessPackage(conn, source, action, getPackageForIPAddress(conn, ipAddress));
+			PackageHandler.checkAccessPackage(conn, source, action, getPackageForIPAddress(conn, ipAddressId));
 		}
 	}
 
-	public static boolean isDHCPAddress(DatabaseConnection conn, int id) throws IOException, SQLException {
+	public static boolean isDHCPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
 			"select \"isDhcp\" from net.\"IpAddress\" where id=?",
-			id
+			ipAddressId
 		);
 	}
 
 	public static DomainName getUnassignedHostname(
 		DatabaseConnection conn,
-		int ipAddress
+		int ipAddressId
 	) throws IOException, SQLException {
 		try {
-			final InetAddress inetAddress = getInetAddressForIPAddress(conn, ipAddress);
+			final InetAddress inetAddress = getInetAddressForIPAddress(conn, ipAddressId);
 			switch(inetAddress.getAddressFamily()) {
 				case INET : {
 					String ip = inetAddress.toString();
 					int pos=ip.lastIndexOf('.');
 					final String octet=ip.substring(pos+1);
-					int server=getServerForIPAddress(conn, ipAddress);
+					int server=getServerForIPAddress(conn, ipAddressId);
 					final String net;
 					if(ip.startsWith("66.160.183.")) net = "net1.";
 					else if(ip.startsWith("64.62.174.")) net = "net2.";
@@ -83,19 +83,19 @@ final public class IPAddressHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int ipAddressId,
-		int toServer
+		int toServerId
 	) throws IOException, SQLException {
 		checkAccessIPAddress(conn, source, "moveIPAddress", ipAddressId);
-		ServerHandler.checkAccessServer(conn, source, "moveIPAddress", toServer);
-		int fromServer=getServerForIPAddress(conn, ipAddressId);
-		ServerHandler.checkAccessServer(conn, source, "moveIPAddress", fromServer);
+		ServerHandler.checkAccessServer(conn, source, "moveIPAddress", toServerId);
+		int fromServerId=getServerForIPAddress(conn, ipAddressId);
+		ServerHandler.checkAccessServer(conn, source, "moveIPAddress", fromServerId);
 
 		AccountingCode accounting=getBusinessForIPAddress(conn, ipAddressId);
 
 		// Update net.IpAddress
 		int netDeviceId = conn.executeIntQuery(
 			"select id from net.\"Device\" where server=? and \"deviceID\"=?",
-			toServer,
+			toServerId,
 			NetDeviceID.ETH0
 		);
 		conn.executeUpdate(
@@ -109,14 +109,14 @@ final public class IPAddressHandler {
 			conn,
 			SchemaTable.TableID.IP_ADDRESSES,
 			accounting,
-			fromServer,
+			fromServerId,
 			false
 		);
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.IP_ADDRESSES,
 			accounting,
-			toServer,
+			toServerId,
 			false
 		);
 	}
@@ -128,17 +128,17 @@ final public class IPAddressHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ipAddress,
+		int ipAddressId,
 		InetAddress dhcpAddress
 	) throws IOException, SQLException {
-		checkAccessIPAddress(conn, source, "setIPAddressDHCPAddress", ipAddress);
-		if(!isDHCPAddress(conn, ipAddress)) throw new SQLException("net.IpAddress is not DHCP-enabled: "+ipAddress);
+		checkAccessIPAddress(conn, source, "setIPAddressDHCPAddress", ipAddressId);
+		if(!isDHCPAddress(conn, ipAddressId)) throw new SQLException("net.IpAddress is not DHCP-enabled: "+ipAddressId);
 
-		AccountingCode accounting=getBusinessForIPAddress(conn, ipAddress);
-		int server=getServerForIPAddress(conn, ipAddress);
+		AccountingCode accounting=getBusinessForIPAddress(conn, ipAddressId);
+		int server=getServerForIPAddress(conn, ipAddressId);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set \"inetAddress\"=? where id=?", dhcpAddress, ipAddress);
+		conn.executeUpdate("update net.\"IpAddress\" set \"inetAddress\"=? where id=?", dhcpAddress, ipAddressId);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -150,7 +150,7 @@ final public class IPAddressHandler {
 		);
 
 		// Update any DNS records that follow this IP address
-		DNSHandler.updateDhcpDnsRecords(conn, invalidateList, ipAddress, dhcpAddress);
+		DNSHandler.updateDhcpDnsRecords(conn, invalidateList, ipAddressId, dhcpAddress);
 	}
 
 	/**
@@ -160,13 +160,13 @@ final public class IPAddressHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ipAddress,
+		int ipAddressId,
 		DomainName hostname
 	) throws IOException, SQLException {
-		checkAccessIPAddress(conn, source, "setIPAddressHostname", ipAddress);
+		checkAccessIPAddress(conn, source, "setIPAddressHostname", ipAddressId);
 		MasterServer.checkAccessHostname(conn, source, "setIPAddressHostname", hostname.toString());
 
-		setIPAddressHostname(conn, invalidateList, ipAddress, hostname);
+		setIPAddressHostname(conn, invalidateList, ipAddressId, hostname);
 	}
 
 	/**
@@ -175,28 +175,28 @@ final public class IPAddressHandler {
 	public static void setIPAddressHostname(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int ipAddress,
+		int ipAddressId,
 		DomainName hostname
 	) throws IOException, SQLException {
 		// Can't set the hostname on a disabled package
 		//String packageName=getPackageForIPAddress(conn, ipAddress);
 		//if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to set hostname for an IP address, package disabled: "+packageName);
 
-		InetAddress ip = getInetAddressForIPAddress(conn, ipAddress);
+		InetAddress ip = getInetAddressForIPAddress(conn, ipAddressId);
 		if(
 			ip.isLoopback()
 			|| ip.isUnspecified()
 		) throw new SQLException("Not allowed to set the hostname for "+ip);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set hostname=? where id=?", hostname.toString(), ipAddress);
+		conn.executeUpdate("update net.\"IpAddress\" set hostname=? where id=?", hostname.toString(), ipAddressId);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.IP_ADDRESSES,
-			getBusinessForIPAddress(conn, ipAddress),
-			getServerForIPAddress(conn, ipAddress),
+			getBusinessForIPAddress(conn, ipAddressId),
+			getServerForIPAddress(conn, ipAddressId),
 			false
 		);
 
@@ -208,31 +208,31 @@ final public class IPAddressHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ipAddress,
+		int ipAddressId,
 		boolean enabled
 	) throws IOException, SQLException {
-		checkAccessIPAddress(conn, source, "setIPAddressMonitoringEnabled", ipAddress);
+		checkAccessIPAddress(conn, source, "setIPAddressMonitoringEnabled", ipAddressId);
 
-		setIPAddressMonitoringEnabled(conn, invalidateList, ipAddress, enabled);
+		setIPAddressMonitoringEnabled(conn, invalidateList, ipAddressId, enabled);
 	}
 
 	public static void setIPAddressMonitoringEnabled(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int ipAddress,
+		int ipAddressId,
 		boolean enabled
 	) throws IOException, SQLException {
 		// Update the table
 		// TODO: Add row when first enabled or column set to non-default
 		// TODO: Remove row when disabled and other columns match defaults
-		conn.executeUpdate("update monitoring.\"IpAddressMonitoring\" set enabled=? where id=?", enabled, ipAddress);
+		conn.executeUpdate("update monitoring.\"IpAddressMonitoring\" set enabled=? where id=?", enabled, ipAddressId);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			SchemaTable.TableID.IP_ADDRESSES,
-			getBusinessForIPAddress(conn, ipAddress),
-			getServerForIPAddress(conn, ipAddress),
+			getBusinessForIPAddress(conn, ipAddressId),
+			getServerForIPAddress(conn, ipAddressId),
 			false
 		);
 	}
@@ -244,13 +244,13 @@ final public class IPAddressHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ipAddress,
+		int ipAddressId,
 		AccountingCode newPackage
 	) throws IOException, SQLException {
-		checkAccessIPAddress(conn, source, "setIPAddressPackage", ipAddress);
+		checkAccessIPAddress(conn, source, "setIPAddressPackage", ipAddressId);
 		PackageHandler.checkAccessPackage(conn, source, "setIPAddressPackage", newPackage);
 
-		setIPAddressPackage(conn, invalidateList, ipAddress, newPackage);
+		setIPAddressPackage(conn, invalidateList, ipAddressId, newPackage);
 	}
 
 	/**

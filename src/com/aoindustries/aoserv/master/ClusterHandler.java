@@ -160,7 +160,7 @@ final public class ClusterHandler implements CronJob {
 	}
 	
 	/**
-     * Gets the pkey of the physical server that is currently the primary for
+     * Gets the id of the physical server that is currently the primary for
 	 * the virtual server.  If there is no primary (Secondary/Secondary role),
 	 * will use the physical server that has Xen auto start configured.
      */
@@ -197,7 +197,7 @@ final public class ClusterHandler implements CronJob {
 	}
 
 	/**
-     * Gets the pkey of the physical server that is currently the secondary for
+     * Gets the id of the physical server that is currently the secondary for
 	 * the virtual server.  If there are two secondaries (Secondary/Secondary role),
 	 * will use the physical server that does not have Xen auto start configured.
      */

@@ -78,7 +78,7 @@ final public class DaemonHandler {
 			+ "  net.\"IpAddress\" ia\n"
 			+ "where\n"
 			+ "  ao.server=?\n"
-			+ "  and ao.daemon_connect_bind=nb.pkey\n"
+			+ "  and ao.daemon_connect_bind=nb.id\n"
 			+ "  and nb.\"ipAddress\"=ia.id",
 			aoServer
 		);
@@ -95,11 +95,11 @@ final public class DaemonHandler {
 				+ "  net.\"IpAddress\" ia\n"
 				+ "where\n"
 				+ "  ao.server=?\n"
-				+ "  and ao.daemon_connect_bind=nb.pkey\n"
+				+ "  and ao.daemon_connect_bind=nb.id\n"
 				+ "  and nb.server=ao2.server\n"
 				+ "  and ao2.server=nd.server\n"
 				+ "  and ao2.\"daemonDeviceID\"=nd.\"deviceID\"\n"
-				+ "  and nd.pkey=ia.\"netDevice\"\n"
+				+ "  and nd.id=ia.\"netDevice\"\n"
 				+ "  and not ia.\"isAlias\"\n"
 				+ "limit 1",
 				aoServer
@@ -120,7 +120,7 @@ final public class DaemonHandler {
 			+ "  net.\"Bind\" nb\n"
 			+ "where\n"
 			+ "  ao.server=?\n"
-			+ "  and ao.daemon_connect_bind=nb.pkey",
+			+ "  and ao.daemon_connect_bind=nb.id",
 			aoServer
 		);
 	}
@@ -134,7 +134,7 @@ final public class DaemonHandler {
 			+ "  net.\"Bind\" nb\n"
 			+ "where\n"
 			+ "  ao.server=?\n"
-			+ "  and ao.daemon_connect_bind=nb.pkey",
+			+ "  and ao.daemon_connect_bind=nb.id",
 			aoServer
 		);
 	}

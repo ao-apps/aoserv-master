@@ -142,13 +142,13 @@ final public class AccountCleaner implements CronJob {
                                 "select\n"
                                 + "  (\n"
                                 + "    select\n"
-                                + "      br.pkey\n"
+                                + "      br.id\n"
                                 + "    from\n"
                                 + "      backup.\"BackupReport\" br,\n"
                                 + "      billing.\"Package\" pk,\n"
                                 + "      account.\"Account\" bu\n"
                                 + "    where\n"
-                                + "      br.package=pk.pkey\n"
+                                + "      br.package=pk.id\n"
                                 + "      and pk.accounting=bu.accounting\n"
                                 + "      and bu.canceled is not null\n"
                                 + "      and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
@@ -161,15 +161,15 @@ final public class AccountCleaner implements CronJob {
                                 "delete from\n"
                                 + "  backup.\"BackupReport\"\n"
                                 + "where\n"
-                                + "  pkey in (\n"
+                                + "  id in (\n"
                                 + "    select\n"
-                                + "      br.pkey\n"
+                                + "      br.id\n"
                                 + "    from\n"
                                 + "      backup.\"BackupReport\" br,\n"
                                 + "      billing.\"Package\" pk,\n"
                                 + "      account.\"Account\" bu\n"
                                 + "    where\n"
-                                + "      br.package=pk.pkey\n"
+                                + "      br.package=pk.id\n"
                                 + "      and pk.accounting=bu.accounting\n"
                                 + "      and bu.canceled is not null\n"
                                 + "      and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
@@ -185,7 +185,7 @@ final public class AccountCleaner implements CronJob {
                                 "select\n"
                                 + "  (\n"
                                 + "    select\n"
-                                + "      pkey\n"
+                                + "      id\n"
                                 + "    from\n"
                                 + "      backup.\"BackupReport\"\n"
                                 + "    where\n"
@@ -238,7 +238,7 @@ final public class AccountCleaner implements CronJob {
                             + "  account.\"DisableLog\" dl\n"
                             + "where\n"
                             + "  bu.canceled is null\n"
-                            + "  and bu.disable_log=dl.pkey\n"
+                            + "  and bu.disable_log=dl.id\n"
                             + "  and (?::date-dl.time::date)>60",
                             now
                         );
@@ -259,7 +259,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList ccs=conn.executeIntListQuery(
                         "select\n"
-                        + "  cc.pkey\n"
+                        + "  cc.id\n"
                         + "from\n"
                         + "  payment.\"CreditCard\" cc,\n"
                         + "  account.\"Account\" bu\n"
@@ -291,31 +291,31 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS + "\n"
 						// payment.Payment
 						// PostgresSQL 8.3 doing sequential scan on "or":
-                        // + "  and (select cct.pkey from payment.\"Payment\" cct where cct.credit_card_created_by=ba.username or cct.authorization_username=ba.username or cct.capture_username=ba.username or cct.void_username=ba.username limit 1) is null\n"
-						+ "  and (select cct1.pkey from payment.\"Payment\" cct1 where cct1.credit_card_created_by = ba.username limit 1) is null\n"
-						+ "  and (select cct2.pkey from payment.\"Payment\" cct2 where cct2.authorization_username = ba.username limit 1) is null\n"
-						+ "  and (select cct3.pkey from payment.\"Payment\" cct3 where cct3.capture_username       = ba.username limit 1) is null\n"
-						+ "  and (select cct4.pkey from payment.\"Payment\" cct4 where cct4.void_username          = ba.username limit 1) is null\n"
+                        // + "  and (select cct.id from payment.\"Payment\" cct where cct.credit_card_created_by=ba.username or cct.authorization_username=ba.username or cct.capture_username=ba.username or cct.void_username=ba.username limit 1) is null\n"
+						+ "  and (select cct1.id from payment.\"Payment\" cct1 where cct1.credit_card_created_by = ba.username limit 1) is null\n"
+						+ "  and (select cct2.id from payment.\"Payment\" cct2 where cct2.authorization_username = ba.username limit 1) is null\n"
+						+ "  and (select cct3.id from payment.\"Payment\" cct3 where cct3.capture_username       = ba.username limit 1) is null\n"
+						+ "  and (select cct4.id from payment.\"Payment\" cct4 where cct4.void_username          = ba.username limit 1) is null\n"
 						// payment.CreditCard
-                        + "  and (select cc.pkey from payment.\"CreditCard\" cc where cc.created_by=ba.username limit 1) is null\n"
+                        + "  and (select cc.id from payment.\"CreditCard\" cc where cc.created_by=ba.username limit 1) is null\n"
 						// account.DisableLog
-                        + "  and (select dl.pkey from account.\"DisableLog\" dl where dl.disabled_by=ba.username limit 1) is null\n"
+                        + "  and (select dl.id from account.\"DisableLog\" dl where dl.disabled_by=ba.username limit 1) is null\n"
 						// billing.MonthlyCharge
-                        + "  and (select mc.pkey from billing.\"MonthlyCharge\" mc where mc.created_by=ba.username limit 1) is null\n"
+                        + "  and (select mc.id from billing.\"MonthlyCharge\" mc where mc.created_by=ba.username limit 1) is null\n"
 						// billing.Package
-                        + "  and (select pk2.pkey from billing.\"Package\" pk2 where pk2.created_by=ba.username limit 1) is null\n"
+                        + "  and (select pk2.id from billing.\"Package\" pk2 where pk2.created_by=ba.username limit 1) is null\n"
 						// signup.Request
-                        + "  and (select sr.pkey from signup.\"Request\" sr where sr.completed_by=ba.username limit 1) is null\n"
+                        + "  and (select sr.id from signup.\"Request\" sr where sr.completed_by=ba.username limit 1) is null\n"
 						// ticket.Action
 						// PostgresSQL 8.3 doing sequential scan on "or":
-						// + "  and (select ta.pkey from ticket.Action ta where ta.administrator=ba.username or ta.old_assigned_to=ba.username or ta.new_assigned_to=ba.username limit 1) is null\n"
-						+ "  and (select ta1.pkey from ticket.\"Action\" ta1 where ta1.administrator   = ba.username limit 1) is null\n"
-						+ "  and (select ta2.pkey from ticket.\"Action\" ta2 where ta2.old_assigned_to = ba.username limit 1) is null\n"
-						+ "  and (select ta3.pkey from ticket.\"Action\" ta3 where ta3.new_assigned_to = ba.username limit 1) is null\n"
+						// + "  and (select ta.id from ticket.Action ta where ta.administrator=ba.username or ta.old_assigned_to=ba.username or ta.new_assigned_to=ba.username limit 1) is null\n"
+						+ "  and (select ta1.id from ticket.\"Action\" ta1 where ta1.administrator   = ba.username limit 1) is null\n"
+						+ "  and (select ta2.id from ticket.\"Action\" ta2 where ta2.old_assigned_to = ba.username limit 1) is null\n"
+						+ "  and (select ta3.id from ticket.\"Action\" ta3 where ta3.new_assigned_to = ba.username limit 1) is null\n"
 						// ticket.Assignment
-                        + "  and (select ta4.pkey from ticket.\"Assignment\" ta4 where ta4.administrator=ba.username limit 1) is null\n"
+                        + "  and (select ta4.id from ticket.\"Assignment\" ta4 where ta4.administrator=ba.username limit 1) is null\n"
 						// ticket.Ticket
-                        + "  and (select ti.pkey from ticket.\"Ticket\" ti where ti.created_by=ba.username limit 1) is null\n"
+                        + "  and (select ti.id from ticket.\"Ticket\" ti where ti.created_by=ba.username limit 1) is null\n"
 						// billing.Transaction
                         + "  and (select tr.transid from billing.\"Transaction\" tr where tr.username=ba.username limit 1) is null",
                         now
@@ -333,7 +333,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList crs=conn.executeIntListQuery(
                         "select\n"
-                        + "  cr.pkey\n"
+                        + "  cr.id\n"
                         + "from\n"
                         + "  scm.\"CvsRepository\" cr,\n"
                         + "  linux.\"UserServer\" lsa,\n"
@@ -341,7 +341,7 @@ final public class AccountCleaner implements CronJob {
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
-                        + "  cr.linux_server_account=lsa.pkey\n"
+                        + "  cr.linux_server_account=lsa.id\n"
                         + "  and lsa.username=un.username\n"
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -379,7 +379,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList els=conn.executeIntListQuery(
                         "select\n"
-                        + "  el.pkey\n"
+                        + "  el.id\n"
                         + "from\n"
                         + "  email.\"List\" el,\n"
                         + "  linux.\"GroupServer\" lsg,\n"
@@ -387,7 +387,7 @@ final public class AccountCleaner implements CronJob {
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
-                        + "  el.linux_server_group=lsg.pkey\n"
+                        + "  el.linux_server_group=lsg.id\n"
                         + "  and lsg.name=lg.name\n"
                         + "  and lg.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -404,7 +404,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList eds=conn.executeIntListQuery(
                         "select\n"
-                        + "  ed.pkey\n"
+                        + "  ed.id\n"
                         + "from\n"
                         + "  email.\"Domain\" ed,\n"
                         + "  billing.\"Package\" pk,\n"
@@ -425,7 +425,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList eps=conn.executeIntListQuery(
                         "select\n"
-                        + "  ep.pkey\n"
+                        + "  ep.id\n"
                         + "from\n"
                         + "  email.\"Pipe\" ep,\n"
                         + "  billing.\"Package\" pk,\n"
@@ -446,7 +446,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList esrs=conn.executeIntListQuery(
                         "select\n"
-                        + "  esr.pkey\n"
+                        + "  esr.id\n"
                         + "from\n"
                         + "  email.\"SmtpRelay\" esr,\n"
                         + "  billing.\"Package\" pk,\n"
@@ -468,7 +468,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList fbss=conn.executeIntListQuery(
                         "select\n"
-                        + "  fbs.pkey\n"
+                        + "  fbs.id\n"
                         + "from\n"
                         + "  account.\"Account\" bu,\n"
                         + "  billing.\"Package\" pk,\n"
@@ -477,7 +477,7 @@ final public class AccountCleaner implements CronJob {
                         + "  bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
                         + "  and bu.accounting=pk.accounting\n"
-                        + "  and pk.pkey=fbs.package",
+                        + "  and pk.id=fbs.package",
                         now
                     );
                     for(int c=0;c<fbss.size();c++) {
@@ -490,7 +490,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList hss=conn.executeIntListQuery(
                         "select\n"
-                        + "  hs.pkey\n"
+                        + "  hs.id\n"
                         + "from\n"
                         + "  web.\"Site\" hs,\n"
                         + "  billing.\"Package\" pk,\n"
@@ -511,7 +511,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList hsts=conn.executeIntListQuery(
                         "select\n"
-                        + "  hst.pkey\n"
+                        + "  hst.id\n"
                         + "from\n"
                         + "  \"web/tomcat\".\"SharedTomcat\" hst,\n"
                         + "  linux.\"GroupServer\" lsg,\n"
@@ -519,7 +519,7 @@ final public class AccountCleaner implements CronJob {
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
-                        + "  hst.linux_server_group=lsg.pkey\n"
+                        + "  hst.linux_server_group=lsg.id\n"
                         + "  and lsg.name=lg.name\n"
                         + "  and lg.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -543,7 +543,7 @@ final public class AccountCleaner implements CronJob {
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
-                        + "  pfs.net_bind=nb.pkey\n"
+                        + "  pfs.net_bind=nb.id\n"
                         + "  and nb.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
@@ -559,7 +559,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList nbs=conn.executeIntListQuery(
                         "select\n"
-                        + "  nb.pkey\n"
+                        + "  nb.id\n"
                         + "from\n"
                         + "  net.\"Bind\" nb,\n"
                         + "  billing.\"Package\" pk,\n"
@@ -587,7 +587,7 @@ final public class AccountCleaner implements CronJob {
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
-                        + "  ia.package=pk.pkey\n"
+                        + "  ia.package=pk.id\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
@@ -604,13 +604,13 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList hss=conn.executeIntListQuery(
                         "select\n"
-                        + "  hs.pkey\n"
+                        + "  hs.id\n"
                         + "from\n"
                         + "  web.\"HttpdServer\" hs,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
-                        + "  hs.package=pk.pkey\n"
+                        + "  hs.package=pk.id\n"
                         + "  and pk.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
@@ -682,7 +682,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList mds=conn.executeIntListQuery(
                         "select\n"
-                        + "  md.pkey\n"
+                        + "  md.id\n"
                         + "from\n"
                         + "  mysql.\"Database\" md,\n"
                         + "  billing.\"Package\" pk,\n"
@@ -727,7 +727,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList pds=conn.executeIntListQuery(
                         "select\n"
-                        + "  pd.pkey\n"
+                        + "  pd.id\n"
                         + "from\n"
                         + "  postgresql.\"Database\" pd,\n"
                         + "  postgresql.\"UserServer\" psu,\n"
@@ -735,7 +735,7 @@ final public class AccountCleaner implements CronJob {
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
-                        + "  pd.datdba=psu.pkey\n"
+                        + "  pd.datdba=psu.id\n"
                         + "  and psu.username=un.username\n"
                         + "  and un.package=pk.name\n"
                         + "  and pk.accounting=bu.accounting\n"
@@ -800,7 +800,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     IntList dls=conn.executeIntListQuery(
                         "select\n"
-                        + "  dl.pkey\n"
+                        + "  dl.id\n"
                         + "from\n"
                         + "  account.\"DisableLog\" dl,\n"
                         + "  account.\"Account\" bu\n"
@@ -808,23 +808,23 @@ final public class AccountCleaner implements CronJob {
                         + "  dl.accounting=bu.accounting\n"
                         + "  and bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS+"\n"
-                        + "  and (select ba.username from account.\"Administrator\" ba where ba.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select bu2.accounting from account.\"Account\" bu2 where bu2.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select cr.pkey from scm.\"CvsRepository\" cr where cr.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select el.pkey from email.\"List\" el where el.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select ep.pkey from email.\"Pipe\" ep where ep.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select esr.pkey from email.\"SmtpRelay\" esr where esr.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select hst.pkey from \"web/tomcat\".\"SharedTomcat\" hst where hst.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select hsb.pkey from web.\"VirtualHost\" hsb where hsb.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select hs.pkey from web.\"Site\" hs where hs.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select la.username from linux.\"User\" la where la.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select lsa.pkey from linux.\"UserServer\" lsa where lsa.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select msu.pkey from mysql.\"UserServer\" msu where msu.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select mu.username from mysql.\"User\" mu where mu.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select pk.name from billing.\"Package\" pk where pk.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select psu.pkey from postgresql.\"UserServer\" psu where psu.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select pu.username from postgresql.\"User\" pu where pu.disable_log=dl.pkey limit 1) is null\n"
-                        + "  and (select un.username from account.\"Username\" un where un.disable_log=dl.pkey limit 1) is null",
+                        + "  and (select ba.username from account.\"Administrator\" ba where ba.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select bu2.accounting from account.\"Account\" bu2 where bu2.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select cr.id from scm.\"CvsRepository\" cr where cr.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select el.id from email.\"List\" el where el.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select ep.id from email.\"Pipe\" ep where ep.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select esr.id from email.\"SmtpRelay\" esr where esr.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select hst.id from \"web/tomcat\".\"SharedTomcat\" hst where hst.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select hsb.id from web.\"VirtualHost\" hsb where hsb.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select hs.id from web.\"Site\" hs where hs.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select la.username from linux.\"User\" la where la.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select lsa.id from linux.\"UserServer\" lsa where lsa.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select msu.id from mysql.\"UserServer\" msu where msu.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select mu.username from mysql.\"User\" mu where mu.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select pk.name from billing.\"Package\" pk where pk.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select psu.id from postgresql.\"UserServer\" psu where psu.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select pu.username from postgresql.\"User\" pu where pu.disable_log=dl.id limit 1) is null\n"
+                        + "  and (select un.username from account.\"Username\" un where un.disable_log=dl.id limit 1) is null",
                         now
                     );
                     for(int c=0;c<dls.size();c++) BusinessHandler.removeDisableLog(conn, invalidateList, dls.getInt(c));
@@ -837,7 +837,7 @@ final public class AccountCleaner implements CronJob {
                         // non-default
                         IntList bss=conn.executeIntListQuery(
                             "select\n"
-                            + "  bs.pkey\n"
+                            + "  bs.id\n"
                             + "from\n"
                             + "  server.\"AccountServer\" bs,\n"
                             + "  account.\"Account\" bu\n"
@@ -850,7 +850,7 @@ final public class AccountCleaner implements CronJob {
                         );
                         for(int c=0;c<bss.size();c++) {
                             int bs = bss.getInt(c);
-                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from server.\"AccountServer\" where pkey=?", bs));
+                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from server.\"AccountServer\" where id=?", bs));
                             int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
                             if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
                         }
@@ -858,7 +858,7 @@ final public class AccountCleaner implements CronJob {
                         // default
                         bss=conn.executeIntListQuery(
                             "select\n"
-                            + "  bs.pkey\n"
+                            + "  bs.id\n"
                             + "from\n"
                             + "  server.\"AccountServer\" bs,\n"
                             + "  account.\"Account\" bu\n"
@@ -870,7 +870,7 @@ final public class AccountCleaner implements CronJob {
                         );
                         for(int c=0;c<bss.size();c++) {
                             int bs = bss.getInt(c);
-                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from server.\"AccountServer\" where pkey=?", bs));
+                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from server.\"AccountServer\" where id=?", bs));
                             int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
                             if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
                         }
@@ -909,8 +909,8 @@ final public class AccountCleaner implements CronJob {
                     if(affectedServers==InvalidateList.allServers) {
                         System.out.println("invalidate "+tableId.name().toLowerCase(Locale.ENGLISH));
                     } else {
-                        for(int pkey : affectedServers) {
-                            System.out.println("invalidate "+tableId.name().toLowerCase(Locale.ENGLISH)+" "+pkey);
+                        for(int id : affectedServers) {
+                            System.out.println("invalidate "+tableId.name().toLowerCase(Locale.ENGLISH)+" "+id);
                         }
                     }
                 }

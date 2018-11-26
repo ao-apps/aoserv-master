@@ -60,7 +60,7 @@ final public class CvsHandler {
 				// Such as /home/e/example/ being a prefix of /home/e/example/my-webapp
 				IntList lsas = conn.executeIntListQuery(
 					"select\n"
-					+ "  pkey\n"
+					+ "  id\n"
 					+ "from\n"
 					+ "  linux.\"UserServer\"\n"
 					+ "where\n"
@@ -85,7 +85,7 @@ final public class CvsHandler {
 				int slashPos = pathStr.indexOf('/', httpdSitesDirStr.length() + 1);
 				if(slashPos == -1) slashPos = pathStr.length();
 				String siteName = pathStr.substring(httpdSitesDirStr.length() + 1, slashPos);
-				int hs = conn.executeIntQuery("select pkey from web.\"Site\" where ao_server=? and \"name\"=?", aoServer, siteName);
+				int hs = conn.executeIntQuery("select id from web.\"Site\" where ao_server=? and \"name\"=?", aoServer, siteName);
 				HttpdHandler.checkAccessHttpdSite(conn, source, "addCvsRepository", hs);
 			} else if(pathStr.startsWith(httpdSharedTomcatsDirStr + '/')) {
 				int slashPos = pathStr.indexOf('/', httpdSharedTomcatsDirStr.length() + 1);
@@ -103,13 +103,13 @@ final public class CvsHandler {
 					"select\n"
 					+ "  (\n"
 					+ "    select\n"
-					+ "      cr.pkey\n"
+					+ "      cr.id\n"
 					+ "    from\n"
 					+ "      scm.\"CvsRepository\" cr,\n"
 					+ "      linux.\"UserServer\" lsa\n"
 					+ "    where\n"
 					+ "      cr.path=?\n"
-					+ "      and cr.linux_server_account=lsa.pkey\n"
+					+ "      and cr.linux_server_account=lsa.id\n"
 					+ "      and lsa.ao_server=?\n"
 					+ "    limit 1\n"
 					+ "  ) is not null",
@@ -142,7 +142,7 @@ final public class CvsHandler {
 			if(!found) throw new SQLException("Invalid mode: "+mode);
 
 			// Update the database
-			int pkey = conn.executeIntUpdate(
+			int id = conn.executeIntUpdate(
 				"INSERT INTO scm.\"CvsRepository\" (\n"
 				+ "  \"path\",\n"
 				+ "  linux_server_account,\n"
@@ -153,7 +153,7 @@ final public class CvsHandler {
 				+ "  ?,\n"
 				+ "  ?,\n"
 				+ "  ?\n"
-				+ ") RETURNING pkey",
+				+ ") RETURNING id",
 				path,
 				lsa,
 				lsg,
@@ -166,7 +166,7 @@ final public class CvsHandler {
 				aoServer,
 				false
 			);
-			return pkey;
+			return id;
 		}
 	}
 
@@ -178,17 +178,17 @@ final public class CvsHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int disableLog,
-		int pkey
+		int id
 	) throws IOException, SQLException {
-		if(isCvsRepositoryDisabled(conn, pkey)) throw new SQLException("CvsRepository is already disabled: "+pkey);
+		if(isCvsRepositoryDisabled(conn, id)) throw new SQLException("CvsRepository is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableCvsRepository", disableLog, false);
-		int lsa=getLinuxServerAccountForCvsRepository(conn, pkey);
+		int lsa=getLinuxServerAccountForCvsRepository(conn, id);
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "disableCvsRepository", lsa);
 
 		conn.executeUpdate(
-			"update scm.\"CvsRepository\" set disable_log=? where pkey=?",
+			"update scm.\"CvsRepository\" set disable_log=? where id=?",
 			disableLog,
-			pkey
+			id
 		);
 
 		// Notify all clients of the update
@@ -205,18 +205,18 @@ final public class CvsHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
-		int disableLog=getDisableLogForCvsRepository(conn, pkey);
-		if(disableLog==-1) throw new SQLException("CvsRepository is already enabled: "+pkey);
+		int disableLog=getDisableLogForCvsRepository(conn, id);
+		if(disableLog==-1) throw new SQLException("CvsRepository is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableCvsRepository", disableLog, true);
-		int lsa=getLinuxServerAccountForCvsRepository(conn, pkey);
+		int lsa=getLinuxServerAccountForCvsRepository(conn, id);
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "enableCvsRepository", lsa);
-		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable CvsRepository #"+pkey+", LinuxServerAccount not enabled: "+lsa);
+		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable CvsRepository #"+id+", LinuxServerAccount not enabled: "+lsa);
 
 		conn.executeUpdate(
-			"update scm.\"CvsRepository\" set disable_log=null where pkey=?",
-			pkey
+			"update scm.\"CvsRepository\" set disable_log=null where id=?",
+			id
 		);
 
 		// Notify all clients of the update
@@ -229,12 +229,12 @@ final public class CvsHandler {
 		);
 	}
 
-	public static IntList getCvsRepositoriesForLinuxServerAccount(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntListQuery("select pkey from scm.\"CvsRepository\" where linux_server_account=?", pkey);
+	public static IntList getCvsRepositoriesForLinuxServerAccount(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeIntListQuery("select id from scm.\"CvsRepository\" where linux_server_account=?", id);
 	}
 
-	public static int getLinuxServerAccountForCvsRepository(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select linux_server_account from scm.\"CvsRepository\" where pkey=?", pkey);
+	public static int getLinuxServerAccountForCvsRepository(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeIntQuery("select linux_server_account from scm.\"CvsRepository\" where id=?", id);
 	}
 
 	public static void invalidateTable(SchemaTable.TableID tableID) {
@@ -245,17 +245,17 @@ final public class CvsHandler {
 		}
 	}
 
-	public static int getDisableLogForCvsRepository(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from scm.\"CvsRepository\" where pkey=?", pkey);
+	public static int getDisableLogForCvsRepository(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from scm.\"CvsRepository\" where id=?", id);
 	}
 
-	public static boolean isCvsRepositoryDisabled(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		Integer pkeyObj = pkey;
+	public static boolean isCvsRepositoryDisabled(DatabaseConnection conn, int id) throws IOException, SQLException {
+		Integer idObj = id;
 		synchronized(CvsHandler.class) {
-			Boolean isDisabledObj = disabledCvsRepositories.get(pkeyObj);
+			Boolean isDisabledObj = disabledCvsRepositories.get(idObj);
 			if(isDisabledObj != null) return isDisabledObj;
-			boolean isDisabled = getDisableLogForCvsRepository(conn, pkey) != -1;
-			disabledCvsRepositories.put(pkeyObj, isDisabled);
+			boolean isDisabled = getDisableLogForCvsRepository(conn, id) != -1;
+			disabledCvsRepositories.put(idObj, isDisabled);
 			return isDisabled;
 		}
 	}
@@ -264,26 +264,26 @@ final public class CvsHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
 		// Security checks
-		int lsa=getLinuxServerAccountForCvsRepository(conn, pkey);
+		int lsa=getLinuxServerAccountForCvsRepository(conn, id);
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "removeCvsRepository", lsa);
 
-		removeCvsRepository(conn, invalidateList, pkey);
+		removeCvsRepository(conn, invalidateList, id);
 	}
 
 	public static void removeCvsRepository(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
 		// Grab values for later use
-		int lsa=getLinuxServerAccountForCvsRepository(conn, pkey);
+		int lsa=getLinuxServerAccountForCvsRepository(conn, id);
 		int aoServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa);
 
 		// Update the database
-		conn.executeUpdate("delete from scm.\"CvsRepository\" where pkey=?", pkey);
+		conn.executeUpdate("delete from scm.\"CvsRepository\" where id=?", id);
 
 		invalidateList.addTable(
 			conn,
@@ -298,11 +298,11 @@ final public class CvsHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int pkey,
+		int id,
 		long mode
 	) throws IOException, SQLException {
 		// Security checks
-		int lsa=getLinuxServerAccountForCvsRepository(conn, pkey);
+		int lsa=getLinuxServerAccountForCvsRepository(conn, id);
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "setMode", lsa);
 
 		// Integrity checks
@@ -318,9 +318,9 @@ final public class CvsHandler {
 
 		// Update the database
 		conn.executeUpdate(
-			"update scm.\"CvsRepository\" set mode=? where pkey=?",
+			"update scm.\"CvsRepository\" set mode=? where id=?",
 			mode,
-			pkey
+			id
 		);
 
 		invalidateList.addTable(

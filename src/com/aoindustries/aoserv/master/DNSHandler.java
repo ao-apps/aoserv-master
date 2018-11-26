@@ -137,9 +137,9 @@ final public class DNSHandler implements CronJob {
 						 */
 						//  Open account that have balance <= $0.00 and entry is older than one year
 						int updated = conn.executeUpdate(
-							"delete from billing.\"WhoisHistory\" where pkey in (\n"
+							"delete from billing.\"WhoisHistory\" where id in (\n"
 							+ "  select\n"
-							+ "    wh.pkey\n"
+							+ "    wh.id\n"
 							+ "  from\n"
 							+ "               billing.\"WhoisHistory\" wh\n"
 							+ "    inner join account.\"Account\"      bu on wh.accounting = bu.accounting\n"
@@ -157,9 +157,9 @@ final public class DNSHandler implements CronJob {
 
 						// Closed account that have a balance of $0.00, has not had any billing.Transaction for one year, and entry is older than one year
 						updated = conn.executeUpdate(
-							"delete from billing.\"WhoisHistory\" where pkey in (\n"
+							"delete from billing.\"WhoisHistory\" where id in (\n"
 							+ "  select\n"
-							+ "    wh.pkey\n"
+							+ "    wh.id\n"
 							+ "  from\n"
 							+ "               billing.\"WhoisHistory\" wh\n"
 							+ "    inner join account.\"Account\"      bu on wh.accounting = bu.accounting\n"
@@ -314,8 +314,8 @@ final public class DNSHandler implements CronJob {
 			+ "  hsu.hostname||'.' as zone\n"
 			+ "from\n"
 			+ "  web.\"VirtualHostName\" hsu\n"
-			+ "  inner join web.\"VirtualHost\" hsb on hsu.httpd_site_bind=hsb.pkey\n"
-			+ "  inner join web.\"Site\" hs on hsb.httpd_site=hs.pkey\n"
+			+ "  inner join web.\"VirtualHost\" hsb on hsu.httpd_site_bind=hsb.id\n"
+			+ "  inner join web.\"Site\" hs on hsb.httpd_site=hs.id\n"
 			+ "  inner join billing.\"Package\" pk on hs.package=pk.name\n"
 			+ "  inner join linux.\"Server\" ao on hs.ao_server=ao.server\n"
 			+ "where\n"
@@ -329,10 +329,10 @@ final public class DNSHandler implements CronJob {
 	/**
 	 * Gets the whois output for the specific billing.WhoisHistory record.
 	 */
-	public static String getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int pkey) throws IOException, SQLException {
-		AccountingCode accounting = getBusinessForWhoisHistory(conn, pkey);
+	public static String getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int id) throws IOException, SQLException {
+		AccountingCode accounting = getBusinessForWhoisHistory(conn, id);
 		BusinessHandler.checkAccessBusiness(conn, source, "getWhoisHistoryOutput", accounting);
-		return conn.executeStringQuery("select whois_output from billing.\"WhoisHistory\" where pkey=?", pkey);
+		return conn.executeStringQuery("select whois_output from billing.\"WhoisHistory\" where id=?", id);
 	}
 
 	/**
@@ -391,8 +391,8 @@ final public class DNSHandler implements CronJob {
 		}
 
 		// Add the entry
-		int pkey = conn.executeIntUpdate(
-			"INSERT INTO dns.\"Record\" VALUES (default,?,?,?,?,?,?,null,?) RETURNING pkey",
+		int id = conn.executeIntUpdate(
+			"INSERT INTO dns.\"Record\" VALUES (default,?,?,?,?,?,?,null,?) RETURNING id",
 			zone,
 			domain,
 			type,
@@ -408,7 +408,7 @@ final public class DNSHandler implements CronJob {
 		updateDNSZoneSerial(conn, invalidateList, zone);
 
 		// Notify all clients of the update
-		return pkey;
+		return id;
 	}
 
 	/**
@@ -503,16 +503,16 @@ final public class DNSHandler implements CronJob {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int pkey
+		int id
 	) throws IOException, SQLException {
 		// Must be allowed to access this zone record
-		checkAccessDNSRecord(conn, source, "removeDNSRecord", pkey);
+		checkAccessDNSRecord(conn, source, "removeDNSRecord", id);
 
-		// Get the zone associated with the pkey
-		String zone=getDNSZoneForDNSRecord(conn, pkey);
+		// Get the zone associated with the id
+		String zone=getDNSZoneForDNSRecord(conn, id);
 
 		// Remove the dns.Record entry
-		conn.executeUpdate("delete from dns.\"Record\" where pkey=?", pkey);
+		conn.executeUpdate("delete from dns.\"Record\" where id=?", id);
 		invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
 		// Update the serial of the zone
@@ -586,7 +586,7 @@ final public class DNSHandler implements CronJob {
 		if (exists) {
 			String preTld = getPreTld(hostname, tld);
 			exists = conn.executeBooleanQuery(
-				"select (select pkey from dns.\"Record\" where zone=? and type='A' and domain=?) is not null",
+				"select (select id from dns.\"Record\" where zone=? and type='A' and domain=?) is not null",
 				zone,
 				preTld
 			);
@@ -623,18 +623,18 @@ final public class DNSHandler implements CronJob {
 		return false;
 	}
 
-	public static void checkAccessDNSRecord(DatabaseConnection conn, RequestSource source, String action, int pkey) throws IOException, SQLException {
+	public static void checkAccessDNSRecord(DatabaseConnection conn, RequestSource source, String action, int id) throws IOException, SQLException {
 		if(
 			!isDNSAdmin(conn, source)
-			&& !PackageHandler.canAccessPackage(conn, source, getPackageForDNSRecord(conn, pkey))
+			&& !PackageHandler.canAccessPackage(conn, source, getPackageForDNSRecord(conn, id))
 		) {
 			String message=
 				"business_administrator.username="
 				+source.getUsername()
 				+" is not allowed to access dns_record: action='"
 				+action
-				+", pkey="
-				+pkey
+				+", id="
+				+id
 			;
 			throw new SQLException(message);
 		}
@@ -674,11 +674,11 @@ final public class DNSHandler implements CronJob {
 		return mu!=null && mu.isDNSAdmin();
 	}
 
-	public static AccountingCode getBusinessForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+	public static AccountingCode getBusinessForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from dns.\"Record\" nr, dns.\"Zone\" nz, billing.\"Package\" pk where nr.zone=nz.zone and nz.package=pk.name and nr.pkey=?",
-			pkey
+			"select pk.accounting from dns.\"Record\" nr, dns.\"Zone\" nz, billing.\"Package\" pk where nr.zone=nz.zone and nz.package=pk.name and nr.id=?",
+			id
 		);
 	}
 
@@ -690,11 +690,11 @@ final public class DNSHandler implements CronJob {
 		);
 	}
 
-	public static AccountingCode getBusinessForWhoisHistory(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+	public static AccountingCode getBusinessForWhoisHistory(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from billing.\"WhoisHistory\" where pkey=?",
-			pkey
+			"select accounting from billing.\"WhoisHistory\" where id=?",
+			id
 		);
 	}
 
@@ -717,19 +717,19 @@ final public class DNSHandler implements CronJob {
 		}
 	}
 
-	public static String getDNSZoneForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
-		return conn.executeStringQuery("select zone from dns.\"Record\" where pkey=?", pkey);
+	public static String getDNSZoneForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeStringQuery("select zone from dns.\"Record\" where id=?", id);
 	}
 
 	public static boolean isDNSZoneAvailable(DatabaseConnection conn, String zone) throws IOException, SQLException {
 		return conn.executeBooleanQuery("select (select zone from dns.\"Zone\" where zone=?) is null", zone);
 	}
 
-	public static AccountingCode getPackageForDNSRecord(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+	public static AccountingCode getPackageForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select nz.package from dns.\"Record\" nr, dns.\"Zone\" nz where nr.pkey=? and nr.zone=nz.zone",
-			pkey
+			"select nz.package from dns.\"Record\" nr, dns.\"Zone\" nz where nr.id=? and nr.zone=nz.zone",
+			id
 		);
 	}
 
@@ -758,7 +758,7 @@ final public class DNSHandler implements CronJob {
 		DomainName hostname,
 		List<DomainName> tlds
 	) throws IOException, SQLException {
-		if(conn.executeBooleanQuery("select (select pkey from web.\"VirtualHostName\" where hostname=? limit 1) is null", hostname)) {
+		if(conn.executeBooleanQuery("select (select id from web.\"VirtualHostName\" where hostname=? limit 1) is null", hostname)) {
 			DomainName tld = DNSZoneTable.getHostTLD(hostname, tlds);
 			String zone = tld + ".";
 			if(conn.executeBooleanQuery("select (select zone from dns.\"Zone\" where zone=?) is not null", zone)) {
@@ -818,17 +818,17 @@ final public class DNSHandler implements CronJob {
 		int ipAddress,
 		InetAddress dhcpAddress
 	) throws IOException, SQLException {
-		// Find the pkeys of the entries that should be changed
-		IntList pkeys=conn.executeIntListQuery("select pkey from dns.\"Record\" where \"dhcpAddress\"=?", ipAddress);
+		// Find the ids of the entries that should be changed
+		IntList ids=conn.executeIntListQuery("select id from dns.\"Record\" where \"dhcpAddress\"=?", ipAddress);
 
 		// Build a list of affected zones
 		List<String> zones=new SortedArrayList<>();
 
-		for(int c=0;c<pkeys.size();c++) {
-			int pkey=pkeys.getInt(c);
-			String zone=getDNSZoneForDNSRecord(conn, pkey);
+		for(int c=0;c<ids.size();c++) {
+			int id=ids.getInt(c);
+			String zone=getDNSZoneForDNSRecord(conn, id);
 			if(!zones.contains(zone)) zones.add(zone);
-			conn.executeUpdate("update dns.\"Record\" set destination=? where pkey=?", dhcpAddress, pkey);
+			conn.executeUpdate("update dns.\"Record\" set destination=? where id=?", dhcpAddress, id);
 		}
 
 		// Invalidate the records
@@ -911,7 +911,7 @@ final public class DNSHandler implements CronJob {
 						String oct4=ipStr.substring(pos+1);
 						if(
 							conn.executeBooleanQuery(
-								"select (select pkey from dns.\"Record\" where zone=? and domain=? and type=? limit 1) is not null",
+								"select (select id from dns.\"Record\" where zone=? and domain=? and type=? limit 1) is not null",
 								arpaZone,
 								oct4,
 								DNSType.PTR

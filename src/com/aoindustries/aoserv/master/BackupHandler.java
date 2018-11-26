@@ -34,7 +34,7 @@ public final class BackupHandler {
         boolean backupEnabled,
         boolean required
     ) throws IOException, SQLException {
-        int server = conn.executeIntQuery("select server from backup.\"FileReplication\" where pkey=?", replication);
+        int server = conn.executeIntQuery("select server from backup.\"FileReplication\" where id=?", replication);
         int packageNum = ServerHandler.getPackageForServer(conn, server);
         PackageHandler.checkAccessPackage(conn, source, "addFileBackupSetting", packageNum);
 
@@ -44,8 +44,8 @@ public final class BackupHandler {
         if(slashPos==-1) throw new SQLException("Path must contain a slash (/): "+path);
         // TODO: Check for windows roots: if(FilePathHandler.getRootNode(backupConn, path.substring(0, slashPos+1))==-1) throw new SQLException("Path does not start with a valid root: "+path);
 
-        int pkey = conn.executeIntUpdate(
-            "INSERT INTO backup.\"FileReplicationSetting\" (replication, \"path\", backup_enabled, required) VALUES (?,?,?,?) RETURNING pkey",
+        int id = conn.executeIntUpdate(
+            "INSERT INTO backup.\"FileReplicationSetting\" (replication, \"path\", backup_enabled, required) VALUES (?,?,?,?) RETURNING id",
             replication,
             path,
             backupEnabled,
@@ -60,31 +60,31 @@ public final class BackupHandler {
             server,
             false
         );
-        return pkey;
+        return id;
     }
 
     public static void removeFileBackupSetting(
         DatabaseConnection conn,
         RequestSource source, 
         InvalidateList invalidateList,
-        int pkey
+        int id
     ) throws IOException, SQLException {
-        int server = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
+        int server = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.id where fbs.id=?", id);
         int packageNum=ServerHandler.getPackageForServer(conn, server);
         PackageHandler.checkAccessPackage(conn, source, "removeFileBackupSetting", packageNum);
 
-        removeFileBackupSetting(conn, invalidateList, pkey);
+        removeFileBackupSetting(conn, invalidateList, id);
     }
 
     public static void removeFileBackupSetting(
         DatabaseConnection conn,
         InvalidateList invalidateList,
-        int pkey
+        int id
     ) throws IOException, SQLException {
-        int server = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
+        int server = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.id where fbs.id=?", id);
         int packageNum=ServerHandler.getPackageForServer(conn, server);
 
-        conn.executeUpdate("delete from backup.\"FileReplicationSetting\" where pkey=?", pkey);
+        conn.executeUpdate("delete from backup.\"FileReplicationSetting\" where id=?", id);
 
         // Notify all clients of the update
         invalidateList.addTable(
@@ -100,12 +100,12 @@ public final class BackupHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        int pkey,
+        int id,
         String path,
         boolean backupEnabled,
         boolean required
     ) throws IOException, SQLException {
-        int server = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.pkey where fbs.pkey=?", pkey);
+        int server = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.id where fbs.id=?", id);
         int packageNum = ServerHandler.getPackageForServer(conn, server);
         PackageHandler.checkAccessPackage(conn, source, "setFileBackupSetting", packageNum);
 
@@ -123,11 +123,11 @@ public final class BackupHandler {
             + "  backup_enabled=?,\n"
             + "  required=?\n"
             + "where\n"
-            + "  pkey=?",
+            + "  id=?",
             path,
             backupEnabled,
             required,
-            pkey
+            id
         );
 
         // Notify all clients of the update
@@ -142,33 +142,33 @@ public final class BackupHandler {
 
     public static int getAOServerForBackupPartition(
         DatabaseConnection conn,
-        int pkey
+        int id
     ) throws IOException, SQLException {
-        return conn.executeIntQuery("select ao_server from backup.\"BackupPartition\" where pkey=?", pkey);
+        return conn.executeIntQuery("select ao_server from backup.\"BackupPartition\" where id=?", id);
     }
 
-    public static UnixPath getPathForBackupPartition(DatabaseConnection conn, int pkey) throws IOException, SQLException {
+    public static UnixPath getPathForBackupPartition(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.unixPathFactory,
-			"select path from backup.\"BackupPartition\" where pkey=?",
-			pkey
+			"select path from backup.\"BackupPartition\" where id=?",
+			id
 		);
     }
 
     public static long getBackupPartitionTotalSize(
         DatabaseConnection conn,
         RequestSource source,
-        int pkey
+        int id
     ) throws IOException, SQLException {
-        int aoServer=getAOServerForBackupPartition(conn, pkey);
+        int aoServer=getAOServerForBackupPartition(conn, id);
         ServerHandler.checkAccessServer(conn, source, "getBackupPartitionTotalSize", aoServer);
         if(DaemonHandler.isDaemonAvailable(aoServer)) {
-            UnixPath path=getPathForBackupPartition(conn, pkey);
+            UnixPath path=getPathForBackupPartition(conn, id);
             try {
                 return DaemonHandler.getDaemonConnector(conn, aoServer).getDiskDeviceTotalSize(path);
             } catch(IOException | SQLException err) {
                 DaemonHandler.flagDaemonAsDown(aoServer);
-                logger.log(Level.SEVERE, "pkey="+pkey+", path="+path+", aoServer="+aoServer, err);
+                logger.log(Level.SEVERE, "id="+id+", path="+path+", aoServer="+aoServer, err);
                 return -1;
             }
         } else return -1;
@@ -177,17 +177,17 @@ public final class BackupHandler {
     public static long getBackupPartitionUsedSize(
         DatabaseConnection conn,
         RequestSource source,
-        int pkey
+        int id
     ) throws IOException, SQLException {
-        int aoServer=getAOServerForBackupPartition(conn, pkey);
+        int aoServer=getAOServerForBackupPartition(conn, id);
         ServerHandler.checkAccessServer(conn, source, "getBackupPartitionUsedSize", aoServer);
         if(DaemonHandler.isDaemonAvailable(aoServer)) {
-            UnixPath path=getPathForBackupPartition(conn, pkey);
+            UnixPath path=getPathForBackupPartition(conn, id);
             try {
                 return DaemonHandler.getDaemonConnector(conn, aoServer).getDiskDeviceUsedSize(path);
             } catch(IOException | SQLException err) {
                 DaemonHandler.flagDaemonAsDown(aoServer);
-                logger.log(Level.SEVERE, "pkey="+pkey+", path="+path+", aoServer="+aoServer, err);
+                logger.log(Level.SEVERE, "id="+id+", path="+path+", aoServer="+aoServer, err);
                 return -1;
             }
         } else return -1;
