@@ -221,7 +221,7 @@ final public class ServerHandler {
 								+ "from\n"
 								+ "  account.\"Username\" un,\n"
 								+ "  billing.\"Package\" pk,\n"
-								+ "  server.\"AccountServer\" bs\n"
+								+ "  account.\"AccountHost\" bs\n"
 								+ "where\n"
 								+ "  un.username=?\n"
 								+ "  and un.package=pk.name\n"
@@ -240,7 +240,7 @@ final public class ServerHandler {
 		return conn.executeObjectCollectionQuery(
 			new ArrayList<AccountingCode>(),
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from server.\"AccountServer\" where server=?",
+			"select accounting from account.\"AccountHost\" where server=?",
 			server
 		);
 	}

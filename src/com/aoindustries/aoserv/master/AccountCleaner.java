@@ -830,8 +830,8 @@ final public class AccountCleaner implements CronJob {
                     for(int c=0;c<dls.size();c++) BusinessHandler.removeDisableLog(conn, invalidateList, dls.getInt(c));
                 }
 
-                // server.AccountServer
-                // delete all server.AccountServer for canceled account.Account
+                // account.AccountHost
+                // delete all account.AccountHost for canceled account.Account
                 {
                     for(int depth = Business.MAXIMUM_BUSINESS_TREE_DEPTH; depth>=1; depth--) {
                         // non-default
@@ -839,7 +839,7 @@ final public class AccountCleaner implements CronJob {
                             "select\n"
                             + "  bs.id\n"
                             + "from\n"
-                            + "  server.\"AccountServer\" bs,\n"
+                            + "  account.\"AccountHost\" bs,\n"
                             + "  account.\"Account\" bu\n"
                             + "where\n"
                             + "  not bs.is_default\n"
@@ -850,7 +850,7 @@ final public class AccountCleaner implements CronJob {
                         );
                         for(int c=0;c<bss.size();c++) {
                             int bs = bss.getInt(c);
-                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from server.\"AccountServer\" where id=?", bs));
+                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from account.\"AccountHost\" where id=?", bs));
                             int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
                             if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
                         }
@@ -860,7 +860,7 @@ final public class AccountCleaner implements CronJob {
                             "select\n"
                             + "  bs.id\n"
                             + "from\n"
-                            + "  server.\"AccountServer\" bs,\n"
+                            + "  account.\"AccountHost\" bs,\n"
                             + "  account.\"Account\" bu\n"
                             + "where\n"
                             + "  bs.accounting=bu.accounting\n"
@@ -870,7 +870,7 @@ final public class AccountCleaner implements CronJob {
                         );
                         for(int c=0;c<bss.size();c++) {
                             int bs = bss.getInt(c);
-                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from server.\"AccountServer\" where id=?", bs));
+                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from account.\"AccountHost\" where id=?", bs));
                             int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
                             if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
                         }

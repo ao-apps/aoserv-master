@@ -2191,7 +2191,7 @@ final public class LinuxAccountHandler {
 			+ "    from\n"
 			+ "      linux.\"Group\" lg,\n"
 			+ "      billing.\"Package\" pk,\n"
-			+ "      server.\"AccountServer\" bs\n"
+			+ "      account.\"AccountHost\" bs\n"
 			+ "    where\n"
 			+ "      lg.name=?\n"
 			+ "      and lg.package=pk.name\n"

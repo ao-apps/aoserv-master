@@ -124,7 +124,7 @@ final public class BusinessHandler {
 			+ "from\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
-			+ "  server.\"AccountServer\" bs\n"
+			+ "  account.\"AccountHost\" bs\n"
 			+ "where\n"
 			+ "  un.username=?\n"
 			+ "  and un.package=pk.name\n"
@@ -250,7 +250,7 @@ final public class BusinessHandler {
 							+ "  bu.accounting\n"
 							+ "from\n"
 							+ "  server.\"MasterServer\" ms,\n"
-							+ "  server.\"AccountServer\" bs,\n"
+							+ "  account.\"AccountHost\" bs,\n"
 							+ "  account.\"Account\" bu\n"
 							+ "where\n"
 							+ "  ms.username=?\n"
@@ -351,7 +351,7 @@ final public class BusinessHandler {
 			billParent
 		);
 		conn.executeUpdate(
-			"insert into server.\"AccountServer\"(\n"
+			"insert into account.\"AccountHost\"\n"
 			+ "  accounting,\n"
 			+ "  server,\n"
 			+ "  is_default,\n"
@@ -564,7 +564,7 @@ final public class BusinessHandler {
 				+ "      bs.id\n"
 				+ "    from\n"
 				+ "      account.\"Account\" bu,\n"
-				+ "      server.\"AccountServer\" bs\n"
+				+ "      account.\"AccountHost\" bs\n"
 				+ "    where\n"
 				+ "      bu.accounting=?\n"
 				+ "      and bu.parent=bs.accounting\n"
@@ -575,10 +575,10 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Unable to add business_server, parent does not have access to server.  accounting="+accounting+", server="+server);
 
-		boolean hasDefault=conn.executeBooleanQuery("select (select id from server.\"AccountServer\" where accounting=? and is_default limit 1) is not null", accounting);
+		boolean hasDefault=conn.executeBooleanQuery("select (select id from account.\"AccountHost\" where accounting=? and is_default limit 1) is not null", accounting);
 
 		int id = conn.executeIntUpdate(
-			"INSERT INTO server.\"AccountServer\" (accounting, server, is_default) VALUES (?,?,?) RETURNING id",
+			"INSERT INTO account.\"AccountHost\" (accounting, server, is_default) VALUES (?,?,?) RETURNING id",
 			accounting,
 			server,
 			!hasDefault
@@ -868,7 +868,7 @@ final public class BusinessHandler {
 	}
 
 	public static IntList getServersForBusiness(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
-		return conn.executeIntListQuery("select server from server.\"AccountServer\" where accounting=?", accounting);
+		return conn.executeIntListQuery("select server from account.\"AccountHost\" where accounting=?", accounting);
 	}
 
 	public static AccountingCode getRootBusiness() throws IOException {
@@ -930,18 +930,18 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		AccountingCode accounting = conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from server.\"AccountServer\" where id=?",
+			"select accounting from account.\"AccountHost\" where id=?",
 			id
 		);
-		int server=conn.executeIntQuery("select server from server.\"AccountServer\" where id=?", id);
+		int server=conn.executeIntQuery("select server from account.\"AccountHost\" where id=?", id);
 
 		// Must be allowed to access this Business
 		checkAccessBusiness(conn, source, "removeBusinessServer", accounting);
 
 		// Do not remove the default unless it is the only one left
 		if(
-			conn.executeBooleanQuery("select is_default from server.\"AccountServer\" where id=?", id)
-			&& conn.executeIntQuery("select count(*) from server.\"AccountServer\" where accounting=?", accounting)>1
+			conn.executeBooleanQuery("select is_default from account.\"AccountHost\" where id=?", id)
+			&& conn.executeIntQuery("select count(*) from account.\"AccountHost\" where accounting=?", accounting)>1
 		) {
 			throw new SQLException("Cannot remove the default business_server unless it is the last business_server for a business: "+id);
 		}
@@ -963,10 +963,10 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		AccountingCode accounting = conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from server.\"AccountServer\" where id=?",
+			"select accounting from account.\"AccountHost\" where id=?",
 			id
 		);
-		int server=conn.executeIntQuery("select server from server.\"AccountServer\" where id=?", id);
+		int server=conn.executeIntQuery("select server from account.\"AccountHost\" where id=?", id);
 
 		// No children should be able to access the server
 		if(
@@ -977,7 +977,7 @@ final public class BusinessHandler {
 				+ "      bs.id\n"
 				+ "    from\n"
 				+ "      account.\"Account\" bu,\n"
-				+ "      server.\"AccountServer\" bs\n"
+				+ "      account.\"AccountHost\" bs\n"
 				+ "    where\n"
 				+ "      bu.parent=?\n"
 				+ "      and bu.accounting=bs.accounting\n"
@@ -1277,7 +1277,7 @@ final public class BusinessHandler {
 			)
 		) throw new SQLException("Business="+accounting+" still owns at least one EmailSmtpRelay on Server="+server);
 
-		conn.executeUpdate("delete from server.\"AccountServer\" where id=?", id);
+		conn.executeUpdate("delete from account.\"AccountHost\" where id=?", id);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
@@ -1430,7 +1430,7 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		AccountingCode accounting = conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select accounting from server.\"AccountServer\" where id=?",
+			"select accounting from account.\"AccountHost\" where id=?",
 			id
 		);
 
@@ -1440,11 +1440,11 @@ final public class BusinessHandler {
 
 		// Update the table
 		conn.executeUpdate(
-			"update server.\"AccountServer\" set is_default=true where id=?",
+			"update account.\"AccountHost\" set is_default=true where id=?",
 			id
 		);
 		conn.executeUpdate(
-			"update server.\"AccountServer\" set is_default=false where accounting=? and id!=?",
+			"update account.\"AccountHost\" set is_default=false where accounting=? and id!=?",
 			accounting,
 			id
 		);
@@ -1769,7 +1769,7 @@ final public class BusinessHandler {
 			+ "    select\n"
 			+ "      id\n"
 			+ "    from\n"
-			+ "      server.\"AccountServer\"\n"
+			+ "      account.\"AccountHost\"\n"
 			+ "    where\n"
 			+ "      accounting=?\n"
 			+ "      and server=?\n"
