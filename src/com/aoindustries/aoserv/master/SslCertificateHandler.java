@@ -51,12 +51,12 @@ final public class SslCertificateHandler {
 	public static List<SslCertificate.Check> check(
 		DatabaseConnection conn,
 		RequestSource source,
-		int certificate
+		int sslCertificate
 	) throws IOException, SQLException {
 		// Check access
-		checkAccessCertificate(conn, source, "check", certificate);
+		checkAccessCertificate(conn, source, "check", sslCertificate);
 		return DaemonHandler.getDaemonConnector(conn,
-			getLinuxServerForCertificate(conn, certificate)
-		).checkSslCertificate(certificate);
+			getLinuxServerForCertificate(conn, sslCertificate)
+		).checkSslCertificate(sslCertificate);
 	}
 }
