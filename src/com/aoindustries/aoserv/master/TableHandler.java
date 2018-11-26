@@ -506,7 +506,7 @@ final public class TableHandler {
 							return 0;
 						} else {
 							return conn.executeIntQuery(
-								"select count(*) from management.\"DistroFile\""
+								"select count(*) from \"distribution.management\".\"DistroFile\""
 							);
 						}
 					} else {
@@ -514,7 +514,7 @@ final public class TableHandler {
 						IntList osVersions=getOperatingSystemVersions(conn, source);
 						if(osVersions.size()==0) return 0;
 						StringBuilder sql=new StringBuilder();
-						sql.append("select count(*) from management.\"DistroFile\" where operating_system_version in (");
+						sql.append("select count(*) from \"distribution.management\".\"DistroFile\" where operating_system_version in (");
 						for(int c=0;c<osVersions.size();c++) {
 							if(c>0) sql.append(',');
 							sql.append(osVersions.getInt(c));
@@ -1802,7 +1802,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new DistroFileType(),
-					"select * from management.\"DistroFileType\""
+					"select * from \"distribution.management\".\"DistroFileType\""
 				);
 				break;
 			case DISTRO_FILES :
@@ -1819,7 +1819,7 @@ final public class TableHandler {
 								source,
 								out,
 								new DistroFile(),
-								"select * from management.\"DistroFile\""
+								"select * from \"distribution.management\".\"DistroFile\""
 							);
 						}
 					} else {
@@ -1831,7 +1831,7 @@ final public class TableHandler {
 						} else {
 							if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.DISTRO_FILES));
 							StringBuilder sql=new StringBuilder();
-							sql.append("select * from management.\"DistroFile\" where operating_system_version in (");
+							sql.append("select * from \"distribution.management\".\"DistroFile\" where operating_system_version in (");
 							for(int c=0;c<osVersions.size();c++) {
 								if(c>0) sql.append(',');
 								sql.append(osVersions.getInt(c));
@@ -1858,7 +1858,7 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new DistroReportType(),
-					"select * from management.\"DistroReportType\""
+					"select * from \"distribution.management\".\"DistroReportType\""
 				);
 				break;
 			case DNS_FORBIDDEN_ZONES :
