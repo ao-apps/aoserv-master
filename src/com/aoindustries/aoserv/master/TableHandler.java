@@ -2035,7 +2035,7 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new EmailAttachmentBlock(),
-						"select * from email.\"AttachmentBlocks\""
+						"select * from email.\"AttachmentBlock\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -2047,7 +2047,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
 						+ "  linux.\"UserServer\" lsa,\n"
-						+ "  email.\"AttachmentBlocks\" eab\n"
+						+ "  email.\"AttachmentBlock\" eab\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=lsa.ao_server\n"
@@ -2069,7 +2069,7 @@ final public class TableHandler {
 					+ "  billing.\"Package\" pk2,\n"
 					+ "  account.\"Username\" un2,\n"
 					+ "  linux.\"UserServer\" lsa,\n"
-					+ "  email.\"AttachmentBlocks\" eab\n"
+					+ "  email.\"AttachmentBlock\" eab\n"
 					+ "where\n"
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"

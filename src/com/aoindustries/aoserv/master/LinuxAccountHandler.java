@@ -465,10 +465,10 @@ final public class LinuxAccountHandler {
 		// If it is a email type, add the default attachment blocks
 		if(!username.equals(LinuxAccount.EMAILMON) && isLinuxAccountEmailType(conn, username)) {
 			conn.executeUpdate(
-				"insert into\n"
-				+ "  email.\"AttachmentBlocks\"\n"
-				+ "select\n"
-				+ "  default,\n"
+				"insert into email.\"AttachmentBlock\" (\n"
+				+ "  linux_server_account,\n"
+				+ "  extension\n"
+				+ ") select\n"
 				+ "  ?,\n"
 				+ "  extension\n"
 				+ "from\n"
@@ -1609,8 +1609,9 @@ final public class LinuxAccountHandler {
 		AccountingCode accounting = getBusinessForLinuxServerAccount(conn, account);
 
 		// Delete the attachment blocks
-		conn.executeUpdate("delete from email.\"AttachmentBlocks\" where linux_server_account=?", account);
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ATTACHMENT_BLOCKS, accounting, aoServer, false);
+		if(conn.executeUpdate("delete from email.\"AttachmentBlock\" where linux_server_account=?", account) > 0) {
+			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ATTACHMENT_BLOCKS, accounting, aoServer, false);
+		}
 
 		// Delete the account from the server
 		conn.executeUpdate("delete from linux.\"UserServer\" where id=?", account);
