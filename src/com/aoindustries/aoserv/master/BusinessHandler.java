@@ -1197,7 +1197,7 @@ final public class BusinessHandler {
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=un.package\n"
 				+ "      and ps.ao_server=?\n"
-				+ "      and un.username=psu.username and ps.id=psu.postgres_server\n"
+				+ "      and un.username=psu.username and ps.bind = psu.postgres_server\n"
 				+ "      and pd.datdba=psu.id\n"
 				+ "    limit 1\n"
 				+ "  )\n"
@@ -1223,7 +1223,7 @@ final public class BusinessHandler {
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=un.package\n"
 				+ "      and ps.ao_server=?\n"
-				+ "      and un.username=psu.username and ps.id=psu.postgres_server\n"
+				+ "      and un.username=psu.username and ps.bind = psu.postgres_server\n"
 				+ "    limit 1\n"
 				+ "  )\n"
 				+ "  is not null\n",

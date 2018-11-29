@@ -110,7 +110,7 @@ final public class PostgresHandler {
 		// If requesting PostGIS, make sure the version of PostgreSQL supports it.
 		if(
 			enable_postgis
-			&& conn.executeBooleanQuery("select pv.postgis_version is null from postgresql.\"Server\" ps inner join postgresql.\"Version\" pv on ps.version=pv.version where ps.id=?", postgresServer)
+			&& conn.executeBooleanQuery("select pv.postgis_version is null from postgresql.\"Server\" ps inner join postgresql.\"Version\" pv on ps.version = pv.version where ps.bind = ?", postgresServer)
 		) throw new SQLException("This version of PostgreSQL doesn't support PostGIS");
 
 		// datdba must be on the same server and not be 'mail'
@@ -124,19 +124,16 @@ final public class PostgresHandler {
 		// Encoding must exist for this version of the database
 		if(
 			!conn.executeBooleanQuery(
-				"select\n"
-				+ "  (\n"
-				+ "    select\n"
-				+ "      pe.id\n"
-				+ "    from\n"
-				+ "      postgresql.\"Server\" ps,\n"
-				+ "      postgresql.\"Encoding\" pe\n"
-				+ "    where\n"
-				+ "      ps.id=?\n"
-				+ "      and ps.version=pe.postgres_version\n"
-				+ "      and pe.id=?\n"
-				+ "    limit 1\n"
-				+ "  ) is not null",
+				"SELECT EXISTS (\n"
+				+ "  SELECT\n"
+				+ "    pe.id\n"
+				+ "  FROM\n"
+				+ "    postgresql.\"Server\" ps\n"
+				+ "    INNER JOIN postgresql.\"Encoding\" pe ON ps.version = pe.postgres_version\n"
+				+ "  WHERE\n"
+				+ "    ps.bind = ?\n"
+				+ "    AND pe.id = ?\n"
+				+ ")",
 				postgresServer,
 				encoding
 			)
@@ -529,7 +526,7 @@ final public class PostgresHandler {
 		int aoServer
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "isPostgresServerNameAvailable", aoServer);
-		return conn.executeBooleanQuery("select (select id from postgresql.\"Server\" where name=? and ao_server=? limit 1) is null", name, aoServer);
+		return conn.executeBooleanQuery("SELECT NOT EXISTS (SELECT * FROM postgresql.\"Server\" WHERE \"name\" = ? AND ao_server = ?)", name, aoServer);
 	}
 
 	public static boolean isPostgresServerUserPasswordSet(
@@ -644,7 +641,7 @@ final public class PostgresHandler {
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
 		// Remove the postgres_server_user
-		IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgresql.\"UserServer\" psu, postgresql.\"Server\" ps where psu.username=? and psu.postgres_server=ps.id", username);
+		IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgresql.\"UserServer\" psu, postgresql.\"Server\" ps where psu.username=? and psu.postgres_server = ps.bind", username);
 		if(aoServers.size()>0) {
 			conn.executeUpdate("delete from postgresql.\"UserServer\" where username=?", username);
 			invalidateList.addTable(
@@ -803,23 +800,22 @@ final public class PostgresHandler {
 	}
 
 	public static int getAOServerForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from postgresql.\"Server\" where id=?", postgresServer);
+		return conn.executeIntQuery("select ao_server from postgresql.\"Server\" where bind = ?", postgresServer);
 	}
 
 	public static int getPortForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select nb.port from postgresql.\"Server\" ps, net.\"Bind\" nb where ps.id=? and ps.net_bind=nb.id", postgresServer);
+		return conn.executeIntQuery("select nb.port from postgresql.\"Server\" ps, net.\"Bind\" nb where ps.bind = ? and ps.bind = nb.id", postgresServer);
 	}
 
 	public static String getMinorVersionForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
 		return conn.executeStringQuery(
-			"select\n"
+			"SELECT\n"
 			+ "  pv.minor_version\n"
-			+ "from\n"
-			+ "  postgresql.\"Server\" ps,\n"
-			+ "  postgresql.\"Version\" pv\n"
-			+ "where\n"
-			+ "  ps.id=?\n"
-			+ "  and ps.version=pv.version",
+			+ "FROM\n"
+			+ "  postgresql.\"Server\" ps\n"
+			+ "  INNER JOIN postgresql.\"Version\" pv ON ps.version = pv.version\n"
+			+ "WHERE\n"
+			+ "  ps.bind = ?",
 			postgresServer
 		);
 	}
@@ -837,14 +833,13 @@ final public class PostgresHandler {
 
 	public static int getAOServerForPostgresDatabase(DatabaseConnection conn, int postgresDatabase) throws IOException, SQLException {
 		return conn.executeIntQuery(
-			"select\n"
+			"SELECT\n"
 			+ "  ps.ao_server\n"
-			+ "from\n"
-			+ "  postgresql.\"Database\" pd,\n"
-			+ "  postgresql.\"Server\" ps\n"
-			+ "where\n"
-			+ "  pd.id=?\n"
-			+ "  and pd.postgres_server=ps.id",
+			+ "FROM\n"
+			+ "  postgresql.\"Database\" pd\n"
+			+ "  INNER JOIN postgresql.\"Server\" ps ON pd.postgres_server = ps.bind\n"
+			+ "WHERE\n"
+			+ "  pd.id=?",
 			postgresDatabase
 		);
 	}
@@ -863,14 +858,13 @@ final public class PostgresHandler {
 
 	public static int getAOServerForPostgresServerUser(DatabaseConnection conn, int postgres_server_user) throws IOException, SQLException {
 		return conn.executeIntQuery(
-			"select\n"
+			"SELECT\n"
 			+ "  ps.ao_server\n"
-			+ "from\n"
-			+ "  postgresql.\"UserServer\" psu,\n"
-			+ "  postgresql.\"Server\" ps\n"
-			+ "where\n"
-			+ "  psu.id=?\n"
-			+ "  and psu.postgres_server=ps.id",
+			+ "FROM\n"
+			+ "  postgresql.\"UserServer\" psu\n"
+			+ "  INNER JOIN postgresql.\"Server\" ps ON psu.postgres_server = ps.bind\n"
+			+ "WHERE\n"
+			+ "  psu.id=?",
 			postgres_server_user
 		);
 	}

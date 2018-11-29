@@ -5842,7 +5842,7 @@ final public class TableHandler {
 					+ "      and bs4.server=ms4.ao_server\n"
 					+ "  ) or nb.id in (\n"
 					+ "    select\n"
-					+ "      ps5.net_bind\n"
+					+ "      ps5.bind\n"
 					+ "    from\n"
 					+ "      account.\"Username\" un5,\n"
 					+ "      billing.\"Package\" pk5,\n"
@@ -6020,7 +6020,7 @@ final public class TableHandler {
 					+ "      and bs4.server=ms4.ao_server\n"
 					+ "  ) or nb.id in (\n"
 					+ "    select\n"
-					+ "      ps5.net_bind\n"
+					+ "      ps5.bind\n"
 					+ "    from\n"
 					+ "      account.\"Username\" un5,\n"
 					+ "      billing.\"Package\" pk5,\n"
@@ -6652,16 +6652,14 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new PostgresDatabase(),
-						"select\n"
+						"SELECT\n"
 						+ "  pd.*\n"
-						+ "from\n"
-						+ "  master.\"UserHost\" ms,\n"
-						+ "  postgresql.\"Server\" ps,\n"
-						+ "  postgresql.\"Database\" pd\n"
-						+ "where\n"
-						+ "  ms.username=?\n"
-						+ "  and ms.server=ps.ao_server\n"
-						+ "  and ps.id=pd.postgres_server",
+						+ "FROM\n"
+						+ "             master.\"UserHost\"     ms\n"
+						+ "  INNER JOIN postgresql.\"Server\"   ps ON ms.server = ps.ao_server\n"
+						+ "  INNER JOIN postgresql.\"Database\" pd ON ps.bind   = pd.postgres_server\n"
+						+ "WHERE\n"
+						+ "  ms.username = ?",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -6719,16 +6717,14 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new PostgresServerUser(),
-						"select\n"
+						"SELECT\n"
 						+ "  psu.*\n"
-						+ "from\n"
-						+ "  master.\"UserHost\" ms,\n"
-						+ "  postgresql.\"Server\" ps,\n"
-						+ "  postgresql.\"UserServer\" psu\n"
+						+ "FROM\n"
+						+ "             master.\"UserHost\"       ms\n"
+						+ "  INNER JOIN postgresql.\"Server\"     ps  ON ms.server =  ps.ao_server\n"
+						+ "  INNER JOIN postgresql.\"UserServer\" psu ON ps.bind   = psu.postgres_server\n"
 						+ "where\n"
-						+ "  ms.username=?\n"
-						+ "  and ms.server=ps.ao_server\n"
-						+ "  and ps.id=psu.postgres_server",
+						+ "  ms.username = ?",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -6771,21 +6767,39 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new PostgresServer(),
-						"select * from postgresql.\"Server\""
+						"SELECT\n"
+						+ "  bind,\n"
+						+ "  \"name\",\n"
+						+ "  ao_server,\n"
+						+ "  version,\n"
+						+ "  max_connections,\n"
+						+ "  bind,\n"
+						+ "  sort_mem,\n"
+						+ "  shared_buffers,\n"
+						+ "  fsync\n"
+						+ "FROM\n"
+						+ "  postgresql.\"Server\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
 						new PostgresServer(),
-						"select\n"
-						+ "  ps.*\n"
-						+ "from\n"
-						+ "  master.\"UserHost\" ms,\n"
-						+ "  postgresql.\"Server\" ps\n"
-						+ "where\n"
-						+ "  ms.username=?\n"
-						+ "  and ms.server=ps.ao_server",
+						"SELECT\n"
+						+ "  ps.bind,\n"
+						+ "  ps.\"name\",\n"
+						+ "  ps.ao_server,\n"
+						+ "  ps.version,\n"
+						+ "  ps.max_connections,\n"
+						+ "  ps.bind,\n"
+						+ "  ps.sort_mem,\n"
+						+ "  ps.shared_buffers,\n"
+						+ "  ps.fsync\n"
+						+ "FROM\n"
+						+ "             master.\"UserHost\"   ms\n"
+						+ "  INNER JOIN postgresql.\"Server\" ps ON ms.server = ps.ao_server\n"
+						+ "WHERE\n"
+						+ "  ms.username=?",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -6794,18 +6808,23 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new PostgresServer(),
-					"select\n"
-					+ "  ps.*\n"
-					+ "from\n"
-					+ "  account.\"Username\" un,\n"
-					+ "  billing.\"Package\" pk,\n"
-					+ "  account.\"AccountHost\" bs,\n"
-					+ "  postgresql.\"Server\" ps\n"
-					+ "where\n"
-					+ "  un.username=?\n"
-					+ "  and un.package=pk.name\n"
-					+ "  and pk.accounting=bs.accounting\n"
-					+ "  and bs.server=ps.ao_server",
+					"SELECT\n"
+					+ "  ps.bind,\n"
+					+ "  ps.\"name\",\n"
+					+ "  ps.ao_server,\n"
+					+ "  ps.version,\n"
+					+ "  ps.max_connections,\n"
+					+ "  ps.bind,\n"
+					+ "  ps.sort_mem,\n"
+					+ "  ps.shared_buffers,\n"
+					+ "  ps.fsync\n"
+					+ "FROM\n"
+					+ "             account.\"Username\"    un\n"
+					+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
+					+ "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
+					+ "  INNER JOIN postgresql.\"Server\"   ps ON bs.server     = ps.ao_server\n"
+					+ "WHERE\n"
+					+ "  un.username = ?",
 					username
 				);
 				break;
