@@ -294,7 +294,7 @@ final public class LinuxAccountHandler {
 		}
 
 		// Do not allow more than 31 groups per account
-		int count=conn.executeIntQuery("select count(*) from linux.\"GroupUser\" where username=?", username);
+		int count=conn.executeIntQuery("select count(*) from linux.\"GroupUser\" where \"user\"=?", username);
 		if(count>=LinuxGroupAccount.MAX_GROUPS) throw new SQLException("Only "+LinuxGroupAccount.MAX_GROUPS+" groups are allowed per user, username="+username+" already has access to "+count+" groups");
 
 		int id = conn.executeIntUpdate(
@@ -1293,11 +1293,11 @@ final public class LinuxAccountHandler {
 			+ "from\n"
 			+ "  linux.\"GroupUser\"\n"
 			+ "where\n"
-			+ "  username=?\n"
-			+ "  and is_primary\n"
+			+ "  \"user\"=?\n"
+			+ "  and \"isPrimary\"\n"
 			+ "  and (\n"
-			+ "    operating_system_version is null\n"
-			+ "    or operating_system_version=?\n"
+			+ "    \"operatingSystemVersion\" is null\n"
+			+ "    or \"operatingSystemVersion\"=?\n"
 		    + ")",
 			username,
 			operatingSystemVersion
@@ -1372,7 +1372,7 @@ final public class LinuxAccountHandler {
 			removeLinuxServerAccount(conn, invalidateList, id);
 		}
 		// Delete the group relations for this account
-		boolean groupAccountModified = conn.executeUpdate("delete from linux.\"GroupUser\" where username=?", username) > 0;
+		boolean groupAccountModified = conn.executeUpdate("delete from linux.\"GroupUser\" where \"user\"=?", username) > 0;
 		// Delete from the database
 		conn.executeUpdate("delete from linux.\"User\" where username=?", username);
 
@@ -1406,7 +1406,7 @@ final public class LinuxAccountHandler {
 		) throw new SQLException("Not allowed to remove LinuxGroup named '"+name+"'");
 
 		// Must not be the primary group for any LinuxAccount
-		int primaryCount=conn.executeIntQuery("select count(*) from linux.\"GroupUser\" where \"group\"=? and is_primary", name);
+		int primaryCount=conn.executeIntQuery("select count(*) from linux.\"GroupUser\" where \"group\"=? and \"isPrimary\"", name);
 		if(primaryCount>0) throw new SQLException("linux_group.name="+name+" is the primary group for "+primaryCount+" Linux "+(primaryCount==1?"account":"accounts"));
 		// Get the values for later use
 		AccountingCode accounting = getBusinessForLinuxGroup(conn, name);
@@ -1436,7 +1436,7 @@ final public class LinuxAccountHandler {
 		checkAccessLinuxGroupAccount(conn, source, "removeLinuxGroupAccount", id);
 
 		// Must not be a primary group
-		boolean isPrimary=conn.executeBooleanQuery("select is_primary from linux.\"GroupUser\" where id=?", id);
+		boolean isPrimary=conn.executeBooleanQuery("select \"isPrimary\" from linux.\"GroupUser\" where id=?", id);
 		if(isPrimary) throw new SQLException("linux.GroupUser.id="+id+" is a primary group");
 
 		// Must be needingful not by HttpdTomcatSharedSite to be tying to HttpdSharedTomcat please
@@ -1446,7 +1446,7 @@ final public class LinuxAccountHandler {
 					"\"web.tomcat\".\"SharedTomcat\" hst, "+
 					"\"web.tomcat\".\"SharedTomcatSite\" htss, "+
 					"web.\"Site\" hs "+
-						"where lga.username = lsa.username and "+
+						"where lga.\"user\" = lsa.username and "+
 						"lsa.id           = hst.linux_server_account and "+
 						"htss.tomcat_site   = hs.id and "+
 						"lga.\"group\"      = hs.linux_group and "+
@@ -1464,7 +1464,7 @@ final public class LinuxAccountHandler {
 							"where lga.\"group\" = lsg.name and "+
 							"lsg.id            = hst.linux_server_group and "+
 							"htss.tomcat_site    = hs.id and "+
-							"lga.username        = hs.linux_account and "+
+							"lga.\"user\"        = hs.linux_account and "+
 							"hst.id            = htss.httpd_shared_tomcat and "+
 							"lga.id = ?",
 				id
@@ -1498,8 +1498,8 @@ final public class LinuxAccountHandler {
 			+ "        linux.\"GroupUser\" lga\n"
 			+ "      where\n"
 			+ "        lga.\"group\"=?\n"
-			+ "        and lga.username=?\n"
-			+ "        and not lga.is_primary\n"
+			+ "        and lga.\"user\"=?\n"
+			+ "        and not lga.\"isPrimary\"\n"
 			+ "        and (\n"
 			+ "          select\n"
 			+ "            htss.tomcat_site\n"
@@ -1509,7 +1509,7 @@ final public class LinuxAccountHandler {
 			+ "            \"web.tomcat\".\"SharedTomcatSite\" htss,\n"
 			+ "            web.\"Site\" hs\n"
 			+ "          where\n"
-			+ "            lga.username=lsa.username\n"
+			+ "            lga.\"user\"=lsa.username\n"
 			+ "            and lsa.id=hst.linux_server_account\n"
 			+ "            and hst.id=htss.httpd_shared_tomcat\n"
 			+ "            and htss.tomcat_site=hs.id\n"
@@ -1529,7 +1529,7 @@ final public class LinuxAccountHandler {
 			+ "            and lsg.id=hst.linux_server_group\n"
 			+ "            and hst.id=htss.httpd_shared_tomcat\n"
 			+ "            and htss.tomcat_site=hs.id\n"
-			+ "            and hs.linux_account=lga.username\n"
+			+ "            and hs.linux_account=lga.\"user\"\n"
 			+ "          limit 1\n"
 			+ "        ) is null\n"
 			+ "    ),\n"
@@ -1657,14 +1657,14 @@ final public class LinuxAccountHandler {
 			+ "from\n"
 			+ "  linux.\"GroupServer\" lsg\n"
 			+ "  inner join linux.\"GroupUser\" lga on lsg.name=lga.\"group\"\n"
-			+ "  inner join linux.\"UserServer\" lsa on lga.username=lsa.username\n"
+			+ "  inner join linux.\"UserServer\" lsa on lga.\"user\"=lsa.username\n"
 			+ "  inner join net.\"Host\" se on lsg.ao_server=se.id\n"
 			+ "where\n"
 			+ "  lsg.id=?\n"
-			+ "  and lga.is_primary\n"
+			+ "  and lga.\"isPrimary\"\n"
 			+ "  and (\n"
-			+ "    lga.operating_system_version is null\n"
-			+ "    or lga.operating_system_version=se.operating_system_version\n"
+			+ "    lga.\"operatingSystemVersion\" is null\n"
+			+ "    or lga.\"operatingSystemVersion\" = se.operating_system_version\n"
 			+ "  )\n"
 			+ "  and lsg.ao_server=lsa.ao_server",
 			group
@@ -1728,15 +1728,15 @@ final public class LinuxAccountHandler {
 				+ "  lsg.gid\n"
 				+ "from\n"
 				+ "  linux.\"UserServer\" lsa\n"
-				+ "  inner join linux.\"GroupUser\" lga on lsa.username=lga.username\n"
+				+ "  inner join linux.\"GroupUser\" lga on lsa.username=lga.\"user\"\n"
 				+ "  inner join linux.\"GroupServer\" lsg on lga.\"group\"=lsg.name\n"
 				+ "  inner join net.\"Host\" se on lsa.ao_server=se.id\n"
 				+ "where\n"
 				+ "  lsa.id=?\n"
-				+ "  and lga.is_primary\n"
+				+ "  and lga.\"isPrimary\"\n"
 				+ "  and (\n"
-				+ "    lga.operating_system_version is null\n"
-				+ "    or lga.operating_system_version=se.operating_system_version\n"
+				+ "    lga.\"operatingSystemVersion\" is null\n"
+				+ "    or lga.\"operatingSystemVersion\" = se.operating_system_version\n"
 				+ "  )\n"
 				+ "  and lsa.ao_server=lsg.ao_server",
 				id
@@ -2245,7 +2245,7 @@ final public class LinuxAccountHandler {
 			+ "  pk2.accounting\n"
 			+ "from\n"
 			+ "  linux.\"GroupUser\" lga2\n"
-			+ "  inner join account.\"Username\" un2 on lga2.username=un2.username\n"
+			+ "  inner join account.\"Username\" un2 on lga2.\"user\" = un2.username\n"
 			+ "  inner join billing.\"Package\" pk2 on un2.package=pk2.name\n"
 			+ "where\n"
 			+ "  lga2.id=?",
@@ -2319,14 +2319,14 @@ final public class LinuxAccountHandler {
 			+ "from\n"
 			+ "  linux.\"GroupUser\" lga\n"
 			+ "  inner join linux.\"GroupServer\" lsg on lga.\"group\"=lsg.name\n"
-			+ "  inner join linux.\"UserServer\" lsa on lga.username=lsa.username\n"
+			+ "  inner join linux.\"UserServer\" lsa on lga.\"user\"=lsa.username\n"
 			+ "  inner join net.\"Host\" se on lsg.ao_server=se.id\n"
 			+ "where\n"
 			+ "  lga.id=?\n"
 			+ "  and lsg.ao_server=lsa.ao_server\n"
 			+ "  and (\n"
-			+ "    lga.operating_system_version is null\n"
-			+ "    or lga.operating_system_version=se.operating_system_version\n"
+			+ "    lga.\"operatingSystemVersion\" is null\n"
+			+ "    or lga.\"operatingSystemVersion\" = se.operating_system_version\n"
 			+ "  )",
 			id
 		);
@@ -2431,7 +2431,7 @@ final public class LinuxAccountHandler {
 	public static UserId getLinuxAccountForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.userIdFactory,
-			"select username from linux.\"GroupUser\" where id=?",
+			"select \"user\" from linux.\"GroupUser\" where id=?",
 			lga
 		);
 	}
@@ -2484,7 +2484,7 @@ final public class LinuxAccountHandler {
 		checkAccessLinuxGroupAccount(conn, source, "setPrimaryLinuxGroupAccount", id);
 		UserId username = conn.executeObjectQuery(
 			ObjectFactories.userIdFactory,
-			"select username from linux.\"GroupUser\" where id=?",
+			"select \"user\" from linux.\"GroupUser\" where id=?",
 			id
 		);
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set primary LinuxGroupUser, User disabled: "+username);
@@ -2495,11 +2495,11 @@ final public class LinuxAccountHandler {
 		);
 
 		conn.executeUpdate(
-			"update linux.\"GroupUser\" set is_primary=true where id=?",
+			"update linux.\"GroupUser\" set \"isPrimary\" = true where id = ?",
 			id
 		);
 		conn.executeUpdate(
-			"update linux.\"GroupUser\" set is_primary=false where is_primary and id!=? and username=?",
+			"update linux.\"GroupUser\" set \"isPrimary\" = false where \"isPrimary\" and id != ? and \"user\" = ?",
 			id,
 			username
 		);

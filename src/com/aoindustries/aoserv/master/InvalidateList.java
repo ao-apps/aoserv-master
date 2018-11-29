@@ -187,6 +187,9 @@ final public class InvalidateList {
                 case HTTPD_TOMCAT_SITES :
                     addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, businesses, servers, false);
                     break;
+                case IP_ADDRESSES :
+                    addTable(conn, SchemaTable.TableID.IpAddressMonitoring, businesses, servers, false);
+                    break;
                 case LINUX_ACCOUNTS :
                     addTable(conn, SchemaTable.TableID.FTP_GUEST_USERS, businesses, servers, true);
                     addTable(conn, SchemaTable.TableID.USERNAMES, businesses, servers, true);

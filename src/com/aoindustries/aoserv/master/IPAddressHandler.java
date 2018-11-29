@@ -94,12 +94,12 @@ final public class IPAddressHandler {
 
 		// Update net.IpAddress
 		int netDeviceId = conn.executeIntQuery(
-			"select id from net.\"Device\" where server=? and \"deviceID\"=?",
+			"select id from net.\"Device\" where server=? and \"deviceId\"=?",
 			toServerId,
 			NetDeviceID.ETH0
 		);
 		conn.executeUpdate(
-			"update net.\"IpAddress\" set \"netDevice\"=? where id=?",
+			"update net.\"IpAddress\" set device=? where id=?",
 			netDeviceId,
 			ipAddressId
 		);
@@ -306,7 +306,7 @@ final public class IPAddressHandler {
 			+ "        left join web.\"HttpdServer\" hs on hb.httpd_server=hs.id\n"
 			+ "      where\n"
 			+ "        ia.\"isOverflow\"\n"
-			+ "        and ia.\"netDevice\"=nd.id\n"
+			+ "        and ia.device=nd.id\n"
 			+ "        and nd.server=?\n"
 			+ "        and (\n"
 			+ "          nb.\"ipAddress\" is null\n"
@@ -365,7 +365,7 @@ final public class IPAddressHandler {
 	}
 
 	public static int getServerForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
-		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net.\"Device\" nd where ia.id=? and ia.\"netDevice\"=nd.id", ipAddressId);
+		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net.\"Device\" nd where ia.id=? and ia.device=nd.id", ipAddressId);
 	}
 
 	public static InetAddress getInetAddressForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
@@ -388,7 +388,7 @@ final public class IPAddressHandler {
 			+ "  net.\"Device\" nd\n"
 			+ "where\n"
 			+ "  ia.\"inetAddress\"=?\n"
-			+ "  and ia.\"netDevice\"=nd.id\n"
+			+ "  and ia.device=nd.id\n"
 			+ "  and nd.server=?\n"
 			+ "limit 1",
 			IPAddress.LOOPBACK_IP,

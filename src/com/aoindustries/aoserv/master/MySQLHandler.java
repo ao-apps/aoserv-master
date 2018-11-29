@@ -1020,7 +1020,7 @@ final public class MySQLHandler {
 	}
 
 	public static int getAOServerForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from mysql.\"Server\" where net_bind=?", mysqlServer);
+		return conn.executeIntQuery("select ao_server from mysql.\"Server\" where bind=?", mysqlServer);
 	}
 
 	public static AccountingCode getPackageForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
@@ -1030,9 +1030,9 @@ final public class MySQLHandler {
 			+ "  nb.package\n"
 			+ "from\n"
 			+ "  mysql.\"Server\" ms\n"
-			+ "  inner join net.\"Bind\" nb on ms.net_bind=nb.id\n"
+			+ "  inner join net.\"Bind\" nb on ms.bind=nb.id\n"
 			+ "where\n"
-			+ "  ms.net_bind=?",
+			+ "  ms.bind=?",
 			mysqlServer
 		);
 	}
@@ -1045,9 +1045,9 @@ final public class MySQLHandler {
 			+ "  nb.net_protocol\n"
 			+ "from\n"
 			+ "  mysql.\"Server\" ms\n"
-			+ "  inner join net.\"Bind\" nb on ms.net_bind=nb.id\n"
+			+ "  inner join net.\"Bind\" nb on ms.bind=nb.id\n"
 			+ "where\n"
-			+ "  ms.net_bind=?",
+			+ "  ms.bind=?",
 			mysqlServer
 		);
 	}

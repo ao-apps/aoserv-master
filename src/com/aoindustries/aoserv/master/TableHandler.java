@@ -89,6 +89,7 @@ import com.aoindustries.aoserv.client.HttpdTomcatStdSite;
 import com.aoindustries.aoserv.client.HttpdTomcatVersion;
 import com.aoindustries.aoserv.client.HttpdWorker;
 import com.aoindustries.aoserv.client.IPAddress;
+import com.aoindustries.aoserv.client.IpAddressMonitoring;
 import com.aoindustries.aoserv.client.IpReputationLimiter;
 import com.aoindustries.aoserv.client.IpReputationLimiterLimit;
 import com.aoindustries.aoserv.client.IpReputationLimiterSet;
@@ -379,8 +380,8 @@ final public class TableHandler {
 						out,
 						new BankTransaction(),
 						"select\n"
-						+ "  time,\n" // Was cast to date here but not in full table query - why?
 						+ "  id,\n"
+						+ "  time,\n" // Was cast to date here but not in full table query - why?
 						+ "  account,\n"
 						+ "  processor,\n"
 						+ "  administrator,\n"
@@ -595,7 +596,7 @@ final public class TableHandler {
 						+ "  distro_hour,\n"
 						+ "  last_distro_time,\n"
 						+ "  failover_server,\n"
-						+ "  \"daemonDeviceID\",\n"
+						+ "  \"daemonDeviceId\",\n"
 						+ "  daemon_connect_bind,\n"
 						+ "  time_zone,\n"
 						+ "  jilter_bind,\n"
@@ -608,6 +609,10 @@ final public class TableHandler {
 						+ "  monitoring_load_critical,\n"
 						+ "  \"uidMin\",\n"
 						+ "  \"gidMin\",\n"
+						+ "  \"uidMax\",\n"
+						+ "  \"gidMax\",\n"
+						+ "  \"lastUid\",\n"
+						+ "  \"lastGid\",\n"
 						+ "  sftp_umask\n"
 						+ "from\n"
 						+ "  linux.\"Server\""
@@ -626,7 +631,7 @@ final public class TableHandler {
 						+ "  ao2.distro_hour,\n"
 						+ "  ao2.last_distro_time,\n"
 						+ "  ao2.failover_server,\n"
-						+ "  ao2.\"daemonDeviceID\",\n"
+						+ "  ao2.\"daemonDeviceId\",\n"
 						+ "  ao2.daemon_connect_bind,\n"
 						+ "  ao2.time_zone,\n"
 						+ "  ao2.jilter_bind,\n"
@@ -639,6 +644,10 @@ final public class TableHandler {
 						+ "  ao2.monitoring_load_critical,\n"
 						+ "  ao2.\"uidMin\",\n"
 						+ "  ao2.\"gidMin\",\n"
+						+ "  ao2.\"uidMax\",\n"
+						+ "  ao2.\"gidMax\",\n"
+						+ "  ao2.\"lastUid\",\n"
+						+ "  ao2.\"lastGid\",\n"
 						+ "  ao2.sftp_umask\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
@@ -680,7 +689,7 @@ final public class TableHandler {
 					+ "  ao.distro_hour,\n"
 					+ "  ao.last_distro_time,\n"
 					+ "  ao.failover_server,\n"
-					+ "  ao.\"daemonDeviceID\",\n"
+					+ "  ao.\"daemonDeviceId\",\n"
 					+ "  ao.daemon_connect_bind,\n"
 					+ "  ao.time_zone,\n"
 					+ "  ao.jilter_bind,\n"
@@ -693,6 +702,10 @@ final public class TableHandler {
 					+ "  ao.monitoring_load_critical,\n"
 					+ "  ao.\"uidMin\",\n"
 					+ "  ao.\"gidMin\",\n"
+					+ "  ao.\"uidMax\",\n"
+					+ "  ao.\"gidMax\",\n"
+					+ "  ao.\"lastUid\",\n"
+					+ "  ao.\"lastGid\",\n"
 					+ "  ao.sftp_umask\n"
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
@@ -743,11 +756,11 @@ final public class TableHandler {
 					new AOSHCommand(),
 					"select\n"
 					+ "  ac.command,\n"
+					+ "  ac.\"sinceVersion\",\n"
+					+ "  ac.\"lastVersion\",\n"
 					+ "  st.\"name\" as \"table\",\n"
 					+ "  ac.description,\n"
-					+ "  ac.syntax,\n"
-					+ "  ac.\"sinceVersion\",\n"
-					+ "  ac.\"lastVersion\"\n"
+					+ "  ac.syntax\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 					+ "                   aosh.\"Command\"              ac\n"
@@ -932,8 +945,8 @@ final public class TableHandler {
 						provideProgress,
 						new BankTransaction(),
 						"select\n"
-						+ "  time,\n" // Was not cast to date here while was in single object query - why?
 						+ "  id,\n"
+						+ "  time,\n" // Was not cast to date here while was in single object query - why?
 						+ "  account,\n"
 						+ "  processor,\n"
 						+ "  administrator,\n"
@@ -1908,7 +1921,7 @@ final public class TableHandler {
 					+ "  )\n"
 					+ "  and bu1.accounting=pk2.accounting\n"
 					+ "  and pk2.name=dz.package\n"
-					+ "  and dz.zone=dr.zone",
+					+ "  and dz.\"zone\"=dr.\"zone\"",
 					username
 				);
 				break;
@@ -3765,6 +3778,7 @@ final public class TableHandler {
 						new HttpdTomcatSite(),
 						"select\n"
 						+ "  hts.*,\n"
+						// Protocol conversion
 						+ "  (\n"
 						+ "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
 						+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
@@ -3779,6 +3793,7 @@ final public class TableHandler {
 						new HttpdTomcatSite(),
 						"select\n"
 						+ "  hts.*,\n"
+						// Protocol conversion
 						+ "  (\n"
 						+ "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
 						+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
@@ -3801,6 +3816,7 @@ final public class TableHandler {
 					new HttpdTomcatSite(),
 					"select\n"
 					+ "  hts.*,\n"
+					// Protocol conversion
 					+ "  (\n"
 					+ "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
 					+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
@@ -3955,10 +3971,7 @@ final public class TableHandler {
 						provideProgress,
 						new HttpdWorker(),
 						"select\n"
-						+ "  bind as pkey,\n"
-						+ "  \"name\" as code,\n"
-						+ "  bind as net_bind,\n"
-						+ "  \"tomcatSite\" as tomcat_site\n"
+						+ "  *\n"
 						+ "from\n"
 						+ "  \"web.tomcat\".\"Worker\""
 					); else MasterServer.writeObjects(
@@ -3968,10 +3981,7 @@ final public class TableHandler {
 						provideProgress,
 						new HttpdWorker(),
 						"select\n"
-						+ "  hw.bind as pkey,\n"
-						+ "  hw.\"name\" as code,\n"
-						+ "  hw.bind as net_bind,\n"
-						+ "  hw.\"tomcatSite\" as tomcat_site\n"
+						+ "  hw.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
 						+ "  net.\"Bind\" nb,\n"
@@ -3989,10 +3999,7 @@ final public class TableHandler {
 					provideProgress,
 					new HttpdWorker(),
 					"select\n"
-					+ "  hw.bind as pkey,\n"
-					+ "  hw.\"name\" as code,\n"
-					+ "  hw.bind as net_bind,\n"
-					+ "  hw.\"tomcatSite\" as tomcat_site\n"
+					+ "  hw.*\n"
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
 					+ "  billing.\"Package\" pk1,\n"
@@ -4026,22 +4033,24 @@ final public class TableHandler {
 						"select\n"
 						+ "  ia.id,\n"
 						+ "  host(ia.\"inetAddress\") as \"inetAddress\",\n"
-						+ "  ia.\"netDevice\",\n"
+						+ "  ia.device,\n"
 						+ "  ia.\"isAlias\",\n"
 						+ "  ia.hostname,\n"
-						+ "  (select pk.name from billing.\"Package\" pk where pk.id = ia.package),\n"
+						+ "  ia.package,\n"
 						+ "  ia.created,\n"
-						+ "  ia.available,\n"
+						+ "  ia.\"isAvailable\",\n"
 						+ "  ia.\"isOverflow\",\n"
 						+ "  ia.\"isDhcp\",\n"
-						+ "  iam.\"pingMonitorEnabled\",\n"
 						+ "  host(ia.\"externalInetAddress\") as \"externalInetAddress\",\n"
 						+ "  ia.netmask,\n"
+						// Protocol conversion
+						+ "  (select pk.name from billing.\"Package\" pk where pk.id = ia.package) as \"packageName\",\n"
+						+ "  iam.\"pingMonitorEnabled\",\n"
 						+ "  iam.\"checkBlacklistsOverSmtp\",\n"
-						+ "  iam.enabled\n"
+						+ "  iam.enabled as \"monitoringEnabled\"\n"
 						+ "from\n"
 						+ "  net.\"IpAddress\" ia\n"
-						+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id=iam.id"
+						+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id = iam.id"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -4051,22 +4060,24 @@ final public class TableHandler {
 						"select\n"
 						+ "  ia.id,\n"
 						+ "  host(ia.\"inetAddress\") as \"inetAddress\",\n"
-						+ "  ia.\"netDevice\",\n"
+						+ "  ia.device,\n"
 						+ "  ia.\"isAlias\",\n"
 						+ "  ia.hostname,\n"
-						+ "  (select pk.name from billing.\"Package\" pk where pk.id = ia.package),\n"
+						+ "  ia.package,\n"
 						+ "  ia.created,\n"
-						+ "  ia.available,\n"
+						+ "  ia.\"isAvailable\",\n"
 						+ "  ia.\"isOverflow\",\n"
 						+ "  ia.\"isDhcp\",\n"
-						+ "  iam.\"pingMonitorEnabled\",\n"
 						+ "  host(ia.\"externalInetAddress\") as \"externalInetAddress\",\n"
 						+ "  ia.netmask,\n"
+						// Protocol conversion
+						+ "  (select pk.name from billing.\"Package\" pk where pk.id = ia.package) as \"packageName\",\n"
+						+ "  iam.\"pingMonitorEnabled\",\n"
 						+ "  iam.\"checkBlacklistsOverSmtp\",\n"
-						+ "  iam.enabled\n"
+						+ "  iam.enabled as \"monitoringEnabled\"\n"
 						+ "from\n"
 						+ "  net.\"IpAddress\" ia\n"
-						+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id=iam.id\n"
+						+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id = iam.id\n"
 						+ "where\n"
 						+ "  ia.id in (\n"
 						+ "    select\n"
@@ -4075,7 +4086,7 @@ final public class TableHandler {
 						+ "      master.\"UserHost\" ms\n"
 						+ "      left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "      net.\"Device\" nd\n"
-						+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.\"netDevice\"\n"
+						+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.device\n"
 						+ "    where\n"
 						+ "      ia2.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"' or (\n"
 						+ "        ms.username=?\n"
@@ -4092,7 +4103,7 @@ final public class TableHandler {
 						+ "            where\n"
 						+ "              ms.server=ffr.server\n"
 						+ "              and bp.ao_server=nd.server\n"
-						+ "              and bpao.\"daemonDeviceID\"=nd.\"deviceID\"\n" // Only allow access to the device device ID for failovers
+						+ "              and bpao.\"daemonDeviceId\"=nd.\"deviceId\"\n" // Only allow access to the device device ID for failovers
 						+ "            limit 1\n"
 						+ "          ) is not null\n"
 						+ "        )\n"
@@ -4110,22 +4121,24 @@ final public class TableHandler {
 						"select\n"
 						+ "  ia.id,\n"
 						+ "  host(ia.\"inetAddress\") as \"inetAddress\",\n"
-						+ "  ia.\"netDevice\",\n"
+						+ "  ia.device,\n"
 						+ "  ia.\"isAlias\",\n"
 						+ "  ia.hostname,\n"
-						+ "  (select pk.name from billing.\"Package\" pk where pk.id = ia.package),\n"
+						+ "  ia.package,\n"
 						+ "  ia.created,\n"
-						+ "  ia.available,\n"
+						+ "  ia.\"isAvailable\",\n"
 						+ "  ia.\"isOverflow\",\n"
 						+ "  ia.\"isDhcp\",\n"
-						+ "  iam.\"pingMonitorEnabled\",\n"
 						+ "  host(ia.\"externalInetAddress\") as \"externalInetAddress\",\n"
 						+ "  ia.netmask,\n"
+						// Protocol conversion
+						+ "  (select pk.name from billing.\"Package\" pk where pk.id = ia.package) as \"packageName\",\n"
+						+ "  iam.\"pingMonitorEnabled\",\n"
 						+ "  iam.\"checkBlacklistsOverSmtp\",\n"
-						+ "  iam.enabled\n"
+						+ "  iam.enabled as \"monitoringEnabled\"\n"
 						+ "from\n"
 						+ "  net.\"IpAddress\" ia\n"
-						+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id=iam.id\n"
+						+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id = iam.id\n"
 						+ "where\n"
 						+ "  ia.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"'\n"
 						+ "  or ia.id in (\n"
@@ -4181,7 +4194,7 @@ final public class TableHandler {
 						+ "      and un5.package=pk5.name\n"
 						+ "      and pk5.accounting=bs5.accounting\n"
 						+ "      and bs5.server=nd5.server\n"
-						+ "      and nd5.id=ia5.\"netDevice\"\n"
+						+ "      and nd5.id=ia5.device\n"
 						+ "      and (ia5.\"inetAddress\"='"+IPAddress.LOOPBACK_IP+"' or ia5.\"isOverflow\")\n"
 						/*+ "  ) or ia.id in (\n"
 						+ "    select \n"
@@ -4202,8 +4215,164 @@ final public class TableHandler {
 						+ "      and bs6.server=ffr6.server\n"
 						+ "      and ffr6.backup_partition=bp6.id\n"
 						+ "      and bp6.ao_server=ao6.server\n"
-						+ "      and ao6.server=nd6.ao_server and ao6.\"daemonDeviceID\"=nd6.\"deviceID\"\n"
-						+ "      and nd6.id=ia6.\"netDevice\" and not ia6.\"isAlias\"\n"*/
+						+ "      and ao6.server=nd6.ao_server and ao6.\"daemonDeviceId\"=nd6.\"deviceId\"\n"
+						+ "      and nd6.id=ia6.device and not ia6.\"isAlias\"\n"*/
+						+ "  )",
+						username,
+						username,
+						username//,
+						//username
+					);
+				}
+				break;
+			case IpAddressMonitoring :
+				if(masterUser != null) {
+					assert masterServers != null;
+					if(masterServers.length == 0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new IpAddressMonitoring(),
+						"select\n"
+						+ "  iam.*\n"
+						+ "from\n"
+						+ "  net.\"IpAddress\" ia\n"
+						+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id = iam.id"
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new IpAddressMonitoring(),
+						"select\n"
+						+ "  iam.*\n"
+						+ "from\n"
+						+ "  net.\"IpAddress\" ia\n"
+						+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id = iam.id\n"
+						+ "where\n"
+						+ "  ia.id in (\n"
+						+ "    select\n"
+						+ "      ia2.id\n"
+						+ "    from\n"
+						+ "      master.\"UserHost\" ms\n"
+						+ "      left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
+						+ "      net.\"Device\" nd\n"
+						+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.device\n"
+						+ "    where\n"
+						+ "      ia2.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"' or (\n"
+						+ "        ms.username=?\n"
+						+ "        and (\n"
+						+ "          ms.server=nd.server\n"
+						+ "          or ff.server=nd.server\n"
+						+ "          or (\n"
+						+ "            select\n"
+						+ "              ffr.id\n"
+						+ "            from\n"
+						+ "              backup.\"FileReplication\" ffr\n"
+						+ "              inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
+						+ "              inner join linux.\"Server\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
+						+ "            where\n"
+						+ "              ms.server=ffr.server\n"
+						+ "              and bp.ao_server=nd.server\n"
+						+ "              and bpao.\"daemonDeviceId\"=nd.\"deviceId\"\n" // Only allow access to the device device ID for failovers
+						+ "            limit 1\n"
+						+ "          ) is not null\n"
+						+ "        )\n"
+						+ "      )\n"
+						+ "  )",
+						username
+					);
+				} else {
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new IpAddressMonitoring(),
+						"select\n"
+						+ "  iam.*\n"
+						+ "from\n"
+						+ "  net.\"IpAddress\" ia\n"
+						+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id = iam.id\n"
+						+ "where\n"
+						+ "  ia.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"'\n"
+						+ "  or ia.id in (\n"
+						+ "    select\n"
+						+ "      ia2.id\n"
+						+ "    from\n"
+						+ "      account.\"Username\" un1,\n"
+						+ "      billing.\"Package\" pk1,\n"
+						+ BU1_PARENTS_JOIN
+						+ "      billing.\"Package\" pk2,\n"
+						+ "      net.\"IpAddress\" ia2\n"
+						+ "    where\n"
+						+ "      un1.username=?\n"
+						+ "      and un1.package=pk1.name\n"
+						+ "      and (\n"
+						+ PK1_BU1_PARENTS_WHERE
+						+ "      )\n"
+						+ "      and bu1.accounting=pk2.accounting\n"
+						+ "      and pk2.id=ia2.package\n"
+						+ "  )\n"
+						+ "  or ia.id in (\n"
+						+ "    select\n"
+						+ "      nb.\"ipAddress\"\n"
+						+ "    from\n"
+						+ "      account.\"Username\" un3,\n"
+						+ "      billing.\"Package\" pk3,\n"
+						+ BU2_PARENTS_JOIN
+						+ "      billing.\"Package\" pk4,\n"
+						+ "      web.\"Site\" hs,\n"
+						+ "      web.\"VirtualHost\" hsb,\n"
+						+ "      net.\"Bind\" nb\n"
+						+ "    where\n"
+						+ "      un3.username=?\n"
+						+ "      and un3.package=pk3.name\n"
+						+ "      and (\n"
+						+ PK3_BU2_PARENTS_WHERE
+						+ "      )\n"
+						+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+						+ "      and pk4.name=hs.package\n"
+						+ "      and hs.id=hsb.httpd_site\n"
+						+ "      and hsb.httpd_bind=nb.id\n"
+						+ "  ) or ia.id in (\n"
+						+ "    select\n"
+						+ "      ia5.id\n"
+						+ "    from\n"
+						+ "      account.\"Username\" un5,\n"
+						+ "      billing.\"Package\" pk5,\n"
+						+ "      account.\"AccountHost\" bs5,\n"
+						+ "      net.\"Device\" nd5,\n"
+						+ "      net.\"IpAddress\" ia5\n"
+						+ "    where\n"
+						+ "      un5.username=?\n"
+						+ "      and un5.package=pk5.name\n"
+						+ "      and pk5.accounting=bs5.accounting\n"
+						+ "      and bs5.server=nd5.server\n"
+						+ "      and nd5.id=ia5.device\n"
+						+ "      and (ia5.\"inetAddress\"='"+IPAddress.LOOPBACK_IP+"' or ia5.\"isOverflow\")\n"
+						/*+ "  ) or ia.id in (\n"
+						+ "    select \n"
+						+ "      ia6.id\n"
+						+ "    from\n"
+						+ "      account.\"Username\" un6,\n"
+						+ "      billing.\"Package\" pk6,\n"
+						+ "      account.\"AccountHost\" bs6,\n"
+						+ "      backup.\"FileReplication\" ffr6,\n"
+						+ "      backup.\"BackupPartition\" bp6,\n"
+						+ "      linux.\"Server\" ao6,\n"
+						+ "      net.\"Device\" nd6,\n"
+						+ "      net.\"IpAddress\" ia6\n"
+						+ "    where\n"
+						+ "      un6.username=?\n"
+						+ "      and un6.package=pk6.name\n"
+						+ "      and pk6.accounting=bs6.accounting\n"
+						+ "      and bs6.server=ffr6.server\n"
+						+ "      and ffr6.backup_partition=bp6.id\n"
+						+ "      and bp6.ao_server=ao6.server\n"
+						+ "      and ao6.server=nd6.ao_server and ao6.\"daemonDeviceId\"=nd6.\"deviceId\"\n"
+						+ "      and nd6.id=ia6.device and not ia6.\"isAlias\"\n"*/
 						+ "  )",
 						username,
 						username,
@@ -4810,7 +4979,7 @@ final public class TableHandler {
 						+ "        ms1.username=?\n"
 						+ "        and ms1.server=lsg.ao_server\n"
 						+ "  )\n"
-						+ "  and username in (\n"
+						+ "  and \"user\" in (\n"
 						+ "    select\n"
 						+ "      lsa.username\n"
 						+ "      from\n"
@@ -4855,7 +5024,7 @@ final public class TableHandler {
 					+ "      and bu1.accounting=pk2.accounting\n"
 					+ "      and pk2.name=lg.package\n"
 					+ "  )\n"
-					+ "  and username in (\n"
+					+ "  and \"user\" in (\n"
 					+ "    select\n"
 					+ "      la.username\n"
 					+ "    from\n"
@@ -5472,7 +5641,7 @@ final public class TableHandler {
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=mys.ao_server\n"
-						+ "  and mys.net_bind=md.mysql_server",
+						+ "  and mys.bind=md.mysql_server",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -5526,7 +5695,7 @@ final public class TableHandler {
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=mys.ao_server\n"
-						+ "  and mys.net_bind=md.mysql_server\n"
+						+ "  and mys.bind=md.mysql_server\n"
 						+ "  and md.id=mdu.mysql_database",
 						username
 					);
@@ -5582,7 +5751,7 @@ final public class TableHandler {
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=mys.ao_server\n"
-						+ "  and mys.net_bind=msu.mysql_server",
+						+ "  and mys.bind=msu.mysql_server",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -5630,15 +5799,11 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new MySQLServer(),
-						"select\n"
-						+ "  ms.net_bind as pkey,\n"
-						+ "  ms.\"name\",\n"
-						+ "  ms.ao_server,\n"
-						+ "  ms.version,\n"
-						+ "  ms.max_connections,\n"
-						+ "  ms.net_bind,\n"
-						+ "  (select nb.package from net.\"Bind\" nb where ms.net_bind=nb.id)\n"
-						+ "from\n"
+						"SELECT\n"
+						+ "  ms.*,\n"
+						// Protocol conversion
+						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
+						+ "FROM\n"
 						+ "  mysql.\"Server\" ms"
 					); else MasterServer.writeObjects(
 						conn,
@@ -5646,20 +5811,15 @@ final public class TableHandler {
 						out,
 						provideProgress,
 						new MySQLServer(),
-						"select\n"
-						+ "  ps.net_bind as pkey,\n"
-						+ "  ps.\"name\",\n"
-						+ "  ps.ao_server,\n"
-						+ "  ps.version,\n"
-						+ "  ps.max_connections,\n"
-						+ "  ps.net_bind,\n"
-						+ "  (select nb.package from net.\"Bind\" nb where ps.net_bind=nb.id)\n"
+						"SELECT\n"
+						+ "  ms.*,\n"
+						// Protocol conversion
+						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
 						+ "from\n"
-						+ "  master.\"UserHost\" ms,\n"
-						+ "  mysql.\"Server\" ps\n"
+						+ "             master.\"UserHost\" uh\n"
+						+ "  INNER JOIN mysql.\"Server\"    ms ON uh.server=ms.ao_server\n"
 						+ "where\n"
-						+ "  ms.username=?\n"
-						+ "  and ms.server=ps.ao_server",
+						+ "  uh.username=?",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -5668,24 +5828,17 @@ final public class TableHandler {
 					out,
 					provideProgress,
 					new MySQLServer(),
-					"select\n"
-					+ "  ps.net_bind as pkey,\n"
-					+ "  ps.\"name\",\n"
-					+ "  ps.ao_server,\n"
-					+ "  ps.version,\n"
-					+ "  ps.max_connections,\n"
-					+ "  ps.net_bind,\n"
-					+ "  (select nb.package from net.\"Bind\" nb where ps.net_bind=nb.id)\n"
-					+ "from\n"
-					+ "  account.\"Username\" un,\n"
-					+ "  billing.\"Package\" pk,\n"
-					+ "  account.\"AccountHost\" bs,\n"
-					+ "  mysql.\"Server\" ps\n"
-					+ "where\n"
-					+ "  un.username=?\n"
-					+ "  and un.package=pk.name\n"
-					+ "  and pk.accounting=bs.accounting\n"
-					+ "  and bs.server=ps.ao_server",
+					"SELECT\n"
+					+ "  ms.*,\n"
+					// Protocol conversion
+					+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
+					+ "FROM\n"
+					+ "             account.\"Username\"    un\n"
+					+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
+					+ "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
+					+ "  INNER JOIN mysql.\"Server\"        ms ON bs.server     = ms.ao_server\n"
+					+ "WHERE\n"
+					+ "  un.username=?",
 					username
 				);
 				break;
@@ -5829,7 +5982,7 @@ final public class TableHandler {
 					+ "      and hsb.httpd_bind=nb3.id\n"
 					+ "  ) or nb.id in (\n"
 					+ "    select\n"
-					+ "      ms4.net_bind\n"
+					+ "      ms4.bind\n"
 					+ "    from\n"
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
@@ -5872,6 +6025,7 @@ final public class TableHandler {
 						new NetBind(),
 						"select\n"
 						+ "  nb.*,\n"
+						// Protocol conversion
 						+ "  (\n"
 						+ "    select\n"
 						+ "      nbfz.id\n"
@@ -5901,6 +6055,7 @@ final public class TableHandler {
 						+ "  nb.app_protocol,\n"
 						+ "  nb.monitoring_enabled,\n"
 						+ "  case when nb.monitoring_parameters is null then null::text else '"+AOServProtocol.FILTERED+"'::text end as monitoring_parameters,\n"
+						// Protocol conversion
 						+ "  (\n"
 						+ "    select\n"
 						+ "      nbfz.id\n"
@@ -5953,6 +6108,7 @@ final public class TableHandler {
 					+ "  nb.app_protocol,\n"
 					+ "  nb.monitoring_enabled,\n"
 					+ "  case when nb.monitoring_parameters is null then null::text else '"+AOServProtocol.FILTERED+"'::text end as monitoring_parameters,\n"
+					// Protocol conversion
 					+ "  (\n"
 					+ "    select\n"
 					+ "      nbfz.id\n"
@@ -6007,7 +6163,7 @@ final public class TableHandler {
 					+ "      and hsb.httpd_bind=nb3.id\n"
 					+ "  ) or nb.id in (\n"
 					+ "    select\n"
-					+ "      ms4.net_bind\n"
+					+ "      ms4.bind\n"
 					+ "    from\n"
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
@@ -6084,7 +6240,7 @@ final public class TableHandler {
 						"select"
 						+ "  id,\n"
 						+ "  server,\n"
-						+ "  \"deviceID\",\n"
+						+ "  \"deviceId\",\n"
 						+ "  description,\n"
 						+ "  delete_route,\n"
 						+ "  host(gateway) as gateway,\n"
@@ -6108,7 +6264,7 @@ final public class TableHandler {
 						"select distinct\n"
 						+ "  nd.id,\n"
 						+ "  nd.server,\n"
-						+ "  nd.\"deviceID\",\n"
+						+ "  nd.\"deviceId\",\n"
 						+ "  nd.description,\n"
 						+ "  nd.delete_route,\n"
 						+ "  host(nd.gateway) as gateway,\n"
@@ -6140,7 +6296,7 @@ final public class TableHandler {
 						+ "      where\n"
 						+ "        ms.server=ffr.server\n"
 						+ "        and bp.ao_server=nd.server\n"
-						+ "        and bpao.\"daemonDeviceID\"=nd.\"deviceID\"\n" // Only allow access to the device device ID for failovers
+						+ "        and bpao.\"daemonDeviceId\"=nd.\"deviceId\"\n" // Only allow access to the device device ID for failovers
 						+ "      limit 1\n"
 						+ "    ) is not null\n"
 						+ "  )",
@@ -6155,7 +6311,7 @@ final public class TableHandler {
 					"select\n" // distinct
 					+ "  nd.id,\n"
 					+ "  nd.server,\n"
-					+ "  nd.\"deviceID\",\n"
+					+ "  nd.\"deviceId\",\n"
 					+ "  nd.description,\n"
 					+ "  nd.delete_route,\n"
 					+ "  host(nd.gateway) as gateway,\n"
@@ -6184,7 +6340,7 @@ final public class TableHandler {
 					+ "  and (\n"
 					+ "    bs.server=nd.server\n"
 					// Need distinct above when using this or
-					//+ "    or (bp.ao_server=nd.ao_server and nd.\"deviceID\"=bpao.\"daemonDeviceID\")\n"
+					//+ "    or (bp.ao_server=nd.ao_server and nd.\"deviceId\"=bpao.\"daemonDeviceId\")\n"
 					+ "  )",
 					username
 				);
@@ -6768,15 +6924,7 @@ final public class TableHandler {
 						provideProgress,
 						new PostgresServer(),
 						"SELECT\n"
-						+ "  bind,\n"
-						+ "  \"name\",\n"
-						+ "  ao_server,\n"
-						+ "  version,\n"
-						+ "  max_connections,\n"
-						+ "  bind,\n"
-						+ "  sort_mem,\n"
-						+ "  shared_buffers,\n"
-						+ "  fsync\n"
+						+ "  *\n"
 						+ "FROM\n"
 						+ "  postgresql.\"Server\""
 					); else MasterServer.writeObjects(
@@ -6786,15 +6934,7 @@ final public class TableHandler {
 						provideProgress,
 						new PostgresServer(),
 						"SELECT\n"
-						+ "  ps.bind,\n"
-						+ "  ps.\"name\",\n"
-						+ "  ps.ao_server,\n"
-						+ "  ps.version,\n"
-						+ "  ps.max_connections,\n"
-						+ "  ps.bind,\n"
-						+ "  ps.sort_mem,\n"
-						+ "  ps.shared_buffers,\n"
-						+ "  ps.fsync\n"
+						+ "  ps.*\n"
 						+ "FROM\n"
 						+ "             master.\"UserHost\"   ms\n"
 						+ "  INNER JOIN postgresql.\"Server\" ps ON ms.server = ps.ao_server\n"
@@ -6809,15 +6949,7 @@ final public class TableHandler {
 					provideProgress,
 					new PostgresServer(),
 					"SELECT\n"
-					+ "  ps.bind,\n"
-					+ "  ps.\"name\",\n"
-					+ "  ps.ao_server,\n"
-					+ "  ps.version,\n"
-					+ "  ps.max_connections,\n"
-					+ "  ps.bind,\n"
-					+ "  ps.sort_mem,\n"
-					+ "  ps.shared_buffers,\n"
-					+ "  ps.fsync\n"
+					+ "  ps.*\n"
 					+ "FROM\n"
 					+ "             account.\"Username\"    un\n"
 					+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
@@ -7083,14 +7215,14 @@ final public class TableHandler {
 						+ "  sc.id,\n"
 						+ "  st.\"name\" as \"table\",\n"
 						+ "  sc.\"name\",\n"
+						+ "  sc.\"sinceVersion\",\n"
+						+ "  sc.\"lastVersion\",\n"
 						+ "  sc.index,\n"
 						+ "  ty.\"name\" as \"type\",\n"
 						+ "  sc.\"isNullable\",\n"
 						+ "  sc.\"isUnique\",\n"
 						+ "  sc.\"isPublic\",\n"
-						+ "  coalesce(sc.description, d.description, '') as description,\n"
-						+ "  sc.\"sinceVersion\",\n"
-						+ "  sc.\"lastVersion\"\n"
+						+ "  coalesce(sc.description, d.description, '') as description\n"
 						+ "from\n"
 						+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 						+ "             \"schema\".\"Column\"              sc\n"
@@ -7121,30 +7253,30 @@ final public class TableHandler {
 
 						ResultSet results=pstmt.executeQuery();
 						try {
-							int clientColumnIndex=0;
+							short clientColumnIndex = 0;
 							String lastTableName=null;
 							SchemaColumn tempSC=new SchemaColumn();
 							while(results.next()) {
 								tempSC.init(results);
 								// Change the table ID if on next table
-								String tableName=tempSC.getSchemaTableName();
+								String tableName = tempSC.getTable_name();
 								if(lastTableName==null || !lastTableName.equals(tableName)) {
-									clientColumnIndex=0;
+									clientColumnIndex = 0;
 									lastTableName=tableName;
 								}
 								clientColumns.add(
 									new SchemaColumn(
 										tempSC.getPkey(),
 										tableName,
-										tempSC.getColumnName(),
+										tempSC.getName(),
+										tempSC.getSinceVersion_version(),
+										tempSC.getLastVersion_version(),
 										clientColumnIndex++,
-										tempSC.getSchemaTypeName(),
+										tempSC.getType_name(),
 										tempSC.isNullable(),
 										tempSC.isUnique(),
 										tempSC.isPublic(),
-										tempSC.getDescription(),
-										tempSC.getSinceVersion(),
-										tempSC.getLastVersion()
+										tempSC.getDescription()
 									)
 								);
 							}
@@ -7191,13 +7323,13 @@ final public class TableHandler {
 					List<SchemaTable> clientTables=new ArrayList<>();
 					PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
 						"select\n"
-						+ "  st.\"name\",\n"
 						+ "  st.id,\n"
+						+ "  st.\"name\",\n"
+						+ "  st.\"sinceVersion\",\n"
+						+ "  st.\"lastVersion\",\n"
 						+ "  st.display,\n"
 						+ "  st.\"isPublic\",\n"
-						+ "  coalesce(st.description, d.description, '') as description,\n"
-						+ "  st.\"sinceVersion\",\n"
-						+ "  st.\"lastVersion\"\n"
+						+ "  coalesce(st.description, d.description, '') as description\n"
 						+ "from\n"
 						+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
 						+ "             \"schema\".\"Table\"                        st\n"
@@ -7230,13 +7362,13 @@ final public class TableHandler {
 								tempST.init(results);
 								clientTables.add(
 									new SchemaTable(
-										tempST.getName(),
 										clientTableID++,
+										tempST.getName(),
+										tempST.getSinceVersion_version(),
+										tempST.getLastVersion_version(),
 										tempST.getDisplay(),
 										tempST.isPublic(),
-										tempST.getDescription(),
-										tempST.getSinceVersion(),
-										tempST.getLastVersion()
+										tempST.getDescription()
 									)
 								);
 							}
@@ -7265,13 +7397,13 @@ final public class TableHandler {
 					provideProgress,
 					new SchemaType(),
 					"select\n"
-					+ "  st.\"name\",\n"
 					+ "  st.id,\n"
+					+ "  st.\"name\",\n"
 					+ "  st.\"sinceVersion\",\n"
 					+ "  st.\"lastVersion\"\n"
 					+ "from\n"
 					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
-					+ "             \"schema\".\"Type\"                         st\n"
+					+ "             \"schema\".\"Type\"           st\n"
 					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
 					+ "  left  join \"schema\".\"AOServProtocol\" \"lastVersion\"  on st.\"lastVersion\"  =  \"lastVersion\".version\n"
 					+ "where\n"

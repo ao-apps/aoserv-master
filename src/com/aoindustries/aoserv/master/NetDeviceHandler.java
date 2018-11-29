@@ -19,23 +19,23 @@ final public class NetDeviceHandler {
 	private NetDeviceHandler() {
 	}
 
-	public static String getNetDeviceBondingReport(DatabaseConnection conn, RequestSource source, int netDevice) throws IOException, SQLException {
-		int server = getServerForNetDevice(conn, netDevice);
+	public static String getNetDeviceBondingReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
+		int server = getServerForNetDevice(conn, device);
 		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
 		ServerHandler.checkAccessServer(conn, source, "getNetDeviceBondingReport", server);
 
-		return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceBondingReport(netDevice);
+		return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceBondingReport(device);
 	}
 
-	public static String getNetDeviceStatisticsReport(DatabaseConnection conn, RequestSource source, int netDevice) throws IOException, SQLException {
-		int server = getServerForNetDevice(conn, netDevice);
+	public static String getNetDeviceStatisticsReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
+		int server = getServerForNetDevice(conn, device);
 		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
 		ServerHandler.checkAccessServer(conn, source, "getNetDeviceStatisticsReport", server);
 
-		return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceStatisticsReport(netDevice);
+		return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceStatisticsReport(device);
 	}
 
-	public static int getServerForNetDevice(DatabaseConnection conn, int netDevice) throws IOException, SQLException {
-		return conn.executeIntQuery("select server from net.\"Device\" where id=?", netDevice);
+	public static int getServerForNetDevice(DatabaseConnection conn, int device) throws IOException, SQLException {
+		return conn.executeIntQuery("select server from net.\"Device\" where id=?", device);
 	}
 }

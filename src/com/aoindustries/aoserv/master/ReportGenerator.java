@@ -210,7 +210,7 @@ final public class ReportGenerator implements CronJob {
 									+ "      mysql_backups mb,\n"
 									+ "      mysql.\"Server\" ms\n"
 									+ "    where\n"
-									+ "      mb.mysql_server=ms.net_bind\n"
+									+ "      mb.mysql_server=ms.bind\n"
 									+ "    union select\n"
 									+ "      ps.ao_server,\n"
 									+ "      pb.package,\n"
