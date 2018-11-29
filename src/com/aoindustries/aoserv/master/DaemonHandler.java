@@ -99,7 +99,7 @@ final public class DaemonHandler {
 				+ "  and nb.server=ao2.server\n"
 				+ "  and ao2.server=nd.server\n"
 				+ "  and ao2.\"daemonDeviceID\"=nd.\"deviceId\"\n"
-				+ "  and nd.id=ia.\"netDevice\"\n"
+				+ "  and nd.id=ia.device\n"
 				+ "  and not ia.\"isAlias\"\n"
 				+ "limit 1",
 				aoServer

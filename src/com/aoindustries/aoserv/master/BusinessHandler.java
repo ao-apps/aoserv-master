@@ -1050,7 +1050,7 @@ final public class BusinessHandler {
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.id=ia.package\n"
-				+ "      and ia.\"netDevice\"=nd.id\n"
+				+ "      and ia.device=nd.id\n"
 				+ "      and nd.server=?\n"
 				+ "    limit 1\n"
 				+ "  )\n"
