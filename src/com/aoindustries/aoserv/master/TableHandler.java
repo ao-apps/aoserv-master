@@ -596,7 +596,7 @@ final public class TableHandler {
 						+ "  distro_hour,\n"
 						+ "  last_distro_time,\n"
 						+ "  failover_server,\n"
-						+ "  \"daemonDeviceID\",\n"
+						+ "  \"daemonDeviceId\",\n"
 						+ "  daemon_connect_bind,\n"
 						+ "  time_zone,\n"
 						+ "  jilter_bind,\n"
@@ -609,6 +609,10 @@ final public class TableHandler {
 						+ "  monitoring_load_critical,\n"
 						+ "  \"uidMin\",\n"
 						+ "  \"gidMin\",\n"
+						+ "  \"uidMax\",\n"
+						+ "  \"gidMax\",\n"
+						+ "  \"lastUid\",\n"
+						+ "  \"lastGid\",\n"
 						+ "  sftp_umask\n"
 						+ "from\n"
 						+ "  linux.\"Server\""
@@ -627,7 +631,7 @@ final public class TableHandler {
 						+ "  ao2.distro_hour,\n"
 						+ "  ao2.last_distro_time,\n"
 						+ "  ao2.failover_server,\n"
-						+ "  ao2.\"daemonDeviceID\",\n"
+						+ "  ao2.\"daemonDeviceId\",\n"
 						+ "  ao2.daemon_connect_bind,\n"
 						+ "  ao2.time_zone,\n"
 						+ "  ao2.jilter_bind,\n"
@@ -640,6 +644,10 @@ final public class TableHandler {
 						+ "  ao2.monitoring_load_critical,\n"
 						+ "  ao2.\"uidMin\",\n"
 						+ "  ao2.\"gidMin\",\n"
+						+ "  ao2.\"uidMax\",\n"
+						+ "  ao2.\"gidMax\",\n"
+						+ "  ao2.\"lastUid\",\n"
+						+ "  ao2.\"lastGid\",\n"
 						+ "  ao2.sftp_umask\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
@@ -681,7 +689,7 @@ final public class TableHandler {
 					+ "  ao.distro_hour,\n"
 					+ "  ao.last_distro_time,\n"
 					+ "  ao.failover_server,\n"
-					+ "  ao.\"daemonDeviceID\",\n"
+					+ "  ao.\"daemonDeviceId\",\n"
 					+ "  ao.daemon_connect_bind,\n"
 					+ "  ao.time_zone,\n"
 					+ "  ao.jilter_bind,\n"
@@ -694,6 +702,10 @@ final public class TableHandler {
 					+ "  ao.monitoring_load_critical,\n"
 					+ "  ao.\"uidMin\",\n"
 					+ "  ao.\"gidMin\",\n"
+					+ "  ao.\"uidMax\",\n"
+					+ "  ao.\"gidMax\",\n"
+					+ "  ao.\"lastUid\",\n"
+					+ "  ao.\"lastGid\",\n"
 					+ "  ao.sftp_umask\n"
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
@@ -4074,7 +4086,7 @@ final public class TableHandler {
 						+ "      master.\"UserHost\" ms\n"
 						+ "      left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "      net.\"Device\" nd\n"
-						+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.\"netDevice\"\n"
+						+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.device\n"
 						+ "    where\n"
 						+ "      ia2.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"' or (\n"
 						+ "        ms.username=?\n"
@@ -4091,7 +4103,7 @@ final public class TableHandler {
 						+ "            where\n"
 						+ "              ms.server=ffr.server\n"
 						+ "              and bp.ao_server=nd.server\n"
-						+ "              and bpao.\"daemonDeviceID\"=nd.\"deviceId\"\n" // Only allow access to the device device ID for failovers
+						+ "              and bpao.\"daemonDeviceId\"=nd.\"deviceId\"\n" // Only allow access to the device device ID for failovers
 						+ "            limit 1\n"
 						+ "          ) is not null\n"
 						+ "        )\n"
@@ -4182,7 +4194,7 @@ final public class TableHandler {
 						+ "      and un5.package=pk5.name\n"
 						+ "      and pk5.accounting=bs5.accounting\n"
 						+ "      and bs5.server=nd5.server\n"
-						+ "      and nd5.id=ia5.\"netDevice\"\n"
+						+ "      and nd5.id=ia5.device\n"
 						+ "      and (ia5.\"inetAddress\"='"+IPAddress.LOOPBACK_IP+"' or ia5.\"isOverflow\")\n"
 						/*+ "  ) or ia.id in (\n"
 						+ "    select \n"
@@ -4203,8 +4215,8 @@ final public class TableHandler {
 						+ "      and bs6.server=ffr6.server\n"
 						+ "      and ffr6.backup_partition=bp6.id\n"
 						+ "      and bp6.ao_server=ao6.server\n"
-						+ "      and ao6.server=nd6.ao_server and ao6.\"daemonDeviceID\"=nd6.\"deviceId\"\n"
-						+ "      and nd6.id=ia6.\"netDevice\" and not ia6.\"isAlias\"\n"*/
+						+ "      and ao6.server=nd6.ao_server and ao6.\"daemonDeviceId\"=nd6.\"deviceId\"\n"
+						+ "      and nd6.id=ia6.device and not ia6.\"isAlias\"\n"*/
 						+ "  )",
 						username,
 						username,
@@ -4246,7 +4258,7 @@ final public class TableHandler {
 						+ "      master.\"UserHost\" ms\n"
 						+ "      left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "      net.\"Device\" nd\n"
-						+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.\"netDevice\"\n"
+						+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.device\n"
 						+ "    where\n"
 						+ "      ia2.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"' or (\n"
 						+ "        ms.username=?\n"
@@ -4263,7 +4275,7 @@ final public class TableHandler {
 						+ "            where\n"
 						+ "              ms.server=ffr.server\n"
 						+ "              and bp.ao_server=nd.server\n"
-						+ "              and bpao.\"daemonDeviceID\"=nd.\"deviceId\"\n" // Only allow access to the device device ID for failovers
+						+ "              and bpao.\"daemonDeviceId\"=nd.\"deviceId\"\n" // Only allow access to the device device ID for failovers
 						+ "            limit 1\n"
 						+ "          ) is not null\n"
 						+ "        )\n"
@@ -4338,7 +4350,7 @@ final public class TableHandler {
 						+ "      and un5.package=pk5.name\n"
 						+ "      and pk5.accounting=bs5.accounting\n"
 						+ "      and bs5.server=nd5.server\n"
-						+ "      and nd5.id=ia5.\"netDevice\"\n"
+						+ "      and nd5.id=ia5.device\n"
 						+ "      and (ia5.\"inetAddress\"='"+IPAddress.LOOPBACK_IP+"' or ia5.\"isOverflow\")\n"
 						/*+ "  ) or ia.id in (\n"
 						+ "    select \n"
@@ -4359,8 +4371,8 @@ final public class TableHandler {
 						+ "      and bs6.server=ffr6.server\n"
 						+ "      and ffr6.backup_partition=bp6.id\n"
 						+ "      and bp6.ao_server=ao6.server\n"
-						+ "      and ao6.server=nd6.ao_server and ao6.\"daemonDeviceID\"=nd6.\"deviceId\"\n"
-						+ "      and nd6.id=ia6.\"netDevice\" and not ia6.\"isAlias\"\n"*/
+						+ "      and ao6.server=nd6.ao_server and ao6.\"daemonDeviceId\"=nd6.\"deviceId\"\n"
+						+ "      and nd6.id=ia6.device and not ia6.\"isAlias\"\n"*/
 						+ "  )",
 						username,
 						username,
@@ -4967,7 +4979,7 @@ final public class TableHandler {
 						+ "        ms1.username=?\n"
 						+ "        and ms1.server=lsg.ao_server\n"
 						+ "  )\n"
-						+ "  and username in (\n"
+						+ "  and \"user\" in (\n"
 						+ "    select\n"
 						+ "      lsa.username\n"
 						+ "      from\n"
@@ -5012,7 +5024,7 @@ final public class TableHandler {
 					+ "      and bu1.accounting=pk2.accounting\n"
 					+ "      and pk2.name=lg.package\n"
 					+ "  )\n"
-					+ "  and username in (\n"
+					+ "  and \"user\" in (\n"
 					+ "    select\n"
 					+ "      la.username\n"
 					+ "    from\n"
@@ -5629,7 +5641,7 @@ final public class TableHandler {
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=mys.ao_server\n"
-						+ "  and mys.net_bind=md.mysql_server",
+						+ "  and mys.bind=md.mysql_server",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -5683,7 +5695,7 @@ final public class TableHandler {
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=mys.ao_server\n"
-						+ "  and mys.net_bind=md.mysql_server\n"
+						+ "  and mys.bind=md.mysql_server\n"
 						+ "  and md.id=mdu.mysql_database",
 						username
 					);
@@ -5739,7 +5751,7 @@ final public class TableHandler {
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and ms.server=mys.ao_server\n"
-						+ "  and mys.net_bind=msu.mysql_server",
+						+ "  and mys.bind=msu.mysql_server",
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -5790,7 +5802,7 @@ final public class TableHandler {
 						"SELECT\n"
 						+ "  ms.*,\n"
 						// Protocol conversion
-						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.net_bind = nb.id) AS \"packageName\"\n"
+						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
 						+ "FROM\n"
 						+ "  mysql.\"Server\" ms"
 					); else MasterServer.writeObjects(
@@ -5802,7 +5814,7 @@ final public class TableHandler {
 						"SELECT\n"
 						+ "  ms.*,\n"
 						// Protocol conversion
-						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.net_bind = nb.id) AS \"packageName\"\n"
+						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
 						+ "from\n"
 						+ "             master.\"UserHost\" ms\n"
 						+ "  INNER JOIN mysql.\"Server\"    ms ON ms.server=ms.ao_server\n"
@@ -5819,7 +5831,7 @@ final public class TableHandler {
 					"SELECT\n"
 					+ "  ms.*,\n"
 					// Protocol conversion
-					+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.net_bind = nb.id) AS \"packageName\"\n"
+					+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
 					+ "FROM\n"
 					+ "             account.\"Username\"    un\n"
 					+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
@@ -5970,7 +5982,7 @@ final public class TableHandler {
 					+ "      and hsb.httpd_bind=nb3.id\n"
 					+ "  ) or nb.id in (\n"
 					+ "    select\n"
-					+ "      ms4.net_bind\n"
+					+ "      ms4.bind\n"
 					+ "    from\n"
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
@@ -6151,7 +6163,7 @@ final public class TableHandler {
 					+ "      and hsb.httpd_bind=nb3.id\n"
 					+ "  ) or nb.id in (\n"
 					+ "    select\n"
-					+ "      ms4.net_bind\n"
+					+ "      ms4.bind\n"
 					+ "    from\n"
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
@@ -6284,7 +6296,7 @@ final public class TableHandler {
 						+ "      where\n"
 						+ "        ms.server=ffr.server\n"
 						+ "        and bp.ao_server=nd.server\n"
-						+ "        and bpao.\"daemonDeviceID\"=nd.\"deviceId\"\n" // Only allow access to the device device ID for failovers
+						+ "        and bpao.\"daemonDeviceId\"=nd.\"deviceId\"\n" // Only allow access to the device device ID for failovers
 						+ "      limit 1\n"
 						+ "    ) is not null\n"
 						+ "  )",
@@ -6328,7 +6340,7 @@ final public class TableHandler {
 					+ "  and (\n"
 					+ "    bs.server=nd.server\n"
 					// Need distinct above when using this or
-					//+ "    or (bp.ao_server=nd.ao_server and nd.\"deviceId\"=bpao.\"daemonDeviceID\")\n"
+					//+ "    or (bp.ao_server=nd.ao_server and nd.\"deviceId\"=bpao.\"daemonDeviceId\")\n"
 					+ "  )",
 					username
 				);
