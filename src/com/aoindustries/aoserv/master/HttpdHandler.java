@@ -840,10 +840,10 @@ final public class HttpdHandler {
 				+ "    linux.\"GroupUser\"\n"
 				+ "  where\n"
 				+ "    \"group\"=?\n"
-				+ "    and username=?\n"
+				+ "    and \"user\"=?\n"
 				+ "    and (\n"
-				+ "      operating_system_version is null\n"
-				+ "      or operating_system_version=?\n"
+				+ "      \"operatingSystemVersion\" is null\n"
+				+ "      or \"operatingSystemVersion\"=?\n"
 				+ "    )\n"
 				+ ") is not null",
 				sharedTomcatLinuxGroup,
@@ -859,10 +859,10 @@ final public class HttpdHandler {
 				+ "    linux.\"GroupUser\"\n"
 				+ "  where\n"
 				+ "    \"group\"=?\n"
-				+ "    and username=?\n"
+				+ "    and \"user\"=?\n"
 				+ "    and (\n"
-				+ "      operating_system_version is null\n"
-				+ "      or operating_system_version=?\n"
+				+ "      \"operatingSystemVersion\" is null\n"
+				+ "      or \"operatingSystemVersion\"=?\n"
 				+ "    )\n"
 				+ ") is not null",
 				group,

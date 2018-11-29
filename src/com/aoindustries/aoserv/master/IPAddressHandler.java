@@ -99,7 +99,7 @@ final public class IPAddressHandler {
 			NetDeviceID.ETH0
 		);
 		conn.executeUpdate(
-			"update net.\"IpAddress\" set \"netDevice\"=? where id=?",
+			"update net.\"IpAddress\" set device=? where id=?",
 			netDeviceId,
 			ipAddressId
 		);
@@ -279,7 +279,7 @@ final public class IPAddressHandler {
 		if(count!=0) throw new SQLException("Unable to set Package, net.IpAddress in use by "+count+(count==1?" row":" rows")+" in net.Bind: "+ipAddressId);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set package=(select id from billing.\"Package\" where name=?), available=false where id=?", newPackage, ipAddressId);
+		conn.executeUpdate("update net.\"IpAddress\" set package=(select id from billing.\"Package\" where name=?), \"isAvailable\"=false where id=?", newPackage, ipAddressId);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -306,7 +306,7 @@ final public class IPAddressHandler {
 			+ "        left join web.\"HttpdServer\" hs on hb.httpd_server=hs.id\n"
 			+ "      where\n"
 			+ "        ia.\"isOverflow\"\n"
-			+ "        and ia.\"netDevice\"=nd.id\n"
+			+ "        and ia.device=nd.id\n"
 			+ "        and nd.server=?\n"
 			+ "        and (\n"
 			+ "          nb.\"ipAddress\" is null\n"
@@ -365,7 +365,7 @@ final public class IPAddressHandler {
 	}
 
 	public static int getServerForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
-		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net.\"Device\" nd where ia.id=? and ia.\"netDevice\"=nd.id", ipAddressId);
+		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net.\"Device\" nd where ia.id=? and ia.device=nd.id", ipAddressId);
 	}
 
 	public static InetAddress getInetAddressForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
@@ -388,7 +388,7 @@ final public class IPAddressHandler {
 			+ "  net.\"Device\" nd\n"
 			+ "where\n"
 			+ "  ia.\"inetAddress\"=?\n"
-			+ "  and ia.\"netDevice\"=nd.id\n"
+			+ "  and ia.device=nd.id\n"
 			+ "  and nd.server=?\n"
 			+ "limit 1",
 			IPAddress.LOOPBACK_IP,
@@ -409,7 +409,7 @@ final public class IPAddressHandler {
 		);
 
 		conn.executeUpdate(
-			"update net.\"IpAddress\" set available=true, \"isOverflow\"=false where id=?",
+			"update net.\"IpAddress\" set \"isAvailable\"=true, \"isOverflow\"=false where id=?",
 			ipAddressId
 		);
 		conn.executeUpdate(

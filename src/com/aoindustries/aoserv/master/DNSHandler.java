@@ -392,7 +392,16 @@ final public class DNSHandler implements CronJob {
 
 		// Add the entry
 		int id = conn.executeIntUpdate(
-			"INSERT INTO dns.\"Record\" VALUES (default,?,?,?,?,?,?,null,?) RETURNING id",
+			"INSERT INTO dns.\"Record\" (\n"
+			+ "  \"zone\",\n"
+			+ "  \"domain\",\n"
+			+ "  \"type\",\n"
+			+ "  priority,\n"
+			+ "  weight,\n"
+			+ "  port,\n"
+			+ "  destination,\n"
+			+ "  ttl\n"
+			+ ") VALUES (?,?,?,?,?,?,?,?) RETURNING id",
 			zone,
 			domain,
 			type,
@@ -447,7 +456,7 @@ final public class DNSHandler implements CronJob {
 
 		// Add the MX entry
 		conn.executeUpdate(
-			"insert into dns.\"Record\"(zone, domain, type, priority, destination) values(?,?,?,?,?)",
+			"insert into dns.\"Record\"(\"zone\", \"domain\", \"type\", priority, destination) values(?,?,?,?,?)",
 			zone,
 			"@",
 			DNSType.MX,
@@ -455,7 +464,7 @@ final public class DNSHandler implements CronJob {
 			"mail"
 		);
 
-		final String INSERT_RECORD = "insert into dns.\"Record\"(zone, domain, type, destination) values(?,?,?,?)";
+		final String INSERT_RECORD = "insert into dns.\"Record\"(\"zone\", \"domain\", \"type\", destination) values(?,?,?,?)";
 		// TODO: Take a "mail exchanger" parameter to properly setup the default MX records.
 		//       If in this domain, sets up SPF like below.  If outside this domain (ends in .),
 		//       sets up MX to the mail exchanger, and CNAME "mail" to the mail exchanger.
@@ -543,10 +552,10 @@ final public class DNSHandler implements CronJob {
 		String zone
 	) throws IOException, SQLException {
 		// Remove the dns.Record entries
-		conn.executeUpdate("delete from dns.\"Record\" where zone=?", zone);
+		conn.executeUpdate("delete from dns.\"Record\" where \"zone\"=?", zone);
 
 		// Remove the dns.Zone entry
-		conn.executeUpdate("delete from dns.\"Zone\" where zone=?", zone);
+		conn.executeUpdate("delete from dns.\"Zone\" where \"zone\"=?", zone);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
@@ -586,7 +595,7 @@ final public class DNSHandler implements CronJob {
 		if (exists) {
 			String preTld = getPreTld(hostname, tld);
 			exists = conn.executeBooleanQuery(
-				"select (select id from dns.\"Record\" where zone=? and type='A' and domain=?) is not null",
+				"select (select id from dns.\"Record\" where \"zone\"=? and \"type\"='A' and \"domain\"=?) is not null",
 				zone,
 				preTld
 			);
@@ -603,7 +612,7 @@ final public class DNSHandler implements CronJob {
 						throw new AssertionError();
 				}
 				conn.executeUpdate(
-					"insert into dns.\"Record\" (zone, domain, type, destination) values (?,?,?,?)",
+					"insert into dns.\"Record\" (\"zone\", \"domain\", \"type\", destination) values (?,?,?,?)",
 					zone,
 					preTld,
 					aType,
@@ -677,7 +686,7 @@ final public class DNSHandler implements CronJob {
 	public static AccountingCode getBusinessForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select pk.accounting from dns.\"Record\" nr, dns.\"Zone\" nz, billing.\"Package\" pk where nr.zone=nz.zone and nz.package=pk.name and nr.id=?",
+			"select pk.accounting from dns.\"Record\" nr, dns.\"Zone\" nz, billing.\"Package\" pk where nr.\"zone\"=nz.\"zone\" and nz.package=pk.\"name\" and nr.id=?",
 			id
 		);
 	}
@@ -718,7 +727,7 @@ final public class DNSHandler implements CronJob {
 	}
 
 	public static String getDNSZoneForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeStringQuery("select zone from dns.\"Record\" where id=?", id);
+		return conn.executeStringQuery("select \"zone\" from dns.\"Record\" where id=?", id);
 	}
 
 	public static boolean isDNSZoneAvailable(DatabaseConnection conn, String zone) throws IOException, SQLException {
@@ -728,7 +737,7 @@ final public class DNSHandler implements CronJob {
 	public static AccountingCode getPackageForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
-			"select nz.package from dns.\"Record\" nr, dns.\"Zone\" nz where nr.id=? and nr.zone=nz.zone",
+			"select nz.package from dns.\"Record\" nr, dns.\"Zone\" nz where nr.id=? and nr.\"zone\"=nz.\"zone\"",
 			id
 		);
 	}
@@ -765,9 +774,9 @@ final public class DNSHandler implements CronJob {
 				String preTld = getPreTld(hostname, tld);
 				int deleteCount = conn.executeUpdate(
 					"delete from dns.\"Record\" where\n"
-					+ "  zone=?\n"
-					+ "  and type in (?,?)\n"
-					+ "  and domain=?",
+					+ "  \"zone\"=?\n"
+					+ "  and \"type\" in (?,?)\n"
+					+ "  and \"domain\"=?",
 					zone,
 					DNSType.A, DNSType.AAAA,
 					preTld
@@ -911,7 +920,7 @@ final public class DNSHandler implements CronJob {
 						String oct4=ipStr.substring(pos+1);
 						if(
 							conn.executeBooleanQuery(
-								"select (select id from dns.\"Record\" where zone=? and domain=? and type=? limit 1) is not null",
+								"select (select id from dns.\"Record\" where \"zone\"=? and \"domain\"=? and \"type\"=? limit 1) is not null",
 								arpaZone,
 								oct4,
 								DNSType.PTR
@@ -920,7 +929,7 @@ final public class DNSHandler implements CronJob {
 							updateDNSZoneSerial(conn, invalidateList, arpaZone);
 
 							conn.executeUpdate(
-								"update dns.\"Record\" set destination=? where zone=? and domain=? and type=?",
+								"update dns.\"Record\" set destination=? where \"zone\"=? and \"domain\"=? and \"type\"=?",
 								hostname.toString()+'.',
 								arpaZone,
 								oct4,
