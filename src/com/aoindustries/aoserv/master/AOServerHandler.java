@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * The <code>AOServerHandler</code> handles all the accesses to the linux.Server table.
+ * The <code>AOServerHandler</code> handles all the accesses to the linux.Host table.
  *
  * @author  AO Industries, Inc.
  */
@@ -34,23 +34,23 @@ final public class AOServerHandler {
 	}
 
 	public static IntList getAOServers(DatabaseConnection conn) throws SQLException {
-		return conn.executeIntListQuery("select server from linux.\"Server\"");
+		return conn.executeIntListQuery("select server from linux.\"Host\"");
 	}
 
 	public static int getUidMin(DatabaseConnection conn, int aoServer) throws SQLException {
-		return conn.executeIntQuery("select \"uidMin\" from linux.\"Server\" where server=?", aoServer);
+		return conn.executeIntQuery("select \"uidMin\" from linux.\"Host\" where server=?", aoServer);
 	}
 
 	public static int getUidMax(DatabaseConnection conn, int aoServer) throws SQLException {
-		return conn.executeIntQuery("select \"uidMax\" from linux.\"Server\" where server=?", aoServer);
+		return conn.executeIntQuery("select \"uidMax\" from linux.\"Host\" where server=?", aoServer);
 	}
 
 	public static int getGidMin(DatabaseConnection conn, int aoServer) throws SQLException {
-		return conn.executeIntQuery("select \"gidMin\" from linux.\"Server\" where server=?", aoServer);
+		return conn.executeIntQuery("select \"gidMin\" from linux.\"Host\" where server=?", aoServer);
 	}
 
 	public static int getGidMax(DatabaseConnection conn, int aoServer) throws SQLException {
-		return conn.executeIntQuery("select \"gidMax\" from linux.\"Server\" where server=?", aoServer);
+		return conn.executeIntQuery("select \"gidMax\" from linux.\"Host\" where server=?", aoServer);
 	}
 
 	private static final Map<Integer,Object> mrtgLocks = new HashMap<>();
@@ -93,9 +93,9 @@ final public class AOServerHandler {
 					DaemonHandler.getDaemonConnector(conn, aoServer).getMrtgFile(filename, out);
 				} catch(IOException err) {
 					DaemonHandler.flagDaemonAsDown(aoServer);
-					throw new IOException("Server Unavailable", err);
+					throw new IOException("Host Unavailable", err);
 				}
-			} else throw new IOException("Server Unavailable");
+			} else throw new IOException("Host Unavailable");
 		} finally {
 			synchronized(mrtgLocks) {
 				mrtgLocks.remove(aoServer);
@@ -112,17 +112,17 @@ final public class AOServerHandler {
 		long time
 	) throws IOException, SQLException {
 		UserId mustring = source.getUsername();
-		MasterUser mu = MasterServer.getMasterUser(conn, mustring);
+		User mu = MasterServer.getUser(conn, mustring);
 		if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not set the last distro time");
 		ServerHandler.checkAccessServer(conn, source, "setLastDistroTime", aoServer);
 		conn.executeUpdate(
-			"update linux.\"Server\" set last_distro_time=? where server=?",
+			"update linux.\"Host\" set last_distro_time=? where server=?",
 			new Timestamp(time),
 			aoServer
 		);
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.SERVERS,
+			Table.TableID.SERVERS,
 			ServerHandler.getBusinessesForServer(conn, aoServer),
 			aoServer,
 			false
@@ -136,7 +136,7 @@ final public class AOServerHandler {
 		boolean includeUser
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "startDistro", aoServer);
-		MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+		User mu=MasterServer.getUser(conn, source.getUsername());
 		if(mu==null) throw new SQLException("Only master users may start distribution verifications: "+source.getUsername());
 		ServerHandler.checkAccessServer(conn, source, "startDistro", aoServer);
 		DaemonHandler.getDaemonConnector(conn, aoServer).startDistro(includeUser);
