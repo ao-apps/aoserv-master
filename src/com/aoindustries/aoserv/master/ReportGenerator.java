@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.BackupReport;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.backup.BackupReport;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;

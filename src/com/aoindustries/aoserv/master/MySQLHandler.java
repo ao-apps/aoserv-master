@@ -5,17 +5,17 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.AOServPermission;
-import com.aoindustries.aoserv.client.AOServProtocol;
-import com.aoindustries.aoserv.client.FailoverMySQLReplication;
-import com.aoindustries.aoserv.client.LinuxAccount;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.MySQLDatabase;
-import com.aoindustries.aoserv.client.MySQLServer;
-import com.aoindustries.aoserv.client.MySQLServerUser;
-import com.aoindustries.aoserv.client.MySQLUser;
-import com.aoindustries.aoserv.client.PasswordChecker;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.backup.FailoverMySQLReplication;
+import com.aoindustries.aoserv.client.linux.LinuxAccount;
+import com.aoindustries.aoserv.client.master.AOServPermission;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.mysql.MySQLDatabase;
+import com.aoindustries.aoserv.client.mysql.MySQLServer;
+import com.aoindustries.aoserv.client.mysql.MySQLServerUser;
+import com.aoindustries.aoserv.client.mysql.MySQLUser;
+import com.aoindustries.aoserv.client.password.PasswordChecker;
+import com.aoindustries.aoserv.client.schema.AOServProtocol;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.MySQLDatabaseName;
 import com.aoindustries.aoserv.client.validator.MySQLTableName;

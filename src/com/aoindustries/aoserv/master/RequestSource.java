@@ -5,7 +5,7 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.AOServProtocol;
+import com.aoindustries.aoserv.client.schema.AOServProtocol;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.util.IntList;
 import java.io.IOException;

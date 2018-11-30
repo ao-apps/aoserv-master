@@ -5,28 +5,26 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.AOSHCommand;
 import com.aoindustries.aoserv.client.AOServObject;
-import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.AOServWritable;
-import com.aoindustries.aoserv.client.AOServer;
-import com.aoindustries.aoserv.client.DNSRecord;
-import com.aoindustries.aoserv.client.DNSZoneTable;
-import com.aoindustries.aoserv.client.FirewalldZone;
-import com.aoindustries.aoserv.client.HttpdSiteAuthenticatedLocation;
-import com.aoindustries.aoserv.client.HttpdTomcatContext;
-import com.aoindustries.aoserv.client.InboxAttributes;
-import com.aoindustries.aoserv.client.IpReputationSet.AddReputation;
-import com.aoindustries.aoserv.client.IpReputationSet.ConfidenceType;
-import com.aoindustries.aoserv.client.IpReputationSet.ReputationType;
-import com.aoindustries.aoserv.client.Language;
-import com.aoindustries.aoserv.client.MasterProcess;
-import com.aoindustries.aoserv.client.MasterServerStat;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.SchemaTable;
-import com.aoindustries.aoserv.client.SslCertificate;
-import com.aoindustries.aoserv.client.Transaction;
-import com.aoindustries.aoserv.client.TransactionSearchCriteria;
+import com.aoindustries.aoserv.client.aosh.AOSHCommand;
+import com.aoindustries.aoserv.client.billing.Transaction;
+import com.aoindustries.aoserv.client.billing.TransactionSearchCriteria;
+import com.aoindustries.aoserv.client.dns.DNSRecord;
+import com.aoindustries.aoserv.client.dns.DNSZoneTable;
+import com.aoindustries.aoserv.client.email.InboxAttributes;
+import com.aoindustries.aoserv.client.linux.AOServer;
+import com.aoindustries.aoserv.client.master.MasterProcess;
+import com.aoindustries.aoserv.client.master.MasterServerStat;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.net.FirewalldZone;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationSet.AddReputation;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationSet.ConfidenceType;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationSet.ReputationType;
+import com.aoindustries.aoserv.client.pki.SslCertificate;
+import com.aoindustries.aoserv.client.schema.AOServProtocol;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.ticket.Language;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.FirewalldZoneName;
 import com.aoindustries.aoserv.client.validator.Gecos;
@@ -40,6 +38,8 @@ import com.aoindustries.aoserv.client.validator.PostgresServerName;
 import com.aoindustries.aoserv.client.validator.PostgresUserId;
 import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.client.web.HttpdSiteAuthenticatedLocation;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatContext;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
 import com.aoindustries.io.CompressedDataInputStream;
@@ -119,7 +119,7 @@ public abstract class MasterServer {
 	private static final Object masterHostsLock = new Object();
 	private static Map<UserId,List<HostAddress>> masterHosts;
 	private static final Object masterServersLock = new Object();
-	private static Map<UserId,com.aoindustries.aoserv.client.MasterServer[]> masterServers;
+	private static Map<UserId,com.aoindustries.aoserv.client.master.MasterServer[]> masterServers;
 
 	/**
 	 * The time the system started up
@@ -10336,23 +10336,23 @@ public abstract class MasterServer {
 		for(int emailDomain : emailDomains) if(!EmailHandler.canAccessEmailDomain(conn, source, emailDomain)) throw new SQLException("Access to this hostname forbidden: Exists in email.Domain: "+hostname);
 	}
 
-	public static com.aoindustries.aoserv.client.MasterServer[] getMasterServers(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static com.aoindustries.aoserv.client.master.MasterServer[] getMasterServers(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		synchronized(masterServersLock) {
 			if(masterServers==null) masterServers=new HashMap<>();
-			com.aoindustries.aoserv.client.MasterServer[] mss=masterServers.get(username);
+			com.aoindustries.aoserv.client.master.MasterServer[] mss=masterServers.get(username);
 			if(mss!=null) return mss;
 			try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master.\"User\" mu, master.\"UserHost\" ms where mu.is_active and mu.username=? and mu.username=ms.username")) {
 				try {
-					List<com.aoindustries.aoserv.client.MasterServer> v=new ArrayList<>();
+					List<com.aoindustries.aoserv.client.master.MasterServer> v=new ArrayList<>();
 					pstmt.setString(1, username.toString());
 					try (ResultSet results = pstmt.executeQuery()) {
 						while(results.next()) {
-							com.aoindustries.aoserv.client.MasterServer ms=new com.aoindustries.aoserv.client.MasterServer();
+							com.aoindustries.aoserv.client.master.MasterServer ms=new com.aoindustries.aoserv.client.master.MasterServer();
 							ms.init(results);
 							v.add(ms);
 						}
 					}
-					mss=new com.aoindustries.aoserv.client.MasterServer[v.size()];
+					mss=new com.aoindustries.aoserv.client.master.MasterServer[v.size()];
 					v.toArray(mss);
 					masterServers.put(username, mss);
 					return mss;

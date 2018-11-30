@@ -5,182 +5,182 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.AOSHCommand;
-import com.aoindustries.aoserv.client.AOServPermission;
-import com.aoindustries.aoserv.client.AOServProtocol;
 import com.aoindustries.aoserv.client.AOServWritable;
-import com.aoindustries.aoserv.client.AOServer;
-import com.aoindustries.aoserv.client.AOServerDaemonHost;
-import com.aoindustries.aoserv.client.Architecture;
-import com.aoindustries.aoserv.client.BackupPartition;
-import com.aoindustries.aoserv.client.BackupReport;
-import com.aoindustries.aoserv.client.BackupRetention;
-import com.aoindustries.aoserv.client.Bank;
-import com.aoindustries.aoserv.client.BankAccount;
-import com.aoindustries.aoserv.client.BankTransaction;
-import com.aoindustries.aoserv.client.BankTransactionType;
-import com.aoindustries.aoserv.client.BlackholeEmailAddress;
-import com.aoindustries.aoserv.client.Brand;
-import com.aoindustries.aoserv.client.Business;
-import com.aoindustries.aoserv.client.BusinessAdministrator;
-import com.aoindustries.aoserv.client.BusinessAdministratorPermission;
-import com.aoindustries.aoserv.client.BusinessProfile;
-import com.aoindustries.aoserv.client.BusinessServer;
-import com.aoindustries.aoserv.client.CountryCode;
-import com.aoindustries.aoserv.client.CreditCard;
-import com.aoindustries.aoserv.client.CreditCardProcessor;
-import com.aoindustries.aoserv.client.CreditCardTransaction;
-import com.aoindustries.aoserv.client.CvsRepository;
-import com.aoindustries.aoserv.client.CyrusImapdBind;
-import com.aoindustries.aoserv.client.CyrusImapdServer;
-import com.aoindustries.aoserv.client.DNSForbiddenZone;
-import com.aoindustries.aoserv.client.DNSRecord;
-import com.aoindustries.aoserv.client.DNSTLD;
-import com.aoindustries.aoserv.client.DNSType;
-import com.aoindustries.aoserv.client.DNSZone;
-import com.aoindustries.aoserv.client.DisableLog;
-import com.aoindustries.aoserv.client.DistroFile;
-import com.aoindustries.aoserv.client.DistroFileType;
-import com.aoindustries.aoserv.client.DistroReportType;
-import com.aoindustries.aoserv.client.EmailAddress;
-import com.aoindustries.aoserv.client.EmailAttachmentBlock;
-import com.aoindustries.aoserv.client.EmailAttachmentType;
-import com.aoindustries.aoserv.client.EmailDomain;
-import com.aoindustries.aoserv.client.EmailForwarding;
-import com.aoindustries.aoserv.client.EmailList;
-import com.aoindustries.aoserv.client.EmailListAddress;
-import com.aoindustries.aoserv.client.EmailPipe;
-import com.aoindustries.aoserv.client.EmailPipeAddress;
-import com.aoindustries.aoserv.client.EmailSmtpRelay;
-import com.aoindustries.aoserv.client.EmailSmtpRelayType;
-import com.aoindustries.aoserv.client.EmailSmtpSmartHost;
-import com.aoindustries.aoserv.client.EmailSmtpSmartHostDomain;
-import com.aoindustries.aoserv.client.EmailSpamAssassinIntegrationMode;
-import com.aoindustries.aoserv.client.EncryptionKey;
-import com.aoindustries.aoserv.client.ExpenseCategory;
-import com.aoindustries.aoserv.client.FTPGuestUser;
-import com.aoindustries.aoserv.client.FailoverFileLog;
-import com.aoindustries.aoserv.client.FailoverFileReplication;
-import com.aoindustries.aoserv.client.FailoverFileSchedule;
-import com.aoindustries.aoserv.client.FailoverMySQLReplication;
-import com.aoindustries.aoserv.client.FileBackupSetting;
-import com.aoindustries.aoserv.client.FirewalldZone;
-import com.aoindustries.aoserv.client.HttpdBind;
-import com.aoindustries.aoserv.client.HttpdJBossSite;
-import com.aoindustries.aoserv.client.HttpdJBossVersion;
-import com.aoindustries.aoserv.client.HttpdJKCode;
-import com.aoindustries.aoserv.client.HttpdJKProtocol;
-import com.aoindustries.aoserv.client.HttpdServer;
-import com.aoindustries.aoserv.client.HttpdSharedTomcat;
-import com.aoindustries.aoserv.client.HttpdSite;
-import com.aoindustries.aoserv.client.HttpdSiteAuthenticatedLocation;
-import com.aoindustries.aoserv.client.HttpdSiteBind;
-import com.aoindustries.aoserv.client.HttpdSiteBindHeader;
-import com.aoindustries.aoserv.client.HttpdSiteBindRedirect;
-import com.aoindustries.aoserv.client.HttpdSiteURL;
-import com.aoindustries.aoserv.client.HttpdStaticSite;
-import com.aoindustries.aoserv.client.HttpdTomcatContext;
-import com.aoindustries.aoserv.client.HttpdTomcatDataSource;
-import com.aoindustries.aoserv.client.HttpdTomcatParameter;
-import com.aoindustries.aoserv.client.HttpdTomcatSharedSite;
-import com.aoindustries.aoserv.client.HttpdTomcatSite;
-import com.aoindustries.aoserv.client.HttpdTomcatSiteJkMount;
-import com.aoindustries.aoserv.client.HttpdTomcatStdSite;
-import com.aoindustries.aoserv.client.HttpdTomcatVersion;
-import com.aoindustries.aoserv.client.HttpdWorker;
-import com.aoindustries.aoserv.client.IPAddress;
-import com.aoindustries.aoserv.client.IpAddressMonitoring;
-import com.aoindustries.aoserv.client.IpReputationLimiter;
-import com.aoindustries.aoserv.client.IpReputationLimiterLimit;
-import com.aoindustries.aoserv.client.IpReputationLimiterSet;
-import com.aoindustries.aoserv.client.IpReputationSet;
-import com.aoindustries.aoserv.client.IpReputationSetHost;
-import com.aoindustries.aoserv.client.IpReputationSetNetwork;
-import com.aoindustries.aoserv.client.Language;
-import com.aoindustries.aoserv.client.LinuxAccAddress;
-import com.aoindustries.aoserv.client.LinuxAccount;
-import com.aoindustries.aoserv.client.LinuxAccountType;
-import com.aoindustries.aoserv.client.LinuxGroup;
-import com.aoindustries.aoserv.client.LinuxGroupAccount;
-import com.aoindustries.aoserv.client.LinuxGroupType;
-import com.aoindustries.aoserv.client.LinuxServerAccount;
-import com.aoindustries.aoserv.client.LinuxServerGroup;
-import com.aoindustries.aoserv.client.MajordomoList;
-import com.aoindustries.aoserv.client.MajordomoServer;
-import com.aoindustries.aoserv.client.MajordomoVersion;
-import com.aoindustries.aoserv.client.MasterHost;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.MonthlyCharge;
-import com.aoindustries.aoserv.client.MySQLDBUser;
-import com.aoindustries.aoserv.client.MySQLDatabase;
-import com.aoindustries.aoserv.client.MySQLServer;
-import com.aoindustries.aoserv.client.MySQLServerUser;
-import com.aoindustries.aoserv.client.MySQLUser;
-import com.aoindustries.aoserv.client.NetBind;
-import com.aoindustries.aoserv.client.NetBindFirewalldZone;
-import com.aoindustries.aoserv.client.NetDevice;
-import com.aoindustries.aoserv.client.NetDeviceID;
-import com.aoindustries.aoserv.client.NetTcpRedirect;
-import com.aoindustries.aoserv.client.NoticeLog;
-import com.aoindustries.aoserv.client.NoticeType;
-import com.aoindustries.aoserv.client.OperatingSystem;
-import com.aoindustries.aoserv.client.OperatingSystemVersion;
-import com.aoindustries.aoserv.client.Package;
-import com.aoindustries.aoserv.client.PackageCategory;
-import com.aoindustries.aoserv.client.PackageDefinition;
-import com.aoindustries.aoserv.client.PackageDefinitionLimit;
-import com.aoindustries.aoserv.client.PaymentType;
-import com.aoindustries.aoserv.client.PhysicalServer;
-import com.aoindustries.aoserv.client.PostgresDatabase;
-import com.aoindustries.aoserv.client.PostgresEncoding;
-import com.aoindustries.aoserv.client.PostgresServer;
-import com.aoindustries.aoserv.client.PostgresServerUser;
-import com.aoindustries.aoserv.client.PostgresUser;
-import com.aoindustries.aoserv.client.PostgresVersion;
-import com.aoindustries.aoserv.client.PrivateFTPServer;
-import com.aoindustries.aoserv.client.ProcessorType;
-import com.aoindustries.aoserv.client.Protocol;
-import com.aoindustries.aoserv.client.Rack;
-import com.aoindustries.aoserv.client.Reseller;
-import com.aoindustries.aoserv.client.Resource;
-import com.aoindustries.aoserv.client.SchemaColumn;
-import com.aoindustries.aoserv.client.SchemaForeignKey;
-import com.aoindustries.aoserv.client.SchemaTable;
-import com.aoindustries.aoserv.client.SchemaType;
-import com.aoindustries.aoserv.client.SendmailBind;
-import com.aoindustries.aoserv.client.SendmailServer;
-import com.aoindustries.aoserv.client.Server;
-import com.aoindustries.aoserv.client.ServerFarm;
-import com.aoindustries.aoserv.client.Shell;
-import com.aoindustries.aoserv.client.SignupRequest;
-import com.aoindustries.aoserv.client.SignupRequestOption;
-import com.aoindustries.aoserv.client.SpamEmailMessage;
-import com.aoindustries.aoserv.client.SslCertificate;
-import com.aoindustries.aoserv.client.SslCertificateName;
-import com.aoindustries.aoserv.client.SslCertificateOtherUse;
-import com.aoindustries.aoserv.client.SystemEmailAlias;
-import com.aoindustries.aoserv.client.Technology;
-import com.aoindustries.aoserv.client.TechnologyClass;
-import com.aoindustries.aoserv.client.TechnologyName;
-import com.aoindustries.aoserv.client.TechnologyVersion;
-import com.aoindustries.aoserv.client.Ticket;
-import com.aoindustries.aoserv.client.TicketAction;
-import com.aoindustries.aoserv.client.TicketActionType;
-import com.aoindustries.aoserv.client.TicketAssignment;
-import com.aoindustries.aoserv.client.TicketBrandCategory;
-import com.aoindustries.aoserv.client.TicketCategory;
-import com.aoindustries.aoserv.client.TicketPriority;
-import com.aoindustries.aoserv.client.TicketStatus;
-import com.aoindustries.aoserv.client.TicketType;
-import com.aoindustries.aoserv.client.TimeZone;
-import com.aoindustries.aoserv.client.Transaction;
-import com.aoindustries.aoserv.client.TransactionType;
-import com.aoindustries.aoserv.client.USState;
-import com.aoindustries.aoserv.client.Username;
-import com.aoindustries.aoserv.client.VirtualDisk;
-import com.aoindustries.aoserv.client.VirtualServer;
-import com.aoindustries.aoserv.client.WhoisHistory;
+import com.aoindustries.aoserv.client.account.Business;
+import com.aoindustries.aoserv.client.account.BusinessAdministrator;
+import com.aoindustries.aoserv.client.account.BusinessProfile;
+import com.aoindustries.aoserv.client.account.BusinessServer;
+import com.aoindustries.aoserv.client.account.DisableLog;
+import com.aoindustries.aoserv.client.account.USState;
+import com.aoindustries.aoserv.client.account.Username;
+import com.aoindustries.aoserv.client.accounting.Bank;
+import com.aoindustries.aoserv.client.accounting.BankAccount;
+import com.aoindustries.aoserv.client.accounting.BankTransaction;
+import com.aoindustries.aoserv.client.accounting.BankTransactionType;
+import com.aoindustries.aoserv.client.accounting.ExpenseCategory;
+import com.aoindustries.aoserv.client.aosh.AOSHCommand;
+import com.aoindustries.aoserv.client.backup.BackupPartition;
+import com.aoindustries.aoserv.client.backup.BackupReport;
+import com.aoindustries.aoserv.client.backup.BackupRetention;
+import com.aoindustries.aoserv.client.backup.FailoverFileLog;
+import com.aoindustries.aoserv.client.backup.FailoverFileReplication;
+import com.aoindustries.aoserv.client.backup.FailoverFileSchedule;
+import com.aoindustries.aoserv.client.backup.FailoverMySQLReplication;
+import com.aoindustries.aoserv.client.backup.FileBackupSetting;
+import com.aoindustries.aoserv.client.billing.MonthlyCharge;
+import com.aoindustries.aoserv.client.billing.NoticeLog;
+import com.aoindustries.aoserv.client.billing.NoticeType;
+import com.aoindustries.aoserv.client.billing.Package;
+import com.aoindustries.aoserv.client.billing.PackageCategory;
+import com.aoindustries.aoserv.client.billing.PackageDefinition;
+import com.aoindustries.aoserv.client.billing.PackageDefinitionLimit;
+import com.aoindustries.aoserv.client.billing.Resource;
+import com.aoindustries.aoserv.client.billing.Transaction;
+import com.aoindustries.aoserv.client.billing.TransactionType;
+import com.aoindustries.aoserv.client.billing.WhoisHistory;
+import com.aoindustries.aoserv.client.distribution.Architecture;
+import com.aoindustries.aoserv.client.distribution.OperatingSystem;
+import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
+import com.aoindustries.aoserv.client.distribution.Technology;
+import com.aoindustries.aoserv.client.distribution.TechnologyClass;
+import com.aoindustries.aoserv.client.distribution.TechnologyName;
+import com.aoindustries.aoserv.client.distribution.TechnologyVersion;
+import com.aoindustries.aoserv.client.distribution.management.DistroFile;
+import com.aoindustries.aoserv.client.distribution.management.DistroFileType;
+import com.aoindustries.aoserv.client.distribution.management.DistroReportType;
+import com.aoindustries.aoserv.client.dns.DNSForbiddenZone;
+import com.aoindustries.aoserv.client.dns.DNSRecord;
+import com.aoindustries.aoserv.client.dns.DNSTLD;
+import com.aoindustries.aoserv.client.dns.DNSType;
+import com.aoindustries.aoserv.client.dns.DNSZone;
+import com.aoindustries.aoserv.client.email.BlackholeEmailAddress;
+import com.aoindustries.aoserv.client.email.CyrusImapdBind;
+import com.aoindustries.aoserv.client.email.CyrusImapdServer;
+import com.aoindustries.aoserv.client.email.EmailAddress;
+import com.aoindustries.aoserv.client.email.EmailAttachmentBlock;
+import com.aoindustries.aoserv.client.email.EmailAttachmentType;
+import com.aoindustries.aoserv.client.email.EmailDomain;
+import com.aoindustries.aoserv.client.email.EmailForwarding;
+import com.aoindustries.aoserv.client.email.EmailList;
+import com.aoindustries.aoserv.client.email.EmailListAddress;
+import com.aoindustries.aoserv.client.email.EmailPipe;
+import com.aoindustries.aoserv.client.email.EmailPipeAddress;
+import com.aoindustries.aoserv.client.email.EmailSmtpRelay;
+import com.aoindustries.aoserv.client.email.EmailSmtpRelayType;
+import com.aoindustries.aoserv.client.email.EmailSmtpSmartHost;
+import com.aoindustries.aoserv.client.email.EmailSmtpSmartHostDomain;
+import com.aoindustries.aoserv.client.email.EmailSpamAssassinIntegrationMode;
+import com.aoindustries.aoserv.client.email.LinuxAccAddress;
+import com.aoindustries.aoserv.client.email.MajordomoList;
+import com.aoindustries.aoserv.client.email.MajordomoServer;
+import com.aoindustries.aoserv.client.email.MajordomoVersion;
+import com.aoindustries.aoserv.client.email.SendmailBind;
+import com.aoindustries.aoserv.client.email.SendmailServer;
+import com.aoindustries.aoserv.client.email.SpamEmailMessage;
+import com.aoindustries.aoserv.client.email.SystemEmailAlias;
+import com.aoindustries.aoserv.client.ftp.FTPGuestUser;
+import com.aoindustries.aoserv.client.ftp.PrivateFTPServer;
+import com.aoindustries.aoserv.client.infrastructure.PhysicalServer;
+import com.aoindustries.aoserv.client.infrastructure.ProcessorType;
+import com.aoindustries.aoserv.client.infrastructure.Rack;
+import com.aoindustries.aoserv.client.infrastructure.ServerFarm;
+import com.aoindustries.aoserv.client.infrastructure.VirtualDisk;
+import com.aoindustries.aoserv.client.infrastructure.VirtualServer;
+import com.aoindustries.aoserv.client.linux.AOServer;
+import com.aoindustries.aoserv.client.linux.AOServerDaemonHost;
+import com.aoindustries.aoserv.client.linux.LinuxAccount;
+import com.aoindustries.aoserv.client.linux.LinuxAccountType;
+import com.aoindustries.aoserv.client.linux.LinuxGroup;
+import com.aoindustries.aoserv.client.linux.LinuxGroupAccount;
+import com.aoindustries.aoserv.client.linux.LinuxGroupType;
+import com.aoindustries.aoserv.client.linux.LinuxServerAccount;
+import com.aoindustries.aoserv.client.linux.LinuxServerGroup;
+import com.aoindustries.aoserv.client.linux.Shell;
+import com.aoindustries.aoserv.client.linux.TimeZone;
+import com.aoindustries.aoserv.client.master.AOServPermission;
+import com.aoindustries.aoserv.client.master.BusinessAdministratorPermission;
+import com.aoindustries.aoserv.client.master.MasterHost;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.mysql.MySQLDBUser;
+import com.aoindustries.aoserv.client.mysql.MySQLDatabase;
+import com.aoindustries.aoserv.client.mysql.MySQLServer;
+import com.aoindustries.aoserv.client.mysql.MySQLServerUser;
+import com.aoindustries.aoserv.client.mysql.MySQLUser;
+import com.aoindustries.aoserv.client.net.FirewalldZone;
+import com.aoindustries.aoserv.client.net.IPAddress;
+import com.aoindustries.aoserv.client.net.NetBind;
+import com.aoindustries.aoserv.client.net.NetBindFirewalldZone;
+import com.aoindustries.aoserv.client.net.NetDevice;
+import com.aoindustries.aoserv.client.net.NetDeviceID;
+import com.aoindustries.aoserv.client.net.NetTcpRedirect;
+import com.aoindustries.aoserv.client.net.Protocol;
+import com.aoindustries.aoserv.client.net.Server;
+import com.aoindustries.aoserv.client.net.monitoring.IpAddressMonitoring;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationLimiter;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationLimiterLimit;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationLimiterSet;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationSet;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationSetHost;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationSetNetwork;
+import com.aoindustries.aoserv.client.payment.CountryCode;
+import com.aoindustries.aoserv.client.payment.CreditCard;
+import com.aoindustries.aoserv.client.payment.CreditCardProcessor;
+import com.aoindustries.aoserv.client.payment.CreditCardTransaction;
+import com.aoindustries.aoserv.client.payment.PaymentType;
+import com.aoindustries.aoserv.client.pki.EncryptionKey;
+import com.aoindustries.aoserv.client.pki.SslCertificate;
+import com.aoindustries.aoserv.client.pki.SslCertificateName;
+import com.aoindustries.aoserv.client.pki.SslCertificateOtherUse;
+import com.aoindustries.aoserv.client.postgresql.PostgresDatabase;
+import com.aoindustries.aoserv.client.postgresql.PostgresEncoding;
+import com.aoindustries.aoserv.client.postgresql.PostgresServer;
+import com.aoindustries.aoserv.client.postgresql.PostgresServerUser;
+import com.aoindustries.aoserv.client.postgresql.PostgresUser;
+import com.aoindustries.aoserv.client.postgresql.PostgresVersion;
+import com.aoindustries.aoserv.client.reseller.Brand;
+import com.aoindustries.aoserv.client.reseller.Reseller;
+import com.aoindustries.aoserv.client.reseller.TicketBrandCategory;
+import com.aoindustries.aoserv.client.reseller.TicketCategory;
+import com.aoindustries.aoserv.client.schema.AOServProtocol;
+import com.aoindustries.aoserv.client.schema.SchemaColumn;
+import com.aoindustries.aoserv.client.schema.SchemaForeignKey;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.schema.SchemaType;
+import com.aoindustries.aoserv.client.scm.CvsRepository;
+import com.aoindustries.aoserv.client.signup.SignupRequest;
+import com.aoindustries.aoserv.client.signup.SignupRequestOption;
+import com.aoindustries.aoserv.client.ticket.Language;
+import com.aoindustries.aoserv.client.ticket.Ticket;
+import com.aoindustries.aoserv.client.ticket.TicketAction;
+import com.aoindustries.aoserv.client.ticket.TicketActionType;
+import com.aoindustries.aoserv.client.ticket.TicketAssignment;
+import com.aoindustries.aoserv.client.ticket.TicketPriority;
+import com.aoindustries.aoserv.client.ticket.TicketStatus;
+import com.aoindustries.aoserv.client.ticket.TicketType;
 import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.client.web.HttpdBind;
+import com.aoindustries.aoserv.client.web.HttpdServer;
+import com.aoindustries.aoserv.client.web.HttpdSite;
+import com.aoindustries.aoserv.client.web.HttpdSiteAuthenticatedLocation;
+import com.aoindustries.aoserv.client.web.HttpdSiteBind;
+import com.aoindustries.aoserv.client.web.HttpdSiteBindHeader;
+import com.aoindustries.aoserv.client.web.HttpdSiteBindRedirect;
+import com.aoindustries.aoserv.client.web.HttpdSiteURL;
+import com.aoindustries.aoserv.client.web.HttpdStaticSite;
+import com.aoindustries.aoserv.client.web.jboss.HttpdJBossSite;
+import com.aoindustries.aoserv.client.web.jboss.HttpdJBossVersion;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdJKCode;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdJKProtocol;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdSharedTomcat;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatContext;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatDataSource;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatParameter;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatSharedSite;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatSite;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatSiteJkMount;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatStdSite;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatVersion;
+import com.aoindustries.aoserv.client.web.tomcat.HttpdWorker;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataInputStream;
@@ -312,7 +312,7 @@ final public class TableHandler {
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
 		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-		com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
+		com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
 		switch(tableID) {
 			case BACKUP_REPORTS :
 			{
@@ -497,7 +497,7 @@ final public class TableHandler {
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
 		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-		com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
+		com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
 		switch(tableID) {
 			case DISTRO_FILES :
 				if(masterUser != null) {
@@ -544,7 +544,7 @@ final public class TableHandler {
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
 		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-		com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
+		com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
 
 		switch(tableID) {
 			case AO_SERVER_DAEMON_HOSTS :
@@ -609,6 +609,10 @@ final public class TableHandler {
 						+ "  monitoring_load_critical,\n"
 						+ "  \"uidMin\",\n"
 						+ "  \"gidMin\",\n"
+						+ "  \"uidMax\",\n"
+						+ "  \"gidMax\",\n"
+						+ "  \"lastUid\",\n"
+						+ "  \"lastGid\",\n"
 						+ "  sftp_umask\n"
 						+ "from\n"
 						+ "  linux.\"Server\""
@@ -640,6 +644,10 @@ final public class TableHandler {
 						+ "  ao2.monitoring_load_critical,\n"
 						+ "  ao2.\"uidMin\",\n"
 						+ "  ao2.\"gidMin\",\n"
+						+ "  ao2.\"uidMax\",\n"
+						+ "  ao2.\"gidMax\",\n"
+						+ "  ao2.\"lastUid\",\n"
+						+ "  ao2.\"lastGid\",\n"
 						+ "  ao2.sftp_umask\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
@@ -694,6 +702,10 @@ final public class TableHandler {
 					+ "  ao.monitoring_load_critical,\n"
 					+ "  ao.\"uidMin\",\n"
 					+ "  ao.\"gidMin\",\n"
+					+ "  ao.\"uidMax\",\n"
+					+ "  ao.\"gidMax\",\n"
+					+ "  ao.\"lastUid\",\n"
+					+ "  ao.\"lastGid\",\n"
 					+ "  ao.sftp_umask\n"
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
@@ -1909,7 +1921,7 @@ final public class TableHandler {
 					+ "  )\n"
 					+ "  and bu1.accounting=pk2.accounting\n"
 					+ "  and pk2.name=dz.package\n"
-					+ "  and dz.zone=dr.zone",
+					+ "  and dz.\"zone\"=dr.\"zone\"",
 					username
 				);
 				break;
@@ -5450,14 +5462,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new com.aoindustries.aoserv.client.MasterServer(),
+						new com.aoindustries.aoserv.client.master.MasterServer(),
 						"select * from master.\"UserHost\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new com.aoindustries.aoserv.client.MasterServer(),
+						new com.aoindustries.aoserv.client.master.MasterServer(),
 						"select\n"
 						+ "  ms2.*\n"
 						+ "from\n"
@@ -5473,7 +5485,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new com.aoindustries.aoserv.client.MasterServer(),
+					new com.aoindustries.aoserv.client.master.MasterServer(),
 					"select\n"
 					+ "  ms.*\n"
 					+ "from\n"
@@ -5804,10 +5816,10 @@ final public class TableHandler {
 						// Protocol conversion
 						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
 						+ "from\n"
-						+ "             master.\"UserHost\" ms\n"
-						+ "  INNER JOIN mysql.\"Server\"    ms ON ms.server=ms.ao_server\n"
+						+ "             master.\"UserHost\" uh\n"
+						+ "  INNER JOIN mysql.\"Server\"    ms ON uh.server=ms.ao_server\n"
 						+ "where\n"
-						+ "  ms.username=?",
+						+ "  uh.username=?",
 						username
 					);
 				} else MasterServer.writeObjects(

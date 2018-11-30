@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.AOServPermission;
-import com.aoindustries.aoserv.client.AOServer;
+import com.aoindustries.aoserv.client.linux.AOServer;
+import com.aoindustries.aoserv.client.master.AOServPermission;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
@@ -44,12 +44,12 @@ final public class VirtualServerHandler {
 	}
 	 */
 
-	public static int getVirtualServerForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
-		return conn.executeIntQuery("select virtual_server from infrastructure.\"VirtualDisk\" where id=?", virtualDisk);
+	public static int getVirtualServerForVirtualDisk(DatabaseConnection conn, int virtualDiskId) throws IOException, SQLException {
+		return conn.executeIntQuery("select virtual_server from infrastructure.\"VirtualDisk\" where id=?", virtualDiskId);
 	}
 
-	public static String getDeviceForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
-		return conn.executeStringQuery("select device from infrastructure.\"VirtualDisk\" where id=?", virtualDisk);
+	public static String getDeviceForVirtualDisk(DatabaseConnection conn, int virtualDiskId) throws IOException, SQLException {
+		return conn.executeStringQuery("select device from infrastructure.\"VirtualDisk\" where id=?", virtualDiskId);
 	}
 
 	public static AOServer.DaemonAccess requestVncConsoleDaemonAccess(

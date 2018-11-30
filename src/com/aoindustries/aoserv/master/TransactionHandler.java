@@ -5,12 +5,12 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.LinuxAccount;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.SchemaTable;
-import com.aoindustries.aoserv.client.Transaction;
-import com.aoindustries.aoserv.client.TransactionSearchCriteria;
-import com.aoindustries.aoserv.client.TransactionType;
+import com.aoindustries.aoserv.client.billing.Transaction;
+import com.aoindustries.aoserv.client.billing.TransactionSearchCriteria;
+import com.aoindustries.aoserv.client.billing.TransactionType;
+import com.aoindustries.aoserv.client.linux.LinuxAccount;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -266,7 +266,7 @@ final public class TransactionHandler {
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-        com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
+        com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
         if(masterUser!=null) {
             if(masterServers.length==0) MasterServer.writeObjects(
                 conn,
@@ -335,7 +335,7 @@ final public class TransactionHandler {
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-        com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
+        com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
         StringBuilder sql;
 		final List<Object> params = new ArrayList<>();
         boolean whereDone;

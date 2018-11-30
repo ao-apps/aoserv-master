@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.SslCertificate;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.pki.SslCertificate;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
@@ -51,12 +51,12 @@ final public class SslCertificateHandler {
 	public static List<SslCertificate.Check> check(
 		DatabaseConnection conn,
 		RequestSource source,
-		int sslCertificate
+		int certificate
 	) throws IOException, SQLException {
 		// Check access
-		checkAccessCertificate(conn, source, "check", sslCertificate);
+		checkAccessCertificate(conn, source, "check", certificate);
 		return DaemonHandler.getDaemonConnector(conn,
-			getLinuxServerForCertificate(conn, sslCertificate)
-		).checkSslCertificate(sslCertificate);
+			getLinuxServerForCertificate(conn, certificate)
+		).checkSslCertificate(certificate);
 	}
 }

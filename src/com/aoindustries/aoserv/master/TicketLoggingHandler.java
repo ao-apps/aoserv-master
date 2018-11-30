@@ -5,10 +5,10 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.Language;
-import com.aoindustries.aoserv.client.TicketPriority;
-import com.aoindustries.aoserv.client.TicketStatus;
-import com.aoindustries.aoserv.client.TicketType;
+import com.aoindustries.aoserv.client.ticket.Language;
+import com.aoindustries.aoserv.client.ticket.TicketPriority;
+import com.aoindustries.aoserv.client.ticket.TicketStatus;
+import com.aoindustries.aoserv.client.ticket.TicketType;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.ErrorPrinter;
@@ -123,7 +123,7 @@ final public class TicketLoggingHandler extends QueuedHandler {
 							invalidateList,
 							existingTicket,
 							null,
-							com.aoindustries.aoserv.client.TicketLoggingHandler.generateActionSummary(formatter, record),
+							com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.generateActionSummary(formatter, record),
 							fullReport
 						);
 					} else {

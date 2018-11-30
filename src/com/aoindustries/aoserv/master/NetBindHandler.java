@@ -5,11 +5,11 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.AOServProtocol;
-import com.aoindustries.aoserv.client.FirewalldZone;
-import com.aoindustries.aoserv.client.IPAddress;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.net.FirewalldZone;
+import com.aoindustries.aoserv.client.net.IPAddress;
+import com.aoindustries.aoserv.client.schema.AOServProtocol;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.FirewalldZoneName;
 import com.aoindustries.dbc.DatabaseConnection;

@@ -5,12 +5,12 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.AOServPermission;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.SchemaTable;
-import com.aoindustries.aoserv.client.TicketActionType;
-import com.aoindustries.aoserv.client.TicketStatus;
-import com.aoindustries.aoserv.client.TicketType;
+import com.aoindustries.aoserv.client.master.AOServPermission;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.ticket.TicketActionType;
+import com.aoindustries.aoserv.client.ticket.TicketStatus;
+import com.aoindustries.aoserv.client.ticket.TicketType;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.cron.CronDaemon;

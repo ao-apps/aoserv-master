@@ -1,12 +1,12 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.MasterProcess;
-import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.master.MasterProcess;
+import com.aoindustries.aoserv.client.master.MasterUser;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
@@ -71,7 +71,7 @@ final public class MasterProcessManager {
         boolean provideProgress,
         RequestSource source,
         MasterUser masterUser,
-        com.aoindustries.aoserv.client.MasterServer[] masterServers
+        com.aoindustries.aoserv.client.master.MasterServer[] masterServers
     ) throws IOException, SQLException {
         List<MasterProcess> processesCopy=new ArrayList<>(processes.size());
         synchronized(MasterProcessManager.class) {

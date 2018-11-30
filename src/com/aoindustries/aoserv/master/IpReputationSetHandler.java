@@ -5,11 +5,11 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.IpReputationSet;
-import com.aoindustries.aoserv.client.IpReputationSetHost;
-import com.aoindustries.aoserv.client.IpReputationSetNetwork;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationSet;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationSetHost;
+import com.aoindustries.aoserv.client.net.reputation.IpReputationSetNetwork;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -421,7 +421,7 @@ final public class IpReputationSetHandler {
                 MasterUser mu = entry.getValue();
                 if(mu.isRouter()) {
                     // TODO: Filter isRouter users by server_farm
-                    for(com.aoindustries.aoserv.client.MasterServer ms : MasterServer.getMasterServers(conn, username)) {
+                    for(com.aoindustries.aoserv.client.master.MasterServer ms : MasterServer.getMasterServers(conn, username)) {
                         if(hostsUpdated) {
                             invalidateList.addTable(
                                 conn,

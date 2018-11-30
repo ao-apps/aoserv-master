@@ -5,9 +5,9 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.OperatingSystemVersion;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseAccess;
@@ -205,9 +205,9 @@ final public class ServerHandler {
 				SV=new SortedIntArrayList();
 					MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
 					if(mu!=null) {
-						com.aoindustries.aoserv.client.MasterServer[] masterServers = MasterServer.getMasterServers(conn, source.getUsername());
+						com.aoindustries.aoserv.client.master.MasterServer[] masterServers = MasterServer.getMasterServers(conn, source.getUsername());
 						if(masterServers.length!=0) {
-							for(com.aoindustries.aoserv.client.MasterServer masterServer : masterServers) {
+							for(com.aoindustries.aoserv.client.master.MasterServer masterServer : masterServers) {
 								SV.add(masterServer.getServerPKey());
 							}
 						} else {

@@ -5,13 +5,13 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.AOServPermission;
-import com.aoindustries.aoserv.client.AOServProtocol;
-import com.aoindustries.aoserv.client.LinuxAccount;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.PasswordChecker;
-import com.aoindustries.aoserv.client.PostgresUser;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.linux.LinuxAccount;
+import com.aoindustries.aoserv.client.master.AOServPermission;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.password.PasswordChecker;
+import com.aoindustries.aoserv.client.postgresql.PostgresUser;
+import com.aoindustries.aoserv.client.schema.AOServProtocol;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.PostgresDatabaseName;
 import com.aoindustries.aoserv.client.validator.PostgresServerName;

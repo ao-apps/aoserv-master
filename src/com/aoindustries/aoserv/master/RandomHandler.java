@@ -1,12 +1,12 @@
 /*
- * Copyright 2004-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2004-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOServConnector;
-import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.master.MasterUser;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.FifoFile;
@@ -39,10 +39,10 @@ public final class RandomHandler {
 		UserId mustring=source.getUsername();
 		MasterUser mu = MasterServer.getMasterUser(conn, mustring);
 		if (mu!=null) {
-			com.aoindustries.aoserv.client.MasterServer[] masterServers=MasterServer.getMasterServers(conn, mustring);
+			com.aoindustries.aoserv.client.master.MasterServer[] masterServers=MasterServer.getMasterServers(conn, mustring);
 			if(masterServers.length==0) isAllowed=true;
 			else {
-				for (com.aoindustries.aoserv.client.MasterServer masterServer : masterServers) {
+				for (com.aoindustries.aoserv.client.master.MasterServer masterServer : masterServers) {
 					if (ServerHandler.isAOServer(conn, masterServer.getServerPKey())) {
 						isAllowed=true;
 						break;

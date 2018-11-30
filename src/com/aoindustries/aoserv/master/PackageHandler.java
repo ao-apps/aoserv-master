@@ -5,10 +5,10 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.Package;
-import com.aoindustries.aoserv.client.Resource;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.billing.Package;
+import com.aoindustries.aoserv.client.billing.Resource;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseAccess;
@@ -546,7 +546,7 @@ final public class PackageHandler {
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-        com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
+        com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
         if(masterUser!=null) {
             if(masterServers.length==0) return conn.executeStringListQuery("select name from billing.\"Package\"");
             else return conn.executeStringListQuery(
@@ -589,7 +589,7 @@ final public class PackageHandler {
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
         MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-        com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
+        com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
         if(masterUser!=null) {
             if(masterServers.length==0) return conn.executeIntListQuery("select id from billing.\"Package\"");
             else return conn.executeIntListQuery(

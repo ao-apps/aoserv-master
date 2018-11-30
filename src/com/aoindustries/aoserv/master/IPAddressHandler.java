@@ -5,11 +5,11 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.DNSZone;
-import com.aoindustries.aoserv.client.IPAddress;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.NetDeviceID;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.dns.DNSZone;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.net.IPAddress;
+import com.aoindustries.aoserv.client.net.NetDeviceID;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.NotImplementedException;
