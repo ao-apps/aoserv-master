@@ -5,9 +5,9 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.BackupReport;
-import com.aoindustries.aoserv.client.Business;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.account.Business;
+import com.aoindustries.aoserv.client.backup.BackupReport;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.GroupId;
 import com.aoindustries.aoserv.client.validator.MySQLUserId;

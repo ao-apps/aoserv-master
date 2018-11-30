@@ -5,10 +5,10 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.AOServPermission;
-import com.aoindustries.aoserv.client.PaymentType;
-import com.aoindustries.aoserv.client.SchemaTable;
-import com.aoindustries.aoserv.client.TransactionType;
+import com.aoindustries.aoserv.client.billing.TransactionType;
+import com.aoindustries.aoserv.client.master.AOServPermission;
+import com.aoindustries.aoserv.client.payment.PaymentType;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.creditcards.AuthorizationResult;
@@ -1485,7 +1485,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                                 paymentTypeName,
                                 cardInfo,
                                 automaticPayment.ccpProviderId,
-                                com.aoindustries.aoserv.client.Transaction.WAITING_CONFIRMATION
+                                com.aoindustries.aoserv.client.billing.Transaction.WAITING_CONFIRMATION
                             );
                             conn.commit();
 

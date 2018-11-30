@@ -5,10 +5,10 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.CvsRepository;
-import com.aoindustries.aoserv.client.LinuxAccountType;
-import com.aoindustries.aoserv.client.OperatingSystemVersion;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
+import com.aoindustries.aoserv.client.linux.LinuxAccountType;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.scm.CvsRepository;
 import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.IntList;

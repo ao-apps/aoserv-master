@@ -5,13 +5,13 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.DNSRecord;
-import com.aoindustries.aoserv.client.DNSType;
-import com.aoindustries.aoserv.client.DNSZone;
-import com.aoindustries.aoserv.client.DNSZoneTable;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.Protocol;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.dns.DNSRecord;
+import com.aoindustries.aoserv.client.dns.DNSType;
+import com.aoindustries.aoserv.client.dns.DNSZone;
+import com.aoindustries.aoserv.client.dns.DNSZoneTable;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.net.Protocol;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;

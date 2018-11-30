@@ -5,18 +5,18 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.EmailList;
-import com.aoindustries.aoserv.client.EmailSmtpRelay;
-import com.aoindustries.aoserv.client.InboxAttributes;
-import com.aoindustries.aoserv.client.LinuxAccount;
-import com.aoindustries.aoserv.client.LinuxAccountType;
-import com.aoindustries.aoserv.client.LinuxGroup;
-import com.aoindustries.aoserv.client.LinuxGroupType;
-import com.aoindustries.aoserv.client.MajordomoList;
-import com.aoindustries.aoserv.client.MajordomoServer;
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.SchemaTable;
-import com.aoindustries.aoserv.client.SpamEmailMessage;
+import com.aoindustries.aoserv.client.email.EmailList;
+import com.aoindustries.aoserv.client.email.EmailSmtpRelay;
+import com.aoindustries.aoserv.client.email.InboxAttributes;
+import com.aoindustries.aoserv.client.email.MajordomoList;
+import com.aoindustries.aoserv.client.email.MajordomoServer;
+import com.aoindustries.aoserv.client.email.SpamEmailMessage;
+import com.aoindustries.aoserv.client.linux.LinuxAccount;
+import com.aoindustries.aoserv.client.linux.LinuxAccountType;
+import com.aoindustries.aoserv.client.linux.LinuxGroup;
+import com.aoindustries.aoserv.client.linux.LinuxGroupType;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.GroupId;
 import com.aoindustries.aoserv.client.validator.UnixPath;
@@ -594,7 +594,7 @@ final public class EmailHandler {
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
 		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-		com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
+		com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
 		if(masterUser==null || masterServers.length!=0) throw new SQLException("Only master users may add spam email messages.");
 
 		int id = conn.executeIntUpdate(
@@ -1181,7 +1181,7 @@ final public class EmailHandler {
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
 		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-		com.aoindustries.aoserv.client.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
+		com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
 		if(masterUser!=null && masterServers.length==0) MasterServer.writeObjects(
 			conn,
 			source,

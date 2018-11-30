@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.BankTransaction;
-import com.aoindustries.aoserv.client.MasterUser;
+import com.aoindustries.aoserv.client.accounting.BankTransaction;
+import com.aoindustries.aoserv.client.master.MasterUser;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import java.io.IOException;
