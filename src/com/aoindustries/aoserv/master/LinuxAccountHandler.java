@@ -6,25 +6,24 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
-import com.aoindustries.aoserv.client.email.EmailSpamAssassinIntegrationMode;
-import com.aoindustries.aoserv.client.linux.LinuxAccount;
-import com.aoindustries.aoserv.client.linux.LinuxAccountType;
-import com.aoindustries.aoserv.client.linux.LinuxGroup;
-import com.aoindustries.aoserv.client.linux.LinuxGroupAccount;
-import com.aoindustries.aoserv.client.linux.LinuxServerAccount;
+import com.aoindustries.aoserv.client.email.SpamAssassinMode;
+import com.aoindustries.aoserv.client.linux.Group;
+import com.aoindustries.aoserv.client.linux.GroupUser;
 import com.aoindustries.aoserv.client.linux.Shell;
-import com.aoindustries.aoserv.client.master.AOServPermission;
-import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.linux.User;
+import com.aoindustries.aoserv.client.linux.UserServer;
+import com.aoindustries.aoserv.client.linux.UserType;
+import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.password.PasswordChecker;
-import com.aoindustries.aoserv.client.schema.AOServProtocol;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.schema.AoservProtocol;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.Gecos;
 import com.aoindustries.aoserv.client.validator.GroupId;
 import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.client.web.HttpdSite;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdSharedTomcat;
+import com.aoindustries.aoserv.client.web.Site;
+import com.aoindustries.aoserv.client.web.tomcat.SharedTomcat;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.util.IntList;
@@ -67,9 +66,9 @@ final public class LinuxAccountHandler {
 	private final static Map<Integer,Boolean> disabledLinuxServerAccounts=new HashMap<>();
 
 	public static void checkAccessLinuxAccount(DatabaseConnection conn, RequestSource source, String action, UserId username) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 				IntList lsas = getLinuxServerAccountsForLinuxAccount(conn, username);
 				boolean found = false;
 				for(Integer lsa : lsas) {
@@ -96,9 +95,9 @@ final public class LinuxAccountHandler {
 	}
 
 	public static void checkAccessLinuxGroup(DatabaseConnection conn, RequestSource source, String action, GroupId name) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 				IntList lsgs = getLinuxServerGroupsForLinuxGroup(conn, name);
 				boolean found = false;
 				for(int lsg : lsgs) {
@@ -130,9 +129,9 @@ final public class LinuxAccountHandler {
 	}
 
 	public static boolean canAccessLinuxServerAccount(DatabaseConnection conn, RequestSource source, int account) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 				return ServerHandler.canAccessServer(conn, source, getAOServerForLinuxServerAccount(conn, account));
 			} else return true;
 		} else {
@@ -192,14 +191,14 @@ final public class LinuxAccountHandler {
 		UnixPath shell,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to add User named '"+User.MAIL+'\'');
 
 		// Make sure the shell is allowed for the type of account being added
-		if(!LinuxAccountType.isAllowedShell(type, shell)) throw new SQLException("shell='"+shell+"' not allowed for type='"+type+'\'');
+		if(!UserType.isAllowedShell(type, shell)) throw new SQLException("shell='"+shell+"' not allowed for type='"+type+'\'');
 
 		if(!skipSecurityChecks) {
 			UsernameHandler.checkAccessUsername(conn, source, "addLinuxAccount", username);
-			if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add LinuxAccount, Username disabled: "+username);
+			if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add User, Username disabled: "+username);
 		}
 
 		conn.executeUpdate(
@@ -215,7 +214,7 @@ final public class LinuxAccountHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_ACCOUNTS,
+			Table.TableID.LINUX_ACCOUNTS,
 			UsernameHandler.getBusinessForUsername(conn, username),
 			InvalidateList.allServers,
 			false
@@ -243,20 +242,20 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		if(!skipSecurityChecks) {
 			PackageHandler.checkAccessPackage(conn, source, "addLinuxGroup", packageName);
-			if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add LinuxGroup, Package disabled: "+packageName);
+			if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add Group, Package disabled: "+packageName);
 		}
 		if (
-			groupName.equals(LinuxGroup.FTPONLY)
-			|| groupName.equals(LinuxGroup.MAIL)
-			|| groupName.equals(LinuxGroup.MAILONLY)
-		) throw new SQLException("Not allowed to add LinuxGroup: "+groupName);
+			groupName.equals(Group.FTPONLY)
+			|| groupName.equals(Group.MAIL)
+			|| groupName.equals(Group.MAILONLY)
+		) throw new SQLException("Not allowed to add Group: "+groupName);
 
 		conn.executeUpdate("insert into linux.\"Group\" values(?,?,?)", groupName, packageName, type);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_GROUPS,
+			Table.TableID.LINUX_GROUPS,
 			PackageHandler.getBusinessForPackage(conn, packageName),
 			InvalidateList.allServers,
 			false
@@ -272,30 +271,30 @@ final public class LinuxAccountHandler {
 		boolean isPrimary,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
-		if(groupName.equals(LinuxGroup.MAIL)) throw new SQLException("Not allowed to add LinuxGroupUser for group '"+LinuxGroup.MAIL+'\'');
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add LinuxGroupUser for user '"+LinuxAccount.MAIL+'\'');
+		if(groupName.equals(Group.MAIL)) throw new SQLException("Not allowed to add LinuxGroupUser for group '"+Group.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to add LinuxGroupUser for user '"+User.MAIL+'\'');
 		if(!skipSecurityChecks) {
 			if(
-				!groupName.equals(LinuxGroup.FTPONLY)
-				&& !groupName.equals(LinuxGroup.MAILONLY)
+				!groupName.equals(Group.FTPONLY)
+				&& !groupName.equals(Group.MAILONLY)
 			) checkAccessLinuxGroup(conn, source, "addLinuxGroupAccount", groupName);
 			checkAccessLinuxAccount(conn, source, "addLinuxGroupAccount", username);
-			if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to add LinuxGroupUser, LinuxAccount disabled: "+username);
+			if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to add LinuxGroupUser, User disabled: "+username);
 		}
-		if(groupName.equals(LinuxGroup.FTPONLY)) {
+		if(groupName.equals(Group.FTPONLY)) {
 			// Only allowed to have ftponly group when it is a ftponly account
 			String type=getTypeForLinuxAccount(conn, username);
-			if(!type.equals(LinuxAccountType.FTPONLY)) throw new SQLException("Not allowed to add LinuxGroupUser for group '"+LinuxGroup.FTPONLY+"' on non-ftp-only-type LinuxAccount named "+username);
+			if(!type.equals(UserType.FTPONLY)) throw new SQLException("Not allowed to add LinuxGroupUser for group '"+Group.FTPONLY+"' on non-ftp-only-type User named "+username);
 		}
-		if(groupName.equals(LinuxGroup.MAILONLY)) {
+		if(groupName.equals(Group.MAILONLY)) {
 			// Only allowed to have mail group when it is a "mailonly" account
 			String type=getTypeForLinuxAccount(conn, username);
-			if(!type.equals(LinuxAccountType.EMAIL)) throw new SQLException("Not allowed to add LinuxGroupUser for group '"+LinuxGroup.MAILONLY+"' on non-email-type LinuxAccount named "+username);
+			if(!type.equals(UserType.EMAIL)) throw new SQLException("Not allowed to add LinuxGroupUser for group '"+Group.MAILONLY+"' on non-email-type User named "+username);
 		}
 
 		// Do not allow more than 31 groups per account
 		int count=conn.executeIntQuery("select count(*) from linux.\"GroupUser\" where \"user\"=?", username);
-		if(count>=LinuxGroupAccount.MAX_GROUPS) throw new SQLException("Only "+LinuxGroupAccount.MAX_GROUPS+" groups are allowed per user, username="+username+" already has access to "+count+" groups");
+		if(count >= GroupUser.MAX_GROUPS) throw new SQLException("Only "+GroupUser.MAX_GROUPS+" groups are allowed per user, username="+username+" already has access to "+count+" groups");
 
 		int id = conn.executeIntUpdate(
 			"INSERT INTO linux.\"GroupUser\" VALUES (default,?,?,?,null) RETURNING id",
@@ -307,7 +306,7 @@ final public class LinuxAccountHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_GROUP_ACCOUNTS,
+			Table.TableID.LINUX_GROUP_ACCOUNTS,
 			InvalidateList.getCollection(
 				UsernameHandler.getBusinessForUsername(conn, username),
 				getBusinessForLinuxGroup(conn, groupName)
@@ -327,12 +326,12 @@ final public class LinuxAccountHandler {
 		UnixPath home,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
-		if(username.equals(LinuxAccount.MAIL)) {
-			throw new SQLException("Not allowed to add LinuxServerAccount for user '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) {
+			throw new SQLException("Not allowed to add UserServer for user '"+User.MAIL+'\'');
 		}
 		if(!skipSecurityChecks) {
 			checkAccessLinuxAccount(conn, source, "addLinuxServerAccount", username);
-			if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to add LinuxServerAccount, LinuxAccount disabled: "+username);
+			if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to add UserServer, User disabled: "+username);
 			ServerHandler.checkAccessServer(conn, source, "addLinuxServerAccount", aoServer);
 			UsernameHandler.checkUsernameAccessServer(conn, source, "addLinuxServerAccount", username, aoServer);
 		}
@@ -343,7 +342,7 @@ final public class LinuxAccountHandler {
 		UnixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
 		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 
-		if(home.equals(LinuxServerAccount.getDefaultHomeDirectory(username))) {
+		if(home.equals(UserServer.getDefaultHomeDirectory(username))) {
 			// Make sure no conflicting /home/u/username account exists.
 			String prefix = home + "/";
 			List<String> conflicting = conn.executeStringListQuery(
@@ -352,7 +351,7 @@ final public class LinuxAccountHandler {
 				prefix
 			);
 			if(!conflicting.isEmpty()) throw new SQLException("Found conflicting home directories: " + conflicting);
-		} else if(home.equals(LinuxServerAccount.getHashedHomeDirectory(username))) {
+		} else if(home.equals(UserServer.getHashedHomeDirectory(username))) {
 			// Make sure no conflicting /home/u account exists.
 			String conflictHome = "/home/" + username.toString().charAt(0);
 			if(
@@ -388,7 +387,7 @@ final public class LinuxAccountHandler {
 					}
 				} else {
 					// Must be a valid site name
-					if(!HttpdSite.isValidSiteName(siteName)) {
+					if(!Site.isValidSiteName(siteName)) {
 						throw new SQLException("Invalid site name for www home directory: " + home);
 					}
 				}
@@ -409,7 +408,7 @@ final public class LinuxAccountHandler {
 					}
 				} else {
 					// Must be a valid tomcat name
-					if(!HttpdSharedTomcat.isValidSharedTomcatName(tomcatName)) {
+					if(!SharedTomcat.isValidSharedTomcatName(tomcatName)) {
 						throw new SQLException("Invalid shared tomcat name for wwwgroup home directory: " + home);
 					}
 				}
@@ -419,7 +418,7 @@ final public class LinuxAccountHandler {
 		// The primary group for this user must exist on this server
 		GroupId primaryGroup=getPrimaryLinuxGroup(conn, username, osv);
 		int primaryLSG=getLinuxServerGroup(conn, primaryGroup, aoServer);
-		if(primaryLSG<0) throw new SQLException("Unable to find primary Linux group '"+primaryGroup+"' on AOServer #"+aoServer+" for Linux account '"+username+"'");
+		if(primaryLSG<0) throw new SQLException("Unable to find primary Linux group '"+primaryGroup+"' on Server #"+aoServer+" for Linux account '"+username+"'");
 
 		// Now allocating unique to entire system for server portability between farms
 		//String farm=ServerHandler.getFarmForServer(conn, aoServer);
@@ -440,30 +439,30 @@ final public class LinuxAccountHandler {
 			+ "  null,\n"
 			+ "  now(),\n"
 			+ "  true,\n"
-			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "null::int" : Integer.toString(LinuxServerAccount.DEFAULT_TRASH_EMAIL_RETENTION)) + ",\n"
-			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "null::int" : Integer.toString(LinuxServerAccount.DEFAULT_JUNK_EMAIL_RETENTION)) + ",\n"
+			+ "  " + (username.equals(User.EMAILMON) ? "null::int" : Integer.toString(UserServer.DEFAULT_TRASH_EMAIL_RETENTION)) + ",\n"
+			+ "  " + (username.equals(User.EMAILMON) ? "null::int" : Integer.toString(UserServer.DEFAULT_JUNK_EMAIL_RETENTION)) + ",\n"
 			+ "  ?,\n"
-			+ "  " + LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE + ",\n"
-			+ "  " + (username.equals(LinuxAccount.EMAILMON) ? "null::int" : Integer.toString(LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_DISCARD_SCORE)) + ",\n"
+			+ "  " + UserServer.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE + ",\n"
+			+ "  " + (username.equals(User.EMAILMON) ? "null::int" : Integer.toString(UserServer.DEFAULT_SPAM_ASSASSIN_DISCARD_SCORE)) + ",\n"
 			+ "  null\n" // sudo
 			+ ") RETURNING id",
 			username,
 			aoServer,
 			aoServer,
 			home,
-			EmailSpamAssassinIntegrationMode.DEFAULT_SPAMASSASSIN_INTEGRATION_MODE
+			SpamAssassinMode.DEFAULT_SPAMASSASSIN_INTEGRATION_MODE
 		);
 		// Notify all clients of the update
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+			Table.TableID.LINUX_SERVER_ACCOUNTS,
 			accounting,
 			aoServer,
 			true
 		);
 		// If it is a email type, add the default attachment blocks
-		if(!username.equals(LinuxAccount.EMAILMON) && isLinuxAccountEmailType(conn, username)) {
+		if(!username.equals(User.EMAILMON) && isLinuxAccountEmailType(conn, username)) {
 			conn.executeUpdate(
 				"insert into email.\"AttachmentBlock\" (\n"
 				+ "  linux_server_account,\n"
@@ -479,7 +478,7 @@ final public class LinuxAccountHandler {
 			);
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.EMAIL_ATTACHMENT_BLOCKS,
+				Table.TableID.EMAIL_ATTACHMENT_BLOCKS,
 				accounting,
 				aoServer,
 				false
@@ -497,10 +496,10 @@ final public class LinuxAccountHandler {
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
 		if(
-			groupName.equals(LinuxGroup.FTPONLY)
-			|| groupName.equals(LinuxGroup.MAIL)
-			|| groupName.equals(LinuxGroup.MAILONLY)
-		) throw new SQLException("Not allowed to add LinuxServerGroup for group '"+groupName+'\'');
+			groupName.equals(Group.FTPONLY)
+			|| groupName.equals(Group.MAIL)
+			|| groupName.equals(Group.MAILONLY)
+		) throw new SQLException("Not allowed to add GroupServer for group '"+groupName+'\'');
 		AccountingCode accounting = getBusinessForLinuxGroup(conn, groupName);
 		if(!skipSecurityChecks) {
 			checkAccessLinuxGroup(conn, source, "addLinuxServerGroup", groupName);
@@ -529,7 +528,7 @@ final public class LinuxAccountHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_SERVER_GROUPS,
+			Table.TableID.LINUX_SERVER_GROUPS,
 			accounting,
 			aoServer,
 			true
@@ -586,7 +585,7 @@ final public class LinuxAccountHandler {
 		int gid
 	) throws IOException, SQLException {
 		// This must be a master user with access to the server
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu == null) throw new SQLException("Not a master user: " + source.getUsername());
 		ServerHandler.checkAccessServer(conn, source, "addSystemGroup", aoServer);
 		// The group ID must be in the system group range
@@ -604,81 +603,81 @@ final public class LinuxAccountHandler {
 			osv == OperatingSystemVersion.CENTOS_7_X86_64
 			&& (
 				// Fixed group ids
-				   (groupName.equals(LinuxGroup.ROOT)            && gid == 0)
-				|| (groupName.equals(LinuxGroup.BIN)             && gid == 1)
-				|| (groupName.equals(LinuxGroup.DAEMON)          && gid == 2)
-				|| (groupName.equals(LinuxGroup.SYS)             && gid == 3)
-				|| (groupName.equals(LinuxGroup.ADM)             && gid == 4)
-				|| (groupName.equals(LinuxGroup.TTY)             && gid == 5)
-				|| (groupName.equals(LinuxGroup.DISK)            && gid == 6)
-				|| (groupName.equals(LinuxGroup.LP)              && gid == 7)
-				|| (groupName.equals(LinuxGroup.MEM)             && gid == 8)
-				|| (groupName.equals(LinuxGroup.KMEM)            && gid == 9)
-				|| (groupName.equals(LinuxGroup.WHEEL)           && gid == 10)
-				|| (groupName.equals(LinuxGroup.CDROM)           && gid == 11)
-				|| (groupName.equals(LinuxGroup.MAIL)            && gid == 12)
-				|| (groupName.equals(LinuxGroup.MAN)             && gid == 15)
-				|| (groupName.equals(LinuxGroup.DIALOUT)         && gid == 18)
-				|| (groupName.equals(LinuxGroup.FLOPPY)          && gid == 19)
-				|| (groupName.equals(LinuxGroup.GAMES)           && gid == 20)
-				|| (groupName.equals(LinuxGroup.UTMP)            && gid == 22)
-				|| (groupName.equals(LinuxGroup.NAMED)           && gid == 25)
-				|| (groupName.equals(LinuxGroup.POSTGRES)        && gid == 26)
-				|| (groupName.equals(LinuxGroup.RPCUSER)         && gid == 29)
-				|| (groupName.equals(LinuxGroup.MYSQL)           && gid == 31)
-				|| (groupName.equals(LinuxGroup.RPC)             && gid == 32)
-				|| (groupName.equals(LinuxGroup.TAPE)            && gid == 33)
-				|| (groupName.equals(LinuxGroup.UTEMPTER)        && gid == 35)
-				|| (groupName.equals(LinuxGroup.VIDEO)           && gid == 39)
-				|| (groupName.equals(LinuxGroup.DIP)             && gid == 40)
-				|| (groupName.equals(LinuxGroup.MAILNULL)        && gid == 47)
-				|| (groupName.equals(LinuxGroup.APACHE)          && gid == 48)
-				|| (groupName.equals(LinuxGroup.FTP)             && gid == 50)
-				|| (groupName.equals(LinuxGroup.SMMSP)           && gid == 51)
-				|| (groupName.equals(LinuxGroup.LOCK)            && gid == 54)
-				|| (groupName.equals(LinuxGroup.TSS)             && gid == 59)
-				|| (groupName.equals(LinuxGroup.AUDIO)           && gid == 63)
-				|| (groupName.equals(LinuxGroup.TCPDUMP)         && gid == 72)
-				|| (groupName.equals(LinuxGroup.SSHD)            && gid == 74)
-				|| (groupName.equals(LinuxGroup.SASLAUTH)        && gid == 76)
-				|| (groupName.equals(LinuxGroup.AWSTATS)         && gid == 78)
-				|| (groupName.equals(LinuxGroup.DBUS)            && gid == 81)
-				|| (groupName.equals(LinuxGroup.MAILONLY)        && gid == 83)
-				|| (groupName.equals(LinuxGroup.SCREEN)          && gid == 84)
-				|| (groupName.equals(LinuxGroup.BIRD)            && gid == 95)
-				|| (groupName.equals(LinuxGroup.NOBODY)          && gid == 99)
-				|| (groupName.equals(LinuxGroup.USERS)           && gid == 100)
-				|| (groupName.equals(LinuxGroup.AVAHI_AUTOIPD)   && gid == 170)
-				|| (groupName.equals(LinuxGroup.DHCPD)           && gid == 177)
-				|| (groupName.equals(LinuxGroup.SYSTEMD_JOURNAL) && gid == 190)
-				|| (groupName.equals(LinuxGroup.SYSTEMD_NETWORK) && gid == 192)
-				|| (groupName.equals(LinuxGroup.NFSNOBODY)       && gid == 65534)
+				   (groupName.equals(Group.ROOT)            && gid == 0)
+				|| (groupName.equals(Group.BIN)             && gid == 1)
+				|| (groupName.equals(Group.DAEMON)          && gid == 2)
+				|| (groupName.equals(Group.SYS)             && gid == 3)
+				|| (groupName.equals(Group.ADM)             && gid == 4)
+				|| (groupName.equals(Group.TTY)             && gid == 5)
+				|| (groupName.equals(Group.DISK)            && gid == 6)
+				|| (groupName.equals(Group.LP)              && gid == 7)
+				|| (groupName.equals(Group.MEM)             && gid == 8)
+				|| (groupName.equals(Group.KMEM)            && gid == 9)
+				|| (groupName.equals(Group.WHEEL)           && gid == 10)
+				|| (groupName.equals(Group.CDROM)           && gid == 11)
+				|| (groupName.equals(Group.MAIL)            && gid == 12)
+				|| (groupName.equals(Group.MAN)             && gid == 15)
+				|| (groupName.equals(Group.DIALOUT)         && gid == 18)
+				|| (groupName.equals(Group.FLOPPY)          && gid == 19)
+				|| (groupName.equals(Group.GAMES)           && gid == 20)
+				|| (groupName.equals(Group.UTMP)            && gid == 22)
+				|| (groupName.equals(Group.NAMED)           && gid == 25)
+				|| (groupName.equals(Group.POSTGRES)        && gid == 26)
+				|| (groupName.equals(Group.RPCUSER)         && gid == 29)
+				|| (groupName.equals(Group.MYSQL)           && gid == 31)
+				|| (groupName.equals(Group.RPC)             && gid == 32)
+				|| (groupName.equals(Group.TAPE)            && gid == 33)
+				|| (groupName.equals(Group.UTEMPTER)        && gid == 35)
+				|| (groupName.equals(Group.VIDEO)           && gid == 39)
+				|| (groupName.equals(Group.DIP)             && gid == 40)
+				|| (groupName.equals(Group.MAILNULL)        && gid == 47)
+				|| (groupName.equals(Group.APACHE)          && gid == 48)
+				|| (groupName.equals(Group.FTP)             && gid == 50)
+				|| (groupName.equals(Group.SMMSP)           && gid == 51)
+				|| (groupName.equals(Group.LOCK)            && gid == 54)
+				|| (groupName.equals(Group.TSS)             && gid == 59)
+				|| (groupName.equals(Group.AUDIO)           && gid == 63)
+				|| (groupName.equals(Group.TCPDUMP)         && gid == 72)
+				|| (groupName.equals(Group.SSHD)            && gid == 74)
+				|| (groupName.equals(Group.SASLAUTH)        && gid == 76)
+				|| (groupName.equals(Group.AWSTATS)         && gid == 78)
+				|| (groupName.equals(Group.DBUS)            && gid == 81)
+				|| (groupName.equals(Group.MAILONLY)        && gid == 83)
+				|| (groupName.equals(Group.SCREEN)          && gid == 84)
+				|| (groupName.equals(Group.BIRD)            && gid == 95)
+				|| (groupName.equals(Group.NOBODY)          && gid == 99)
+				|| (groupName.equals(Group.USERS)           && gid == 100)
+				|| (groupName.equals(Group.AVAHI_AUTOIPD)   && gid == 170)
+				|| (groupName.equals(Group.DHCPD)           && gid == 177)
+				|| (groupName.equals(Group.SYSTEMD_JOURNAL) && gid == 190)
+				|| (groupName.equals(Group.SYSTEMD_NETWORK) && gid == 192)
+				|| (groupName.equals(Group.NFSNOBODY)       && gid == 65534)
 				|| (
 					// System groups in range 201 through gidMin - 1
 					gid >= CENTOS_7_SYS_GID_MIN
 					&& gid < gidMin
 					&& (
-						   groupName.equals(LinuxGroup.AOSERV_JILTER)
-						|| groupName.equals(LinuxGroup.AOSERV_XEN_MIGRATION)
-						|| groupName.equals(LinuxGroup.CGRED)
-						|| groupName.equals(LinuxGroup.CHRONY)
-						|| groupName.equals(LinuxGroup.CLAMSCAN)
-						|| groupName.equals(LinuxGroup.CLAMUPDATE)
-						|| groupName.equals(LinuxGroup.INPUT)
-						|| groupName.equals(LinuxGroup.MEMCACHED)
-						|| groupName.equals(LinuxGroup.NGINX)
-						|| groupName.equals(LinuxGroup.POLKITD)
-						|| groupName.equals(LinuxGroup.SSH_KEYS)
-						|| groupName.equals(LinuxGroup.SYSTEMD_BUS_PROXY)
-						|| groupName.equals(LinuxGroup.SYSTEMD_NETWORK)
-						|| groupName.equals(LinuxGroup.UNBOUND)
-						|| groupName.equals(LinuxGroup.VIRUSGROUP)
+						   groupName.equals(Group.AOSERV_JILTER)
+						|| groupName.equals(Group.AOSERV_XEN_MIGRATION)
+						|| groupName.equals(Group.CGRED)
+						|| groupName.equals(Group.CHRONY)
+						|| groupName.equals(Group.CLAMSCAN)
+						|| groupName.equals(Group.CLAMUPDATE)
+						|| groupName.equals(Group.INPUT)
+						|| groupName.equals(Group.MEMCACHED)
+						|| groupName.equals(Group.NGINX)
+						|| groupName.equals(Group.POLKITD)
+						|| groupName.equals(Group.SSH_KEYS)
+						|| groupName.equals(Group.SYSTEMD_BUS_PROXY)
+						|| groupName.equals(Group.SYSTEMD_NETWORK)
+						|| groupName.equals(Group.UNBOUND)
+						|| groupName.equals(Group.VIRUSGROUP)
 					)
 				) || (
-					// Regular user groups in range gidMin through LinuxGroup.GID_MAX
+					// Regular user groups in range gidMin through Group.GID_MAX
 					gid >= gidMin
 					&& gid <= gidMax
-					&& groupName.equals(LinuxGroup.AOADMIN)
+					&& groupName.equals(Group.AOADMIN)
 				)
 			)
 		) {
@@ -699,7 +698,7 @@ final public class LinuxAccountHandler {
 			// Notify all clients of the update
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.LINUX_SERVER_GROUPS,
+				Table.TableID.LINUX_SERVER_GROUPS,
 				ServerHandler.getBusinessesForServer(conn, aoServer),
 				aoServer,
 				true
@@ -746,50 +745,50 @@ final public class LinuxAccountHandler {
 		static {
 			try {
 				try {
-					addCentos7SystemUser(LinuxAccount.ROOT,                           0, LinuxGroup.ROOT,              "root",                        "/root",            Shell.BASH, null);
-					addCentos7SystemUser(LinuxAccount.BIN,                            1, LinuxGroup.BIN,               "bin",                         "/bin",             Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.DAEMON,                         2, LinuxGroup.DAEMON,            "daemon",                      "/sbin",            Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.ADM,                            3, LinuxGroup.ADM,               "adm",                         "/var/adm",         Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.LP,                             4, LinuxGroup.LP,                "lp",                          "/var/spool/lpd",   Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.SYNC,                           5, LinuxGroup.ROOT,              "sync",                        "/sbin",            Shell.SYNC, null);
-					addCentos7SystemUser(LinuxAccount.SHUTDOWN,                       6, LinuxGroup.ROOT,              "shutdown",                    "/sbin",            Shell.SHUTDOWN, null);
-					addCentos7SystemUser(LinuxAccount.HALT,                           7, LinuxGroup.ROOT,              "halt",                        "/sbin",            Shell.HALT, null);
-					addCentos7SystemUser(LinuxAccount.MAIL,                           8, LinuxGroup.MAIL,              "mail",                        "/var/spool/mail",  Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.OPERATOR,                      11, LinuxGroup.ROOT,              "operator",                    "/root",            Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.GAMES,                         12, LinuxGroup.USERS,             "games",                       "/usr/games",       Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.FTP,                           14, LinuxGroup.FTP,               "FTP User",                    "/var/ftp",         Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.NAMED,                         25, LinuxGroup.NAMED,             "Named",                       "/var/named",       Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.POSTGRES,                      26, LinuxGroup.POSTGRES,          "PostgreSQL Server",           "/var/lib/pgsql",   Shell.BASH, null);
-					addCentos7SystemUser(LinuxAccount.RPCUSER,                       29, LinuxGroup.RPCUSER,           "RPC Service User",            "/var/lib/nfs",     Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.MYSQL,                         31, LinuxGroup.MYSQL,             "MySQL server",                "/var/lib/mysql",   Shell.BASH, null);
-					addCentos7SystemUser(LinuxAccount.RPC,                           32, LinuxGroup.RPC,               "Rpcbind Daemon",              "/var/lib/rpcbind", Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.MAILNULL,                      47, LinuxGroup.MAILNULL,          null,                          "/var/spool/mqueue", Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.APACHE,                        48, LinuxGroup.APACHE,            "Apache",                      "/usr/share/httpd", Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.SMMSP,                         51, LinuxGroup.SMMSP,             null,                          "/var/spool/mqueue", Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.TSS,                           59, LinuxGroup.TSS,               "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null", Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.TCPDUMP,                       72, LinuxGroup.TCPDUMP,           null,                          "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.SSHD,                          74, LinuxGroup.SSHD,              "Privilege-separated SSH",     "/var/empty/sshd",  Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.CYRUS,                         76, LinuxGroup.MAIL,              "Cyrus IMAP Server",           "/var/lib/imap",    Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.AWSTATS,                       78, LinuxGroup.AWSTATS,           "AWStats Background Log Processing", "/var/opt/awstats", Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.DBUS,                          81, LinuxGroup.DBUS,              "System message bus",          "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.BIRD,                          95, LinuxGroup.BIRD,              "BIRD Internet Routing Daemon", "/var/opt/bird",   Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.NOBODY,                        99, LinuxGroup.NOBODY,            "Nobody",                      "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.AVAHI_AUTOIPD,                170, LinuxGroup.AVAHI_AUTOIPD,     "Avahi IPv4LL Stack",          "/var/lib/avahi-autoipd", Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.DHCPD,                        177, LinuxGroup.DHCPD,             "DHCP server",                 "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.SYSTEMD_NETWORK,              192, LinuxGroup.SYSTEMD_NETWORK,   "systemd Network Management",  "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.NFSNOBODY,                  65534, LinuxGroup.NFSNOBODY,         "Anonymous NFS User",          "/var/lib/nfs",     Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.AOSERV_JILTER,     ANY_SYSTEM_UID, LinuxGroup.AOSERV_JILTER,     "AOServ Jilter",               "/var/opt/aoserv-jilter", Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.CHRONY,            ANY_SYSTEM_UID, LinuxGroup.CHRONY,            null,                          "/var/lib/chrony",  Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.CLAMSCAN,          ANY_SYSTEM_UID, LinuxGroup.CLAMSCAN,          "Clamav scanner user",         "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.CLAMUPDATE,        ANY_SYSTEM_UID, LinuxGroup.CLAMUPDATE,        "Clamav database update user", "/var/lib/clamav",  Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.MEMCACHED,         ANY_SYSTEM_UID, LinuxGroup.MEMCACHED,         "Memcached daemon",            "/run/memcached",   Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.NGINX,             ANY_SYSTEM_UID, LinuxGroup.NGINX,             "Nginx web server",            "/var/lib/nginx",   Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.POLKITD,           ANY_SYSTEM_UID, LinuxGroup.POLKITD,           "User for polkitd",            "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.SASLAUTH,          ANY_SYSTEM_UID, LinuxGroup.SASLAUTH,          "Saslauthd user",              "/run/saslauthd",   Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.SYSTEMD_BUS_PROXY, ANY_SYSTEM_UID, LinuxGroup.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",           "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.UNBOUND,           ANY_SYSTEM_UID, LinuxGroup.UNBOUND,           "Unbound DNS resolver",        "/etc/unbound",     Shell.NOLOGIN, null);
-					addCentos7SystemUser(LinuxAccount.AOADMIN,           ANY_USER_UID,   LinuxGroup.AOADMIN,           "AO Industries Administrator", "/home/aoadmin",    Shell.BASH, AOADMIN_SUDO);
-					addCentos7SystemUser(LinuxAccount.AOSERV_XEN_MIGRATION, ANY_SYSTEM_UID, LinuxGroup.AOSERV_XEN_MIGRATION, "AOServ Xen Migration",  "/var/opt/aoserv-xen-migration", Shell.BASH, AOSERV_XEN_MIGRATION_SUDO);
+					addCentos7SystemUser(User.ROOT,                           0, Group.ROOT,              "root",                        "/root",            Shell.BASH, null);
+					addCentos7SystemUser(User.BIN,                            1, Group.BIN,               "bin",                         "/bin",             Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.DAEMON,                         2, Group.DAEMON,            "daemon",                      "/sbin",            Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.ADM,                            3, Group.ADM,               "adm",                         "/var/adm",         Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.LP,                             4, Group.LP,                "lp",                          "/var/spool/lpd",   Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.SYNC,                           5, Group.ROOT,              "sync",                        "/sbin",            Shell.SYNC, null);
+					addCentos7SystemUser(User.SHUTDOWN,                       6, Group.ROOT,              "shutdown",                    "/sbin",            Shell.SHUTDOWN, null);
+					addCentos7SystemUser(User.HALT,                           7, Group.ROOT,              "halt",                        "/sbin",            Shell.HALT, null);
+					addCentos7SystemUser(User.MAIL,                           8, Group.MAIL,              "mail",                        "/var/spool/mail",  Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.OPERATOR,                      11, Group.ROOT,              "operator",                    "/root",            Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.GAMES,                         12, Group.USERS,             "games",                       "/usr/games",       Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.FTP,                           14, Group.FTP,               "FTP User",                    "/var/ftp",         Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.NAMED,                         25, Group.NAMED,             "Named",                       "/var/named",       Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.POSTGRES,                      26, Group.POSTGRES,          "PostgreSQL Host",           "/var/lib/pgsql",   Shell.BASH, null);
+					addCentos7SystemUser(User.RPCUSER,                       29, Group.RPCUSER,           "RPC Service User",            "/var/lib/nfs",     Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.MYSQL,                         31, Group.MYSQL,             "MySQL server",                "/var/lib/mysql",   Shell.BASH, null);
+					addCentos7SystemUser(User.RPC,                           32, Group.RPC,               "Rpcbind Daemon",              "/var/lib/rpcbind", Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.MAILNULL,                      47, Group.MAILNULL,          null,                          "/var/spool/mqueue", Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.APACHE,                        48, Group.APACHE,            "Apache",                      "/usr/share/httpd", Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.SMMSP,                         51, Group.SMMSP,             null,                          "/var/spool/mqueue", Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.TSS,                           59, Group.TSS,               "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null", Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.TCPDUMP,                       72, Group.TCPDUMP,           null,                          "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.SSHD,                          74, Group.SSHD,              "Privilege-separated SSH",     "/var/empty/sshd",  Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.CYRUS,                         76, Group.MAIL,              "Cyrus IMAP Host",           "/var/lib/imap",    Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.AWSTATS,                       78, Group.AWSTATS,           "AWStats Background Log Processing", "/var/opt/awstats", Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.DBUS,                          81, Group.DBUS,              "System message bus",          "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.BIRD,                          95, Group.BIRD,              "BIRD Internet Routing Daemon", "/var/opt/bird",   Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.NOBODY,                        99, Group.NOBODY,            "Nobody",                      "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.AVAHI_AUTOIPD,                170, Group.AVAHI_AUTOIPD,     "Avahi IPv4LL Stack",          "/var/lib/avahi-autoipd", Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.DHCPD,                        177, Group.DHCPD,             "DHCP server",                 "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.SYSTEMD_NETWORK,              192, Group.SYSTEMD_NETWORK,   "systemd Network Management",  "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.NFSNOBODY,                  65534, Group.NFSNOBODY,         "Anonymous NFS User",          "/var/lib/nfs",     Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.AOSERV_JILTER,     ANY_SYSTEM_UID, Group.AOSERV_JILTER,     "AOServ Jilter",               "/var/opt/aoserv-jilter", Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.CHRONY,            ANY_SYSTEM_UID, Group.CHRONY,            null,                          "/var/lib/chrony",  Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.CLAMSCAN,          ANY_SYSTEM_UID, Group.CLAMSCAN,          "Clamav scanner user",         "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.CLAMUPDATE,        ANY_SYSTEM_UID, Group.CLAMUPDATE,        "Clamav database update user", "/var/lib/clamav",  Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.MEMCACHED,         ANY_SYSTEM_UID, Group.MEMCACHED,         "Memcached daemon",            "/run/memcached",   Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.NGINX,             ANY_SYSTEM_UID, Group.NGINX,             "Nginx web server",            "/var/lib/nginx",   Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.POLKITD,           ANY_SYSTEM_UID, Group.POLKITD,           "User for polkitd",            "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.SASLAUTH,          ANY_SYSTEM_UID, Group.SASLAUTH,          "Saslauthd user",              "/run/saslauthd",   Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.SYSTEMD_BUS_PROXY, ANY_SYSTEM_UID, Group.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",           "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.UNBOUND,           ANY_SYSTEM_UID, Group.UNBOUND,           "Unbound DNS resolver",        "/etc/unbound",     Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.AOADMIN,           ANY_USER_UID,   Group.AOADMIN,           "AO Industries Administrator", "/home/aoadmin",    Shell.BASH, AOADMIN_SUDO);
+					addCentos7SystemUser(User.AOSERV_XEN_MIGRATION, ANY_SYSTEM_UID, Group.AOSERV_XEN_MIGRATION, "AOServ Xen Migration",  "/var/opt/aoserv-xen-migration", Shell.BASH, AOSERV_XEN_MIGRATION_SUDO);
 				} catch(ValidationException e) {
 					throw new AssertionError("These hard-coded values are valid", e);
 				}
@@ -853,7 +852,7 @@ final public class LinuxAccountHandler {
 		UnixPath shell
 	) throws IOException, SQLException {
 		// This must be a master user with access to the server
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu == null) throw new SQLException("Not a master user: " + source.getUsername());
 		ServerHandler.checkAccessServer(conn, source, "addSystemUser", aoServer);
 		// The user ID must be in the system user range
@@ -879,7 +878,7 @@ final public class LinuxAccountHandler {
 				// System users in range 201 through uidMin - 1
 				if(uid < CENTOS_7_SYS_UID_MIN || uid >= uidMin) throw new SQLException("Invalid system uid: " + uid);
 			} else if(systemUser.uid == SystemUser.ANY_USER_UID) {
-				// Regular users in range uidMin through LinuxAccount.UID_MAX
+				// Regular users in range uidMin through User.UID_MAX
 				if(uid < uidMin || uid > uidMax) throw new SQLException("Invalid regular user uid: " + uid);
 			} else {
 				// UID must match exactly
@@ -914,7 +913,7 @@ final public class LinuxAccountHandler {
 				+ "  null,\n" // trash_email_retention
 				+ "  null,\n" // junk_email_retention
 				+ "  ?,\n" // sa_integration_mode
-				+ "  "+LinuxServerAccount.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE+",\n"
+				+ "  "+UserServer.DEFAULT_SPAM_ASSASSIN_REQUIRED_SCORE+",\n"
 				+ "  null,\n" // sa_discard_score
 				+ "  ?\n" // sudo
 				+ ") RETURNING id",
@@ -922,13 +921,13 @@ final public class LinuxAccountHandler {
 				aoServer,
 				uid,
 				home,
-				EmailSpamAssassinIntegrationMode.NONE,
+				SpamAssassinMode.NONE,
 				systemUser.sudo
 			);
 			// Notify all clients of the update
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+				Table.TableID.LINUX_SERVER_ACCOUNTS,
 				ServerHandler.getBusinessesForServer(conn, aoServer),
 				aoServer,
 				true
@@ -950,7 +949,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "copyHomeDirectory", from_lsa);
 		UserId username=getUsernameForLinuxServerAccount(conn, from_lsa);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to copy LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to copy User named '"+User.MAIL+'\'');
 		int from_server=getAOServerForLinuxServerAccount(conn, from_lsa);
 		int to_lsa=conn.executeIntQuery(
 			"select id from linux.\"UserServer\" where username=? and ao_server=?",
@@ -960,9 +959,9 @@ final public class LinuxAccountHandler {
 		checkAccessLinuxServerAccount(conn, source, "copyHomeDirectory", to_lsa);
 		String type=getTypeForLinuxAccount(conn, username);
 		if(
-			!type.equals(LinuxAccountType.USER)
-			&& !type.equals(LinuxAccountType.EMAIL)
-			&& !type.equals(LinuxAccountType.FTPONLY)
+			!type.equals(UserType.USER)
+			&& !type.equals(UserType.EMAIL)
+			&& !type.equals(UserType.FTPONLY)
 		) throw new SQLException("Not allowed to copy LinuxAccounts of type '"+type+"', username="+username);
 
 		long byteCount=DaemonHandler.getDaemonConnector(conn, from_server).copyHomeDirectory(username, DaemonHandler.getDaemonConnector(conn, to_server));
@@ -980,31 +979,31 @@ final public class LinuxAccountHandler {
 		int to_lsa
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "copyLinuxServerAccountPassword", from_lsa);
-		if(isLinuxServerAccountDisabled(conn, from_lsa)) throw new SQLException("Unable to copy LinuxServerAccount password, from account disabled: "+from_lsa);
+		if(isLinuxServerAccountDisabled(conn, from_lsa)) throw new SQLException("Unable to copy UserServer password, from account disabled: "+from_lsa);
 		UserId from_username=getUsernameForLinuxServerAccount(conn, from_lsa);
-		if(from_username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to copy the password from LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(from_username.equals(User.MAIL)) throw new SQLException("Not allowed to copy the password from User named '"+User.MAIL+'\'');
 		checkAccessLinuxServerAccount(conn, source, "copyLinuxServerAccountPassword", to_lsa);
-		if(isLinuxServerAccountDisabled(conn, to_lsa)) throw new SQLException("Unable to copy LinuxServerAccount password, to account disabled: "+to_lsa);
+		if(isLinuxServerAccountDisabled(conn, to_lsa)) throw new SQLException("Unable to copy UserServer password, to account disabled: "+to_lsa);
 		UserId to_username=getUsernameForLinuxServerAccount(conn, to_lsa);
-		if(to_username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to copy the password to LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(to_username.equals(User.MAIL)) throw new SQLException("Not allowed to copy the password to User named '"+User.MAIL+'\'');
 
 		int from_server=getAOServerForLinuxServerAccount(conn, from_lsa);
 		int to_server=getAOServerForLinuxServerAccount(conn, to_lsa);
 
 		String from_type=getTypeForLinuxAccount(conn, from_username);
 		if(
-			!from_type.equals(LinuxAccountType.APPLICATION)
-			&& !from_type.equals(LinuxAccountType.USER)
-			&& !from_type.equals(LinuxAccountType.EMAIL)
-			&& !from_type.equals(LinuxAccountType.FTPONLY)
+			!from_type.equals(UserType.APPLICATION)
+			&& !from_type.equals(UserType.USER)
+			&& !from_type.equals(UserType.EMAIL)
+			&& !from_type.equals(UserType.FTPONLY)
 		) throw new SQLException("Not allowed to copy passwords from LinuxAccounts of type '"+from_type+"', username="+from_username);
 
 		String to_type=getTypeForLinuxAccount(conn, to_username);
 		if(
-			!to_type.equals(LinuxAccountType.APPLICATION)
-			&& !to_type.equals(LinuxAccountType.USER)
-			&& !to_type.equals(LinuxAccountType.EMAIL)
-			&& !to_type.equals(LinuxAccountType.FTPONLY)
+			!to_type.equals(UserType.APPLICATION)
+			&& !to_type.equals(UserType.USER)
+			&& !to_type.equals(UserType.EMAIL)
+			&& !to_type.equals(UserType.FTPONLY)
 		) throw new SQLException("Not allowed to copy passwords to LinuxAccounts of type '"+to_type+"', username="+to_username);
 
 		Tuple2<String,Integer> enc_password = DaemonHandler.getDaemonConnector(conn, from_server).getEncryptedLinuxAccountPassword(from_username);
@@ -1028,7 +1027,7 @@ final public class LinuxAccountHandler {
 		for(int c=0;c<lsas.size();c++) {
 			int lsa=lsas.getInt(c);
 			if(!isLinuxServerAccountDisabled(conn, lsa)) {
-				throw new SQLException("Cannot disable LinuxAccount '"+username+"': LinuxServerAccount not disabled: "+lsa);
+				throw new SQLException("Cannot disable User '"+username+"': UserServer not disabled: "+lsa);
 			}
 		}
 
@@ -1041,7 +1040,7 @@ final public class LinuxAccountHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_ACCOUNTS,
+			Table.TableID.LINUX_ACCOUNTS,
 			UsernameHandler.getBusinessForUsername(conn, username),
 			UsernameHandler.getServersForUsername(conn, username),
 			false
@@ -1064,34 +1063,34 @@ final public class LinuxAccountHandler {
 
 		// The UID must be a user UID
 		int uid=getUIDForLinuxServerAccount(conn, id);
-		if(uid < uidMin) throw new SQLException("Not allowed to disable a system LinuxServerAccount: id="+id+", uid="+uid);
+		if(uid < uidMin) throw new SQLException("Not allowed to disable a system UserServer: id="+id+", uid="+uid);
 
 		IntList crs=CvsHandler.getCvsRepositoriesForLinuxServerAccount(conn, id);
 		for(int c=0;c<crs.size();c++) {
 			int cr=crs.getInt(c);
 			if(!CvsHandler.isCvsRepositoryDisabled(conn, cr)) {
-				throw new SQLException("Cannot disable LinuxServerAccount #"+id+": CvsRepository not disabled: "+cr);
+				throw new SQLException("Cannot disable UserServer #"+id+": CvsRepository not disabled: "+cr);
 			}
 		}
 		IntList hsts=HttpdHandler.getHttpdSharedTomcatsForLinuxServerAccount(conn, id);
 		for(int c=0;c<hsts.size();c++) {
 			int hst=hsts.getInt(c);
 			if(!HttpdHandler.isHttpdSharedTomcatDisabled(conn, hst)) {
-				throw new SQLException("Cannot disable LinuxServerAccount #"+id+": HttpdSharedTomcat not disabled: "+hst);
+				throw new SQLException("Cannot disable UserServer #"+id+": SharedTomcat not disabled: "+hst);
 			}
 		}
 		IntList hss=HttpdHandler.getHttpdSitesForLinuxServerAccount(conn, id);
 		for(int c=0;c<hss.size();c++) {
 			int hs=hss.getInt(c);
 			if(!HttpdHandler.isHttpdSiteDisabled(conn, hs)) {
-				throw new SQLException("Cannot disable LinuxServerAccount #"+id+": HttpdSite not disabled: "+hs);
+				throw new SQLException("Cannot disable UserServer #"+id+": Site not disabled: "+hs);
 			}
 		}
 		IntList els=EmailHandler.getEmailListsForLinuxServerAccount(conn, id);
 		for(int c=0;c<els.size();c++) {
 			int el=els.getInt(c);
 			if(!EmailHandler.isEmailListDisabled(conn, el)) {
-				throw new SQLException("Cannot disable LinuxServerAccount #"+id+": EmailList not disabled: "+el);
+				throw new SQLException("Cannot disable UserServer #"+id+": List not disabled: "+el);
 			}
 		}
 
@@ -1104,7 +1103,7 @@ final public class LinuxAccountHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+			Table.TableID.LINUX_SERVER_ACCOUNTS,
 			getBusinessForLinuxServerAccount(conn, id),
 			aoServer,
 			false
@@ -1121,7 +1120,7 @@ final public class LinuxAccountHandler {
 		if(disableLog==-1) throw new SQLException("linux.User is already enabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableLinuxAccount", disableLog, true);
 		checkAccessLinuxAccount(conn, source, "enableLinuxAccount", username);
-		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable LinuxAccount '"+username+"', Username not enabled: "+username);
+		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable User '"+username+"', Username not enabled: "+username);
 
 		conn.executeUpdate(
 			"update linux.\"User\" set disable_log=null where username=?",
@@ -1131,7 +1130,7 @@ final public class LinuxAccountHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_ACCOUNTS,
+			Table.TableID.LINUX_ACCOUNTS,
 			UsernameHandler.getBusinessForUsername(conn, username),
 			UsernameHandler.getServersForUsername(conn, username),
 			false
@@ -1149,7 +1148,7 @@ final public class LinuxAccountHandler {
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableLinuxServerAccount", disableLog, true);
 		checkAccessLinuxServerAccount(conn, source, "enableLinuxServerAccount", id);
 		UserId la=getUsernameForLinuxServerAccount(conn, id);
-		if(isLinuxAccountDisabled(conn, la)) throw new SQLException("Unable to enable LinuxServerAccount #"+id+", LinuxAccount not enabled: "+la);
+		if(isLinuxAccountDisabled(conn, la)) throw new SQLException("Unable to enable UserServer #"+id+", User not enabled: "+la);
 
 		conn.executeUpdate(
 			"update linux.\"UserServer\" set disable_log=null where id=?",
@@ -1159,7 +1158,7 @@ final public class LinuxAccountHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+			Table.TableID.LINUX_SERVER_ACCOUNTS,
 			UsernameHandler.getBusinessForUsername(conn, la),
 			getAOServerForLinuxServerAccount(conn, id),
 			false
@@ -1172,7 +1171,7 @@ final public class LinuxAccountHandler {
 	public static String getAutoresponderContent(DatabaseConnection conn, RequestSource source, int lsa) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "getAutoresponderContent", lsa);
 		UserId username=getUsernameForLinuxServerAccount(conn, lsa);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to get the autoresponder content for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to get the autoresponder content for User named '"+User.MAIL+'\'');
 		UnixPath path = conn.executeObjectQuery(
 			ObjectFactories.unixPathFactory,
 			"select autoresponder_path from linux.\"UserServer\" where id=?",
@@ -1194,10 +1193,10 @@ final public class LinuxAccountHandler {
 	public static String getCronTable(DatabaseConnection conn, RequestSource source, int lsa) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "getCronTable", lsa);
 		UserId username=getUsernameForLinuxServerAccount(conn, lsa);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to get the cron table for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to get the cron table for User named '"+User.MAIL+'\'');
 		String type=getTypeForLinuxAccount(conn, username);
 		if(
-			!type.equals(LinuxAccountType.USER)
+			!type.equals(UserType.USER)
 		) throw new SQLException("Not allowed to get the cron table for LinuxAccounts of type '"+type+"', username="+username);
 		int aoServer=getAOServerForLinuxServerAccount(conn, lsa);
 
@@ -1212,12 +1211,12 @@ final public class LinuxAccountHandler {
 		return conn.executeIntQuery("select coalesce(disable_log, -1) from linux.\"UserServer\" where id=?", id);
 	}
 
-	public static void invalidateTable(SchemaTable.TableID tableID) {
-		if(tableID==SchemaTable.TableID.LINUX_ACCOUNTS) {
+	public static void invalidateTable(Table.TableID tableID) {
+		if(tableID==Table.TableID.LINUX_ACCOUNTS) {
 			synchronized(LinuxAccountHandler.class) {
 				disabledLinuxAccounts.clear();
 			}
-		} else if(tableID==SchemaTable.TableID.LINUX_SERVER_ACCOUNTS) {
+		} else if(tableID==Table.TableID.LINUX_SERVER_ACCOUNTS) {
 			synchronized(LinuxAccountHandler.class) {
 				disabledLinuxServerAccounts.clear();
 			}
@@ -1281,7 +1280,7 @@ final public class LinuxAccountHandler {
 
 	public static int getLinuxServerGroup(DatabaseConnection conn, GroupId group, int aoServer) throws IOException, SQLException {
 		int id=conn.executeIntQuery("select coalesce((select id from linux.\"GroupServer\" where name=? and ao_server=?), -1)", group, aoServer);
-		if(id==-1) throw new SQLException("Unable to find LinuxServerGroup "+group+" on "+aoServer);
+		if(id==-1) throw new SQLException("Unable to find GroupServer "+group+" on "+aoServer);
 		return id;
 	}
 
@@ -1311,11 +1310,11 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "isLinuxServerAccountPasswordSet", account);
 		UserId username=getUsernameForLinuxServerAccount(conn, account);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to check if a password is set for LinuxServerAccount '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to check if a password is set for UserServer '"+User.MAIL+'\'');
 
 		int aoServer=getAOServerForLinuxServerAccount(conn, account);
 		String crypted = DaemonHandler.getDaemonConnector(conn, aoServer).getEncryptedLinuxAccountPassword(username).getElement1();
-		return crypted.length() >= 2 && !LinuxAccount.NO_PASSWORD_CONFIG_VALUE.equals(crypted);
+		return crypted.length() >= 2 && !User.NO_PASSWORD_CONFIG_VALUE.equals(crypted);
 	}
 
 	public static int isLinuxServerAccountProcmailManual(
@@ -1328,13 +1327,13 @@ final public class LinuxAccountHandler {
 		int aoServer=getAOServerForLinuxServerAccount(conn, account);
 		if(DaemonHandler.isDaemonAvailable(aoServer)) {
 			try {
-				return DaemonHandler.getDaemonConnector(conn, aoServer).isProcmailManual(account) ? AOServProtocol.TRUE : AOServProtocol.FALSE;
+				return DaemonHandler.getDaemonConnector(conn, aoServer).isProcmailManual(account) ? AoservProtocol.TRUE : AoservProtocol.FALSE;
 			} catch(IOException err) {
 				DaemonHandler.flagDaemonAsDown(aoServer);
-				return AOServProtocol.SERVER_DOWN;
+				return AoservProtocol.SERVER_DOWN;
 			}
 		} else {
-			return AOServProtocol.SERVER_DOWN;
+			return AoservProtocol.SERVER_DOWN;
 		}
 	}
 
@@ -1354,7 +1353,7 @@ final public class LinuxAccountHandler {
 		InvalidateList invalidateList,
 		UserId username
 	) throws IOException, SQLException {
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove LinuxAccount with username '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to remove User with username '"+User.MAIL+'\'');
 
 		// Detach the linux account from its autoresponder address
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
@@ -1378,9 +1377,9 @@ final public class LinuxAccountHandler {
 
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
-		if(ftpModified) invalidateList.addTable(conn, SchemaTable.TableID.FTP_GUEST_USERS, accounting, aoServers, false);
-		if(groupAccountModified) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accounting, aoServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
+		if(ftpModified) invalidateList.addTable(conn, Table.TableID.FTP_GUEST_USERS, accounting, aoServers, false);
+		if(groupAccountModified) invalidateList.addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, accounting, aoServers, false);
+		invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
 	}
 
 	public static void removeLinuxGroup(
@@ -1400,12 +1399,12 @@ final public class LinuxAccountHandler {
 		GroupId name
 	) throws IOException, SQLException {
 		if(
-			name.equals(LinuxGroup.FTPONLY)
-			|| name.equals(LinuxGroup.MAIL)
-			|| name.equals(LinuxGroup.MAILONLY)
-		) throw new SQLException("Not allowed to remove LinuxGroup named '"+name+"'");
+			name.equals(Group.FTPONLY)
+			|| name.equals(Group.MAIL)
+			|| name.equals(Group.MAILONLY)
+		) throw new SQLException("Not allowed to remove Group named '"+name+"'");
 
-		// Must not be the primary group for any LinuxAccount
+		// Must not be the primary group for any User
 		int primaryCount=conn.executeIntQuery("select count(*) from linux.\"GroupUser\" where \"group\"=? and \"isPrimary\"", name);
 		if(primaryCount>0) throw new SQLException("linux_group.name="+name+" is the primary group for "+primaryCount+" Linux "+(primaryCount==1?"account":"accounts"));
 		// Get the values for later use
@@ -1422,9 +1421,9 @@ final public class LinuxAccountHandler {
 		conn.executeUpdate("delete from linux.\"Group\" where name=?", name);
 
 		// Notify all clients of the update
-		if(aoServers.size()>0) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, accounting, aoServers, false);
-		if(groupAccountsModified) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accounting, aoServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUPS, accounting, aoServers, false);
+		if(aoServers.size()>0) invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_GROUPS, accounting, aoServers, false);
+		if(groupAccountsModified) invalidateList.addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, accounting, aoServers, false);
+		invalidateList.addTable(conn, Table.TableID.LINUX_GROUPS, accounting, aoServers, false);
 	}
 
 	public static void removeLinuxGroupAccount(
@@ -1439,7 +1438,7 @@ final public class LinuxAccountHandler {
 		boolean isPrimary=conn.executeBooleanQuery("select \"isPrimary\" from linux.\"GroupUser\" where id=?", id);
 		if(isPrimary) throw new SQLException("linux.GroupUser.id="+id+" is a primary group");
 
-		// Must be needingful not by HttpdTomcatSharedSite to be tying to HttpdSharedTomcat please
+		// Must be needingful not by SharedTomcatSite to be tying to SharedTomcat please
 		int useCount = conn.executeIntQuery(
 			"select count(*) from linux.\"GroupUser\" lga, "+
 					"linux.\"UserServer\" lsa, "+
@@ -1447,10 +1446,10 @@ final public class LinuxAccountHandler {
 					"\"web.tomcat\".\"SharedTomcatSite\" htss, "+
 					"web.\"Site\" hs "+
 						"where lga.\"user\" = lsa.username and "+
-						"lsa.id           = hst.linux_server_account and "+
+						"lsa.id             = hst.linux_server_account and "+
 						"htss.tomcat_site   = hs.id and "+
 						"lga.\"group\"      = hs.linux_group and "+
-						"hst.id           = htss.httpd_shared_tomcat and "+
+						"hst.id             = htss.httpd_shared_tomcat and "+
 						"lga.id = ?",
 			id
 		);
@@ -1462,10 +1461,10 @@ final public class LinuxAccountHandler {
 						"\"web.tomcat\".\"SharedTomcatSite\" htss, "+
 						"web.\"Site\" hs "+
 							"where lga.\"group\" = lsg.name and "+
-							"lsg.id            = hst.linux_server_group and "+
+							"lsg.id              = hst.linux_server_group and "+
 							"htss.tomcat_site    = hs.id and "+
 							"lga.\"user\"        = hs.linux_account and "+
-							"hst.id            = htss.httpd_shared_tomcat and "+
+							"hst.id              = htss.httpd_shared_tomcat and "+
 							"lga.id = ?",
 				id
 			);
@@ -1479,7 +1478,7 @@ final public class LinuxAccountHandler {
 		conn.executeUpdate("delete from linux.\"GroupUser\" where id=?", id);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accountings, aoServers, false);
+		invalidateList.addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, accountings, aoServers, false);
 	}
 
 	public static void removeUnusedAlternateLinuxGroupAccount(
@@ -1545,7 +1544,7 @@ final public class LinuxAccountHandler {
 			conn.executeUpdate("delete from linux.\"GroupUser\" where id=?", id);
 
 			// Notify all clients of the update
-			invalidateList.addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, accountings, aoServers, false);
+			invalidateList.addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, accountings, aoServers, false);
 		}
 	}
 
@@ -1566,14 +1565,14 @@ final public class LinuxAccountHandler {
 		int account
 	) throws IOException, SQLException {
 		UserId username=getUsernameForLinuxServerAccount(conn, account);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove LinuxServerAccount for user '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to remove UserServer for user '"+User.MAIL+'\'');
 
 		int aoServer = getAOServerForLinuxServerAccount(conn, account);
 		int uidMin = AOServerHandler.getUidMin(conn, aoServer);
 
 		// The UID must be a user UID
 		int uid=getUIDForLinuxServerAccount(conn, account);
-		if(uid < uidMin) throw new SQLException("Not allowed to remove a system LinuxServerAccount: id="+account+", uid="+uid);
+		if(uid < uidMin) throw new SQLException("Not allowed to remove a system UserServer: id="+account+", uid="+uid);
 
 		// Must not contain a CVS repository
 		String home=conn.executeStringQuery("select home from linux.\"UserServer\" where id=?", account);
@@ -1610,17 +1609,17 @@ final public class LinuxAccountHandler {
 
 		// Delete the attachment blocks
 		if(conn.executeUpdate("delete from email.\"AttachmentBlock\" where linux_server_account=?", account) > 0) {
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ATTACHMENT_BLOCKS, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_ATTACHMENT_BLOCKS, accounting, aoServer, false);
 		}
 
 		// Delete the account from the server
 		conn.executeUpdate("delete from linux.\"UserServer\" where id=?", account);
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, accounting, aoServer, true);
+		invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_ACCOUNTS, accounting, aoServer, true);
 
 		// Notify all clients of the update
 		if(addressesModified) {
-			invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 		}
 	}
 
@@ -1642,15 +1641,15 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		GroupId groupName=getGroupNameForLinuxServerGroup(conn, group);
 		if(
-			groupName.equals(LinuxGroup.FTPONLY)
-			|| groupName.equals(LinuxGroup.MAIL)
-			|| groupName.equals(LinuxGroup.MAILONLY)
-		) throw new SQLException("Not allowed to remove LinuxServerGroup for group '"+groupName+"'");
+			groupName.equals(Group.FTPONLY)
+			|| groupName.equals(Group.MAIL)
+			|| groupName.equals(Group.MAILONLY)
+		) throw new SQLException("Not allowed to remove GroupServer for group '"+groupName+"'");
 
 		// Get the server this group is on
 		AccountingCode accounting = getBusinessForLinuxServerGroup(conn, group);
 		int aoServer=getAOServerForLinuxServerGroup(conn, group);
-		// Must not be the primary group for any LinuxServerAccount on the same server
+		// Must not be the primary group for any UserServer on the same server
 		int primaryCount=conn.executeIntQuery(
 			"select\n"
 			+ "  count(*)\n"
@@ -1675,7 +1674,7 @@ final public class LinuxAccountHandler {
 		conn.executeUpdate("delete from linux.\"GroupServer\" where id=?", group);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, accounting, aoServer, true);
+		invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_GROUPS, accounting, aoServer, true);
 	}
 
 	public static void setAutoresponder(
@@ -1689,13 +1688,13 @@ final public class LinuxAccountHandler {
 		boolean enabled
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "setAutoresponder", id);
-		if(isLinuxServerAccountDisabled(conn, id)) throw new SQLException("Unable to set autoresponder, LinuxServerAccount disabled: "+id);
+		if(isLinuxServerAccountDisabled(conn, id)) throw new SQLException("Unable to set autoresponder, UserServer disabled: "+id);
 		UserId username=getUsernameForLinuxServerAccount(conn, id);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set autoresponder for user '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set autoresponder for user '"+User.MAIL+'\'');
 		String type=getTypeForLinuxAccount(conn, username);
 		if(
-			!type.equals(LinuxAccountType.EMAIL)
-			&& !type.equals(LinuxAccountType.USER)
+			!type.equals(UserType.EMAIL)
+			&& !type.equals(UserType.USER)
 		) throw new SQLException("Not allowed to set autoresponder for this type of account: "+type);
 
 		// The from must be on this account
@@ -1781,7 +1780,7 @@ final public class LinuxAccountHandler {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_ACCOUNTS, accounting, aoServer, false);
 	}
 
 	/**
@@ -1794,12 +1793,12 @@ final public class LinuxAccountHandler {
 		String cronTable
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "setCronTable", lsa);
-		if(isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to set cron table, LinuxServerAccount disabled: "+lsa);
+		if(isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to set cron table, UserServer disabled: "+lsa);
 		UserId username=getUsernameForLinuxServerAccount(conn, lsa);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the cron table for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the cron table for User named '"+User.MAIL+'\'');
 		String type=getTypeForLinuxAccount(conn, username);
 		if(
-			!type.equals(LinuxAccountType.USER)
+			!type.equals(UserType.USER)
 		) throw new SQLException("Not allowed to set the cron table for LinuxAccounts of type '"+type+"', username="+username);
 		int aoServer=getAOServerForLinuxServerAccount(conn, lsa);
 
@@ -1814,8 +1813,8 @@ final public class LinuxAccountHandler {
 		Gecos phone
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountHomePhone", username);
-		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set home phone number, LinuxAccount disabled: "+username);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set home phone number for user '"+LinuxAccount.MAIL+'\'');
+		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set home phone number, User disabled: "+username);
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set home phone number for user '"+User.MAIL+'\'');
 
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
@@ -1823,7 +1822,7 @@ final public class LinuxAccountHandler {
 		conn.executeUpdate("update linux.\"User\" set home_phone=? where username=?", phone, username);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
+		invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
 	}
 
 	public static void setLinuxAccountName(
@@ -1834,8 +1833,8 @@ final public class LinuxAccountHandler {
 		Gecos name
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountName", username);
-		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set full name, LinuxAccount disabled: "+username);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set LinuxAccountName for user '"+LinuxAccount.MAIL+'\'');
+		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set full name, User disabled: "+username);
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set LinuxAccountName for user '"+User.MAIL+'\'');
 
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
@@ -1843,7 +1842,7 @@ final public class LinuxAccountHandler {
 		conn.executeUpdate("update linux.\"User\" set name=? where username=?", name, username);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
+		invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
 	}
 
 	public static void setLinuxAccountOfficeLocation(
@@ -1854,8 +1853,8 @@ final public class LinuxAccountHandler {
 		Gecos location
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountOfficeLocation", username);
-		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set office location, LinuxAccount disabled: "+username);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set office location for user '"+LinuxAccount.MAIL+'\'');
+		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set office location, User disabled: "+username);
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set office location for user '"+User.MAIL+'\'');
 
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
@@ -1863,7 +1862,7 @@ final public class LinuxAccountHandler {
 		conn.executeUpdate("update linux.\"User\" set office_location=? where username=?", location, username);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
+		invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
 	}
 
 	public static void setLinuxAccountOfficePhone(
@@ -1874,8 +1873,8 @@ final public class LinuxAccountHandler {
 		Gecos phone
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountOfficePhone", username);
-		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set office phone number, LinuxAccount disabled: "+username);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set office phone number for user '"+LinuxAccount.MAIL+'\'');
+		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set office phone number, User disabled: "+username);
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set office phone number for user '"+User.MAIL+'\'');
 
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
@@ -1883,7 +1882,7 @@ final public class LinuxAccountHandler {
 		conn.executeUpdate("update linux.\"User\" set office_phone=? where username=?", phone, username);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
+		invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
 	}
 
 	public static void setLinuxAccountShell(
@@ -1894,10 +1893,10 @@ final public class LinuxAccountHandler {
 		UnixPath shell
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountOfficeShell", username);
-		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set shell, LinuxAccount disabled: "+username);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set shell for account named '"+LinuxAccount.MAIL+'\'');
+		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set shell, User disabled: "+username);
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set shell for account named '"+User.MAIL+'\'');
 		String type=getTypeForLinuxAccount(conn, username);
-		if(!LinuxAccountType.isAllowedShell(type, shell)) throw new SQLException("Shell '"+shell+"' not allowed for Linux accounts with the type '"+type+'\'');
+		if(!UserType.isAllowedShell(type, shell)) throw new SQLException("Shell '"+shell+"' not allowed for Linux accounts with the type '"+type+'\'');
 
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
@@ -1905,7 +1904,7 @@ final public class LinuxAccountHandler {
 		conn.executeUpdate("update linux.\"User\" set shell=? where username=?", shell, username);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
+		invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, accounting, aoServers, false);
 	}
 
 	public static void setLinuxServerAccountPassword(
@@ -1915,20 +1914,20 @@ final public class LinuxAccountHandler {
 		int id,
 		String password
 	) throws IOException, SQLException {
-		BusinessHandler.checkPermission(conn, source, "setLinuxServerAccountPassword", AOServPermission.Permission.set_linux_server_account_password);
+		BusinessHandler.checkPermission(conn, source, "setLinuxServerAccountPassword", Permission.Name.set_linux_server_account_password);
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountPassword", id);
-		if(isLinuxServerAccountDisabled(conn, id)) throw new SQLException("Unable to set LinuxServerAccount password, account disabled: "+id);
+		if(isLinuxServerAccountDisabled(conn, id)) throw new SQLException("Unable to set UserServer password, account disabled: "+id);
 
 		UserId username=getUsernameForLinuxServerAccount(conn, id);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set password for LinuxServerAccount named '"+LinuxAccount.MAIL+"': "+id);
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set password for UserServer named '"+User.MAIL+"': "+id);
 		String type=conn.executeStringQuery("select type from linux.\"User\" where username=?", username);
 
 		// Make sure passwords can be set before doing a strength check
-		if(!LinuxAccountType.canSetPassword(type)) throw new SQLException("Passwords may not be set for LinuxAccountType="+type);
+		if(!UserType.canSetPassword(type)) throw new SQLException("Passwords may not be set for UserType="+type);
 
 		if(password!=null && password.length()>0) {
 			// Perform the password check here, too.
-			List<PasswordChecker.Result> results = LinuxAccount.checkPassword(username, type, password);
+			List<PasswordChecker.Result> results = User.checkPassword(username, type, password);
 			if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 		}
 
@@ -1941,13 +1940,13 @@ final public class LinuxAccountHandler {
 			throw err;
 		}
 
-		// Update the linux.Server table for emailmon and ftpmon
-		/*if(username.equals(LinuxAccount.EMAILMON)) {
-			conn.executeUpdate("update linux."Server" set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
-			invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
-		} else if(username.equals(LinuxAccount.FTPMON)) {
-			conn.executeUpdate("update linux."Server" set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
-			invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
+		// Update the linux.Host table for emailmon and ftpmon
+		/*if(username.equals(User.EMAILMON)) {
+			conn.executeUpdate("update linux."Host" set emailmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
+			invalidateList.addTable(conn, Table.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
+		} else if(username.equals(User.FTPMON)) {
+			conn.executeUpdate("update linux."Host" set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, aoServer);
+			invalidateList.addTable(conn, Table.TableID.AO_SERVERS, ServerHandler.getBusinessesForServer(conn, aoServer), aoServer, false);
 		}*/
 	}
 
@@ -1960,9 +1959,9 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountPredisablePassword", lsa);
 		if(password==null) {
-			if(isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to clear LinuxServerAccount predisable password, account disabled: "+lsa);
+			if(isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to clear UserServer predisable password, account disabled: "+lsa);
 		} else {
-			if(!isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to set LinuxServerAccount predisable password, account not disabled: "+lsa);
+			if(!isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to set UserServer predisable password, account not disabled: "+lsa);
 		}
 
 		// Update the database
@@ -1974,7 +1973,7 @@ final public class LinuxAccountHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+			Table.TableID.LINUX_SERVER_ACCOUNTS,
 			getBusinessForLinuxServerAccount(conn, lsa),
 			getAOServerForLinuxServerAccount(conn, lsa),
 			false
@@ -1991,7 +1990,7 @@ final public class LinuxAccountHandler {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountJunkEmailRetention", id);
 		UserId username=getUsernameForLinuxServerAccount(conn, id);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the junk email retention for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the junk email retention for User named '"+User.MAIL+'\'');
 
 		// Update the database
 		if(days==-1) {
@@ -2009,7 +2008,7 @@ final public class LinuxAccountHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+			Table.TableID.LINUX_SERVER_ACCOUNTS,
 			getBusinessForLinuxServerAccount(conn, id),
 			getAOServerForLinuxServerAccount(conn, id),
 			false
@@ -2026,7 +2025,7 @@ final public class LinuxAccountHandler {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountSpamAssassinIntegrationMode", id);
 		UserId username=getUsernameForLinuxServerAccount(conn, id);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the spam assassin integration mode for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the spam assassin integration mode for User named '"+User.MAIL+'\'');
 
 		// Update the database
 		conn.executeUpdate(
@@ -2037,7 +2036,7 @@ final public class LinuxAccountHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+			Table.TableID.LINUX_SERVER_ACCOUNTS,
 			getBusinessForLinuxServerAccount(conn, id),
 			getAOServerForLinuxServerAccount(conn, id),
 			false
@@ -2054,7 +2053,7 @@ final public class LinuxAccountHandler {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountSpamAssassinRequiredScore", id);
 		UserId username=getUsernameForLinuxServerAccount(conn, id);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the spam assassin required score for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the spam assassin required score for User named '"+User.MAIL+'\'');
 
 		// Update the database
 		conn.executeUpdate(
@@ -2065,7 +2064,7 @@ final public class LinuxAccountHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+			Table.TableID.LINUX_SERVER_ACCOUNTS,
 			getBusinessForLinuxServerAccount(conn, id),
 			getAOServerForLinuxServerAccount(conn, id),
 			false
@@ -2082,7 +2081,7 @@ final public class LinuxAccountHandler {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountSpamAssassinDiscardScore", id);
 		UserId username=getUsernameForLinuxServerAccount(conn, id);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the spam assassin discard score for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the spam assassin discard score for User named '"+User.MAIL+'\'');
 
 		// Update the database
 		if(discard_score==-1) {
@@ -2100,7 +2099,7 @@ final public class LinuxAccountHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+			Table.TableID.LINUX_SERVER_ACCOUNTS,
 			getBusinessForLinuxServerAccount(conn, id),
 			getAOServerForLinuxServerAccount(conn, id),
 			false
@@ -2117,7 +2116,7 @@ final public class LinuxAccountHandler {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountTrashEmailRetention", id);
 		UserId username=getUsernameForLinuxServerAccount(conn, id);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the trash email retention for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the trash email retention for User named '"+User.MAIL+'\'');
 
 		// Update the database
 		if(days==-1) {
@@ -2135,7 +2134,7 @@ final public class LinuxAccountHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+			Table.TableID.LINUX_SERVER_ACCOUNTS,
 			getBusinessForLinuxServerAccount(conn, id),
 			getAOServerForLinuxServerAccount(conn, id),
 			false
@@ -2152,7 +2151,7 @@ final public class LinuxAccountHandler {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountUseInbox", id);
 		UserId username=getUsernameForLinuxServerAccount(conn, id);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set the use_inbox flag for LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the use_inbox flag for User named '"+User.MAIL+'\'');
 
 		// Update the database
 		conn.executeUpdate(
@@ -2163,7 +2162,7 @@ final public class LinuxAccountHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_SERVER_ACCOUNTS,
+			Table.TableID.LINUX_SERVER_ACCOUNTS,
 			getBusinessForLinuxServerAccount(conn, id),
 			getAOServerForLinuxServerAccount(conn, id),
 			false
@@ -2380,7 +2379,7 @@ final public class LinuxAccountHandler {
 			username,
 			aoServer
 		);
-		if(id==-1) throw new SQLException("Unable to find LinuxServerAccount for "+username+" on "+aoServer);
+		if(id==-1) throw new SQLException("Unable to find UserServer for "+username+" on "+aoServer);
 		return id;
 	}
 
@@ -2459,14 +2458,14 @@ final public class LinuxAccountHandler {
 		String password
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "comparePassword", id);
-		if(isLinuxServerAccountDisabled(conn, id)) throw new SQLException("Unable to compare password, LinuxServerAccount disabled: "+id);
+		if(isLinuxServerAccountDisabled(conn, id)) throw new SQLException("Unable to compare password, UserServer disabled: "+id);
 
 		UserId username=getUsernameForLinuxServerAccount(conn, id);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to compare password for LinuxServerAccount named '"+LinuxAccount.MAIL+"': "+id);
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to compare password for UserServer named '"+User.MAIL+"': "+id);
 		String type=conn.executeStringQuery("select type from linux.\"User\" where username=?", username);
 
 		// Make sure passwords can be set before doing a comparison
-		if(!LinuxAccountType.canSetPassword(type)) throw new SQLException("Passwords may not be compared for LinuxAccountType="+type);
+		if(!UserType.canSetPassword(type)) throw new SQLException("Passwords may not be compared for UserType="+type);
 
 		// Perform the password comparison
 		return DaemonHandler.getDaemonConnector(
@@ -2506,7 +2505,7 @@ final public class LinuxAccountHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_GROUP_ACCOUNTS,
+			Table.TableID.LINUX_GROUP_ACCOUNTS,
 			InvalidateList.getCollection(UsernameHandler.getBusinessForUsername(conn, username), getBusinessForLinuxGroup(conn, group)),
 			getAOServersForLinuxGroupAccount(conn, id),
 			false

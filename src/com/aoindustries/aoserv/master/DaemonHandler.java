@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.linux.AOServer;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.linux.Server;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -65,7 +65,7 @@ final public class DaemonHandler {
 	public static HostAddress getDaemonConnectAddress(DatabaseAccess database, int aoServer) throws IOException, SQLException {
 		HostAddress address = database.executeObjectQuery(
 			ObjectFactories.hostAddressFactory,
-			"select daemon_connect_address from linux.\"Server\" where server=?",
+			"select daemon_connect_address from linux.\"Host\" where server=?",
 			aoServer
 		);
 		if(address!=null) return address;
@@ -73,7 +73,7 @@ final public class DaemonHandler {
 			"select\n"
 			+ "  host(ia.\"inetAddress\")\n"
 			+ "from\n"
-			+ "  linux.\"Server\" ao,\n"
+			+ "  linux.\"Host\" ao,\n"
 			+ "  net.\"Bind\" nb,\n"
 			+ "  net.\"IpAddress\" ia\n"
 			+ "where\n"
@@ -82,15 +82,15 @@ final public class DaemonHandler {
 			+ "  and nb.\"ipAddress\"=ia.id",
 			aoServer
 		);
-		if(ip==null) throw new SQLException("Unable to find daemon IP address for AOServer: "+aoServer);
+		if(ip==null) throw new SQLException("Unable to find daemon IP address for Server: "+aoServer);
 		if(ip.isUnspecified()) {
 			ip = database.executeObjectQuery(ObjectFactories.inetAddressFactory,
 				"select\n"
 				+ "  host(ia.\"inetAddress\")\n"
 				+ "from\n"
-				+ "  linux.\"Server\" ao,\n"
+				+ "  linux.\"Host\" ao,\n"
 				+ "  net.\"Bind\" nb,\n"
-				+ "  linux.\"Server\" ao2,\n"
+				+ "  linux.\"Host\" ao2,\n"
 				+ "  net.\"Device\" nd,\n"
 				+ "  net.\"IpAddress\" ia\n"
 				+ "where\n"
@@ -104,7 +104,7 @@ final public class DaemonHandler {
 				+ "limit 1",
 				aoServer
 			);
-			if(ip==null) throw new SQLException("Unable to find daemon IP address for AOServer: "+aoServer);
+			if(ip==null) throw new SQLException("Unable to find daemon IP address for Server: "+aoServer);
 		}
 		return HostAddress.valueOf(ip);
 	}
@@ -116,7 +116,7 @@ final public class DaemonHandler {
 			+ "  nb.port,\n"
 			+ "  nb.net_protocol\n"
 			+ "from\n"
-			+ "  linux.\"Server\" ao,\n"
+			+ "  linux.\"Host\" ao,\n"
 			+ "  net.\"Bind\" nb\n"
 			+ "where\n"
 			+ "  ao.server=?\n"
@@ -130,7 +130,7 @@ final public class DaemonHandler {
 			"select\n"
 			+ "  nb.app_protocol\n"
 			+ "from\n"
-			+ "  linux.\"Server\" ao,\n"
+			+ "  linux.\"Host\" ao,\n"
 			+ "  net.\"Bind\" nb\n"
 			+ "where\n"
 			+ "  ao.server=?\n"
@@ -144,7 +144,7 @@ final public class DaemonHandler {
 			"select\n"
 			+ "  pool_size\n"
 			+ "from\n"
-			+ "  linux.\"Server\"\n"
+			+ "  linux.\"Host\"\n"
 			+ "where\n"
 			+ "  server=?",
 			aoServer
@@ -229,11 +229,11 @@ final public class DaemonHandler {
 
 	private static final Map<Integer,Long> downDaemons=new HashMap<>();
 
-	public static void invalidateTable(SchemaTable.TableID tableID) {
+	public static void invalidateTable(Table.TableID tableID) {
 		if(
-			tableID==SchemaTable.TableID.AO_SERVERS
-			|| tableID==SchemaTable.TableID.IP_ADDRESSES
-			|| tableID==SchemaTable.TableID.NET_BINDS
+			tableID==Table.TableID.AO_SERVERS
+			|| tableID==Table.TableID.IP_ADDRESSES
+			|| tableID==Table.TableID.NET_BINDS
 		) {
 			synchronized(DaemonHandler.class) {
 				connectors.clear();
@@ -291,7 +291,7 @@ final public class DaemonHandler {
 	 * @throws java.io.IOException
 	 * @throws java.sql.SQLException
 	 */
-	public static AOServer.DaemonAccess grantDaemonAccess(
+	public static Server.DaemonAccess grantDaemonAccess(
 		DatabaseConnection conn,
 		int aoServer,
 		HostAddress connectAddress,
@@ -337,7 +337,7 @@ final public class DaemonHandler {
 		// Send the key to the daemon
 		getDaemonConnector(conn, aoServer).grantDaemonAccess(key, daemonCommandCode, param1, param2, param3, param4);
 
-		return new AOServer.DaemonAccess(
+		return new Server.DaemonAccess(
 			getDaemonConnectorProtocol(conn, aoServer),
 			connectAddress!=null ? connectAddress : getDaemonConnectAddress(conn, aoServer),
 			getDaemonConnectorPort(conn, aoServer),

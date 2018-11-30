@@ -33,6 +33,6 @@ final public class ResellerHandler {
             if(conn.executeBooleanQuery("select (select accounting from reseller.\"Reseller\" where accounting=? and not ticket_auto_escalate) is not null", accounting)) return accounting;
             accounting = BusinessHandler.getParentBusiness(conn, accounting);
         }
-        throw new SQLException("Unable to find Reseller for Business: "+originalAccounting);
+        throw new SQLException("Unable to find Reseller for Account: "+originalAccounting);
     }
 }

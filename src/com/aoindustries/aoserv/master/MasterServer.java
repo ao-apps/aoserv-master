@@ -7,23 +7,23 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.AOServWritable;
-import com.aoindustries.aoserv.client.aosh.AOSHCommand;
+import com.aoindustries.aoserv.client.aosh.Command;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.billing.TransactionSearchCriteria;
-import com.aoindustries.aoserv.client.dns.DNSRecord;
-import com.aoindustries.aoserv.client.dns.DNSZoneTable;
+import com.aoindustries.aoserv.client.dns.Record;
+import com.aoindustries.aoserv.client.dns.ZoneTable;
 import com.aoindustries.aoserv.client.email.InboxAttributes;
-import com.aoindustries.aoserv.client.linux.AOServer;
-import com.aoindustries.aoserv.client.master.MasterProcess;
-import com.aoindustries.aoserv.client.master.MasterServerStat;
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.net.FirewalldZone;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationSet.AddReputation;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationSet.ConfidenceType;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationSet.ReputationType;
-import com.aoindustries.aoserv.client.pki.SslCertificate;
-import com.aoindustries.aoserv.client.schema.AOServProtocol;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.linux.Server;
+import com.aoindustries.aoserv.client.master.Process;
+import com.aoindustries.aoserv.client.master.ServerStat;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.net.FirewallZone;
+import com.aoindustries.aoserv.client.net.reputation.Set.AddReputation;
+import com.aoindustries.aoserv.client.net.reputation.Set.ConfidenceType;
+import com.aoindustries.aoserv.client.net.reputation.Set.ReputationType;
+import com.aoindustries.aoserv.client.pki.Certificate;
+import com.aoindustries.aoserv.client.schema.AoservProtocol;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.ticket.Language;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.FirewalldZoneName;
@@ -38,8 +38,8 @@ import com.aoindustries.aoserv.client.validator.PostgresServerName;
 import com.aoindustries.aoserv.client.validator.PostgresUserId;
 import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.client.web.HttpdSiteAuthenticatedLocation;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatContext;
+import com.aoindustries.aoserv.client.web.Location;
+import com.aoindustries.aoserv.client.web.tomcat.Context;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
 import com.aoindustries.io.CompressedDataInputStream;
@@ -115,11 +115,11 @@ public abstract class MasterServer {
 	 * The database values are read the first time this data is needed.
 	 */
 	private static final Object masterUsersLock = new Object();
-	private static Map<UserId,MasterUser> masterUsers;
+	private static Map<UserId,User> masterUsers;
 	private static final Object masterHostsLock = new Object();
 	private static Map<UserId,List<HostAddress>> masterHosts;
 	private static final Object masterServersLock = new Object();
-	private static Map<UserId,com.aoindustries.aoserv.client.master.MasterServer[]> masterServers;
+	private static Map<UserId,com.aoindustries.aoserv.client.master.UserHost[]> masterServers;
 
 	/**
 	 * The time the system started up
@@ -260,21 +260,21 @@ public abstract class MasterServer {
 	}
 
 	/** Used to avoid cloning of array for each access. */
-	private static final AOServProtocol.CommandID[] commandIDs = AOServProtocol.CommandID.values();
+	private static final AoservProtocol.CommandID[] commandIDs = AoservProtocol.CommandID.values();
 
 	/** Copy used to avoid copying for each access. */
-	private static final SchemaTable.TableID[] tableIDs = SchemaTable.TableID.values();
+	private static final Table.TableID[] tableIDs = Table.TableID.values();
 
 	static abstract class Response {
 
-		abstract void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException;
+		abstract void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException;
 
-		static final Response DONE = Response.of(AOServProtocol.DONE);
+		static final Response DONE = Response.of(AoservProtocol.DONE);
 
 		static Response of(int resp1) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 				}
 			};
@@ -283,7 +283,7 @@ public abstract class MasterServer {
 		static Response of(int resp1, int resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeCompressedInt(resp2);
 				}
@@ -293,7 +293,7 @@ public abstract class MasterServer {
 		static Response of(int resp1, long resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeLong(resp2);
 				}
@@ -303,7 +303,7 @@ public abstract class MasterServer {
 		static Response of(int resp1, boolean resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeBoolean(resp2);
 				}
@@ -313,7 +313,7 @@ public abstract class MasterServer {
 		static Response of(int resp1, String resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeUTF(resp2);
 				}
@@ -335,7 +335,7 @@ public abstract class MasterServer {
 		static Response of(int resp1, long resp2, String resp3) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeLong(resp2);
 					out.writeUTF(resp3);
@@ -346,7 +346,7 @@ public abstract class MasterServer {
 		static Response of(int resp1, long[] resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					for(int c=0;c<resp2.length;c++) out.writeLong(resp2[c]);
 				}
@@ -356,7 +356,7 @@ public abstract class MasterServer {
 		static Response of(int resp1, InboxAttributes resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeBoolean(resp2!=null);
 					if(resp2!=null) resp2.write(out, protocolVersion);
@@ -367,7 +367,7 @@ public abstract class MasterServer {
 		static Response of(int resp1, String resp2, String resp3, String resp4) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeUTF(resp2);
 					out.writeUTF(resp3);
@@ -379,7 +379,7 @@ public abstract class MasterServer {
 		static Response ofNullLongString(int resp1, String resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeNullLongUTF(resp2);
 				}
@@ -389,7 +389,7 @@ public abstract class MasterServer {
 		static Response ofLongString(int resp1, String resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeLongUTF(resp2);
 				}
@@ -405,7 +405,7 @@ public abstract class MasterServer {
 		) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeUTF(resp2);
 					out.writeUTF(resp3.toString());
@@ -418,7 +418,7 @@ public abstract class MasterServer {
 		static Response ofNullString(int resp1, String resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AOServProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeNullUTF(resp2);
 				}
@@ -439,7 +439,7 @@ public abstract class MasterServer {
 		long seq,
 		CompressedDataInputStream in,
 		CompressedDataOutputStream out,
-		MasterProcess process
+		Process process
 	) throws IOException, SQLException {
 		// Time is not added for the cache invalidation connection
 		boolean addTime=true;
@@ -450,12 +450,12 @@ public abstract class MasterServer {
 		process.commandCompleted();
 
 		// Verify client sends matching sequence
-		if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
+		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
 			long clientSeq = in.readLong();
 			if(clientSeq != seq) throw new IOException("Sequence mismatch: " + clientSeq + " != " + seq);
 		}
 		// Send command sequence
-		if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) >= 0) {
+		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) >= 0) {
 			out.writeLong(seq); // out is buffered, so no I/O created by writing this early
 		}
 		// Continue with task
@@ -480,7 +480,7 @@ public abstract class MasterServer {
 				return false;
 			} else {
 				final boolean done;
-				AOServProtocol.CommandID taskCode=commandIDs[taskCodeOrdinal];
+				AoservProtocol.CommandID taskCode=commandIDs[taskCodeOrdinal];
 				switch(taskCode) {
 					case LISTEN_CACHES :
 						process.setCommand("listen_caches");
@@ -491,7 +491,7 @@ public abstract class MasterServer {
 							addCacheListener(source);
 							final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
 							try {
-								final AOServProtocol.Version protocolVersion = source.getProtocolVersion();
+								final AoservProtocol.Version protocolVersion = source.getProtocolVersion();
 								final UserId username = source.getUsername();
 								boolean didInitialInvalidateAll = false;
 								while(!BusinessHandler.isBusinessAdministratorDisabled(conn, username)) {
@@ -499,7 +499,7 @@ public abstract class MasterServer {
 									if(!didInitialInvalidateAll) {
 										// Invalidate all once immediately now that listener added, just in case signals were lost during a network outage and reconnect
 										IntList clientInvalidateList = new IntArrayList();
-										for(SchemaTable.TableID tableID : SchemaTable.TableID.values()) {
+										for(Table.TableID tableID : Table.TableID.values()) {
 											int clientTableID = TableHandler.convertToClientTableID(conn, source, tableID);
 											if(clientTableID != -1) clientInvalidateList.add(clientTableID);
 										}
@@ -526,11 +526,11 @@ public abstract class MasterServer {
 										if(didInitialInvalidateAll) process.commandRunning();
 										IntList clientTableIDs=ice.getInvalidateList();
 										int size=clientTableIDs.size();
-										if(protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_47)>=0) out.writeBoolean(ice.getCacheSyncID()!=null);
+										if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_47)>=0) out.writeBoolean(ice.getCacheSyncID()!=null);
 										out.writeCompressedInt(size);
 										for(int c=0;c<size;c++) out.writeCompressedInt(clientTableIDs.getInt(c));
 									} else {
-										if(protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_47)>=0) out.writeBoolean(true);
+										if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_47)>=0) out.writeBoolean(true);
 										out.writeCompressedInt(-1);
 									}
 									out.flush();
@@ -540,7 +540,7 @@ public abstract class MasterServer {
 										Long id=ice.getCacheSyncID();
 										if(
 											id!=null
-											|| protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_47)<0 // Before version 1.47 was always synchronous
+											|| protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_47)<0 // Before version 1.47 was always synchronous
 										) {
 											if(!in.readBoolean()) throw new IOException("Unexpected invalidate sync response.");
 										}
@@ -558,8 +558,8 @@ public abstract class MasterServer {
 						}
 						return false;
 					case PING :
-						process.setCommand(AOSHCommand.PING);
-						out.writeByte(AOServProtocol.DONE);
+						process.setCommand(Command.PING);
+						out.writeByte(AoservProtocol.DONE);
 						done=true;
 						break;
 					case QUIT :
@@ -569,7 +569,7 @@ public abstract class MasterServer {
 						return false;
 					case TEST_CONNECTION :
 						process.setCommand("test_connection");
-						out.writeByte(AOServProtocol.DONE);
+						out.writeByte(AoservProtocol.DONE);
 						done=true;
 						break;
 					default :
@@ -593,23 +593,23 @@ public abstract class MasterServer {
 							boolean connRolledBack=false;
 							try {
 								// Stop processing if the account is disabled
-								if(BusinessHandler.isBusinessAdministratorDisabled(conn, source.getUsername())) throw new IOException("BusinessAdministrator disabled: "+source.getUsername());
+								if(BusinessHandler.isBusinessAdministratorDisabled(conn, source.getUsername())) throw new IOException("Administrator disabled: "+source.getUsername());
 
 								switch(taskCode) {
 									case INVALIDATE_TABLE :
 										{
 											int clientTableID = in.readCompressedInt();
-											SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+											Table.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
 											if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
 											int server;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) {
 												DomainName hostname = DomainName.valueOf(in.readNullUTF());
 												server = hostname==null ? -1 : ServerHandler.getServerForAOServerHostname(conn, hostname);
 											} else {
 												server = in.readCompressedInt();
 											}
 											process.setCommand(
-												AOSHCommand.INVALIDATE,
+												Command.INVALIDATE,
 												TableHandler.getTableName(
 													conn,
 													tableID
@@ -629,7 +629,7 @@ public abstract class MasterServer {
 										break;
 									case ADD : {
 										int clientTableID = in.readCompressedInt();
-										SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+										Table.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
 										if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
 										switch(tableID) {
 											case BUSINESS_ADMINISTRATORS :
@@ -652,12 +652,12 @@ public abstract class MasterServer {
 													String country=in.readNullUTF();
 													String zip=in.readNullUTF();
 													boolean enableEmailSupport=
-														source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_44)>=0
+														source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_44)>=0
 														? in.readBoolean()
 														: false
 													;
 													process.setCommand(
-														AOSHCommand.ADD_BUSINESS_ADMINISTRATOR,
+														Command.ADD_BUSINESS_ADMINISTRATOR,
 														username,
 														name,
 														title,
@@ -720,7 +720,7 @@ public abstract class MasterServer {
 													String technicalContact=in.readUTF().trim();
 													String technicalEmail=in.readUTF().trim();
 													process.setCommand(
-														AOSHCommand.ADD_BUSINESS_PROFILE,
+														Command.ADD_BUSINESS_PROFILE,
 														accounting,
 														name,
 														isPrivate,
@@ -760,7 +760,7 @@ public abstract class MasterServer {
 														technicalEmail
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -770,13 +770,13 @@ public abstract class MasterServer {
 													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
 													int server=in.readCompressedInt();
 													if(
-														source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_102)>=0
-														&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0
+														source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_102)>=0
+														&& source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0
 													) {
 														boolean can_configure_backup=in.readBoolean();
 													}
 													process.setCommand(
-														AOSHCommand.ADD_BUSINESS_SERVER,
+														Command.ADD_BUSINESS_SERVER,
 														accounting,
 														server
 													);
@@ -788,7 +788,7 @@ public abstract class MasterServer {
 														server
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -799,7 +799,7 @@ public abstract class MasterServer {
 													String contractVersion=in.readNullUTF();
 													int defaultServer;
 													DomainName hostname;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) {
 														defaultServer = -1;
 														hostname = DomainName.valueOf(in.readUTF());
 													} else {
@@ -808,13 +808,13 @@ public abstract class MasterServer {
 													}
 													AccountingCode parent = AccountingCode.valueOf(in.readUTF());
 													boolean can_add_backup_servers=
-														source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_102)>=0
+														source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_102)>=0
 														?in.readBoolean()
 														:false
 													;
 													boolean can_add_businesses=in.readBoolean();
 													boolean can_see_prices=
-														source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_103)>=0
+														source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_103)>=0
 														?in.readBoolean()
 														:true
 													;
@@ -824,7 +824,7 @@ public abstract class MasterServer {
 														defaultServer = ServerHandler.getServerForAOServerHostname(conn, hostname);
 													}
 													process.setCommand(
-														AOSHCommand.ADD_BUSINESS,
+														Command.ADD_BUSINESS,
 														accounting,
 														contractVersion,
 														defaultServer,
@@ -853,7 +853,7 @@ public abstract class MasterServer {
 											case CREDIT_CARDS :
 												{
 													// If before version 1.29, do not support add call but read the old values anyway
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_28)<=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_28)<=0) {
 														String accounting=in.readUTF();
 														byte[] cardNumber=new byte[in.readCompressedInt()]; in.readFully(cardNumber);
 														String cardInfo=in.readUTF().trim();
@@ -866,7 +866,7 @@ public abstract class MasterServer {
 														len=in.readCompressedInt(); byte[] zip=len>=0?new byte[len]:null; if(len>=0) in.readFully(zip);
 														boolean useMonthly=in.readBoolean();
 														String description=in.readNullUTF();
-														throw new SQLException("add_credit_card for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
+														throw new SQLException("add_credit_card for protocol version "+AoservProtocol.Version.VERSION_1_28+" or older is no longer supported.");
 													}
 													String processorName = in.readUTF();
 													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
@@ -892,7 +892,7 @@ public abstract class MasterServer {
 													String encryptedExpiration;
 													int encryptionFrom;
 													int encryptionRecipient;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) {
 														encryptedCardNumber = null;
 														encryptedExpiration = null;
 														encryptionFrom = -1;
@@ -926,8 +926,8 @@ public abstract class MasterServer {
 														countryCode,
 														principalName,
 														description,
-														encryptedCardNumber==null ? null : AOServProtocol.FILTERED,
-														encryptedExpiration==null ? null : AOServProtocol.FILTERED,
+														encryptedCardNumber==null ? null : AoservProtocol.FILTERED,
+														encryptedExpiration==null ? null : AoservProtocol.FILTERED,
 														encryptionFrom==-1 ? null : encryptionFrom,
 														encryptionRecipient==-1 ? null : encryptionRecipient
 													);
@@ -961,7 +961,7 @@ public abstract class MasterServer {
 														encryptionRecipient
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1122,7 +1122,7 @@ public abstract class MasterServer {
 														authorizationPrincipalName
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1135,7 +1135,7 @@ public abstract class MasterServer {
 													int lsg = in.readCompressedInt();
 													long mode = in.readLong();
 													process.setCommand(
-														AOSHCommand.ADD_CVS_REPOSITORY,
+														Command.ADD_CVS_REPOSITORY,
 														aoServer,
 														path,
 														lsa,
@@ -1153,7 +1153,7 @@ public abstract class MasterServer {
 														mode
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1175,7 +1175,7 @@ public abstract class MasterServer {
 														disableReason
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1188,30 +1188,30 @@ public abstract class MasterServer {
 													int priority       = in.readCompressedInt();
 													int weight;
 													int port;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_72)>=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_72)>=0) {
 														weight         = in.readCompressedInt();
 														port           = in.readCompressedInt();
 													} else {
-														weight         = DNSRecord.NO_WEIGHT;
-														port           = DNSRecord.NO_PORT;
+														weight         = Record.NO_WEIGHT;
+														port           = Record.NO_PORT;
 													}
 													String destination = in.readUTF().trim();
 													int ttl;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_127)>=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_127)>=0) {
 														ttl            = in.readCompressedInt();
 													} else {
-														ttl            = DNSRecord.NO_TTL;
+														ttl            = Record.NO_TTL;
 													}
 													process.setCommand(
-														AOSHCommand.ADD_DNS_RECORD,
+														Command.ADD_DNS_RECORD,
 														zone,
 														domain,
 														type,
-														priority==DNSRecord.NO_PRIORITY ? null : priority,
-														weight==DNSRecord.NO_WEIGHT ? null : weight,
-														port==DNSRecord.NO_PORT ? null : port,
+														priority==Record.NO_PRIORITY ? null : priority,
+														weight==Record.NO_WEIGHT ? null : weight,
+														port==Record.NO_PORT ? null : port,
 														destination,
-														ttl==DNSRecord.NO_TTL ? null : ttl
+														ttl==Record.NO_TTL ? null : ttl
 													);
 													int id = DNSHandler.addDNSRecord(
 														conn,
@@ -1227,7 +1227,7 @@ public abstract class MasterServer {
 														ttl
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1239,7 +1239,7 @@ public abstract class MasterServer {
 													InetAddress ip = InetAddress.valueOf(in.readUTF());
 													int ttl = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.ADD_DNS_ZONE,
+														Command.ADD_DNS_ZONE,
 														packageName,
 														zone,
 														ip,
@@ -1262,7 +1262,7 @@ public abstract class MasterServer {
 													String address = in.readUTF().trim();
 													int domain = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.ADD_EMAIL_ADDRESS,
+														Command.ADD_EMAIL_ADDRESS,
 														address,
 														domain
 													);
@@ -1274,7 +1274,7 @@ public abstract class MasterServer {
 														domain
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1285,7 +1285,7 @@ public abstract class MasterServer {
 													int aoServer = in.readCompressedInt();
 													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_EMAIL_DOMAIN,
+														Command.ADD_EMAIL_DOMAIN,
 														domain,
 														aoServer,
 														packageName
@@ -1299,7 +1299,7 @@ public abstract class MasterServer {
 														packageName
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1309,7 +1309,7 @@ public abstract class MasterServer {
 													int address = in.readCompressedInt();
 													Email destination = Email.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_EMAIL_FORWARDING,
+														Command.ADD_EMAIL_FORWARDING,
 														address,
 														destination
 													);
@@ -1321,7 +1321,7 @@ public abstract class MasterServer {
 														destination
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1331,7 +1331,7 @@ public abstract class MasterServer {
 													int address=in.readCompressedInt();
 													int email_list=in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.ADD_EMAIL_LIST_ADDRESS,
+														Command.ADD_EMAIL_LIST_ADDRESS,
 														address,
 														email_list
 													);
@@ -1343,7 +1343,7 @@ public abstract class MasterServer {
 														email_list
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1354,7 +1354,7 @@ public abstract class MasterServer {
 													int linuxServerAccount = in.readCompressedInt();
 													int linuxServerGroup = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.ADD_EMAIL_LIST,
+														Command.ADD_EMAIL_LIST,
 														path,
 														linuxServerAccount,
 														linuxServerGroup
@@ -1368,7 +1368,7 @@ public abstract class MasterServer {
 														linuxServerGroup
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1378,7 +1378,7 @@ public abstract class MasterServer {
 													int address=in.readCompressedInt();
 													int pipe=in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.ADD_EMAIL_PIPE_ADDRESS,
+														Command.ADD_EMAIL_PIPE_ADDRESS,
 														address,
 														pipe
 													);
@@ -1390,7 +1390,7 @@ public abstract class MasterServer {
 														pipe
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1401,7 +1401,7 @@ public abstract class MasterServer {
 													String command = in.readUTF();
 													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_EMAIL_PIPE,
+														Command.ADD_EMAIL_PIPE,
 														ao_server,
 														command,
 														packageName
@@ -1415,7 +1415,7 @@ public abstract class MasterServer {
 														packageName
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1431,7 +1431,7 @@ public abstract class MasterServer {
 													String type=in.readUTF();
 													long duration=in.readLong();
 													process.setCommand(
-														AOSHCommand.ADD_EMAIL_SMTP_RELAY,
+														Command.ADD_EMAIL_SMTP_RELAY,
 														packageName,
 														aoServer==-1?null:aoServer,
 														host,
@@ -1449,7 +1449,7 @@ public abstract class MasterServer {
 														duration
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1486,7 +1486,7 @@ public abstract class MasterServer {
 														isSuccessful
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1495,11 +1495,11 @@ public abstract class MasterServer {
 												{
 													int replication=in.readCompressedInt();
 													String path=in.readUTF();
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) {
 														int packageNum=in.readCompressedInt();
 													}
 													boolean backupEnabled;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) {
 														short backupLevel=in.readShort();
 														short backupRetention=in.readShort();
 														boolean recurse=in.readBoolean();
@@ -1508,16 +1508,16 @@ public abstract class MasterServer {
 														backupEnabled = in.readBoolean();
 													}
 													boolean required;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_62)>=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_62)>=0) {
 														required = in.readBoolean();
 													} else {
 														required = false;
 													}
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_31)<0) {
-														throw new IOException(AOSHCommand.ADD_FILE_BACKUP_SETTING+" call not supported for AOServProtocol < "+AOServProtocol.Version.VERSION_1_31+", please upgrade AOServ Client.");
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_31)<0) {
+														throw new IOException(Command.ADD_FILE_BACKUP_SETTING+" call not supported for AoservProtocol < "+AoservProtocol.Version.VERSION_1_31+", please upgrade AOServ Client.");
 													}
 													process.setCommand(
-														AOSHCommand.ADD_FILE_BACKUP_SETTING,
+														Command.ADD_FILE_BACKUP_SETTING,
 														replication,
 														path,
 														backupEnabled,
@@ -1533,7 +1533,7 @@ public abstract class MasterServer {
 														required
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1542,7 +1542,7 @@ public abstract class MasterServer {
 												{
 													UserId username = UserId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_FTP_GUEST_USER,
+														Command.ADD_FTP_GUEST_USER,
 														username
 													);
 													FTPHandler.addFTPGuestUser(
@@ -1561,14 +1561,14 @@ public abstract class MasterServer {
 													int version=in.readCompressedInt();
 													UserId linuxServerAccount = UserId.valueOf(in.readUTF());
 													GroupId linuxServerGroup = GroupId.valueOf(in.readUTF());
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_9) <= 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_9) <= 0) {
 														boolean isSecure = in.readBoolean();
 														boolean isOverflow = in.readBoolean();
-														if(isSecure) throw new IOException(AOSHCommand.ADD_HTTPD_SHARED_TOMCAT + " call no longer supports is_secure=true");
-														if(isOverflow) throw new IOException(AOSHCommand.ADD_HTTPD_SHARED_TOMCAT + " call no longer supports isOverflow=true");
+														if(isSecure) throw new IOException(Command.ADD_HTTPD_SHARED_TOMCAT + " call no longer supports is_secure=true");
+														if(isOverflow) throw new IOException(Command.ADD_HTTPD_SHARED_TOMCAT + " call no longer supports isOverflow=true");
 													}
 													process.setCommand(
-														AOSHCommand.ADD_HTTPD_SHARED_TOMCAT,
+														Command.ADD_HTTPD_SHARED_TOMCAT,
 														name,
 														aoServer,
 														version,
@@ -1587,7 +1587,7 @@ public abstract class MasterServer {
 														false
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1608,7 +1608,7 @@ public abstract class MasterServer {
 													for(int c=0;c<len;c++) altHttpHostnames[c] = DomainName.valueOf(in.readUTF());
 													int jBossVersion = in.readCompressedInt();
 													UnixPath contentSrc;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_9) <= 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_9) <= 0) {
 														contentSrc = UnixPath.valueOf(in.readNullUTF());
 													} else {
 														contentSrc = null;
@@ -1619,14 +1619,14 @@ public abstract class MasterServer {
 													boolean enableHtaccess;
 													boolean enableIndexes;
 													boolean enableFollowSymlinks;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) < 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) < 0) {
 														phpVersion = -1;
 														enableCgi = true;
 														enableSsi = true;
 														enableHtaccess = true;
 														enableIndexes = true;
 														enableFollowSymlinks = false;
-													} else if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_6) < 0) {
+													} else if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_6) < 0) {
 														phpVersion = in.readCompressedInt();
 														enableCgi = in.readBoolean();
 														enableSsi = in.readBoolean();
@@ -1642,7 +1642,7 @@ public abstract class MasterServer {
 														enableFollowSymlinks = false;
 													}
 													process.setCommand(
-														AOSHCommand.ADD_HTTPD_JBOSS_SITE,
+														Command.ADD_HTTPD_JBOSS_SITE,
 														aoServer,
 														siteName,
 														packageName,
@@ -1661,7 +1661,7 @@ public abstract class MasterServer {
 														enableIndexes,
 														enableFollowSymlinks
 													);
-													if(contentSrc != null) throw new IOException(AOSHCommand.ADD_HTTPD_JBOSS_SITE + " call no longer supports non-null content_source");
+													if(contentSrc != null) throw new IOException(Command.ADD_HTTPD_JBOSS_SITE + " call no longer supports non-null content_source");
 													int id = HttpdHandler.addHttpdJBossSite(
 														conn,
 														source,
@@ -1685,7 +1685,7 @@ public abstract class MasterServer {
 														enableFollowSymlinks
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1708,7 +1708,7 @@ public abstract class MasterServer {
 													}
 													String require = in.readUTF();
 													String handler;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_13) >= 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_13) >= 0) {
 														String s = in.readUTF();
 														handler = s.isEmpty() ? null : s;
 													} else {
@@ -1716,7 +1716,7 @@ public abstract class MasterServer {
 													}
 
 													process.setCommand(
-														AOSHCommand.ADD_HTTPD_SITE_AUTHENTICATED_LOCATION,
+														Command.ADD_HTTPD_SITE_AUTHENTICATED_LOCATION,
 														httpd_site,
 														path,
 														isRegularExpression,
@@ -1740,7 +1740,7 @@ public abstract class MasterServer {
 														handler
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1750,7 +1750,7 @@ public abstract class MasterServer {
 													int hsb_id = in.readCompressedInt();
 													DomainName hostname = DomainName.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_HTTPD_SITE_URL,
+														Command.ADD_HTTPD_SITE_URL,
 														hsb_id,
 														hostname
 													);
@@ -1762,7 +1762,7 @@ public abstract class MasterServer {
 														hostname
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1783,13 +1783,13 @@ public abstract class MasterServer {
 													int debug = in.readCompressedInt();
 													UnixPath workDir = UnixPath.valueOf(in.readNullUTF());
 													boolean serverXmlConfigured;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_2) <= 0) {
-														serverXmlConfigured = HttpdTomcatContext.DEFAULT_SERVER_XML_CONFIGURED;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_2) <= 0) {
+														serverXmlConfigured = Context.DEFAULT_SERVER_XML_CONFIGURED;
 													} else {
 														serverXmlConfigured = in.readBoolean();
 													}
 													process.setCommand(
-														AOSHCommand.ADD_HTTPD_TOMCAT_CONTEXT,
+														Command.ADD_HTTPD_TOMCAT_CONTEXT,
 														tomcat_site,
 														className,
 														cookies,
@@ -1825,7 +1825,7 @@ public abstract class MasterServer {
 														serverXmlConfigured
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1844,13 +1844,13 @@ public abstract class MasterServer {
 													String validationQuery=in.readUTF();
 													if(validationQuery.length()==0) validationQuery=null;
 													process.setCommand(
-														AOSHCommand.ADD_HTTPD_TOMCAT_DATA_SOURCE,
+														Command.ADD_HTTPD_TOMCAT_DATA_SOURCE,
 														tomcat_context,
 														name,
 														driverClassName,
 														url,
 														username,
-														AOServProtocol.FILTERED,
+														AoservProtocol.FILTERED,
 														maxActive,
 														maxIdle,
 														maxWait,
@@ -1872,7 +1872,7 @@ public abstract class MasterServer {
 														validationQuery
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1886,7 +1886,7 @@ public abstract class MasterServer {
 													String description=in.readUTF();
 													if(description.length()==0) description=null;
 													process.setCommand(
-														AOSHCommand.ADD_HTTPD_TOMCAT_PARAMETER,
+														Command.ADD_HTTPD_TOMCAT_PARAMETER,
 														tomcat_context,
 														name,
 														value,
@@ -1904,7 +1904,7 @@ public abstract class MasterServer {
 														description
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1915,7 +1915,7 @@ public abstract class MasterServer {
 													String path = in.readUTF();
 													boolean mount = in.readBoolean();
 													process.setCommand(
-														AOSHCommand.ADD_HTTPD_TOMCAT_SITE_JK_MOUNT,
+														Command.ADD_HTTPD_TOMCAT_SITE_JK_MOUNT,
 														tomcat_site,
 														path,
 														mount
@@ -1929,7 +1929,7 @@ public abstract class MasterServer {
 														mount
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -1949,14 +1949,14 @@ public abstract class MasterServer {
 													DomainName[] altHttpHostnames = new DomainName[len];
 													for(int c=0;c<len;c++) altHttpHostnames[c] = DomainName.valueOf(in.readUTF());
 													String sharedTomcatName;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_9) <= 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_9) <= 0) {
 														sharedTomcatName = in.readNullUTF();
 														int version = in.readCompressedInt();
 													} else {
 														sharedTomcatName = in.readUTF();
 													}
 													UnixPath contentSrc;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_9) <= 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_9) <= 0) {
 														contentSrc = UnixPath.valueOf(in.readNullUTF());
 													} else {
 														contentSrc = null;
@@ -1967,14 +1967,14 @@ public abstract class MasterServer {
 													boolean enableHtaccess;
 													boolean enableIndexes;
 													boolean enableFollowSymlinks;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) < 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) < 0) {
 														phpVersion = -1;
 														enableCgi = true;
 														enableSsi = true;
 														enableHtaccess = true;
 														enableIndexes = true;
 														enableFollowSymlinks = false;
-													} else if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_6) < 0) {
+													} else if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_6) < 0) {
 														phpVersion = in.readCompressedInt();
 														enableCgi = in.readBoolean();
 														enableSsi = in.readBoolean();
@@ -1990,7 +1990,7 @@ public abstract class MasterServer {
 														enableFollowSymlinks = false;
 													}
 													process.setCommand(
-														AOSHCommand.ADD_HTTPD_TOMCAT_SHARED_SITE,
+														Command.ADD_HTTPD_TOMCAT_SHARED_SITE,
 														aoServer,
 														siteName,
 														packageName,
@@ -2009,8 +2009,8 @@ public abstract class MasterServer {
 														enableIndexes,
 														enableFollowSymlinks
 													);
-													if(sharedTomcatName == null) throw new IOException(AOSHCommand.ADD_HTTPD_TOMCAT_SHARED_SITE + " call now requires non-null shared_tomcat_name");
-													if(contentSrc != null) throw new IOException(AOSHCommand.ADD_HTTPD_TOMCAT_SHARED_SITE + " call no longer supports non-null content_source");
+													if(sharedTomcatName == null) throw new IOException(Command.ADD_HTTPD_TOMCAT_SHARED_SITE + " call now requires non-null shared_tomcat_name");
+													if(contentSrc != null) throw new IOException(Command.ADD_HTTPD_TOMCAT_SHARED_SITE + " call no longer supports non-null content_source");
 													int id = HttpdHandler.addHttpdTomcatSharedSite(
 														conn,
 														source,
@@ -2034,7 +2034,7 @@ public abstract class MasterServer {
 														enableFollowSymlinks
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2055,7 +2055,7 @@ public abstract class MasterServer {
 													for(int c=0;c<len;c++) altHttpHostnames[c] = DomainName.valueOf(in.readUTF());
 													int tomcatVersion = in.readCompressedInt();
 													UnixPath contentSrc;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_9) <= 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_9) <= 0) {
 														contentSrc = UnixPath.valueOf(in.readNullUTF());
 													} else {
 														contentSrc = null;
@@ -2066,14 +2066,14 @@ public abstract class MasterServer {
 													boolean enableHtaccess;
 													boolean enableIndexes;
 													boolean enableFollowSymlinks;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) < 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) < 0) {
 														phpVersion = -1;
 														enableCgi = true;
 														enableSsi = true;
 														enableHtaccess = true;
 														enableIndexes = true;
 														enableFollowSymlinks = false;
-													} else if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_6) < 0) {
+													} else if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_6) < 0) {
 														phpVersion = in.readCompressedInt();
 														enableCgi = in.readBoolean();
 														enableSsi = in.readBoolean();
@@ -2089,7 +2089,7 @@ public abstract class MasterServer {
 														enableFollowSymlinks = false;
 													}
 													process.setCommand(
-														AOSHCommand.ADD_HTTPD_TOMCAT_STD_SITE,
+														Command.ADD_HTTPD_TOMCAT_STD_SITE,
 														aoServer,
 														siteName,
 														packageName,
@@ -2108,7 +2108,7 @@ public abstract class MasterServer {
 														enableIndexes,
 														enableFollowSymlinks
 													);
-													if(contentSrc != null) throw new IOException(AOSHCommand.ADD_HTTPD_TOMCAT_STD_SITE + " call no longer supports non-null content_source");
+													if(contentSrc != null) throw new IOException(Command.ADD_HTTPD_TOMCAT_STD_SITE + " call no longer supports non-null content_source");
 													int id = HttpdHandler.addHttpdTomcatStdSite(
 														conn,
 														source,
@@ -2132,22 +2132,22 @@ public abstract class MasterServer {
 														enableFollowSymlinks
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
 												break;
 											case LINUX_ACC_ADDRESSES :
 												{
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_31)<0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_31)<0) {
 														int address = in.readCompressedInt();
 														String username = in.readUTF().trim();
-														throw new IOException(AOSHCommand.ADD_LINUX_ACC_ADDRESS+" call not supported for AOServProtocol < "+AOServProtocol.Version.VERSION_1_31+", please upgrade AOServ Client.");
+														throw new IOException(Command.ADD_LINUX_ACC_ADDRESS+" call not supported for AoservProtocol < "+AoservProtocol.Version.VERSION_1_31+", please upgrade AOServ Client.");
 													}
 													int address = in.readCompressedInt();
 													int lsa = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.ADD_LINUX_ACC_ADDRESS,
+														Command.ADD_LINUX_ACC_ADDRESS,
 														address,
 														lsa
 													);
@@ -2159,7 +2159,7 @@ public abstract class MasterServer {
 														lsa
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2169,7 +2169,7 @@ public abstract class MasterServer {
 													UserId username = UserId.valueOf(in.readUTF());
 													GroupId primary_group = GroupId.valueOf(in.readUTF());
 													Gecos name;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) < 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) < 0) {
 														name = Gecos.valueOf(in.readUTF());
 													} else {
 														name = Gecos.valueOf(in.readNullUTF());
@@ -2180,7 +2180,7 @@ public abstract class MasterServer {
 													String type = in.readUTF().trim();
 													UnixPath shell = UnixPath.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_LINUX_ACCOUNT,
+														Command.ADD_LINUX_ACCOUNT,
 														username,
 														primary_group,
 														name,
@@ -2212,7 +2212,7 @@ public abstract class MasterServer {
 													GroupId groupName = GroupId.valueOf(in.readUTF());
 													UserId username = UserId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_LINUX_GROUP_ACCOUNT,
+														Command.ADD_LINUX_GROUP_ACCOUNT,
 														groupName,
 														username
 													);
@@ -2226,7 +2226,7 @@ public abstract class MasterServer {
 														false
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2237,7 +2237,7 @@ public abstract class MasterServer {
 													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
 													String type = in.readUTF().trim();
 													process.setCommand(
-														AOSHCommand.ADD_LINUX_GROUP,
+														Command.ADD_LINUX_GROUP,
 														groupName,
 														packageName,
 														type
@@ -2260,7 +2260,7 @@ public abstract class MasterServer {
 													int aoServer = in.readCompressedInt();
 													UnixPath home = UnixPath.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_LINUX_SERVER_ACCOUNT,
+														Command.ADD_LINUX_SERVER_ACCOUNT,
 														username,
 														aoServer,
 														home
@@ -2275,7 +2275,7 @@ public abstract class MasterServer {
 														false
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2285,7 +2285,7 @@ public abstract class MasterServer {
 													GroupId groupName = GroupId.valueOf(in.readUTF());
 													int aoServer = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.ADD_LINUX_SERVER_GROUP,
+														Command.ADD_LINUX_SERVER_GROUP,
 														groupName,
 														aoServer
 													);
@@ -2298,7 +2298,7 @@ public abstract class MasterServer {
 														false
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2308,7 +2308,7 @@ public abstract class MasterServer {
 													int majordomoServer = in.readCompressedInt();
 													String listName = in.readUTF().trim();
 													process.setCommand(
-														AOSHCommand.ADD_MAJORDOMO_LIST,
+														Command.ADD_MAJORDOMO_LIST,
 														majordomoServer,
 														listName
 													);
@@ -2320,7 +2320,7 @@ public abstract class MasterServer {
 														listName
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2332,7 +2332,7 @@ public abstract class MasterServer {
 													int lsg = in.readCompressedInt();
 													String version = in.readUTF().trim();
 													process.setCommand(
-														AOSHCommand.ADD_MAJORDOMO_SERVER,
+														Command.ADD_MAJORDOMO_SERVER,
 														emailDomain,
 														lsa,
 														lsg,
@@ -2356,7 +2356,7 @@ public abstract class MasterServer {
 													int mysqlServer = in.readCompressedInt();
 													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_MYSQL_DATABASE,
+														Command.ADD_MYSQL_DATABASE,
 														name,
 														mysqlServer,
 														packageName
@@ -2370,7 +2370,7 @@ public abstract class MasterServer {
 														packageName
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2386,7 +2386,7 @@ public abstract class MasterServer {
 													boolean canCreate=in.readBoolean();
 													boolean canDrop=in.readBoolean();
 													boolean canReference;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_2) >= 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_2) >= 0) {
 														canReference = in.readBoolean();
 													} else {
 														// Default to copying drop_priv for older clients
@@ -2396,7 +2396,7 @@ public abstract class MasterServer {
 													boolean canAlter=in.readBoolean();
 													boolean canCreateTempTable;
 													boolean canLockTables;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_111)>=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_111)>=0) {
 														canCreateTempTable=in.readBoolean();
 														canLockTables=in.readBoolean();
 													} else {
@@ -2410,13 +2410,13 @@ public abstract class MasterServer {
 													boolean canExecute;
 													boolean canEvent;
 													boolean canTrigger;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4)>=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_4)>=0) {
 														canCreateView=in.readBoolean();
 														canShowView=in.readBoolean();
 														canCreateRoutine=in.readBoolean();
 														canAlterRoutine=in.readBoolean();
 														canExecute=in.readBoolean();
-														if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_54)>=0) {
+														if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_54)>=0) {
 															canEvent=in.readBoolean();
 															canTrigger=in.readBoolean();
 														} else {
@@ -2433,7 +2433,7 @@ public abstract class MasterServer {
 														canTrigger=false;
 													}
 													process.setCommand(
-														AOSHCommand.ADD_MYSQL_DB_USER,
+														Command.ADD_MYSQL_DB_USER,
 														mysql_database,
 														mysql_server_user,
 														canSelect,
@@ -2481,7 +2481,7 @@ public abstract class MasterServer {
 														canTrigger
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2492,7 +2492,7 @@ public abstract class MasterServer {
 													int mysqlServer = in.readCompressedInt();
 													String host = in.readNullUTF();
 													process.setCommand(
-														AOSHCommand.ADD_MYSQL_SERVER_USER,
+														Command.ADD_MYSQL_SERVER_USER,
 														username,
 														mysqlServer,
 														host
@@ -2506,7 +2506,7 @@ public abstract class MasterServer {
 														host
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2515,7 +2515,7 @@ public abstract class MasterServer {
 												{
 													MySQLUserId username = MySQLUserId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_MYSQL_USER,
+														Command.ADD_MYSQL_USER,
 														username
 													);
 													MySQLHandler.addMySQLUser(
@@ -2536,7 +2536,7 @@ public abstract class MasterServer {
 													{
 														int portNum = in.readCompressedInt();
 														Protocol protocol;
-														if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) < 0) {
+														if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) < 0) {
 															protocol = Protocol.valueOf(in.readUTF().toUpperCase(Locale.ROOT));
 														} else {
 															protocol = in.readEnum(Protocol.class);
@@ -2547,16 +2547,16 @@ public abstract class MasterServer {
 													boolean monitoringEnabled;
 													int numZones;
 													Set<FirewalldZoneName> firewalldZones;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_2) <= 0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_2) <= 0) {
 														boolean openFirewall = in.readBoolean();
 														if(openFirewall) {
 															numZones = 1;
-															firewalldZones = Collections.singleton(FirewalldZone.PUBLIC);
+															firewalldZones = Collections.singleton(FirewallZone.PUBLIC);
 														} else {
 															numZones = 0;
 															firewalldZones = Collections.emptySet();
 														}
-														if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_103) <= 0) {
+														if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_103) <= 0) {
 															monitoringEnabled = in.readCompressedInt() != -1;
 															in.readNullUTF();
 															in.readNullUTF();
@@ -2576,7 +2576,7 @@ public abstract class MasterServer {
 														}
 													}
 													Object[] command = new Object[7 + numZones];
-													command[0] = AOSHCommand.ADD_NET_BIND;
+													command[0] = Command.ADD_NET_BIND;
 													command[1] = server;
 													command[2] = packageName;
 													command[3] = ipAddress;
@@ -2604,7 +2604,7 @@ public abstract class MasterServer {
 														firewalldZones
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2618,7 +2618,7 @@ public abstract class MasterServer {
 													String type = in.readUTF().trim();
 													int transid = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.ADD_NOTICE_LOG,
+														Command.ADD_NOTICE_LOG,
 														accounting,
 														billingContact,
 														emailAddress,
@@ -2645,7 +2645,7 @@ public abstract class MasterServer {
 													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
 													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
 													int packageDefinition;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_122)<=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_122)<=0) {
 														// Try to find a package definition owned by the source accounting with matching rates and limits
 														String level=in.readUTF().trim();
 														int rate=in.readCompressedInt();
@@ -2677,7 +2677,7 @@ public abstract class MasterServer {
 														packageDefinition = in.readCompressedInt();
 													}
 													process.setCommand(
-														AOSHCommand.ADD_PACKAGE,
+														Command.ADD_PACKAGE,
 														packageName,
 														accounting,
 														packageDefinition
@@ -2691,7 +2691,7 @@ public abstract class MasterServer {
 														packageDefinition
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2737,7 +2737,7 @@ public abstract class MasterServer {
 														monthlyRateTransactionType
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2748,9 +2748,9 @@ public abstract class MasterServer {
 													int postgresServer = in.readCompressedInt();
 													int datdba = in.readCompressedInt();
 													int encoding = in.readCompressedInt();
-													boolean enable_postgis = source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_27)>=0?in.readBoolean():false;
+													boolean enable_postgis = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_27)>=0?in.readBoolean():false;
 													process.setCommand(
-														AOSHCommand.ADD_POSTGRES_DATABASE,
+														Command.ADD_POSTGRES_DATABASE,
 														name,
 														postgresServer,
 														datdba,
@@ -2768,7 +2768,7 @@ public abstract class MasterServer {
 														enable_postgis
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2778,7 +2778,7 @@ public abstract class MasterServer {
 													PostgresUserId username = PostgresUserId.valueOf(in.readUTF());
 													int postgresServer = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.ADD_POSTGRES_SERVER_USER,
+														Command.ADD_POSTGRES_SERVER_USER,
 														username,
 														postgresServer
 													);
@@ -2790,7 +2790,7 @@ public abstract class MasterServer {
 														postgresServer
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2799,7 +2799,7 @@ public abstract class MasterServer {
 												{
 													PostgresUserId username = PostgresUserId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_POSTGRES_USER,
+														Command.ADD_POSTGRES_USER,
 														username
 													);
 													PostgresHandler.addPostgresUser(
@@ -2845,7 +2845,7 @@ public abstract class MasterServer {
 													boolean billing_pay_one_year = in.readBoolean();
 													// Encrypted values
 													int from;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) from = 2; // Hard-coded value from AO website key
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) from = 2; // Hard-coded value from AO website key
 													else from = in.readCompressedInt();
 													int recipient = in.readCompressedInt();
 													String ciphertext = in.readUTF();
@@ -2938,7 +2938,7 @@ public abstract class MasterServer {
 														options
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2948,7 +2948,7 @@ public abstract class MasterServer {
 													int esr = in.readCompressedInt();
 													String message = in.readUTF().trim();
 													process.setCommand(
-														AOSHCommand.ADD_SPAM_EMAIL_MESSAGE,
+														Command.ADD_SPAM_EMAIL_MESSAGE,
 														esr,
 														message
 													);
@@ -2960,7 +2960,7 @@ public abstract class MasterServer {
 														message
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -2968,35 +2968,35 @@ public abstract class MasterServer {
 											case TICKETS :
 												{
 													AccountingCode brand;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_46)>=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_46)>=0) {
 														brand = AccountingCode.valueOf(in.readUTF());
 													} else {
 														brand = BusinessHandler.getRootBusiness();
 													}
 													AccountingCode accounting;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_126)>=0) {
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_126)>=0) {
 														accounting = AccountingCode.valueOf(in.readNullUTF());
 													} else {
 														AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
 														accounting = PackageHandler.getBusinessForPackage(conn, packageName);
 													}
-													String language = source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_44)>=0 ? in.readUTF() : Language.EN;
-													int category = source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_44)>=0 ? in.readCompressedInt() : -1;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) in.readUTF(); // username
+													String language = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_44)>=0 ? in.readUTF() : Language.EN;
+													int category = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_44)>=0 ? in.readCompressedInt() : -1;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) in.readUTF(); // username
 													String type = in.readUTF();
 													String fromAddress;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_48)>=0) fromAddress = in.readNullUTF();
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_48)>=0) fromAddress = in.readNullUTF();
 													else fromAddress = null;
-													String summary = source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_44)>=0 ? in.readUTF() : "(No summary)";
-													String details = source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_44)>=0 ? in.readNullLongUTF() : in.readUTF();
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) in.readLong(); // deadline
+													String summary = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_44)>=0 ? in.readUTF() : "(No summary)";
+													String details = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_44)>=0 ? in.readNullLongUTF() : in.readUTF();
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) in.readLong(); // deadline
 													String clientPriority=in.readUTF();
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) in.readUTF(); // adminPriority
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) in.readNullUTF(); // technology
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) in.readUTF(); // adminPriority
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) in.readNullUTF(); // technology
 													String contactEmails;
 													String contactPhoneNumbers;
-													if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_125)>=0) {
-														if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) in.readNullUTF(); // assignedTo
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_125)>=0) {
+														if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) in.readNullUTF(); // assignedTo
 														contactEmails=in.readUTF();
 														contactPhoneNumbers=in.readUTF();
 													} else {
@@ -3034,7 +3034,7 @@ public abstract class MasterServer {
 														contactPhoneNumbers
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -3053,7 +3053,7 @@ public abstract class MasterServer {
 													String processor = in.readNullUTF();
 													byte payment_confirmed = in.readByte();
 													process.setCommand(
-														AOSHCommand.ADD_TRANSACTION,
+														Command.ADD_TRANSACTION,
 														accounting,
 														sourceAccounting,
 														business_administrator,
@@ -3085,7 +3085,7 @@ public abstract class MasterServer {
 														payment_confirmed
 													);
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														id
 													);
 												}
@@ -3095,7 +3095,7 @@ public abstract class MasterServer {
 													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
 													UserId username = UserId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.ADD_USERNAME,
+														Command.ADD_USERNAME,
 														packageName,
 														username
 													);
@@ -3124,22 +3124,22 @@ public abstract class MasterServer {
 											String farm=in.readUTF();
 											int owner=in.readCompressedInt();
 											String description=in.readUTF();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_107)<=0) in.readUTF();
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107)<=0) in.readUTF();
 											int os_version=in.readCompressedInt();
 											String username=in.readUTF();
 											String password=in.readUTF();
 											String contact_phone=in.readUTF();
 											String contact_email=in.readUTF();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_107)<=0) throw new IOException("addBackupServer call not supported for AOServ Client version <= "+AOServProtocol.VERSION_1_0_A_107+", please upgrade AOServ Client.");
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107)<=0) throw new IOException("addBackupServer call not supported for AOServ Client version <= "+AoservProtocol.VERSION_1_0_A_107+", please upgrade AOServ Client.");
 											process.setCommand(
-												AOSHCommand.ADD_BACKUP_SERVER,
+												Command.ADD_BACKUP_SERVER,
 												hostname,
 												farm,
 												owner,
 												description,
 												os_version,
 												username,
-												AOServProtocol.FILTERED,
+												AoservProtocol.FILTERED,
 												contact_phone,
 												contact_email
 											);
@@ -3157,7 +3157,7 @@ public abstract class MasterServer {
 												contact_phone,
 												contact_email
 											);
-											resp1=AOServProtocol.DONE;
+											resp1=AoservProtocol.DONE;
 											resp2Int=id;
 											hasResp2Int=true;
 											sendInvalidateList=true;
@@ -3183,7 +3183,7 @@ public abstract class MasterServer {
 											int ticketID=in.readCompressedInt();
 											String username=in.readUTF().trim();
 											String comments=in.readUTF().trim();
-											process.setCommand(AOSHCommand.BOUNCE_TICKET);
+											process.setCommand(Command.BOUNCE_TICKET);
 											TicketHandler.bounceTicket(
 												conn,
 												source,
@@ -3192,7 +3192,7 @@ public abstract class MasterServer {
 												username,
 												comments
 											);
-											resp1=AOServProtocol.DONE;
+											resp1=AoservProtocol.DONE;
 											sendInvalidateList=true;
 										}
 										break;*/
@@ -3216,7 +3216,7 @@ public abstract class MasterServer {
 												gid
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												id
 											);
 											sendInvalidateList = true;
@@ -3279,7 +3279,7 @@ public abstract class MasterServer {
 												shell
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												id
 											);
 											sendInvalidateList = true;
@@ -3289,7 +3289,7 @@ public abstract class MasterServer {
 										{
 											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
 											String cancelReason = in.readNullUTF();
-											process.setCommand(AOSHCommand.CANCEL_BUSINESS, accounting, cancelReason);
+											process.setCommand(Command.CANCEL_BUSINESS, accounting, cancelReason);
 											BusinessHandler.cancelBusiness(conn, source, invalidateList, accounting, cancelReason);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -3303,7 +3303,7 @@ public abstract class MasterServer {
 											String username=in.readUTF().trim();
 											String comments=in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.CHANGE_TICKET_ADMIN_PRIORITY,
+												Command.CHANGE_TICKET_ADMIN_PRIORITY,
 												ticketID,
 												priority,
 												username,
@@ -3318,7 +3318,7 @@ public abstract class MasterServer {
 												username,
 												comments
 											);
-											resp1=AOServProtocol.DONE;
+											resp1=AoservProtocol.DONE;
 											sendInvalidateList=true;
 										}
 										break;*/
@@ -3326,7 +3326,7 @@ public abstract class MasterServer {
 										{
 											int ticketID = in.readCompressedInt();
 											String clientPriority = in.readUTF();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) {
 												String username = in.readUTF();
 												String comments = in.readUTF();
 											}
@@ -3394,7 +3394,7 @@ public abstract class MasterServer {
 											int ticketID = in.readCompressedInt();
 											String oldType;
 											String newType;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_48)>=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_48)>=0) {
 												oldType = in.readUTF();
 												newType = in.readUTF();
 											} else {
@@ -3417,11 +3417,11 @@ public abstract class MasterServer {
 												oldType,
 												newType
 											);
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_48) < 0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_48) < 0) {
 												resp = Response.DONE;
 											} else {
 												resp = Response.of(
-													AOServProtocol.DONE,
+													AoservProtocol.DONE,
 													updated
 												);
 											}
@@ -3434,7 +3434,7 @@ public abstract class MasterServer {
 											String username=in.readUTF().trim();
 											String comments=in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.COMPLETE_TICKET,
+												Command.COMPLETE_TICKET,
 												ticketID,
 												username,
 												comments
@@ -3447,7 +3447,7 @@ public abstract class MasterServer {
 												username,
 												comments
 											);
-											resp1=AOServProtocol.DONE;
+											resp1=AoservProtocol.DONE;
 											sendInvalidateList=true;
 										}
 										break;*/
@@ -3455,19 +3455,19 @@ public abstract class MasterServer {
 										{
 											int sslCertificate = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.CHECK_SSL_CERTIFICATE,
+												Command.CHECK_SSL_CERTIFICATE,
 												sslCertificate
 											);
-											List<SslCertificate.Check> results = SslCertificateHandler.check(
+											List<Certificate.Check> results = SslCertificateHandler.check(
 												conn,
 												source,
 												sslCertificate
 											);
-											out.writeByte(AOServProtocol.NEXT);
+											out.writeByte(AoservProtocol.NEXT);
 											int size = results.size();
 											out.writeCompressedInt(size);
 											for(int c = 0; c < size; c++) {
-												SslCertificate.Check check = results.get(c);
+												Certificate.Check check = results.get(c);
 												out.writeUTF(check.getCheck());
 												out.writeUTF(check.getValue());
 												out.writeUTF(check.getAlertLevel().name());
@@ -3482,9 +3482,9 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											String password = in.readUTF();
 											process.setCommand(
-												AOSHCommand.COMPARE_LINUX_SERVER_ACCOUNT_PASSWORD,
+												Command.COMPARE_LINUX_SERVER_ACCOUNT_PASSWORD,
 												id,
-												AOServProtocol.FILTERED
+												AoservProtocol.FILTERED
 											);
 											boolean result = LinuxAccountHandler.comparePassword(
 												conn,
@@ -3493,7 +3493,7 @@ public abstract class MasterServer {
 												password
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												result
 											);
 											sendInvalidateList = false;
@@ -3504,7 +3504,7 @@ public abstract class MasterServer {
 											int from_lsa = in.readCompressedInt();
 											int to_server = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.COPY_HOME_DIRECTORY,
+												Command.COPY_HOME_DIRECTORY,
 												from_lsa,
 												to_server
 											);
@@ -3515,7 +3515,7 @@ public abstract class MasterServer {
 												to_server
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												byteCount
 											);
 											sendInvalidateList = false;
@@ -3526,7 +3526,7 @@ public abstract class MasterServer {
 											int from_lsa = in.readCompressedInt();
 											int to_lsa = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.COPY_LINUX_SERVER_ACCOUNT_PASSWORD,
+												Command.COPY_LINUX_SERVER_ACCOUNT_PASSWORD,
 												from_lsa,
 												to_lsa
 											);
@@ -3555,7 +3555,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												newPKey
 											);
 											sendInvalidateList = true;
@@ -3566,7 +3566,7 @@ public abstract class MasterServer {
 											int transid = in.readCompressedInt();
 											String reason = in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.DECLINE_CREDIT_CARD,
+												Command.DECLINE_CREDIT_CARD,
 												transid,
 												reason
 											);
@@ -3741,7 +3741,7 @@ public abstract class MasterServer {
 									case DISABLE :
 										{
 											int clientTableID = in.readCompressedInt();
-											SchemaTable.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
+											Table.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
 											if(tableID == null) throw new IOException("Client table not supported: #" + clientTableID);
 											int disableLog = in.readCompressedInt();
 											switch(tableID) {
@@ -3749,7 +3749,7 @@ public abstract class MasterServer {
 													{
 														AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.DISABLE_BUSINESS,
+															Command.DISABLE_BUSINESS,
 															disableLog,
 															accounting
 														);
@@ -3766,7 +3766,7 @@ public abstract class MasterServer {
 													{
 														UserId username = UserId.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.DISABLE_BUSINESS_ADMINISTRATOR,
+															Command.DISABLE_BUSINESS_ADMINISTRATOR,
 															disableLog,
 															username
 														);
@@ -3783,7 +3783,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.DISABLE_CVS_REPOSITORY,
+															Command.DISABLE_CVS_REPOSITORY,
 															disableLog,
 															id
 														);
@@ -3800,7 +3800,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.DISABLE_EMAIL_LIST,
+															Command.DISABLE_EMAIL_LIST,
 															disableLog,
 															id
 														);
@@ -3817,7 +3817,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.DISABLE_EMAIL_PIPE,
+															Command.DISABLE_EMAIL_PIPE,
 															disableLog,
 															id
 														);
@@ -3834,7 +3834,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.DISABLE_EMAIL_SMTP_RELAY,
+															Command.DISABLE_EMAIL_SMTP_RELAY,
 															disableLog,
 															id
 														);
@@ -3851,7 +3851,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.DISABLE_HTTPD_SHARED_TOMCAT,
+															Command.DISABLE_HTTPD_SHARED_TOMCAT,
 															disableLog,
 															id
 														);
@@ -3868,7 +3868,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.DISABLE_HTTPD_SITE,
+															Command.DISABLE_HTTPD_SITE,
 															disableLog,
 															id
 														);
@@ -3885,7 +3885,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.DISABLE_HTTPD_SITE_BIND,
+															Command.DISABLE_HTTPD_SITE_BIND,
 															disableLog,
 															id
 														);
@@ -3902,7 +3902,7 @@ public abstract class MasterServer {
 													{
 														UserId username = UserId.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.DISABLE_LINUX_ACCOUNT,
+															Command.DISABLE_LINUX_ACCOUNT,
 															disableLog,
 															username
 														);
@@ -3919,7 +3919,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.DISABLE_LINUX_SERVER_ACCOUNT,
+															Command.DISABLE_LINUX_SERVER_ACCOUNT,
 															disableLog,
 															id
 														);
@@ -3936,7 +3936,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.DISABLE_MYSQL_SERVER_USER,
+															Command.DISABLE_MYSQL_SERVER_USER,
 															disableLog,
 															id
 														);
@@ -3953,7 +3953,7 @@ public abstract class MasterServer {
 													{
 														MySQLUserId username = MySQLUserId.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.DISABLE_MYSQL_USER,
+															Command.DISABLE_MYSQL_USER,
 															disableLog,
 															username
 														);
@@ -3970,7 +3970,7 @@ public abstract class MasterServer {
 													{
 														AccountingCode name = AccountingCode.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.DISABLE_PACKAGE,
+															Command.DISABLE_PACKAGE,
 															disableLog,
 															name
 														);
@@ -3987,7 +3987,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.DISABLE_POSTGRES_SERVER_USER,
+															Command.DISABLE_POSTGRES_SERVER_USER,
 															disableLog,
 															id
 														);
@@ -4004,7 +4004,7 @@ public abstract class MasterServer {
 													{
 														PostgresUserId username = PostgresUserId.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.DISABLE_POSTGRES_USER,
+															Command.DISABLE_POSTGRES_USER,
 															disableLog,
 															username
 														);
@@ -4021,7 +4021,7 @@ public abstract class MasterServer {
 													{
 														UserId username = UserId.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.DISABLE_USERNAME,
+															Command.DISABLE_USERNAME,
 															disableLog,
 															username
 														);
@@ -4048,13 +4048,13 @@ public abstract class MasterServer {
 
 											int id = in.readCompressedInt();
 											boolean gzip;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
 												gzip = in.readBoolean();
 											} else {
 												gzip = false;
 											}
 											process.setCommand(
-												AOSHCommand.DUMP_MYSQL_DATABASE,
+												Command.DUMP_MYSQL_DATABASE,
 												id,
 												gzip
 											);
@@ -4076,13 +4076,13 @@ public abstract class MasterServer {
 
 											int id = in.readCompressedInt();
 											boolean gzip;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
 												gzip = in.readBoolean();
 											} else {
 												gzip = false;
 											}
 											process.setCommand(
-												AOSHCommand.DUMP_POSTGRES_DATABASE,
+												Command.DUMP_POSTGRES_DATABASE,
 												id,
 												gzip
 											);
@@ -4100,14 +4100,14 @@ public abstract class MasterServer {
 									case ENABLE :
 										{
 											int clientTableID = in.readCompressedInt();
-											SchemaTable.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
+											Table.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
 											if(tableID == null) throw new IOException("Client table not supported: #" + clientTableID);
 											switch(tableID) {
 												case BUSINESSES :
 													{
 														AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.ENABLE_BUSINESS,
+															Command.ENABLE_BUSINESS,
 															accounting
 														);
 														BusinessHandler.enableBusiness(
@@ -4122,7 +4122,7 @@ public abstract class MasterServer {
 													{
 														UserId username = UserId.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.ENABLE_BUSINESS_ADMINISTRATOR,
+															Command.ENABLE_BUSINESS_ADMINISTRATOR,
 															username
 														);
 														BusinessHandler.enableBusinessAdministrator(
@@ -4137,7 +4137,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.ENABLE_CVS_REPOSITORY,
+															Command.ENABLE_CVS_REPOSITORY,
 															id
 														);
 														CvsHandler.enableCvsRepository(
@@ -4152,7 +4152,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.ENABLE_EMAIL_LIST,
+															Command.ENABLE_EMAIL_LIST,
 															id
 														);
 														EmailHandler.enableEmailList(
@@ -4167,7 +4167,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.ENABLE_EMAIL_PIPE,
+															Command.ENABLE_EMAIL_PIPE,
 															id
 														);
 														EmailHandler.enableEmailPipe(
@@ -4182,7 +4182,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.ENABLE_EMAIL_SMTP_RELAY,
+															Command.ENABLE_EMAIL_SMTP_RELAY,
 															id
 														);
 														EmailHandler.enableEmailSmtpRelay(
@@ -4197,7 +4197,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.ENABLE_HTTPD_SHARED_TOMCAT,
+															Command.ENABLE_HTTPD_SHARED_TOMCAT,
 															id
 														);
 														HttpdHandler.enableHttpdSharedTomcat(
@@ -4212,7 +4212,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.ENABLE_HTTPD_SITE,
+															Command.ENABLE_HTTPD_SITE,
 															id
 														);
 														HttpdHandler.enableHttpdSite(
@@ -4227,7 +4227,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.ENABLE_HTTPD_SITE_BIND,
+															Command.ENABLE_HTTPD_SITE_BIND,
 															id
 														);
 														HttpdHandler.enableHttpdSiteBind(
@@ -4242,7 +4242,7 @@ public abstract class MasterServer {
 													{
 														UserId username = UserId.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.ENABLE_LINUX_ACCOUNT,
+															Command.ENABLE_LINUX_ACCOUNT,
 															username
 														);
 														LinuxAccountHandler.enableLinuxAccount(
@@ -4257,7 +4257,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.ENABLE_LINUX_SERVER_ACCOUNT,
+															Command.ENABLE_LINUX_SERVER_ACCOUNT,
 															id
 														);
 														LinuxAccountHandler.enableLinuxServerAccount(
@@ -4272,7 +4272,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.ENABLE_MYSQL_SERVER_USER,
+															Command.ENABLE_MYSQL_SERVER_USER,
 															id
 														);
 														MySQLHandler.enableMySQLServerUser(
@@ -4287,7 +4287,7 @@ public abstract class MasterServer {
 													{
 														MySQLUserId username = MySQLUserId.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.ENABLE_MYSQL_USER,
+															Command.ENABLE_MYSQL_USER,
 															username
 														);
 														MySQLHandler.enableMySQLUser(
@@ -4302,7 +4302,7 @@ public abstract class MasterServer {
 													{
 														AccountingCode name = AccountingCode.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.ENABLE_PACKAGE,
+															Command.ENABLE_PACKAGE,
 															name
 														);
 														PackageHandler.enablePackage(
@@ -4317,7 +4317,7 @@ public abstract class MasterServer {
 													{
 														int id = in.readCompressedInt();
 														process.setCommand(
-															AOSHCommand.ENABLE_POSTGRES_SERVER_USER,
+															Command.ENABLE_POSTGRES_SERVER_USER,
 															id
 														);
 														PostgresHandler.enablePostgresServerUser(
@@ -4332,7 +4332,7 @@ public abstract class MasterServer {
 													{
 														PostgresUserId username = PostgresUserId.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.ENABLE_POSTGRES_USER,
+															Command.ENABLE_POSTGRES_USER,
 															username
 														);
 														PostgresHandler.enablePostgresUser(
@@ -4347,7 +4347,7 @@ public abstract class MasterServer {
 													{
 														UserId username = UserId.valueOf(in.readUTF());
 														process.setCommand(
-															AOSHCommand.ENABLE_USERNAME,
+															Command.ENABLE_USERNAME,
 															username
 														);
 														UsernameHandler.enableUsername(
@@ -4369,7 +4369,7 @@ public abstract class MasterServer {
 										{
 											AccountingCode template = AccountingCode.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.GENERATE_ACCOUNTING,
+												Command.GENERATE_ACCOUNTING,
 												template
 											);
 											AccountingCode accounting = BusinessHandler.generateAccountingCode(
@@ -4377,7 +4377,7 @@ public abstract class MasterServer {
 												template
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												accounting
 											);
 											sendInvalidateList = false;
@@ -4388,7 +4388,7 @@ public abstract class MasterServer {
 											String template_base = in.readUTF().trim();
 											String template_added = in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.GENERATE_MYSQL_DATABASE_NAME,
+												Command.GENERATE_MYSQL_DATABASE_NAME,
 												template_base,
 												template_added
 											);
@@ -4398,7 +4398,7 @@ public abstract class MasterServer {
 												template_added
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												name
 											);
 											sendInvalidateList = false;
@@ -4408,7 +4408,7 @@ public abstract class MasterServer {
 										{
 											AccountingCode template = AccountingCode.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.GENERATE_PACKAGE_NAME,
+												Command.GENERATE_PACKAGE_NAME,
 												template
 											);
 											AccountingCode name = PackageHandler.generatePackageName(
@@ -4416,7 +4416,7 @@ public abstract class MasterServer {
 												template
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												name
 											);
 											sendInvalidateList = false;
@@ -4427,7 +4427,7 @@ public abstract class MasterServer {
 											String template_base = in.readUTF().trim();
 											String template_added = in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.GENERATE_POSTGRES_DATABASE_NAME,
+												Command.GENERATE_POSTGRES_DATABASE_NAME,
 												template_base,
 												template_added
 											);
@@ -4437,7 +4437,7 @@ public abstract class MasterServer {
 												template_added
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												name
 											);
 											sendInvalidateList = false;
@@ -4447,7 +4447,7 @@ public abstract class MasterServer {
 										{
 											String template = in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.GENERATE_SHARED_TOMCAT_NAME,
+												Command.GENERATE_SHARED_TOMCAT_NAME,
 												template
 											);
 											String name = HttpdHandler.generateSharedTomcatName(
@@ -4455,7 +4455,7 @@ public abstract class MasterServer {
 												template
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												name
 											);
 											sendInvalidateList = false;
@@ -4465,7 +4465,7 @@ public abstract class MasterServer {
 										{
 											String template = in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.GENERATE_SITE_NAME,
+												Command.GENERATE_SITE_NAME,
 												template
 											);
 											String name = HttpdHandler.generateSiteName(
@@ -4473,7 +4473,7 @@ public abstract class MasterServer {
 												template
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												name
 											);
 											sendInvalidateList = false;
@@ -4577,7 +4577,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_AUTORESPONDER_CONTENT,
+												Command.GET_AUTORESPONDER_CONTENT,
 												id
 											);
 											String content = LinuxAccountHandler.getAutoresponderContent(
@@ -4586,7 +4586,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												content
 											);
 											sendInvalidateList = false;
@@ -4598,7 +4598,7 @@ public abstract class MasterServer {
 											String path = in.readUTF();
 											String queryString = in.readUTF();
 											process.setCommand(
-												AOSHCommand.GET_AWSTATS_FILE,
+												Command.GET_AWSTATS_FILE,
 												id,
 												path,
 												queryString
@@ -4619,7 +4619,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_BACKUP_PARTITION_TOTAL_SIZE,
+												Command.GET_BACKUP_PARTITION_TOTAL_SIZE,
 												id
 											);
 											long size = BackupHandler.getBackupPartitionTotalSize(
@@ -4628,7 +4628,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												size
 											);
 											sendInvalidateList = false;
@@ -4638,7 +4638,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_BACKUP_PARTITION_USED_SIZE,
+												Command.GET_BACKUP_PARTITION_USED_SIZE,
 												id
 											);
 											long size = BackupHandler.getBackupPartitionUsedSize(
@@ -4647,7 +4647,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												size
 											);
 											sendInvalidateList = false;
@@ -4656,7 +4656,7 @@ public abstract class MasterServer {
 									case GET_CACHED_ROW_COUNT :
 										{
 											int clientTableID = in.readCompressedInt();
-											SchemaTable.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
+											Table.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
 											if(tableID == null) throw new IOException("Client table not supported: #" + clientTableID);
 											process.setCommand(
 												"get_cached_row_count",
@@ -4671,7 +4671,7 @@ public abstract class MasterServer {
 												tableID
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												count
 											);
 											sendInvalidateList = false;
@@ -4681,7 +4681,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_CRON_TABLE,
+												Command.GET_CRON_TABLE,
 												id
 											);
 											String cronTable = LinuxAccountHandler.getCronTable(
@@ -4690,7 +4690,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												cronTable
 											);
 											sendInvalidateList = false;
@@ -4700,7 +4700,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_EMAIL_LIST,
+												Command.GET_EMAIL_LIST,
 												id
 											);
 											String emailList = EmailHandler.getEmailListAddressList(
@@ -4709,7 +4709,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												emailList
 											);
 											sendInvalidateList = false;
@@ -4734,7 +4734,7 @@ public abstract class MasterServer {
 										{
 											int replication = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_FAILOVER_FILE_REPLICATION_ACTIVITY,
+												Command.GET_FAILOVER_FILE_REPLICATION_ACTIVITY,
 												replication
 											);
 											Tuple2<Long,String> activity = FailoverHandler.getFailoverFileReplicationActivity(
@@ -4743,7 +4743,7 @@ public abstract class MasterServer {
 												replication
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												activity.getElement1(),
 												activity.getElement2()
 											);
@@ -4754,7 +4754,7 @@ public abstract class MasterServer {
 										{
 											int httpdServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_HTTPD_SERVER_CONCURRENCY,
+												Command.GET_HTTPD_SERVER_CONCURRENCY,
 												httpdServer
 											);
 											int hsConcurrency = HttpdHandler.getHttpdServerConcurrency(
@@ -4763,7 +4763,7 @@ public abstract class MasterServer {
 												httpdServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												hsConcurrency
 											);
 											sendInvalidateList = false;
@@ -4776,13 +4776,13 @@ public abstract class MasterServer {
 											String[] folderNames = new String[numFolders];
 											for(int c=0;c<numFolders;c++) folderNames[c] = in.readUTF();
 											process.setCommand(
-												AOSHCommand.GET_IMAP_FOLDER_SIZES,
+												Command.GET_IMAP_FOLDER_SIZES,
 												id,
 												numFolders,
 												folderNames
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												EmailHandler.getImapFolderSizes(
 													conn,
 													source,
@@ -4797,11 +4797,11 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_INBOX_ATTRIBUTES,
+												Command.GET_INBOX_ATTRIBUTES,
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												EmailHandler.getInboxAttributes(
 													conn,
 													source,
@@ -4815,7 +4815,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_MAJORDOMO_INFO_FILE,
+												Command.GET_MAJORDOMO_INFO_FILE,
 												id
 											);
 											String file = EmailHandler.getMajordomoInfoFile(
@@ -4824,7 +4824,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												file
 											);
 											sendInvalidateList = false;
@@ -4834,7 +4834,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_MAJORDOMO_INTRO_FILE,
+												Command.GET_MAJORDOMO_INTRO_FILE,
 												id
 											);
 											String file = EmailHandler.getMajordomoIntroFile(
@@ -4843,7 +4843,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												file
 											);
 											sendInvalidateList = false;
@@ -4857,7 +4857,7 @@ public abstract class MasterServer {
 												numBytes
 											);
 											byte[] bytes = RandomHandler.getMasterEntropy(conn, source, numBytes);
-											out.writeByte(AOServProtocol.DONE);
+											out.writeByte(AoservProtocol.DONE);
 											out.writeCompressedInt(bytes.length);
 											for(int c=0;c<bytes.length;c++) out.writeByte(bytes[c]);
 											resp = null;
@@ -4870,7 +4870,7 @@ public abstract class MasterServer {
 												"get_master_entropy_needed"
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												RandomHandler.getMasterEntropyNeeded(conn, source)
 											);
 											sendInvalidateList = false;
@@ -4881,7 +4881,7 @@ public abstract class MasterServer {
 											int aoServer = in.readCompressedInt();
 											String filename = in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.GET_MRTG_FILE,
+												Command.GET_MRTG_FILE,
 												aoServer,
 												filename
 											);
@@ -4934,7 +4934,7 @@ public abstract class MasterServer {
 										{
 											int mysqlDatabase = in.readCompressedInt();
 											int mysqlSlave;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_60)>=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_60)>=0) {
 												mysqlSlave = in.readCompressedInt();
 											} else {
 												mysqlSlave = -1;
@@ -4959,7 +4959,7 @@ public abstract class MasterServer {
 										{
 											int mysqlDatabase = in.readCompressedInt();
 											int mysqlSlave;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_60)>=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_60)>=0) {
 												mysqlSlave = in.readCompressedInt();
 											} else {
 												mysqlSlave = -1;
@@ -5002,7 +5002,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report
 											);
 											sendInvalidateList = false;
@@ -5021,7 +5021,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report
 											);
 											sendInvalidateList = false;
@@ -5040,7 +5040,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report
 											);
 											sendInvalidateList = false;
@@ -5059,7 +5059,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report
 											);
 											sendInvalidateList = false;
@@ -5078,7 +5078,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report
 											);
 											sendInvalidateList = false;
@@ -5097,7 +5097,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report
 											);
 											sendInvalidateList = false;
@@ -5116,7 +5116,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report[0],
 												report[1],
 												report[2]
@@ -5137,7 +5137,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report
 											);
 											sendInvalidateList = false;
@@ -5156,7 +5156,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report
 											);
 											sendInvalidateList = false;
@@ -5175,7 +5175,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report
 											);
 											sendInvalidateList = false;
@@ -5194,7 +5194,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report
 											);
 											sendInvalidateList = false;
@@ -5213,7 +5213,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												report
 											);
 											sendInvalidateList = false;
@@ -5227,7 +5227,7 @@ public abstract class MasterServer {
 											{
 												int portNum = in.readCompressedInt();
 												Protocol protocol;
-												if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) < 0) {
+												if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) < 0) {
 													protocol = Protocol.valueOf(in.readUTF().toUpperCase(Locale.ROOT));
 												} else {
 													protocol = in.readEnum(Protocol.class);
@@ -5257,7 +5257,7 @@ public abstract class MasterServer {
 											);
 											logIOException = true;
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												result
 											);
 											sendInvalidateList = false;
@@ -5285,7 +5285,7 @@ public abstract class MasterServer {
 											);
 											logIOException = true;
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												result
 											);
 											sendInvalidateList = false;
@@ -5304,7 +5304,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												systemTime
 											);
 											sendInvalidateList = false;
@@ -5314,7 +5314,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_UPS_STATUS,
+												Command.GET_UPS_STATUS,
 												aoServer
 											);
 											String status = AOServerHandler.getUpsStatus(
@@ -5323,7 +5323,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												status
 											);
 											sendInvalidateList = false;
@@ -5332,7 +5332,7 @@ public abstract class MasterServer {
 									case GET_OBJECT :
 										{
 											int clientTableID = in.readCompressedInt();
-											SchemaTable.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
+											Table.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
 											if(tableID == null) throw new IOException("Client table not supported: #" + clientTableID);
 											process.setCommand(
 												"get_object",
@@ -5371,9 +5371,9 @@ public abstract class MasterServer {
 										break;
 									case GET_ROOT_BUSINESS :
 										{
-											process.setCommand(AOSHCommand.GET_ROOT_BUSINESS);
+											process.setCommand(Command.GET_ROOT_BUSINESS);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												BusinessHandler.getRootBusiness()
 											);
 											sendInvalidateList = false;
@@ -5382,7 +5382,7 @@ public abstract class MasterServer {
 									case GET_ROW_COUNT :
 										{
 											int clientTableID = in.readCompressedInt();
-											SchemaTable.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
+											Table.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
 											int count;
 											if(tableID == null) {
 												logger.log(Level.WARNING, "Client table not supported: #{0}, returning 0 from get_row_count", clientTableID);
@@ -5402,7 +5402,7 @@ public abstract class MasterServer {
 												);
 											}
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												count
 											);
 											sendInvalidateList = false;
@@ -5432,7 +5432,7 @@ public abstract class MasterServer {
 										{
 											boolean provideProgress = in.readBoolean();
 											int clientTableID = in.readCompressedInt();
-											SchemaTable.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
+											Table.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
 											if(tableID == null) {
 												// Get the table name, if possible
 												int dbTableId = TableHandler.convertClientTableIDToDBTableID(
@@ -5447,7 +5447,7 @@ public abstract class MasterServer {
 												if(tableName != null) {
 													// Is a recognized table name, give a chance for backward compatibility
 													process.setCommand(
-														AOSHCommand.SELECT,
+														Command.SELECT,
 														"*",
 														"from",
 														tableName
@@ -5462,7 +5462,7 @@ public abstract class MasterServer {
 												} else {
 													// Not recognized table name, write empty response
 													process.setCommand(
-														AOSHCommand.SELECT,
+														Command.SELECT,
 														"*",
 														"from",
 														clientTableID
@@ -5471,13 +5471,13 @@ public abstract class MasterServer {
 												}
 											} else {
 												if(
-													tableID == SchemaTable.TableID.DISTRO_FILES
+													tableID == Table.TableID.DISTRO_FILES
 												) {
 													process.setPriority(Thread.NORM_PRIORITY-1);
 													currentThread.setPriority(Thread.NORM_PRIORITY-1);
 												}
 												process.setCommand(
-													AOSHCommand.SELECT,
+													Command.SELECT,
 													"*",
 													"from",
 													TableHandler.getTableName(
@@ -5510,7 +5510,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.ofNullLongString(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												details
 											);
 											sendInvalidateList = false;
@@ -5529,7 +5529,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.ofNullLongString(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												rawEmail
 											);
 											sendInvalidateList = false;
@@ -5548,7 +5548,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.ofLongString(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												internalNotes
 											);
 											sendInvalidateList = false;
@@ -5567,7 +5567,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.ofNullLongString(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												oldValue
 											);
 											sendInvalidateList = false;
@@ -5586,7 +5586,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.ofNullLongString(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												newValue
 											);
 											sendInvalidateList = false;
@@ -5605,7 +5605,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.ofNullLongString(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												details
 											);
 											sendInvalidateList = false;
@@ -5624,7 +5624,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.ofNullLongString(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												rawEmail
 											);
 											sendInvalidateList = false;
@@ -5704,7 +5704,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												whoisOutput
 											);
 											sendInvalidateList = false;
@@ -5715,7 +5715,7 @@ public abstract class MasterServer {
 											int ticketID=in.readCompressedInt();
 											String comments=in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.HOLD_TICKET,
+												Command.HOLD_TICKET,
 												ticketID,
 												comments
 											);
@@ -5726,7 +5726,7 @@ public abstract class MasterServer {
 												ticketID,
 												comments
 											);
-											resp1=AOServProtocol.DONE;
+											resp1=AoservProtocol.DONE;
 											sendInvalidateList=true;
 										}
 										break;*/
@@ -5736,7 +5736,7 @@ public abstract class MasterServer {
 											String username=in.readUTF().trim();
 											String encPassword=in.readUTF();
 											process.setCommand(
-												AOSHCommand.INITIALIZE_HTTPD_SITE_PASSWD_FILE,
+												Command.INITIALIZE_HTTPD_SITE_PASSWD_FILE,
 												sitePKey,
 												username,
 												encPassword
@@ -5748,7 +5748,7 @@ public abstract class MasterServer {
 												username,
 												encPassword
 											);
-											resp1=AOServProtocol.DONE;
+											resp1=AoservProtocol.DONE;
 											sendInvalidateList=false;
 										}
 										break;*/
@@ -5756,7 +5756,7 @@ public abstract class MasterServer {
 										{
 											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.IS_ACCOUNTING_AVAILABLE,
+												Command.IS_ACCOUNTING_AVAILABLE,
 												accounting
 											);
 											boolean isAvailable = BusinessHandler.isAccountingAvailable(
@@ -5764,7 +5764,7 @@ public abstract class MasterServer {
 												accounting
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -5774,7 +5774,7 @@ public abstract class MasterServer {
 										{
 											UserId username = UserId.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.IS_BUSINESS_ADMINISTRATOR_PASSWORD_SET,
+												Command.IS_BUSINESS_ADMINISTRATOR_PASSWORD_SET,
 												username
 											);
 											boolean isAvailable = BusinessHandler.isBusinessAdministratorPasswordSet(
@@ -5783,7 +5783,7 @@ public abstract class MasterServer {
 												username
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -5793,7 +5793,7 @@ public abstract class MasterServer {
 										{
 											String zone = in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.IS_DNS_ZONE_AVAILABLE,
+												Command.IS_DNS_ZONE_AVAILABLE,
 												zone
 											);
 											boolean isAvailable = DNSHandler.isDNSZoneAvailable(
@@ -5801,7 +5801,7 @@ public abstract class MasterServer {
 												zone
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -5812,7 +5812,7 @@ public abstract class MasterServer {
 											int aoServer = in.readCompressedInt();
 											DomainName domain = DomainName.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.IS_EMAIL_DOMAIN_AVAILABLE,
+												Command.IS_EMAIL_DOMAIN_AVAILABLE,
 												aoServer,
 												domain
 											);
@@ -5823,7 +5823,7 @@ public abstract class MasterServer {
 												domain
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -5833,7 +5833,7 @@ public abstract class MasterServer {
 										{
 											GroupId name = GroupId.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.IS_LINUX_GROUP_NAME_AVAILABLE,
+												Command.IS_LINUX_GROUP_NAME_AVAILABLE,
 												name
 											);
 											boolean isAvailable = LinuxAccountHandler.isLinuxGroupNameAvailable(
@@ -5841,7 +5841,7 @@ public abstract class MasterServer {
 												name
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -5851,7 +5851,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.IS_LINUX_SERVER_ACCOUNT_PASSWORD_SET,
+												Command.IS_LINUX_SERVER_ACCOUNT_PASSWORD_SET,
 												id
 											);
 											boolean isAvailable = LinuxAccountHandler.isLinuxServerAccountPasswordSet(
@@ -5860,7 +5860,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -5870,7 +5870,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.IS_LINUX_SERVER_ACCOUNT_PROCMAIL_MANUAL,
+												Command.IS_LINUX_SERVER_ACCOUNT_PROCMAIL_MANUAL,
 												id
 											);
 											int isManual = LinuxAccountHandler.isLinuxServerAccountProcmailManual(
@@ -5878,24 +5878,24 @@ public abstract class MasterServer {
 												source,
 												id
 											);
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_6)>=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_6)>=0) {
 												resp = Response.of(
-													AOServProtocol.DONE,
+													AoservProtocol.DONE,
 													isManual
 												);
 											} else {
-												if(isManual==AOServProtocol.FALSE) {
+												if(isManual==AoservProtocol.FALSE) {
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														false
 													);
-												} else if(isManual==AOServProtocol.TRUE) {
+												} else if(isManual==AoservProtocol.TRUE) {
 													resp = Response.of(
-														AOServProtocol.DONE,
+														AoservProtocol.DONE,
 														true
 													);
 												} else {
-													throw new IOException("Unsupported value for AOServClient protocol < "+AOServProtocol.Version.VERSION_1_6);
+													throw new IOException("Unsupported value for AOServClient protocol < "+AoservProtocol.Version.VERSION_1_6);
 												}
 											}
 											sendInvalidateList = false;
@@ -5906,11 +5906,11 @@ public abstract class MasterServer {
 											MySQLDatabaseName name = MySQLDatabaseName.valueOf(in.readUTF());
 											int mysqlServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.IS_MYSQL_DATABASE_NAME_AVAILABLE,
+												Command.IS_MYSQL_DATABASE_NAME_AVAILABLE,
 												name,
 												mysqlServer
 											);
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4)<0) throw new IOException(AOSHCommand.IS_MYSQL_DATABASE_NAME_AVAILABLE+" call not supported for AOServProtocol < "+AOServProtocol.Version.VERSION_1_4+", please upgrade AOServ Client.");
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_4)<0) throw new IOException(Command.IS_MYSQL_DATABASE_NAME_AVAILABLE+" call not supported for AoservProtocol < "+AoservProtocol.Version.VERSION_1_4+", please upgrade AOServ Client.");
 											boolean isAvailable = MySQLHandler.isMySQLDatabaseNameAvailable(
 												conn,
 												source,
@@ -5918,7 +5918,7 @@ public abstract class MasterServer {
 												mysqlServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -5928,7 +5928,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.IS_MYSQL_SERVER_USER_PASSWORD_SET,
+												Command.IS_MYSQL_SERVER_USER_PASSWORD_SET,
 												id
 											);
 											boolean isSet = MySQLHandler.isMySQLServerUserPasswordSet(
@@ -5937,7 +5937,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isSet
 											);
 											sendInvalidateList = false;
@@ -5947,7 +5947,7 @@ public abstract class MasterServer {
 										{
 											AccountingCode name = AccountingCode.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.IS_PACKAGE_NAME_AVAILABLE,
+												Command.IS_PACKAGE_NAME_AVAILABLE,
 												name
 											);
 											boolean isAvailable = PackageHandler.isPackageNameAvailable(
@@ -5955,7 +5955,7 @@ public abstract class MasterServer {
 												name
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -5966,7 +5966,7 @@ public abstract class MasterServer {
 											PostgresDatabaseName name = PostgresDatabaseName.valueOf(in.readUTF());
 											int postgresServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.IS_POSTGRES_DATABASE_NAME_AVAILABLE,
+												Command.IS_POSTGRES_DATABASE_NAME_AVAILABLE,
 												name,
 												postgresServer
 											);
@@ -5977,7 +5977,7 @@ public abstract class MasterServer {
 												postgresServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -5987,7 +5987,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.IS_POSTGRES_SERVER_USER_PASSWORD_SET,
+												Command.IS_POSTGRES_SERVER_USER_PASSWORD_SET,
 												id
 											);
 											boolean isAvailable = PostgresHandler.isPostgresServerUserPasswordSet(
@@ -5996,7 +5996,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -6007,7 +6007,7 @@ public abstract class MasterServer {
 											PostgresServerName name = PostgresServerName.valueOf(in.readUTF());
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.IS_POSTGRES_SERVER_NAME_AVAILABLE,
+												Command.IS_POSTGRES_SERVER_NAME_AVAILABLE,
 												name,
 												aoServer
 											);
@@ -6018,7 +6018,7 @@ public abstract class MasterServer {
 												aoServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -6028,7 +6028,7 @@ public abstract class MasterServer {
 										{
 											String name = in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.IS_SHARED_TOMCAT_NAME_AVAILABLE,
+												Command.IS_SHARED_TOMCAT_NAME_AVAILABLE,
 												name
 											);
 											boolean isAvailable = HttpdHandler.isSharedTomcatNameAvailable(
@@ -6036,7 +6036,7 @@ public abstract class MasterServer {
 												name
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -6046,7 +6046,7 @@ public abstract class MasterServer {
 										{
 											UserId username = UserId.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.IS_USERNAME_AVAILABLE,
+												Command.IS_USERNAME_AVAILABLE,
 												username
 											);
 											boolean isAvailable = UsernameHandler.isUsernameAvailable(
@@ -6054,7 +6054,7 @@ public abstract class MasterServer {
 												username
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -6064,7 +6064,7 @@ public abstract class MasterServer {
 										{
 											String name = in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.IS_SITE_NAME_AVAILABLE,
+												Command.IS_SITE_NAME_AVAILABLE,
 												name
 											);
 											boolean isAvailable = HttpdHandler.isSiteNameAvailable(
@@ -6072,7 +6072,7 @@ public abstract class MasterServer {
 												name
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												isAvailable
 											);
 											sendInvalidateList = false;
@@ -6084,7 +6084,7 @@ public abstract class MasterServer {
 											String username=in.readUTF().trim();
 											String comments=in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.KILL_TICKET,
+												Command.KILL_TICKET,
 												username,
 												comments
 											);
@@ -6096,7 +6096,7 @@ public abstract class MasterServer {
 												username,
 												comments
 											);
-											resp1=AOServProtocol.DONE;
+											resp1=AoservProtocol.DONE;
 											sendInvalidateList=true;
 										}
 										break;*/
@@ -6105,7 +6105,7 @@ public abstract class MasterServer {
 											int ipAddress = in.readCompressedInt();
 											int toServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.MOVE_IP_ADDRESS,
+												Command.MOVE_IP_ADDRESS,
 												ipAddress,
 												toServer
 											);
@@ -6126,7 +6126,7 @@ public abstract class MasterServer {
 											String username=in.readUTF().trim();
 											String comments=in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.REACTIVATE_TICKET,
+												Command.REACTIVATE_TICKET,
 												ticketID,
 												username,
 												comments
@@ -6139,7 +6139,7 @@ public abstract class MasterServer {
 												username,
 												comments
 											);
-											resp1=AOServProtocol.DONE;
+											resp1=AoservProtocol.DONE;
 											sendInvalidateList=true;
 										}
 										break;*/
@@ -6151,7 +6151,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											long min_duration = in.readLong();
 											process.setCommand(
-												AOSHCommand.REFRESH_EMAIL_SMTP_RELAY,
+												Command.REFRESH_EMAIL_SMTP_RELAY,
 												id,
 												min_duration
 											);
@@ -6168,14 +6168,14 @@ public abstract class MasterServer {
 										break;
 									case REMOVE : {
 										int clientTableID = in.readCompressedInt();
-										SchemaTable.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
+										Table.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
 										if(tableID == null) throw new IOException("Client table not supported: #" + clientTableID);
 										switch(tableID) {
 											case BLACKHOLE_EMAIL_ADDRESSES :
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_BLACKHOLE_EMAIL_ADDRESS,
+														Command.REMOVE_BLACKHOLE_EMAIL_ADDRESS,
 														id
 													);
 													EmailHandler.removeBlackholeEmailAddress(
@@ -6191,7 +6191,7 @@ public abstract class MasterServer {
 												{
 													UserId username = UserId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.REMOVE_BUSINESS_ADMINISTRATOR,
+														Command.REMOVE_BUSINESS_ADMINISTRATOR,
 														username
 													);
 													BusinessHandler.removeBusinessAdministrator(
@@ -6207,7 +6207,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_BUSINESS_SERVER,
+														Command.REMOVE_BUSINESS_SERVER,
 														id
 													);
 													BusinessHandler.removeBusinessServer(
@@ -6223,7 +6223,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_CREDIT_CARD,
+														Command.REMOVE_CREDIT_CARD,
 														id
 													);
 													CreditCardHandler.removeCreditCard(
@@ -6239,7 +6239,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_CVS_REPOSITORY,
+														Command.REMOVE_CVS_REPOSITORY,
 														id
 													);
 													CvsHandler.removeCvsRepository(
@@ -6255,7 +6255,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_DNS_RECORD,
+														Command.REMOVE_DNS_RECORD,
 														id
 													);
 													DNSHandler.removeDNSRecord(
@@ -6271,7 +6271,7 @@ public abstract class MasterServer {
 												{
 													String zone = in.readUTF().trim();
 													process.setCommand(
-														AOSHCommand.REMOVE_DNS_ZONE,
+														Command.REMOVE_DNS_ZONE,
 														zone
 													);
 													DNSHandler.removeDNSZone(
@@ -6287,7 +6287,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_EMAIL_ADDRESS,
+														Command.REMOVE_EMAIL_ADDRESS,
 														id
 													);
 													EmailHandler.removeEmailAddress(
@@ -6303,7 +6303,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_EMAIL_DOMAIN,
+														Command.REMOVE_EMAIL_DOMAIN,
 														id
 													);
 													EmailHandler.removeEmailDomain(
@@ -6319,7 +6319,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_EMAIL_FORWARDING,
+														Command.REMOVE_EMAIL_FORWARDING,
 														id
 													);
 													EmailHandler.removeEmailForwarding(
@@ -6335,7 +6335,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_EMAIL_LIST_ADDRESS,
+														Command.REMOVE_EMAIL_LIST_ADDRESS,
 														id
 													);
 													EmailHandler.removeEmailListAddress(
@@ -6351,7 +6351,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_EMAIL_LIST,
+														Command.REMOVE_EMAIL_LIST,
 														id
 													);
 													EmailHandler.removeEmailList(
@@ -6367,7 +6367,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_EMAIL_PIPE_ADDRESS,
+														Command.REMOVE_EMAIL_PIPE_ADDRESS,
 														id
 													);
 													EmailHandler.removeEmailPipeAddress(
@@ -6383,7 +6383,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_EMAIL_PIPE,
+														Command.REMOVE_EMAIL_PIPE,
 														id
 													);
 													EmailHandler.removeEmailPipe(
@@ -6402,7 +6402,7 @@ public abstract class MasterServer {
 
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_EMAIL_SMTP_RELAY,
+														Command.REMOVE_EMAIL_SMTP_RELAY,
 														id
 													);
 													EmailHandler.removeEmailSmtpRelay(
@@ -6418,7 +6418,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_FILE_BACKUP_SETTING,
+														Command.REMOVE_FILE_BACKUP_SETTING,
 														id
 													);
 													BackupHandler.removeFileBackupSetting(
@@ -6434,7 +6434,7 @@ public abstract class MasterServer {
 												{
 													UserId username = UserId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.REMOVE_FTP_GUEST_USER,
+														Command.REMOVE_FTP_GUEST_USER,
 														username
 													);
 													FTPHandler.removeFTPGuestUser(
@@ -6450,7 +6450,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_HTTPD_SHARED_TOMCAT,
+														Command.REMOVE_HTTPD_SHARED_TOMCAT,
 														id
 													);
 													HttpdHandler.removeHttpdSharedTomcat(
@@ -6482,7 +6482,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_HTTPD_SITE,
+														Command.REMOVE_HTTPD_SITE,
 														id
 													);
 													HttpdHandler.removeHttpdSite(
@@ -6498,7 +6498,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_HTTPD_SITE_URL,
+														Command.REMOVE_HTTPD_SITE_URL,
 														id
 													);
 													HttpdHandler.removeHttpdSiteURL(
@@ -6514,7 +6514,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_HTTPD_TOMCAT_CONTEXT,
+														Command.REMOVE_HTTPD_TOMCAT_CONTEXT,
 														id
 													);
 													HttpdHandler.removeHttpdTomcatContext(
@@ -6530,7 +6530,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_HTTPD_TOMCAT_DATA_SOURCE,
+														Command.REMOVE_HTTPD_TOMCAT_DATA_SOURCE,
 														id
 													);
 													HttpdHandler.removeHttpdTomcatDataSource(
@@ -6546,7 +6546,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_HTTPD_TOMCAT_PARAMETER,
+														Command.REMOVE_HTTPD_TOMCAT_PARAMETER,
 														id
 													);
 													HttpdHandler.removeHttpdTomcatParameter(
@@ -6562,7 +6562,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_HTTPD_TOMCAT_SITE_JK_MOUNT,
+														Command.REMOVE_HTTPD_TOMCAT_SITE_JK_MOUNT,
 														id
 													);
 													HttpdHandler.removeHttpdTomcatSiteJkMount(
@@ -6578,7 +6578,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_LINUX_ACC_ADDRESS,
+														Command.REMOVE_LINUX_ACC_ADDRESS,
 														id
 													);
 													EmailHandler.removeLinuxAccAddress(
@@ -6594,7 +6594,7 @@ public abstract class MasterServer {
 												{
 													UserId username = UserId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.REMOVE_LINUX_ACCOUNT,
+														Command.REMOVE_LINUX_ACCOUNT,
 														username
 													);
 													LinuxAccountHandler.removeLinuxAccount(
@@ -6610,7 +6610,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_LINUX_GROUP_ACCOUNT,
+														Command.REMOVE_LINUX_GROUP_ACCOUNT,
 														id
 													);
 													LinuxAccountHandler.removeLinuxGroupAccount(
@@ -6626,7 +6626,7 @@ public abstract class MasterServer {
 												{
 													GroupId name = GroupId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.REMOVE_LINUX_GROUP,
+														Command.REMOVE_LINUX_GROUP,
 														name
 													);
 													LinuxAccountHandler.removeLinuxGroup(
@@ -6642,7 +6642,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_LINUX_SERVER_ACCOUNT,
+														Command.REMOVE_LINUX_SERVER_ACCOUNT,
 														id
 													);
 													LinuxAccountHandler.removeLinuxServerAccount(
@@ -6658,7 +6658,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_LINUX_SERVER_GROUP,
+														Command.REMOVE_LINUX_SERVER_GROUP,
 														id
 													);
 													LinuxAccountHandler.removeLinuxServerGroup(
@@ -6674,7 +6674,7 @@ public abstract class MasterServer {
 												{
 													int domain = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_MAJORDOMO_SERVER,
+														Command.REMOVE_MAJORDOMO_SERVER,
 														domain
 													);
 													EmailHandler.removeMajordomoServer(
@@ -6690,7 +6690,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_MYSQL_DATABASE,
+														Command.REMOVE_MYSQL_DATABASE,
 														id
 													);
 													MySQLHandler.removeMySQLDatabase(
@@ -6706,7 +6706,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_MYSQL_DB_USER,
+														Command.REMOVE_MYSQL_DB_USER,
 														id
 													);
 													MySQLHandler.removeMySQLDBUser(
@@ -6722,7 +6722,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_MYSQL_SERVER_USER,
+														Command.REMOVE_MYSQL_SERVER_USER,
 														id
 													);
 													MySQLHandler.removeMySQLServerUser(
@@ -6738,7 +6738,7 @@ public abstract class MasterServer {
 												{
 													MySQLUserId username = MySQLUserId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.REMOVE_MYSQL_USER,
+														Command.REMOVE_MYSQL_USER,
 														username
 													);
 													MySQLHandler.removeMySQLUser(
@@ -6754,7 +6754,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_NET_BIND,
+														Command.REMOVE_NET_BIND,
 														id
 													);
 													NetBindHandler.removeNetBind(
@@ -6786,7 +6786,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_POSTGRES_DATABASE,
+														Command.REMOVE_POSTGRES_DATABASE,
 														id
 													);
 													PostgresHandler.removePostgresDatabase(
@@ -6802,7 +6802,7 @@ public abstract class MasterServer {
 												{
 													int id = in.readCompressedInt();
 													process.setCommand(
-														AOSHCommand.REMOVE_POSTGRES_SERVER_USER,
+														Command.REMOVE_POSTGRES_SERVER_USER,
 														id
 													);
 													PostgresHandler.removePostgresServerUser(
@@ -6818,7 +6818,7 @@ public abstract class MasterServer {
 												{
 													PostgresUserId username = PostgresUserId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.REMOVE_POSTGRES_USER,
+														Command.REMOVE_POSTGRES_USER,
 														username
 													);
 													PostgresHandler.removePostgresUser(
@@ -6834,7 +6834,7 @@ public abstract class MasterServer {
 												{
 													UserId username = UserId.valueOf(in.readUTF());
 													process.setCommand(
-														AOSHCommand.REMOVE_USERNAME,
+														Command.REMOVE_USERNAME,
 														username
 													);
 													UsernameHandler.removeUsername(
@@ -6859,13 +6859,13 @@ public abstract class MasterServer {
 												"request_replication_daemon_access",
 												id
 											);
-											AOServer.DaemonAccess daemonAccess = FailoverHandler.requestReplicationDaemonAccess(
+											Server.DaemonAccess daemonAccess = FailoverHandler.requestReplicationDaemonAccess(
 												conn,
 												source,
 												id
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												daemonAccess.getProtocol(),
 												daemonAccess.getHost(),
 												daemonAccess.getPort().getPort(),
@@ -6878,7 +6878,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.RESTART_APACHE,
+												Command.RESTART_APACHE,
 												aoServer
 											);
 											HttpdHandler.restartApache(
@@ -6894,7 +6894,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.RESTART_CRON,
+												Command.RESTART_CRON,
 												aoServer
 											);
 											AOServerHandler.restartCron(
@@ -6909,11 +6909,11 @@ public abstract class MasterServer {
 									case RESTART_MYSQL :
 										{
 											int mysqlServer = in.readCompressedInt();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4) < 0) {
-												throw new IOException(AOSHCommand.RESTART_MYSQL + " call not supported for AOServ Client version < " + AOServProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_4) < 0) {
+												throw new IOException(Command.RESTART_MYSQL + " call not supported for AOServ Client version < " + AoservProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
 											}
 											process.setCommand(
-												AOSHCommand.RESTART_MYSQL,
+												Command.RESTART_MYSQL,
 												mysqlServer
 											);
 											MySQLHandler.restartMySQL(
@@ -6929,7 +6929,7 @@ public abstract class MasterServer {
 										{
 											int postgresServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.RESTART_POSTGRESQL,
+												Command.RESTART_POSTGRESQL,
 												postgresServer
 											);
 											PostgresHandler.restartPostgreSQL(
@@ -6945,7 +6945,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.RESTART_XFS,
+												Command.RESTART_XFS,
 												aoServer
 											);
 											AOServerHandler.restartXfs(
@@ -6961,7 +6961,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.RESTART_XVFB,
+												Command.RESTART_XVFB,
 												aoServer
 											);
 											AOServerHandler.restartXvfb(
@@ -6981,7 +6981,7 @@ public abstract class MasterServer {
 											String content = in.readNullUTF();
 											boolean enabled = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_AUTORESPONDER,
+												Command.SET_AUTORESPONDER,
 												id,
 												from==-1?null:from,
 												subject,
@@ -7007,7 +7007,7 @@ public abstract class MasterServer {
 											AccountingCode oldAccounting = AccountingCode.valueOf(in.readUTF());
 											AccountingCode newAccounting = AccountingCode.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.SET_BUSINESS_ACCOUNTING,
+												Command.SET_BUSINESS_ACCOUNTING,
 												oldAccounting,
 												newAccounting
 											);
@@ -7027,9 +7027,9 @@ public abstract class MasterServer {
 											UserId username = UserId.valueOf(in.readUTF());
 											String password = in.readUTF();
 											process.setCommand(
-												AOSHCommand.SET_BUSINESS_ADMINISTRATOR_PASSWORD,
+												Command.SET_BUSINESS_ADMINISTRATOR_PASSWORD,
 												username,
-												AOServProtocol.FILTERED
+												AoservProtocol.FILTERED
 											);
 											BusinessHandler.setBusinessAdministratorPassword(
 												conn,
@@ -7062,7 +7062,7 @@ public abstract class MasterServer {
 											String country=in.readNullUTF();
 											String zip=in.readNullUTF();
 											process.setCommand(
-												AOSHCommand.SET_BUSINESS_ADMINISTRATOR_PROFILE,
+												Command.SET_BUSINESS_ADMINISTRATOR_PROFILE,
 												username,
 												name,
 												title,
@@ -7110,7 +7110,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											String crontab = in.readUTF();
 											process.setCommand(
-												AOSHCommand.SET_CRON_TABLE,
+												Command.SET_CRON_TABLE,
 												id,
 												crontab
 											);
@@ -7129,7 +7129,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											long mode = in.readLong();
 											process.setCommand(
-												AOSHCommand.SET_CVS_REPOSITORY_MODE,
+												Command.SET_CVS_REPOSITORY_MODE,
 												id,
 												Long.toOctalString(mode)
 											);
@@ -7148,7 +7148,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.SET_DEFAULT_BUSINESS_SERVER,
+												Command.SET_DEFAULT_BUSINESS_SERVER,
 												id
 											);
 											BusinessHandler.setDefaultBusinessServer(
@@ -7166,7 +7166,7 @@ public abstract class MasterServer {
 											String zone = in.readUTF();
 											int ttl = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.SET_DNS_ZONE_TTL,
+												Command.SET_DNS_ZONE_TTL,
 												zone,
 												ttl
 											);
@@ -7186,7 +7186,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											String list = in.readUTF();
 											process.setCommand(
-												AOSHCommand.SET_EMAIL_LIST,
+												Command.SET_EMAIL_LIST,
 												id,
 												list
 											);
@@ -7204,11 +7204,11 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											String path = in.readUTF();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) {
 												in.readCompressedInt(); // package
 											}
 											boolean backupEnabled;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_30)<=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) {
 												short backupLevel=in.readShort();
 												in.readShort(); // backup_retention
 												in.readBoolean(); // recurse
@@ -7217,13 +7217,13 @@ public abstract class MasterServer {
 												backupEnabled = in.readBoolean();
 											}
 											boolean required;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_62)>=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_62)>=0) {
 												required = in.readBoolean();
 											} else {
 												required = false;
 											}
 											process.setCommand(
-												AOSHCommand.SET_FILE_BACKUP_SETTING,
+												Command.SET_FILE_BACKUP_SETTING,
 												id,
 												path,
 												backupEnabled,
@@ -7253,7 +7253,7 @@ public abstract class MasterServer {
 												paths.add(in.readUTF());
 												backupEnableds.add(in.readBoolean());
 												boolean required;
-												if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_62)>=0) {
+												if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_62)>=0) {
 													required = in.readBoolean();
 												} else {
 													required = false;
@@ -7284,7 +7284,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean is_manual = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SHARED_TOMCAT_IS_MANUAL,
+												Command.SET_HTTPD_SHARED_TOMCAT_IS_MANUAL,
 												id,
 												is_manual
 											);
@@ -7304,7 +7304,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											int maxPostSize = in.readInt();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SHARED_TOMCAT_MAX_POST_SIZE,
+												Command.SET_HTTPD_SHARED_TOMCAT_MAX_POST_SIZE,
 												id,
 												maxPostSize
 											);
@@ -7324,7 +7324,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean unpackWARs = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SHARED_TOMCAT_UNPACK_WARS,
+												Command.SET_HTTPD_SHARED_TOMCAT_UNPACK_WARS,
 												id,
 												unpackWARs
 											);
@@ -7344,7 +7344,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean autoDeploy = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SHARED_TOMCAT_AUTO_DEPLOY,
+												Command.SET_HTTPD_SHARED_TOMCAT_AUTO_DEPLOY,
 												id,
 												autoDeploy
 											);
@@ -7364,7 +7364,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											int version = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SHARED_TOMCAT_VERSION,
+												Command.SET_HTTPD_SHARED_TOMCAT_VERSION,
 												id,
 												version
 											);
@@ -7397,15 +7397,15 @@ public abstract class MasterServer {
 											}
 											String require = in.readUTF().trim();
 											String handler;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_13) >= 0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_13) >= 0) {
 												String s = in.readUTF();
 												handler = s.isEmpty() ? null : s;
 											} else {
 												// Keep current value
-												handler = HttpdSiteAuthenticatedLocation.Handler.CURRENT;
+												handler = Location.Handler.CURRENT;
 											}
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES,
+												Command.SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES,
 												id,
 												path,
 												isRegularExpression,
@@ -7437,7 +7437,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean is_manual = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_BIND_IS_MANUAL,
+												Command.SET_HTTPD_SITE_BIND_IS_MANUAL,
 												id,
 												is_manual
 											);
@@ -7457,7 +7457,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean redirect_to_primary_hostname = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_BIND_REDIRECT_TO_PRIMARY_HOSTNAME,
+												Command.SET_HTTPD_SITE_BIND_REDIRECT_TO_PRIMARY_HOSTNAME,
 												id,
 												redirect_to_primary_hostname
 											);
@@ -7477,7 +7477,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean is_manual = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_IS_MANUAL,
+												Command.SET_HTTPD_SITE_IS_MANUAL,
 												id,
 												is_manual
 											);
@@ -7497,7 +7497,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											Email emailAddress = Email.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_SERVER_ADMIN,
+												Command.SET_HTTPD_SITE_SERVER_ADMIN,
 												id,
 												emailAddress
 											);
@@ -7517,7 +7517,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											int phpVersion = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_PHP_VERSION,
+												Command.SET_HTTPD_SITE_PHP_VERSION,
 												id,
 												phpVersion
 											);
@@ -7537,7 +7537,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean enableCgi = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_ENABLE_CGI,
+												Command.SET_HTTPD_SITE_ENABLE_CGI,
 												id,
 												enableCgi
 											);
@@ -7557,7 +7557,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean enableSsi = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_ENABLE_SSI,
+												Command.SET_HTTPD_SITE_ENABLE_SSI,
 												id,
 												enableSsi
 											);
@@ -7577,7 +7577,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean enableHtaccess = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_ENABLE_HTACCESS,
+												Command.SET_HTTPD_SITE_ENABLE_HTACCESS,
 												id,
 												enableHtaccess
 											);
@@ -7597,7 +7597,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean enableIndexes = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_ENABLE_INDEXES,
+												Command.SET_HTTPD_SITE_ENABLE_INDEXES,
 												id,
 												enableIndexes
 											);
@@ -7617,7 +7617,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean enableFollowSymlinks = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_ENABLE_FOLLOW_SYMLINKS,
+												Command.SET_HTTPD_SITE_ENABLE_FOLLOW_SYMLINKS,
 												id,
 												enableFollowSymlinks
 											);
@@ -7637,7 +7637,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean enableAnonymousFtp = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_ENABLE_ANONYMOUS_FTP,
+												Command.SET_HTTPD_SITE_ENABLE_ANONYMOUS_FTP,
 												id,
 												enableAnonymousFtp
 											);
@@ -7657,7 +7657,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean blockTraceTrack = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_BLOCK_TRACE_TRACK,
+												Command.SET_HTTPD_SITE_BLOCK_TRACE_TRACK,
 												id,
 												blockTraceTrack
 											);
@@ -7677,7 +7677,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean blockScm = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_BLOCK_SCM,
+												Command.SET_HTTPD_SITE_BLOCK_SCM,
 												id,
 												blockScm
 											);
@@ -7697,7 +7697,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean blockCoreDumps = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_BLOCK_CORE_DUMPS,
+												Command.SET_HTTPD_SITE_BLOCK_CORE_DUMPS,
 												id,
 												blockCoreDumps
 											);
@@ -7717,7 +7717,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean blockEditorBackups = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_SITE_BLOCK_EDITOR_BACKUPS,
+												Command.SET_HTTPD_SITE_BLOCK_EDITOR_BACKUPS,
 												id,
 												blockEditorBackups
 											);
@@ -7739,7 +7739,7 @@ public abstract class MasterServer {
 											process.setCommand(
 												"set_httpd_site_bind_predisable_config",
 												id,
-												AOServProtocol.FILTERED
+												AoservProtocol.FILTERED
 											);
 											HttpdHandler.setHttpdSiteBindPredisableConfig(
 												conn,
@@ -7768,13 +7768,13 @@ public abstract class MasterServer {
 											int debug = in.readCompressedInt();
 											UnixPath workDir = UnixPath.valueOf(in.readNullUTF());
 											boolean serverXmlConfigured;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_81_2) <= 0) {
-												serverXmlConfigured = HttpdTomcatContext.DEFAULT_SERVER_XML_CONFIGURED;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_2) <= 0) {
+												serverXmlConfigured = Context.DEFAULT_SERVER_XML_CONFIGURED;
 											} else {
 												serverXmlConfigured = in.readBoolean();
 											}
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_TOMCAT_CONTEXT_ATTRIBUTES,
+												Command.SET_HTTPD_TOMCAT_CONTEXT_ATTRIBUTES,
 												id,
 												className,
 												cookies,
@@ -7818,7 +7818,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean blockWebinf = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_TOMCAT_SITE_BLOCK_WEBINF,
+												Command.SET_HTTPD_TOMCAT_SITE_BLOCK_WEBINF,
 												id,
 												blockWebinf
 											);
@@ -7838,7 +7838,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											int maxPostSize = in.readInt();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_TOMCAT_STD_SITE_MAX_POST_SIZE,
+												Command.SET_HTTPD_TOMCAT_STD_SITE_MAX_POST_SIZE,
 												id,
 												maxPostSize
 											);
@@ -7858,7 +7858,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean unpackWARs = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_TOMCAT_STD_SITE_UNPACK_WARS,
+												Command.SET_HTTPD_TOMCAT_STD_SITE_UNPACK_WARS,
 												id,
 												unpackWARs
 											);
@@ -7878,7 +7878,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean autoDeploy = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_TOMCAT_STD_SITE_AUTO_DEPLOY,
+												Command.SET_HTTPD_TOMCAT_STD_SITE_AUTO_DEPLOY,
 												id,
 												autoDeploy
 											);
@@ -7898,7 +7898,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											int version = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.SET_HTTPD_TOMCAT_STD_SITE_VERSION,
+												Command.SET_HTTPD_TOMCAT_STD_SITE_VERSION,
 												id,
 												version
 											);
@@ -7918,7 +7918,7 @@ public abstract class MasterServer {
 											int ipAddress = in.readCompressedInt();
 											InetAddress dhcpAddress = InetAddress.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.SET_IP_ADDRESS_DHCP_ADDRESS,
+												Command.SET_IP_ADDRESS_DHCP_ADDRESS,
 												ipAddress,
 												dhcpAddress
 											);
@@ -7938,7 +7938,7 @@ public abstract class MasterServer {
 											int ipAddress = in.readCompressedInt();
 											DomainName hostname = DomainName.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.SET_IP_ADDRESS_HOSTNAME,
+												Command.SET_IP_ADDRESS_HOSTNAME,
 												ipAddress,
 												hostname
 											);
@@ -7958,7 +7958,7 @@ public abstract class MasterServer {
 											int ipAddress = in.readCompressedInt();
 											boolean enabled = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_IP_ADDRESS_MONITORING_ENABLED,
+												Command.SET_IP_ADDRESS_MONITORING_ENABLED,
 												ipAddress,
 												enabled
 											);
@@ -7978,7 +7978,7 @@ public abstract class MasterServer {
 											int ipAddress = in.readCompressedInt();
 											AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.SET_IP_ADDRESS_PACKAGE,
+												Command.SET_IP_ADDRESS_PACKAGE,
 												ipAddress,
 												packageName
 											);
@@ -8011,7 +8011,7 @@ public abstract class MasterServer {
 												);
 											}
 											process.setCommand(
-												AOSHCommand.ADD_IP_REPUTATION,
+												Command.ADD_IP_REPUTATION,
 												ipReputationSet,
 												size
 											);
@@ -8058,7 +8058,7 @@ public abstract class MasterServer {
 												phone = s.isEmpty() ? null : Gecos.valueOf(s);
 											}
 											process.setCommand(
-												AOSHCommand.SET_LINUX_ACCOUNT_HOME_PHONE,
+												Command.SET_LINUX_ACCOUNT_HOME_PHONE,
 												username,
 												phone
 											);
@@ -8077,14 +8077,14 @@ public abstract class MasterServer {
 										{
 											UserId username = UserId.valueOf(in.readUTF());
 											Gecos fullName;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_1) < 0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) < 0) {
 												fullName = Gecos.valueOf(in.readUTF());
 											} else {
 												String s = in.readUTF();
 												fullName = s.isEmpty() ? null : Gecos.valueOf(s);
 											}
 											process.setCommand(
-												AOSHCommand.SET_LINUX_ACCOUNT_NAME,
+												Command.SET_LINUX_ACCOUNT_NAME,
 												username,
 												fullName
 											);
@@ -8108,7 +8108,7 @@ public abstract class MasterServer {
 												location = s.isEmpty() ? null : Gecos.valueOf(s);
 											}
 											process.setCommand(
-												AOSHCommand.SET_LINUX_ACCOUNT_OFFICE_LOCATION,
+												Command.SET_LINUX_ACCOUNT_OFFICE_LOCATION,
 												username,
 												location
 											);
@@ -8132,7 +8132,7 @@ public abstract class MasterServer {
 												phone = s.isEmpty() ? null : Gecos.valueOf(s);
 											}
 											process.setCommand(
-												AOSHCommand.SET_LINUX_ACCOUNT_OFFICE_PHONE,
+												Command.SET_LINUX_ACCOUNT_OFFICE_PHONE,
 												username,
 												phone
 											);
@@ -8152,7 +8152,7 @@ public abstract class MasterServer {
 											UserId username = UserId.valueOf(in.readUTF());
 											UnixPath shell = UnixPath.valueOf(in.readUTF());
 											process.setCommand(
-												AOSHCommand.SET_LINUX_ACCOUNT_SHELL,
+												Command.SET_LINUX_ACCOUNT_SHELL,
 												username,
 												shell
 											);
@@ -8172,7 +8172,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											int days = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.SET_LINUX_SERVER_ACCOUNT_JUNK_EMAIL_RETENTION,
+												Command.SET_LINUX_SERVER_ACCOUNT_JUNK_EMAIL_RETENTION,
 												id,
 												days
 											);
@@ -8192,9 +8192,9 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											String password = in.readUTF();
 											process.setCommand(
-												AOSHCommand.SET_LINUX_ACCOUNT_PASSWORD,
+												Command.SET_LINUX_ACCOUNT_PASSWORD,
 												id,
-												AOServProtocol.FILTERED
+												AoservProtocol.FILTERED
 											);
 											LinuxAccountHandler.setLinuxServerAccountPassword(
 												conn,
@@ -8214,7 +8214,7 @@ public abstract class MasterServer {
 											process.setCommand(
 												"set_linux_server_account_predisable_password",
 												id,
-												AOServProtocol.FILTERED
+												AoservProtocol.FILTERED
 											);
 											LinuxAccountHandler.setLinuxServerAccountPredisablePassword(
 												conn,
@@ -8232,7 +8232,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											String mode = in.readUTF();
 											process.setCommand(
-												AOSHCommand.SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_INTEGRATION_MODE,
+												Command.SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_INTEGRATION_MODE,
 												id,
 												mode
 											);
@@ -8252,7 +8252,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											float required_score = in.readFloat();
 											process.setCommand(
-												AOSHCommand.SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_REQUIRED_SCORE,
+												Command.SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_REQUIRED_SCORE,
 												id,
 												required_score
 											);
@@ -8292,7 +8292,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											int days = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.SET_LINUX_SERVER_ACCOUNT_TRASH_EMAIL_RETENTION,
+												Command.SET_LINUX_SERVER_ACCOUNT_TRASH_EMAIL_RETENTION,
 												id,
 												days
 											);
@@ -8312,7 +8312,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean useInbox = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_LINUX_SERVER_ACCOUNT_USE_INBOX,
+												Command.SET_LINUX_SERVER_ACCOUNT_USE_INBOX,
 												id,
 												useInbox
 											);
@@ -8332,7 +8332,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											String file = in.readUTF();
 											process.setCommand(
-												AOSHCommand.SET_MAJORDOMO_INFO_FILE,
+												Command.SET_MAJORDOMO_INFO_FILE,
 												id,
 												file
 											);
@@ -8351,7 +8351,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											String file = in.readUTF();
 											process.setCommand(
-												AOSHCommand.SET_MAJORDOMO_INTRO_FILE,
+												Command.SET_MAJORDOMO_INTRO_FILE,
 												id,
 												file
 											);
@@ -8370,9 +8370,9 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											String password = in.readNullUTF();
 											process.setCommand(
-												AOSHCommand.SET_MYSQL_SERVER_USER_PASSWORD,
+												Command.SET_MYSQL_SERVER_USER_PASSWORD,
 												id,
-												AOServProtocol.FILTERED
+												AoservProtocol.FILTERED
 											);
 											MySQLHandler.setMySQLServerUserPassword(
 												conn,
@@ -8391,7 +8391,7 @@ public abstract class MasterServer {
 											process.setCommand(
 												"set_mysql_server_user_predisable_password",
 												id,
-												AOServProtocol.FILTERED
+												AoservProtocol.FILTERED
 											);
 											MySQLHandler.setMySQLServerUserPredisablePassword(
 												conn,
@@ -8416,7 +8416,7 @@ public abstract class MasterServer {
 												}
 											}
 											Object[] command = new Object[2 + numZones];
-											command[0] = AOSHCommand.SET_NET_BIND_FIREWALLD_ZONES;
+											command[0] = Command.SET_NET_BIND_FIREWALLD_ZONES;
 											command[1] = id;
 											System.arraycopy(
 												firewalldZones.toArray(new FirewalldZoneName[numZones]),
@@ -8442,7 +8442,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											boolean enabled = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.SET_NET_BIND_MONITORING_ENABLED,
+												Command.SET_NET_BIND_MONITORING_ENABLED,
 												id,
 												enabled
 											);
@@ -8544,7 +8544,7 @@ public abstract class MasterServer {
 											int id = in.readCompressedInt();
 											String password = in.readNullUTF();
 											process.setCommand(
-												AOSHCommand.SET_POSTGRES_SERVER_USER_PASSWORD,
+												Command.SET_POSTGRES_SERVER_USER_PASSWORD,
 												id,
 												password
 											);
@@ -8565,7 +8565,7 @@ public abstract class MasterServer {
 											process.setCommand(
 												"set_postgres_server_user_predisable_password",
 												id,
-												AOServProtocol.FILTERED
+												AoservProtocol.FILTERED
 											);
 											PostgresHandler.setPostgresServerUserPredisablePassword(
 												conn,
@@ -8582,7 +8582,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.SET_PRIMARY_HTTPD_SITE_URL,
+												Command.SET_PRIMARY_HTTPD_SITE_URL,
 												id
 											);
 											HttpdHandler.setPrimaryHttpdSiteURL(
@@ -8599,7 +8599,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.SET_PRIMARY_LINUX_GROUP_ACCOUNT,
+												Command.SET_PRIMARY_LINUX_GROUP_ACCOUNT,
 												id
 											);
 											LinuxAccountHandler.setPrimaryLinuxGroupAccount(
@@ -8635,7 +8635,7 @@ public abstract class MasterServer {
 												username,
 												comments
 											);
-											resp1=AOServProtocol.DONE;
+											resp1=AoservProtocol.DONE;
 											sendInvalidateList=true;
 										}
 										break;*/
@@ -8643,7 +8643,7 @@ public abstract class MasterServer {
 										{
 											int ticketID = in.readCompressedInt();
 											String contactEmails = in.readUTF();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) {
 												String username=in.readUTF();
 												String comments=in.readUTF();
 											}
@@ -8667,7 +8667,7 @@ public abstract class MasterServer {
 										{
 											int ticketID = in.readCompressedInt(); 
 											String contactPhoneNumbers = in.readUTF();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) {
 												String username=in.readUTF();
 												String comments=in.readUTF();
 											}
@@ -8691,7 +8691,7 @@ public abstract class MasterServer {
 										{
 											int ticketID = in.readCompressedInt();
 											AccountingCode oldAccounting;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_48)>=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_48)>=0) {
 												// Added old accounting to behave like atomic variable
 												String oldAccountingS = in.readUTF();
 												oldAccounting = oldAccountingS.length()==0 ? null : AccountingCode.valueOf(oldAccountingS);
@@ -8700,7 +8700,7 @@ public abstract class MasterServer {
 											}
 											String newAccountingS = in.readUTF();
 											AccountingCode newAccounting = newAccountingS.length()==0 ? null : AccountingCode.valueOf(newAccountingS);
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) {
 												String username = in.readUTF();
 												String comments = in.readUTF();
 											}
@@ -8718,12 +8718,12 @@ public abstract class MasterServer {
 												oldAccounting,
 												newAccounting
 											);
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_48)<0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_48)<0) {
 												resp = Response.DONE;
 											} else {
 												// Added boolean updated response
 												resp = Response.of(
-													AOServProtocol.DONE,
+													AoservProtocol.DONE,
 													updated
 												);
 											}
@@ -8753,7 +8753,7 @@ public abstract class MasterServer {
 												statusTimeout
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												updated
 											);
 											sendInvalidateList = true;
@@ -8779,7 +8779,7 @@ public abstract class MasterServer {
 												newInternalNotes
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												updated
 											);
 											sendInvalidateList = true;
@@ -8789,7 +8789,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.START_APACHE,
+												Command.START_APACHE,
 												aoServer
 											);
 											HttpdHandler.startApache(
@@ -8805,7 +8805,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.START_CRON,
+												Command.START_CRON,
 												aoServer
 											);
 											AOServerHandler.startCron(
@@ -8825,7 +8825,7 @@ public abstract class MasterServer {
 											int ao_server = in.readCompressedInt();
 											boolean includeUser = in.readBoolean();
 											process.setCommand(
-												AOSHCommand.START_DISTRO,
+												Command.START_DISTRO,
 												ao_server,
 												includeUser
 											);
@@ -8843,7 +8843,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.START_JVM,
+												Command.START_JVM,
 												id
 											);
 											String message = HttpdHandler.startJVM(
@@ -8852,7 +8852,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.ofNullString(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												message
 											);
 											sendInvalidateList = false;
@@ -8861,11 +8861,11 @@ public abstract class MasterServer {
 									case START_MYSQL :
 										{
 											int mysqlServer = in.readCompressedInt();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4) < 0) {
-												throw new IOException(AOSHCommand.START_MYSQL + " call not supported for AOServ Client version < " + AOServProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_4) < 0) {
+												throw new IOException(Command.START_MYSQL + " call not supported for AOServ Client version < " + AoservProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
 											}
 											process.setCommand(
-												AOSHCommand.START_MYSQL,
+												Command.START_MYSQL,
 												mysqlServer
 											);
 											MySQLHandler.startMySQL(
@@ -8881,7 +8881,7 @@ public abstract class MasterServer {
 										{
 											int postgresServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.START_POSTGRESQL,
+												Command.START_POSTGRESQL,
 												postgresServer
 											);
 											PostgresHandler.startPostgreSQL(
@@ -8897,7 +8897,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.START_XFS,
+												Command.START_XFS,
 												aoServer
 											);
 											AOServerHandler.startXfs(
@@ -8913,7 +8913,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.START_XVFB,
+												Command.START_XVFB,
 												aoServer
 											);
 											AOServerHandler.startXvfb(
@@ -8929,7 +8929,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.STOP_APACHE,
+												Command.STOP_APACHE,
 												aoServer
 											);
 											HttpdHandler.stopApache(
@@ -8945,7 +8945,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.STOP_CRON,
+												Command.STOP_CRON,
 												aoServer
 											);
 											AOServerHandler.stopCron(
@@ -8961,7 +8961,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.STOP_JVM,
+												Command.STOP_JVM,
 												id
 											);
 											String message = HttpdHandler.stopJVM(
@@ -8970,7 +8970,7 @@ public abstract class MasterServer {
 												id
 											);
 											resp = Response.ofNullString(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												message
 											);
 											sendInvalidateList = false;
@@ -8979,11 +8979,11 @@ public abstract class MasterServer {
 									case STOP_MYSQL :
 										{
 											int mysqlServer = in.readCompressedInt();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_4) < 0) {
-												throw new IOException(AOSHCommand.STOP_MYSQL + " call not supported for AOServ Client version < " + AOServProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_4) < 0) {
+												throw new IOException(Command.STOP_MYSQL + " call not supported for AOServ Client version < " + AoservProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
 											}
 											process.setCommand(
-												AOSHCommand.STOP_MYSQL,
+												Command.STOP_MYSQL,
 												mysqlServer
 											);
 											MySQLHandler.stopMySQL(
@@ -8999,7 +8999,7 @@ public abstract class MasterServer {
 										{
 											int postgresServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.STOP_POSTGRESQL,
+												Command.STOP_POSTGRESQL,
 												postgresServer
 											);
 											PostgresHandler.stopPostgreSQL(
@@ -9015,7 +9015,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.STOP_XFS,
+												Command.STOP_XFS,
 												aoServer
 											);
 											AOServerHandler.stopXfs(
@@ -9031,7 +9031,7 @@ public abstract class MasterServer {
 										{
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.STOP_XVFB,
+												Command.STOP_XVFB,
 												aoServer
 											);
 											AOServerHandler.stopXvfb(
@@ -9049,7 +9049,7 @@ public abstract class MasterServer {
 											String username=in.readUTF().trim();
 											String comments=in.readUTF().trim();
 											process.setCommand(
-												AOSHCommand.ADD_TICKET_WORK,
+												Command.ADD_TICKET_WORK,
 												ticketID,
 												username,
 												comments
@@ -9062,21 +9062,21 @@ public abstract class MasterServer {
 												username,
 												comments
 											);
-											resp1=AOServProtocol.DONE;
+											resp1=AoservProtocol.DONE;
 											sendInvalidateList=true;
 										}
 										break;*/
 									case TRANSACTION_APPROVED :
 										{
 											int transid = in.readCompressedInt();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_28)<=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_28)<=0) {
 												String paymentType=in.readUTF();
 												String paymentInfo=in.readNullUTF();
 												String merchant=in.readNullUTF();
 												String apr_num;
-												if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_128)<0) apr_num=Integer.toString(in.readCompressedInt());
+												if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_128)<0) apr_num=Integer.toString(in.readCompressedInt());
 												else apr_num=in.readUTF();
-												throw new SQLException("approve_transaction for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
+												throw new SQLException("approve_transaction for protocol version "+AoservProtocol.Version.VERSION_1_28+" or older is no longer supported.");
 											}
 											int creditCardTransaction = in.readCompressedInt();
 											process.setCommand(
@@ -9098,11 +9098,11 @@ public abstract class MasterServer {
 									case TRANSACTION_DECLINED :
 										{
 											int transid = in.readCompressedInt();
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_28)<=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_28)<=0) {
 												String paymentType=in.readUTF().trim();
 												String paymentInfo=in.readNullUTF();
 												String merchant=in.readNullUTF();
-												throw new SQLException("decline_transaction for protocol version "+AOServProtocol.Version.VERSION_1_28+" or older is no longer supported.");
+												throw new SQLException("decline_transaction for protocol version "+AoservProtocol.Version.VERSION_1_28+" or older is no longer supported.");
 											}
 											int creditCardTransaction = in.readCompressedInt();
 											process.setCommand(
@@ -9182,7 +9182,7 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											final Long bitRate;
-											if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_61)<=0) {
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_61)<=0) {
 												int bitRateInt = in.readCompressedInt();
 												bitRate = bitRateInt==-1 ? null : (long)bitRateInt;
 											} else {
@@ -9312,8 +9312,8 @@ public abstract class MasterServer {
 												"update_credit_card_number_and_expiration",
 												id,
 												maskedCardNumber,
-												encryptedCardNumber==null ? null : AOServProtocol.FILTERED,
-												encryptedExpiration==null ? null : AOServProtocol.FILTERED,
+												encryptedCardNumber==null ? null : AoservProtocol.FILTERED,
+												encryptedExpiration==null ? null : AoservProtocol.FILTERED,
 												encryptionFrom==-1 ? null : encryptionFrom,
 												encryptionRecipient==-1 ? null : encryptionRecipient
 											);
@@ -9341,7 +9341,7 @@ public abstract class MasterServer {
 											process.setCommand(
 												"update_credit_card_expiration",
 												id,
-												AOServProtocol.FILTERED,
+												AoservProtocol.FILTERED,
 												encryptionFrom,
 												encryptionRecipient
 											);
@@ -9372,13 +9372,13 @@ public abstract class MasterServer {
 											String validationQuery=in.readUTF();
 											if(validationQuery.length()==0) validationQuery=null;
 											process.setCommand(
-												AOSHCommand.UPDATE_HTTPD_TOMCAT_DATA_SOURCE,
+												Command.UPDATE_HTTPD_TOMCAT_DATA_SOURCE,
 												id,
 												name,
 												driverClassName,
 												url,
 												username,
-												AOServProtocol.FILTERED,
+												AoservProtocol.FILTERED,
 												maxActive,
 												maxIdle,
 												maxWait,
@@ -9412,7 +9412,7 @@ public abstract class MasterServer {
 											String description=in.readUTF();
 											if(description.length()==0) description=null;
 											process.setCommand(
-												AOSHCommand.UPDATE_HTTPD_TOMCAT_PARAMETER,
+												Command.UPDATE_HTTPD_TOMCAT_PARAMETER,
 												id,
 												name,
 												value,
@@ -9483,13 +9483,13 @@ public abstract class MasterServer {
 									case WAIT_FOR_REBUILD :
 										{
 											int clientTableID = in.readCompressedInt();
-											SchemaTable.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
+											Table.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
 											if(tableID == null) throw new IOException("Client table not supported: #" + clientTableID);
 											int aoServer = in.readCompressedInt();
 											switch(tableID) {
 												case HTTPD_SITES :
 													process.setCommand(
-														AOSHCommand.WAIT_FOR_HTTPD_SITE_REBUILD,
+														Command.WAIT_FOR_HTTPD_SITE_REBUILD,
 														aoServer
 													);
 													HttpdHandler.waitForHttpdSiteRebuild(
@@ -9500,7 +9500,7 @@ public abstract class MasterServer {
 													break;
 												case LINUX_ACCOUNTS :
 													process.setCommand(
-														AOSHCommand.WAIT_FOR_LINUX_ACCOUNT_REBUILD,
+														Command.WAIT_FOR_LINUX_ACCOUNT_REBUILD,
 														aoServer
 													);
 													LinuxAccountHandler.waitForLinuxAccountRebuild(
@@ -9511,7 +9511,7 @@ public abstract class MasterServer {
 													break;
 												case MYSQL_DATABASES :
 													process.setCommand(
-														AOSHCommand.WAIT_FOR_MYSQL_DATABASE_REBUILD,
+														Command.WAIT_FOR_MYSQL_DATABASE_REBUILD,
 														aoServer
 													);
 													MySQLHandler.waitForMySQLDatabaseRebuild(
@@ -9522,7 +9522,7 @@ public abstract class MasterServer {
 													break;
 												case MYSQL_DB_USERS :
 													process.setCommand(
-														AOSHCommand.WAIT_FOR_MYSQL_DB_USER_REBUILD,
+														Command.WAIT_FOR_MYSQL_DB_USER_REBUILD,
 														aoServer
 													);
 													MySQLHandler.waitForMySQLDBUserRebuild(
@@ -9533,7 +9533,7 @@ public abstract class MasterServer {
 													break;
 												case MYSQL_SERVERS :
 													process.setCommand(
-														AOSHCommand.WAIT_FOR_MYSQL_SERVER_REBUILD,
+														Command.WAIT_FOR_MYSQL_SERVER_REBUILD,
 														aoServer
 													);
 													MySQLHandler.waitForMySQLServerRebuild(
@@ -9544,7 +9544,7 @@ public abstract class MasterServer {
 													break;
 												case MYSQL_USERS :
 													process.setCommand(
-														AOSHCommand.WAIT_FOR_MYSQL_USER_REBUILD,
+														Command.WAIT_FOR_MYSQL_USER_REBUILD,
 														aoServer
 													);
 													MySQLHandler.waitForMySQLUserRebuild(
@@ -9555,7 +9555,7 @@ public abstract class MasterServer {
 													break;
 												case POSTGRES_DATABASES :
 													process.setCommand(
-														AOSHCommand.WAIT_FOR_POSTGRES_DATABASE_REBUILD,
+														Command.WAIT_FOR_POSTGRES_DATABASE_REBUILD,
 														aoServer
 													);
 													PostgresHandler.waitForPostgresDatabaseRebuild(
@@ -9566,7 +9566,7 @@ public abstract class MasterServer {
 													break;
 												case POSTGRES_SERVERS :
 													process.setCommand(
-														AOSHCommand.WAIT_FOR_POSTGRES_SERVER_REBUILD,
+														Command.WAIT_FOR_POSTGRES_SERVER_REBUILD,
 														aoServer
 													);
 													PostgresHandler.waitForPostgresServerRebuild(
@@ -9577,7 +9577,7 @@ public abstract class MasterServer {
 													break;
 												case POSTGRES_USERS :
 													process.setCommand(
-														AOSHCommand.WAIT_FOR_POSTGRES_USER_REBUILD,
+														Command.WAIT_FOR_POSTGRES_USER_REBUILD,
 														aoServer
 													);
 													PostgresHandler.waitForPostgresUserRebuild(
@@ -9601,13 +9601,13 @@ public abstract class MasterServer {
 												"request_vnc_console_daemon_access",
 												virtualServer
 											);
-											AOServer.DaemonAccess daemonAccess = VirtualServerHandler.requestVncConsoleDaemonAccess(
+											Server.DaemonAccess daemonAccess = VirtualServerHandler.requestVncConsoleDaemonAccess(
 												conn,
 												source,
 												virtualServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												daemonAccess.getProtocol(),
 												daemonAccess.getHost(),
 												daemonAccess.getPort().getPort(),
@@ -9620,7 +9620,7 @@ public abstract class MasterServer {
 										{
 											int virtualDisk = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.VERIFY_VIRTUAL_DISK,
+												Command.VERIFY_VIRTUAL_DISK,
 												virtualDisk
 											);
 											long lastVerified = VirtualServerHandler.verifyVirtualDisk(
@@ -9629,7 +9629,7 @@ public abstract class MasterServer {
 												virtualDisk
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												lastVerified
 											);
 											sendInvalidateList = false;
@@ -9639,7 +9639,7 @@ public abstract class MasterServer {
 										{
 											int virtualServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.CREATE_VIRTUAL_SERVER,
+												Command.CREATE_VIRTUAL_SERVER,
 												virtualServer
 											);
 											String output = VirtualServerHandler.createVirtualServer(
@@ -9648,7 +9648,7 @@ public abstract class MasterServer {
 												virtualServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												output
 											);
 											sendInvalidateList = false;
@@ -9658,7 +9658,7 @@ public abstract class MasterServer {
 										{
 											int virtualServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.REBOOT_VIRTUAL_SERVER,
+												Command.REBOOT_VIRTUAL_SERVER,
 												virtualServer
 											);
 											String output = VirtualServerHandler.rebootVirtualServer(
@@ -9667,7 +9667,7 @@ public abstract class MasterServer {
 												virtualServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												output
 											);
 											sendInvalidateList = false;
@@ -9677,7 +9677,7 @@ public abstract class MasterServer {
 										{
 											int virtualServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.SHUTDOWN_VIRTUAL_SERVER,
+												Command.SHUTDOWN_VIRTUAL_SERVER,
 												virtualServer
 											);
 											String output = VirtualServerHandler.shutdownVirtualServer(
@@ -9686,7 +9686,7 @@ public abstract class MasterServer {
 												virtualServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												output
 											);
 											sendInvalidateList = false;
@@ -9696,7 +9696,7 @@ public abstract class MasterServer {
 										{
 											int virtualServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.DESTROY_VIRTUAL_SERVER,
+												Command.DESTROY_VIRTUAL_SERVER,
 												virtualServer
 											);
 											String output = VirtualServerHandler.destroyVirtualServer(
@@ -9705,7 +9705,7 @@ public abstract class MasterServer {
 												virtualServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												output
 											);
 											sendInvalidateList = false;
@@ -9715,7 +9715,7 @@ public abstract class MasterServer {
 										{
 											int virtualServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.PAUSE_VIRTUAL_SERVER,
+												Command.PAUSE_VIRTUAL_SERVER,
 												virtualServer
 											);
 											String output = VirtualServerHandler.pauseVirtualServer(
@@ -9724,7 +9724,7 @@ public abstract class MasterServer {
 												virtualServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												output
 											);
 											sendInvalidateList = false;
@@ -9734,7 +9734,7 @@ public abstract class MasterServer {
 										{
 											int virtualServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.UNPAUSE_VIRTUAL_SERVER,
+												Command.UNPAUSE_VIRTUAL_SERVER,
 												virtualServer
 											);
 											String output = VirtualServerHandler.unpauseVirtualServer(
@@ -9743,7 +9743,7 @@ public abstract class MasterServer {
 												virtualServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												output
 											);
 											sendInvalidateList = false;
@@ -9753,7 +9753,7 @@ public abstract class MasterServer {
 										{
 											int virtualServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_VIRTUAL_SERVER_STATUS,
+												Command.GET_VIRTUAL_SERVER_STATUS,
 												virtualServer
 											);
 											int status = VirtualServerHandler.getVirtualServerStatus(
@@ -9762,7 +9762,7 @@ public abstract class MasterServer {
 												virtualServer
 											);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												status
 											);
 											sendInvalidateList = false;
@@ -9772,12 +9772,12 @@ public abstract class MasterServer {
 										{
 											int virtualServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_PRIMARY_PHYSICAL_SERVER,
+												Command.GET_PRIMARY_PHYSICAL_SERVER,
 												virtualServer
 											);
 											int physicalServer = ClusterHandler.getPrimaryPhysicalServer(conn, source, virtualServer);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												physicalServer
 											);
 											sendInvalidateList = false;
@@ -9787,12 +9787,12 @@ public abstract class MasterServer {
 										{
 											int virtualServer = in.readCompressedInt();
 											process.setCommand(
-												AOSHCommand.GET_SECONDARY_PHYSICAL_SERVER,
+												Command.GET_SECONDARY_PHYSICAL_SERVER,
 												virtualServer
 											);
 											int physicalServer = ClusterHandler.getSecondaryPhysicalServer(conn, source, virtualServer);
 											resp = Response.of(
-												AOServProtocol.DONE,
+												AoservProtocol.DONE,
 												physicalServer
 											);
 											sendInvalidateList = false;
@@ -9807,7 +9807,7 @@ public abstract class MasterServer {
 								// Convert the invalidate list to client table IDs before releasing the connection
 								if(sendInvalidateList) {
 									clientInvalidateList=new IntArrayList();
-									for(SchemaTable.TableID tableID : tableIDs) {
+									for(Table.TableID tableID : tableIDs) {
 										if(invalidateList.isInvalid(tableID)) {
 											int clientTableID = TableHandler.convertToClientTableID(conn, source, tableID);
 											if(clientTableID != -1) clientInvalidateList.add(clientTableID);
@@ -9854,18 +9854,18 @@ public abstract class MasterServer {
 					} catch(SQLException err) {
 						if(logSQLException) logger.log(Level.SEVERE, null, err);
 						String message=err.getMessage();
-						out.writeByte(AOServProtocol.SQL_EXCEPTION);
+						out.writeByte(AoservProtocol.SQL_EXCEPTION);
 						out.writeUTF(message==null?"":message);
 					} catch(ValidationException err) {
 						logger.log(Level.SEVERE, null, err);
 						String message=err.getMessage();
-						out.writeByte(AOServProtocol.IO_EXCEPTION);
+						out.writeByte(AoservProtocol.IO_EXCEPTION);
 						out.writeUTF(message==null?"":message);
 						keepOpen = false; // Close on ValidationException
 					} catch(IOException err) {
 						if(logIOException) logger.log(Level.SEVERE, null, err);
 						String message=err.getMessage();
-						out.writeByte(AOServProtocol.IO_EXCEPTION);
+						out.writeByte(AoservProtocol.IO_EXCEPTION);
 						out.writeUTF(message==null?"":message);
 						keepOpen = false; // Close on IOException
 					} finally {
@@ -9917,7 +9917,7 @@ public abstract class MasterServer {
 					// Build the list with a connection, but don't send until the connection is released
 					try {
 						try {
-							for(SchemaTable.TableID tableID : tableIDs) {
+							for(Table.TableID tableID : tableIDs) {
 								int clientTableID=TableHandler.convertToClientTableID(conn, source, tableID);
 								if(clientTableID!=-1) {
 									List<AccountingCode> affectedBusinesses = invalidateList.getAffectedBusinesses(tableID);
@@ -9952,13 +9952,13 @@ public abstract class MasterServer {
 													break;
 												}
 												if(
-													tableID==SchemaTable.TableID.AO_SERVERS
-													|| tableID==SchemaTable.TableID.IP_ADDRESSES
-													|| tableID==SchemaTable.TableID.LINUX_ACCOUNTS
-													|| tableID==SchemaTable.TableID.LINUX_SERVER_ACCOUNTS
-													|| tableID==SchemaTable.TableID.NET_DEVICES
-													|| tableID==SchemaTable.TableID.SERVERS
-													|| tableID==SchemaTable.TableID.USERNAMES
+													tableID==Table.TableID.AO_SERVERS
+													|| tableID==Table.TableID.IP_ADDRESSES
+													|| tableID==Table.TableID.LINUX_ACCOUNTS
+													|| tableID==Table.TableID.LINUX_SERVER_ACCOUNTS
+													|| tableID==Table.TableID.NET_DEVICES
+													|| tableID==Table.TableID.SERVERS
+													|| tableID==Table.TableID.USERNAMES
 												) {
 													// These tables invalidations are also sent to the servers failover parent
 													int failoverServer=ServerHandler.getFailoverServer(conn, server);
@@ -9992,7 +9992,7 @@ public abstract class MasterServer {
 	}
 
 	/**
-	 * Runs all of the configured protocols of <code>MasterServer</code>
+	 * Runs all of the configured protocols of <code>UserHost</code>
 	 * processes as configured in <code>com/aoindustries/aoserv/master/aoserv-master.properties</code>.
 	 */
 	public static void main(String[] args) {
@@ -10076,20 +10076,20 @@ public abstract class MasterServer {
 		T obj,
 		ResultSet results
 	) throws IOException, SQLException {
-		AOServProtocol.Version version=source.getProtocolVersion();
+		AoservProtocol.Version version=source.getProtocolVersion();
 
 		// Make one pass counting the rows if providing progress information
 		if(provideProgress) {
 			int rowCount = 0;
 			while (results.next()) rowCount++;
 			results.beforeFirst();
-			out.writeByte(AOServProtocol.NEXT);
+			out.writeByte(AoservProtocol.NEXT);
 			out.writeCompressedInt(rowCount);
 		}
 		int writeCount = 0;
 		while(results.next()) {
 			obj.init(results);
-			out.writeByte(AOServProtocol.NEXT);
+			out.writeByte(AoservProtocol.NEXT);
 			obj.write(out, version);
 			writeCount++;
 		}
@@ -10107,18 +10107,18 @@ public abstract class MasterServer {
 		boolean provideProgress,
 		Collection<? extends AOServWritable> objs
 	) throws IOException {
-		AOServProtocol.Version version = source.getProtocolVersion();
+		AoservProtocol.Version version = source.getProtocolVersion();
 
 		int size = objs.size();
 		if (provideProgress) {
-			out.writeByte(AOServProtocol.NEXT);
+			out.writeByte(AoservProtocol.NEXT);
 			out.writeCompressedInt(size);
 		}
 		int count = 0;
 		for(AOServWritable obj : objs) {
 			count++;
 			if(count > size) throw new ConcurrentModificationException("Too many objects during iteration: " + count + " > " + size);
-			out.writeByte(AOServProtocol.NEXT);
+			out.writeByte(AoservProtocol.NEXT);
 			obj.write(out, version);
 		}
 		if(count < size) throw new ConcurrentModificationException("Too few objects during iteration: " + count + " < " + size);
@@ -10133,18 +10133,18 @@ public abstract class MasterServer {
 		boolean provideProgress,
 		Collection<? extends AOServWritable> objs
 	) throws IOException {
-		AOServProtocol.Version version = source.getProtocolVersion();
+		AoservProtocol.Version version = source.getProtocolVersion();
 
 		int size = objs.size();
 		if (provideProgress) {
-			out.writeByte(AOServProtocol.NEXT);
+			out.writeByte(AoservProtocol.NEXT);
 			out.writeCompressedInt(size);
 		}
 		int count = 0;
 		for(AOServWritable obj : objs) {
 			count++;
 			if(count > size) throw new ConcurrentModificationException("Too many objects during iteration: " + count + " > " + size);
-			out.writeByte(AOServProtocol.NEXT);
+			out.writeByte(AoservProtocol.NEXT);
 			synchronized(obj) {
 				obj.write(out, version);
 			}
@@ -10162,9 +10162,9 @@ public abstract class MasterServer {
 		if(connectAs == null) return "Connection attempted with empty connect username";
 		if(authenticateAs == null) return "Connection attempted with empty authentication username";
 
-		if(!BusinessHandler.isBusinessAdministrator(conn, authenticateAs)) return "Unable to find BusinessAdministrator: "+authenticateAs;
+		if(!BusinessHandler.isBusinessAdministrator(conn, authenticateAs)) return "Unable to find Administrator: "+authenticateAs;
 
-		if(BusinessHandler.isBusinessAdministratorDisabled(conn, authenticateAs)) return "BusinessAdministrator disabled: "+authenticateAs;
+		if(BusinessHandler.isBusinessAdministratorDisabled(conn, authenticateAs)) return "Administrator disabled: "+authenticateAs;
 
 		if (!isHostAllowed(conn, authenticateAs, remoteHost)) return "Connection from "+remoteHost+" as "+authenticateAs+" not allowed.";
 
@@ -10179,7 +10179,7 @@ public abstract class MasterServer {
 
 		// If connectAs is not authenticateAs, must be authenticated with switch user permissions
 		if(!connectAs.equals(authenticateAs)) {
-			if(!BusinessHandler.isBusinessAdministrator(conn, connectAs)) return "Unable to find BusinessAdministrator: "+connectAs;
+			if(!BusinessHandler.isBusinessAdministrator(conn, connectAs)) return "Unable to find Administrator: "+connectAs;
 			// Must have can_switch_users permissions and must be switching to a subaccount user
 			if(!BusinessHandler.canSwitchUser(conn, authenticateAs, connectAs)) return "Not allowed to switch users from "+authenticateAs+" to "+connectAs;
 		}
@@ -10193,7 +10193,7 @@ public abstract class MasterServer {
 	}
 
 	private static void addStat(
-		List<MasterServerStat> objs, 
+		List<ServerStat> objs, 
 		String name, 
 		String value, 
 		String description
@@ -10201,75 +10201,75 @@ public abstract class MasterServer {
 		name=trim(name);
 		value=trim(value);
 		description=trim(description);
-		objs.add(new MasterServerStat(name, value, description));
+		objs.add(new ServerStat(name, value, description));
 	}
 
 	public static void writeStats(RequestSource source, CompressedDataOutputStream out, boolean provideProgress) throws IOException {
 		try {
 			// Create the list of objects first
-			List<MasterServerStat> objs=new ArrayList<>();
-			addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getByteBufferCreates()), "Number of byte[] buffers created");
-			addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_USES, Long.toString(BufferManager.getByteBufferUses()), "Total number of byte[] buffers allocated");
-			if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
-				addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_ZERO_FILLS, Long.toString(BufferManager.getByteBufferZeroFills()), "Total number of byte[] buffers zero-filled");
-				addStat(objs, MasterServerStat.BYTE_ARRAY_CACHE_COLLECTED, Long.toString(BufferManager.getByteBuffersCollected()), "Total number of byte[] buffers detected as garbage collected");
+			List<ServerStat> objs=new ArrayList<>();
+			addStat(objs, ServerStat.BYTE_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getByteBufferCreates()), "Number of byte[] buffers created");
+			addStat(objs, ServerStat.BYTE_ARRAY_CACHE_USES, Long.toString(BufferManager.getByteBufferUses()), "Total number of byte[] buffers allocated");
+			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
+				addStat(objs, ServerStat.BYTE_ARRAY_CACHE_ZERO_FILLS, Long.toString(BufferManager.getByteBufferZeroFills()), "Total number of byte[] buffers zero-filled");
+				addStat(objs, ServerStat.BYTE_ARRAY_CACHE_COLLECTED, Long.toString(BufferManager.getByteBuffersCollected()), "Total number of byte[] buffers detected as garbage collected");
 			}
 
-			addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getCharBufferCreates()), "Number of char[] buffers created");
-			addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_USES, Long.toString(BufferManager.getCharBufferUses()), "Total number of char[] buffers allocated");
-			if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
-				addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_ZERO_FILLS, Long.toString(BufferManager.getCharBufferZeroFills()), "Total number of char[] buffers zero-filled");
-				addStat(objs, MasterServerStat.CHAR_ARRAY_CACHE_COLLECTED, Long.toString(BufferManager.getCharBuffersCollected()), "Total number of char[] buffers detected as garbage collected");
+			addStat(objs, ServerStat.CHAR_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getCharBufferCreates()), "Number of char[] buffers created");
+			addStat(objs, ServerStat.CHAR_ARRAY_CACHE_USES, Long.toString(BufferManager.getCharBufferUses()), "Total number of char[] buffers allocated");
+			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
+				addStat(objs, ServerStat.CHAR_ARRAY_CACHE_ZERO_FILLS, Long.toString(BufferManager.getCharBufferZeroFills()), "Total number of char[] buffers zero-filled");
+				addStat(objs, ServerStat.CHAR_ARRAY_CACHE_COLLECTED, Long.toString(BufferManager.getCharBuffersCollected()), "Total number of char[] buffers detected as garbage collected");
 			}
 
-			addStat(objs, MasterServerStat.DAEMON_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonConcurrency()), "Number of active daemon connections");
-			addStat(objs, MasterServerStat.DAEMON_CONNECTIONS, Integer.toString(DaemonHandler.getDaemonConnections()), "Current number of daemon connections");
-			addStat(objs, MasterServerStat.DAEMON_CONNECTS, Integer.toString(DaemonHandler.getDaemonConnects()), "Number of times connecting to daemons");
-			addStat(objs, MasterServerStat.DAEMON_COUNT, Integer.toString(DaemonHandler.getDaemonCount()), "Number of daemons that have been accessed");
-			addStat(objs, MasterServerStat.DAEMON_DOWN_COUNT, Integer.toString(DaemonHandler.getDownDaemonCount()), "Number of daemons that are currently unavailable");
-			addStat(objs, MasterServerStat.DAEMON_MAX_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonMaxConcurrency()), "Peak number of active daemon connections");
-			addStat(objs, MasterServerStat.DAEMON_POOL_SIZE, Integer.toString(DaemonHandler.getDaemonPoolSize()), "Maximum number of daemon connections");
-			addStat(objs, MasterServerStat.DAEMON_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(DaemonHandler.getDaemonTotalTime()), "Total time spent accessing daemons");
-			addStat(objs, MasterServerStat.DAEMON_TRANSACTIONS, Long.toString(DaemonHandler.getDaemonTransactions()), "Number of transactions processed by daemons");
+			addStat(objs, ServerStat.DAEMON_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonConcurrency()), "Number of active daemon connections");
+			addStat(objs, ServerStat.DAEMON_CONNECTIONS, Integer.toString(DaemonHandler.getDaemonConnections()), "Current number of daemon connections");
+			addStat(objs, ServerStat.DAEMON_CONNECTS, Integer.toString(DaemonHandler.getDaemonConnects()), "Number of times connecting to daemons");
+			addStat(objs, ServerStat.DAEMON_COUNT, Integer.toString(DaemonHandler.getDaemonCount()), "Number of daemons that have been accessed");
+			addStat(objs, ServerStat.DAEMON_DOWN_COUNT, Integer.toString(DaemonHandler.getDownDaemonCount()), "Number of daemons that are currently unavailable");
+			addStat(objs, ServerStat.DAEMON_MAX_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonMaxConcurrency()), "Peak number of active daemon connections");
+			addStat(objs, ServerStat.DAEMON_POOL_SIZE, Integer.toString(DaemonHandler.getDaemonPoolSize()), "Maximum number of daemon connections");
+			addStat(objs, ServerStat.DAEMON_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(DaemonHandler.getDaemonTotalTime()), "Total time spent accessing daemons");
+			addStat(objs, ServerStat.DAEMON_TRANSACTIONS, Long.toString(DaemonHandler.getDaemonTransactions()), "Number of transactions processed by daemons");
 
 			AOConnectionPool dbPool=MasterDatabase.getDatabase().getConnectionPool();
-			addStat(objs, MasterServerStat.DB_CONCURRENCY, Integer.toString(dbPool.getConcurrency()), "Number of active database connections");
-			addStat(objs, MasterServerStat.DB_CONNECTIONS, Integer.toString(dbPool.getConnectionCount()), "Current number of database connections");
-			addStat(objs, MasterServerStat.DB_CONNECTS, Long.toString(dbPool.getConnects()), "Number of times connecting to the database");
-			addStat(objs, MasterServerStat.DB_MAX_CONCURRENCY, Integer.toString(dbPool.getMaxConcurrency()), "Peak number of active database connections");
-			addStat(objs, MasterServerStat.DB_POOL_SIZE, Integer.toString(dbPool.getPoolSize()), "Maximum number of database connections");
-			addStat(objs, MasterServerStat.DB_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(dbPool.getTotalTime()), "Total time spent accessing the database");
-			addStat(objs, MasterServerStat.DB_TRANSACTIONS, Long.toString(dbPool.getTransactionCount()), "Number of transactions committed by the database");
+			addStat(objs, ServerStat.DB_CONCURRENCY, Integer.toString(dbPool.getConcurrency()), "Number of active database connections");
+			addStat(objs, ServerStat.DB_CONNECTIONS, Integer.toString(dbPool.getConnectionCount()), "Current number of database connections");
+			addStat(objs, ServerStat.DB_CONNECTS, Long.toString(dbPool.getConnects()), "Number of times connecting to the database");
+			addStat(objs, ServerStat.DB_MAX_CONCURRENCY, Integer.toString(dbPool.getMaxConcurrency()), "Peak number of active database connections");
+			addStat(objs, ServerStat.DB_POOL_SIZE, Integer.toString(dbPool.getPoolSize()), "Maximum number of database connections");
+			addStat(objs, ServerStat.DB_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(dbPool.getTotalTime()), "Total time spent accessing the database");
+			addStat(objs, ServerStat.DB_TRANSACTIONS, Long.toString(dbPool.getTransactionCount()), "Number of transactions committed by the database");
 
 			FifoFile entropyFile=RandomHandler.getFifoFile();
-			addStat(objs, MasterServerStat.ENTROPY_AVAIL, Long.toString(entropyFile.getLength()), "Number of bytes of entropy currently available");
-			addStat(objs, MasterServerStat.ENTROPY_POOLSIZE, Long.toString(entropyFile.getMaximumFifoLength()), "Maximum number of bytes of entropy");
+			addStat(objs, ServerStat.ENTROPY_AVAIL, Long.toString(entropyFile.getLength()), "Number of bytes of entropy currently available");
+			addStat(objs, ServerStat.ENTROPY_POOLSIZE, Long.toString(entropyFile.getMaximumFifoLength()), "Maximum number of bytes of entropy");
 			FifoFileInputStream entropyIn=entropyFile.getInputStream();
-			addStat(objs, MasterServerStat.ENTROPY_READ_BYTES, Long.toString(entropyIn.getReadBytes()), "Number of bytes read from the entropy pool");
-			addStat(objs, MasterServerStat.ENTROPY_READ_COUNT, Long.toString(entropyIn.getReadCount()), "Number of reads from the entropy pool");
+			addStat(objs, ServerStat.ENTROPY_READ_BYTES, Long.toString(entropyIn.getReadBytes()), "Number of bytes read from the entropy pool");
+			addStat(objs, ServerStat.ENTROPY_READ_COUNT, Long.toString(entropyIn.getReadCount()), "Number of reads from the entropy pool");
 			FifoFileOutputStream entropyOut=entropyFile.getOutputStream();
-			addStat(objs, MasterServerStat.ENTROPY_WRITE_BYTES, Long.toString(entropyOut.getWriteBytes()), "Number of bytes written to the entropy pool");
-			addStat(objs, MasterServerStat.ENTROPY_WRITE_COUNT, Long.toString(entropyOut.getWriteCount()), "Number of writes to the entropy pool");
+			addStat(objs, ServerStat.ENTROPY_WRITE_BYTES, Long.toString(entropyOut.getWriteBytes()), "Number of bytes written to the entropy pool");
+			addStat(objs, ServerStat.ENTROPY_WRITE_COUNT, Long.toString(entropyOut.getWriteCount()), "Number of writes to the entropy pool");
 
-			addStat(objs, MasterServerStat.MEMORY_FREE, Long.toString(Runtime.getRuntime().freeMemory()), "Free virtual machine memory in bytes");
-			addStat(objs, MasterServerStat.MEMORY_TOTAL, Long.toString(Runtime.getRuntime().totalMemory()), "Total virtual machine memory in bytes");
+			addStat(objs, ServerStat.MEMORY_FREE, Long.toString(Runtime.getRuntime().freeMemory()), "Free virtual machine memory in bytes");
+			addStat(objs, ServerStat.MEMORY_TOTAL, Long.toString(Runtime.getRuntime().totalMemory()), "Total virtual machine memory in bytes");
 
-			addStat(objs, MasterServerStat.PROTOCOL_VERSION, StringUtility.join(AOServProtocol.Version.values(), ", "), "Supported AOServProtocol version numbers");
+			addStat(objs, ServerStat.PROTOCOL_VERSION, StringUtility.join(AoservProtocol.Version.values(), ", "), "Supported AoservProtocol version numbers");
 
-			addStat(objs, MasterServerStat.REQUEST_CONCURRENCY, Integer.toString(getRequestConcurrency()), "Current number of client requests being processed");
-			addStat(objs, MasterServerStat.REQUEST_CONNECTIONS, Long.toString(getRequestConnections()), "Number of connections received from clients");
-			addStat(objs, MasterServerStat.REQUEST_MAX_CONCURRENCY, Integer.toString(getRequestMaxConcurrency()), "Peak number of client requests being processed");
-			addStat(objs, MasterServerStat.REQUEST_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(getRequestTotalTime()), "Total time spent processing client requests");
-			addStat(objs, MasterServerStat.REQUEST_TRANSACTIONS, Long.toString(getRequestTransactions()), "Number of client requests processed");
+			addStat(objs, ServerStat.REQUEST_CONCURRENCY, Integer.toString(getRequestConcurrency()), "Current number of client requests being processed");
+			addStat(objs, ServerStat.REQUEST_CONNECTIONS, Long.toString(getRequestConnections()), "Number of connections received from clients");
+			addStat(objs, ServerStat.REQUEST_MAX_CONCURRENCY, Integer.toString(getRequestMaxConcurrency()), "Peak number of client requests being processed");
+			addStat(objs, ServerStat.REQUEST_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(getRequestTotalTime()), "Total time spent processing client requests");
+			addStat(objs, ServerStat.REQUEST_TRANSACTIONS, Long.toString(getRequestTransactions()), "Number of client requests processed");
 
-			addStat(objs, MasterServerStat.THREAD_COUNT, Integer.toString(ThreadUtility.getThreadCount()), "Current number of virtual machine threads");
+			addStat(objs, ServerStat.THREAD_COUNT, Integer.toString(ThreadUtility.getThreadCount()), "Current number of virtual machine threads");
 
-			addStat(objs, MasterServerStat.UPTIME, StringUtility.getDecimalTimeLengthString(System.currentTimeMillis()-getStartTime()), "Amount of time the master server has been running");
+			addStat(objs, ServerStat.UPTIME, StringUtility.getDecimalTimeLengthString(System.currentTimeMillis()-getStartTime()), "Amount of time the master server has been running");
 
 			writeObjects(source, out, provideProgress, objs);
 		} catch(IOException err) {
 			logger.log(Level.SEVERE, null, err);
-			out.writeByte(AOServProtocol.IO_EXCEPTION);
+			out.writeByte(AoservProtocol.IO_EXCEPTION);
 			String message=err.getMessage();
 			out.writeUTF(message==null?"":message);
 		}
@@ -10292,7 +10292,7 @@ public abstract class MasterServer {
 	 * TODO: What about ending '.' on zones vs DomainName objects here?
 	 */
 	public static void checkAccessHostname(DatabaseConnection conn, RequestSource source, String action, String hostname, List<DomainName> tlds) throws IOException, SQLException {
-		String zone = DNSZoneTable.getDNSZoneForHostname(hostname, tlds);
+		String zone = ZoneTable.getDNSZoneForHostname(hostname, tlds);
 
 		if(conn.executeBooleanQuery(
 			"select (select zone from dns.\"ForbiddenZone\" where zone=?) is not null",
@@ -10336,23 +10336,23 @@ public abstract class MasterServer {
 		for(int emailDomain : emailDomains) if(!EmailHandler.canAccessEmailDomain(conn, source, emailDomain)) throw new SQLException("Access to this hostname forbidden: Exists in email.Domain: "+hostname);
 	}
 
-	public static com.aoindustries.aoserv.client.master.MasterServer[] getMasterServers(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static com.aoindustries.aoserv.client.master.UserHost[] getUserHosts(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		synchronized(masterServersLock) {
 			if(masterServers==null) masterServers=new HashMap<>();
-			com.aoindustries.aoserv.client.master.MasterServer[] mss=masterServers.get(username);
+			com.aoindustries.aoserv.client.master.UserHost[] mss=masterServers.get(username);
 			if(mss!=null) return mss;
 			try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master.\"User\" mu, master.\"UserHost\" ms where mu.is_active and mu.username=? and mu.username=ms.username")) {
 				try {
-					List<com.aoindustries.aoserv.client.master.MasterServer> v=new ArrayList<>();
+					List<com.aoindustries.aoserv.client.master.UserHost> v=new ArrayList<>();
 					pstmt.setString(1, username.toString());
 					try (ResultSet results = pstmt.executeQuery()) {
 						while(results.next()) {
-							com.aoindustries.aoserv.client.master.MasterServer ms=new com.aoindustries.aoserv.client.master.MasterServer();
+							com.aoindustries.aoserv.client.master.UserHost ms=new com.aoindustries.aoserv.client.master.UserHost();
 							ms.init(results);
 							v.add(ms);
 						}
 					}
-					mss=new com.aoindustries.aoserv.client.master.MasterServer[v.size()];
+					mss=new com.aoindustries.aoserv.client.master.UserHost[v.size()];
 					v.toArray(mss);
 					masterServers.put(username, mss);
 					return mss;
@@ -10363,14 +10363,14 @@ public abstract class MasterServer {
 		}
 	}
 
-	public static Map<UserId,MasterUser> getMasterUsers(DatabaseConnection conn) throws IOException, SQLException {
+	public static Map<UserId,User> getUsers(DatabaseConnection conn) throws IOException, SQLException {
 		synchronized(masterUsersLock) {
 			if(masterUsers==null) {
 				try (Statement stmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement()) {
-					Map<UserId,MasterUser> table=new HashMap<>();
+					Map<UserId,User> table=new HashMap<>();
 					ResultSet results=stmt.executeQuery("select * from master.\"User\" where is_active");
 					while(results.next()) {
-						MasterUser mu=new MasterUser();
+						User mu=new User();
 						mu.init(results);
 						table.put(mu.getKey(), mu);
 					}
@@ -10381,8 +10381,8 @@ public abstract class MasterServer {
 		}
 	}
 
-	public static MasterUser getMasterUser(DatabaseConnection conn, UserId username) throws IOException, SQLException {
-		return getMasterUsers(conn).get(username);
+	public static User getUser(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+		return getUsers(conn).get(username);
 	}
 
 	/**
@@ -10413,7 +10413,7 @@ public abstract class MasterServer {
 			}
 			myMasterHosts = masterHosts;
 		}
-		if(getMasterUser(conn, username)!=null) {
+		if(getUser(conn, username)!=null) {
 			List<HostAddress> hosts=myMasterHosts.get(username);
 			// Allow from anywhere if no hosts are provided
 			if(hosts==null) return true;
@@ -10438,7 +10438,7 @@ public abstract class MasterServer {
 		String sql,
 		Object ... params
 	) throws IOException, SQLException {
-		AOServProtocol.Version version = source.getProtocolVersion();
+		AoservProtocol.Version version = source.getProtocolVersion();
 		Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
 		try (PreparedStatement pstmt = dbConn.prepareStatement(sql)) {
 			try {
@@ -10446,9 +10446,9 @@ public abstract class MasterServer {
 				try (ResultSet results = pstmt.executeQuery()) {
 					if(results.next()) {
 						obj.init(results);
-						out.writeByte(AOServProtocol.NEXT);
+						out.writeByte(AoservProtocol.NEXT);
 						obj.write(out, version);
-					} else out.writeByte(AOServProtocol.DONE);
+					} else out.writeByte(AoservProtocol.DONE);
 				}
 			} catch(SQLException err) {
 				throw new WrappedSQLException(err, pstmt);
@@ -10464,7 +10464,7 @@ public abstract class MasterServer {
 		String sql,
 		Object ... params
 	) throws IOException, SQLException {
-		AOServProtocol.Version version=source.getProtocolVersion();
+		AoservProtocol.Version version=source.getProtocolVersion();
 
 		Connection dbConn=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false);
 		try (PreparedStatement pstmt = dbConn.prepareStatement("declare fetch_objects cursor for "+sql)) {
@@ -10484,7 +10484,7 @@ public abstract class MasterServer {
 				try (ResultSet results = stmt.executeQuery(sqlString)) {
 					while(results.next()) {
 						obj.init(results);
-						out.writeByte(AOServProtocol.NEXT);
+						out.writeByte(AoservProtocol.NEXT);
 						obj.write(out, version);
 						batchSize++;
 					}
@@ -10539,7 +10539,7 @@ public abstract class MasterServer {
 				pstmt.setString(1, param1);
 				try (ResultSet results = pstmt.executeQuery()) {
 					if(results.next()) {
-						out.writeByte(AOServProtocol.DONE);
+						out.writeByte(AoservProtocol.DONE);
 						out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
 					} else throw new NoRowException();
 				}
@@ -10566,7 +10566,7 @@ public abstract class MasterServer {
 				pstmt.setTimestamp(2, param2);
 				try (ResultSet results = pstmt.executeQuery()) {
 					if(results.next()) {
-						out.writeByte(AOServProtocol.DONE);
+						out.writeByte(AoservProtocol.DONE);
 						out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
 					} else throw new NoRowException();
 				}
@@ -10576,19 +10576,19 @@ public abstract class MasterServer {
 		}
 	}
 
-	public static void invalidateTable(SchemaTable.TableID tableID) {
-		if(tableID==SchemaTable.TableID.MASTER_HOSTS) {
+	public static void invalidateTable(Table.TableID tableID) {
+		if(tableID==Table.TableID.MASTER_HOSTS) {
 			synchronized(masterHostsLock) {
 				masterHosts=null;
 			}
-		} else if(tableID==SchemaTable.TableID.MASTER_SERVERS) {
+		} else if(tableID==Table.TableID.MASTER_SERVERS) {
 			synchronized(masterHostsLock) {
 				masterHosts=null;
 			}
 			synchronized(masterServersLock) {
 				masterServers=null;
 			}
-		} else if(tableID==SchemaTable.TableID.MASTER_USERS) {
+		} else if(tableID==Table.TableID.MASTER_USERS) {
 			synchronized(masterHostsLock) {
 				masterHosts=null;
 			}
@@ -10601,7 +10601,7 @@ public abstract class MasterServer {
 		}
 	}
 
-	public static void updateAOServProtocolLastUsed(DatabaseConnection conn, AOServProtocol.Version protocolVersion) throws IOException, SQLException {
-		conn.executeUpdate("update schema.\"AOServProtocol\" set \"lastUsed\" = now()::date where version = ? and (\"lastUsed\" is null or \"lastUsed\" < now()::date)", protocolVersion.getVersion());
+	public static void updateAOServProtocolLastUsed(DatabaseConnection conn, AoservProtocol.Version protocolVersion) throws IOException, SQLException {
+		conn.executeUpdate("update schema.\"AoservProtocol\" set \"lastUsed\" = now()::date where version = ? and (\"lastUsed\" is null or \"lastUsed\" < now()::date)", protocolVersion.getVersion());
 	}
 }

@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.master.MasterProcess;
-import com.aoindustries.aoserv.client.schema.AOServProtocol;
+import com.aoindustries.aoserv.client.master.Process;
+import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataInputStream;
@@ -63,7 +63,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	/**
 	 * The version of the protocol the client is running.
 	 */
-	private AOServProtocol.Version protocolVersion;
+	private AoservProtocol.Version protocolVersion;
 
 	/**
 	 * The server if this is a connection from a daemon.
@@ -72,7 +72,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	/**
 	 * The master process.
 	 */
-	private final MasterProcess process;
+	private final Process process;
 
 	private boolean isClosed=true;
 
@@ -143,7 +143,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	}
 
 	@Override
-	public AOServProtocol.Version getProtocolVersion() {
+	public AoservProtocol.Version getProtocolVersion() {
 		return protocolVersion;
 	}
 
@@ -170,7 +170,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	public void run() {
 		try {
 			try {
-				this.protocolVersion=AOServProtocol.Version.getVersion(in.readUTF());
+				this.protocolVersion=AoservProtocol.Version.getVersion(in.readUTF());
 				process.setAOServProtocol(protocolVersion.getVersion());
 				if(in.readBoolean()) {
 					DomainName daemonServer;
@@ -383,7 +383,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 							}
 
 							if(message!=null) {
-								//MasterServer.reportSecurityMessage(this, message, process.getEffectiveUser().length()>0 && password.length()>0);
+								//UserHost.reportSecurityMessage(this, message, process.getEffectiveUser().length()>0 && password.length()>0);
 								out.writeBoolean(false);
 								out.writeUTF(message);
 								out.flush();
@@ -393,18 +393,18 @@ final public class SocketServerThread extends Thread implements RequestSource {
 								int daemonServer=process.getDaemonServer();
 								if(daemonServer!=-1) {
 									try {
-										if(MasterServer.getMasterUser(conn, process.getEffectiveUser())==null) {
+										if(MasterServer.getUser(conn, process.getEffectiveUser())==null) {
 											conn.releaseConnection();
 											out.writeBoolean(false);
 											out.writeUTF("Only master users may register a daemon server.");
 											out.flush();
 											isOK=false;
 										} else {
-											com.aoindustries.aoserv.client.master.MasterServer[] servers=MasterServer.getMasterServers(conn, process.getEffectiveUser());
+											com.aoindustries.aoserv.client.master.UserHost[] servers=MasterServer.getUserHosts(conn, process.getEffectiveUser());
 											conn.releaseConnection();
 											if(servers.length!=0) {
 												isOK=false;
-												for (com.aoindustries.aoserv.client.master.MasterServer server1 : servers) {
+												for (com.aoindustries.aoserv.client.master.UserHost server1 : servers) {
 													if (server1.getServerPKey() == daemonServer) {
 														isOK=true;
 														break;
@@ -437,7 +437,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 									}
 									// Command sequence starts at a random value
 									final long startSeq;
-									if(protocolVersion.compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
+									if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
 										startSeq = MasterServer.getRandom().nextLong();
 										out.writeLong(startSeq);
 									} else {
@@ -481,7 +481,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 							"Client ("+socket.getInetAddress().getHostAddress()+":"+socket.getPort()+") requesting AOServ Protocol version "
 							+protocolVersion
 							+", server ("+socket.getLocalAddress().getHostAddress()+":"+socket.getLocalPort()+") supporting versions "
-							+StringUtility.join(AOServProtocol.Version.values(), ", ")
+							+StringUtility.join(AoservProtocol.Version.values(), ", ")
 							+".  Please upgrade the client code to match the server."
 						);
 						out.flush();

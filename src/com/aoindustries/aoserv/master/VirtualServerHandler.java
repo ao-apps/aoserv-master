@@ -5,15 +5,15 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.linux.AOServer;
-import com.aoindustries.aoserv.client.master.AOServPermission;
+import com.aoindustries.aoserv.client.linux.Server;
+import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
 
 /**
- * The <code>ServerHandler</code> handles all the accesses to the Server tables.
+ * The <code>ServerHandler</code> handles all the accesses to the Host tables.
  *
  * @author  AO Industries, Inc.
  */
@@ -52,13 +52,13 @@ final public class VirtualServerHandler {
 		return conn.executeStringQuery("select device from infrastructure.\"VirtualDisk\" where id=?", virtualDiskId);
 	}
 
-	public static AOServer.DaemonAccess requestVncConsoleDaemonAccess(
+	public static Server.DaemonAccess requestVncConsoleDaemonAccess(
 		DatabaseConnection conn,
 		RequestSource source,
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "requestVncConsoleDaemonAccess", AOServPermission.Permission.vnc_console);
+		BusinessHandler.checkPermission(conn, source, "requestVncConsoleDaemonAccess", Permission.Name.vnc_console);
 		// The business must have proper access
 		boolean canVncConsole=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_vnc_console");
 		if(!canVncConsole) throw new SQLException("Not allowed to VNC console to "+virtualServer);
@@ -87,7 +87,7 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "createVirtualServer", AOServPermission.Permission.control_virtual_server);
+		BusinessHandler.checkPermission(conn, source, "createVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
 		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
@@ -104,7 +104,7 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "rebootVirtualServer", AOServPermission.Permission.control_virtual_server);
+		BusinessHandler.checkPermission(conn, source, "rebootVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
 		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
@@ -121,7 +121,7 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "shutdownVirtualServer", AOServPermission.Permission.control_virtual_server);
+		BusinessHandler.checkPermission(conn, source, "shutdownVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
 		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
@@ -138,7 +138,7 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "destroyVirtualServer", AOServPermission.Permission.control_virtual_server);
+		BusinessHandler.checkPermission(conn, source, "destroyVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
 		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
@@ -155,7 +155,7 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "pauseVirtualServer", AOServPermission.Permission.control_virtual_server);
+		BusinessHandler.checkPermission(conn, source, "pauseVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
 		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
@@ -172,7 +172,7 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "unpauseVirtualServer", AOServPermission.Permission.control_virtual_server);
+		BusinessHandler.checkPermission(conn, source, "unpauseVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
 		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
@@ -189,7 +189,7 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "getVirtualServerStatus", AOServPermission.Permission.get_virtual_server_status);
+		BusinessHandler.checkPermission(conn, source, "getVirtualServerStatus", Permission.Name.get_virtual_server_status);
 		// TODO: Must not be a disabled server
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
@@ -204,7 +204,7 @@ final public class VirtualServerHandler {
 	) throws IOException, SQLException {
 		int virtualServer = getVirtualServerForVirtualDisk(conn, virtualDisk);
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "verifyVirtualDisk", AOServPermission.Permission.control_virtual_server);
+		BusinessHandler.checkPermission(conn, source, "verifyVirtualDisk", Permission.Name.control_virtual_server);
 		// The business must have proper access
 		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);

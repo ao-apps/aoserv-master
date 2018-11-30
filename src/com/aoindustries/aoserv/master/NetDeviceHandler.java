@@ -21,7 +21,7 @@ final public class NetDeviceHandler {
 
 	public static String getNetDeviceBondingReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
 		int server = getServerForNetDevice(conn, device);
-		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
+		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Host is not an Server: "+server);
 		ServerHandler.checkAccessServer(conn, source, "getNetDeviceBondingReport", server);
 
 		return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceBondingReport(device);
@@ -29,7 +29,7 @@ final public class NetDeviceHandler {
 
 	public static String getNetDeviceStatisticsReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
 		int server = getServerForNetDevice(conn, device);
-		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Server is not an AOServer: "+server);
+		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Host is not an Server: "+server);
 		ServerHandler.checkAccessServer(conn, source, "getNetDeviceStatisticsReport", server);
 
 		return DaemonHandler.getDaemonConnector(conn, server).getNetDeviceStatisticsReport(device);

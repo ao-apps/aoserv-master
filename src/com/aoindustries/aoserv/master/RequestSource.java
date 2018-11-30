@@ -5,7 +5,7 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.schema.AOServProtocol;
+import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
@@ -43,5 +43,5 @@ public interface RequestSource {
 	/**
 	 * Gets the protocol version number supported by the client.
 	 */
-	AOServProtocol.Version getProtocolVersion();
+	AoservProtocol.Version getProtocolVersion();
 }

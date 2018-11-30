@@ -8,9 +8,8 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.billing.TransactionSearchCriteria;
 import com.aoindustries.aoserv.client.billing.TransactionType;
-import com.aoindustries.aoserv.client.linux.LinuxAccount;
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -68,7 +67,7 @@ final public class TransactionHandler {
         BusinessHandler.checkAccessBusiness(conn, source, "addTransaction", accounting);
         BusinessHandler.checkAccessBusiness(conn, source, "addTransaction", sourceAccounting);
         UsernameHandler.checkAccessUsername(conn, source, "addTransaction", business_administrator);
-        if(business_administrator.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+LinuxAccount.MAIL+'\'');
+        if(business_administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
         return addTransaction(
             conn,
@@ -107,7 +106,7 @@ final public class TransactionHandler {
         String processor,
         byte payment_confirmed
     ) throws IOException, SQLException {
-        if(business_administrator.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+LinuxAccount.MAIL+'\'');
+        if(business_administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
         int transid = conn.executeIntUpdate(
             "INSERT INTO billing.\"Transaction\" VALUES (?,default,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
@@ -126,7 +125,7 @@ final public class TransactionHandler {
         );
 
         // Notify all clients of the updates
-        invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accounting, BusinessHandler.getServersForBusiness(conn, accounting), false);
+        invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accounting, BusinessHandler.getServersForBusiness(conn, accounting), false);
         return transid;
     }
 
@@ -238,7 +237,7 @@ final public class TransactionHandler {
         CompressedDataOutputStream out, 
         boolean provideProgress
     ) throws IOException, SQLException {
-        MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+        User mu = MasterServer.getUser(conn, source.getUsername());
         if(mu!=null && mu.canAccessAccounting()) {
             MasterServer.writeObjects(
                 conn,
@@ -265,8 +264,8 @@ final public class TransactionHandler {
         AccountingCode accounting
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
-        MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-        com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
+        User masterUser=MasterServer.getUser(conn, username);
+        com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
         if(masterUser!=null) {
             if(masterServers.length==0) MasterServer.writeObjects(
                 conn,
@@ -334,8 +333,8 @@ final public class TransactionHandler {
         TransactionSearchCriteria criteria
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
-        MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-        com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
+        User masterUser=MasterServer.getUser(conn, username);
+        com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
         StringBuilder sql;
 		final List<Object> params = new ArrayList<>();
         boolean whereDone;
@@ -503,7 +502,7 @@ final public class TransactionHandler {
         if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W'");
 
         // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
     }
 
     public static void transactionDeclined(
@@ -532,7 +531,7 @@ final public class TransactionHandler {
         if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W'");
 
         // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
     }
 
     public static void transactionHeld(
@@ -561,7 +560,7 @@ final public class TransactionHandler {
         if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W' and credit_card_transaction is null");
 
         // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
     }
 
     public static AccountingCode getBusinessForTransaction(DatabaseConnection conn, int transid) throws IOException, SQLException {

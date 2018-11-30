@@ -5,11 +5,11 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationSet;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationSetHost;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationSetNetwork;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.net.reputation.Host;
+import com.aoindustries.aoserv.client.net.reputation.Network;
+import com.aoindustries.aoserv.client.net.reputation.Set;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -42,9 +42,9 @@ final public class IpReputationSetHandler {
     }
 
     public static void checkAccessIpReputationSet(DatabaseConnection conn, RequestSource source, String action, int ipReputationSet) throws IOException, SQLException {
-        MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+        User mu = MasterServer.getUser(conn, source.getUsername());
         if(mu!=null) {
-            if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+            if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
                 // Must be an admin or router to submit reputation
                 String message=
                     "business_administrator.username="
@@ -74,7 +74,7 @@ final public class IpReputationSetHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int ipReputationSet,
-        IpReputationSet.AddReputation[] addReputations
+        Set.AddReputation[] addReputations
     ) throws IOException, SQLException {
         checkAccessIpReputationSet(conn, source, "addIpReputation", ipReputationSet);
 
@@ -120,8 +120,8 @@ final public class IpReputationSetHandler {
     private static void addTempRows(
         DatabaseConnection conn,
         short networkPrefix,
-        IpReputationSet.AddReputation[] addReputations,
-        IpReputationSet.ReputationType reputationType,
+        Set.AddReputation[] addReputations,
+        Set.ReputationType reputationType,
         String suffix
     ) throws SQLException {
         PreparedStatement pstmt = conn.getConnection(
@@ -130,7 +130,7 @@ final public class IpReputationSetHandler {
         ).prepareStatement("INSERT INTO add_reputation_" + suffix + " VALUES (?,?,?,?)");
         try {
             boolean hasRow = false;
-            for(IpReputationSet.AddReputation addRep : addReputations) {
+            for(Set.AddReputation addRep : addReputations) {
                 if(addRep.getReputationType()==reputationType) {
                     hasRow = true;
                     int host = addRep.getHost();
@@ -188,10 +188,10 @@ final public class IpReputationSetHandler {
     }
      */
     
-    private static short constrainReputation(int newReputation, IpReputationSet.ConfidenceType confidence, short maxUncertainReputation, short maxDefiniteReputation) {
-        if(confidence==IpReputationSet.ConfidenceType.UNCERTAIN) {
+    private static short constrainReputation(int newReputation, Set.ConfidenceType confidence, short maxUncertainReputation, short maxDefiniteReputation) {
+        if(confidence==Set.ConfidenceType.UNCERTAIN) {
             return newReputation>maxUncertainReputation ? maxUncertainReputation : (short)newReputation;
-        } else if(confidence==IpReputationSet.ConfidenceType.DEFINITE) {
+        } else if(confidence==Set.ConfidenceType.DEFINITE) {
             return newReputation>maxDefiniteReputation ? maxDefiniteReputation : (short)newReputation;
         } else {
             throw new AssertionError("Unexpected value for confidence: " + confidence);
@@ -205,7 +205,7 @@ final public class IpReputationSetHandler {
         DatabaseConnection conn,
         InvalidateList invalidateList,
         int ipReputationSet,
-        IpReputationSet.AddReputation[] addReputations
+        Set.AddReputation[] addReputations
     ) throws IOException, SQLException {
         // Can't add reputation to a disabled business
         AccountingCode accounting = getBusinessForIpReputationSet(conn, ipReputationSet);
@@ -231,17 +231,17 @@ final public class IpReputationSetHandler {
             // Flag as rep added
             conn.executeUpdate("UPDATE \"net.reputation\".\"Set\" SET last_reputation_added=now() WHERE id=?", ipReputationSet);
 
-            for(IpReputationSet.AddReputation addRep : addReputations) {
+            for(Set.AddReputation addRep : addReputations) {
                 int host = addRep.getHost();
-                IpReputationSet.ConfidenceType confidence = addRep.getConfidence();
-                IpReputationSet.ReputationType reputationType = addRep.getReputationType();
+                Set.ConfidenceType confidence = addRep.getConfidence();
+                Set.ReputationType reputationType = addRep.getReputationType();
                 short score = addRep.getScore();
-                IpReputationSetHost dbHost = conn.executeObjectQuery(
+                Host dbHost = conn.executeObjectQuery(
 					Connection.TRANSACTION_READ_COMMITTED,
                     true,
                     false,
 					(ResultSet result) -> {
-						IpReputationSetHost obj = new IpReputationSetHost();
+						Host obj = new Host();
 						obj.init(result);
 						return obj;
 					},
@@ -257,11 +257,11 @@ final public class IpReputationSetHandler {
                     // Constraint score by confidence
                     short constrainedReputation = constrainReputation(score, confidence, maxUncertainReputation, maxDefiniteReputation);
                     // Resolve starting reputation
-                    if(reputationType==IpReputationSet.ReputationType.GOOD) {
+                    if(reputationType==Set.ReputationType.GOOD) {
                         goodReputation = constrainedReputation;
                         // Update positiveChange for network reputation
                         positiveChange = goodReputation;
-                    } else if(reputationType==IpReputationSet.ReputationType.BAD) {
+                    } else if(reputationType==Set.ReputationType.BAD) {
                         badReputation = constrainedReputation;
                     } else {
                         throw new AssertionError("Unexpected value for reputationType: " + reputationType);
@@ -278,7 +278,7 @@ final public class IpReputationSetHandler {
                         hostsUpdated = true;
                     }
                 } else {
-                    if(reputationType==IpReputationSet.ReputationType.GOOD) {
+                    if(reputationType==Set.ReputationType.GOOD) {
                         short oldGoodReputation = dbHost.getGoodReputation();
                         short newGoodReputation = constrainReputation(
                             (int)oldGoodReputation + (int)score,
@@ -298,7 +298,7 @@ final public class IpReputationSetHandler {
                             // Update positiveChange for network reputation
                             positiveChange = newGoodReputation - oldGoodReputation;
                         }
-                    } else if(reputationType==IpReputationSet.ReputationType.BAD) {
+                    } else if(reputationType==Set.ReputationType.BAD) {
                         short oldBadReputation = dbHost.getBadReputation();
                         short newBadReputation = constrainReputation(
                             (int)oldBadReputation + (int)score,
@@ -323,12 +323,12 @@ final public class IpReputationSetHandler {
                 if(positiveChange>0) {
                     // Update network when positive change applied
                     int network = getNetwork(host, networkPrefix);
-                    IpReputationSetNetwork dbNetwork = conn.executeObjectQuery(
+                    Network dbNetwork = conn.executeObjectQuery(
 						Connection.TRANSACTION_READ_COMMITTED,
                         true,
                         false,
 						(ResultSet result) -> {
-							IpReputationSetNetwork obj = new IpReputationSetNetwork();
+							Network obj = new Network();
 							obj.init(result);
 							return obj;
 						},
@@ -376,8 +376,8 @@ final public class IpReputationSetHandler {
                 createTempTable(conn, "bad");
 
                 // Add all rows in big batches
-                addTempRows(conn, networkPrefix, addReputations, IpReputationSet.ReputationType.GOOD, "good");
-                addTempRows(conn, networkPrefix, addReputations, IpReputationSet.ReputationType.BAD,  "bad");
+                addTempRows(conn, networkPrefix, addReputations, Set.ReputationType.GOOD, "good");
+                addTempRows(conn, networkPrefix, addReputations, Set.ReputationType.BAD,  "bad");
 
                 // Lock for update
                 lockForUpdate(conn);
@@ -400,7 +400,7 @@ final public class IpReputationSetHandler {
             if(hostsUpdated) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.IP_REPUTATION_SET_HOSTS,
+                    Table.TableID.IP_REPUTATION_SET_HOSTS,
                     accounting,
                     BusinessHandler.getServersForBusiness(conn, accounting),
                     false
@@ -409,23 +409,23 @@ final public class IpReputationSetHandler {
             if(networksUpdated) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.IP_REPUTATION_SET_NETWORKS,
+                    Table.TableID.IP_REPUTATION_SET_NETWORKS,
                     accounting,
                     BusinessHandler.getServersForBusiness(conn, accounting),
                     false
                 );
             }
             // Also notify routers
-            for(Map.Entry<UserId,MasterUser> entry : MasterServer.getMasterUsers(conn).entrySet()) {
+            for(Map.Entry<UserId,User> entry : MasterServer.getUsers(conn).entrySet()) {
                 UserId username = entry.getKey();
-                MasterUser mu = entry.getValue();
+                User mu = entry.getValue();
                 if(mu.isRouter()) {
                     // TODO: Filter isRouter users by server_farm
-                    for(com.aoindustries.aoserv.client.master.MasterServer ms : MasterServer.getMasterServers(conn, username)) {
+                    for(com.aoindustries.aoserv.client.master.UserHost ms : MasterServer.getUserHosts(conn, username)) {
                         if(hostsUpdated) {
                             invalidateList.addTable(
                                 conn,
-                                SchemaTable.TableID.IP_REPUTATION_SET_HOSTS,
+                                Table.TableID.IP_REPUTATION_SET_HOSTS,
                                 InvalidateList.allBusinesses,
                                 ms.getServerPKey(),
                                 false
@@ -434,7 +434,7 @@ final public class IpReputationSetHandler {
                         if(networksUpdated) {
                             invalidateList.addTable(
                                 conn,
-                                SchemaTable.TableID.IP_REPUTATION_SET_NETWORKS,
+                                Table.TableID.IP_REPUTATION_SET_NETWORKS,
                                 InvalidateList.allBusinesses,
                                 ms.getServerPKey(),
                                 false

@@ -5,13 +5,13 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.dns.DNSRecord;
-import com.aoindustries.aoserv.client.dns.DNSType;
-import com.aoindustries.aoserv.client.dns.DNSZone;
-import com.aoindustries.aoserv.client.dns.DNSZoneTable;
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.net.Protocol;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.dns.Record;
+import com.aoindustries.aoserv.client.dns.RecordType;
+import com.aoindustries.aoserv.client.dns.Zone;
+import com.aoindustries.aoserv.client.dns.ZoneTable;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.net.AppProtocol;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
@@ -153,7 +153,7 @@ final public class DNSHandler implements CronJob {
 							+ "    and (ab.accounting is null or ab.balance<='0.00'::decimal(9,2))"
 							+ ")"
 						);
-						if(updated>0) invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+						if(updated>0) invalidateList.addTable(conn, Table.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
 						// Closed account that have a balance of $0.00, has not had any billing.Transaction for one year, and entry is older than one year
 						updated = conn.executeUpdate(
@@ -175,7 +175,7 @@ final public class DNSHandler implements CronJob {
 							+ "    and (ab.accounting is null or ab.balance='0.00'::decimal(9,2))"
 							+ ")"
 						);
-						if(updated>0) invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+						if(updated>0) invalidateList.addTable(conn, Table.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
 						/*
 						 * The add new records
@@ -204,7 +204,7 @@ final public class DNSHandler implements CronJob {
 							String zone = aaz.getZone();
 							String whoisOutput = whoisOutputs.get(zone);
 							conn.executeUpdate("insert into billing.\"WhoisHistory\" (accounting, zone, whois_output) values(?,?,?)", accounting, zone, whoisOutput);
-							invalidateList.addTable(conn, SchemaTable.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+							invalidateList.addTable(conn, Table.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 						}
 					} catch(RuntimeException | IOException err) {
 						if(conn.rollback()) {
@@ -265,7 +265,7 @@ final public class DNSHandler implements CronJob {
 	/**
 	 * Gets the set of all unique business accounting code and top level domain (zone) pairs.
 	 *
-	 * @see  DNSZoneTable#getHostTLD(com.aoindustries.net.DomainName, java.util.List)
+	 * @see  ZoneTable#getHostTLD(com.aoindustries.net.DomainName, java.util.List)
 	 */
 	public static Set<AccountingAndZone> getBusinessesAndTopLevelZones(DatabaseConnection conn) throws IOException, SQLException {
 		List<DomainName> tlds = getDNSTLDs(conn);
@@ -285,7 +285,7 @@ final public class DNSHandler implements CronJob {
 					}
 					String tld;
 					try {
-						tld = DNSZoneTable.getHostTLD(domain, tlds) + ".";
+						tld = ZoneTable.getHostTLD(domain, tlds) + ".";
 					} catch(IllegalArgumentException err) {
 						logger.log(Level.WARNING, null, err);
 						tld = zone;
@@ -317,7 +317,7 @@ final public class DNSHandler implements CronJob {
 			+ "  inner join web.\"VirtualHost\" hsb on hsu.httpd_site_bind=hsb.id\n"
 			+ "  inner join web.\"Site\" hs on hsb.httpd_site=hs.id\n"
 			+ "  inner join billing.\"Package\" pk on hs.package=pk.name\n"
-			+ "  inner join linux.\"Server\" ao on hs.ao_server=ao.server\n"
+			+ "  inner join linux.\"Host\" ao on hs.ao_server=ao.server\n"
 			+ "where\n"
 			// Is not "localhost"
 			+ "  hsu.hostname!='localhost'\n"
@@ -336,7 +336,7 @@ final public class DNSHandler implements CronJob {
 	}
 
 	/**
-	 * Creates a new <code>DNSRecord</code>.
+	 * Creates a new <code>Record</code>.
 	 */
 	public static int addDNSRecord(
 		DatabaseConnection conn,
@@ -356,32 +356,32 @@ final public class DNSHandler implements CronJob {
 
 		// Must have appropriate priority
 		if(conn.executeBooleanQuery("select has_priority from dns.\"RecordType\" where type=?", type)) {
-			if(priority == DNSRecord.NO_PRIORITY) throw new IllegalArgumentException("priority required for type=" + type);
+			if(priority == Record.NO_PRIORITY) throw new IllegalArgumentException("priority required for type=" + type);
 			else if(priority<=0) throw new SQLException("Invalid priority: " + priority);
 		} else {
-			if(priority != DNSRecord.NO_PRIORITY) throw new SQLException("No priority allowed for type="+type);
+			if(priority != Record.NO_PRIORITY) throw new SQLException("No priority allowed for type="+type);
 		}
 
 		// Must have appropriate weight
 		if(conn.executeBooleanQuery("select has_weight from dns.\"RecordType\" where type=?", type)) {
-			if(weight == DNSRecord.NO_WEIGHT) throw new IllegalArgumentException("weight required for type=" + type);
+			if(weight == Record.NO_WEIGHT) throw new IllegalArgumentException("weight required for type=" + type);
 			else if(weight<=0) throw new SQLException("Invalid weight: " + weight);
 		} else {
-			if(weight != DNSRecord.NO_WEIGHT) throw new SQLException("No weight allowed for type="+type);
+			if(weight != Record.NO_WEIGHT) throw new SQLException("No weight allowed for type="+type);
 		}
 
 		// Must have appropriate port
 		if(conn.executeBooleanQuery("select has_port from dns.\"RecordType\" where type=?", type)) {
-			if(port == DNSRecord.NO_PORT) throw new IllegalArgumentException("port required for type=" + type);
+			if(port == Record.NO_PORT) throw new IllegalArgumentException("port required for type=" + type);
 			else if(port < 1 || port > 65535) throw new SQLException("Invalid port: " + port);
 		} else {
-			if(port != DNSRecord.NO_PORT) throw new SQLException("No port allowed for type="+type);
+			if(port != Record.NO_PORT) throw new SQLException("No port allowed for type="+type);
 		}
 
 		// Must have a valid destination type unless is a TXT entry
-		if(!DNSType.TXT.equals(type)) {
+		if(!RecordType.TXT.equals(type)) {
 			try {
-				DNSType.checkDestination(
+				RecordType.checkDestination(
 					type,
 					destination
 				);
@@ -405,13 +405,13 @@ final public class DNSHandler implements CronJob {
 			zone,
 			domain,
 			type,
-			(priority == DNSRecord.NO_PRIORITY) ? Null.INTEGER : priority,
-			(weight == DNSRecord.NO_WEIGHT) ? Null.INTEGER : weight,
-			(port == DNSRecord.NO_PORT) ? Null.INTEGER : port,
+			(priority == Record.NO_PRIORITY) ? Null.INTEGER : priority,
+			(weight == Record.NO_WEIGHT) ? Null.INTEGER : weight,
+			(port == Record.NO_PORT) ? Null.INTEGER : port,
 			destination,
 			(ttl == -1) ? Null.INTEGER : ttl
 		);
-		invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
 		// Update the serial of the zone
 		updateDNSZoneSerial(conn, invalidateList, zone);
@@ -421,7 +421,7 @@ final public class DNSHandler implements CronJob {
 	}
 
 	/**
-	 * Creates a new <code>DNSZone</code>.
+	 * Creates a new <code>Zone</code>.
 	 */
 	public static void addDNSZone(
 		DatabaseConnection conn,
@@ -434,11 +434,11 @@ final public class DNSHandler implements CronJob {
 	) throws IOException, SQLException {
 		// Must be allowed to access this package
 		PackageHandler.checkAccessPackage(conn, source, "addDNSZone", packageName);
-		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Not allowed to add DNSZone to disabled Package: "+packageName);
+		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Not allowed to add Zone to disabled Package: "+packageName);
 		MasterServer.checkAccessHostname(conn, source, "addDNSZone", zone);
 		// Check the zone format
 		List<DomainName> tlds=getDNSTLDs(conn);
-		if(!DNSZoneTable.checkDNSZone(zone, tlds)) throw new SQLException("Invalid zone: "+zone);
+		if(!ZoneTable.checkDNSZone(zone, tlds)) throw new SQLException("Invalid zone: "+zone);
 
 		// Must not be allocated in any way to another account
 		MasterServer.checkAccessHostname(conn, source, "addDNSZone", zone);
@@ -449,8 +449,8 @@ final public class DNSHandler implements CronJob {
 			zone,
 			zone,
 			packageName,
-			DNSZone.DEFAULT_HOSTMASTER,
-			DNSZone.getCurrentSerial(),
+			Zone.DEFAULT_HOSTMASTER,
+			Zone.getCurrentSerial(),
 			ttl
 		);
 
@@ -459,8 +459,8 @@ final public class DNSHandler implements CronJob {
 			"insert into dns.\"Record\"(\"zone\", \"domain\", \"type\", priority, destination) values(?,?,?,?,?)",
 			zone,
 			"@",
-			DNSType.MX,
-			DNSZone.DEFAULT_MX_PRIORITY,
+			RecordType.MX,
+			Zone.DEFAULT_MX_PRIORITY,
 			"mail"
 		);
 
@@ -474,39 +474,39 @@ final public class DNSHandler implements CronJob {
 		String aType;
 		switch(ip.getAddressFamily()) {
 			case INET :
-				aType = DNSType.A;
+				aType = RecordType.A;
 				break;
 			case INET6 :
-				aType = DNSType.AAAA;
+				aType = RecordType.AAAA;
 				break;
 			default :
 				throw new AssertionError();
 		}
 
-		conn.executeUpdate(INSERT_RECORD, zone, "@",    DNSType.NS,  "ns1.aoindustries.com.");
-		conn.executeUpdate(INSERT_RECORD, zone, "@",    DNSType.NS,  "ns2.aoindustries.com.");
-		conn.executeUpdate(INSERT_RECORD, zone, "@",    DNSType.NS,  "ns3.aoindustries.com.");
-		conn.executeUpdate(INSERT_RECORD, zone, "@",    DNSType.NS,  "ns4.aoindustries.com.");
-		conn.executeUpdate(INSERT_RECORD, zone, "@",    DNSType.TXT, "v=spf1 a mx -all");
+		conn.executeUpdate(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns1.aoindustries.com.");
+		conn.executeUpdate(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns2.aoindustries.com.");
+		conn.executeUpdate(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns3.aoindustries.com.");
+		conn.executeUpdate(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns4.aoindustries.com.");
+		conn.executeUpdate(INSERT_RECORD, zone, "@",    RecordType.TXT, "v=spf1 a mx -all");
 		conn.executeUpdate(INSERT_RECORD, zone, "@",    aType,       ip.toString());
 		/*
 		conn.executeUpdate(INSERT_RECORD, zone, "ftp",  aType,       ip.toString());
-		conn.executeUpdate(INSERT_RECORD, zone, "ftp",  DNSType.TXT, "v=spf1 -all");
+		conn.executeUpdate(INSERT_RECORD, zone, "ftp",  RecordType.TXT, "v=spf1 -all");
 		 */
 		conn.executeUpdate(INSERT_RECORD, zone, "mail", aType,       ip.toString());
 		// See http://www.openspf.org/FAQ/Common_mistakes#helo "Publish SPF records for HELO names used by your mail servers"
-		conn.executeUpdate(INSERT_RECORD, zone, "mail", DNSType.TXT, "v=spf1 a -all");
+		conn.executeUpdate(INSERT_RECORD, zone, "mail", RecordType.TXT, "v=spf1 a -all");
 		conn.executeUpdate(INSERT_RECORD, zone, "www",  aType,       ip.toString());
 		// See http://www.openspf.org/FAQ/Common_mistakes#all-domains "Publish null SPF records for your domains that don't send mail"
-		conn.executeUpdate(INSERT_RECORD, zone, "www",  DNSType.TXT, "v=spf1 -all");
+		conn.executeUpdate(INSERT_RECORD, zone, "www",  RecordType.TXT, "v=spf1 -all");
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 	}
 
 	/**
-	 * Removes a <code>DNSRecord</code>.
+	 * Removes a <code>Record</code>.
 	 */
 	public static void removeDNSRecord(
 		DatabaseConnection conn,
@@ -522,14 +522,14 @@ final public class DNSHandler implements CronJob {
 
 		// Remove the dns.Record entry
 		conn.executeUpdate("delete from dns.\"Record\" where id=?", id);
-		invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
 		// Update the serial of the zone
 		updateDNSZoneSerial(conn, invalidateList, zone);
 	}
 
 	/**
-	 * Removes a <code>DNSZone</code>.
+	 * Removes a <code>Zone</code>.
 	 */
 	public static void removeDNSZone(
 		DatabaseConnection conn,
@@ -544,7 +544,7 @@ final public class DNSHandler implements CronJob {
 	}
 
 	/**
-	 * Removes a <code>DNSZone</code>.
+	 * Removes a <code>Zone</code>.
 	 */
 	public static void removeDNSZone(
 		DatabaseConnection conn,
@@ -558,8 +558,8 @@ final public class DNSHandler implements CronJob {
 		conn.executeUpdate("delete from dns.\"Zone\" where \"zone\"=?", zone);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 	}
 
 	/**
@@ -586,7 +586,7 @@ final public class DNSHandler implements CronJob {
 		InetAddress ipAddress,
 		List<DomainName> tlds
 	) throws IOException, SQLException {
-		DomainName tld = DNSZoneTable.getHostTLD(hostname, tlds);
+		DomainName tld = ZoneTable.getHostTLD(hostname, tlds);
 		String zone = tld + ".";
 		boolean exists = conn.executeBooleanQuery(
 			"select (select zone from dns.\"Zone\" where zone=?) is not null",
@@ -603,10 +603,10 @@ final public class DNSHandler implements CronJob {
 				String aType;
 				switch(ipAddress.getAddressFamily()) {
 					case INET :
-						aType = DNSType.A;
+						aType = RecordType.A;
 						break;
 					case INET6 :
-						aType = DNSType.AAAA;
+						aType = RecordType.AAAA;
 						break;
 					default :
 						throw new AssertionError();
@@ -620,7 +620,7 @@ final public class DNSHandler implements CronJob {
 				);
 				invalidateList.addTable(
 					conn,
-					SchemaTable.TableID.DNS_RECORDS,
+					Table.TableID.DNS_RECORDS,
 					getBusinessForDNSZone(conn, zone),
 					getDNSAOServers(conn),
 					false
@@ -679,7 +679,7 @@ final public class DNSHandler implements CronJob {
 		DatabaseConnection conn,
 		RequestSource source
 	) throws IOException, SQLException {
-		MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+		User mu=MasterServer.getUser(conn, source.getUsername());
 		return mu!=null && mu.isDNSAdmin();
 	}
 
@@ -708,7 +708,7 @@ final public class DNSHandler implements CronJob {
 	}
 
 	public static IntList getDNSAOServers(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntListQuery("select distinct server from net.\"Bind\" where app_protocol=? and server in (select server from linux.\"Server\")", Protocol.DNS);
+		return conn.executeIntListQuery("select distinct server from net.\"Bind\" where app_protocol=? and server in (select server from linux.\"Host\")", AppProtocol.DNS);
 	}
 
 	private static final Object dnstldLock=new Object();
@@ -750,7 +750,7 @@ final public class DNSHandler implements CronJob {
 		);
 	}
 
-	public static void invalidateTable(SchemaTable.TableID tableID) {
+	public static void invalidateTable(Table.TableID tableID) {
 		switch(tableID) {
 			case DNS_TLDS :
 				synchronized(dnstldLock) {
@@ -768,7 +768,7 @@ final public class DNSHandler implements CronJob {
 		List<DomainName> tlds
 	) throws IOException, SQLException {
 		if(conn.executeBooleanQuery("select (select id from web.\"VirtualHostName\" where hostname=? limit 1) is null", hostname)) {
-			DomainName tld = DNSZoneTable.getHostTLD(hostname, tlds);
+			DomainName tld = ZoneTable.getHostTLD(hostname, tlds);
 			String zone = tld + ".";
 			if(conn.executeBooleanQuery("select (select zone from dns.\"Zone\" where zone=?) is not null", zone)) {
 				String preTld = getPreTld(hostname, tld);
@@ -778,13 +778,13 @@ final public class DNSHandler implements CronJob {
 					+ "  and \"type\" in (?,?)\n"
 					+ "  and \"domain\"=?",
 					zone,
-					DNSType.A, DNSType.AAAA,
+					RecordType.A, RecordType.AAAA,
 					preTld
 				);
 				if(deleteCount > 0) {
 					invalidateList.addTable(
 						conn,
-						SchemaTable.TableID.DNS_RECORDS,
+						Table.TableID.DNS_RECORDS,
 						getBusinessForDNSZone(conn, zone),
 						getDNSAOServers(conn),
 						false
@@ -796,7 +796,7 @@ final public class DNSHandler implements CronJob {
 	}
 
 	/**
-	 * Sets the default TTL for a <code>DNSZone</code>.
+	 * Sets the default TTL for a <code>Zone</code>.
 	 */
 	public static void setDNSZoneTTL(
 		DatabaseConnection conn,
@@ -813,7 +813,7 @@ final public class DNSHandler implements CronJob {
 		conn.executeUpdate("update dns.\"Zone\" set ttl=? where zone=?", ttl, zone);
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.DNS_ZONES,
+			Table.TableID.DNS_ZONES,
 			getBusinessForDNSZone(conn, zone),
 			getDNSAOServers(conn),
 			false
@@ -843,7 +843,7 @@ final public class DNSHandler implements CronJob {
 		// Invalidate the records
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.DNS_RECORDS,
+			Table.TableID.DNS_RECORDS,
 			InvalidateList.allBusinesses,
 			InvalidateList.allServers,
 			false
@@ -868,7 +868,7 @@ final public class DNSHandler implements CronJob {
 		long serial=conn.executeLongQuery("select serial from dns.\"Zone\" where zone=?", zone);
 
 		// Check if already today or higher
-		long todaySerial=DNSZone.getCurrentSerial();
+		long todaySerial=Zone.getCurrentSerial();
 		if(serial>=todaySerial) {
 			// If so, just increment by one
 			serial++;
@@ -881,7 +881,7 @@ final public class DNSHandler implements CronJob {
 		conn.executeUpdate("update dns.\"Zone\" set serial=? where zone=?", serial, zone);
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.DNS_ZONES,
+			Table.TableID.DNS_ZONES,
 			InvalidateList.allBusinesses,
 			InvalidateList.allServers,
 			false
@@ -909,7 +909,7 @@ final public class DNSHandler implements CronJob {
 					netmask = null;
 				}
 				if(netmask!=null) {
-					String arpaZone=DNSZone.getArpaZoneForIPAddress(ip, netmask);
+					String arpaZone=Zone.getArpaZoneForIPAddress(ip, netmask);
 					if(
 						conn.executeBooleanQuery(
 							"select (select zone from dns.\"Zone\" where zone=?) is not null",
@@ -923,7 +923,7 @@ final public class DNSHandler implements CronJob {
 								"select (select id from dns.\"Record\" where \"zone\"=? and \"domain\"=? and \"type\"=? limit 1) is not null",
 								arpaZone,
 								oct4,
-								DNSType.PTR
+								RecordType.PTR
 							)
 						) {
 							updateDNSZoneSerial(conn, invalidateList, arpaZone);
@@ -933,9 +933,9 @@ final public class DNSHandler implements CronJob {
 								hostname.toString()+'.',
 								arpaZone,
 								oct4,
-								DNSType.PTR
+								RecordType.PTR
 							);
-							invalidateList.addTable(conn, SchemaTable.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+							invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 						}
 					}
 				}

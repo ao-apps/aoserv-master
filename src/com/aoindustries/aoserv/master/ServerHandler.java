@@ -6,8 +6,8 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseAccess;
@@ -28,7 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The <code>ServerHandler</code> handles all the accesses to the Server tables.
+ * The <code>ServerHandler</code> handles all the accesses to the Host tables.
  *
  * @author  AO Industries, Inc.
  */
@@ -85,7 +85,7 @@ final public class ServerHandler {
 		String check = Username.checkUsername(username, Locale.getDefault());
 		if(check!=null) throw new SQLException(check);
 
-		PasswordChecker.Result[] results = BusinessAdministrator.checkPassword(Locale.getDefault(), username, password);
+		PasswordChecker.Result[] results = Administrator.checkPassword(Locale.getDefault(), username, password);
 		if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Password strength check failed: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 
 		int serverPKey = conn.executeIntUpdate(
@@ -108,7 +108,7 @@ final public class ServerHandler {
 			description,
 			os_version
 		);
-		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.SERVERS, accounting, InvalidateList.allServers, false);
 
 		// Build a stack of parents, adding each business_server
 		Stack<String> bus=new Stack<String>();
@@ -147,9 +147,9 @@ final public class ServerHandler {
 			null
 		);
 		conn.executeUpdate("insert into master.\"User\" values(?,true,false,false,false,false,false,false)", username);
-		invalidateList.addTable(conn, SchemaTable.TableID.MASTER_USERS, packageAccounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.MASTER_USERS, packageAccounting, InvalidateList.allServers, false);
 		conn.executeUpdate("insert into master.\"UserHost\"(username, server) values(?,?)", username, serverPKey);
-		invalidateList.addTable(conn, SchemaTable.TableID.MASTER_SERVERS, packageAccounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.MASTER_SERVERS, packageAccounting, InvalidateList.allServers, false);
 		BusinessHandler.setBusinessAdministratorPassword(conn, source, invalidateList, username, password);
 
 		return serverPKey;
@@ -165,7 +165,7 @@ final public class ServerHandler {
 				+", hostname="
 				+server
 			;
-			MasterServer.reportSecurityMessage(source, message);
+			UserHost.reportSecurityMessage(source, message);
 			throw new SQLException(message);
 		}
 	}*/
@@ -203,11 +203,11 @@ final public class ServerHandler {
 			List<Integer> SV=usernameServers.get(username);
 			if(SV==null) {
 				SV=new SortedIntArrayList();
-					MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+					User mu = MasterServer.getUser(conn, source.getUsername());
 					if(mu!=null) {
-						com.aoindustries.aoserv.client.master.MasterServer[] masterServers = MasterServer.getMasterServers(conn, source.getUsername());
+						com.aoindustries.aoserv.client.master.UserHost[] masterServers = MasterServer.getUserHosts(conn, source.getUsername());
 						if(masterServers.length!=0) {
-							for(com.aoindustries.aoserv.client.master.MasterServer masterServer : masterServers) {
+							for(com.aoindustries.aoserv.client.master.UserHost masterServer : masterServers) {
 								SV.add(masterServer.getServerPKey());
 							}
 						} else {
@@ -256,7 +256,7 @@ final public class ServerHandler {
 				+ "      select\n"
 				+ "        failover_server\n"
 				+ "      from\n"
-				+ "        linux.\"Server\"\n"
+				+ "        linux.\"Host\"\n"
 				+ "      where\n"
 				+ "        server=?\n"
 				+ "    ), -1\n"
@@ -289,7 +289,7 @@ final public class ServerHandler {
 			if(hostname == null) {
 				hostname = database.executeObjectQuery(
 					ObjectFactories.domainNameFactory,
-					"select hostname from linux.\"Server\" where server=?",
+					"select hostname from linux.\"Host\" where server=?",
 					aoServer
 				);
 				hostnamesForAOServers.put(mapKey, hostname.intern());
@@ -311,7 +311,7 @@ final public class ServerHandler {
 			Integer I = serversForAOServers.get(aoServerHostname);
 			int server;
 			if(I == null) {
-				server = conn.executeIntQuery("select server from linux.\"Server\" where hostname=?", aoServerHostname);
+				server = conn.executeIntQuery("select server from linux.\"Host\" where hostname=?", aoServerHostname);
 				serversForAOServers.put(aoServerHostname, server);
 			} else {
 				server = I;
@@ -346,7 +346,7 @@ final public class ServerHandler {
 		synchronized(aoServers) {
 			if(aoServers.containsKey(I)) return aoServers.get(I);
 			boolean isAOServer=conn.executeBooleanQuery(
-				"select (select server from linux.\"Server\" where server=?) is not null",
+				"select (select server from linux.\"Host\" where server=?) is not null",
 				id
 			);
 			aoServers.put(I, isAOServer);
@@ -354,20 +354,20 @@ final public class ServerHandler {
 		}
 	}
 
-	public static void invalidateTable(SchemaTable.TableID tableID) {
-		if(tableID==SchemaTable.TableID.AO_SERVERS) {
+	public static void invalidateTable(Table.TableID tableID) {
+		if(tableID==Table.TableID.AO_SERVERS) {
 			synchronized(aoServers) {
 				aoServers.clear();
 			}
-		} else if(tableID==SchemaTable.TableID.BUSINESS_SERVERS) {
+		} else if(tableID==Table.TableID.BUSINESS_SERVERS) {
 			synchronized(ServerHandler.class) {
 				usernameServers=null;
 			}
-		} else if(tableID==SchemaTable.TableID.MASTER_SERVERS) {
+		} else if(tableID==Table.TableID.MASTER_SERVERS) {
 			synchronized(ServerHandler.class) {
 				usernameServers=null;
 			}
-		} else if(tableID==SchemaTable.TableID.SERVERS) {
+		} else if(tableID==Table.TableID.SERVERS) {
 			synchronized(failoverServers) {
 				failoverServers.clear();
 			}
@@ -380,7 +380,7 @@ final public class ServerHandler {
 			synchronized(serversForAOServers) {
 				serversForAOServers.clear();
 			}
-		} else if(tableID==SchemaTable.TableID.SERVER_FARMS) {
+		} else if(tableID==Table.TableID.SERVER_FARMS) {
 		}
 	}
 
@@ -392,7 +392,7 @@ final public class ServerHandler {
 	private static final Map<Integer,Map<Long,RequestSource>> invalidateSyncEntries=new HashMap<>();
 
 	/**
-	 * HashMap(Server)->Long(lastID)
+	 * HashMap(Host)->Long(lastID)
 	 */
 	private static final Map<Integer,Long> lastIDs=new HashMap<>();
 

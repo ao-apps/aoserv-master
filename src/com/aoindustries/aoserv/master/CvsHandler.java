@@ -6,8 +6,8 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
-import com.aoindustries.aoserv.client.linux.LinuxAccountType;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.linux.UserType;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.scm.CvsRepository;
 import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -41,7 +41,7 @@ final public class CvsHandler {
 			ServerHandler.checkAccessServer(conn, source, "addCvsRepository", aoServer);
 			LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addCvsRepository", lsa);
 			LinuxAccountHandler.checkAccessLinuxServerGroup(conn, source, "addCvsRepository", lsg);
-			if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to add CvsRepository, LinuxServerAccount disabled: "+lsa);
+			if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to add CvsRepository, UserServer disabled: "+lsa);
 
 			// OperatingSystem settings
 			int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
@@ -116,20 +116,20 @@ final public class CvsHandler {
 					path,
 					aoServer
 				)
-			) throw new SQLException("CvsRepository already exists: "+path+" on AOServer #"+aoServer);
+			) throw new SQLException("CvsRepository already exists: "+path+" on Server #"+aoServer);
 
 			int lsaAOServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa);
-			if(lsaAOServer!=aoServer) throw new SQLException("linux.UserServer "+lsa+" is not located on AOServer #"+aoServer);
+			if(lsaAOServer!=aoServer) throw new SQLException("linux.UserServer "+lsa+" is not located on Server #"+aoServer);
 			String type=LinuxAccountHandler.getTypeForLinuxServerAccount(conn, lsa);
 			if(
 				!(
-					LinuxAccountType.USER.equals(type)
-					|| LinuxAccountType.APPLICATION.equals(type)
+					UserType.USER.equals(type)
+					|| UserType.APPLICATION.equals(type)
 				)
-			) throw new SQLException("CVS repositories must be owned by a linux account of type '"+LinuxAccountType.USER+"' or '"+LinuxAccountType.APPLICATION+'\'');
+			) throw new SQLException("CVS repositories must be owned by a linux account of type '"+UserType.USER+"' or '"+UserType.APPLICATION+'\'');
 
 			int lsgAOServer=LinuxAccountHandler.getAOServerForLinuxServerGroup(conn, lsg);
-			if(lsgAOServer!=aoServer) throw new SQLException("linux.GroupServer "+lsg+" is not located on AOServer #"+aoServer);
+			if(lsgAOServer!=aoServer) throw new SQLException("linux.GroupServer "+lsg+" is not located on Server #"+aoServer);
 
 			long[] modes=CvsRepository.getValidModes();
 			boolean found=false;
@@ -161,7 +161,7 @@ final public class CvsHandler {
 			);
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.CVS_REPOSITORIES,
+				Table.TableID.CVS_REPOSITORIES,
 				LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
 				aoServer,
 				false
@@ -194,7 +194,7 @@ final public class CvsHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.CVS_REPOSITORIES,
+			Table.TableID.CVS_REPOSITORIES,
 			LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
 			LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa),
 			false
@@ -212,7 +212,7 @@ final public class CvsHandler {
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableCvsRepository", disableLog, true);
 		int lsa=getLinuxServerAccountForCvsRepository(conn, id);
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "enableCvsRepository", lsa);
-		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable CvsRepository #"+id+", LinuxServerAccount not enabled: "+lsa);
+		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable CvsRepository #"+id+", UserServer not enabled: "+lsa);
 
 		conn.executeUpdate(
 			"update scm.\"CvsRepository\" set disable_log=null where id=?",
@@ -222,7 +222,7 @@ final public class CvsHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.CVS_REPOSITORIES,
+			Table.TableID.CVS_REPOSITORIES,
 			LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
 			LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa),
 			false
@@ -237,8 +237,8 @@ final public class CvsHandler {
 		return conn.executeIntQuery("select linux_server_account from scm.\"CvsRepository\" where id=?", id);
 	}
 
-	public static void invalidateTable(SchemaTable.TableID tableID) {
-		if(tableID==SchemaTable.TableID.CVS_REPOSITORIES) {
+	public static void invalidateTable(Table.TableID tableID) {
+		if(tableID==Table.TableID.CVS_REPOSITORIES) {
 			synchronized(CvsHandler.class) {
 				disabledCvsRepositories.clear();
 			}
@@ -287,7 +287,7 @@ final public class CvsHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.CVS_REPOSITORIES,
+			Table.TableID.CVS_REPOSITORIES,
 			LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
 			aoServer,
 			false
@@ -325,7 +325,7 @@ final public class CvsHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.CVS_REPOSITORIES,
+			Table.TableID.CVS_REPOSITORIES,
 			LinuxAccountHandler.getBusinessForLinuxServerAccount(conn, lsa),
 			LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, lsa),
 			false

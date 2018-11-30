@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.master.MasterProcess;
-import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.master.Process;
+import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
@@ -28,18 +28,18 @@ final public class MasterProcessManager {
     private MasterProcessManager() {
     }
 
-    private static final List<MasterProcess> processes=new ArrayList<>();
+    private static final List<Process> processes=new ArrayList<>();
 
     private static long nextPID=1;
 
-    public static MasterProcess createProcess(
+    public static Process createProcess(
         InetAddress host,
         String protocol,
         boolean is_secure
     ) {
         synchronized(MasterProcessManager.class) {
             long time=System.currentTimeMillis();
-            MasterProcess process=new MasterProcess(
+            Process process=new Process(
                 nextPID++,
                 host,
                 protocol,
@@ -51,11 +51,11 @@ final public class MasterProcessManager {
         }
     }
 
-    public static void removeProcess(MasterProcess process) {
+    public static void removeProcess(Process process) {
         synchronized(MasterProcessManager.class) {
             int size=processes.size();
             for(int c=0;c<size;c++) {
-                MasterProcess mp=processes.get(c);
+                Process mp=processes.get(c);
                 if(mp.getProcessID()==process.getProcessID()) {
                     processes.remove(c);
                     return;
@@ -70,17 +70,17 @@ final public class MasterProcessManager {
         CompressedDataOutputStream out,
         boolean provideProgress,
         RequestSource source,
-        MasterUser masterUser,
-        com.aoindustries.aoserv.client.master.MasterServer[] masterServers
+        User masterUser,
+        com.aoindustries.aoserv.client.master.UserHost[] masterServers
     ) throws IOException, SQLException {
-        List<MasterProcess> processesCopy=new ArrayList<>(processes.size());
+        List<Process> processesCopy=new ArrayList<>(processes.size());
         synchronized(MasterProcessManager.class) {
             processesCopy.addAll(processes);
         }
-        List<MasterProcess> objs=new ArrayList<>();
-        Iterator<MasterProcess> I=processesCopy.iterator();
+        List<Process> objs=new ArrayList<>();
+        Iterator<Process> I=processesCopy.iterator();
         while(I.hasNext()) {
-            MasterProcess process=I.next();
+            Process process=I.next();
             if(masterUser!=null && masterServers.length==0) {
                 // Stupor-user
                 objs.add(process);

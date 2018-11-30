@@ -6,7 +6,7 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.backup.BackupReport;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
@@ -208,7 +208,7 @@ final public class ReportGenerator implements CronJob {
 									+ "      mb.backup_data\n"
 									+ "    from\n"
 									+ "      mysql_backups mb,\n"
-									+ "      mysql.\"Server\" ms\n"
+									+ "      mysql.\"Host\" ms\n"
 									+ "    where\n"
 									+ "      mb.mysql_server=ms.bind\n"
 									+ "    union select\n"
@@ -217,7 +217,7 @@ final public class ReportGenerator implements CronJob {
 									+ "      pb.backup_data\n"
 									+ "    from\n"
 									+ "      postgres_backups pb\n"
-									+ "      INNER JOIN postgresql.\"Server\" ps ON pb.postgres_server = ps.bind\n"
+									+ "      INNER JOIN postgresql.\"Host\" ps ON pb.postgres_server = ps.bind\n"
 									+ "  ) as fb,\n"
 									+ "  backup_data bd\n"
 									+ "where\n"
@@ -286,7 +286,7 @@ final public class ReportGenerator implements CronJob {
 							}
 
 							// Invalidate the table
-							invalidateList.addTable(conn, SchemaTable.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+							invalidateList.addTable(conn, Table.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 						}
 					} catch(RuntimeException | IOException err) {
 						if(conn.rollback()) {

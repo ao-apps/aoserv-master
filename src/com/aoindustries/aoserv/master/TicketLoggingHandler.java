@@ -6,8 +6,8 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.ticket.Language;
-import com.aoindustries.aoserv.client.ticket.TicketPriority;
-import com.aoindustries.aoserv.client.ticket.TicketStatus;
+import com.aoindustries.aoserv.client.ticket.Priority;
+import com.aoindustries.aoserv.client.ticket.Status;
 import com.aoindustries.aoserv.client.ticket.TicketType;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -107,9 +107,9 @@ final public class TicketLoggingHandler extends QueuedHandler {
 						+ "      limit 1\n"
 						+ "    ), -1\n"
 						+ "  )",
-						TicketStatus.OPEN,
-						TicketStatus.HOLD,
-						TicketStatus.BOUNCED,
+						Status.OPEN,
+						Status.HOLD,
+						Status.BOUNCED,
 						rootAccounting,
 						rootAccounting,
 						Language.EN,
@@ -130,10 +130,10 @@ final public class TicketLoggingHandler extends QueuedHandler {
 						// The priority depends on the log level
 						String priorityName;
 						int intLevel = level.intValue();
-						if(intLevel<=Level.CONFIG.intValue()) priorityName = TicketPriority.LOW;           // FINE < level <= CONFIG
-						else if(intLevel<=Level.INFO.intValue()) priorityName = TicketPriority.NORMAL;     // CONFIG < level <=INFO
-						else if(intLevel<=Level.WARNING.intValue()) priorityName = TicketPriority.HIGH;    // INFO < level <=WARNING
-						else priorityName = TicketPriority.URGENT;                                         // WARNING < level
+						if(intLevel<=Level.CONFIG.intValue()) priorityName = Priority.LOW;           // FINE < level <= CONFIG
+						else if(intLevel<=Level.INFO.intValue()) priorityName = Priority.NORMAL;     // CONFIG < level <=INFO
+						else if(intLevel<=Level.WARNING.intValue()) priorityName = Priority.HIGH;    // INFO < level <=WARNING
+						else priorityName = Priority.URGENT;                                         // WARNING < level
 						TicketHandler.addTicket(
 							conn,
 							invalidateList,
@@ -150,7 +150,7 @@ final public class TicketLoggingHandler extends QueuedHandler {
 							null,
 							priorityName,
 							null,
-							TicketStatus.OPEN,
+							Status.OPEN,
 							-1,
 							"",
 							"",

@@ -6,7 +6,7 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.accounting.BankTransaction;
-import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import java.io.IOException;
@@ -63,12 +63,12 @@ final public class BankAccountHandler {
 	}
 
 	public static boolean isAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-		MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+		User mu=MasterServer.getUser(conn, source.getUsername());
 		return mu!=null && mu.canAccessAccounting();
 	}
 
 	public static boolean isBankAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-		MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+		User mu=MasterServer.getUser(conn, source.getUsername());
 		return mu!=null && mu.canAccessBankAccount();
 	}
 }

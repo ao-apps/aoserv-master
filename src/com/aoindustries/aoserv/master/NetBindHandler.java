@@ -5,11 +5,11 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.net.FirewalldZone;
-import com.aoindustries.aoserv.client.net.IPAddress;
-import com.aoindustries.aoserv.client.schema.AOServProtocol;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.net.FirewallZone;
+import com.aoindustries.aoserv.client.net.IpAddress;
+import com.aoindustries.aoserv.client.schema.AoservProtocol;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.FirewalldZoneName;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -52,7 +52,7 @@ final public class NetBindHandler {
 			conn.executeBooleanQuery("select (select protocol from net.\"AppProtocol\" where protocol=?) is null", appProtocol)
 		) throw new SQLException("Unable to find in table net.AppProtocol: "+appProtocol);
 
-		MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+		User mu=MasterServer.getUser(conn, source.getUsername());
 		if(mu==null) {
 			// Must be a user service
 			if(
@@ -96,7 +96,7 @@ final public class NetBindHandler {
 						port.getPort(),
 						port.getProtocol().name().toLowerCase(Locale.ROOT)
 					)
-				) throw new SQLException("NetBind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
+				) throw new SQLException("Bind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
 			} else if(inetAddress.isLoopback()) {
 				// Loopback must be unique per server and not have wildcard
 				if(
@@ -116,12 +116,12 @@ final public class NetBindHandler {
 						+ "    limit 1\n"
 						+ "  ) is not null",
 						server,
-						IPAddress.WILDCARD_IP,
-						IPAddress.LOOPBACK_IP,
+						IpAddress.WILDCARD_IP,
+						IpAddress.LOOPBACK_IP,
 						port.getPort(),
 						port.getProtocol().name().toLowerCase(Locale.ROOT)
 					)
-				) throw new SQLException("NetBind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
+				) throw new SQLException("Bind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
 			} else {
 				// Make sure that this port is not already allocated within the server on this IP or the wildcard
 				if(
@@ -144,12 +144,12 @@ final public class NetBindHandler {
 						+ "    limit 1\n"
 						+ "  ) is not null",
 						server,
-						IPAddress.WILDCARD_IP,
+						IpAddress.WILDCARD_IP,
 						ipAddress,
 						port.getPort(),
 						port.getProtocol().name().toLowerCase(Locale.ROOT)
 					)
-				) throw new SQLException("NetBind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
+				) throw new SQLException("Bind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
 			}
 
 			// Add the port to the DB
@@ -178,7 +178,7 @@ final public class NetBindHandler {
 		AccountingCode business = PackageHandler.getBusinessForPackage(conn, packageName);
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.NET_BINDS,
+			Table.TableID.NET_BINDS,
 			business,
 			server,
 			false
@@ -197,7 +197,7 @@ final public class NetBindHandler {
 			}
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+				Table.TableID.NET_BIND_FIREWALLD_ZONES,
 				business,
 				server,
 				false
@@ -246,7 +246,7 @@ final public class NetBindHandler {
 		}
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.NET_BINDS,
+			Table.TableID.NET_BINDS,
 			PackageHandler.getBusinessForPackage(conn, pack),
 			server,
 			false
@@ -335,7 +335,7 @@ final public class NetBindHandler {
 		if(conn.executeUpdate("delete from net.\"TcpRedirect\" where net_bind=?", id) > 0) {
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.NET_TCP_REDIRECTS,
+				Table.TableID.NET_TCP_REDIRECTS,
 				business,
 				server,
 				false
@@ -345,7 +345,7 @@ final public class NetBindHandler {
 		if(conn.executeUpdate("delete from ftp.\"PrivateServer\" where net_bind=?", id) > 0) {
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.PRIVATE_FTP_SERVERS,
+				Table.TableID.PRIVATE_FTP_SERVERS,
 				business,
 				server,
 				false
@@ -355,14 +355,14 @@ final public class NetBindHandler {
 		conn.executeUpdate("delete from net.\"Bind\" where id=?", id);
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.NET_BINDS,
+			Table.TableID.NET_BINDS,
 			business,
 			server,
 			false
 		);
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+			Table.TableID.NET_BIND_FIREWALLD_ZONES,
 			business,
 			server,
 			false
@@ -438,14 +438,14 @@ final public class NetBindHandler {
 			AccountingCode business = getBusinessForNetBind(conn, id);
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.NET_BINDS,
+				Table.TableID.NET_BINDS,
 				business,
 				server,
 				false
 			);
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+				Table.TableID.NET_BIND_FIREWALLD_ZONES,
 				business,
 				server,
 				false
@@ -466,7 +466,7 @@ final public class NetBindHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.NET_BINDS,
+			Table.TableID.NET_BINDS,
 			getBusinessForNetBind(conn, id),
 			getServerForNetBind(conn, id),
 			false
@@ -484,8 +484,8 @@ final public class NetBindHandler {
 		int id,
 		boolean open_firewall
 	) throws IOException, SQLException {
-		AOServProtocol.Version clientVersion = source.getProtocolVersion();
-		if(clientVersion.compareTo(AOServProtocol.Version.VERSION_1_80_2) > 0) {
+		AoservProtocol.Version clientVersion = source.getProtocolVersion();
+		if(clientVersion.compareTo(AoservProtocol.Version.VERSION_1_80_2) > 0) {
 			throw new IOException("This compatibility method only remains for clients version <= 1.80.2: Client is version " + clientVersion);
 		}
 
@@ -494,7 +494,7 @@ final public class NetBindHandler {
 		int server = getServerForNetBind(conn, id);
 		if(open_firewall) {
 			// Add the public zone if missing
-			int fz = conn.executeIntQuery("select id from net.\"FirewallZone\" where server=? and \"name\"=?", server, FirewalldZone.PUBLIC);
+			int fz = conn.executeIntQuery("select id from net.\"FirewallZone\" where server=? and \"name\"=?", server, FirewallZone.PUBLIC);
 			boolean updated;
 			synchronized(netBindLock) {
 				if(
@@ -510,14 +510,14 @@ final public class NetBindHandler {
 				AccountingCode business = getBusinessForNetBind(conn, id);
 				invalidateList.addTable(
 					conn,
-					SchemaTable.TableID.NET_BINDS,
+					Table.TableID.NET_BINDS,
 					business,
 					server,
 					false
 				);
 				invalidateList.addTable(
 					conn,
-					SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+					Table.TableID.NET_BIND_FIREWALLD_ZONES,
 					business,
 					server,
 					false
@@ -530,20 +530,20 @@ final public class NetBindHandler {
 					"delete from net.\"BindFirewallZone\" where net_bind=? and firewalld_zone=(select id from net.\"FirewallZone\" where server=? and \"name\"=?)",
 					id,
 					server,
-					FirewalldZone.PUBLIC
+					FirewallZone.PUBLIC
 				) != 0
 			) {
 				AccountingCode business = getBusinessForNetBind(conn, id);
 				invalidateList.addTable(
 					conn,
-					SchemaTable.TableID.NET_BINDS,
+					Table.TableID.NET_BINDS,
 					business,
 					server,
 					false
 				);
 				invalidateList.addTable(
 					conn,
-					SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES,
+					Table.TableID.NET_BIND_FIREWALLD_ZONES,
 					business,
 					server,
 					false

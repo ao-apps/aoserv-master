@@ -5,7 +5,7 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.reseller.TicketCategory;
+import com.aoindustries.aoserv.client.reseller.Category;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Handler;
@@ -40,7 +40,7 @@ public class LogFactory {
 	public static Logger getLogger(String name) {
 		Logger logger = loggers.get(name);
 		if(logger==null) {
-			Handler handler = TicketLoggingHandler.getHandler("AOServ Master", TicketCategory.AOSERV_MASTER_PKEY);
+			Handler handler = TicketLoggingHandler.getHandler("AOServ Master", Category.AOSERV_MASTER_PKEY);
 			logger = Logger.getLogger(name);
 			synchronized(logger) {
 				boolean foundHandler = false;

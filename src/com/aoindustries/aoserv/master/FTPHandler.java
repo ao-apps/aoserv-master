@@ -5,9 +5,9 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.linux.LinuxAccount;
-import com.aoindustries.aoserv.client.linux.LinuxAccountType;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.linux.User;
+import com.aoindustries.aoserv.client.linux.UserType;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
@@ -27,23 +27,23 @@ final public class FTPHandler {
 		UserId username
 	) throws IOException, SQLException {
 		LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "addFTPGuestUser", username);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add FTP guest user for mail");
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to add FTP guest user for mail");
 
-		if(LinuxAccountHandler.isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to add FTPGuestUser, LinuxAccount disabled: "+username);
+		if(LinuxAccountHandler.isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to add GuestUser, User disabled: "+username);
 
 		// FTP Guest Users may only be added to user and ftponly accounts
 		String type=LinuxAccountHandler.getTypeForLinuxAccount(conn, username);
 		if(
-			!LinuxAccountType.USER.equals(type)
-			&& !LinuxAccountType.FTPONLY.equals(type)
-		) throw new SQLException("Only Linux Accounts of type '"+LinuxAccountType.USER+"' or '"+LinuxAccountType.FTPONLY+"' may be flagged as a FTP Guest User: "+type);
+			!UserType.USER.equals(type)
+			&& !UserType.FTPONLY.equals(type)
+		) throw new SQLException("Only Linux Accounts of type '"+UserType.USER+"' or '"+UserType.FTPONLY+"' may be flagged as a FTP Guest User: "+type);
 
 		conn.executeUpdate("insert into ftp.\"GuestUser\" values(?)", username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.FTP_GUEST_USERS,
+			Table.TableID.FTP_GUEST_USERS,
 			UsernameHandler.getBusinessForUsername(conn, username),
 			LinuxAccountHandler.getAOServersForLinuxAccount(conn, username),
 			false
@@ -57,14 +57,14 @@ final public class FTPHandler {
 		UserId username
 	) throws IOException, SQLException {
 		LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "removeFTPGuestUser", username);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove FTPGuestUser for user '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to remove GuestUser for user '"+User.MAIL+'\'');
 
 		conn.executeUpdate("delete from ftp.\"GuestUser\" where username=?", username);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.FTP_GUEST_USERS,
+			Table.TableID.FTP_GUEST_USERS,
 			UsernameHandler.getBusinessForUsername(conn, username),
 			LinuxAccountHandler.getAOServersForLinuxAccount(conn, username),
 			false
@@ -81,7 +81,7 @@ final public class FTPHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.PRIVATE_FTP_SERVERS,
+			Table.TableID.PRIVATE_FTP_SERVERS,
 			NetBindHandler.getBusinessForNetBind(conn, net_bind),
 			NetBindHandler.getServerForNetBind(conn, net_bind),
 			false

@@ -5,9 +5,9 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.account.Business;
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.backup.BackupReport;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.GroupId;
 import com.aoindustries.aoserv.client.validator.MySQLUserId;
@@ -176,7 +176,7 @@ final public class AccountCleaner implements CronJob {
                                 + "  )",
                                 now
                             );
-                            invalidateList.addTable(conn, SchemaTable.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                            invalidateList.addTable(conn, Table.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
                         }
 
                         // Those that are older than BackupReport.SendmailSmtpStat.MAX_REPORT_AGE
@@ -202,7 +202,7 @@ final public class AccountCleaner implements CronJob {
                                 + "  (?::date-date)>"+BackupReport.MAX_REPORT_AGE, // Convert to interval?
                                 now
                             );
-                            invalidateList.addTable(conn, SchemaTable.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                            invalidateList.addTable(conn, Table.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
                         }
                     }
 
@@ -645,7 +645,7 @@ final public class AccountCleaner implements CronJob {
 						try {
 							LinuxAccountHandler.removeLinuxAccount(conn, invalidateList, la);
 						} catch (SQLException err) {
-							System.err.println("SQLException trying to remove LinuxAccount: " + la);
+							System.err.println("SQLException trying to remove User: " + la);
 							throw err;
 						}
 					}
@@ -672,7 +672,7 @@ final public class AccountCleaner implements CronJob {
 						try {
 							LinuxAccountHandler.removeLinuxGroup(conn, invalidateList, lg);
 						} catch (SQLException err) {
-							System.err.println("SQLException trying to remove LinuxGroup: " + lg);
+							System.err.println("SQLException trying to remove Group: " + lg);
 							throw err;
 						}
 					}
@@ -833,7 +833,7 @@ final public class AccountCleaner implements CronJob {
                 // account.AccountHost
                 // delete all account.AccountHost for canceled account.Account
                 {
-                    for(int depth = Business.MAXIMUM_BUSINESS_TREE_DEPTH; depth>=1; depth--) {
+                    for(int depth = Account.MAXIMUM_BUSINESS_TREE_DEPTH; depth>=1; depth--) {
                         // non-default
                         IntList bss=conn.executeIntListQuery(
                             "select\n"
@@ -903,7 +903,7 @@ final public class AccountCleaner implements CronJob {
         try {
             InvalidateList invalidateList = new InvalidateList();
             cleanNow(invalidateList);
-            for(SchemaTable.TableID tableId : SchemaTable.TableID.values()) {
+            for(Table.TableID tableId : Table.TableID.values()) {
                 List<Integer> affectedServers = invalidateList.getAffectedServers(tableId);
                 if(affectedServers!=null) {
                     if(affectedServers==InvalidateList.allServers) {

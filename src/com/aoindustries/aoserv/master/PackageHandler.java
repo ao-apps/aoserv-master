@@ -7,8 +7,8 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.billing.Package;
 import com.aoindustries.aoserv.client.billing.Resource;
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseAccess;
@@ -129,14 +129,14 @@ final public class PackageHandler {
         int packageDefinition
     ) throws IOException, SQLException {
         BusinessHandler.checkAccessBusiness(conn, source, "addPackage", accounting);
-        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add Package '"+packageName+"', Business disabled: "+accounting);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add Package '"+packageName+"', Account disabled: "+accounting);
 
         // Check the PackageDefinition rules
         checkAccessPackageDefinition(conn, source, "addPackage", packageDefinition);
         // Businesses parent must be the package definition owner
         AccountingCode parent=BusinessHandler.getParentBusiness(conn, accounting);
         AccountingCode packageDefinitionBusiness = getBusinessForPackageDefinition(conn, packageDefinition);
-        if(!packageDefinitionBusiness.equals(parent)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition #"+packageDefinition+" not owned by parent Business");
+        if(!packageDefinitionBusiness.equals(parent)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition #"+packageDefinition+" not owned by parent Account");
         if(!isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not approved: "+packageDefinition);
         //if(!isPackageDefinitionActive(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not active: "+packageDefinition);
 
@@ -171,7 +171,7 @@ final public class PackageHandler {
 		);
 
         // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.PACKAGES, accounting, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.PACKAGES, accounting, InvalidateList.allServers, false);
 
         return packageId;
     }
@@ -195,7 +195,7 @@ final public class PackageHandler {
         String monthlyRateTransactionType
     ) throws IOException, SQLException {
         BusinessHandler.checkAccessBusiness(conn, source, "addPackageDefinition", accounting);
-        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add PackageDefinition, Business disabled: "+accounting);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add PackageDefinition, Account disabled: "+accounting);
 
         int packageDefinition = conn.executeIntUpdate(
             "INSERT INTO\n"
@@ -230,7 +230,7 @@ final public class PackageHandler {
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.PACKAGE_DEFINITIONS,
+            Table.TableID.PACKAGE_DEFINITIONS,
             accounting,
             BusinessHandler.getServersForBusiness(conn, accounting),
             false
@@ -250,7 +250,7 @@ final public class PackageHandler {
     ) throws IOException, SQLException {
         checkAccessPackageDefinition(conn, source, "copyPackageDefinition", packageDefinition);
         AccountingCode accounting = getBusinessForPackageDefinition(conn, packageDefinition);
-        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to copy PackageDefinition, Business disabled: "+accounting);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to copy PackageDefinition, Account disabled: "+accounting);
         String category=conn.executeStringQuery("select category from billing.\"PackageDefinition\" where id=?", packageDefinition);
         String name=conn.executeStringQuery("select name from billing.\"PackageDefinition\" where id=?", packageDefinition);
         String version=conn.executeStringQuery("select version from billing.\"PackageDefinition\" where id=?", packageDefinition);
@@ -332,14 +332,14 @@ final public class PackageHandler {
         IntList servers=BusinessHandler.getServersForBusiness(conn, accounting);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.PACKAGE_DEFINITIONS,
+            Table.TableID.PACKAGE_DEFINITIONS,
             accounting,
             servers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
+            Table.TableID.PACKAGE_DEFINITION_LIMITS,
             accounting,
             servers,
             false
@@ -408,7 +408,7 @@ final public class PackageHandler {
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.PACKAGE_DEFINITIONS,
+            Table.TableID.PACKAGE_DEFINITIONS,
             accounting,
             BusinessHandler.getServersForBusiness(conn, accounting),
             false
@@ -429,14 +429,14 @@ final public class PackageHandler {
         for(int c=0;c<hsts.size();c++) {
             int hst=hsts.getInt(c);
             if(!HttpdHandler.isHttpdSharedTomcatDisabled(conn, hst)) {
-                throw new SQLException("Cannot disable Package '"+name+"': HttpdSharedTomcat not disabled: "+hst);
+                throw new SQLException("Cannot disable Package '"+name+"': SharedTomcat not disabled: "+hst);
             }
         }
         IntList eps=EmailHandler.getEmailPipesForPackage(conn, name);
         for(int c=0;c<eps.size();c++) {
             int ep=eps.getInt(c);
             if(!EmailHandler.isEmailPipeDisabled(conn, ep)) {
-                throw new SQLException("Cannot disable Package '"+name+"': EmailPipe not disabled: "+ep);
+                throw new SQLException("Cannot disable Package '"+name+"': Pipe not disabled: "+ep);
             }
         }
         List<UserId> uns=UsernameHandler.getUsernamesForPackage(conn, name);
@@ -449,21 +449,21 @@ final public class PackageHandler {
         for(int c=0;c<hss.size();c++) {
             int hs=hss.getInt(c);
             if(!HttpdHandler.isHttpdSiteDisabled(conn, hs)) {
-                throw new SQLException("Cannot disable Package '"+name+"': HttpdSite not disabled: "+hs);
+                throw new SQLException("Cannot disable Package '"+name+"': Site not disabled: "+hs);
             }
         }
         IntList els=EmailHandler.getEmailListsForPackage(conn, name);
         for(int c=0;c<els.size();c++) {
             int el=els.getInt(c);
             if(!EmailHandler.isEmailListDisabled(conn, el)) {
-                throw new SQLException("Cannot disable Package '"+name+"': EmailList not disabled: "+el);
+                throw new SQLException("Cannot disable Package '"+name+"': List not disabled: "+el);
             }
         }
         IntList ssrs=EmailHandler.getEmailSmtpRelaysForPackage(conn, name);
         for(int c=0;c<ssrs.size();c++) {
             int ssr=ssrs.getInt(c);
             if(!EmailHandler.isEmailSmtpRelayDisabled(conn, ssr)) {
-                throw new SQLException("Cannot disable Package '"+name+"': EmailSmtpRelay not disabled: "+ssr);
+                throw new SQLException("Cannot disable Package '"+name+"': SmtpRelay not disabled: "+ssr);
             }
         }
 
@@ -477,7 +477,7 @@ final public class PackageHandler {
         AccountingCode accounting = getBusinessForPackage(conn, name);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.PACKAGES,
+            Table.TableID.PACKAGES,
             accounting,
             BusinessHandler.getServersForBusiness(conn, accounting),
             false
@@ -495,7 +495,7 @@ final public class PackageHandler {
         BusinessHandler.checkAccessDisableLog(conn, source, "enablePackage", disableLog, true);
         checkAccessPackage(conn, source, "enablePackage", name);
         AccountingCode accounting = getBusinessForPackage(conn, name);
-        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to enable Package '"+name+"', Business not enabled: "+accounting);
+        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to enable Package '"+name+"', Account not enabled: "+accounting);
 
         conn.executeUpdate(
             "update billing.\"Package\" set disable_log=null where name=?",
@@ -505,7 +505,7 @@ final public class PackageHandler {
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.PACKAGES,
+            Table.TableID.PACKAGES,
             accounting,
             BusinessHandler.getServersForBusiness(conn, accounting),
             false
@@ -545,8 +545,8 @@ final public class PackageHandler {
         RequestSource source
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
-        MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-        com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
+        User masterUser=MasterServer.getUser(conn, username);
+        com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
         if(masterUser!=null) {
             if(masterServers.length==0) return conn.executeStringListQuery("select name from billing.\"Package\"");
             else return conn.executeStringListQuery(
@@ -588,8 +588,8 @@ final public class PackageHandler {
         RequestSource source
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
-        MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-        com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
+        User masterUser=MasterServer.getUser(conn, username);
+        com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
         if(masterUser!=null) {
             if(masterServers.length==0) return conn.executeIntListQuery("select id from billing.\"Package\"");
             else return conn.executeIntListQuery(
@@ -626,8 +626,8 @@ final public class PackageHandler {
         );
     }
 
-    public static void invalidateTable(SchemaTable.TableID tableID) {
-        if(tableID==SchemaTable.TableID.PACKAGES) {
+    public static void invalidateTable(Table.TableID tableID) {
+        if(tableID==Table.TableID.PACKAGES) {
             synchronized(PackageHandler.class) {
                 disabledPackages.clear();
             }
@@ -799,14 +799,14 @@ final public class PackageHandler {
 
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.PACKAGE_DEFINITIONS,
+            Table.TableID.PACKAGE_DEFINITIONS,
             getBusinessForPackageDefinition(conn, packageDefinition),
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.PACKAGE_DEFINITIONS,
+            Table.TableID.PACKAGE_DEFINITIONS,
             getBusinessesForPackageDefinition(conn, packageDefinition),
             InvalidateList.allServers,
             false
@@ -860,14 +860,14 @@ final public class PackageHandler {
 
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
+            Table.TableID.PACKAGE_DEFINITION_LIMITS,
             getBusinessForPackageDefinition(conn, packageDefinition),
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
+            Table.TableID.PACKAGE_DEFINITION_LIMITS,
             getBusinessesForPackageDefinition(conn, packageDefinition),
             InvalidateList.allServers,
             false
@@ -897,7 +897,7 @@ final public class PackageHandler {
         if(conn.executeUpdate("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", id)>0) {
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS,
+                Table.TableID.PACKAGE_DEFINITION_LIMITS,
                 accounting,
                 servers,
                 false
@@ -907,7 +907,7 @@ final public class PackageHandler {
         conn.executeUpdate("delete from billing.\"PackageDefinition\" where id=?", id);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.PACKAGE_DEFINITIONS,
+            Table.TableID.PACKAGE_DEFINITIONS,
             accounting,
             servers,
             false

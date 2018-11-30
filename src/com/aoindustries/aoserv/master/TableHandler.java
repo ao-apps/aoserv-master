@@ -6,27 +6,27 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOServWritable;
-import com.aoindustries.aoserv.client.account.Business;
-import com.aoindustries.aoserv.client.account.BusinessAdministrator;
-import com.aoindustries.aoserv.client.account.BusinessProfile;
-import com.aoindustries.aoserv.client.account.BusinessServer;
+import com.aoindustries.aoserv.client.account.Account;
+import com.aoindustries.aoserv.client.account.AccountHost;
+import com.aoindustries.aoserv.client.account.Administrator;
 import com.aoindustries.aoserv.client.account.DisableLog;
-import com.aoindustries.aoserv.client.account.USState;
+import com.aoindustries.aoserv.client.account.Profile;
+import com.aoindustries.aoserv.client.account.UsState;
 import com.aoindustries.aoserv.client.account.Username;
 import com.aoindustries.aoserv.client.accounting.Bank;
 import com.aoindustries.aoserv.client.accounting.BankAccount;
 import com.aoindustries.aoserv.client.accounting.BankTransaction;
 import com.aoindustries.aoserv.client.accounting.BankTransactionType;
 import com.aoindustries.aoserv.client.accounting.ExpenseCategory;
-import com.aoindustries.aoserv.client.aosh.AOSHCommand;
+import com.aoindustries.aoserv.client.aosh.Command;
 import com.aoindustries.aoserv.client.backup.BackupPartition;
 import com.aoindustries.aoserv.client.backup.BackupReport;
 import com.aoindustries.aoserv.client.backup.BackupRetention;
-import com.aoindustries.aoserv.client.backup.FailoverFileLog;
-import com.aoindustries.aoserv.client.backup.FailoverFileReplication;
-import com.aoindustries.aoserv.client.backup.FailoverFileSchedule;
-import com.aoindustries.aoserv.client.backup.FailoverMySQLReplication;
-import com.aoindustries.aoserv.client.backup.FileBackupSetting;
+import com.aoindustries.aoserv.client.backup.FileReplication;
+import com.aoindustries.aoserv.client.backup.FileReplicationLog;
+import com.aoindustries.aoserv.client.backup.FileReplicationSchedule;
+import com.aoindustries.aoserv.client.backup.FileReplicationSetting;
+import com.aoindustries.aoserv.client.backup.MysqlReplication;
 import com.aoindustries.aoserv.client.billing.MonthlyCharge;
 import com.aoindustries.aoserv.client.billing.NoticeLog;
 import com.aoindustries.aoserv.client.billing.NoticeType;
@@ -41,146 +41,129 @@ import com.aoindustries.aoserv.client.billing.WhoisHistory;
 import com.aoindustries.aoserv.client.distribution.Architecture;
 import com.aoindustries.aoserv.client.distribution.OperatingSystem;
 import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
-import com.aoindustries.aoserv.client.distribution.Technology;
-import com.aoindustries.aoserv.client.distribution.TechnologyClass;
-import com.aoindustries.aoserv.client.distribution.TechnologyName;
-import com.aoindustries.aoserv.client.distribution.TechnologyVersion;
+import com.aoindustries.aoserv.client.distribution.Software;
+import com.aoindustries.aoserv.client.distribution.SoftwareCategorization;
+import com.aoindustries.aoserv.client.distribution.SoftwareCategory;
+import com.aoindustries.aoserv.client.distribution.SoftwareVersion;
 import com.aoindustries.aoserv.client.distribution.management.DistroFile;
 import com.aoindustries.aoserv.client.distribution.management.DistroFileType;
 import com.aoindustries.aoserv.client.distribution.management.DistroReportType;
-import com.aoindustries.aoserv.client.dns.DNSForbiddenZone;
-import com.aoindustries.aoserv.client.dns.DNSRecord;
-import com.aoindustries.aoserv.client.dns.DNSTLD;
-import com.aoindustries.aoserv.client.dns.DNSType;
-import com.aoindustries.aoserv.client.dns.DNSZone;
-import com.aoindustries.aoserv.client.email.BlackholeEmailAddress;
+import com.aoindustries.aoserv.client.dns.ForbiddenZone;
+import com.aoindustries.aoserv.client.dns.Record;
+import com.aoindustries.aoserv.client.dns.RecordType;
+import com.aoindustries.aoserv.client.dns.TopLevelDomain;
+import com.aoindustries.aoserv.client.dns.Zone;
+import com.aoindustries.aoserv.client.email.Address;
+import com.aoindustries.aoserv.client.email.AttachmentBlock;
+import com.aoindustries.aoserv.client.email.AttachmentType;
+import com.aoindustries.aoserv.client.email.BlackholeAddress;
 import com.aoindustries.aoserv.client.email.CyrusImapdBind;
 import com.aoindustries.aoserv.client.email.CyrusImapdServer;
-import com.aoindustries.aoserv.client.email.EmailAddress;
-import com.aoindustries.aoserv.client.email.EmailAttachmentBlock;
-import com.aoindustries.aoserv.client.email.EmailAttachmentType;
-import com.aoindustries.aoserv.client.email.EmailDomain;
-import com.aoindustries.aoserv.client.email.EmailForwarding;
-import com.aoindustries.aoserv.client.email.EmailList;
-import com.aoindustries.aoserv.client.email.EmailListAddress;
-import com.aoindustries.aoserv.client.email.EmailPipe;
-import com.aoindustries.aoserv.client.email.EmailPipeAddress;
-import com.aoindustries.aoserv.client.email.EmailSmtpRelay;
-import com.aoindustries.aoserv.client.email.EmailSmtpRelayType;
-import com.aoindustries.aoserv.client.email.EmailSmtpSmartHost;
-import com.aoindustries.aoserv.client.email.EmailSmtpSmartHostDomain;
-import com.aoindustries.aoserv.client.email.EmailSpamAssassinIntegrationMode;
-import com.aoindustries.aoserv.client.email.LinuxAccAddress;
+import com.aoindustries.aoserv.client.email.Domain;
+import com.aoindustries.aoserv.client.email.Forwarding;
+import com.aoindustries.aoserv.client.email.InboxAddress;
+import com.aoindustries.aoserv.client.email.ListAddress;
 import com.aoindustries.aoserv.client.email.MajordomoList;
 import com.aoindustries.aoserv.client.email.MajordomoServer;
 import com.aoindustries.aoserv.client.email.MajordomoVersion;
+import com.aoindustries.aoserv.client.email.Pipe;
+import com.aoindustries.aoserv.client.email.PipeAddress;
 import com.aoindustries.aoserv.client.email.SendmailBind;
 import com.aoindustries.aoserv.client.email.SendmailServer;
-import com.aoindustries.aoserv.client.email.SpamEmailMessage;
-import com.aoindustries.aoserv.client.email.SystemEmailAlias;
-import com.aoindustries.aoserv.client.ftp.FTPGuestUser;
-import com.aoindustries.aoserv.client.ftp.PrivateFTPServer;
+import com.aoindustries.aoserv.client.email.SmtpRelay;
+import com.aoindustries.aoserv.client.email.SmtpRelayType;
+import com.aoindustries.aoserv.client.email.SmtpSmartHost;
+import com.aoindustries.aoserv.client.email.SmtpSmartHostDomain;
+import com.aoindustries.aoserv.client.email.SpamAssassinMode;
+import com.aoindustries.aoserv.client.email.SpamMessage;
+import com.aoindustries.aoserv.client.email.SystemAlias;
+import com.aoindustries.aoserv.client.ftp.GuestUser;
+import com.aoindustries.aoserv.client.ftp.PrivateServer;
 import com.aoindustries.aoserv.client.infrastructure.PhysicalServer;
 import com.aoindustries.aoserv.client.infrastructure.ProcessorType;
 import com.aoindustries.aoserv.client.infrastructure.Rack;
 import com.aoindustries.aoserv.client.infrastructure.ServerFarm;
 import com.aoindustries.aoserv.client.infrastructure.VirtualDisk;
 import com.aoindustries.aoserv.client.infrastructure.VirtualServer;
-import com.aoindustries.aoserv.client.linux.AOServer;
-import com.aoindustries.aoserv.client.linux.AOServerDaemonHost;
-import com.aoindustries.aoserv.client.linux.LinuxAccount;
-import com.aoindustries.aoserv.client.linux.LinuxAccountType;
-import com.aoindustries.aoserv.client.linux.LinuxGroup;
-import com.aoindustries.aoserv.client.linux.LinuxGroupAccount;
-import com.aoindustries.aoserv.client.linux.LinuxGroupType;
-import com.aoindustries.aoserv.client.linux.LinuxServerAccount;
-import com.aoindustries.aoserv.client.linux.LinuxServerGroup;
+import com.aoindustries.aoserv.client.linux.DaemonAcl;
+import com.aoindustries.aoserv.client.linux.Group;
+import com.aoindustries.aoserv.client.linux.GroupServer;
+import com.aoindustries.aoserv.client.linux.GroupType;
+import com.aoindustries.aoserv.client.linux.GroupUser;
+import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.linux.Shell;
 import com.aoindustries.aoserv.client.linux.TimeZone;
-import com.aoindustries.aoserv.client.master.AOServPermission;
-import com.aoindustries.aoserv.client.master.BusinessAdministratorPermission;
-import com.aoindustries.aoserv.client.master.MasterHost;
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.mysql.MySQLDBUser;
-import com.aoindustries.aoserv.client.mysql.MySQLDatabase;
-import com.aoindustries.aoserv.client.mysql.MySQLServer;
-import com.aoindustries.aoserv.client.mysql.MySQLServerUser;
-import com.aoindustries.aoserv.client.mysql.MySQLUser;
-import com.aoindustries.aoserv.client.net.FirewalldZone;
-import com.aoindustries.aoserv.client.net.IPAddress;
-import com.aoindustries.aoserv.client.net.NetBind;
-import com.aoindustries.aoserv.client.net.NetBindFirewalldZone;
-import com.aoindustries.aoserv.client.net.NetDevice;
-import com.aoindustries.aoserv.client.net.NetDeviceID;
-import com.aoindustries.aoserv.client.net.NetTcpRedirect;
-import com.aoindustries.aoserv.client.net.Protocol;
-import com.aoindustries.aoserv.client.net.Server;
+import com.aoindustries.aoserv.client.linux.UserServer;
+import com.aoindustries.aoserv.client.linux.UserType;
+import com.aoindustries.aoserv.client.master.AdministratorPermission;
+import com.aoindustries.aoserv.client.master.Permission;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.master.UserAcl;
+import com.aoindustries.aoserv.client.mysql.Database;
+import com.aoindustries.aoserv.client.mysql.DatabaseUser;
+import com.aoindustries.aoserv.client.net.AppProtocol;
+import com.aoindustries.aoserv.client.net.Bind;
+import com.aoindustries.aoserv.client.net.BindFirewallZone;
+import com.aoindustries.aoserv.client.net.Device;
+import com.aoindustries.aoserv.client.net.DeviceId;
+import com.aoindustries.aoserv.client.net.FirewallZone;
+import com.aoindustries.aoserv.client.net.Host;
+import com.aoindustries.aoserv.client.net.IpAddress;
+import com.aoindustries.aoserv.client.net.TcpRedirect;
 import com.aoindustries.aoserv.client.net.monitoring.IpAddressMonitoring;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationLimiter;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationLimiterLimit;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationLimiterSet;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationSet;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationSetHost;
-import com.aoindustries.aoserv.client.net.reputation.IpReputationSetNetwork;
+import com.aoindustries.aoserv.client.net.reputation.Limiter;
+import com.aoindustries.aoserv.client.net.reputation.LimiterClass;
+import com.aoindustries.aoserv.client.net.reputation.Network;
+import com.aoindustries.aoserv.client.net.reputation.Set;
 import com.aoindustries.aoserv.client.payment.CountryCode;
 import com.aoindustries.aoserv.client.payment.CreditCard;
-import com.aoindustries.aoserv.client.payment.CreditCardProcessor;
-import com.aoindustries.aoserv.client.payment.CreditCardTransaction;
+import com.aoindustries.aoserv.client.payment.Payment;
 import com.aoindustries.aoserv.client.payment.PaymentType;
+import com.aoindustries.aoserv.client.payment.Processor;
+import com.aoindustries.aoserv.client.pki.Certificate;
+import com.aoindustries.aoserv.client.pki.CertificateName;
+import com.aoindustries.aoserv.client.pki.CertificateOtherUse;
 import com.aoindustries.aoserv.client.pki.EncryptionKey;
-import com.aoindustries.aoserv.client.pki.SslCertificate;
-import com.aoindustries.aoserv.client.pki.SslCertificateName;
-import com.aoindustries.aoserv.client.pki.SslCertificateOtherUse;
-import com.aoindustries.aoserv.client.postgresql.PostgresDatabase;
-import com.aoindustries.aoserv.client.postgresql.PostgresEncoding;
-import com.aoindustries.aoserv.client.postgresql.PostgresServer;
-import com.aoindustries.aoserv.client.postgresql.PostgresServerUser;
-import com.aoindustries.aoserv.client.postgresql.PostgresUser;
-import com.aoindustries.aoserv.client.postgresql.PostgresVersion;
+import com.aoindustries.aoserv.client.postgresql.Encoding;
+import com.aoindustries.aoserv.client.postgresql.Version;
 import com.aoindustries.aoserv.client.reseller.Brand;
+import com.aoindustries.aoserv.client.reseller.BrandCategory;
+import com.aoindustries.aoserv.client.reseller.Category;
 import com.aoindustries.aoserv.client.reseller.Reseller;
-import com.aoindustries.aoserv.client.reseller.TicketBrandCategory;
-import com.aoindustries.aoserv.client.reseller.TicketCategory;
-import com.aoindustries.aoserv.client.schema.AOServProtocol;
-import com.aoindustries.aoserv.client.schema.SchemaColumn;
-import com.aoindustries.aoserv.client.schema.SchemaForeignKey;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
-import com.aoindustries.aoserv.client.schema.SchemaType;
+import com.aoindustries.aoserv.client.schema.AoservProtocol;
+import com.aoindustries.aoserv.client.schema.Column;
+import com.aoindustries.aoserv.client.schema.ForeignKey;
+import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.client.schema.Type;
 import com.aoindustries.aoserv.client.scm.CvsRepository;
-import com.aoindustries.aoserv.client.signup.SignupRequest;
-import com.aoindustries.aoserv.client.signup.SignupRequestOption;
+import com.aoindustries.aoserv.client.signup.Option;
+import com.aoindustries.aoserv.client.signup.Request;
+import com.aoindustries.aoserv.client.ticket.Action;
+import com.aoindustries.aoserv.client.ticket.ActionType;
+import com.aoindustries.aoserv.client.ticket.Assignment;
 import com.aoindustries.aoserv.client.ticket.Language;
+import com.aoindustries.aoserv.client.ticket.Priority;
+import com.aoindustries.aoserv.client.ticket.Status;
 import com.aoindustries.aoserv.client.ticket.Ticket;
-import com.aoindustries.aoserv.client.ticket.TicketAction;
-import com.aoindustries.aoserv.client.ticket.TicketActionType;
-import com.aoindustries.aoserv.client.ticket.TicketAssignment;
-import com.aoindustries.aoserv.client.ticket.TicketPriority;
-import com.aoindustries.aoserv.client.ticket.TicketStatus;
 import com.aoindustries.aoserv.client.ticket.TicketType;
 import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.client.web.Header;
 import com.aoindustries.aoserv.client.web.HttpdBind;
 import com.aoindustries.aoserv.client.web.HttpdServer;
-import com.aoindustries.aoserv.client.web.HttpdSite;
-import com.aoindustries.aoserv.client.web.HttpdSiteAuthenticatedLocation;
-import com.aoindustries.aoserv.client.web.HttpdSiteBind;
-import com.aoindustries.aoserv.client.web.HttpdSiteBindHeader;
-import com.aoindustries.aoserv.client.web.HttpdSiteBindRedirect;
-import com.aoindustries.aoserv.client.web.HttpdSiteURL;
-import com.aoindustries.aoserv.client.web.HttpdStaticSite;
-import com.aoindustries.aoserv.client.web.jboss.HttpdJBossSite;
-import com.aoindustries.aoserv.client.web.jboss.HttpdJBossVersion;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdJKCode;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdJKProtocol;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdSharedTomcat;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatContext;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatDataSource;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatParameter;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatSharedSite;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatSite;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatSiteJkMount;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatStdSite;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdTomcatVersion;
-import com.aoindustries.aoserv.client.web.tomcat.HttpdWorker;
+import com.aoindustries.aoserv.client.web.Location;
+import com.aoindustries.aoserv.client.web.Redirect;
+import com.aoindustries.aoserv.client.web.Site;
+import com.aoindustries.aoserv.client.web.StaticSite;
+import com.aoindustries.aoserv.client.web.VirtualHost;
+import com.aoindustries.aoserv.client.web.VirtualHostName;
+import com.aoindustries.aoserv.client.web.tomcat.Context;
+import com.aoindustries.aoserv.client.web.tomcat.ContextDataSource;
+import com.aoindustries.aoserv.client.web.tomcat.ContextParameter;
+import com.aoindustries.aoserv.client.web.tomcat.JkMount;
+import com.aoindustries.aoserv.client.web.tomcat.PrivateTomcatSite;
+import com.aoindustries.aoserv.client.web.tomcat.SharedTomcat;
+import com.aoindustries.aoserv.client.web.tomcat.SharedTomcatSite;
+import com.aoindustries.aoserv.client.web.tomcat.Worker;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataInputStream;
@@ -237,21 +220,21 @@ final public class TableHandler {
 			+ "  left join account.\"Account\" bu3 on bu2.parent=bu3.accounting\n"
 			+ "  left join account.\"Account\" bu4 on bu3.parent=bu4.accounting\n"
 			+ "  left join account.\"Account\" bu5 on bu4.parent=bu5.accounting\n"
-			+ "  left join account.\"Account\" bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting,\n",
+			+ "  left join account.\"Account\" bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting,\n",
 		BU1_PARENTS_JOIN_NO_COMMA=
 			  "  account.\"Account\" bu1\n"
 			+ "  left join account.\"Account\" bu2 on bu1.parent=bu2.accounting\n"
 			+ "  left join account.\"Account\" bu3 on bu2.parent=bu3.accounting\n"
 			+ "  left join account.\"Account\" bu4 on bu3.parent=bu4.accounting\n"
 			+ "  left join account.\"Account\" bu5 on bu4.parent=bu5.accounting\n"
-			+ "  left join account.\"Account\" bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting\n",
+			+ "  left join account.\"Account\" bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting\n",
 		BU2_PARENTS_JOIN=
-			  "      account.\"Account\" bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+"\n"
+			  "      account.\"Account\" bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+"\n"
 			+ "      left join account.\"Account\" bu8 on bu7.parent=bu8.accounting\n"
 			+ "      left join account.\"Account\" bu9 on bu8.parent=bu9.accounting\n"
 			+ "      left join account.\"Account\" bu10 on bu9.parent=bu10.accounting\n"
 			+ "      left join account.\"Account\" bu11 on bu10.parent=bu11.accounting\n"
-			+ "      left join account.\"Account\" bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+" on bu11.parent=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".accounting,\n"
+			+ "      left join account.\"Account\" bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+" on bu11.parent=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".accounting,\n"
 	;
 
 	/**
@@ -265,7 +248,7 @@ final public class TableHandler {
 			+ "    or pk.accounting=bu3.parent\n"
 			+ "    or pk.accounting=bu4.parent\n"
 			+ "    or pk.accounting=bu5.parent\n"
-			+ "    or pk.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
+			+ "    or pk.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
 		PK1_BU1_PARENTS_OR_WHERE=
 			  "    or pk1.accounting=bu1.accounting\n"
 			+ "    or pk1.accounting=bu1.parent\n"
@@ -273,7 +256,7 @@ final public class TableHandler {
 			+ "    or pk1.accounting=bu3.parent\n"
 			+ "    or pk1.accounting=bu4.parent\n"
 			+ "    or pk1.accounting=bu5.parent\n"
-			+ "    or pk1.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
+			+ "    or pk1.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
 		PK1_BU1_PARENTS_WHERE=
 			  "    pk1.accounting=bu1.accounting\n"
 			+ "    or pk1.accounting=bu1.parent\n"
@@ -281,23 +264,23 @@ final public class TableHandler {
 			+ "    or pk1.accounting=bu3.parent\n"
 			+ "    or pk1.accounting=bu4.parent\n"
 			+ "    or pk1.accounting=bu5.parent\n"
-			+ "    or pk1.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
+			+ "    or pk1.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
 		PK3_BU2_PARENTS_OR_WHERE=
-			  "        or pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
-			+ "        or pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
+			  "        or pk3.accounting=bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
+			+ "        or pk3.accounting=bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
 			+ "        or pk3.accounting=bu8.parent\n"
 			+ "        or pk3.accounting=bu9.parent\n"
 			+ "        or pk3.accounting=bu10.parent\n"
 			+ "        or pk3.accounting=bu11.parent\n"
-			+ "        or pk3.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n",
+			+ "        or pk3.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n",
 		PK3_BU2_PARENTS_WHERE=
-			  "        pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
-			+ "        or pk3.accounting=bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
+			  "        pk3.accounting=bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
+			+ "        or pk3.accounting=bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
 			+ "        or pk3.accounting=bu8.parent\n"
 			+ "        or pk3.accounting=bu9.parent\n"
 			+ "        or pk3.accounting=bu10.parent\n"
 			+ "        or pk3.accounting=bu11.parent\n"
-			+ "        or pk3.accounting=bu"+(Business.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n"
+			+ "        or pk3.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n"
 	;
 
 	/**
@@ -308,11 +291,11 @@ final public class TableHandler {
 		RequestSource source,
 		CompressedDataInputStream in,
 		CompressedDataOutputStream out,
-		SchemaTable.TableID tableID
+		Table.TableID tableID
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
-		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-		com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
+		User masterUser=MasterServer.getUser(conn, username);
+		com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
 		switch(tableID) {
 			case BACKUP_REPORTS :
 			{
@@ -397,7 +380,7 @@ final public class TableHandler {
 						+ "  id=?",
 						in.readCompressedInt()
 					);
-				} else out.writeByte(AOServProtocol.DONE);
+				} else out.writeByte(AoservProtocol.DONE);
 				break;
 			case SPAM_EMAIL_MESSAGES :
 				{
@@ -407,7 +390,7 @@ final public class TableHandler {
 							conn,
 							source,
 							out,
-							new SpamEmailMessage(),
+							new SpamMessage(),
 							"select * from email.\"SpamMessage\" where id=?",
 							id
 						);
@@ -428,7 +411,7 @@ final public class TableHandler {
 						transid
 					);
 				} else {
-					out.writeShort(AOServProtocol.DONE);
+					out.writeShort(AoservProtocol.DONE);
 				}
 				break;
 			default :
@@ -445,13 +428,13 @@ final public class TableHandler {
 	private static final int MAX_ROW_COUNT_CACHE_AGE=60*60*1000;
 
 	/** Copy used to avoid multiple array copies on each access. */
-	private static final SchemaTable.TableID[] _tableIDs = SchemaTable.TableID.values();
+	private static final Table.TableID[] _tableIDs = Table.TableID.values();
 	private static final int _numTables = _tableIDs.length;
 
 	public static int getCachedRowCount(
 		DatabaseConnection conn,
 		RequestSource source,
-		SchemaTable.TableID tableID
+		Table.TableID tableID
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
 
@@ -493,17 +476,17 @@ final public class TableHandler {
 	public static int getRowCount(
 		DatabaseConnection conn,
 		RequestSource source,
-		SchemaTable.TableID tableID
+		Table.TableID tableID
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
-		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-		com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, source.getUsername());
+		User masterUser=MasterServer.getUser(conn, username);
+		com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
 		switch(tableID) {
 			case DISTRO_FILES :
 				if(masterUser != null) {
 					assert masterServers != null;
 					if(masterServers.length == 0) {
-						if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_107)<=0) {
+						if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107)<=0) {
 							return 0;
 						} else {
 							return conn.executeIntQuery(
@@ -525,7 +508,7 @@ final public class TableHandler {
 					}
 				} else return 0;
 			case TICKETS :
-				if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_43)<=0) return 0; // For backwards-compatibility only
+				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) return 0; // For backwards-compatibility only
 				throw new IOException("Unknown table ID: "+tableID); // No longer used as of version 1.44
 			default :
 				throw new IOException("Unknown table ID: "+tableID);
@@ -540,11 +523,11 @@ final public class TableHandler {
 		RequestSource source,
 		CompressedDataOutputStream out,
 		boolean provideProgress,
-		final SchemaTable.TableID tableID
+		final Table.TableID tableID
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
-		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-		com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
+		User masterUser=MasterServer.getUser(conn, username);
+		com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
 
 		switch(tableID) {
 			case AO_SERVER_DAEMON_HOSTS :
@@ -555,14 +538,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new AOServerDaemonHost(),
+						new DaemonAcl(),
 						"select * from linux.\"DaemonAcl\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new AOServerDaemonHost(),
+						new DaemonAcl(),
 						"select\n"
 						+ "  sdh.*\n"
 						+ "from\n"
@@ -574,7 +557,7 @@ final public class TableHandler {
 						username
 					);
 				} else {
-					List<AOServerDaemonHost> emptyList = Collections.emptyList();
+					List<DaemonAcl> emptyList = Collections.emptyList();
 					MasterServer.writeObjects(source, out, provideProgress, emptyList);
 				}
 				break;
@@ -586,7 +569,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new AOServer(),
+						new Server(),
 						"select\n"
 						+ "  server,\n"
 						+ "  hostname,\n"
@@ -615,13 +598,13 @@ final public class TableHandler {
 						+ "  \"lastGid\",\n"
 						+ "  sftp_umask\n"
 						+ "from\n"
-						+ "  linux.\"Server\""
+						+ "  linux.\"Host\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new AOServer(),
+						new Server(),
 						"select distinct\n"
 						+ "  ao2.server,\n"
 						+ "  ao2.hostname,\n"
@@ -651,15 +634,15 @@ final public class TableHandler {
 						+ "  ao2.sftp_umask\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
-						+ "  inner join linux.\"Server\" ao on ms.server=ao.server\n"
+						+ "  inner join linux.\"Host\" ao on ms.server=ao.server\n"
 						// Allow its failover parent
-						+ "  left join linux.\"Server\" ff on ao.failover_server=ff.server\n"
+						+ "  left join linux.\"Host\" ff on ao.failover_server=ff.server\n"
 						// Allow its failover children
-						+ "  left join linux.\"Server\" fs on ao.server=fs.failover_server\n"
+						+ "  left join linux.\"Host\" fs on ao.server=fs.failover_server\n"
 						// Allow servers it replicates to
 						+ "  left join backup.\"FileReplication\" ffr on ms.server=ffr.server\n"
 						+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
-						+ "  linux.\"Server\" ao2\n"
+						+ "  linux.\"Host\" ao2\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and (\n"
@@ -679,12 +662,12 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new AOServer(),
+					new Server(),
 					"select distinct\n"
 					+ "  ao.server,\n"
 					+ "  ao.hostname,\n"
 					+ "  ao.daemon_bind,\n"
-					+ "  '"+AOServProtocol.FILTERED+"'::text,\n"
+					+ "  '"+AoservProtocol.FILTERED+"'::text,\n"
 					+ "  ao.pool_size,\n"
 					+ "  ao.distro_hour,\n"
 					+ "  ao.last_distro_time,\n"
@@ -714,7 +697,7 @@ final public class TableHandler {
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
-					+ "  linux.\"Server\" ao\n"
+					+ "  linux.\"Host\" ao\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -733,7 +716,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new AOServPermission(),
+					new Permission(),
 					"select * from master.\"Permission\""
 				);
 				break;
@@ -743,8 +726,8 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new AOServProtocol(),
-					"select * from \"schema\".\"AOServProtocol\""
+					new AoservProtocol(),
+					"select * from \"schema\".\"AoservProtocol\""
 				);
 				break;
 			case AOSH_COMMANDS :
@@ -753,7 +736,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new AOSHCommand(),
+					new Command(),
 					"select\n"
 					+ "  ac.command,\n"
 					+ "  ac.\"sinceVersion\",\n"
@@ -762,10 +745,10 @@ final public class TableHandler {
 					+ "  ac.description,\n"
 					+ "  ac.syntax\n"
 					+ "from\n"
-					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
+					+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
 					+ "                   aosh.\"Command\"              ac\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" since_ap on ac.\"sinceVersion\" = since_ap.version\n"
-					+ "  left  join \"schema\".\"AOServProtocol\"  last_ap on ac.\"lastVersion\"  =  last_ap.version\n"
+					+ "  inner join \"schema\".\"AoservProtocol\" since_ap on ac.\"sinceVersion\" = since_ap.version\n"
+					+ "  left  join \"schema\".\"AoservProtocol\"  last_ap on ac.\"lastVersion\"  =  last_ap.version\n"
 					+ "  left  join \"schema\".\"Table\"                st on ac.\"table\"        =        st.id\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
@@ -1001,14 +984,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new BlackholeEmailAddress(),
+						new BlackholeAddress(),
 						"select * from email.\"BlackholeAddress\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new BlackholeEmailAddress(),
+						new BlackholeAddress(),
 						"select\n"
 						+ "  bh.*\n"
 						+ "from\n"
@@ -1028,7 +1011,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new BlackholeEmailAddress(),
+					new BlackholeAddress(),
 					"select\n"
 					+ "  bh.*\n"
 					+ "from\n"
@@ -1080,10 +1063,10 @@ final public class TableHandler {
 							+ "  br.nameserver4,\n"
 							+ "  br.smtp_linux_server_account,\n"
 							+ "  null::text,\n" // smtp_host
-							+ "  '"+AOServProtocol.FILTERED+"'::text,\n" // smtp_password
+							+ "  '"+AoservProtocol.FILTERED+"'::text,\n" // smtp_password
 							+ "  br.imap_linux_server_account,\n"
 							+ "  null::text,\n" // imap_host
-							+ "  '"+AOServProtocol.FILTERED+"'::text,\n" // imap_password
+							+ "  '"+AoservProtocol.FILTERED+"'::text,\n" // imap_password
 							+ "  br.support_email_address,\n"
 							+ "  br.support_email_display,\n"
 							+ "  br.signup_email_address,\n"
@@ -1110,8 +1093,8 @@ final public class TableHandler {
 							+ "  br.aoweb_struts_google_analytics_new_tracking_code,\n"
 							+ "  br.aoweb_struts_signup_admin_address,\n"
 							+ "  br.aoweb_struts_vnc_bind,\n"
-							+ "  '"+AOServProtocol.FILTERED+"'::text,\n" // aoweb_struts_keystore_type
-							+ "  '"+AOServProtocol.FILTERED+"'::text\n" // aoweb_struts_keystore_password
+							+ "  '"+AoservProtocol.FILTERED+"'::text,\n" // aoweb_struts_keystore_type
+							+ "  '"+AoservProtocol.FILTERED+"'::text\n" // aoweb_struts_keystore_password
 							+ "from\n"
 							+ "  account.\"Username\" un,\n"
 							+ "  billing.\"Package\" pk,\n"
@@ -1155,14 +1138,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new BusinessAdministrator(),
+						new Administrator(),
 						"select * from account.\"Administrator\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new BusinessAdministrator(),
+						new Administrator(),
 						"select distinct\n"
 						+ "  ba.username,\n"
 						+ "  null::text,\n"
@@ -1206,7 +1189,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new BusinessAdministrator(),
+						new Administrator(),
 						"select\n"
 						+ "  ba.username,\n"
 						+ "  null::text,\n"
@@ -1259,14 +1242,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new BusinessAdministratorPermission(),
+						new AdministratorPermission(),
 						"select * from master.\"AdministratorPermission\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new BusinessAdministratorPermission(),
+						new AdministratorPermission(),
 						"select distinct\n"
 						+ "  bp.*\n"
 						+ "from\n"
@@ -1288,7 +1271,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new BusinessAdministratorPermission(),
+					new AdministratorPermission(),
 					"select\n"
 					+ "  bp.*\n"
 					+ "from\n"
@@ -1319,14 +1302,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new BusinessProfile(),
+						new Profile(),
 						"select * from account.\"Profile\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new BusinessProfile(),
+						new Profile(),
 						"select distinct\n"
 						+ "  bp.*\n"
 						+ "from\n"
@@ -1344,7 +1327,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new BusinessProfile(),
+					new Profile(),
 					"select\n"
 					+ "  bp.*\n"
 					+ "from\n"
@@ -1370,14 +1353,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new BusinessServer(),
+						new AccountHost(),
 						"select * from account.\"AccountHost\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new BusinessServer(),
+						new AccountHost(),
 						"select distinct\n"
 						+ "  bs.*\n"
 						+ "from\n"
@@ -1393,7 +1376,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new BusinessServer(),
+					new AccountHost(),
 					"select\n"
 					+ "  bs.*\n"
 					+ "from\n"
@@ -1419,14 +1402,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new Business(),
+						new Account(),
 						"select * from account.\"Account\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new Business(),
+						new Account(),
 						"select distinct\n"
 						+ "  bu.*\n"
 						+ "from\n"
@@ -1444,7 +1427,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new Business(),
+					new Account(),
 					"select\n"
 					+ "  bu1.*\n"
 					+ "from\n"
@@ -1461,7 +1444,7 @@ final public class TableHandler {
 				);
 				break;
 			case CREDIT_CARD_PROCESSORS :
-				if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_card_processors)) {
+				if(BusinessHandler.hasPermission(conn, source, Permission.Name.get_credit_card_processors)) {
 					if(masterUser != null) {
 						assert masterServers != null;
 						if(masterServers.length == 0) MasterServer.writeObjects(
@@ -1469,10 +1452,10 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new CreditCardProcessor(),
+							new Processor(),
 							"select * from payment.\"Processor\""
 						); else {
-							List<CreditCardProcessor> emptyList = Collections.emptyList();
+							List<Processor> emptyList = Collections.emptyList();
 							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else MasterServer.writeObjects(
@@ -1480,7 +1463,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new CreditCardProcessor(),
+						new Processor(),
 						"select\n"
 						+ "  ccp.*\n"
 						+ "from\n"
@@ -1499,12 +1482,12 @@ final public class TableHandler {
 					);
 				} else {
 					// No permission, return empty list
-					List<CreditCardProcessor> emptyList = Collections.emptyList();
+					List<Processor> emptyList = Collections.emptyList();
 					MasterServer.writeObjects(source, out, provideProgress, emptyList);
 				}
 				break;
 			case CREDIT_CARDS :
-				if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_cards)) {
+				if(BusinessHandler.hasPermission(conn, source, Permission.Name.get_credit_cards)) {
 					if(masterUser != null) {
 						assert masterServers != null;
 						if(masterServers.length == 0) MasterServer.writeObjects(
@@ -1547,7 +1530,7 @@ final public class TableHandler {
 				}
 				break;
 			case CREDIT_CARD_TRANSACTIONS :
-				if(BusinessHandler.hasPermission(conn, source, AOServPermission.Permission.get_credit_card_transactions)) {
+				if(BusinessHandler.hasPermission(conn, source, Permission.Name.get_credit_card_transactions)) {
 					if(masterUser != null) {
 						assert masterServers != null;
 						if(masterServers.length == 0) MasterServer.writeObjects(
@@ -1555,10 +1538,10 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new CreditCardTransaction(),
+							new Payment(),
 							"select * from payment.\"Payment\""
 						); else {
-							List<CreditCardTransaction> emptyList = Collections.emptyList();
+							List<Payment> emptyList = Collections.emptyList();
 							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else MasterServer.writeObjects(
@@ -1566,7 +1549,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new CreditCardTransaction(),
+						new Payment(),
 						"select\n"
 						+ "  cct.*\n"
 						+ "from\n"
@@ -1585,7 +1568,7 @@ final public class TableHandler {
 					);
 				} else {
 					// No permission, return empty list
-					List<CreditCardTransaction> emptyList = Collections.emptyList();
+					List<Payment> emptyList = Collections.emptyList();
 					MasterServer.writeObjects(source, out, provideProgress, emptyList);
 				}
 				break;
@@ -1772,8 +1755,8 @@ final public class TableHandler {
 						+ "  dl.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  linux.\"Server\" ao\n"
-						+ "  left join linux.\"Server\" ff on ao.server=ff.failover_server,\n"
+						+ "  linux.\"Host\" ao\n"
+						+ "  left join linux.\"Host\" ff on ao.server=ff.failover_server,\n"
 						+ "  account.\"AccountHost\" bs,\n"
 						+ "  account.\"DisableLog\" dl\n"
 						+ "where\n"
@@ -1822,8 +1805,8 @@ final public class TableHandler {
 				if(masterUser!=null && masterUser.isActive()) {
 					assert masterServers != null;
 					if(masterServers.length == 0) {
-						if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.DISTRO_FILES));
-						if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_107)<=0) {
+						if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, Table.TableID.DISTRO_FILES));
+						if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107)<=0) {
 							List<DistroFile> emptyList = Collections.emptyList();
 							MasterServer.writeObjects(source, out, false, emptyList);
 						} else {
@@ -1842,7 +1825,7 @@ final public class TableHandler {
 							List<DistroFile> emptyList = Collections.emptyList();
 							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						} else {
-							if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, SchemaTable.TableID.DISTRO_FILES));
+							if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, Table.TableID.DISTRO_FILES));
 							StringBuilder sql=new StringBuilder();
 							sql.append("select * from \"distribution.management\".\"DistroFile\" where operating_system_version in (");
 							for(int c=0;c<osVersions.size();c++) {
@@ -1880,7 +1863,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new DNSForbiddenZone(),
+					new ForbiddenZone(),
 					"select * from dns.\"ForbiddenZone\""
 				);
 				break;
@@ -1892,10 +1875,10 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new DNSRecord(),
+						new Record(),
 						"select * from dns.\"Record\""
 					); else {
-						List<DNSRecord> emptyList = Collections.emptyList();
+						List<Record> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else MasterServer.writeObjects(
@@ -1903,7 +1886,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new DNSRecord(),
+					new Record(),
 					"select\n"
 					+ "  dr.*\n"
 					+ "from\n"
@@ -1931,7 +1914,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new DNSTLD(),
+					new TopLevelDomain(),
 					"select * from dns.\"TopLevelDomain\""
 				);
 				break;
@@ -1941,7 +1924,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new DNSType(),
+					new RecordType(),
 					"select * from dns.\"RecordType\""
 				);
 				break;
@@ -1953,10 +1936,10 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new DNSZone(),
+						new Zone(),
 						"select * from dns.\"Zone\""
 					); else {
-						List<DNSZone> emptyList = Collections.emptyList();
+						List<Zone> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else MasterServer.writeObjects(
@@ -1964,7 +1947,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new DNSZone(),
+					new Zone(),
 					"select\n"
 					+ "  dz.*\n"
 					+ "from\n"
@@ -1992,14 +1975,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new EmailAddress(),
+						new Address(),
 						"select * from email.\"Address\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new EmailAddress(),
+						new Address(),
 						"select\n"
 						+ "  ea.*\n"
 						+ "from\n"
@@ -2017,7 +2000,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailAddress(),
+					new Address(),
 					"select\n"
 					+ "  ea.*\n"
 					+ "from\n"
@@ -2047,14 +2030,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new EmailAttachmentBlock(),
+						new AttachmentBlock(),
 						"select * from email.\"AttachmentBlock\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new EmailAttachmentBlock(),
+						new AttachmentBlock(),
 						"select\n"
 						+ "  eab.*\n"
 						+ "from\n"
@@ -2072,7 +2055,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailAttachmentBlock(),
+					new AttachmentBlock(),
 					"select\n"
 					+ "  eab.*\n"
 					+ "from\n"
@@ -2102,7 +2085,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailAttachmentType(),
+					new AttachmentType(),
 					"select * from email.\"AttachmentType\""
 				);
 				break;
@@ -2114,14 +2097,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new EmailForwarding(),
+						new Forwarding(),
 						"select * from email.\"Forwarding\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new EmailForwarding(),
+						new Forwarding(),
 						"select\n"
 						+ "  ef.*\n"
 						+ "from\n"
@@ -2141,7 +2124,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailForwarding(),
+					new Forwarding(),
 					"select\n"
 					+ "  ef.*\n"
 					+ "from\n"
@@ -2173,14 +2156,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new EmailListAddress(),
+						new ListAddress(),
 						"select * from email.\"ListAddress\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new EmailListAddress(),
+						new ListAddress(),
 						"select\n"
 						+ "  ela.*\n"
 						+ "from\n"
@@ -2200,7 +2183,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailListAddress(),
+					new ListAddress(),
 					"select\n"
 					+ "  ela.*\n"
 					+ "from\n"
@@ -2232,14 +2215,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new EmailList(),
+						new com.aoindustries.aoserv.client.email.List(),
 						"select * from email.\"List\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new EmailList(),
+						new com.aoindustries.aoserv.client.email.List(),
 						"select\n"
 						+ "  el.*\n"
 						+ "from\n"
@@ -2257,7 +2240,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailList(),
+					new com.aoindustries.aoserv.client.email.List(),
 					"select\n"
 					+ "  el.*\n"
 					+ "from\n"
@@ -2289,14 +2272,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new EmailPipeAddress(),
+						new PipeAddress(),
 						"select * from email.\"PipeAddress\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new EmailPipeAddress(),
+						new PipeAddress(),
 						"select\n"
 						+ "  epa.*\n"
 						+ "from\n"
@@ -2316,7 +2299,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailPipeAddress(),
+					new PipeAddress(),
 					"select\n"
 					+ "  epa.*\n"
 					+ "from\n"
@@ -2348,14 +2331,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new EmailPipe(),
+						new Pipe(),
 						"select * from email.\"Pipe\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new EmailPipe(),
+						new Pipe(),
 						"select\n"
 						+ "  ep.*\n"
 						+ "from\n"
@@ -2371,7 +2354,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailPipe(),
+					new Pipe(),
 					"select\n"
 					+ "  ep.*\n"
 					+ "from\n"
@@ -2397,7 +2380,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailSpamAssassinIntegrationMode(),
+					new SpamAssassinMode(),
 					"select * from email.\"SpamAssassinMode\""
 				);
 				break;
@@ -2465,14 +2448,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new FailoverFileLog(),
+						new FileReplicationLog(),
 						"select * from backup.\"FileReplicationLog\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new FailoverFileLog(),
+						new FileReplicationLog(),
 						"select\n"
 						+ "  ffl.*\n"
 						+ "from\n"
@@ -2490,7 +2473,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new FailoverFileLog(),
+					new FileReplicationLog(),
 					"select\n"
 					+ "  ffl.*\n"
 					+ "from\n"
@@ -2516,7 +2499,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new FailoverFileReplication(),
+						new FileReplication(),
 						"select\n"
 						+ "  id,\n"
 						+ "  server,\n"
@@ -2535,7 +2518,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new FailoverFileReplication(),
+						new FileReplication(),
 						"select\n"
 						+ "  ffr.id,\n"
 						+ "  ffr.server,\n"
@@ -2560,7 +2543,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new FailoverFileReplication(),
+					new FileReplication(),
 					"select\n"
 					+ "  ffr.id,\n"
 					+ "  ffr.server,\n"
@@ -2593,14 +2576,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new FailoverFileSchedule(),
+						new FileReplicationSchedule(),
 						"select * from backup.\"FileReplicationSchedule\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new FailoverFileSchedule(),
+						new FileReplicationSchedule(),
 						"select\n"
 						+ "  ffs.*\n"
 						+ "from\n"
@@ -2618,7 +2601,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new FailoverFileSchedule(),
+					new FileReplicationSchedule(),
 					"select\n"
 					+ "  ffs.*\n"
 					+ "from\n"
@@ -2644,14 +2627,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new FailoverMySQLReplication(),
+						new MysqlReplication(),
 						"select * from backup.\"MysqlReplication\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new FailoverMySQLReplication(),
+						new MysqlReplication(),
 						"select\n"
 						+ "  fmr.*\n"
 						+ "from\n"
@@ -2677,7 +2660,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new FailoverMySQLReplication(),
+					new MysqlReplication(),
 					"select distinct\n"
 					+ "  fmr.*\n"
 					+ "from\n"
@@ -2711,14 +2694,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new FileBackupSetting(),
+						new FileReplicationSetting(),
 						"select * from backup.\"FileReplicationSetting\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new FileBackupSetting(),
+						new FileReplicationSetting(),
 						"select\n"
 						+ "  fbs.*\n"
 						+ "from\n"
@@ -2736,7 +2719,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new FileBackupSetting(),
+					new FileReplicationSetting(),
 					"select\n"
 					+ "  fbs.*\n"
 					+ "from\n"
@@ -2768,14 +2751,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new FirewalldZone(),
+						new FirewallZone(),
 						"select * from net.\"FirewallZone\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new FirewalldZone(),
+						new FirewallZone(),
 						"select\n"
 						+ "  fz.*\n"
 						+ "from\n"
@@ -2791,7 +2774,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new FirewalldZone(),
+					new FirewallZone(),
 					"select\n"
 					+ "  fz.*\n"
 					+ "from\n"
@@ -2815,14 +2798,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new FTPGuestUser(),
+						new GuestUser(),
 						"select * from ftp.\"GuestUser\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new FTPGuestUser(),
+						new GuestUser(),
 						"select distinct\n"
 						+ "  fgu.username\n"
 						+ "from\n"
@@ -2844,7 +2827,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new FTPGuestUser(),
+					new GuestUser(),
 					"select\n"
 					+ "  fgu.*\n"
 					+ "from\n"
@@ -2941,7 +2924,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new HttpdJBossSite(),
+							new com.aoindustries.aoserv.client.web.jboss.Site(),
 							"select * from \"web.jboss\".\"Site\""
 						);
 					} else {
@@ -2950,7 +2933,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new HttpdJBossSite(),
+							new com.aoindustries.aoserv.client.web.jboss.Site(),
 							"select\n"
 							+ "  hjs.*\n"
 							+ "from\n"
@@ -2969,7 +2952,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdJBossSite(),
+					new com.aoindustries.aoserv.client.web.jboss.Site(),
 					"select\n"
 					+ "  hjs.*\n"
 					+ "from\n"
@@ -2997,7 +2980,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdJBossVersion(),
+					new com.aoindustries.aoserv.client.web.jboss.Version(),
 					"select * from \"web.jboss\".\"Version\""
 				);
 				break;
@@ -3007,7 +2990,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdJKCode(),
+					new com.aoindustries.aoserv.client.web.tomcat.WorkerName(),
 					"select * from \"web.tomcat\".\"WorkerName\""
 				);
 				break;
@@ -3017,7 +3000,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdJKProtocol(),
+					new com.aoindustries.aoserv.client.web.tomcat.JkProtocol(),
 					"select * from \"web.tomcat\".\"JkProtocol\""
 				);
 				break;
@@ -3078,14 +3061,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdSharedTomcat(),
+						new SharedTomcat(),
 						"select * from \"web.tomcat\".\"SharedTomcat\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdSharedTomcat(),
+						new SharedTomcat(),
 						"select\n"
 						+ "  hst.*\n"
 						+ "from\n"
@@ -3101,7 +3084,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdSharedTomcat(),
+					new SharedTomcat(),
 					"select\n"
 					+ "  hst.*\n"
 					+ "from\n"
@@ -3133,14 +3116,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdSiteAuthenticatedLocation(),
+						new Location(),
 						"select * from web.\"Location\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdSiteAuthenticatedLocation(),
+						new Location(),
 						"select\n"
 						+ "  hsal.*\n"
 						+ "from\n"
@@ -3158,7 +3141,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdSiteAuthenticatedLocation(),
+					new Location(),
 					"select\n"
 					+ "  hsal.*\n"
 					+ "from\n"
@@ -3188,14 +3171,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdSiteBindHeader(),
+						new Header(),
 						"select * from web.\"Header\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdSiteBindHeader(),
+						new Header(),
 						"select\n"
 						+ "  hsbh.*\n"
 						+ "from\n"
@@ -3215,7 +3198,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdSiteBindHeader(),
+					new Header(),
 					"select\n"
 					+ "  hsbh.*\n"
 					+ "from\n"
@@ -3247,14 +3230,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdSiteBindRedirect(),
+						new Redirect(),
 						"select * from web.\"Redirect\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdSiteBindRedirect(),
+						new Redirect(),
 						"select\n"
 						+ "  hsbr.*\n"
 						+ "from\n"
@@ -3274,7 +3257,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdSiteBindRedirect(),
+					new Redirect(),
 					"select\n"
 					+ "  hsbr.*\n"
 					+ "from\n"
@@ -3306,7 +3289,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdSiteBind(),
+						new VirtualHost(),
 						"select\n"
 						+ "  hsb.*,\n"
 						// Protocol conversion
@@ -3322,7 +3305,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdSiteBind(),
+						new VirtualHost(),
 						"select\n"
 						+ "  hsb.*,\n"
 						// Protocol conversion
@@ -3346,7 +3329,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdSiteBind(),
+					new VirtualHost(),
 					"select\n"
 					+ "  hsb.*,\n"
 					// Protocol conversion
@@ -3382,14 +3365,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdSiteURL(),
+						new VirtualHostName(),
 						"select * from web.\"VirtualHostName\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdSiteURL(),
+						new VirtualHostName(),
 						"select\n"
 						+ "  hsu.*\n"
 						+ "from\n"
@@ -3409,7 +3392,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdSiteURL(),
+					new VirtualHostName(),
 					"select\n"
 					+ "  hsu.*\n"
 					+ "from\n"
@@ -3441,14 +3424,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdSite(),
+						new Site(),
 						"select * from web.\"Site\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdSite(),
+						new Site(),
 						"select\n"
 						+ "  hs.*\n"
 						+ "from\n"
@@ -3464,7 +3447,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdSite(),
+					new Site(),
 					"select\n"
 					+ "  hs.*\n"
 					+ "from\n"
@@ -3492,14 +3475,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdStaticSite(),
+						new StaticSite(),
 						"select * from web.\"StaticSite\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdStaticSite(),
+						new StaticSite(),
 						"select\n"
 						+ "  hss.*\n"
 						+ "from\n"
@@ -3517,7 +3500,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdStaticSite(),
+					new StaticSite(),
 					"select\n"
 					+ "  hss.*\n"
 					+ "from\n"
@@ -3547,14 +3530,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatContext(),
+						new Context(),
 						"select * from \"web.tomcat\".\"Context\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatContext(),
+						new Context(),
 						"select\n"
 						+ "  htc.*\n"
 						+ "from\n"
@@ -3572,7 +3555,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdTomcatContext(),
+					new Context(),
 					"select\n"
 					+ "  htc.*\n"
 					+ "from\n"
@@ -3602,14 +3585,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatDataSource(),
+						new ContextDataSource(),
 						"select * from \"web.tomcat\".\"ContextDataSource\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatDataSource(),
+						new ContextDataSource(),
 						"select\n"
 						+ "  htds.*\n"
 						+ "from\n"
@@ -3629,7 +3612,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdTomcatDataSource(),
+					new ContextDataSource(),
 					"select\n"
 					+ "  htds.*\n"
 					+ "from\n"
@@ -3661,14 +3644,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatParameter(),
+						new ContextParameter(),
 						"select * from \"web.tomcat\".\"ContextParameter\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatParameter(),
+						new ContextParameter(),
 						"select\n"
 						+ "  htp.*\n"
 						+ "from\n"
@@ -3688,7 +3671,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdTomcatParameter(),
+					new ContextParameter(),
 					"select\n"
 					+ "  htp.*\n"
 					+ "from\n"
@@ -3720,14 +3703,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatSiteJkMount(),
+						new JkMount(),
 						"select * from \"web.tomcat\".\"JkMount\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatSiteJkMount(),
+						new JkMount(),
 						"select\n"
 						+ "  htsjm.*\n"
 						+ "from\n"
@@ -3745,7 +3728,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdTomcatSiteJkMount(),
+					new JkMount(),
 					"select\n"
 					+ "  htsjm.*\n"
 					+ "from\n"
@@ -3775,7 +3758,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatSite(),
+						new com.aoindustries.aoserv.client.web.tomcat.Site(),
 						"select\n"
 						+ "  hts.*,\n"
 						// Protocol conversion
@@ -3790,7 +3773,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatSite(),
+						new com.aoindustries.aoserv.client.web.tomcat.Site(),
 						"select\n"
 						+ "  hts.*,\n"
 						// Protocol conversion
@@ -3813,7 +3796,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdTomcatSite(),
+					new com.aoindustries.aoserv.client.web.tomcat.Site(),
 					"select\n"
 					+ "  hts.*,\n"
 					// Protocol conversion
@@ -3848,14 +3831,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatSharedSite(),
+						new SharedTomcatSite(),
 						"select * from \"web.tomcat\".\"SharedTomcatSite\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatSharedSite(),
+						new SharedTomcatSite(),
 						"select\n"
 						+ "  htss.*\n"
 						+ "from\n"
@@ -3873,7 +3856,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdTomcatSharedSite(),
+					new SharedTomcatSite(),
 					"select\n"
 					+ "  htss.*\n"
 					+ "from\n"
@@ -3903,14 +3886,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatStdSite(),
+						new PrivateTomcatSite(),
 						"select * from \"web.tomcat\".\"PrivateTomcatSite\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new HttpdTomcatStdSite(),
+						new PrivateTomcatSite(),
 						"select\n"
 						+ "  htss.*\n"
 						+ "from\n"
@@ -3928,7 +3911,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdTomcatStdSite(),
+					new PrivateTomcatSite(),
 					"select\n"
 					+ "  htss.*\n"
 					+ "from\n"
@@ -3956,7 +3939,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdTomcatVersion(),
+					new Version(),
 					"select * from \"web.tomcat\".\"Version\""
 				);
 				break;
@@ -3969,7 +3952,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdWorker(),
+						new Worker(),
 						"select\n"
 						+ "  *\n"
 						+ "from\n"
@@ -3979,7 +3962,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new HttpdWorker(),
+						new Worker(),
 						"select\n"
 						+ "  hw.*\n"
 						+ "from\n"
@@ -3997,7 +3980,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new HttpdWorker(),
+					new Worker(),
 					"select\n"
 					+ "  hw.*\n"
 					+ "from\n"
@@ -4029,7 +4012,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new IPAddress(),
+						new IpAddress(),
 						"select\n"
 						+ "  ia.id,\n"
 						+ "  host(ia.\"inetAddress\") as \"inetAddress\",\n"
@@ -4056,7 +4039,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new IPAddress(),
+						new IpAddress(),
 						"select\n"
 						+ "  ia.id,\n"
 						+ "  host(ia.\"inetAddress\") as \"inetAddress\",\n"
@@ -4084,11 +4067,11 @@ final public class TableHandler {
 						+ "      ia2.id\n"
 						+ "    from\n"
 						+ "      master.\"UserHost\" ms\n"
-						+ "      left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
+						+ "      left join linux.\"Host\" ff on ms.server=ff.failover_server,\n"
 						+ "      net.\"Device\" nd\n"
 						+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.device\n"
 						+ "    where\n"
-						+ "      ia2.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"' or (\n"
+						+ "      ia2.\"inetAddress\"='"+IpAddress.WILDCARD_IP+"' or (\n"
 						+ "        ms.username=?\n"
 						+ "        and (\n"
 						+ "          ms.server=nd.server\n"
@@ -4099,7 +4082,7 @@ final public class TableHandler {
 						+ "            from\n"
 						+ "              backup.\"FileReplication\" ffr\n"
 						+ "              inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
-						+ "              inner join linux.\"Server\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
+						+ "              inner join linux.\"Host\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
 						+ "            where\n"
 						+ "              ms.server=ffr.server\n"
 						+ "              and bp.ao_server=nd.server\n"
@@ -4117,7 +4100,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new IPAddress(),
+						new IpAddress(),
 						"select\n"
 						+ "  ia.id,\n"
 						+ "  host(ia.\"inetAddress\") as \"inetAddress\",\n"
@@ -4140,7 +4123,7 @@ final public class TableHandler {
 						+ "  net.\"IpAddress\" ia\n"
 						+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id = iam.id\n"
 						+ "where\n"
-						+ "  ia.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"'\n"
+						+ "  ia.\"inetAddress\"='"+IpAddress.WILDCARD_IP+"'\n"
 						+ "  or ia.id in (\n"
 						+ "    select\n"
 						+ "      ia2.id\n"
@@ -4176,7 +4159,7 @@ final public class TableHandler {
 						+ "      and (\n"
 						+ PK3_BU2_PARENTS_WHERE
 						+ "      )\n"
-						+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+						+ "      and bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
 						+ "      and pk4.name=hs.package\n"
 						+ "      and hs.id=hsb.httpd_site\n"
 						+ "      and hsb.httpd_bind=nb.id\n"
@@ -4195,7 +4178,7 @@ final public class TableHandler {
 						+ "      and pk5.accounting=bs5.accounting\n"
 						+ "      and bs5.server=nd5.server\n"
 						+ "      and nd5.id=ia5.device\n"
-						+ "      and (ia5.\"inetAddress\"='"+IPAddress.LOOPBACK_IP+"' or ia5.\"isOverflow\")\n"
+						+ "      and (ia5.\"inetAddress\"='"+IpAddress.LOOPBACK_IP+"' or ia5.\"isOverflow\")\n"
 						/*+ "  ) or ia.id in (\n"
 						+ "    select \n"
 						+ "      ia6.id\n"
@@ -4205,7 +4188,7 @@ final public class TableHandler {
 						+ "      account.\"AccountHost\" bs6,\n"
 						+ "      backup.\"FileReplication\" ffr6,\n"
 						+ "      backup.\"BackupPartition\" bp6,\n"
-						+ "      linux.\"Server\" ao6,\n"
+						+ "      linux.\"Host\" ao6,\n"
 						+ "      net.\"Device\" nd6,\n"
 						+ "      net.\"IpAddress\" ia6\n"
 						+ "    where\n"
@@ -4256,11 +4239,11 @@ final public class TableHandler {
 						+ "      ia2.id\n"
 						+ "    from\n"
 						+ "      master.\"UserHost\" ms\n"
-						+ "      left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
+						+ "      left join linux.\"Host\" ff on ms.server=ff.failover_server,\n"
 						+ "      net.\"Device\" nd\n"
 						+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.device\n"
 						+ "    where\n"
-						+ "      ia2.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"' or (\n"
+						+ "      ia2.\"inetAddress\"='"+IpAddress.WILDCARD_IP+"' or (\n"
 						+ "        ms.username=?\n"
 						+ "        and (\n"
 						+ "          ms.server=nd.server\n"
@@ -4271,7 +4254,7 @@ final public class TableHandler {
 						+ "            from\n"
 						+ "              backup.\"FileReplication\" ffr\n"
 						+ "              inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
-						+ "              inner join linux.\"Server\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
+						+ "              inner join linux.\"Host\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
 						+ "            where\n"
 						+ "              ms.server=ffr.server\n"
 						+ "              and bp.ao_server=nd.server\n"
@@ -4296,7 +4279,7 @@ final public class TableHandler {
 						+ "  net.\"IpAddress\" ia\n"
 						+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id = iam.id\n"
 						+ "where\n"
-						+ "  ia.\"inetAddress\"='"+IPAddress.WILDCARD_IP+"'\n"
+						+ "  ia.\"inetAddress\"='"+IpAddress.WILDCARD_IP+"'\n"
 						+ "  or ia.id in (\n"
 						+ "    select\n"
 						+ "      ia2.id\n"
@@ -4332,7 +4315,7 @@ final public class TableHandler {
 						+ "      and (\n"
 						+ PK3_BU2_PARENTS_WHERE
 						+ "      )\n"
-						+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+						+ "      and bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
 						+ "      and pk4.name=hs.package\n"
 						+ "      and hs.id=hsb.httpd_site\n"
 						+ "      and hsb.httpd_bind=nb.id\n"
@@ -4351,7 +4334,7 @@ final public class TableHandler {
 						+ "      and pk5.accounting=bs5.accounting\n"
 						+ "      and bs5.server=nd5.server\n"
 						+ "      and nd5.id=ia5.device\n"
-						+ "      and (ia5.\"inetAddress\"='"+IPAddress.LOOPBACK_IP+"' or ia5.\"isOverflow\")\n"
+						+ "      and (ia5.\"inetAddress\"='"+IpAddress.LOOPBACK_IP+"' or ia5.\"isOverflow\")\n"
 						/*+ "  ) or ia.id in (\n"
 						+ "    select \n"
 						+ "      ia6.id\n"
@@ -4361,7 +4344,7 @@ final public class TableHandler {
 						+ "      account.\"AccountHost\" bs6,\n"
 						+ "      backup.\"FileReplication\" ffr6,\n"
 						+ "      backup.\"BackupPartition\" bp6,\n"
-						+ "      linux.\"Server\" ao6,\n"
+						+ "      linux.\"Host\" ao6,\n"
 						+ "      net.\"Device\" nd6,\n"
 						+ "      net.\"IpAddress\" ia6\n"
 						+ "    where\n"
@@ -4393,7 +4376,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationLimiterLimit(),
+							new LimiterClass(),
 							"select * from \"net.reputation\".\"LimiterClass\""
 						);
 					} else if(masterUser.isRouter()) {
@@ -4403,7 +4386,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationLimiterLimit(),
+							new LimiterClass(),
 							"select distinct\n"
 							+ "  irll.*\n"
 							+ "from\n"
@@ -4419,7 +4402,7 @@ final public class TableHandler {
 						);
 					} else {
 						// Non-router daemon may not access any reputation limiters
-						List<IpReputationLimiterLimit> emptyList = Collections.emptyList();
+						List<LimiterClass> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else {
@@ -4429,7 +4412,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new IpReputationLimiterLimit(),
+						new LimiterClass(),
 						"select\n"
 						+ "  irll.*\n"
 						+ "from\n"
@@ -4457,7 +4440,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationLimiterSet(),
+							new Set(),
 							"select * from \"net.reputation\".\"LimiterSet\""
 						);
 					} else if(masterUser.isRouter()) {
@@ -4467,7 +4450,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationLimiterSet(),
+							new Set(),
 							"select distinct\n"
 							+ "  irls.*\n"
 							+ "from\n"
@@ -4483,7 +4466,7 @@ final public class TableHandler {
 						);
 					} else {
 						// Non-router daemon may not access any reputation limiters
-						List<IpReputationLimiterSet> emptyList = Collections.emptyList();
+						List<Set> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else {
@@ -4493,7 +4476,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new IpReputationLimiterSet(),
+						new Set(),
 						"select\n"
 						+ "  irls.*\n"
 						+ "from\n"
@@ -4521,7 +4504,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationLimiter(),
+							new Limiter(),
 							"select * from \"net.reputation\".\"Limiter\""
 						);
 					} else if(masterUser.isRouter()) {
@@ -4531,7 +4514,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationLimiter(),
+							new Limiter(),
 							"select distinct\n"
 							+ "  irl.*\n"
 							+ "from\n"
@@ -4546,7 +4529,7 @@ final public class TableHandler {
 						);
 					} else {
 						// Non-router daemon may not access any reputation limiters
-						List<IpReputationLimiter> emptyList = Collections.emptyList();
+						List<Limiter> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else {
@@ -4556,7 +4539,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new IpReputationLimiter(),
+						new Limiter(),
 						"select\n"
 						+ "  irl.*\n"
 						+ "from\n"
@@ -4583,7 +4566,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationSetHost(),
+							new Host(),
 							"select * from \"net.reputation\".\"Host\""
 						);
 					} else if(masterUser.isRouter()) {
@@ -4593,7 +4576,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationSetHost(),
+							new Host(),
 							"select distinct\n"
 							+ "  irsh.*\n"
 							+ "from\n"
@@ -4611,7 +4594,7 @@ final public class TableHandler {
 						);
 					} else {
 						// Non-router daemon may not access any reputation sets
-						List<IpReputationSetHost> emptyList = Collections.emptyList();
+						List<Host> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else {
@@ -4621,7 +4604,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new IpReputationSetHost(),
+						new Host(),
 						"select\n"
 						+ "  irsh.*\n"
 						+ "from\n"
@@ -4654,7 +4637,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationSetNetwork(),
+							new Network(),
 							"select * from \"net.reputation\".\"Network\""
 						);
 					} else if(masterUser.isRouter()) {
@@ -4664,7 +4647,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationSetNetwork(),
+							new Network(),
 							"select distinct\n"
 							+ "  irsn.*\n"
 							+ "from\n"
@@ -4682,7 +4665,7 @@ final public class TableHandler {
 						);
 					} else {
 						// Non-router daemon may not access any reputation sets
-						List<IpReputationSetNetwork> emptyList = Collections.emptyList();
+						List<Network> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else {
@@ -4692,7 +4675,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new IpReputationSetNetwork(),
+						new Network(),
 						"select\n"
 						+ "  irsn.*\n"
 						+ "from\n"
@@ -4725,7 +4708,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationSet(),
+							new Set(),
 							"select * from \"net.reputation\".\"Set\""
 						);
 					} else if(masterUser.isRouter()) {
@@ -4735,7 +4718,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new IpReputationSet(),
+							new Set(),
 							"select distinct\n"
 							+ "  irs.*\n"
 							+ "from\n"
@@ -4752,7 +4735,7 @@ final public class TableHandler {
 						);
 					} else {
 						// Non-router daemon may not access any reputation sets
-						List<IpReputationSet> emptyList = Collections.emptyList();
+						List<Set> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else {
@@ -4763,7 +4746,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new IpReputationSet(),
+						new Set(),
 						"select\n"
 						+ "  irs.*\n"
 						+ "from\n"
@@ -4822,14 +4805,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new LinuxAccAddress(),
+						new InboxAddress(),
 						"select * from email.\"InboxAddress\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new LinuxAccAddress(),
+						new InboxAddress(),
 						"select\n"
 						+ "  laa.*\n"
 						+ "from\n"
@@ -4849,7 +4832,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new LinuxAccAddress(),
+					new InboxAddress(),
 					"select\n"
 					+ "  laa.*\n"
 					+ "from\n"
@@ -4881,20 +4864,20 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new LinuxAccount(),
+						new User(),
 						"select * from linux.\"User\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new LinuxAccount(),
+						new User(),
 						"select distinct\n"
 						+ "  la.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  linux.\"Server\" ao\n"
-						+ "  left join linux.\"Server\" ff on ao.server=ff.failover_server,\n"
+						+ "  linux.\"Host\" ao\n"
+						+ "  left join linux.\"Host\" ff on ao.server=ff.failover_server,\n"
 						+ "  account.\"AccountHost\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
@@ -4915,7 +4898,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new LinuxAccount(),
+					new User(),
 					"select\n"
 					+ "  la.*\n"
 					+ "from\n"
@@ -4929,7 +4912,7 @@ final public class TableHandler {
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"
 					+ "  and (\n"
-					+ "    un2.username='"+LinuxAccount.MAIL+"'\n"
+					+ "    un2.username='"+com.aoindustries.aoserv.client.linux.User.MAIL+"'\n"
 					+ PK1_BU1_PARENTS_OR_WHERE
 					+ "  )\n"
 					+ "  and bu1.accounting=pk2.accounting\n"
@@ -4944,7 +4927,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new LinuxAccountType(),
+					new UserType(),
 					"select * from linux.\"UserType\""
 				);
 				break;
@@ -4956,14 +4939,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new LinuxGroupAccount(),
+						new GroupUser(),
 						"select * from linux.\"GroupUser\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new LinuxGroupAccount(),
+						new GroupUser(),
 						"select\n"
 						+ "  *\n"
 						+ "from\n"
@@ -4997,7 +4980,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new LinuxGroupAccount(),
+					new GroupUser(),
 					"select\n"
 					+ " *\n"
 					+ "from\n"
@@ -5016,9 +4999,9 @@ final public class TableHandler {
 					+ "      un1.username=?\n"
 					+ "      and un1.package=pk1.name\n"
 					+ "      and (\n"
-					+ "        lg.name='"+LinuxGroup.FTPONLY+"'\n"
-					+ "        or lg.name='"+LinuxGroup.MAIL+"'\n"
-					+ "        or lg.name='"+LinuxGroup.MAILONLY+"'\n"
+					+ "        lg.name='"+Group.FTPONLY+"'\n"
+					+ "        or lg.name='"+Group.MAIL+"'\n"
+					+ "        or lg.name='"+Group.MAILONLY+"'\n"
 					+ PK1_BU1_PARENTS_OR_WHERE
 					+ "      )\n"
 					+ "      and bu1.accounting=pk2.accounting\n"
@@ -5038,10 +5021,10 @@ final public class TableHandler {
 					+ "      un2.username=?\n"
 					+ "      and un2.package=pk3.name\n"
 					+ "      and (\n"
-					+ "        un3.username='"+LinuxAccount.MAIL+"'\n"
+					+ "        un3.username='"+com.aoindustries.aoserv.client.linux.User.MAIL+"'\n"
 					+ PK3_BU2_PARENTS_OR_WHERE
 					+ "      )\n"
-					+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+					+ "      and bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
 					+ "      and pk4.name=un3.package\n"
 					+ "      and un3.username=la.username\n"
 					+ "  )",
@@ -5057,19 +5040,19 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new LinuxGroup(),
+						new Group(),
 						"select * from linux.\"Group\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new LinuxGroup(),
+						new Group(),
 						"select distinct\n"
 						+ "  lg.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  linux.\"Server\" ao,\n"
+						+ "  linux.\"Host\" ao,\n"
 						+ "  account.\"AccountHost\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  linux.\"Group\" lg\n"
@@ -5086,7 +5069,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new LinuxGroup(),
+					new Group(),
 					"select\n"
 					+ "  lg.*\n"
 					+ "from\n"
@@ -5099,9 +5082,9 @@ final public class TableHandler {
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
 					+ "  and (\n"
-					+ "    lg.name='"+LinuxGroup.FTPONLY+"'\n"
-					+ "    or lg.name='"+LinuxGroup.MAIL+"'\n"
-					+ "    or lg.name='"+LinuxGroup.MAILONLY+"'\n"
+					+ "    lg.name='"+Group.FTPONLY+"'\n"
+					+ "    or lg.name='"+Group.MAIL+"'\n"
+					+ "    or lg.name='"+Group.MAILONLY+"'\n"
 					+ PK1_BU1_PARENTS_OR_WHERE
 					+ "  )\n"
 					+ "  and bu1.accounting=pk2.accounting\n"
@@ -5115,7 +5098,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new LinuxGroupType(),
+					new GroupType(),
 					"select * from linux.\"GroupType\""
 				);
 				break;
@@ -5127,19 +5110,19 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new LinuxServerAccount(),
+						new UserServer(),
 						"select * from linux.\"UserServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new LinuxServerAccount(),
+						new UserServer(),
 						"select distinct\n"
 						+ "  lsa.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
-						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
+						+ "  left join linux.\"Host\" ff on ms.server=ff.failover_server,\n"
 						+ "  linux.\"UserServer\" lsa\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -5154,7 +5137,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new LinuxServerAccount(),
+					new UserServer(),
 					"select\n"
 					+ "  lsa.id,\n"
 					+ "  lsa.username,\n"
@@ -5166,7 +5149,7 @@ final public class TableHandler {
 					+ "  lsa.autoresponder_path,\n"
 					+ "  lsa.is_autoresponder_enabled,\n"
 					+ "  lsa.disable_log,\n"
-					+ "  case when lsa.predisable_password is null then null else '"+AOServProtocol.FILTERED+"' end,\n"
+					+ "  case when lsa.predisable_password is null then null else '"+AoservProtocol.FILTERED+"' end,\n"
 					+ "  lsa.created,\n"
 					+ "  lsa.use_inbox,\n"
 					+ "  lsa.trash_email_retention,\n"
@@ -5187,7 +5170,7 @@ final public class TableHandler {
 					+ "  un1.username=?\n"
 					+ "  and un1.package=pk1.name\n"
 					+ "  and (\n"
-					+ "    un2.username='"+LinuxAccount.MAIL+"'\n"
+					+ "    un2.username='"+com.aoindustries.aoserv.client.linux.User.MAIL+"'\n"
 					+ PK1_BU1_PARENTS_OR_WHERE
 					+ "  )\n"
 					+ "  and bu1.accounting=pk2.accounting\n"
@@ -5206,14 +5189,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new LinuxServerGroup(),
+						new GroupServer(),
 						"select * from linux.\"GroupServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new LinuxServerGroup(),
+						new GroupServer(),
 						"select\n"
 						+ "  lsg.*\n"
 						+ "from\n"
@@ -5229,7 +5212,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new LinuxServerGroup(),
+					new GroupServer(),
 					"select\n"
 					+ "  lsg.*\n"
 					+ "from\n"
@@ -5244,9 +5227,9 @@ final public class TableHandler {
 					+ "  un.username=?\n"
 					+ "  and un.package=pk1.name\n"
 					+ "  and (\n"
-					+ "    lg.name='"+LinuxGroup.FTPONLY+"'\n"
-					+ "    or lg.name='"+LinuxGroup.MAIL+"'\n"
-					+ "    or lg.name='"+LinuxGroup.MAILONLY+"'\n"
+					+ "    lg.name='"+Group.FTPONLY+"'\n"
+					+ "    or lg.name='"+Group.MAIL+"'\n"
+					+ "    or lg.name='"+Group.MAILONLY+"'\n"
 					+ PK1_BU1_PARENTS_OR_WHERE
 					+ "  )\n"
 					+ "  and bu1.accounting=pk2.accounting\n"
@@ -5385,14 +5368,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new MasterHost(),
+						new UserAcl(),
 						"select * from master.\"UserAcl\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new MasterHost(),
+						new UserAcl(),
 						"select distinct\n"
 						+ "  mh.*\n"
 						+ "from\n"
@@ -5414,7 +5397,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new MasterHost(),
+					new UserAcl(),
 					"select\n"
 					+ "  mh.*\n"
 					+ "from\n"
@@ -5462,14 +5445,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new com.aoindustries.aoserv.client.master.MasterServer(),
+						new com.aoindustries.aoserv.client.master.UserHost(),
 						"select * from master.\"UserHost\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new com.aoindustries.aoserv.client.master.MasterServer(),
+						new com.aoindustries.aoserv.client.master.UserHost(),
 						"select\n"
 						+ "  ms2.*\n"
 						+ "from\n"
@@ -5485,7 +5468,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new com.aoindustries.aoserv.client.master.MasterServer(),
+					new com.aoindustries.aoserv.client.master.UserHost(),
 					"select\n"
 					+ "  ms.*\n"
 					+ "from\n"
@@ -5516,14 +5499,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new MasterUser(),
+						new User(),
 						"select * from master.\"User\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new MasterUser(),
+						new User(),
 						"select distinct\n"
 						+ "  mu.*\n"
 						+ "from\n"
@@ -5545,7 +5528,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new MasterUser(),
+					new User(),
 					"select\n"
 					+ "  mu.*\n"
 					+ "from\n"
@@ -5624,19 +5607,19 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new MySQLDatabase(),
+						new Database(),
 						"select * from mysql.\"Database\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new MySQLDatabase(),
+						new Database(),
 						"select\n"
 						+ "  md.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  mysql.\"Server\" mys,\n"
+						+ "  mysql.\"Host\" mys,\n"
 						+ "  mysql.\"Database\" md\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -5649,7 +5632,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new MySQLDatabase(),
+					new Database(),
 					"select\n"
 					+ "  md.*\n"
 					+ "from\n"
@@ -5677,19 +5660,19 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new MySQLDBUser(),
+						new DatabaseUser(),
 						"select * from mysql.\"DatabaseUser\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new MySQLDBUser(),
+						new DatabaseUser(),
 						"select\n"
 						+ "  mdu.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  mysql.\"Server\" mys,\n"
+						+ "  mysql.\"Host\" mys,\n"
 						+ "  mysql.\"Database\" md,\n"
 						+ "  mysql.\"DatabaseUser\" mdu\n"
 						+ "where\n"
@@ -5704,7 +5687,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new MySQLDBUser(),
+					new DatabaseUser(),
 					"select\n"
 					+ "  mdu.*\n"
 					+ "from\n"
@@ -5734,19 +5717,19 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new MySQLServerUser(),
+						new UserServer(),
 						"select * from mysql.\"UserServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new MySQLServerUser(),
+						new UserServer(),
 						"select\n"
 						+ "  msu.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  mysql.\"Server\" mys,\n"
+						+ "  mysql.\"Host\" mys,\n"
 						+ "  mysql.\"UserServer\" msu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -5759,14 +5742,14 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new MySQLServerUser(),
+					new UserServer(),
 					 "select\n"
 					+ "  msu.id,\n"
 					+ "  msu.username,\n"
 					+ "  msu.mysql_server,\n"
 					+ "  msu.host,\n"
 					+ "  msu.disable_log,\n"
-					+ "  case when msu.predisable_password is null then null else '"+AOServProtocol.FILTERED+"' end,\n"
+					+ "  case when msu.predisable_password is null then null else '"+AoservProtocol.FILTERED+"' end,\n"
 					+ "  msu.max_questions,\n"
 					+ "  msu.max_updates\n,"
 					+ "  msu.max_connections,\n"
@@ -5798,26 +5781,26 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new MySQLServer(),
+						new com.aoindustries.aoserv.client.mysql.Server(),
 						"SELECT\n"
 						+ "  ms.*,\n"
 						// Protocol conversion
 						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
 						+ "FROM\n"
-						+ "  mysql.\"Server\" ms"
+						+ "  mysql.\"Host\" ms"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new MySQLServer(),
+						new com.aoindustries.aoserv.client.mysql.Server(),
 						"SELECT\n"
 						+ "  ms.*,\n"
 						// Protocol conversion
 						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
 						+ "from\n"
 						+ "             master.\"UserHost\" uh\n"
-						+ "  INNER JOIN mysql.\"Server\"    ms ON uh.server=ms.ao_server\n"
+						+ "  INNER JOIN mysql.\"Host\"    ms ON uh.server=ms.ao_server\n"
 						+ "where\n"
 						+ "  uh.username=?",
 						username
@@ -5827,7 +5810,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new MySQLServer(),
+					new com.aoindustries.aoserv.client.mysql.Server(),
 					"SELECT\n"
 					+ "  ms.*,\n"
 					// Protocol conversion
@@ -5836,7 +5819,7 @@ final public class TableHandler {
 					+ "             account.\"Username\"    un\n"
 					+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
 					+ "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
-					+ "  INNER JOIN mysql.\"Server\"        ms ON bs.server     = ms.ao_server\n"
+					+ "  INNER JOIN mysql.\"Host\"        ms ON bs.server     = ms.ao_server\n"
 					+ "WHERE\n"
 					+ "  un.username=?",
 					username
@@ -5850,14 +5833,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new MySQLUser(),
+						new User(),
 						"select * from mysql.\"User\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new MySQLUser(),
+						new User(),
 						"select distinct\n"
 						+ "  mu.*\n"
 						+ "from\n"
@@ -5879,7 +5862,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new MySQLUser(),
+					new User(),
 					"select\n"
 					+ "  mu.*\n"
 					+ "from\n"
@@ -5909,14 +5892,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new NetBindFirewalldZone(),
+						new BindFirewallZone(),
 						"select * from net.\"BindFirewallZone\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new NetBindFirewalldZone(),
+						new BindFirewallZone(),
 						"select\n"
 						+ "  nbfz.*\n"
 						+ "from\n"
@@ -5934,7 +5917,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new NetBindFirewalldZone(),
+					new BindFirewallZone(),
 					"select\n"
 					+ "  nbfz.*\n"
 					+ "from\n"
@@ -5976,7 +5959,7 @@ final public class TableHandler {
 					+ "      and (\n"
 					+ PK3_BU2_PARENTS_WHERE
 					+ "      )\n"
-					+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+					+ "      and bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
 					+ "      and pk4.name=hs.package\n"
 					+ "      and hs.id=hsb.httpd_site\n"
 					+ "      and hsb.httpd_bind=nb3.id\n"
@@ -5987,7 +5970,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
 					+ "      account.\"AccountHost\" bs4,\n"
-					+ "      mysql.\"Server\" ms4\n"
+					+ "      mysql.\"Host\" ms4\n"
 					+ "    where\n"
 					+ "      un4.username=?\n"
 					+ "      and un4.package=pk4.name\n"
@@ -6000,7 +5983,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un5,\n"
 					+ "      billing.\"Package\" pk5,\n"
 					+ "      account.\"AccountHost\" bs5,\n"
-					+ "      postgresql.\"Server\" ps5\n"
+					+ "      postgresql.\"Host\" ps5\n"
 					+ "    where\n"
 					+ "      un5.username=?\n"
 					+ "      and un5.package=pk5.name\n"
@@ -6022,7 +6005,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new NetBind(),
+						new Bind(),
 						"select\n"
 						+ "  nb.*,\n"
 						// Protocol conversion
@@ -6038,13 +6021,13 @@ final public class TableHandler {
 						+ "  ) is not null as open_firewall\n"
 						+ "from\n"
 						+ "  net.\"Bind\" nb",
-						FirewalldZone.PUBLIC
+						FirewallZone.PUBLIC
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new NetBind(),
+						new Bind(),
 						"select\n"
 						+ "  nb.id,\n"
 						+ "  nb.package,\n"
@@ -6054,7 +6037,7 @@ final public class TableHandler {
 						+ "  nb.net_protocol,\n"
 						+ "  nb.app_protocol,\n"
 						+ "  nb.monitoring_enabled,\n"
-						+ "  case when nb.monitoring_parameters is null then null::text else '"+AOServProtocol.FILTERED+"'::text end as monitoring_parameters,\n"
+						+ "  case when nb.monitoring_parameters is null then null::text else '"+AoservProtocol.FILTERED+"'::text end as monitoring_parameters,\n"
 						// Protocol conversion
 						+ "  (\n"
 						+ "    select\n"
@@ -6083,13 +6066,13 @@ final public class TableHandler {
 						+ "        ms.server=ffr.server\n"
 						+ "        and bp.ao_server=nb.server\n"
 						+ "        and (\n"
-						+ "          nb.app_protocol='"+Protocol.AOSERV_DAEMON+"'\n"
-						+ "          or nb.app_protocol='"+Protocol.AOSERV_DAEMON_SSL+"'\n"
+						+ "          nb.app_protocol='"+AppProtocol.AOSERV_DAEMON+"'\n"
+						+ "          or nb.app_protocol='"+AppProtocol.AOSERV_DAEMON_SSL+"'\n"
 						+ "        )\n"
 						+ "      limit 1\n"
 						+ "    ) is not null\n"
 						+ "  )",
-						FirewalldZone.PUBLIC,
+						FirewallZone.PUBLIC,
 						username
 					);
 				} else MasterServer.writeObjects(
@@ -6097,7 +6080,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new NetBind(),
+					new Bind(),
 					"select\n"
 					+ "  nb.id,\n"
 					+ "  nb.package,\n"
@@ -6107,7 +6090,7 @@ final public class TableHandler {
 					+ "  nb.net_protocol,\n"
 					+ "  nb.app_protocol,\n"
 					+ "  nb.monitoring_enabled,\n"
-					+ "  case when nb.monitoring_parameters is null then null::text else '"+AOServProtocol.FILTERED+"'::text end as monitoring_parameters,\n"
+					+ "  case when nb.monitoring_parameters is null then null::text else '"+AoservProtocol.FILTERED+"'::text end as monitoring_parameters,\n"
 					// Protocol conversion
 					+ "  (\n"
 					+ "    select\n"
@@ -6157,7 +6140,7 @@ final public class TableHandler {
 					+ "      and (\n"
 					+ PK3_BU2_PARENTS_WHERE
 					+ "      )\n"
-					+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+					+ "      and bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
 					+ "      and pk4.name=hs.package\n"
 					+ "      and hs.id=hsb.httpd_site\n"
 					+ "      and hsb.httpd_bind=nb3.id\n"
@@ -6168,7 +6151,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
 					+ "      account.\"AccountHost\" bs4,\n"
-					+ "      mysql.\"Server\" ms4\n"
+					+ "      mysql.\"Host\" ms4\n"
 					+ "    where\n"
 					+ "      un4.username=?\n"
 					+ "      and un4.package=pk4.name\n"
@@ -6181,7 +6164,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un5,\n"
 					+ "      billing.\"Package\" pk5,\n"
 					+ "      account.\"AccountHost\" bs5,\n"
-					+ "      postgresql.\"Server\" ps5\n"
+					+ "      postgresql.\"Host\" ps5\n"
 					+ "    where\n"
 					+ "      un5.username=?\n"
 					+ "      and un5.package=pk5.name\n"
@@ -6210,7 +6193,7 @@ final public class TableHandler {
 					+ "        or nb6.app_protocol='"+Protocol.AOSERV_DAEMON_SSL+"'\n"
 					+ "      )\n"*/
 					+ "  )",
-					FirewalldZone.PUBLIC,
+					FirewallZone.PUBLIC,
 					username,
 					username,
 					username,
@@ -6224,7 +6207,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new NetDeviceID(),
+					new DeviceId(),
 					"select * from net.\"DeviceId\""
 				);
 				break;
@@ -6236,7 +6219,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new NetDevice(),
+						new Device(),
 						"select"
 						+ "  id,\n"
 						+ "  server,\n"
@@ -6260,7 +6243,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new NetDevice(),
+						new Device(),
 						"select distinct\n"
 						+ "  nd.id,\n"
 						+ "  nd.server,\n"
@@ -6279,7 +6262,7 @@ final public class TableHandler {
 						+ "  nd.monitoring_enabled\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
-						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
+						+ "  left join linux.\"Host\" ff on ms.server=ff.failover_server,\n"
 						+ "  net.\"Device\" nd\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -6292,7 +6275,7 @@ final public class TableHandler {
 						+ "      from\n"
 						+ "        backup.\"FileReplication\" ffr\n"
 						+ "        inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
-						+ "        inner join linux.\"Server\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
+						+ "        inner join linux.\"Host\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
 						+ "      where\n"
 						+ "        ms.server=ffr.server\n"
 						+ "        and bp.ao_server=nd.server\n"
@@ -6307,7 +6290,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new NetDevice(),
+					new Device(),
 					"select\n" // distinct
 					+ "  nd.id,\n"
 					+ "  nd.server,\n"
@@ -6331,7 +6314,7 @@ final public class TableHandler {
 					// Allow failover destinations
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
-					//+ "  left join linux.\"Server\" bpao on bp.ao_server=bpao.server,\n"
+					//+ "  left join linux.\"Host\" bpao on bp.ao_server=bpao.server,\n"
 					+ "  net.\"Device\" nd\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -6353,14 +6336,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new NetTcpRedirect(),
+						new TcpRedirect(),
 						"select * from net.\"TcpRedirect\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new NetTcpRedirect(),
+						new TcpRedirect(),
 						"select\n"
 						+ "  ntr.*\n"
 						+ "from\n"
@@ -6378,7 +6361,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new NetTcpRedirect(),
+					new TcpRedirect(),
 					"select\n"
 					+ "  ntr.*\n"
 					+ "from\n"
@@ -6800,19 +6783,19 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new PostgresDatabase(),
+						new Database(),
 						"select * from postgresql.\"Database\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new PostgresDatabase(),
+						new Database(),
 						"SELECT\n"
 						+ "  pd.*\n"
 						+ "FROM\n"
 						+ "             master.\"UserHost\"     ms\n"
-						+ "  INNER JOIN postgresql.\"Server\"   ps ON ms.server = ps.ao_server\n"
+						+ "  INNER JOIN postgresql.\"Host\"   ps ON ms.server = ps.ao_server\n"
 						+ "  INNER JOIN postgresql.\"Database\" pd ON ps.bind   = pd.postgres_server\n"
 						+ "WHERE\n"
 						+ "  ms.username = ?",
@@ -6823,7 +6806,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new PostgresDatabase(),
+					new Database(),
 					"select\n"
 					+ "  pd.*\n"
 					+ "from\n"
@@ -6853,7 +6836,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new PostgresEncoding(),
+					new Encoding(),
 					"select * from postgresql.\"Encoding\""
 				);
 				break;
@@ -6865,19 +6848,19 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new PostgresServerUser(),
+						new UserServer(),
 						"select * from postgresql.\"UserServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new PostgresServerUser(),
+						new UserServer(),
 						"SELECT\n"
 						+ "  psu.*\n"
 						+ "FROM\n"
 						+ "             master.\"UserHost\"       ms\n"
-						+ "  INNER JOIN postgresql.\"Server\"     ps  ON ms.server =  ps.ao_server\n"
+						+ "  INNER JOIN postgresql.\"Host\"     ps  ON ms.server =  ps.ao_server\n"
 						+ "  INNER JOIN postgresql.\"UserServer\" psu ON ps.bind   = psu.postgres_server\n"
 						+ "where\n"
 						+ "  ms.username = ?",
@@ -6888,13 +6871,13 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new PostgresServerUser(),
+					new UserServer(),
 					"select\n"
 					+ "  psu.id,\n"
 					+ "  psu.username,\n"
 					+ "  psu.postgres_server,\n"
 					+ "  psu.disable_log,\n"
-					+ "  case when psu.predisable_password is null then null else '"+AOServProtocol.FILTERED+"' end\n"
+					+ "  case when psu.predisable_password is null then null else '"+AoservProtocol.FILTERED+"' end\n"
 					+ "from\n"
 					+ "  account.\"Username\" un1,\n"
 					+ "  billing.\"Package\" pk1,\n"
@@ -6922,22 +6905,22 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new PostgresServer(),
+						new com.aoindustries.aoserv.client.postgresql.Server(),
 						"SELECT\n"
 						+ "  *\n"
 						+ "FROM\n"
-						+ "  postgresql.\"Server\""
+						+ "  postgresql.\"Host\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new PostgresServer(),
+						new com.aoindustries.aoserv.client.postgresql.Server(),
 						"SELECT\n"
 						+ "  ps.*\n"
 						+ "FROM\n"
 						+ "             master.\"UserHost\"   ms\n"
-						+ "  INNER JOIN postgresql.\"Server\" ps ON ms.server = ps.ao_server\n"
+						+ "  INNER JOIN postgresql.\"Host\" ps ON ms.server = ps.ao_server\n"
 						+ "WHERE\n"
 						+ "  ms.username=?",
 						username
@@ -6947,14 +6930,14 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new PostgresServer(),
+					new com.aoindustries.aoserv.client.postgresql.Server(),
 					"SELECT\n"
 					+ "  ps.*\n"
 					+ "FROM\n"
 					+ "             account.\"Username\"    un\n"
 					+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
 					+ "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
-					+ "  INNER JOIN postgresql.\"Server\"   ps ON bs.server     = ps.ao_server\n"
+					+ "  INNER JOIN postgresql.\"Host\"   ps ON bs.server     = ps.ao_server\n"
 					+ "WHERE\n"
 					+ "  un.username = ?",
 					username
@@ -6968,14 +6951,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new PostgresUser(),
+						new User(),
 						"select * from postgresql.\"User\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new PostgresUser(),
+						new User(),
 						"select distinct\n"
 						+ "  pu.*\n"
 						+ "from\n"
@@ -6997,7 +6980,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new PostgresUser(),
+					new User(),
 					"select\n"
 					+ "  pu.*\n"
 					+ "from\n"
@@ -7025,7 +7008,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new PostgresVersion(),
+					new Version(),
 					"select * from postgresql.\"Version\""
 				);
 				break;
@@ -7037,14 +7020,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new PrivateFTPServer(),
+						new PrivateServer(),
 						"select * from ftp.\"PrivateServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new PrivateFTPServer(),
+						new PrivateServer(),
 						"select\n"
 						+ "  pfs.*\n"
 						+ "from\n"
@@ -7063,7 +7046,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new PrivateFTPServer(),
+						new PrivateServer(),
 						"select\n"
 						+ "  pfs.*\n"
 						+ "from\n"
@@ -7102,7 +7085,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new Protocol(),
+					new AppProtocol(),
 					"select * from net.\"AppProtocol\""
 				);
 				break;
@@ -7209,7 +7192,7 @@ final public class TableHandler {
 				break;
 			case SCHEMA_COLUMNS :
 				{
-					List<SchemaColumn> clientColumns=new ArrayList<>();
+					List<Column> clientColumns=new ArrayList<>();
 					PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
 						"select\n"
 						+ "  sc.id,\n"
@@ -7224,13 +7207,13 @@ final public class TableHandler {
 						+ "  sc.\"isPublic\",\n"
 						+ "  coalesce(sc.description, d.description, '') as description\n"
 						+ "from\n"
-						+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
+						+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
 						+ "             \"schema\".\"Column\"              sc\n"
 						+ "  inner join \"schema\".\"Table\"               st on sc.\"table\"        =      st.id\n"
 						+ "  inner join \"schema\".\"Schema\"               s on st.\"schema\"       =       s.id\n"
 						+ "  inner join \"schema\".\"Type\"                ty on sc.\"type\"         =      ty.id\n"
-						+ "  inner join \"schema\".\"AOServProtocol\"   sc_ap on sc.\"sinceVersion\" =   sc_ap.version\n"
-						+ "  left  join \"schema\".\"AOServProtocol\" last_ap on sc.\"lastVersion\"  = last_ap.version\n"
+						+ "  inner join \"schema\".\"AoservProtocol\"   sc_ap on sc.\"sinceVersion\" =   sc_ap.version\n"
+						+ "  left  join \"schema\".\"AoservProtocol\" last_ap on sc.\"lastVersion\"  = last_ap.version\n"
 						+ "  left  join (\n"
 						+ "    select\n"
 						+ "      pn.nspname, pc.relname, pa.attname, pd.description\n"
@@ -7255,7 +7238,7 @@ final public class TableHandler {
 						try {
 							short clientColumnIndex = 0;
 							String lastTableName=null;
-							SchemaColumn tempSC=new SchemaColumn();
+							Column tempSC=new Column();
 							while(results.next()) {
 								tempSC.init(results);
 								// Change the table ID if on next table
@@ -7265,7 +7248,7 @@ final public class TableHandler {
 									lastTableName=tableName;
 								}
 								clientColumns.add(
-									new SchemaColumn(
+									new Column(
 										tempSC.getPkey(),
 										tableName,
 										tempSC.getName(),
@@ -7303,14 +7286,14 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new SchemaForeignKey(),
+					new ForeignKey(),
 					"select\n"
 					+ "  sfk.*\n"
 					+ "from\n"
-					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
+					+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
 					+ "  \"schema\".\"ForeignKey\" sfk\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on sfk.\"sinceVersion\"=\"sinceVersion\".version\n"
-					+ "  left join \"schema\".\"AOServProtocol\" \"lastVersion\" on sfk.\"lastVersion\"=\"lastVersion\".version\n"
+					+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on sfk.\"sinceVersion\"=\"sinceVersion\".version\n"
+					+ "  left join \"schema\".\"AoservProtocol\" \"lastVersion\" on sfk.\"lastVersion\"=\"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
 					+ "  and client_ap.created >= \"sinceVersion\".created\n"
@@ -7320,7 +7303,7 @@ final public class TableHandler {
 				break;
 			case SCHEMA_TABLES :
 				{
-					List<SchemaTable> clientTables=new ArrayList<>();
+					List<Table> clientTables=new ArrayList<>();
 					PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
 						"select\n"
 						+ "  st.id,\n"
@@ -7331,11 +7314,11 @@ final public class TableHandler {
 						+ "  st.\"isPublic\",\n"
 						+ "  coalesce(st.description, d.description, '') as description\n"
 						+ "from\n"
-						+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
+						+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
 						+ "             \"schema\".\"Table\"                        st\n"
 						+ "  inner join \"schema\".\"Schema\"                        s on st.\"schema\"       =                s.id\n"
-						+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
-						+ "  left  join \"schema\".\"AOServProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
+						+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+						+ "  left  join \"schema\".\"AoservProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
 						+ "  left  join (\n"
 						+ "    select\n"
 						+ "      pn.nspname, pc.relname, pd.description\n"
@@ -7357,11 +7340,11 @@ final public class TableHandler {
 						ResultSet results=pstmt.executeQuery();
 						try {
 							int clientTableID=0;
-							SchemaTable tempST=new SchemaTable();
+							Table tempST=new Table();
 							while(results.next()) {
 								tempST.init(results);
 								clientTables.add(
-									new SchemaTable(
+									new Table(
 										clientTableID++,
 										tempST.getName(),
 										tempST.getSinceVersion_version(),
@@ -7395,17 +7378,17 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new SchemaType(),
+					new Type(),
 					"select\n"
 					+ "  st.id,\n"
 					+ "  st.\"name\",\n"
 					+ "  st.\"sinceVersion\",\n"
 					+ "  st.\"lastVersion\"\n"
 					+ "from\n"
-					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
+					+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
 					+ "             \"schema\".\"Type\"           st\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
-					+ "  left  join \"schema\".\"AOServProtocol\" \"lastVersion\"  on st.\"lastVersion\"  =  \"lastVersion\".version\n"
+					+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+					+ "  left  join \"schema\".\"AoservProtocol\" \"lastVersion\"  on st.\"lastVersion\"  =  \"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
 					+ "  and client_ap.created >= \"sinceVersion\".created\n"
@@ -7423,14 +7406,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new EmailDomain(),
+						new Domain(),
 						"select * from email.\"Domain\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new EmailDomain(),
+						new Domain(),
 						"select\n"
 						+ "  ed.*\n"
 						+ "from\n"
@@ -7446,7 +7429,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailDomain(),
+					new Domain(),
 					"select\n"
 					+ "  ed.*\n"
 					+ "from\n"
@@ -7472,7 +7455,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailSmtpRelayType(),
+					new SmtpRelayType(),
 					"select * from email.\"SmtpRelayType\""
 				);
 				break;
@@ -7484,14 +7467,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new EmailSmtpRelay(),
+						new SmtpRelay(),
 						"select * from email.\"SmtpRelay\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new EmailSmtpRelay(),
+						new SmtpRelay(),
 						"select distinct\n"
 						+ "  esr.*\n"
 						+ "from\n"
@@ -7510,7 +7493,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new EmailSmtpRelay(),
+					new SmtpRelay(),
 					"select distinct\n"
 					+ "  esr.*\n"
 					+ "from\n"
@@ -7541,14 +7524,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new EmailSmtpSmartHostDomain(),
+						new SmtpSmartHostDomain(),
 						"select * from email.\"SmtpSmartHostDomain\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new EmailSmtpSmartHostDomain(),
+						new SmtpSmartHostDomain(),
 						"select\n"
 						+ "  esshd.*\n"
 						+ "from\n"
@@ -7567,7 +7550,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new PrivateFTPServer(),
+						new PrivateServer(),
 						"select\n"
 						+ "  esshd.*\n"
 						+ "from\n"
@@ -7598,14 +7581,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new EmailSmtpSmartHost(),
+						new SmtpSmartHost(),
 						"select * from email.\"SmtpSmartHost\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new EmailSmtpSmartHost(),
+						new SmtpSmartHost(),
 						"select\n"
 						+ "  essh.*\n"
 						+ "from\n"
@@ -7624,7 +7607,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new PrivateFTPServer(),
+						new PrivateServer(),
 						"select\n"
 						+ "  essh.*\n"
 						+ "from\n"
@@ -7719,7 +7702,7 @@ final public class TableHandler {
 					+ "      and (\n"
 					+ PK3_BU2_PARENTS_WHERE
 					+ "      )\n"
-					+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+					+ "      and bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
 					+ "      and pk4.id=ss.package\n"
 					+ "  )",
 					username,
@@ -7799,7 +7782,7 @@ final public class TableHandler {
 					+ "      and (\n"
 					+ PK3_BU2_PARENTS_WHERE
 					+ "      )\n"
-					+ "      and bu"+Business.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+					+ "      and bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
 					+ "      and pk4.id=ss.package\n"
 					+ "  )",
 					username,
@@ -7875,23 +7858,23 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new Server(),
+						new Host(),
 						"select * from net.\"Host\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new Server(),
+						new Host(),
 						"select distinct\n"
 						+ "  se.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
-						+ "  left join linux.\"Server\" ao on ms.server=ao.server\n"
+						+ "  left join linux.\"Host\" ao on ms.server=ao.server\n"
 						// Allow its failover parent
-						+ "  left join linux.\"Server\" ff on ao.failover_server=ff.server\n"
+						+ "  left join linux.\"Host\" ff on ao.failover_server=ff.server\n"
 						// Allow its failover children
-						+ "  left join linux.\"Server\" fs on ao.server=fs.failover_server\n"
+						+ "  left join linux.\"Host\" fs on ao.server=fs.failover_server\n"
 						// Allow servers it replicates to
 						+ "  left join backup.\"FileReplication\" ffr on ms.server=ffr.server\n"
 						+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
@@ -7915,7 +7898,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new Server(),
+					new Host(),
 					"select distinct\n"
 					+ "  se.*\n"
 					+ "from\n"
@@ -7957,11 +7940,11 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new SignupRequestOption(),
+							new Option(),
 							"select * from signup.\"Option\""
 						);
 					} else {
-						List<SignupRequestOption> emptyList = Collections.emptyList();
+						List<Option> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else {
@@ -7970,7 +7953,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new SignupRequestOption(),
+						new Option(),
 						"select\n"
 						+ "  sro.*\n"
 						+ "from\n"
@@ -8000,7 +7983,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new SignupRequest(),
+							new Request(),
 							"select\n"
 							+ "  id\n"
 							+ "  brand,\n"
@@ -8043,7 +8026,7 @@ final public class TableHandler {
 							+ "  signup.\"Request\""
 						);
 					} else {
-						List<SignupRequest> emptyList = Collections.emptyList();
+						List<Request> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else {
@@ -8052,7 +8035,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new SignupRequest(),
+						new Request(),
 						"select\n"
 						+ "  sr.id\n"
 						+ "  sr.brand,\n"
@@ -8113,7 +8096,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new SpamEmailMessage(),
+					new SpamMessage(),
 					"select * from email.\"SpamMessage\""
 				); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
 				break;
@@ -8125,14 +8108,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new SslCertificateName(),
+						new CertificateName(),
 						"select * from pki.\"CertificateName\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new SslCertificateName(),
+						new CertificateName(),
 						"select\n"
 						+ "  scn.*\n"
 						+ "from\n"
@@ -8148,7 +8131,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new SslCertificateName(),
+					new CertificateName(),
 					"select\n"
 					+ "  scn.*\n"
 					+ "from\n"
@@ -8178,14 +8161,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new SslCertificateOtherUse(),
+						new CertificateOtherUse(),
 						"select * from pki.\"CertificateOtherUse\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new SslCertificateOtherUse(),
+						new CertificateOtherUse(),
 						"select\n"
 						+ "  scou.*\n"
 						+ "from\n"
@@ -8201,7 +8184,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new SslCertificateOtherUse(),
+					new CertificateOtherUse(),
 					"select\n"
 					+ "  scou.*\n"
 					+ "from\n"
@@ -8231,14 +8214,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new SslCertificate(),
+						new Certificate(),
 						"select * from pki.\"Certificate\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new SslCertificate(),
+						new Certificate(),
 						"select\n"
 						+ "  sc.*\n"
 						+ "from\n"
@@ -8253,7 +8236,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new SslCertificate(),
+					new Certificate(),
 					"select\n"
 					+ "  sc.*\n"
 					+ "from\n"
@@ -8281,14 +8264,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new SystemEmailAlias(),
+						new SystemAlias(),
 						"select * from email.\"SystemAlias\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new SystemEmailAlias(),
+						new SystemAlias(),
 						"select\n"
 						+ "  sea.*\n"
 						+ "from\n"
@@ -8304,7 +8287,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new SystemEmailAlias(),
+					new SystemAlias(),
 					"select\n"
 					+ "  sea.*\n"
 					+ "from\n"
@@ -8326,7 +8309,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new TechnologyClass(),
+					new SoftwareCategory(),
 					"select * from distribution.\"SoftwareCategory\""
 				);
 				break;
@@ -8336,7 +8319,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new TechnologyName(),
+					new Software(),
 					"select * from distribution.\"Software\""
 				);
 				break;
@@ -8346,7 +8329,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new Technology(),
+					new SoftwareCategorization(),
 					"select * from distribution.\"SoftwareCategorization\""
 				);
 				break;
@@ -8356,20 +8339,20 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new TechnologyVersion(),
+					new SoftwareVersion(),
 					"select * from distribution.\"SoftwareVersion\""
 				); else MasterServer.writeObjects(
 					conn,
 					source,
 					out,
 					provideProgress,
-					new TechnologyVersion(),
+					new SoftwareVersion(),
 					"select\n"
 					+ "  id,\n"
 					+ "  name,\n"
 					+ "  version,\n"
 					+ "  updated,\n"
-					+ "  '"+AOServProtocol.FILTERED+"'::text,\n"
+					+ "  '"+AoservProtocol.FILTERED+"'::text,\n"
 					+ "  operating_system_version,\n"
 					+ "  disable_time,\n"
 					+ "  disable_reason\n"
@@ -8383,7 +8366,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new TicketActionType(),
+					new ActionType(),
 					"select * from ticket.\"ActionType\""
 				);
 				break;
@@ -8395,7 +8378,7 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new TicketAction(),
+						new Action(),
 						"select\n"
 						+ "  id,\n"
 						+ "  ticket,\n"
@@ -8419,7 +8402,7 @@ final public class TableHandler {
 						+ "from\n"
 						+ "  ticket.\"Action\""
 					); else {
-						List<TicketAction> emptyList = Collections.emptyList();
+						List<Action> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else {
@@ -8430,7 +8413,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new TicketAction(),
+							new Action(),
 							"select\n"
 							+ "  ta.id,\n"
 							+ "  ta.ticket,\n"
@@ -8478,7 +8461,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new TicketAction(),
+							new Action(),
 							"select\n"
 							+ "  ta.id,\n"
 							+ "  ta.ticket,\n"
@@ -8530,10 +8513,10 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new TicketAssignment(),
+						new Assignment(),
 						"select * from ticket.\"Assignment\""
 					); else {
-						List<TicketAssignment> emptyList = Collections.emptyList();
+						List<Assignment> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else {
@@ -8544,7 +8527,7 @@ final public class TableHandler {
 							source,
 							out,
 							provideProgress,
-							new TicketAction(),
+							new Action(),
 							"select\n"
 							+ "  ta.*\n"
 							+ "from\n"
@@ -8569,7 +8552,7 @@ final public class TableHandler {
 						);
 					} else {
 						// Non-admins don't get any assignment details
-						List<TicketAssignment> emptyList = Collections.emptyList();
+						List<Assignment> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				}
@@ -8582,10 +8565,10 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new TicketBrandCategory(),
+						new BrandCategory(),
 						"select * from reseller.\"BrandCategory\""
 					); else {
-						List<TicketBrandCategory> emptyList = Collections.emptyList();
+						List<BrandCategory> emptyList = Collections.emptyList();
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 				} else MasterServer.writeObjects(
@@ -8593,7 +8576,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new TicketBrandCategory(),
+					new BrandCategory(),
 					"select\n"
 					+ "  tbc.*\n"
 					+ "from\n"
@@ -8616,7 +8599,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new TicketCategory(),
+					new Category(),
 					"select * from reseller.\"Category\""
 				);
 				break;
@@ -8626,7 +8609,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new TicketPriority(),
+					new Priority(),
 					"select * from ticket.\"Priority\""
 				);
 				break;
@@ -8636,7 +8619,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new TicketStatus(),
+					new Status(),
 					"select * from ticket.\"Status\""
 				);
 				break;
@@ -8719,9 +8702,9 @@ final public class TableHandler {
 							+ "  and ti.status in (?,?,?)\n"
 							+ "  and ti.ticket_type=?",
 							username,
-							TicketStatus.OPEN,
-							TicketStatus.HOLD,
-							TicketStatus.BOUNCED,
+							Status.OPEN,
+							Status.HOLD,
+							Status.BOUNCED,
 							TicketType.LOGS
 						);
 					}
@@ -8886,7 +8869,7 @@ final public class TableHandler {
 						+ "  un.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
-						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
+						+ "  left join linux.\"Host\" ff on ms.server=ff.failover_server,\n"
 						+ "  account.\"AccountHost\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un\n"
@@ -8918,7 +8901,7 @@ final public class TableHandler {
 					+ "  and un1.package=pk1.name\n"
 					+ "  and (\n"
 					+ "    un2.username=un1.username\n"
-					+ "    or un2.username='"+LinuxAccount.MAIL+"'\n"
+					+ "    or un2.username='"+com.aoindustries.aoserv.client.linux.User.MAIL+"'\n"
 					+ PK1_BU1_PARENTS_OR_WHERE
 					+ "  )\n"
 					+ "  and bu1.accounting=pk2.accounting\n"
@@ -8932,7 +8915,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new USState(),
+					new UsState(),
 					"select * from account.\"UsState\""
 				);
 				break;
@@ -9043,7 +9026,7 @@ final public class TableHandler {
 					+ "    when (\n"
 					+ "      select bs2.id from account.\"AccountHost\" bs2 where bs2.accounting=pk.accounting and bs2.server=vs.server and bs2.can_vnc_console limit 1\n"
 					+ "    ) is not null then vs.vnc_password\n"
-					+ "    else '"+AOServProtocol.FILTERED+"'::text\n"
+					+ "    else '"+AoservProtocol.FILTERED+"'::text\n"
 					+ "  end\n"
 					+ "from\n"
 					+ "  account.\"Username\" un,\n"
@@ -9128,10 +9111,10 @@ final public class TableHandler {
 		switch(tableName) {
 			case "mysql.mysql_reserved_words" :
 				if(
-					source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_100) >= 0
-					&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80) <= 0
+					source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
+					&& source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
 				) {
-					MySQLServer.ReservedWord[] reservedWords = MySQLServer.ReservedWord.values();
+					com.aoindustries.aoserv.client.mysql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.mysql.Server.ReservedWord.values();
 					MasterServer.writeObjects(
 						source,
 						clientOut,
@@ -9155,8 +9138,8 @@ final public class TableHandler {
 				break;
 			case "net.net_protocols" :
 				if(
-					source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_100) >= 0
-					&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80) <= 0
+					source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
+					&& source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
 				) {
 					// Send in lowercase
 					com.aoindustries.net.Protocol[] netProtocols = com.aoindustries.net.Protocol.values();
@@ -9183,10 +9166,10 @@ final public class TableHandler {
 				break;
 			case "postgresql.postgres_reserved_words" :
 				if(
-					source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_0_A_100) >= 0
-					&& source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80) <= 0
+					source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
+					&& source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
 				) {
-					PostgresServer.ReservedWord[] reservedWords = PostgresServer.ReservedWord.values();
+					com.aoindustries.aoserv.client.postgresql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.postgresql.Server.ReservedWord.values();
 					MasterServer.writeObjects(
 						source,
 						clientOut,
@@ -9217,7 +9200,7 @@ final public class TableHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		SchemaTable.TableID tableID,
+		Table.TableID tableID,
 		int server
 	) throws SQLException, IOException {
 		checkInvalidator(conn, source, "invalidate");
@@ -9235,7 +9218,7 @@ final public class TableHandler {
 	}
 
 	public static boolean isInvalidator(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-		MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+		User mu=MasterServer.getUser(conn, source.getUsername());
 		return mu!=null && mu.canInvalidateTables();
 	}
 
@@ -9245,7 +9228,7 @@ final public class TableHandler {
 	/**
 	 * Gets the table name, with schema prefixed.
 	 *
-	 * @see  #getTableName(com.aoindustries.dbc.DatabaseAccess, com.aoindustries.aoserv.client.SchemaTable.TableID)
+	 * @see  #getTableName(com.aoindustries.dbc.DatabaseAccess, com.aoindustries.aoserv.client.Table.TableID)
 	 */
 	public static String getTableNameForDBTableID(DatabaseAccess conn, Integer dbTableId) throws SQLException {
 		synchronized(tableNamesLock) {
@@ -9279,27 +9262,27 @@ final public class TableHandler {
 	 *
 	 * @see  #getTableNameForDBTableID(com.aoindustries.dbc.DatabaseAccess, java.lang.Integer)
 	 */
-	public static String getTableName(DatabaseAccess conn, SchemaTable.TableID tableID) throws IOException, SQLException {
+	public static String getTableName(DatabaseAccess conn, Table.TableID tableID) throws IOException, SQLException {
 		return getTableNameForDBTableID(
 			conn,
 			convertClientTableIDToDBTableID(
 				conn,
-				AOServProtocol.Version.CURRENT_VERSION,
+				AoservProtocol.Version.CURRENT_VERSION,
 				tableID.ordinal()
 			)
 		);
 	}
 
-	final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> fromClientTableIDs=new EnumMap<>(AOServProtocol.Version.class);
+	final private static EnumMap<AoservProtocol.Version,Map<Integer,Integer>> fromClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
 
 	/**
-	 * Converts a specific AOServProtocol version table ID to the number used in the database storage.
+	 * Converts a specific AoservProtocol version table ID to the number used in the database storage.
 	 *
 	 * @return  the {@code id} used in the database or {@code -1} if unknown
 	 */
 	public static int convertClientTableIDToDBTableID(
 		DatabaseAccess conn,
-		AOServProtocol.Version version,
+		AoservProtocol.Version version,
 		int clientTableID
 	) throws IOException, SQLException {
 		synchronized(fromClientTableIDs) {
@@ -9309,10 +9292,10 @@ final public class TableHandler {
 					"select\n"
 					+ "  st.id\n"
 					+ "from\n"
-					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
+					+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
 					+ "  \"schema\".\"Table\"          st\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
-					+ "  left  join \"schema\".\"AOServProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
+					+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+					+ "  left  join \"schema\".\"AoservProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
 					+ "  and client_ap.created >= \"sinceVersion\".created\n"
@@ -9333,11 +9316,11 @@ final public class TableHandler {
 		}
 	}
 
-	final private static EnumMap<AOServProtocol.Version,Map<Integer,Integer>> toClientTableIDs=new EnumMap<>(AOServProtocol.Version.class);
+	final private static EnumMap<AoservProtocol.Version,Map<Integer,Integer>> toClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
 
 	public static int convertDBTableIDToClientTableID(
 		DatabaseConnection conn,
-		AOServProtocol.Version version,
+		AoservProtocol.Version version,
 		int tableID
 	) throws IOException, SQLException {
 		synchronized(toClientTableIDs) {
@@ -9347,10 +9330,10 @@ final public class TableHandler {
 					"select\n"
 					+ "  st.id\n"
 					+ "from\n"
-					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
+					+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
 					+ "             \"schema\".\"Table\"                      st\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
-					+ "  left  join \"schema\".\"AOServProtocol\"  \"lastVersion\" on st.\"lastVersion\"  = \"lastVersion\".version\n"
+					+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+					+ "  left  join \"schema\".\"AoservProtocol\"  \"lastVersion\" on st.\"lastVersion\"  = \"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
 					+ "  and client_ap.created >= \"sinceVersion\".created\n"
@@ -9373,36 +9356,36 @@ final public class TableHandler {
 	}
 
 	/**
-	 * Converts the client's AOServProtocol-version-specific table ID to the version used by the master's AOServProtocol version.
+	 * Converts the client's AoservProtocol-version-specific table ID to the version used by the master's AoservProtocol version.
 	 *
-	 * @return  The <code>SchemaTable.TableID</code> or <code>null</code> if no match.
+	 * @return  The <code>Table.TableID</code> or <code>null</code> if no match.
 	 */
-	public static SchemaTable.TableID convertFromClientTableID(
+	public static Table.TableID convertFromClientTableID(
 		DatabaseConnection conn,
 		RequestSource source,
 		int clientTableID
 	) throws IOException, SQLException {
 		int dbTableID=convertClientTableIDToDBTableID(conn, source.getProtocolVersion(), clientTableID);
 		if(dbTableID==-1) return null;
-		int tableID = convertDBTableIDToClientTableID(conn, AOServProtocol.Version.CURRENT_VERSION, dbTableID);
+		int tableID = convertDBTableIDToClientTableID(conn, AoservProtocol.Version.CURRENT_VERSION, dbTableID);
 		if(tableID==-1) return null;
 		return _tableIDs[tableID];
 	}
 
 	/**
-	 * Converts a local (Master AOServProtocol) table ID to a client-version matched table ID.
+	 * Converts a local (Master AoservProtocol) table ID to a client-version matched table ID.
 	 */
 	public static int convertToClientTableID(
 		DatabaseConnection conn,
 		RequestSource source,
-		SchemaTable.TableID tableID
+		Table.TableID tableID
 	) throws IOException, SQLException {
-		int dbTableID=convertClientTableIDToDBTableID(conn, AOServProtocol.Version.CURRENT_VERSION, tableID.ordinal());
+		int dbTableID=convertClientTableIDToDBTableID(conn, AoservProtocol.Version.CURRENT_VERSION, tableID.ordinal());
 		if(dbTableID==-1) return -1;
 		return convertDBTableIDToClientTableID(conn, source.getProtocolVersion(), dbTableID);
 	}
 
-	final private static EnumMap<AOServProtocol.Version,Map<SchemaTable.TableID,Map<String,Integer>>> clientColumnIndexes=new EnumMap<>(AOServProtocol.Version.class);
+	final private static EnumMap<AoservProtocol.Version,Map<Table.TableID,Map<String,Integer>>> clientColumnIndexes=new EnumMap<>(AoservProtocol.Version.class);
 
 	/*
 	 * 2018-11-18: This method appears unused.
@@ -9411,14 +9394,14 @@ final public class TableHandler {
 	public static int getClientColumnIndex(
 		DatabaseConnection conn,
 		RequestSource source,
-		SchemaTable.TableID tableID,
+		Table.TableID tableID,
 		String columnName
 	) throws IOException, SQLException {
 		// Get the list of resolved tables for the requested version
-		AOServProtocol.Version version = source.getProtocolVersion();
+		AoservProtocol.Version version = source.getProtocolVersion();
 		synchronized(clientColumnIndexes) {
-			Map<SchemaTable.TableID,Map<String,Integer>> tables = clientColumnIndexes.get(version);
-			if(tables==null) clientColumnIndexes.put(version, tables = new EnumMap<>(SchemaTable.TableID.class));
+			Map<Table.TableID,Map<String,Integer>> tables = clientColumnIndexes.get(version);
+			if(tables==null) clientColumnIndexes.put(version, tables = new EnumMap<>(Table.TableID.class));
 
 			// Find the list of columns for this table
 			Map<String,Integer> columns = tables.get(tableID);
@@ -9428,10 +9411,10 @@ final public class TableHandler {
 					"select\n"
 					+ "  sc.\"name\"\n"
 					+ "from\n"
-					+ "  \"schema\".\"AOServProtocol\" client_ap,\n"
+					+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
 					+ "             \"schema\".\"Column\"                     sc\n"
-					+ "  inner join \"schema\".\"AOServProtocol\" \"sinceVersion\" on sc.\"sinceVersion\" = \"sinceVersion\".version\n"
-					+ "  left  join \"schema\".\"AOServProtocol\"  \"lastVersion\" on sc.\"lastVersion\"  =  \"lastVersion\".version\n"
+					+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on sc.\"sinceVersion\" = \"sinceVersion\".version\n"
+					+ "  left  join \"schema\".\"AoservProtocol\"  \"lastVersion\" on sc.\"lastVersion\"  =  \"lastVersion\".version\n"
 					+ "where\n"
 					+ "  client_ap.version=?\n"
 					+ "  and client_ap.created >= \"sinceVersion\".created\n"
@@ -9455,13 +9438,13 @@ final public class TableHandler {
 	}
 	 */
 
-	public static void invalidateTable(SchemaTable.TableID tableID) {
-		if(tableID == SchemaTable.TableID.SCHEMA_TABLES) {
+	public static void invalidateTable(Table.TableID tableID) {
+		if(tableID == Table.TableID.SCHEMA_TABLES) {
 			synchronized(tableNamesLock) {
 				tableNames = null;
 			}
 		}
-		if(tableID==SchemaTable.TableID.AOSERV_PROTOCOLS || tableID==SchemaTable.TableID.SCHEMA_TABLES) {
+		if(tableID==Table.TableID.AOSERV_PROTOCOLS || tableID==Table.TableID.SCHEMA_TABLES) {
 			synchronized(fromClientTableIDs) {
 				fromClientTableIDs.clear();
 			}
@@ -9469,7 +9452,7 @@ final public class TableHandler {
 				toClientTableIDs.clear();
 			}
 		}
-		if(tableID==SchemaTable.TableID.AOSERV_PROTOCOLS || tableID==SchemaTable.TableID.SCHEMA_COLUMNS) {
+		if(tableID==Table.TableID.AOSERV_PROTOCOLS || tableID==Table.TableID.SCHEMA_COLUMNS) {
 			synchronized(clientColumnIndexes) {
 				clientColumnIndexes.clear();
 			}
@@ -9482,7 +9465,7 @@ final public class TableHandler {
 			+ "  se.operating_system_version\n"
 			+ "from\n"
 			+ "  master.\"UserHost\" ms,\n"
-			+ "  linux.\"Server\" ao,\n"
+			+ "  linux.\"Host\" ao,\n"
 			+ "  net.\"Host\" se,\n"
 			+ "  distribution.\"OperatingSystemVersion\" osv\n"
 			+ "where\n"

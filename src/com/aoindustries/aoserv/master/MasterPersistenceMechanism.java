@@ -5,7 +5,7 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.account.BusinessAdministrator;
+import com.aoindustries.aoserv.client.account.Administrator;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.creditcards.AuthorizationResult;
@@ -33,7 +33,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 
 	/**
 	 * The username used for actions taken directly by the AOServMaster
-	 * but that must be associated with a {@link BusinessAdministrator}.
+	 * but that must be associated with a {@link Administrator}.
 	 */
 	static final UserId MASTER_BUSINESS_ADMINISTRATOR;
 	static {

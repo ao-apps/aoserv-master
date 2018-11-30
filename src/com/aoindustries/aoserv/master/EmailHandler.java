@@ -5,18 +5,17 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.email.EmailList;
-import com.aoindustries.aoserv.client.email.EmailSmtpRelay;
 import com.aoindustries.aoserv.client.email.InboxAttributes;
+import com.aoindustries.aoserv.client.email.List;
 import com.aoindustries.aoserv.client.email.MajordomoList;
 import com.aoindustries.aoserv.client.email.MajordomoServer;
-import com.aoindustries.aoserv.client.email.SpamEmailMessage;
-import com.aoindustries.aoserv.client.linux.LinuxAccount;
-import com.aoindustries.aoserv.client.linux.LinuxAccountType;
-import com.aoindustries.aoserv.client.linux.LinuxGroup;
-import com.aoindustries.aoserv.client.linux.LinuxGroupType;
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.email.SmtpRelay;
+import com.aoindustries.aoserv.client.email.SpamMessage;
+import com.aoindustries.aoserv.client.linux.Group;
+import com.aoindustries.aoserv.client.linux.GroupType;
+import com.aoindustries.aoserv.client.linux.UserType;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.GroupId;
 import com.aoindustries.aoserv.client.validator.UnixPath;
@@ -57,9 +56,9 @@ final public class EmailHandler {
 	private final static Map<Integer,Boolean> disabledEmailSmtpRelays=new HashMap<>();
 
 	public static boolean canAccessEmailDomain(DatabaseConnection conn, RequestSource source, int domain) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 				return ServerHandler.canAccessServer(conn, source, getAOServerForEmailDomain(conn, domain));
 			} else {
 				return true;
@@ -70,9 +69,9 @@ final public class EmailHandler {
 	}
 
 	public static void checkAccessEmailDomain(DatabaseConnection conn, RequestSource source, String action, int domain) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 				ServerHandler.checkAccessServer(conn, source, action, getAOServerForEmailDomain(conn, domain));
 			}
 		} else {
@@ -81,9 +80,9 @@ final public class EmailHandler {
 	}
 
 	public static void checkAccessEmailSmtpRelay(DatabaseConnection conn, RequestSource source, String action, int id) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 				ServerHandler.checkAccessServer(conn, source, action, getAOServerForEmailSmtpRelay(conn, id));
 			}
 		} else {
@@ -101,7 +100,7 @@ final public class EmailHandler {
 
 	public static void checkAccessEmailListPath(DatabaseConnection conn, RequestSource source, String action, int aoServer, UnixPath path) throws IOException, SQLException {
 		if(
-			!EmailList.isValidRegularPath(
+			!List.isValidRegularPath(
 				path,
 				ServerHandler.getOperatingSystemVersionForServer(conn, aoServer)
 			)
@@ -129,9 +128,9 @@ final public class EmailHandler {
 	}
 
 	public static void checkAccessEmailPipe(DatabaseConnection conn, RequestSource source, String action, int pipe) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 				ServerHandler.checkAccessServer(conn, source, action, getAOServerForEmailPipe(conn, pipe));
 			}
 		} else {
@@ -187,7 +186,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_ADDRESSES,
+			Table.TableID.EMAIL_ADDRESSES,
 			getBusinessForEmailAddress(conn, id),
 			getAOServerForEmailAddress(conn, id),
 			false
@@ -231,7 +230,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_FORWARDING,
+			Table.TableID.EMAIL_FORWARDING,
 			getBusinessForEmailAddress(conn, address),
 			getAOServerForEmailAddress(conn, address),
 			false
@@ -252,7 +251,7 @@ final public class EmailHandler {
 
 		// Allow the mail user
 		UserId username=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, linuxServerAccount);
-		if(!username.equals(LinuxAccount.MAIL)) LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addEmailList", linuxServerAccount);
+		if(!username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addEmailList", linuxServerAccount);
 		// Check the group
 		LinuxAccountHandler.checkAccessLinuxServerGroup(conn, source, "addEmailList", linuxServerGroup);
 
@@ -271,9 +270,9 @@ final public class EmailHandler {
 		int linuxServerAccount,
 		int linuxServerGroup
 	) throws IOException, SQLException {
-		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, linuxServerAccount)) throw new SQLException("Unable to add EmailList, LinuxServerAccount disabled: "+linuxServerAccount);
+		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, linuxServerAccount)) throw new SQLException("Unable to add List, UserServer disabled: "+linuxServerAccount);
 		AccountingCode packageName=LinuxAccountHandler.getPackageForLinuxServerGroup(conn, linuxServerGroup);
-		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add EmailList, Package disabled: "+packageName);
+		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add List, Package disabled: "+packageName);
 
 		// The server for both account and group must be the same
 		int accountAOServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, linuxServerAccount);
@@ -298,7 +297,7 @@ final public class EmailHandler {
 				path,
 				groupAOServer
 			)
-		) throw new SQLException("EmailList path already used: "+path+" on "+groupAOServer);
+		) throw new SQLException("List path already used: "+path+" on "+groupAOServer);
 
 		int id = conn.executeIntUpdate(
 			"INSERT INTO email.\"List\" (\n"
@@ -327,7 +326,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_LISTS,
+			Table.TableID.EMAIL_LISTS,
 			InvalidateList.allBusinesses,
 			accountAOServer,
 			false
@@ -374,7 +373,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_LIST_ADDRESSES,
+			Table.TableID.EMAIL_LIST_ADDRESSES,
 			getBusinessForEmailAddress(conn, address),
 			getAOServerForEmailAddress(conn, address),
 			false
@@ -415,14 +414,14 @@ final public class EmailHandler {
 		String command,
 		AccountingCode packageName
 	) throws IOException, SQLException {
-		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add EmailPipe, Package disabled: "+packageName);
+		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add Pipe, Package disabled: "+packageName);
 
 		int id = conn.executeIntUpdate("INSERT INTO email.\"Pipe\" VALUES (default,?,?,?,null) RETURNING id", aoServer, command, packageName);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_PIPES,
+			Table.TableID.EMAIL_PIPES,
 			PackageHandler.getBusinessForPackage(conn, packageName),
 			aoServer,
 			false
@@ -459,7 +458,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_PIPE_ADDRESSES,
+			Table.TableID.EMAIL_PIPE_ADDRESSES,
 			getBusinessForEmailAddress(conn, address),
 			getAOServerForEmailAddress(conn, address),
 			false
@@ -478,7 +477,7 @@ final public class EmailHandler {
 		checkAccessEmailAddress(conn, source, "addLinuxAccAddress", address);
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addLinuxAccAddress", lsa);
 		UserId username = LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, lsa);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add email addresses to LinuxAccount named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add email addresses to User named '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 		// TODO: Make sure they are on the same server
 
 		int id = conn.executeIntUpdate("INSERT INTO email.\"InboxAddress\" VALUES (default,?,?) RETURNING id", address, lsa);
@@ -486,7 +485,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.LINUX_ACC_ADDRESSES,
+			Table.TableID.LINUX_ACC_ADDRESSES,
 			getBusinessForEmailAddress(conn, address),
 			getAOServerForEmailAddress(conn, address),
 			false
@@ -512,7 +511,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_DOMAINS,
+			Table.TableID.EMAIL_DOMAINS,
 			PackageHandler.getBusinessForPackage(conn, packageName),
 			aoServer,
 			false
@@ -534,19 +533,19 @@ final public class EmailHandler {
 		long duration
 	) throws IOException, SQLException {
 		// Only master users can add relays
-		MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+		User mu=MasterServer.getUser(conn, source.getUsername());
 		if(mu==null) throw new SQLException("Only master users may add SMTP relays.");
 
 		PackageHandler.checkAccessPackage(conn, source, "addEmailSmtpRelay", packageName);
 		if(aoServer==-1) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) throw new SQLException("Only super-users may add global SMTP relays.");
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) throw new SQLException("Only super-users may add global SMTP relays.");
 		} else {
 			ServerHandler.checkAccessServer(conn, source, "addEmailSmtpRelay", aoServer);
 			PackageHandler.checkPackageAccessServer(conn, source, "addEmailSmtpRelay", packageName, aoServer);
 		}
 		if(duration!=-1 && duration<=0) throw new SQLException("Duration must be positive: "+duration);
 
-		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add EmailSmtpRelay, Package disabled: "+packageName);
+		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add SmtpRelay, Package disabled: "+packageName);
 
 		int id;
 		if(aoServer==-1) {
@@ -571,7 +570,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_SMTP_RELAYS,
+			Table.TableID.EMAIL_SMTP_RELAYS,
 			PackageHandler.getBusinessForPackage(conn, packageName),
 			aoServer,
 			false
@@ -593,8 +592,8 @@ final public class EmailHandler {
 		String message
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
-		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-		com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
+		User masterUser=MasterServer.getUser(conn, username);
+		com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
 		if(masterUser==null || masterServers.length!=0) throw new SQLException("Only master users may add spam email messages.");
 
 		int id = conn.executeIntUpdate(
@@ -606,7 +605,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.SPAM_EMAIL_MESSAGES,
+			Table.TableID.SPAM_EMAIL_MESSAGES,
 			InvalidateList.allBusinesses,
 			InvalidateList.allServers,
 			false
@@ -704,7 +703,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.MAJORDOMO_LISTS,
+			Table.TableID.MAJORDOMO_LISTS,
 			PackageHandler.getBusinessForPackage(conn, packageName),
 			aoServer,
 			false
@@ -745,24 +744,24 @@ final public class EmailHandler {
 		checkAccessEmailDomain(conn, source, "addMajordomoServer", domain);
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addMajordomoServer", lsa);
 		UserId lsaUsername=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, lsa);
-		if(lsaUsername.equals(LinuxAccount.MAIL)) throw new SQLException("Unable to add MajordomoServer with LinuxServerAccount of '"+lsaUsername+'\'');
+		if(lsaUsername.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Unable to add MajordomoServer with UserServer of '"+lsaUsername+'\'');
 		String lsaType=LinuxAccountHandler.getTypeForLinuxServerAccount(conn, lsa);
 		if(
-			!lsaType.equals(LinuxAccountType.APPLICATION)
-			&& !lsaType.equals(LinuxAccountType.USER)
-		) throw new SQLException("May only add Majordomo servers using Linux accounts of type '"+LinuxAccountType.APPLICATION+"' or '"+LinuxAccountType.USER+"', trying to use '"+lsaType+'\'');
+			!lsaType.equals(UserType.APPLICATION)
+			&& !lsaType.equals(UserType.USER)
+		) throw new SQLException("May only add Majordomo servers using Linux accounts of type '"+UserType.APPLICATION+"' or '"+UserType.USER+"', trying to use '"+lsaType+'\'');
 		LinuxAccountHandler.checkAccessLinuxServerGroup(conn, source, "addMajordomoServer", lsg);
 		GroupId lsgName=LinuxAccountHandler.getGroupNameForLinuxServerGroup(conn, lsg);
 		if(
-			lsgName.equals(LinuxGroup.FTPONLY)
-			|| lsgName.equals(LinuxGroup.MAIL)
-			|| lsgName.equals(LinuxGroup.MAILONLY)
-		) throw new SQLException("Unable to add MajordomoServer with LinuxServerGroup of '"+lsgName+'\'');
+			lsgName.equals(Group.FTPONLY)
+			|| lsgName.equals(Group.MAIL)
+			|| lsgName.equals(Group.MAILONLY)
+		) throw new SQLException("Unable to add MajordomoServer with GroupServer of '"+lsgName+'\'');
 		String lsgType=LinuxAccountHandler.getTypeForLinuxServerGroup(conn, lsg);
 		if(
-			!lsgType.equals(LinuxGroupType.APPLICATION)
-			&& !lsgType.equals(LinuxGroupType.USER)
-		) throw new SQLException("May only add Majordomo servers using Linux groups of type '"+LinuxGroupType.APPLICATION+"' or '"+LinuxGroupType.USER+"', trying to use '"+lsgType+'\'');
+			!lsgType.equals(GroupType.APPLICATION)
+			&& !lsgType.equals(GroupType.USER)
+		) throw new SQLException("May only add Majordomo servers using Linux groups of type '"+GroupType.APPLICATION+"' or '"+GroupType.USER+"', trying to use '"+lsgType+'\'');
 
 		// Data integrity checks
 		int domainAOServer=getAOServerForEmailDomain(conn, domain);
@@ -774,9 +773,9 @@ final public class EmailHandler {
 		// Disabled checks
 		AccountingCode packageName=getPackageForEmailDomain(conn, domain);
 		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add Majordomo server: Package for domain #"+domain+" is disabled: "+packageName);
-		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to add Majordomo server: LinuxServerAccount disabled: "+lsa);
+		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to add Majordomo server: UserServer disabled: "+lsa);
 		AccountingCode lgPackageName=LinuxAccountHandler.getPackageForLinuxServerGroup(conn, lsg);
-		if(PackageHandler.isPackageDisabled(conn, lgPackageName)) throw new SQLException("Unable to add Majordomo server: Package for LinuxServerGroup #"+lsg+" is disabled: "+lgPackageName);
+		if(PackageHandler.isPackageDisabled(conn, lgPackageName)) throw new SQLException("Unable to add Majordomo server: Package for GroupServer #"+lsg+" is disabled: "+lgPackageName);
 
 		// Create the majordomo email pipe
 		DomainName domainName=getDomainForEmailDomain(conn, domain);
@@ -817,7 +816,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.MAJORDOMO_SERVERS,
+			Table.TableID.MAJORDOMO_SERVERS,
 			PackageHandler.getBusinessForPackage(conn, packageName),
 			domainAOServer,
 			false
@@ -831,7 +830,7 @@ final public class EmailHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isEmailListDisabled(conn, id)) throw new SQLException("EmailList is already disabled: "+id);
+		if(isEmailListDisabled(conn, id)) throw new SQLException("List is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableEmailList", disableLog, false);
 		checkAccessEmailList(conn, source, "disableEmailList", id);
 
@@ -844,7 +843,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_LISTS,
+			Table.TableID.EMAIL_LISTS,
 			getBusinessForEmailList(conn, id),
 			getAOServerForEmailList(conn, id),
 			false
@@ -858,7 +857,7 @@ final public class EmailHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isEmailPipeDisabled(conn, id)) throw new SQLException("EmailPipe is already disabled: "+id);
+		if(isEmailPipeDisabled(conn, id)) throw new SQLException("Pipe is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableEmailPipe", disableLog, false);
 		checkAccessEmailPipe(conn, source, "disableEmailPipe", id);
 
@@ -871,7 +870,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_PIPES,
+			Table.TableID.EMAIL_PIPES,
 			getBusinessForEmailPipe(conn, id),
 			getAOServerForEmailPipe(conn, id),
 			false
@@ -885,7 +884,7 @@ final public class EmailHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isEmailSmtpRelayDisabled(conn, id)) throw new SQLException("EmailSmtpRelay is already disabled: "+id);
+		if(isEmailSmtpRelayDisabled(conn, id)) throw new SQLException("SmtpRelay is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableEmailSmtpRelay", disableLog, false);
 		checkAccessEmailSmtpRelay(conn, source, "disableEmailSmtpRelay", id);
 
@@ -898,7 +897,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_SMTP_RELAYS,
+			Table.TableID.EMAIL_SMTP_RELAYS,
 			getBusinessForEmailSmtpRelay(conn, id),
 			getAOServerForEmailSmtpRelay(conn, id),
 			false
@@ -912,11 +911,11 @@ final public class EmailHandler {
 		int id
 	) throws IOException, SQLException {
 		int disableLog=getDisableLogForEmailList(conn, id);
-		if(disableLog==-1) throw new SQLException("EmailList is already enabled: "+id);
+		if(disableLog==-1) throw new SQLException("List is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailList", disableLog, true);
 		checkAccessEmailList(conn, source, "enableEmailList", id);
 		AccountingCode pk=getPackageForEmailList(conn, id);
-		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable EmailList #"+id+", Package not enabled: "+pk);
+		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable List #"+id+", Package not enabled: "+pk);
 
 		conn.executeUpdate(
 			"update email.\"List\" set disable_log=null where id=?",
@@ -926,7 +925,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_LISTS,
+			Table.TableID.EMAIL_LISTS,
 			PackageHandler.getBusinessForPackage(conn, pk),
 			getAOServerForEmailList(conn, id),
 			false
@@ -940,11 +939,11 @@ final public class EmailHandler {
 		int id
 	) throws IOException, SQLException {
 		int disableLog=getDisableLogForEmailPipe(conn, id);
-		if(disableLog==-1) throw new SQLException("EmailPipe is already enabled: "+id);
+		if(disableLog==-1) throw new SQLException("Pipe is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailPipe", disableLog, true);
 		checkAccessEmailPipe(conn, source, "enableEmailPipe", id);
 		AccountingCode pk=getPackageForEmailPipe(conn, id);
-		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable EmailPipe #"+id+", Package not enabled: "+pk);
+		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable Pipe #"+id+", Package not enabled: "+pk);
 
 		conn.executeUpdate(
 			"update email.\"Pipe\" set disable_log=null where id=?",
@@ -954,7 +953,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_PIPES,
+			Table.TableID.EMAIL_PIPES,
 			PackageHandler.getBusinessForPackage(conn, pk),
 			getAOServerForEmailPipe(conn, id),
 			false
@@ -968,11 +967,11 @@ final public class EmailHandler {
 		int id
 	) throws IOException, SQLException {
 		int disableLog=getDisableLogForEmailSmtpRelay(conn, id);
-		if(disableLog==-1) throw new SQLException("EmailSmtpRelay is already enabled: "+id);
+		if(disableLog==-1) throw new SQLException("SmtpRelay is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailSmtpRelay", disableLog, true);
 		checkAccessEmailSmtpRelay(conn, source, "enableEmailSmtpRelay", id);
 		AccountingCode pk=getPackageForEmailSmtpRelay(conn, id);
-		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable EmailSmtpRelay #"+id+", Package not enabled: "+pk);
+		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable SmtpRelay #"+id+", Package not enabled: "+pk);
 
 		conn.executeUpdate(
 			"update email.\"SmtpRelay\" set disable_log=null where id=?",
@@ -982,7 +981,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.EMAIL_SMTP_RELAYS,
+			Table.TableID.EMAIL_SMTP_RELAYS,
 			PackageHandler.getBusinessForPackage(conn, pk),
 			getAOServerForEmailSmtpRelay(conn, id),
 			false
@@ -1180,29 +1179,29 @@ final public class EmailHandler {
 		int esr
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
-		MasterUser masterUser=MasterServer.getMasterUser(conn, username);
-		com.aoindustries.aoserv.client.master.MasterServer[] masterServers=masterUser==null?null:MasterServer.getMasterServers(conn, username);
+		User masterUser=MasterServer.getUser(conn, username);
+		com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
 		if(masterUser!=null && masterServers.length==0) MasterServer.writeObjects(
 			conn,
 			source,
 			out,
 			provideProgress,
-			new SpamEmailMessage(),
+			new SpamMessage(),
 			"select * from email.\"SpamMessage\" where email_relay=?",
 			esr
 		); else throw new SQLException("Only master users may access email.SpamMessage.");
 	}
 
-	public static void invalidateTable(SchemaTable.TableID tableID) {
-		if(tableID==SchemaTable.TableID.EMAIL_LISTS) {
+	public static void invalidateTable(Table.TableID tableID) {
+		if(tableID==Table.TableID.EMAIL_LISTS) {
 			synchronized(EmailHandler.class) {
 				disabledEmailLists.clear();
 			}
-		} else if(tableID==SchemaTable.TableID.EMAIL_PIPES) {
+		} else if(tableID==Table.TableID.EMAIL_PIPES) {
 			synchronized(EmailHandler.class) {
 				disabledEmailPipes.clear();
 			}
-		} else if(tableID==SchemaTable.TableID.EMAIL_SMTP_RELAYS) {
+		} else if(tableID==Table.TableID.EMAIL_SMTP_RELAYS) {
 			synchronized(EmailHandler.class) {
 				disabledEmailSmtpRelays.clear();
 			}
@@ -1254,7 +1253,7 @@ final public class EmailHandler {
 	) throws IOException, SQLException {
 		checkAccessEmailSmtpRelay(conn, source, "refreshEmailSmtpRelay", id);
 
-		if(isEmailSmtpRelayDisabled(conn, id)) throw new SQLException("Unable to refresh EmailSmtpRelay, EmailSmtpRelay disabled: "+id);
+		if(isEmailSmtpRelayDisabled(conn, id)) throw new SQLException("Unable to refresh SmtpRelay, SmtpRelay disabled: "+id);
 
 		AccountingCode packageName=getPackageForEmailSmtpRelay(conn, id);
 		AccountingCode accounting = PackageHandler.getBusinessForPackage(conn, packageName);
@@ -1272,13 +1271,13 @@ final public class EmailHandler {
 
 		// Delete any old entries
 		conn.executeUpdate(
-			"delete from email.\"SmtpRelay\" where package=? and (ao_server is null or ao_server=?) and expiration is not null and now()::date-expiration::date>"+EmailSmtpRelay.HISTORY_DAYS,
+			"delete from email.\"SmtpRelay\" where package=? and (ao_server is null or ao_server=?) and expiration is not null and now()::date-expiration::date>"+SmtpRelay.HISTORY_DAYS,
 			packageName,
 			aoServer
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_SMTP_RELAYS, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.EMAIL_SMTP_RELAYS, accounting, aoServer, false);
 	}
 
 	public static void removeBlackholeEmailAddress(
@@ -1299,7 +1298,7 @@ final public class EmailHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.BLACKHOLE_EMAIL_ADDRESSES,
+			Table.TableID.BLACKHOLE_EMAIL_ADDRESSES,
 			accounting,
 			aoServer,
 			false
@@ -1340,12 +1339,12 @@ final public class EmailHandler {
 		conn.executeUpdate("delete from email.\"Address\" where id=?", address);
 
 		// Notify all clients of the update
-		if(isBlackhole) invalidateList.addTable(conn, SchemaTable.TableID.BLACKHOLE_EMAIL_ADDRESSES, accounting, aoServer, false);
-		if(isLinuxAccAddress) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
-		if(isEmailForwarding) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_FORWARDING, accounting, aoServer, false);
-		if(isEmailListAddress) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
-		if(isEmailPipeAddress) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+		if(isBlackhole) invalidateList.addTable(conn, Table.TableID.BLACKHOLE_EMAIL_ADDRESSES, accounting, aoServer, false);
+		if(isLinuxAccAddress) invalidateList.addTable(conn, Table.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
+		if(isEmailForwarding) invalidateList.addTable(conn, Table.TableID.EMAIL_FORWARDING, accounting, aoServer, false);
+		if(isEmailListAddress) invalidateList.addTable(conn, Table.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
+		if(isEmailPipeAddress) invalidateList.addTable(conn, Table.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 	}
 
 	public static void removeEmailForwarding(
@@ -1365,7 +1364,7 @@ final public class EmailHandler {
 		conn.executeUpdate("delete from email.\"Forwarding\" where id=?", ef);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_FORWARDING, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.EMAIL_FORWARDING, accounting, aoServer, false);
 	}
 
 	public static void removeEmailListAddress(
@@ -1385,7 +1384,7 @@ final public class EmailHandler {
 		conn.executeUpdate("delete from email.\"ListAddress\" where id=?", ela);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
 	}
 
 	public static void removeEmailList(
@@ -1434,48 +1433,48 @@ final public class EmailHandler {
 			int listnameApprovalEA=conn.executeIntQuery("select listname_approval_add from email.\"MajordomoList\" where email_list=?", id);
 
 			conn.executeUpdate("delete from email.\"MajordomoList\" where email_list=?", id);
-			invalidateList.addTable(conn, SchemaTable.TableID.MAJORDOMO_LISTS, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.MAJORDOMO_LISTS, accounting, aoServer, false);
 
 			// Delete the listname_pipe_add
 			conn.executeUpdate("delete from email.\"PipeAddress\" where id=?", listnameEPA);
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
 			if(!isEmailAddressUsed(conn, listnameEA)) {
 				conn.executeUpdate("delete from email.\"Address\" where id=?", listnameEA);
-				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+				invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 			conn.executeUpdate("delete from email.\"Pipe\" where id=?", listnameEP);
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_PIPES, accounting, aoServer, false);
 
 			// Delete the listname_list_add
 			conn.executeUpdate("delete from email.\"ListAddress\" where id=?", listnameListELA);
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
 			if(!isEmailAddressUsed(conn, listnameListEA)) {
 				conn.executeUpdate("delete from email.\"Address\" where id=?", listnameListEA);
-				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+				invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 
 			// Delete the listname_pipe_add
 			conn.executeUpdate("delete from email.\"PipeAddress\" where id=?", listnameRequestEPA);
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
 			if(!isEmailAddressUsed(conn, listnameRequestEA)) {
 				conn.executeUpdate("delete from email.\"Address\" where id=?", listnameRequestEA);
-				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+				invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 			conn.executeUpdate("delete from email.\"Pipe\" where id=?", listnameRequestEP);
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_PIPES, accounting, aoServer, false);
 
 			// Other direct email addresses
 			if(!isEmailAddressUsed(conn, ownerListnameEA)) {
 				conn.executeUpdate("delete from email.\"Address\" where id=?", ownerListnameEA);
-				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+				invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 			if(!isEmailAddressUsed(conn, listnameOwnerEA)) {
 				conn.executeUpdate("delete from email.\"Address\" where id=?", listnameOwnerEA);
-				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+				invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 			if(!isEmailAddressUsed(conn, listnameApprovalEA)) {
 				conn.executeUpdate("delete from email.\"Address\" where id=?", listnameApprovalEA);
-				invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+				invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 			}
 		}
 
@@ -1496,10 +1495,10 @@ final public class EmailHandler {
 
 		// Notify all clients of the update
 		if(addressesModified) {
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 		}
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LISTS, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.EMAIL_LISTS, accounting, aoServer, false);
 
 		// Remove the list file from the server
 		DaemonHandler.getDaemonConnector(conn, aoServer).removeEmailList(path);
@@ -1523,7 +1522,7 @@ final public class EmailHandler {
 		conn.executeUpdate("delete from email.\"InboxAddress\" where id=?", laa);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
 	}
 
 	public static void removeEmailPipe(
@@ -1563,10 +1562,10 @@ final public class EmailHandler {
 
 		// Notify all clients of the update
 		if(addressesModified) {
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 		}
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.EMAIL_PIPES, accounting, aoServer, false);
 	}
 
 	public static void removeEmailPipeAddress(
@@ -1586,7 +1585,7 @@ final public class EmailHandler {
 		conn.executeUpdate("delete from email.\"PipeAddress\" where id=?", epa);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
 	}
 
 	public static void removeEmailDomain(
@@ -1687,13 +1686,13 @@ final public class EmailHandler {
 		conn.executeUpdate("delete from email.\"Domain\" where id=?", id);
 
 		// Notify all clients of the update
-		if(beaMod) invalidateList.addTable(conn, SchemaTable.TableID.BLACKHOLE_EMAIL_ADDRESSES, accounting, aoServer, false);
-		if(laaMod) invalidateList.addTable(conn, SchemaTable.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
-		if(efMod) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_FORWARDING, accounting, aoServer, false);
-		if(elaMod) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
-		if(epaMod) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
-		if(eaMod) invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_DOMAINS, accounting, aoServer, false);
+		if(beaMod) invalidateList.addTable(conn, Table.TableID.BLACKHOLE_EMAIL_ADDRESSES, accounting, aoServer, false);
+		if(laaMod) invalidateList.addTable(conn, Table.TableID.LINUX_ACC_ADDRESSES, accounting, aoServer, false);
+		if(efMod) invalidateList.addTable(conn, Table.TableID.EMAIL_FORWARDING, accounting, aoServer, false);
+		if(elaMod) invalidateList.addTable(conn, Table.TableID.EMAIL_LIST_ADDRESSES, accounting, aoServer, false);
+		if(epaMod) invalidateList.addTable(conn, Table.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
+		if(eaMod) invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.EMAIL_DOMAINS, accounting, aoServer, false);
 	}
 
 	/**
@@ -1727,7 +1726,7 @@ final public class EmailHandler {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_SMTP_RELAYS, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.EMAIL_SMTP_RELAYS, accounting, aoServer, false);
 	}
 
 	public static void removeMajordomoServer(
@@ -1768,26 +1767,26 @@ final public class EmailHandler {
 
 		// Remove the domain from the database
 		conn.executeUpdate("delete from email.\"MajordomoServer\" where domain=?", domain);
-		invalidateList.addTable(conn, SchemaTable.TableID.MAJORDOMO_SERVERS, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.MAJORDOMO_SERVERS, accounting, aoServer, false);
 
 		// Remove the majordomo pipe and address
 		conn.executeUpdate("delete from email.\"PipeAddress\" where id=?", epa);
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.EMAIL_PIPE_ADDRESSES, accounting, aoServer, false);
 		if(!isEmailAddressUsed(conn, ea)) {
 			conn.executeUpdate("delete from email.\"Address\" where id=?", ea);
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 		}
 		conn.executeUpdate("delete from email.\"Pipe\" where id=?", ep);
-		invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_PIPES, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.EMAIL_PIPES, accounting, aoServer, false);
 
 		// Remove the referenced email addresses if not used
 		if(!isEmailAddressUsed(conn, omEA)) {
 			conn.executeUpdate("delete from email.\"Address\" where id=?", omEA);
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 		}
 		if(!isEmailAddressUsed(conn, moEA)) {
 			conn.executeUpdate("delete from email.\"Address\" where id=?", moEA);
-			invalidateList.addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, accounting, aoServer, false);
 		}
 	}
 

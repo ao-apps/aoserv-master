@@ -5,7 +5,7 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.cron.CronDaemon;
@@ -138,8 +138,8 @@ final public class SignupHandler {
         }
 
         // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.SIGNUP_REQUESTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-        invalidateList.addTable(conn, SchemaTable.TableID.SIGNUP_REQUEST_OPTIONS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.SIGNUP_REQUESTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.SIGNUP_REQUEST_OPTIONS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 
         return requestId;
     }
@@ -177,14 +177,14 @@ final public class SignupHandler {
                                 if(database.executeUpdate("delete from signup.\"Request\" where completed_time is not null and (now()::date-completed_time::date)>31")>0) {
                                     invalidateList.addTable(
                                         database,
-                                        SchemaTable.TableID.SIGNUP_REQUESTS,
+                                        Table.TableID.SIGNUP_REQUESTS,
                                         InvalidateList.allBusinesses,
                                         InvalidateList.allServers,
                                         false
                                     );
                                     invalidateList.addTable(
                                         database,
-                                        SchemaTable.TableID.SIGNUP_REQUEST_OPTIONS,
+                                        Table.TableID.SIGNUP_REQUEST_OPTIONS,
                                         InvalidateList.allBusinesses,
                                         InvalidateList.allServers,
                                         false

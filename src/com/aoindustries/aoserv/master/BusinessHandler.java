@@ -5,15 +5,14 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.account.Business;
-import com.aoindustries.aoserv.client.account.BusinessAdministrator;
+import com.aoindustries.aoserv.client.account.Account;
+import com.aoindustries.aoserv.client.account.Administrator;
 import com.aoindustries.aoserv.client.billing.NoticeLog;
-import com.aoindustries.aoserv.client.linux.LinuxAccount;
-import com.aoindustries.aoserv.client.master.AOServPermission;
-import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.master.Permission;
+import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.password.PasswordChecker;
 import com.aoindustries.aoserv.client.payment.CountryCode;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.HashedPassword;
 import com.aoindustries.aoserv.client.validator.UserId;
@@ -41,7 +40,7 @@ import java.util.Random;
 import java.util.Set;
 
 /**
- * The <code>BusinessHandler</code> handles all the accesses to the Business tables.
+ * The <code>BusinessHandler</code> handles all the accesses to the Account tables.
  *
  * @author  AO Industries, Inc.
  */
@@ -51,7 +50,7 @@ final public class BusinessHandler {
 	}
 
 	private static final Object businessAdministratorsLock=new Object();
-	private static Map<UserId,BusinessAdministrator> businessAdministrators;
+	private static Map<UserId,Administrator> businessAdministrators;
 
 	private static final Object usernameBusinessesLock=new Object();
 	private static Map<UserId,List<AccountingCode>> usernameBusinesses;
@@ -88,18 +87,18 @@ final public class BusinessHandler {
 		String cancelReason
 	) throws IOException, SQLException {
 		// Check permissions
-		checkPermission(conn, source, "cancelBusiness", AOServPermission.Permission.cancel_business);
+		checkPermission(conn, source, "cancelBusiness", Permission.Name.cancel_business);
 
 		// Check access to business
 		checkAccessBusiness(conn, source, "cancelBusiness", accounting);
 
 		if(accounting.equals(getRootBusiness())) throw new SQLException("Not allowed to cancel the root business: "+accounting);
 
-		// Business must be disabled
-		if(!isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to cancel Business, Business not disabled: "+accounting);
+		// Account must be disabled
+		if(!isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to cancel Account, Account not disabled: "+accounting);
 
-		// Business must not already be canceled
-		if(isBusinessCanceled(conn, accounting)) throw new SQLException("Unable to cancel Business, Business already canceled: "+accounting);
+		// Account must not already be canceled
+		if(isBusinessCanceled(conn, accounting)) throw new SQLException("Unable to cancel Account, Account already canceled: "+accounting);
 
 		// Update the database
 		conn.executeUpdate(
@@ -109,7 +108,7 @@ final public class BusinessHandler {
 		);
 
 		// Notify the clients
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
 	}
 
 	public static boolean canBusinessServer(
@@ -166,9 +165,9 @@ final public class BusinessHandler {
 	public static void checkAddBusiness(DatabaseConnection conn, RequestSource source, String action, AccountingCode parent, int server) throws IOException, SQLException {
 		boolean canAdd = conn.executeBooleanQuery("select can_add_businesses from account.\"Account\" where accounting=?", UsernameHandler.getBusinessForUsername(conn, source.getUsername()));
 		if(canAdd) {
-			MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+			User mu = MasterServer.getUser(conn, source.getUsername());
 			if(mu!=null) {
-				if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) canAdd = false;
+				if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) canAdd = false;
 			} else {
 				canAdd =
 					canAccessBusiness(conn, source, parent)
@@ -194,7 +193,7 @@ final public class BusinessHandler {
 	private static Map<UserId,Set<String>> cachedPermissions;
 	private static final Object cachedPermissionsLock = new Object();
 
-	public static boolean hasPermission(DatabaseConnection conn, RequestSource source, AOServPermission.Permission permission) throws IOException, SQLException {
+	public static boolean hasPermission(DatabaseConnection conn, RequestSource source, Permission.Name permission) throws IOException, SQLException {
 		synchronized(cachedPermissionsLock) {
 			if(cachedPermissions == null) {
 				cachedPermissions = conn.executeQuery(
@@ -221,7 +220,7 @@ final public class BusinessHandler {
 		}
 	}
 
-	public static void checkPermission(DatabaseConnection conn, RequestSource source, String action, AOServPermission.Permission permission) throws IOException, SQLException {
+	public static void checkPermission(DatabaseConnection conn, RequestSource source, String action, Permission.Name permission) throws IOException, SQLException {
 		if(!hasPermission(conn, source, permission)) {
 			String message=
 				"business_administrator.username="
@@ -240,9 +239,9 @@ final public class BusinessHandler {
 			List<AccountingCode> SV=usernameBusinesses.get(username);
 			if(SV==null) {
 				List<AccountingCode> V;
-				MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+				User mu = MasterServer.getUser(conn, source.getUsername());
 				if(mu!=null) {
-					if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+					if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 						V=conn.executeObjectCollectionQuery(
 							new ArrayList<AccountingCode>(),
 							ObjectFactories.accountingCodeFactory,
@@ -299,7 +298,7 @@ final public class BusinessHandler {
 	}
 
 	/**
-	 * Creates a new <code>Business</code>.
+	 * Creates a new <code>Account</code>.
 	 */
 	public static void addBusiness(
 		DatabaseConnection conn,
@@ -316,11 +315,11 @@ final public class BusinessHandler {
 	) throws IOException, SQLException {
 		checkAddBusiness(conn, source, "addBusiness", parent, defaultServer);
 
-		if(isBusinessDisabled(conn, parent)) throw new SQLException("Unable to add Business '"+accounting+"', parent is disabled: "+parent);
+		if(isBusinessDisabled(conn, parent)) throw new SQLException("Unable to add Account '"+accounting+"', parent is disabled: "+parent);
 
 		// Must not exceed the maximum business tree depth
 		int newDepth=getDepthInBusinessTree(conn, parent)+1;
-		if(newDepth>Business.MAXIMUM_BUSINESS_TREE_DEPTH) throw new SQLException("Unable to add Business '"+accounting+"', the maximum depth of the business tree ("+Business.MAXIMUM_BUSINESS_TREE_DEPTH+") would be exceeded.");
+		if(newDepth>Account.MAXIMUM_BUSINESS_TREE_DEPTH) throw new SQLException("Unable to add Account '"+accounting+"', the maximum depth of the business tree ("+Account.MAXIMUM_BUSINESS_TREE_DEPTH+") would be exceeded.");
 
 		conn.executeUpdate(
 			"insert into account.\"Account\" (\n"
@@ -381,17 +380,17 @@ final public class BusinessHandler {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.NET_DEVICES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.IP_ADDRESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.BUSINESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.AO_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.VIRTUAL_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.NET_DEVICES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.IP_ADDRESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
 	}
 
 	/**
-	 * Creates a new <code>BusinessAdministrator</code>.
+	 * Creates a new <code>Administrator</code>.
 	 */
 	public static void addBusinessAdministrator(
 		DatabaseConnection conn,
@@ -416,7 +415,7 @@ final public class BusinessHandler {
 		boolean enableEmailSupport
 	) throws IOException, SQLException {
 		UsernameHandler.checkAccessUsername(conn, source, "addBusinessAdministrator", username);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add BusinessAdministrator named mail");
+		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add Administrator named mail");
 		if (country!=null && country.equals(CountryCode.US)) state=convertUSState(conn, state);
 
 		String supportCode = enableEmailSupport ? generateSupportCode(conn) : null;
@@ -451,8 +450,8 @@ final public class BusinessHandler {
 		AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATOR_PERMISSIONS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATOR_PERMISSIONS, accounting, InvalidateList.allServers, false);
 	}
 
 	public static String convertUSState(DatabaseConnection conn, String state) throws IOException, SQLException {
@@ -472,7 +471,7 @@ final public class BusinessHandler {
 	}
 
 	/**
-	 * Creates a new <code>BusinessProfile</code>.
+	 * Creates a new <code>Profile</code>.
 	 */
 	public static int addBusinessProfile(
 		DatabaseConnection conn,
@@ -522,12 +521,12 @@ final public class BusinessHandler {
 			technicalEmail
 		);
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_PROFILES, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_PROFILES, accounting, InvalidateList.allServers, false);
 		return id;
 	}
 
 	/**
-	 * Creates a new <code>BusinessServer</code>.
+	 * Creates a new <code>AccountHost</code>.
 	 */
 	public static int addBusinessServer(
 		DatabaseConnection conn,
@@ -536,7 +535,7 @@ final public class BusinessHandler {
 		AccountingCode accounting,
 		int server
 	) throws IOException, SQLException {
-		// Must be allowed to access the Business
+		// Must be allowed to access the Account
 		checkAccessBusiness(conn, source, "addBusinessServer", accounting);
 		if(!accounting.equals(getRootBusiness())) ServerHandler.checkAccessServer(conn, source, "addBusinessServer", server);
 
@@ -544,7 +543,7 @@ final public class BusinessHandler {
 	}
 
 	/**
-	 * Creates a new <code>BusinessServer</code>.
+	 * Creates a new <code>AccountHost</code>.
 	 */
 	public static int addBusinessServer(
 		DatabaseConnection conn,
@@ -552,7 +551,7 @@ final public class BusinessHandler {
 		AccountingCode accounting,
 		int server
 	) throws IOException, SQLException {
-		if(isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add BusinessServer, Business disabled: "+accounting);
+		if(isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add AccountHost, Account disabled: "+accounting);
 
 		// Parent business must also have access to the server
 		if(
@@ -585,12 +584,12 @@ final public class BusinessHandler {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.NET_DEVICES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.IP_ADDRESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.AO_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.VIRTUAL_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.NET_DEVICES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.IP_ADDRESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
 		return id;
 	}
 
@@ -617,7 +616,7 @@ final public class BusinessHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.DISABLE_LOG,
+			Table.TableID.DISABLE_LOG,
 			accounting,
 			InvalidateList.allServers,
 			false
@@ -669,7 +668,7 @@ final public class BusinessHandler {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.NOTICE_LOG, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.NOTICE_LOG, accounting, InvalidateList.allServers, false);
 	}
 
 	public static void disableBusiness(
@@ -679,14 +678,14 @@ final public class BusinessHandler {
 		int disableLog,
 		AccountingCode accounting
 	) throws IOException, SQLException {
-		if(isBusinessDisabled(conn, accounting)) throw new SQLException("Business is already disabled: "+accounting);
+		if(isBusinessDisabled(conn, accounting)) throw new SQLException("Account is already disabled: "+accounting);
 		if(accounting.equals(getRootBusiness())) throw new SQLException("Not allowed to disable the root business: "+accounting);
 		checkAccessDisableLog(conn, source, "disableBusiness", disableLog, false);
 		checkAccessBusiness(conn, source, "disableBusiness", accounting);
 		List<AccountingCode> packages=getPackagesForBusiness(conn, accounting);
 		for (AccountingCode packageName : packages) {
 			if(!PackageHandler.isPackageDisabled(conn, packageName)) {
-				throw new SQLException("Cannot disable Business '"+accounting+"': Package not disabled: "+packageName);
+				throw new SQLException("Cannot disable Account '"+accounting+"': Package not disabled: "+packageName);
 			}
 		}
 
@@ -697,7 +696,7 @@ final public class BusinessHandler {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
 	}
 
 	public static void disableBusinessAdministrator(
@@ -707,7 +706,7 @@ final public class BusinessHandler {
 		int disableLog,
 		UserId username
 	) throws IOException, SQLException {
-		if(isBusinessAdministratorDisabled(conn, username)) throw new SQLException("BusinessAdministrator is already disabled: "+username);
+		if(isBusinessAdministratorDisabled(conn, username)) throw new SQLException("Administrator is already disabled: "+username);
 		checkAccessDisableLog(conn, source, "disableBusinessAdministrator", disableLog, false);
 		UsernameHandler.checkAccessUsername(conn, source, "disableBusinessAdministrator", username);
 
@@ -719,7 +718,7 @@ final public class BusinessHandler {
 
 		// Notify all clients of the update
 		AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, getServersForBusiness(conn, accounting), false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, accounting, getServersForBusiness(conn, accounting), false);
 	}
 
 	public static void enableBusiness(
@@ -731,10 +730,10 @@ final public class BusinessHandler {
 		checkAccessBusiness(conn, source, "enableBusiness", accounting);
 
 		int disableLog=getDisableLogForBusiness(conn, accounting);
-		if(disableLog==-1) throw new SQLException("Business is already enabled: "+accounting);
+		if(disableLog==-1) throw new SQLException("Account is already enabled: "+accounting);
 		checkAccessDisableLog(conn, source, "enableBusiness", disableLog, true);
 
-		if(isBusinessCanceled(conn, accounting)) throw new SQLException("Unable to enable Business, Business canceled: "+accounting);
+		if(isBusinessCanceled(conn, accounting)) throw new SQLException("Unable to enable Account, Account canceled: "+accounting);
 
 		conn.executeUpdate(
 			"update account.\"Account\" set disable_log=null where accounting=?",
@@ -742,7 +741,7 @@ final public class BusinessHandler {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESSES, accounting, getServersForBusiness(conn, accounting), false);
 	}
 
 	public static void enableBusinessAdministrator(
@@ -752,7 +751,7 @@ final public class BusinessHandler {
 		UserId username
 	) throws IOException, SQLException {
 		int disableLog=getDisableLogForBusinessAdministrator(conn, username);
-		if(disableLog==-1) throw new SQLException("BusinessAdministrator is already enabled: "+username);
+		if(disableLog==-1) throw new SQLException("Administrator is already enabled: "+username);
 		checkAccessDisableLog(conn, source, "enableBusinessAdministrator", disableLog, true);
 		UsernameHandler.checkAccessUsername(conn, source, "enableBusinessAdministrator", username);
 
@@ -764,7 +763,7 @@ final public class BusinessHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.BUSINESS_ADMINISTRATORS,
+			Table.TableID.BUSINESS_ADMINISTRATORS,
 			UsernameHandler.getBusinessForUsername(conn, username),
 			UsernameHandler.getServersForUsername(conn, username),
 			false
@@ -819,7 +818,7 @@ final public class BusinessHandler {
 	/**
 	 * Gets the depth of the business in the business tree.  root_accounting is at depth 1.
 	 * 
-	 * @return  the depth between 1 and Business.MAXIMUM_BUSINESS_TREE_DEPTH, inclusive.
+	 * @return  the depth between 1 and Account.MAXIMUM_BUSINESS_TREE_DEPTH, inclusive.
 	 */
 	public static int getDepthInBusinessTree(DatabaseConnection conn, AccountingCode accounting) throws IOException, SQLException {
 		int depth=0;
@@ -832,7 +831,7 @@ final public class BusinessHandler {
 			depth++;
 			accounting=parent;
 		}
-		if(depth<1 || depth>Business.MAXIMUM_BUSINESS_TREE_DEPTH) throw new SQLException("Unexpected depth: "+depth);
+		if(depth<1 || depth>Account.MAXIMUM_BUSINESS_TREE_DEPTH) throw new SQLException("Unexpected depth: "+depth);
 		return depth;
 	}
 
@@ -908,7 +907,7 @@ final public class BusinessHandler {
 		InvalidateList invalidateList,
 		UserId username
 	) throws IOException, SQLException {
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove Username named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to remove Username named '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
 		AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, username);
 
@@ -916,11 +915,11 @@ final public class BusinessHandler {
 		conn.executeUpdate("delete from account.\"Administrator\" where username=?", username);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
 	}
 
 	/**
-	 * Removes a <code>BusinessServer</code>.
+	 * Removes a <code>AccountHost</code>.
 	 */
 	public static void removeBusinessServer(
 		DatabaseConnection conn,
@@ -935,7 +934,7 @@ final public class BusinessHandler {
 		);
 		int server=conn.executeIntQuery("select server from account.\"AccountHost\" where id=?", id);
 
-		// Must be allowed to access this Business
+		// Must be allowed to access this Account
 		checkAccessBusiness(conn, source, "removeBusinessServer", accounting);
 
 		// Do not remove the default unless it is the only one left
@@ -954,7 +953,7 @@ final public class BusinessHandler {
 	}
 
 	/**
-	 * Removes a <code>BusinessServer</code>.
+	 * Removes a <code>AccountHost</code>.
 	 */
 	public static void removeBusinessServer(
 		DatabaseConnection conn,
@@ -987,10 +986,10 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still has at least one child Business able to access Server="+server);
+		) throw new SQLException("Account="+accounting+" still has at least one child Account able to access Host="+server);
 
 		/*
-		 * Business must not have any resources on the server
+		 * Account must not have any resources on the server
 		 */
 		// email.Pipe
 		if(
@@ -1012,7 +1011,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one EmailPipe on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one Pipe on Host="+server);
 
 		// web.Site
 		if(
@@ -1034,7 +1033,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one HttpdSite on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one Site on Host="+server);
 
 		// net.IpAddress
 		if(
@@ -1058,7 +1057,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one net.IpAddress on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one net.IpAddress on Host="+server);
 
 		// linux.UserServer
 		if(
@@ -1082,7 +1081,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one LinuxServerAccount on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one UserServer on Host="+server);
 
 		// linux.GroupServer
 		if(
@@ -1106,7 +1105,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one LinuxServerGroup on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one GroupServer on Host="+server);
 
 		// mysql.Database
 		if(
@@ -1118,7 +1117,7 @@ final public class BusinessHandler {
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      mysql.\"Database\" md,\n"
-				+ "      mysql.\"Server\" ms\n"
+				+ "      mysql.\"Host\" ms\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=md.package\n"
@@ -1130,7 +1129,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one MySQLDatabase on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one Database on Host="+server);
 
 		// mysql.UserServer
 		if(
@@ -1143,7 +1142,7 @@ final public class BusinessHandler {
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
 				+ "      mysql.\"UserServer\" msu,\n"
-				+ "      mysql.\"Server\" ms\n"
+				+ "      mysql.\"Host\" ms\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
 				+ "      and pk.name=un.package\n"
@@ -1156,7 +1155,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one MySQLServerUser on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one UserServer on Host="+server);
 
 		// net.Bind
 		if(
@@ -1178,7 +1177,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one NetBind on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one Bind on Host="+server);
 
 		// postgresql.Database
 		if(
@@ -1190,7 +1189,7 @@ final public class BusinessHandler {
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
-				+ "      postgresql.\"Server\" ps,\n"
+				+ "      postgresql.\"Host\" ps,\n"
 				+ "      postgresql.\"UserServer\" psu,\n"
 				+ "      postgresql.\"Database\" pd\n"
 				+ "    where\n"
@@ -1205,7 +1204,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one PostgresDatabase on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one Database on Host="+server);
 
 		// postgresql.UserServer
 		if(
@@ -1217,7 +1216,7 @@ final public class BusinessHandler {
 				+ "    from\n"
 				+ "      billing.\"Package\" pk,\n"
 				+ "      account.\"Username\" un,\n"
-				+ "      postgresql.\"Server\" ps,\n"
+				+ "      postgresql.\"Host\" ps,\n"
 				+ "      postgresql.\"UserServer\" psu\n"
 				+ "    where\n"
 				+ "      pk.accounting=?\n"
@@ -1230,7 +1229,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one PostgresServerUser on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one UserServer on Host="+server);
 
 		// email.Domain
 		if(
@@ -1252,7 +1251,7 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one EmailDomain on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one Domain on Host="+server);
 
 		// email.SmtpRelay
 		if(
@@ -1275,17 +1274,17 @@ final public class BusinessHandler {
 				accounting,
 				server
 			)
-		) throw new SQLException("Business="+accounting+" still owns at least one EmailSmtpRelay on Server="+server);
+		) throw new SQLException("Account="+accounting+" still owns at least one SmtpRelay on Host="+server);
 
 		conn.executeUpdate("delete from account.\"AccountHost\" where id=?", id);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.AO_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.NET_DEVICES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
-		invalidateList.addTable(conn, SchemaTable.TableID.IP_ADDRESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.AO_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.VIRTUAL_SERVERS, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.NET_DEVICES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
+		invalidateList.addTable(conn, Table.TableID.IP_ADDRESSES, InvalidateList.allBusinesses, InvalidateList.allServers, true);
 	}
 
 	public static void removeDisableLog(
@@ -1298,7 +1297,7 @@ final public class BusinessHandler {
 		conn.executeUpdate("delete from account.\"DisableLog\" where id=?", id);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.DISABLE_LOG, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.DISABLE_LOG, accounting, InvalidateList.allServers, false);
 	}
 
 	public static void setBusinessAccounting(
@@ -1314,18 +1313,18 @@ final public class BusinessHandler {
 
 		// Notify all clients of the update
 		Collection<AccountingCode> accts=InvalidateList.getCollection(oldAccounting, newAccounting);
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESSES, accts, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_PROFILES, accts, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_SERVERS, accts, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARDS, accts, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.DISABLE_LOG, accts, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.MONTHLY_CHARGES, accts, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.NOTICE_LOG, accts, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.PACKAGE_DEFINITIONS, accts, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.PACKAGES, accts, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.SERVERS, accts, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, accts, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, SchemaTable.TableID.TRANSACTIONS, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESSES, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_PROFILES, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_SERVERS, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.CREDIT_CARDS, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.DISABLE_LOG, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.MONTHLY_CHARGES, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.NOTICE_LOG, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.PACKAGE_DEFINITIONS, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.PACKAGES, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.SERVERS, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.TICKETS, accts, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accts, InvalidateList.allServers, false);
 	}
 
 	public static void setBusinessAdministratorPassword(
@@ -1336,16 +1335,16 @@ final public class BusinessHandler {
 		String plaintext
 	) throws IOException, SQLException {
 		// An administrator may always reset their own passwords
-		if(!username.equals(source.getUsername())) checkPermission(conn, source, "setBusinessAdministratorPassword", AOServPermission.Permission.set_business_administrator_password);
+		if(!username.equals(source.getUsername())) checkPermission(conn, source, "setBusinessAdministratorPassword", Permission.Name.set_business_administrator_password);
 
 		UsernameHandler.checkAccessUsername(conn, source, "setBusinessAdministratorPassword", username);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set password for BusinessAdministrator named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to set password for Administrator named '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
-		if(isBusinessAdministratorDisabled(conn, username)) throw new SQLException("Unable to set password, BusinessAdministrator disabled: "+username);
+		if(isBusinessAdministratorDisabled(conn, username)) throw new SQLException("Unable to set password, Administrator disabled: "+username);
 
 		if(plaintext!=null && plaintext.length()>0) {
 			// Perform the password check here, too.
-			List<PasswordChecker.Result> results=BusinessAdministrator.checkPassword(username, plaintext);
+			List<PasswordChecker.Result> results=Administrator.checkPassword(username, plaintext);
 			if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 		}
 
@@ -1359,7 +1358,7 @@ final public class BusinessHandler {
 		conn.executeUpdate("update account.\"Administrator\" set password=? where username=?", encrypted, username);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
 	}
 
 	/**
@@ -1387,7 +1386,7 @@ final public class BusinessHandler {
 		String zip
 	) throws IOException, SQLException {
 		UsernameHandler.checkAccessUsername(conn, source, "setBusinessSdministratorProfile", username);
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to set BusinessAdministrator profile for user '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to set Administrator profile for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
 		ValidationResult emailResult = Email.validate(email);
 		if(!emailResult.isValid()) throw new SQLException("Invalid format for email: " + emailResult);
@@ -1416,11 +1415,11 @@ final public class BusinessHandler {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, accounting, InvalidateList.allServers, false);
 	}
 
 	/**
-	 * Sets the default Server for a Business
+	 * Sets the default Host for a Account
 	 */
 	public static void setDefaultBusinessServer(
 		DatabaseConnection conn,
@@ -1436,7 +1435,7 @@ final public class BusinessHandler {
 
 		checkAccessBusiness(conn, source, "setDefaultBusinessServer", accounting);
 
-		if(isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to set the default BusinessServer, Business disabled: "+accounting);
+		if(isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to set the default AccountHost, Account disabled: "+accounting);
 
 		// Update the table
 		conn.executeUpdate(
@@ -1452,21 +1451,21 @@ final public class BusinessHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.BUSINESS_SERVERS,
+			Table.TableID.BUSINESS_SERVERS,
 			accounting,
 			InvalidateList.allServers,
 			false
 		);
 	}
 
-	public static BusinessAdministrator getBusinessAdministrator(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static Administrator getBusinessAdministrator(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		synchronized(businessAdministratorsLock) {
 			if(businessAdministrators == null) {
 				businessAdministrators = conn.executeQuery(
 					(ResultSet results) -> {
-						Map<UserId,BusinessAdministrator> table=new HashMap<>();
+						Map<UserId,Administrator> table=new HashMap<>();
 						while(results.next()) {
-							BusinessAdministrator ba=new BusinessAdministrator();
+							Administrator ba=new Administrator();
 							ba.init(results);
 							table.put(ba.getKey(), ba);
 						}
@@ -1479,8 +1478,8 @@ final public class BusinessHandler {
 		}
 	}
 
-	public static void invalidateTable(SchemaTable.TableID tableID) {
-		if(tableID==SchemaTable.TableID.BUSINESS_ADMINISTRATORS) {
+	public static void invalidateTable(Table.TableID tableID) {
+		if(tableID==Table.TableID.BUSINESS_ADMINISTRATORS) {
 			synchronized(businessAdministratorsLock) {
 				businessAdministrators=null;
 			}
@@ -1490,14 +1489,14 @@ final public class BusinessHandler {
 			synchronized(businessAdministratorDisableLogs) {
 				businessAdministratorDisableLogs.clear();
 			}
-		} else if(tableID==SchemaTable.TableID.BUSINESSES) {
+		} else if(tableID==Table.TableID.BUSINESSES) {
 			synchronized(usernameBusinessesLock) {
 				usernameBusinesses=null;
 			}
 			synchronized(disabledBusinesses) {
 				disabledBusinesses.clear();
 			}
-		} else if(tableID==SchemaTable.TableID.BUSINESS_ADMINISTRATOR_PERMISSIONS) {
+		} else if(tableID==Table.TableID.BUSINESS_ADMINISTRATOR_PERMISSIONS) {
 			synchronized(cachedPermissionsLock) {
 				cachedPermissions = null;
 			}

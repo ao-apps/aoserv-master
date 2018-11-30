@@ -164,7 +164,7 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		int hs=getHttpdSiteForHttpdSiteBind(conn, hsb_id);
 		checkAccessHttpdSite(conn, source, "addHttpdSiteURL", hs);
-		if(isHttpdSiteBindDisabled(conn, hsb_id)) throw new SQLException("Unable to add HttpdSiteURL, HttpdSiteBind disabled: "+hsb_id);
+		if(isHttpdSiteBindDisabled(conn, hsb_id)) throw new SQLException("Unable to add VirtualHostName, VirtualHost disabled: "+hsb_id);
 		MasterServer.checkAccessHostname(conn, source, "addHttpdSiteURL", hostname.toString());
 
 		int id = conn.executeIntUpdate(
@@ -491,7 +491,7 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatDataSource", tomcat_site);
-		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add HttpdTomcatDataSource, Site disabled: "+tomcat_site);
+		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add ContextDataSource, Site disabled: "+tomcat_site);
 
 		int id = conn.executeIntUpdate(
 			"INSERT INTO\n"
@@ -544,7 +544,7 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatParameter", tomcat_site);
-		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add HttpdTomcatParameter, Site disabled: "+tomcat_site);
+		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add ContextParameter, Site disabled: "+tomcat_site);
 
 		int id = conn.executeIntUpdate(
 			"INSERT INTO\n"
@@ -980,7 +980,7 @@ final public class HttpdHandler {
 		);
 		invalidateList.addTable(conn, Table.TableID.HTTPD_SITES, accounting, aoServer, false);
 
-		// Create the HttpdTomcatSite
+		// Create the Site
 		conn.executeUpdate(
 			"INSERT INTO \"web.tomcat\".\"Site\" (httpd_site, version) VALUES (?,?)",
 			httpdSitePKey,
@@ -1051,7 +1051,7 @@ final public class HttpdHandler {
 		}
 
 		if ("jboss".equals(siteType)) {
-			// Create the HttpdJBossSite
+			// Create the Site
 			int wildcardIP=IPAddressHandler.getWildcardIPAddress(conn);
 			int jnpBind = NetBindHandler.allocateNetBind(
 				conn,
@@ -1121,7 +1121,7 @@ final public class HttpdHandler {
 			}
 			invalidateList.addTable(conn, Table.TableID.HTTPD_JBOSS_SITES, accounting, aoServer, false);
 		} else if ("tomcat_shared".equals(siteType)) {
-			// Create the HttpdTomcatSharedSite
+			// Create the SharedTomcatSite
 			conn.executeUpdate(
 				"insert into \"web.tomcat\".\"SharedTomcatSite\" values(?,?)",
 				httpdSitePKey,
@@ -1170,7 +1170,7 @@ final public class HttpdHandler {
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
 			);
-			// Create the HttpdWorker
+			// Create the Worker
 			addTomcatWorker(
 				conn,
 				invalidateList,
@@ -1179,7 +1179,7 @@ final public class HttpdHandler {
 			);
 		}
 
-		// Create the HTTP HttpdSiteBind
+		// Create the HTTP VirtualHost
 		String siteLogsDir = OperatingSystemVersion.getHttpdSiteLogsDirectory(osv).toString();
 		int httpSiteBindPKey = conn.executeIntUpdate(
 			"INSERT INTO web.\"VirtualHost\" (httpd_site, httpd_bind, access_log, error_log) VALUES (?,?,?,?) RETURNING id",
@@ -1344,7 +1344,7 @@ final public class HttpdHandler {
 				MINIMUM_AUTO_PORT_NUMBER
 			);
 
-			// Create the HttpdWorker
+			// Create the Worker
 			addTomcatWorker(
 				conn,
 				invalidateList,
@@ -1579,7 +1579,7 @@ final public class HttpdHandler {
 		for(int c=0;c<httpdSiteBinds.size();c++) {
 			int hsb=httpdSiteBinds.getInt(c);
 			if(!isHttpdSiteBindDisabled(conn, hsb)) {
-				throw new SQLException("Cannot disable Site #"+id+": HttpdSiteBind not disabled: "+hsb);
+				throw new SQLException("Cannot disable Site #"+id+": VirtualHost not disabled: "+hsb);
 			}
 		}
 
@@ -1606,7 +1606,7 @@ final public class HttpdHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isHttpdSiteBindDisabled(conn, id)) throw new SQLException("HttpdSiteBind is already disabled: "+id);
+		if(isHttpdSiteBindDisabled(conn, id)) throw new SQLException("VirtualHost is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableHttpdSiteBind", disableLog, false);
 		int httpdSite=conn.executeIntQuery("select httpd_site from web.\"VirtualHost\" where id=?", id);
 		checkAccessHttpdSite(conn, source, "disableHttpdSiteBind", httpdSite);
@@ -1694,11 +1694,11 @@ final public class HttpdHandler {
 		int id
 	) throws IOException, SQLException {
 		int disableLog=getDisableLogForHttpdSiteBind(conn, id);
-		if(disableLog==-1) throw new SQLException("HttpdSiteBind is already enabled: "+id);
+		if(disableLog==-1) throw new SQLException("VirtualHost is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSiteBind", disableLog, true);
 		int hs=getHttpdSiteForHttpdSiteBind(conn, id);
 		checkAccessHttpdSite(conn, source, "enableHttpdSiteBind", hs);
-		if(isHttpdSiteDisabled(conn, hs)) throw new SQLException("Unable to enable HttpdSiteBind #"+id+", Site not enabled: "+hs);
+		if(isHttpdSiteDisabled(conn, hs)) throw new SQLException("Unable to enable VirtualHost #"+id+", Site not enabled: "+hs);
 
 		conn.executeUpdate(
 			"update web.\"VirtualHost\" set disable_log=null where id=?",
@@ -3238,7 +3238,7 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		int hs=getHttpdSiteForHttpdSiteBind(conn, id);
 		checkAccessHttpdSite(conn, source, "setHttpdSiteBindIsManual", hs);
-		if(isHttpdSiteBindDisabled(conn, id)) throw new SQLException("Unable to set is_manual flag: HttpdSiteBind disabled: "+id);
+		if(isHttpdSiteBindDisabled(conn, id)) throw new SQLException("Unable to set is_manual flag: VirtualHost disabled: "+id);
 
 		// Update the database
 		conn.executeUpdate(
@@ -3265,7 +3265,7 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		int hs=getHttpdSiteForHttpdSiteBind(conn, id);
 		checkAccessHttpdSite(conn, source, "setHttpdSiteBindRedirectToPrimaryHostname", hs);
-		if(isHttpdSiteBindDisabled(conn, id)) throw new SQLException("Unable to set redirect_to_primary_hostname flag: HttpdSiteBind disabled: "+id);
+		if(isHttpdSiteBindDisabled(conn, id)) throw new SQLException("Unable to set redirect_to_primary_hostname flag: VirtualHost disabled: "+id);
 
 		// Update the database
 		conn.executeUpdate(
@@ -3293,9 +3293,9 @@ final public class HttpdHandler {
 		int hs=getHttpdSiteForHttpdSiteBind(conn, hsb);
 		checkAccessHttpdSite(conn, source, "setHttpdSiteBindPredisableConfig", hs);
 		if(config==null) {
-			if(isHttpdSiteBindDisabled(conn, hsb)) throw new SQLException("Unable to clear HttpdSiteBind predisable config, bind disabled: "+hsb);
+			if(isHttpdSiteBindDisabled(conn, hsb)) throw new SQLException("Unable to clear VirtualHost predisable config, bind disabled: "+hsb);
 		} else {
-			if(!isHttpdSiteBindDisabled(conn, hsb)) throw new SQLException("Unable to set HttpdSiteBind predisable config, bind not disabled: "+hsb);
+			if(!isHttpdSiteBindDisabled(conn, hsb)) throw new SQLException("Unable to set VirtualHost predisable config, bind not disabled: "+hsb);
 		}
 
 		// Update the database
@@ -4078,7 +4078,7 @@ final public class HttpdHandler {
 			blockWebinf,
 			id
 		);
-		if(updateCount == 0) throw new SQLException("Not a HttpdTomcatSite: #" + id);
+		if(updateCount == 0) throw new SQLException("Not a Site: #" + id);
 		if(updateCount != 1) throw new SQLException("Unexpected updateCount: " + updateCount);
 		invalidateList.addTable(
 			conn,

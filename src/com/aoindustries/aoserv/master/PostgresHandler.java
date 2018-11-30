@@ -5,13 +5,11 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.linux.LinuxAccount;
-import com.aoindustries.aoserv.client.master.AOServPermission;
-import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.master.Permission;
+import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.password.PasswordChecker;
-import com.aoindustries.aoserv.client.postgresql.PostgresUser;
-import com.aoindustries.aoserv.client.schema.AOServProtocol;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.schema.AoservProtocol;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.PostgresDatabaseName;
 import com.aoindustries.aoserv.client.validator.PostgresServerName;
@@ -40,9 +38,9 @@ final public class PostgresHandler {
 	private final static Map<PostgresUserId,Boolean> disabledPostgresUsers=new HashMap<>();
 
 	public static void checkAccessPostgresDatabase(DatabaseConnection conn, RequestSource source, String action, int postgres_database) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 				ServerHandler.checkAccessServer(conn, source, action, getAOServerForPostgresDatabase(conn, postgres_database));
 			}
 		} else {
@@ -55,9 +53,9 @@ final public class PostgresHandler {
 	}
 
 	public static void checkAccessPostgresServerUser(DatabaseConnection conn, RequestSource source, String action, int postgres_server_user) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 				ServerHandler.checkAccessServer(conn, source, action, getAOServerForPostgresServerUser(conn, postgres_server_user));
 			}
 		} else {
@@ -66,9 +64,9 @@ final public class PostgresHandler {
 	}
 
 	public static void checkAccessPostgresUser(DatabaseConnection conn, RequestSource source, String action, PostgresUserId username) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 				IntList psus = getPostgresServerUsersForPostgresUser(conn, username);
 				boolean found = false;
 				for(int psu : psus) {
@@ -110,15 +108,15 @@ final public class PostgresHandler {
 		// If requesting PostGIS, make sure the version of PostgreSQL supports it.
 		if(
 			enable_postgis
-			&& conn.executeBooleanQuery("select pv.postgis_version is null from postgresql.\"Server\" ps inner join postgresql.\"Version\" pv on ps.version = pv.version where ps.bind = ?", postgresServer)
+			&& conn.executeBooleanQuery("select pv.postgis_version is null from postgresql.\"Host\" ps inner join postgresql.\"Version\" pv on ps.version = pv.version where ps.bind = ?", postgresServer)
 		) throw new SQLException("This version of PostgreSQL doesn't support PostGIS");
 
 		// datdba must be on the same server and not be 'mail'
 		int datdbaServer=getPostgresServerForPostgresServerUser(conn, datdba);
 		if(datdbaServer!=postgresServer) throw new SQLException("(datdba.postgres_server="+datdbaServer+")!=(postgres_server="+postgresServer+")");
 		PostgresUserId datdbaUsername=getUsernameForPostgresServerUser(conn, datdba);
-		if(datdbaUsername.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add PostgresDatabase with datdba of '"+LinuxAccount.MAIL+'\'');
-		if(isPostgresServerUserDisabled(conn, datdba)) throw new SQLException("Unable to add PostgresDatabase, PostgresServerUser disabled: "+datdba);
+		if(datdbaUsername.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add Database with datdba of '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+		if(isPostgresServerUserDisabled(conn, datdba)) throw new SQLException("Unable to add Database, UserServer disabled: "+datdba);
 		// Look up the accounting code
 		AccountingCode accounting=UsernameHandler.getBusinessForUsername(conn, datdbaUsername);
 		// Encoding must exist for this version of the database
@@ -128,7 +126,7 @@ final public class PostgresHandler {
 				+ "  SELECT\n"
 				+ "    pe.id\n"
 				+ "  FROM\n"
-				+ "    postgresql.\"Server\" ps\n"
+				+ "    postgresql.\"Host\" ps\n"
 				+ "    INNER JOIN postgresql.\"Encoding\" pe ON ps.version = pe.postgres_version\n"
 				+ "  WHERE\n"
 				+ "    ps.bind = ?\n"
@@ -137,7 +135,7 @@ final public class PostgresHandler {
 				postgresServer,
 				encoding
 			)
-		) throw new SQLException("PostgresServer #"+postgresServer+" does not support PostgresEncoding #"+encoding);
+		) throw new SQLException("Server #"+postgresServer+" does not support Encoding #"+encoding);
 
 		// Must be allowed to access this server and package
 		int aoServer=getAOServerForPostgresServer(conn, postgresServer);
@@ -170,7 +168,7 @@ final public class PostgresHandler {
 		// Notify all clients of the update, the server will detect this change and automatically add the database
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.POSTGRES_DATABASES,
+			Table.TableID.POSTGRES_DATABASES,
 			accounting,
 			aoServer,
 			false
@@ -188,10 +186,10 @@ final public class PostgresHandler {
 		PostgresUserId username, 
 		int postgresServer
 	) throws IOException, SQLException {
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add PostgresServerUser for user '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add UserServer for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
 		checkAccessPostgresUser(conn, source, "addPostgresServerUser", username);
-		if(isPostgresUserDisabled(conn, username)) throw new SQLException("Unable to add PostgresServerUser, PostgresUser disabled: "+username);
+		if(isPostgresUserDisabled(conn, username)) throw new SQLException("Unable to add UserServer, User disabled: "+username);
 		int aoServer=getAOServerForPostgresServer(conn, postgresServer);
 		ServerHandler.checkAccessServer(conn, source, "addPostgresServerUser", aoServer);
 		// This sub-account must have access to the server
@@ -206,7 +204,7 @@ final public class PostgresHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.POSTGRES_SERVER_USERS,
+			Table.TableID.POSTGRES_SERVER_USERS,
 			UsernameHandler.getBusinessForUsername(conn, username),
 			aoServer,
 			true
@@ -223,9 +221,9 @@ final public class PostgresHandler {
 		InvalidateList invalidateList,
 		PostgresUserId username
 	) throws IOException, SQLException {
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add PostgresUser for user '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add User for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 		UsernameHandler.checkAccessUsername(conn, source, "addPostgresUser", username);
-		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add PostgresUser, Username disabled: "+username);
+		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add User, Username disabled: "+username);
 
 		conn.executeUpdate(
 			"insert into postgresql.\"User\"(username) values(?)",
@@ -235,7 +233,7 @@ final public class PostgresHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.POSTGRES_USERS,
+			Table.TableID.POSTGRES_USERS,
 			UsernameHandler.getBusinessForUsername(conn, username),
 			InvalidateList.allServers,
 			false
@@ -249,7 +247,7 @@ final public class PostgresHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isPostgresServerUserDisabled(conn, id)) throw new SQLException("PostgresServerUser is already disabled: "+id);
+		if(isPostgresServerUserDisabled(conn, id)) throw new SQLException("UserServer is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disablePostgresServerUser", disableLog, false);
 		checkAccessPostgresServerUser(conn, source, "disablePostgresServerUser", id);
 
@@ -262,7 +260,7 @@ final public class PostgresHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.POSTGRES_SERVER_USERS,
+			Table.TableID.POSTGRES_SERVER_USERS,
 			getBusinessForPostgresServerUser(conn, id),
 			getAOServerForPostgresServerUser(conn, id),
 			false
@@ -276,14 +274,14 @@ final public class PostgresHandler {
 		int disableLog,
 		PostgresUserId username
 	) throws IOException, SQLException {
-		if(isPostgresUserDisabled(conn, username)) throw new SQLException("PostgresUser is already disabled: "+username);
+		if(isPostgresUserDisabled(conn, username)) throw new SQLException("User is already disabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disablePostgresUser", disableLog, false);
 		checkAccessPostgresUser(conn, source, "disablePostgresUser", username);
 		IntList psus=getPostgresServerUsersForPostgresUser(conn, username);
 		for(int c=0;c<psus.size();c++) {
 			int psu=psus.getInt(c);
 			if(!isPostgresServerUserDisabled(conn, psu)) {
-				throw new SQLException("Cannot disable PostgresUser '"+username+"': PostgresServerUser not disabled: "+psu);
+				throw new SQLException("Cannot disable User '"+username+"': UserServer not disabled: "+psu);
 			}
 		}
 
@@ -296,7 +294,7 @@ final public class PostgresHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.POSTGRES_USERS,
+			Table.TableID.POSTGRES_USERS,
 			UsernameHandler.getBusinessForUsername(conn, username),
 			UsernameHandler.getServersForUsername(conn, username),
 			false
@@ -320,7 +318,7 @@ final public class PostgresHandler {
 			dbPKey,
 			gzip,
 			(long dumpSize) -> {
-				if(source.getProtocolVersion().compareTo(AOServProtocol.Version.VERSION_1_80_0) >= 0) {
+				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
 					out.writeLong(dumpSize);
 				}
 			},
@@ -335,11 +333,11 @@ final public class PostgresHandler {
 		int id
 	) throws IOException, SQLException {
 		int disableLog=getDisableLogForPostgresServerUser(conn, id);
-		if(disableLog==-1) throw new SQLException("PostgresServerUser is already enabled: "+id);
+		if(disableLog==-1) throw new SQLException("UserServer is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enablePostgresServerUser", disableLog, true);
 		checkAccessPostgresServerUser(conn, source, "enablePostgresServerUser", id);
 		PostgresUserId pu=getUsernameForPostgresServerUser(conn, id);
-		if(isPostgresUserDisabled(conn, pu)) throw new SQLException("Unable to enable PostgresServerUser #"+id+", PostgresUser not enabled: "+pu);
+		if(isPostgresUserDisabled(conn, pu)) throw new SQLException("Unable to enable UserServer #"+id+", User not enabled: "+pu);
 
 		conn.executeUpdate(
 			"update postgresql.\"UserServer\" set disable_log=null where id=?",
@@ -349,7 +347,7 @@ final public class PostgresHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.POSTGRES_SERVER_USERS,
+			Table.TableID.POSTGRES_SERVER_USERS,
 			UsernameHandler.getBusinessForUsername(conn, pu),
 			getAOServerForPostgresServerUser(conn, id),
 			false
@@ -363,10 +361,10 @@ final public class PostgresHandler {
 		PostgresUserId username
 	) throws IOException, SQLException {
 		int disableLog=getDisableLogForPostgresUser(conn, username);
-		if(disableLog==-1) throw new SQLException("PostgresUser is already enabled: "+username);
+		if(disableLog==-1) throw new SQLException("User is already enabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enablePostgresUser", disableLog, true);
 		UsernameHandler.checkAccessUsername(conn, source, "enablePostgresUser", username);
-		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable PostgresUser '"+username+"', Username not enabled: "+username);
+		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable User '"+username+"', Username not enabled: "+username);
 
 		conn.executeUpdate(
 			"update postgresql.\"User\" set disable_log=null where username=?",
@@ -376,7 +374,7 @@ final public class PostgresHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.POSTGRES_USERS,
+			Table.TableID.POSTGRES_USERS,
 			UsernameHandler.getBusinessForUsername(conn, username),
 			UsernameHandler.getServersForUsername(conn, username),
 			false
@@ -431,7 +429,7 @@ final public class PostgresHandler {
 		);
 	}
 
-	public static void invalidateTable(SchemaTable.TableID tableID) {
+	public static void invalidateTable(Table.TableID tableID) {
 		switch(tableID) {
 			case POSTGRES_SERVER_USERS :
 				synchronized(PostgresHandler.class) {
@@ -526,7 +524,7 @@ final public class PostgresHandler {
 		int aoServer
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "isPostgresServerNameAvailable", aoServer);
-		return conn.executeBooleanQuery("SELECT NOT EXISTS (SELECT * FROM postgresql.\"Server\" WHERE \"name\" = ? AND ao_server = ?)", name, aoServer);
+		return conn.executeBooleanQuery("SELECT NOT EXISTS (SELECT * FROM postgresql.\"Host\" WHERE \"name\" = ? AND ao_server = ?)", name, aoServer);
 	}
 
 	public static boolean isPostgresServerUserPasswordSet(
@@ -535,16 +533,16 @@ final public class PostgresHandler {
 		int psu
 	) throws IOException, SQLException {
 		checkAccessPostgresServerUser(conn, source, "isPostgresServerUserPasswordSet", psu);
-		if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to determine if PostgresServerUser password is set, account disabled: "+psu);
+		if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to determine if UserServer password is set, account disabled: "+psu);
 		PostgresUserId username=getUsernameForPostgresServerUser(conn, psu);
 
 		int aoServer=getAOServerForPostgresServerUser(conn, psu);
 		String password=DaemonHandler.getDaemonConnector(conn, aoServer).getPostgresUserPassword(psu);
-		return !PostgresUser.NO_PASSWORD_DB_VALUE.equals(password);
+		return !com.aoindustries.aoserv.client.postgresql.User.NO_PASSWORD_DB_VALUE.equals(password);
 	}
 
 	/**
-	 * Removes a PostgresDatabase from the system.
+	 * Removes a Database from the system.
 	 */
 	public static void removePostgresDatabase(
 		DatabaseConnection conn,
@@ -558,7 +556,7 @@ final public class PostgresHandler {
 	}
 
 	/**
-	 * Removes a PostgresDatabase from the system.
+	 * Removes a Database from the system.
 	 */
 	public static void removePostgresDatabase(
 		DatabaseConnection conn,
@@ -573,7 +571,7 @@ final public class PostgresHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.POSTGRES_DATABASES,
+			Table.TableID.POSTGRES_DATABASES,
 			accounting,
 			aoServer,
 			false
@@ -581,7 +579,7 @@ final public class PostgresHandler {
 	}
 
 	/**
-	 * Removes a PostgresServerUser from the system.
+	 * Removes a UserServer from the system.
 	 */
 	public static void removePostgresServerUser(
 		DatabaseConnection conn,
@@ -592,7 +590,7 @@ final public class PostgresHandler {
 		checkAccessPostgresServerUser(conn, source, "removePostgresServerUser", id);
 
 		PostgresUserId username=getUsernameForPostgresServerUser(conn, id);
-		if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("Not allowed to remove PostgresUser for user '"+PostgresUser.POSTGRES+'\'');
+		if(username.equals(com.aoindustries.aoserv.client.postgresql.User.POSTGRES)) throw new SQLException("Not allowed to remove User for user '"+com.aoindustries.aoserv.client.postgresql.User.POSTGRES+'\'');
 
 		// Get the details for later use
 		int aoServer=getAOServerForPostgresServerUser(conn, id);
@@ -600,7 +598,7 @@ final public class PostgresHandler {
 
 		// Make sure that this is not the DBA for any databases
 		int count=conn.executeIntQuery("select count(*) from postgresql.\"Database\" where datdba=?", id);
-		if(count>0) throw new SQLException("PostgresServerUser #"+id+" cannot be removed because it is the datdba for "+count+(count==1?" database":" databases"));
+		if(count>0) throw new SQLException("UserServer #"+id+" cannot be removed because it is the datdba for "+count+(count==1?" database":" databases"));
 
 		// Remove the postgres_server_user
 		conn.executeUpdate("delete from postgresql.\"UserServer\" where id=?", id);
@@ -608,7 +606,7 @@ final public class PostgresHandler {
 		// Notify all clients of the updates
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.POSTGRES_SERVER_USERS,
+			Table.TableID.POSTGRES_SERVER_USERS,
 			accounting,
 			aoServer,
 			true
@@ -616,7 +614,7 @@ final public class PostgresHandler {
 	}
 
 	/**
-	 * Removes a PostgresUser from the system.
+	 * Removes a User from the system.
 	 */
 	public static void removePostgresUser(
 		DatabaseConnection conn,
@@ -630,23 +628,23 @@ final public class PostgresHandler {
 	}
 
 	/**
-	 * Removes a PostgresUser from the system.
+	 * Removes a User from the system.
 	 */
 	public static void removePostgresUser(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
 		PostgresUserId username
 	) throws IOException, SQLException {
-		if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("Not allowed to remove PostgresUser named '"+PostgresUser.POSTGRES+'\'');
+		if(username.equals(com.aoindustries.aoserv.client.postgresql.User.POSTGRES)) throw new SQLException("Not allowed to remove User named '"+com.aoindustries.aoserv.client.postgresql.User.POSTGRES+'\'');
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
 		// Remove the postgres_server_user
-		IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgresql.\"UserServer\" psu, postgresql.\"Server\" ps where psu.username=? and psu.postgres_server = ps.bind", username);
+		IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgresql.\"UserServer\" psu, postgresql.\"Host\" ps where psu.username=? and psu.postgres_server = ps.bind", username);
 		if(aoServers.size()>0) {
 			conn.executeUpdate("delete from postgresql.\"UserServer\" where username=?", username);
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.POSTGRES_SERVER_USERS,
+				Table.TableID.POSTGRES_SERVER_USERS,
 				accounting,
 				aoServers,
 				false
@@ -657,7 +655,7 @@ final public class PostgresHandler {
 		conn.executeUpdate("delete from postgresql.\"User\" where username=?", username);
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.POSTGRES_USERS,
+			Table.TableID.POSTGRES_USERS,
 			accounting,
 			BusinessHandler.getServersForBusiness(conn, accounting),
 			false
@@ -673,20 +671,20 @@ final public class PostgresHandler {
 		int postgres_server_user,
 		String password
 	) throws IOException, SQLException {
-		BusinessHandler.checkPermission(conn, source, "setPostgresServerUserPassword", AOServPermission.Permission.set_postgres_server_user_password);
+		BusinessHandler.checkPermission(conn, source, "setPostgresServerUserPassword", Permission.Name.set_postgres_server_user_password);
 		checkAccessPostgresServerUser(conn, source, "setPostgresServerUserPassword", postgres_server_user);
-		if(isPostgresServerUserDisabled(conn, postgres_server_user)) throw new SQLException("Unable to set PostgresServerUser password, account disabled: "+postgres_server_user);
+		if(isPostgresServerUserDisabled(conn, postgres_server_user)) throw new SQLException("Unable to set UserServer password, account disabled: "+postgres_server_user);
 
 		// Get the server for the user
 		int aoServer=getAOServerForPostgresServerUser(conn, postgres_server_user);
 		PostgresUserId username=getUsernameForPostgresServerUser(conn, postgres_server_user);
 
 		// No setting the super user password
-		if(username.equals(PostgresUser.POSTGRES)) throw new SQLException("The PostgreSQL "+PostgresUser.POSTGRES+" password may not be set.");
+		if(username.equals(com.aoindustries.aoserv.client.postgresql.User.POSTGRES)) throw new SQLException("The PostgreSQL "+com.aoindustries.aoserv.client.postgresql.User.POSTGRES+" password may not be set.");
 
 		// Perform the password check here, too.
-		if(password!=PostgresUser.NO_PASSWORD) {
-			List<PasswordChecker.Result> results = PostgresUser.checkPassword(username, password);
+		if(password!=com.aoindustries.aoserv.client.postgresql.User.NO_PASSWORD) {
+			List<PasswordChecker.Result> results = com.aoindustries.aoserv.client.postgresql.User.checkPassword(username, password);
 			if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 		}
 
@@ -703,9 +701,9 @@ final public class PostgresHandler {
 	) throws IOException, SQLException {
 		checkAccessPostgresServerUser(conn, source, "setPostgresServerUserPredisablePassword", psu);
 		if(password==null) {
-			if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to clear PostgresServerUser predisable password, account disabled: "+psu);
+			if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to clear UserServer predisable password, account disabled: "+psu);
 		} else {
-			if(!isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to set PostgresServerUser predisable password, account not disabled: "+psu);
+			if(!isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to set UserServer predisable password, account not disabled: "+psu);
 		}
 
 		// Update the database
@@ -717,7 +715,7 @@ final public class PostgresHandler {
 
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.POSTGRES_SERVER_USERS,
+			Table.TableID.POSTGRES_SERVER_USERS,
 			getBusinessForPostgresServerUser(conn, psu),
 			getAOServerForPostgresServerUser(conn, psu),
 			false
@@ -800,11 +798,11 @@ final public class PostgresHandler {
 	}
 
 	public static int getAOServerForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from postgresql.\"Server\" where bind = ?", postgresServer);
+		return conn.executeIntQuery("select ao_server from postgresql.\"Host\" where bind = ?", postgresServer);
 	}
 
 	public static int getPortForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select nb.port from postgresql.\"Server\" ps, net.\"Bind\" nb where ps.bind = ? and ps.bind = nb.id", postgresServer);
+		return conn.executeIntQuery("select nb.port from postgresql.\"Host\" ps, net.\"Bind\" nb where ps.bind = ? and ps.bind = nb.id", postgresServer);
 	}
 
 	public static String getMinorVersionForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
@@ -812,7 +810,7 @@ final public class PostgresHandler {
 			"SELECT\n"
 			+ "  pv.minor_version\n"
 			+ "FROM\n"
-			+ "  postgresql.\"Server\" ps\n"
+			+ "  postgresql.\"Host\" ps\n"
 			+ "  INNER JOIN postgresql.\"Version\" pv ON ps.version = pv.version\n"
 			+ "WHERE\n"
 			+ "  ps.bind = ?",
@@ -837,7 +835,7 @@ final public class PostgresHandler {
 			+ "  ps.ao_server\n"
 			+ "FROM\n"
 			+ "  postgresql.\"Database\" pd\n"
-			+ "  INNER JOIN postgresql.\"Server\" ps ON pd.postgres_server = ps.bind\n"
+			+ "  INNER JOIN postgresql.\"Host\" ps ON pd.postgres_server = ps.bind\n"
 			+ "WHERE\n"
 			+ "  pd.id=?",
 			postgresDatabase
@@ -862,7 +860,7 @@ final public class PostgresHandler {
 			+ "  ps.ao_server\n"
 			+ "FROM\n"
 			+ "  postgresql.\"UserServer\" psu\n"
-			+ "  INNER JOIN postgresql.\"Server\" ps ON psu.postgres_server = ps.bind\n"
+			+ "  INNER JOIN postgresql.\"Host\" ps ON psu.postgres_server = ps.bind\n"
 			+ "WHERE\n"
 			+ "  psu.id=?",
 			postgres_server_user

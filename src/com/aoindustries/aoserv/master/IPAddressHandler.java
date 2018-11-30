@@ -5,11 +5,11 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.dns.DNSZone;
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.net.IPAddress;
-import com.aoindustries.aoserv.client.net.NetDeviceID;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.dns.Zone;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.net.DeviceId;
+import com.aoindustries.aoserv.client.net.IpAddress;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.NotImplementedException;
@@ -28,9 +28,9 @@ import java.util.Locale;
 final public class IPAddressHandler {
 
 	public static void checkAccessIPAddress(DatabaseConnection conn, RequestSource source, String action, int ipAddressId) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length!=0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
 				ServerHandler.checkAccessServer(conn, source, action, getServerForIPAddress(conn, ipAddressId));
 			}
 		} else {
@@ -63,7 +63,7 @@ final public class IPAddressHandler {
 					else if(ip.startsWith("64.71.144.")) net = "net3.";
 					else net = "";
 					final String farm=ServerHandler.getFarmForServer(conn, server);
-					String hostname="unassigned"+octet+"."+net+farm+'.'+DNSZone.API_ZONE;
+					String hostname="unassigned"+octet+"."+net+farm+'.'+Zone.API_ZONE;
 					while(hostname.endsWith(".")) hostname = hostname.substring(0, hostname.length()-1);
 					return DomainName.valueOf(hostname);
 				}
@@ -96,7 +96,7 @@ final public class IPAddressHandler {
 		int netDeviceId = conn.executeIntQuery(
 			"select id from net.\"Device\" where server=? and \"deviceId\"=?",
 			toServerId,
-			NetDeviceID.ETH0
+			DeviceId.ETH0
 		);
 		conn.executeUpdate(
 			"update net.\"IpAddress\" set device=? where id=?",
@@ -107,14 +107,14 @@ final public class IPAddressHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.IP_ADDRESSES,
+			Table.TableID.IP_ADDRESSES,
 			accounting,
 			fromServerId,
 			false
 		);
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.IP_ADDRESSES,
+			Table.TableID.IP_ADDRESSES,
 			accounting,
 			toServerId,
 			false
@@ -143,7 +143,7 @@ final public class IPAddressHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.IP_ADDRESSES,
+			Table.TableID.IP_ADDRESSES,
 			accounting,
 			server,
 			false
@@ -194,7 +194,7 @@ final public class IPAddressHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.IP_ADDRESSES,
+			Table.TableID.IP_ADDRESSES,
 			getBusinessForIPAddress(conn, ipAddressId),
 			getServerForIPAddress(conn, ipAddressId),
 			false
@@ -230,7 +230,7 @@ final public class IPAddressHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.IP_ADDRESSES,
+			Table.TableID.IP_ADDRESSES,
 			getBusinessForIPAddress(conn, ipAddressId),
 			getServerForIPAddress(conn, ipAddressId),
 			false
@@ -284,7 +284,7 @@ final public class IPAddressHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.IP_ADDRESSES,
+			Table.TableID.IP_ADDRESSES,
 			InvalidateList.getCollection(oldAccounting, newAccounting),
 			server,
 			false
@@ -376,7 +376,7 @@ final public class IPAddressHandler {
 	}
 
 	public static int getWildcardIPAddress(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntQuery("select id from net.\"IpAddress\" where \"inetAddress\"=?", IPAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
+		return conn.executeIntQuery("select id from net.\"IpAddress\" where \"inetAddress\"=?", IpAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
 	}
 
 	public static int getLoopbackIPAddress(DatabaseConnection conn, int serverId) throws IOException, SQLException {
@@ -391,7 +391,7 @@ final public class IPAddressHandler {
 			+ "  and ia.device=nd.id\n"
 			+ "  and nd.server=?\n"
 			+ "limit 1",
-			IPAddress.LOOPBACK_IP,
+			IpAddress.LOOPBACK_IP,
 			serverId
 		);
 	}
@@ -418,7 +418,7 @@ final public class IPAddressHandler {
 		);
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.IP_ADDRESSES,
+			Table.TableID.IP_ADDRESSES,
 			getBusinessForIPAddress(conn, ipAddressId),
 			getServerForIPAddress(conn, ipAddressId),
 			false

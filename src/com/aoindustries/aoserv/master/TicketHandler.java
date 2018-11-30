@@ -5,11 +5,11 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.master.AOServPermission;
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
-import com.aoindustries.aoserv.client.ticket.TicketActionType;
-import com.aoindustries.aoserv.client.ticket.TicketStatus;
+import com.aoindustries.aoserv.client.master.Permission;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.client.ticket.ActionType;
+import com.aoindustries.aoserv.client.ticket.Status;
 import com.aoindustries.aoserv.client.ticket.TicketType;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
@@ -46,9 +46,9 @@ final public class TicketHandler /*implements Runnable*/ {
      * @throws java.sql.SQLException
      */
     public static boolean canAccessTicketAction(DatabaseConnection conn, RequestSource source, int action) throws IOException, SQLException {
-        MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+        User mu = MasterServer.getUser(conn, source.getUsername());
         if(mu!=null) {
-            if(MasterServer.getMasterServers(conn, source.getUsername()).length==0) return true; // Master users
+            if(MasterServer.getUserHosts(conn, source.getUsername()).length==0) return true; // Master users
             else return false; // daemons
         } else {
             AccountingCode accounting = getBusinessForAction(conn, action);
@@ -80,9 +80,9 @@ final public class TicketHandler /*implements Runnable*/ {
     }
 
     public static boolean canAccessTicket(DatabaseConnection conn, RequestSource source, int ticketId) throws IOException, SQLException {
-        MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+        User mu = MasterServer.getUser(conn, source.getUsername());
         if(mu!=null) {
-            if(MasterServer.getMasterServers(conn, source.getUsername()).length==0) {
+            if(MasterServer.getUserHosts(conn, source.getUsername()).length==0) {
                 // Master users
                 return true;
             } else {
@@ -95,9 +95,9 @@ final public class TicketHandler /*implements Runnable*/ {
                     baAccounting.equals(getBrandForTicket(conn, ticketId))
                     && baAccounting.equals(getBusinessForTicket(conn, ticketId))
                     && (
-                        TicketStatus.OPEN.equals(status)
-                        || TicketStatus.HOLD.equals(status)
-                        || TicketStatus.BOUNCED.equals(status)
+                        Status.OPEN.equals(status)
+                        || Status.HOLD.equals(status)
+                        || Status.BOUNCED.equals(status)
                     )
                     && TicketType.LOGS.equals(getTicketTypeForTicket(conn, ticketId))
                 ;
@@ -166,13 +166,13 @@ final public class TicketHandler /*implements Runnable*/ {
         String contactEmails,
         String contactPhoneNumbers
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "addTicket", AOServPermission.Permission.add_ticket);
+        BusinessHandler.checkPermission(conn, source, "addTicket", Permission.Name.add_ticket);
         boolean isAdmin=isTicketAdmin(conn, source);
         if(accounting==null) {
             // if(!isAdmin) throw new SQLException("Only ticket administrators may create a ticket without a business.");
         } else {
             BusinessHandler.checkAccessBusiness(conn, source, "addTicket", accounting);
-            if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add Ticket, Business disabled: "+accounting);
+            if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add Ticket, Account disabled: "+accounting);
         }
         AccountingCode reseller = ResellerHandler.getResellerForBusinessAutoEscalate(
             conn,
@@ -194,7 +194,7 @@ final public class TicketHandler /*implements Runnable*/ {
             null, // raw_email
             clientPriority,
             null, // admin_priority
-            TicketStatus.OPEN,
+            Status.OPEN,
             -1,
             contactEmails,
             contactPhoneNumbers,
@@ -254,11 +254,11 @@ final public class TicketHandler /*implements Runnable*/ {
 
         /*
         if(
-            clientPriority.equals(TicketPriority.URGENT)
+            clientPriority.equals(Priority.URGENT)
             && !accounting.equals(BusinessHandler.getRootBusiness()))
         {
             String message =
-                "Business:   "+accounting+"\n"+
+                "Account:   "+accounting+"\n"+
                 "Username:   "+username+"\n"+
                 "Type:       "+type+"\n"+
                 "Deadline:   "+(deadline==-1?"":SQLUtility.getDate(deadline))+"\n"+
@@ -271,10 +271,10 @@ final public class TicketHandler /*implements Runnable*/ {
         }*/
 
         // Notify all clients of the updates
-        if(accounting!=null) invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, accounting, InvalidateList.allServers, false);
-        invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, brand, InvalidateList.allServers, false);
-        invalidateList.addTable(conn, SchemaTable.TableID.TICKETS, reseller, InvalidateList.allServers, false);
-        //invalidateList.addTable(conn, SchemaTable.TableID.ACTIONS, accounting, null);
+        if(accounting!=null) invalidateList.addTable(conn, Table.TableID.TICKETS, accounting, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.TICKETS, brand, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.TICKETS, reseller, InvalidateList.allServers, false);
+        //invalidateList.addTable(conn, Table.TableID.ACTIONS, accounting, null);
         return id;
     }
     // </editor-fold>
@@ -357,15 +357,15 @@ final public class TicketHandler /*implements Runnable*/ {
         checkAccessTicket(conn, source, "bounceTicket", ticket);
         if(!isActive(conn, ticket)) throw new SQLException("Ticket no longer active: "+ticket);
         UsernameHandler.checkAccessUsername(conn, source, "bounceTicket", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to bounce a Ticket as user '"+LinuxAccount.MAIL+'\'');
+        if(username.equals(User.MAIL)) throw new SQLException("Not allowed to bounce a Ticket as user '"+User.MAIL+'\'');
 
-        conn.executeUpdate("update ticket.\"Ticket\" set status=? where id=?", TicketStatus.BOUNCED, ticket);
+        conn.executeUpdate("update ticket.\"Ticket\" set status=? where id=?", Status.BOUNCED, ticket);
 
         conn.executeUpdate(
             "insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
             ticket,
             username,
-            TicketActionType.BOUNCED,
+            ActionType.BOUNCED,
             comments
         );
 
@@ -373,14 +373,14 @@ final public class TicketHandler /*implements Runnable*/ {
         String accounting=getBusinessForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             accounting,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
+            Table.TableID.ACTIONS,
             accounting,
             InvalidateList.allServers,
             false
@@ -413,7 +413,7 @@ final public class TicketHandler /*implements Runnable*/ {
         checkAccessTicket(conn, source, "changeTicketAdminPriority", ticket);
         if(!isActive(conn, ticket)) throw new SQLException("Ticket no longer active: "+ticket);
         UsernameHandler.checkAccessUsername(conn, source, "changeTicketAdminPriority", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to change a Ticket's admin priority as user '"+LinuxAccount.MAIL+'\'');
+        if(username.equals(User.MAIL)) throw new SQLException("Not allowed to change a Ticket's admin priority as user '"+User.MAIL+'\'');
 
         if(!isTicketAdmin(conn, source)) throw new SQLException("Only ticket administrators may change the administrative priority.");
         String oldValue=conn.executeStringQuery("select admin_priority from ticket.\"Ticket\" where id=?", ticket);
@@ -424,7 +424,7 @@ final public class TicketHandler /*implements Runnable*/ {
             "insert into actions(ticket_id, administrator, action_type, old_value, comments) values(?,?,?,?,?)",
             ticket,
             username,
-            TicketActionType.ADMIN_PRIORITY_CHANGE,
+            ActionType.ADMIN_PRIORITY_CHANGE,
             oldValue,
             comments
         );
@@ -433,14 +433,14 @@ final public class TicketHandler /*implements Runnable*/ {
         String accounting=getBusinessForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             accounting,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
+            Table.TableID.ACTIONS,
             accounting,
             InvalidateList.allServers,
             false
@@ -459,7 +459,7 @@ final public class TicketHandler /*implements Runnable*/ {
         checkAccessTicket(conn, source, "setTicketAssignedTo", ticket);
         if(!isActive(conn, ticket)) throw new SQLException("Ticket no longer active: "+ticket);
         UsernameHandler.checkAccessUsername(conn, source, "setTicketAssignedTo", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to assign a Ticket as user '"+LinuxAccount.MAIL+'\'');
+        if(username.equals(User.MAIL)) throw new SQLException("Not allowed to assign a Ticket as user '"+User.MAIL+'\'');
 
         if(!isTicketAdmin(conn, source)) throw new SQLException("Only ticket administrators may assign ticket.Ticket.");
         String oldValue=conn.executeStringQuery("select assigned_to from ticket.\"Ticket\" where id=?", ticket);
@@ -470,7 +470,7 @@ final public class TicketHandler /*implements Runnable*/ {
             "insert into actions(ticket_id, administrator, action_type, old_value, comments) values(?,?,?,?,?)",
             ticket,
             username,
-            TicketActionType.ASSIGNED,
+            ActionType.ASSIGNED,
             oldValue,
             comments
         );
@@ -479,14 +479,14 @@ final public class TicketHandler /*implements Runnable*/ {
         String accounting=getBusinessForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             accounting,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
+            Table.TableID.ACTIONS,
             accounting,
             InvalidateList.allServers,
             false
@@ -501,7 +501,7 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode oldAccounting,
         AccountingCode newAccounting
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setTicketBusiness", AOServPermission.Permission.edit_ticket);
+        BusinessHandler.checkPermission(conn, source, "setTicketBusiness", Permission.Name.edit_ticket);
         checkAccessTicket(conn, source, "setTicketBusiness", ticket);
 
         if(newAccounting!=null) BusinessHandler.checkAccessBusiness(conn, source, "setTicketBusiness", newAccounting);
@@ -515,7 +515,7 @@ final public class TicketHandler /*implements Runnable*/ {
                 "insert into ticket.\"Action\"(ticket, administrator, action_type, old_accounting, new_accounting) values(?,?,?,?,?)",
                 ticket,
                 source.getUsername(),
-                TicketActionType.SET_BUSINESS,
+                ActionType.SET_BUSINESS,
                 oldAccounting,
                 newAccounting
             );
@@ -525,14 +525,14 @@ final public class TicketHandler /*implements Runnable*/ {
             if(oldAccounting!=null) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.TICKETS,
+                    Table.TableID.TICKETS,
                     oldAccounting,
                     InvalidateList.allServers,
                     false
                 );
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.TICKET_ACTIONS,
+                    Table.TableID.TICKET_ACTIONS,
                     oldAccounting,
                     InvalidateList.allServers,
                     false
@@ -542,14 +542,14 @@ final public class TicketHandler /*implements Runnable*/ {
             if(newAccounting!=null) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.TICKETS,
+                    Table.TableID.TICKETS,
                     newAccounting,
                     InvalidateList.allServers,
                     false
                 );
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.TICKET_ACTIONS,
+                    Table.TableID.TICKET_ACTIONS,
                     newAccounting,
                     InvalidateList.allServers,
                     false
@@ -563,14 +563,14 @@ final public class TicketHandler /*implements Runnable*/ {
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 brand,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 brand,
                 InvalidateList.allServers,
                 false
@@ -583,14 +583,14 @@ final public class TicketHandler /*implements Runnable*/ {
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 reseller,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 reseller,
                 InvalidateList.allServers,
                 false
@@ -611,7 +611,7 @@ final public class TicketHandler /*implements Runnable*/ {
         String oldType,
         String newType
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setTicketType", AOServPermission.Permission.edit_ticket);
+        BusinessHandler.checkPermission(conn, source, "setTicketType", Permission.Name.edit_ticket);
         checkAccessTicket(conn, source, "setTicketType", ticket);
 
         int updateCount = conn.executeUpdate(
@@ -625,7 +625,7 @@ final public class TicketHandler /*implements Runnable*/ {
                 "insert into ticket.\"Action\"(ticket, administrator, action_type, old_type, new_type) values(?,?,?,?,?)",
                 ticket,
                 source.getUsername(),
-                TicketActionType.SET_TYPE,
+                ActionType.SET_TYPE,
                 oldType,
                 newType
             );
@@ -636,14 +636,14 @@ final public class TicketHandler /*implements Runnable*/ {
             if(accounting!=null) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.TICKETS,
+                    Table.TableID.TICKETS,
                     accounting,
                     InvalidateList.allServers,
                     false
                 );
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.TICKET_ACTIONS,
+                    Table.TableID.TICKET_ACTIONS,
                     accounting,
                     InvalidateList.allServers,
                     false
@@ -653,14 +653,14 @@ final public class TicketHandler /*implements Runnable*/ {
             AccountingCode brand = getBrandForTicket(conn, ticket);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 brand,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 brand,
                 InvalidateList.allServers,
                 false
@@ -669,14 +669,14 @@ final public class TicketHandler /*implements Runnable*/ {
             AccountingCode reseller = getResellerForTicket(conn, ticket);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 reseller,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 reseller,
                 InvalidateList.allServers,
                 false
@@ -698,7 +698,7 @@ final public class TicketHandler /*implements Runnable*/ {
         String newStatus,
         long statusTimeout
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setTicketStatus", AOServPermission.Permission.edit_ticket);
+        BusinessHandler.checkPermission(conn, source, "setTicketStatus", Permission.Name.edit_ticket);
         checkAccessTicket(conn, source, "setTicketStatus", ticket);
 
         int updateCount = conn.executeUpdate(
@@ -713,7 +713,7 @@ final public class TicketHandler /*implements Runnable*/ {
                 "insert into ticket.\"Action\"(ticket, administrator, action_type, old_status, new_status) values(?,?,?,?,?)",
                 ticket,
                 source.getUsername(),
-                TicketActionType.SET_STATUS,
+                ActionType.SET_STATUS,
                 oldStatus,
                 newStatus
             );
@@ -724,14 +724,14 @@ final public class TicketHandler /*implements Runnable*/ {
             if(accounting!=null) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.TICKETS,
+                    Table.TableID.TICKETS,
                     accounting,
                     InvalidateList.allServers,
                     false
                 );
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.TICKET_ACTIONS,
+                    Table.TableID.TICKET_ACTIONS,
                     accounting,
                     InvalidateList.allServers,
                     false
@@ -741,14 +741,14 @@ final public class TicketHandler /*implements Runnable*/ {
             AccountingCode brand = getBrandForTicket(conn, ticket);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 brand,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 brand,
                 InvalidateList.allServers,
                 false
@@ -757,14 +757,14 @@ final public class TicketHandler /*implements Runnable*/ {
             AccountingCode reseller = getResellerForTicket(conn, ticket);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 reseller,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 reseller,
                 InvalidateList.allServers,
                 false
@@ -785,7 +785,7 @@ final public class TicketHandler /*implements Runnable*/ {
         String oldInternalNotes,
         String newInternalNotes
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setTicketInternalNotes", AOServPermission.Permission.edit_ticket);
+        BusinessHandler.checkPermission(conn, source, "setTicketInternalNotes", Permission.Name.edit_ticket);
         checkAccessTicket(conn, source, "setTicketInternalNotes", ticket);
 
         int updateCount = conn.executeUpdate(
@@ -799,7 +799,7 @@ final public class TicketHandler /*implements Runnable*/ {
                 "insert into ticket.\"Action\"(ticket, administrator, action_type, old_value, new_value) values(?,?,?,?,?)",
                 ticket,
                 source.getUsername(),
-                TicketActionType.SET_INTERNAL_NOTES,
+                ActionType.SET_INTERNAL_NOTES,
                 oldInternalNotes,
                 newInternalNotes
             );
@@ -810,14 +810,14 @@ final public class TicketHandler /*implements Runnable*/ {
             if(accounting!=null) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.TICKETS,
+                    Table.TableID.TICKETS,
                     accounting,
                     InvalidateList.allServers,
                     false
                 );
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.TICKET_ACTIONS,
+                    Table.TableID.TICKET_ACTIONS,
                     accounting,
                     InvalidateList.allServers,
                     false
@@ -827,14 +827,14 @@ final public class TicketHandler /*implements Runnable*/ {
             AccountingCode brand = getBrandForTicket(conn, ticket);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 brand,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 brand,
                 InvalidateList.allServers,
                 false
@@ -843,14 +843,14 @@ final public class TicketHandler /*implements Runnable*/ {
             AccountingCode reseller = getResellerForTicket(conn, ticket);
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 reseller,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 reseller,
                 InvalidateList.allServers,
                 false
@@ -870,7 +870,7 @@ final public class TicketHandler /*implements Runnable*/ {
         int ticket,
         String contactEmails
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setTicketContactEmails", AOServPermission.Permission.edit_ticket);
+        BusinessHandler.checkPermission(conn, source, "setTicketContactEmails", Permission.Name.edit_ticket);
         checkAccessTicket(conn, source, "setTicketContactEmails", ticket);
 
         String oldValue = conn.executeStringQuery("select contact_emails from ticket.\"Ticket\" where id=?", ticket);
@@ -881,7 +881,7 @@ final public class TicketHandler /*implements Runnable*/ {
             "insert into ticket.\"Action\"(ticket, administrator, action_type, old_value, new_value) values(?,?,?,?,?)",
             ticket,
             source.getUsername(),
-            TicketActionType.SET_CONTACT_EMAILS,
+            ActionType.SET_CONTACT_EMAILS,
             oldValue,
             contactEmails
         );
@@ -892,14 +892,14 @@ final public class TicketHandler /*implements Runnable*/ {
         if(accounting!=null) {
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -909,14 +909,14 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode brand = getBrandForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             brand,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKET_ACTIONS,
+            Table.TableID.TICKET_ACTIONS,
             brand,
             InvalidateList.allServers,
             false
@@ -925,14 +925,14 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode reseller = getResellerForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             reseller,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKET_ACTIONS,
+            Table.TableID.TICKET_ACTIONS,
             reseller,
             InvalidateList.allServers,
             false
@@ -946,7 +946,7 @@ final public class TicketHandler /*implements Runnable*/ {
         int ticket,
         String contactPhoneNumbers
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setTicketContactPhoneNumbers", AOServPermission.Permission.edit_ticket);
+        BusinessHandler.checkPermission(conn, source, "setTicketContactPhoneNumbers", Permission.Name.edit_ticket);
         checkAccessTicket(conn, source, "setTicketContactPhoneNumbers", ticket);
 
         String oldValue = conn.executeStringQuery("select contact_phone_numbers from ticket.\"Ticket\" where id=?", ticket);
@@ -957,7 +957,7 @@ final public class TicketHandler /*implements Runnable*/ {
             "insert into ticket.\"Action\"(ticket, administrator, action_type, old_value, new_value) values(?,?,?,?,?)",
             ticket,
             source.getUsername(),
-            TicketActionType.SET_CONTACT_PHONE_NUMBERS,
+            ActionType.SET_CONTACT_PHONE_NUMBERS,
             oldValue,
             contactPhoneNumbers
         );
@@ -968,14 +968,14 @@ final public class TicketHandler /*implements Runnable*/ {
         if(accounting!=null) {
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -985,14 +985,14 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode brand = getBrandForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             brand,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKET_ACTIONS,
+            Table.TableID.TICKET_ACTIONS,
             brand,
             InvalidateList.allServers,
             false
@@ -1001,14 +1001,14 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode reseller = getResellerForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             reseller,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKET_ACTIONS,
+            Table.TableID.TICKET_ACTIONS,
             reseller,
             InvalidateList.allServers,
             false
@@ -1022,7 +1022,7 @@ final public class TicketHandler /*implements Runnable*/ {
         int ticket, 
         String newClientPriority
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "changeTicketClientPriority", AOServPermission.Permission.edit_ticket);
+        BusinessHandler.checkPermission(conn, source, "changeTicketClientPriority", Permission.Name.edit_ticket);
         checkAccessTicket(conn, source, "changeTicketClientPriority", ticket);
 
         String oldClientPriority = conn.executeStringQuery("select client_priority from ticket.\"Ticket\" where id=?", ticket);
@@ -1033,7 +1033,7 @@ final public class TicketHandler /*implements Runnable*/ {
             "insert into ticket.\"Action\"(ticket, administrator, action_type, old_priority, new_priority) values(?,?,?,?,?)",
             ticket,
             source.getUsername(),
-            TicketActionType.SET_CLIENT_PRIORITY,
+            ActionType.SET_CLIENT_PRIORITY,
             oldClientPriority,
             newClientPriority
         );
@@ -1044,14 +1044,14 @@ final public class TicketHandler /*implements Runnable*/ {
         if(accounting!=null) {
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -1061,14 +1061,14 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode brand = getBrandForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             brand,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKET_ACTIONS,
+            Table.TableID.TICKET_ACTIONS,
             brand,
             InvalidateList.allServers,
             false
@@ -1077,14 +1077,14 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode reseller = getResellerForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             reseller,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKET_ACTIONS,
+            Table.TableID.TICKET_ACTIONS,
             reseller,
             InvalidateList.allServers,
             false
@@ -1098,7 +1098,7 @@ final public class TicketHandler /*implements Runnable*/ {
         int ticket,
         String summary
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "setTicketSummary", AOServPermission.Permission.edit_ticket);
+        BusinessHandler.checkPermission(conn, source, "setTicketSummary", Permission.Name.edit_ticket);
         checkAccessTicket(conn, source, "setTicketSummary", ticket);
 
         String oldValue = conn.executeStringQuery("select summary from ticket.\"Ticket\" where id=?", ticket);
@@ -1109,7 +1109,7 @@ final public class TicketHandler /*implements Runnable*/ {
             "insert into ticket.\"Action\"(ticket, administrator, action_type, old_value, new_value) values(?,?,?,?,?)",
             ticket,
             source.getUsername(),
-            TicketActionType.SET_SUMMARY,
+            ActionType.SET_SUMMARY,
             oldValue,
             summary
         );
@@ -1120,14 +1120,14 @@ final public class TicketHandler /*implements Runnable*/ {
         if(accounting!=null) {
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 accounting,
                 InvalidateList.allServers,
                 false
             );
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -1137,14 +1137,14 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode brand = getBrandForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             brand,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKET_ACTIONS,
+            Table.TableID.TICKET_ACTIONS,
             brand,
             InvalidateList.allServers,
             false
@@ -1153,14 +1153,14 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode reseller = getResellerForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             reseller,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKET_ACTIONS,
+            Table.TableID.TICKET_ACTIONS,
             reseller,
             InvalidateList.allServers,
             false
@@ -1178,7 +1178,7 @@ final public class TicketHandler /*implements Runnable*/ {
         String summary,
         String details
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "addTicketAnnotation", AOServPermission.Permission.add_ticket);
+        BusinessHandler.checkPermission(conn, source, "addTicketAnnotation", Permission.Name.add_ticket);
         checkAccessTicket(conn, source, "addTicketAnnotation", ticket);
 
         addTicketAnnotation(conn, invalidateList, ticket, source.getUsername(), summary, details);
@@ -1199,7 +1199,7 @@ final public class TicketHandler /*implements Runnable*/ {
             "insert into ticket.\"Action\"(ticket, administrator, action_type, summary, details) values(?,?,?,?,?)",
             ticket,
             administrator,
-            TicketActionType.ADD_ANNOTATION,
+            ActionType.ADD_ANNOTATION,
             summary,
             details
         );
@@ -1208,7 +1208,7 @@ final public class TicketHandler /*implements Runnable*/ {
         if(accounting!=null) {
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKET_ACTIONS,
+                Table.TableID.TICKET_ACTIONS,
                 accounting,
                 InvalidateList.allServers,
                 false
@@ -1218,7 +1218,7 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode brand = getBrandForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKET_ACTIONS,
+            Table.TableID.TICKET_ACTIONS,
             brand,
             InvalidateList.allServers,
             false
@@ -1227,7 +1227,7 @@ final public class TicketHandler /*implements Runnable*/ {
         AccountingCode reseller = getResellerForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKET_ACTIONS,
+            Table.TableID.TICKET_ACTIONS,
             reseller,
             InvalidateList.allServers,
             false
@@ -1236,23 +1236,23 @@ final public class TicketHandler /*implements Runnable*/ {
         // Reopen if needed
         String status = conn.executeStringQuery("select status from ticket.\"Ticket\" where id=?", ticket);
         if(
-            status.equals(TicketStatus.BOUNCED)
-            || status.equals(TicketStatus.CLOSED)
+            status.equals(Status.BOUNCED)
+            || status.equals(Status.CLOSED)
         ) {
-            conn.executeUpdate("update ticket.\"Ticket\" set status=?, status_timeout=null where id=?", TicketStatus.OPEN, ticket);
+            conn.executeUpdate("update ticket.\"Ticket\" set status=?, status_timeout=null where id=?", Status.OPEN, ticket);
             conn.executeUpdate(
                 "insert into ticket.\"Action\"(ticket, administrator, action_type, old_status, new_status) values(?,?,?,?,?)",
                 ticket,
                 administrator,
-                TicketActionType.SET_STATUS,
+                ActionType.SET_STATUS,
                 status,
-                TicketStatus.OPEN
+                Status.OPEN
             );
             // By accounting
             if(accounting!=null) {
                 invalidateList.addTable(
                     conn,
-                    SchemaTable.TableID.TICKETS,
+                    Table.TableID.TICKETS,
                     accounting,
                     InvalidateList.allServers,
                     false
@@ -1261,7 +1261,7 @@ final public class TicketHandler /*implements Runnable*/ {
             // By brand
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 brand,
                 InvalidateList.allServers,
                 false
@@ -1269,7 +1269,7 @@ final public class TicketHandler /*implements Runnable*/ {
             // By reseller
             invalidateList.addTable(
                 conn,
-                SchemaTable.TableID.TICKETS,
+                Table.TableID.TICKETS,
                 reseller,
                 InvalidateList.allServers,
                 false
@@ -1288,12 +1288,12 @@ final public class TicketHandler /*implements Runnable*/ {
         checkAccessTicket(conn, source, "completeTicket", ticket);
         if(!isActive(conn, ticket)) throw new SQLException("Ticket no longer active: "+ticket);
         UsernameHandler.checkAccessUsername(conn, source, "completeTicket", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to complete Ticket as user '"+LinuxAccount.MAIL+'\'');
+        if(username.equals(User.MAIL)) throw new SQLException("Not allowed to complete Ticket as user '"+User.MAIL+'\'');
 
         conn.executeUpdate(
             "update ticket.\"Ticket\" set close_date=now(), closed_by=?, status=?, assigned_to=null where id=?",
             username,
-            TicketStatus.COMPLETED,
+            Status.COMPLETED,
             ticket
         );
 
@@ -1301,7 +1301,7 @@ final public class TicketHandler /*implements Runnable*/ {
             "insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
             ticket,
             username,
-            TicketActionType.COMPLETE_TICKET,
+            ActionType.COMPLETE_TICKET,
             comments
         );
 
@@ -1309,14 +1309,14 @@ final public class TicketHandler /*implements Runnable*/ {
         String accounting=getBusinessForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             accounting,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
+            Table.TableID.ACTIONS,
             accounting,
             InvalidateList.allServers,
             false
@@ -1353,7 +1353,7 @@ final public class TicketHandler /*implements Runnable*/ {
 
         conn.executeUpdate(
             "update ticket.\"Ticket\" set status=? where id=?",
-            isAdminChange?TicketStatus.ADMIN_HOLD:TicketStatus.CLIENT_HOLD,
+            isAdminChange?Status.ADMIN_HOLD:Status.CLIENT_HOLD,
             ticket
         );
 
@@ -1361,7 +1361,7 @@ final public class TicketHandler /*implements Runnable*/ {
             "insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
             ticket,
             username,
-            isAdminChange?TicketActionType.ADMIN_HOLD:TicketActionType.CLIENT_HOLD,
+            isAdminChange?ActionType.ADMIN_HOLD:ActionType.CLIENT_HOLD,
             comments
         );
 
@@ -1369,14 +1369,14 @@ final public class TicketHandler /*implements Runnable*/ {
         String accounting=getBusinessForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             accounting,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
+            Table.TableID.ACTIONS,
             accounting,
             InvalidateList.allServers,
             false
@@ -1394,7 +1394,7 @@ final public class TicketHandler /*implements Runnable*/ {
         checkAccessTicket(conn, source, "holdTicket", ticket);
         if(!isActive(conn, ticket)) throw new SQLException("Ticket no longer active: "+ticket);
         UsernameHandler.checkAccessUsername(conn, source, "holdTicket", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to kill Ticket as user '"+LinuxAccount.MAIL+'\'');
+        if(username.equals(User.MAIL)) throw new SQLException("Not allowed to kill Ticket as user '"+User.MAIL+'\'');
 
         String accounting1 = conn.executeStringQuery("select pk.accounting from account.\"Username\" un, billing.\"Package\" pk where un.username=? and un.package=pk.name", username);
         String accounting2 = conn.executeStringQuery("select accounting from ticket.\"Ticket\" where id=?", ticket);
@@ -1404,7 +1404,7 @@ final public class TicketHandler /*implements Runnable*/ {
         conn.executeUpdate(
             "update ticket.\"Ticket\" set close_date=now(), closed_by=?, status=?, assigned_to=null where id=?",
             username,
-            isClientChange?TicketStatus.CLIENT_KILL:TicketStatus.ADMIN_KILL,
+            isClientChange?Status.CLIENT_KILL:Status.ADMIN_KILL,
             ticket
         );
 
@@ -1412,7 +1412,7 @@ final public class TicketHandler /*implements Runnable*/ {
             "insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
             ticket,
             username,
-            isClientChange?TicketActionType.CLIENT_KILLED:TicketActionType.ADMIN_KILL,
+            isClientChange?ActionType.CLIENT_KILLED:ActionType.ADMIN_KILL,
             comments
         );
 
@@ -1420,14 +1420,14 @@ final public class TicketHandler /*implements Runnable*/ {
         String accounting=getBusinessForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             accounting,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
+            Table.TableID.ACTIONS,
             accounting,
             InvalidateList.allServers,
             false
@@ -1460,15 +1460,15 @@ final public class TicketHandler /*implements Runnable*/ {
         checkAccessTicket(conn, source, "holdTicket", ticket);
         if(!isActive(conn, ticket)) throw new SQLException("Ticket no longer active: "+ticket);
         UsernameHandler.checkAccessUsername(conn, source, "holdTicket", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to reactivate Ticket as user '"+LinuxAccount.MAIL+'\'');
+        if(username.equals(User.MAIL)) throw new SQLException("Not allowed to reactivate Ticket as user '"+User.MAIL+'\'');
 
-        conn.executeUpdate("update ticket.\"Ticket\" set status=? where id=?", TicketStatus.UNDERWAY, ticket);
+        conn.executeUpdate("update ticket.\"Ticket\" set status=? where id=?", Status.UNDERWAY, ticket);
 
         conn.executeUpdate(
             "insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
             ticket,
             username,
-            TicketActionType.REACTIVATE_TICKET,
+            ActionType.REACTIVATE_TICKET,
             comments
         );
 
@@ -1476,14 +1476,14 @@ final public class TicketHandler /*implements Runnable*/ {
         String accounting=getBusinessForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             accounting,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
+            Table.TableID.ACTIONS,
             accounting,
             InvalidateList.allServers,
             false
@@ -1514,15 +1514,15 @@ final public class TicketHandler /*implements Runnable*/ {
         checkAccessTicket(conn, source, "ticketWork", ticket);
         if(!isActive(conn, ticket)) throw new SQLException("Ticket no longer active: "+ticket);
         UsernameHandler.checkAccessUsername(conn, source, "ticketWork", username);
-        if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to submit Ticket work as user '"+LinuxAccount.MAIL+'\'');
+        if(username.equals(User.MAIL)) throw new SQLException("Not allowed to submit Ticket work as user '"+User.MAIL+'\'');
 
-        conn.executeUpdate("update ticket.\"Ticket\" set status=? where id=?", TicketStatus.UNDERWAY, ticket);
+        conn.executeUpdate("update ticket.\"Ticket\" set status=? where id=?", Status.UNDERWAY, ticket);
 
         conn.executeUpdate(
             "insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
             ticket,
             username,
-            TicketActionType.WORK_ENTRY,
+            ActionType.WORK_ENTRY,
             comments
         );
 
@@ -1530,14 +1530,14 @@ final public class TicketHandler /*implements Runnable*/ {
         String accounting=getBusinessForTicket(conn, ticket);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.TICKETS,
+            Table.TableID.TICKETS,
             accounting,
             InvalidateList.allServers,
             false
         );
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.ACTIONS,
+            Table.TableID.ACTIONS,
             accounting,
             InvalidateList.allServers,
             false
@@ -1621,9 +1621,9 @@ final public class TicketHandler /*implements Runnable*/ {
     public static boolean isActive(DatabaseConnection conn, int ticketId) throws IOException, SQLException {
         String status=conn.executeStringQuery("select status from ticket.\"Ticket\" where id=?", ticketId);
         return
-            !TicketStatus.ADMIN_KILL.equals(status)
-            && !TicketStatus.CLIENT_KILL.equals(status)
-            && !TicketStatus.COMPLETED.equals(status)
+            !Status.ADMIN_KILL.equals(status)
+            && !Status.CLIENT_KILL.equals(status)
+            && !Status.COMPLETED.equals(status)
         ;
     }*/
     // </editor-fold>
@@ -1647,7 +1647,7 @@ final public class TicketHandler /*implements Runnable*/ {
                         msg.sendAndClose();
                     }
                 } catch (IOException err) {
-                    MasterServer.reportError(err, null);
+                    UserHost.reportError(err, null);
                 }
             }
         }
@@ -1661,7 +1661,7 @@ final public class TicketHandler /*implements Runnable*/ {
                 email.print(cellMessage);
                 msg.sendAndClose();
             } catch (IOException err) {
-                MasterServer.reportError(err, null);
+                UserHost.reportError(err, null);
             }
         }
     }
@@ -1728,7 +1728,7 @@ final public class TicketHandler /*implements Runnable*/ {
                                 if(updateCount>0) {
                                     invalidateList.addTable(
                                         database,
-                                        SchemaTable.TableID.TICKET_ACTIONS,
+                                        Table.TableID.TICKET_ACTIONS,
                                         InvalidateList.allBusinesses,
                                         InvalidateList.allServers,
                                         false
@@ -1746,7 +1746,7 @@ final public class TicketHandler /*implements Runnable*/ {
                                 if(updateCount>0) {
                                     invalidateList.addTable(
                                         database,
-                                        SchemaTable.TableID.TICKETS,
+                                        Table.TableID.TICKETS,
                                         InvalidateList.allBusinesses,
                                         InvalidateList.allServers,
                                         false
@@ -1841,7 +1841,7 @@ final public class TicketHandler /*implements Runnable*/ {
                                         );
                                         Folder folder=store.getFolder(folderName);
                                         if(!folder.exists()) {
-                                            MasterServer.reportWarning(new IOException("Folder does not exist: "+folderName), null);
+                                            UserHost.reportWarning(new IOException("Folder does not exist: "+folderName), null);
                                         } else {
                                             try {
                                                 folder.open(Folder.READ_WRITE);
@@ -1913,8 +1913,8 @@ final public class TicketHandler /*implements Runnable*/ {
                                                             TicketType.NONE,
                                                             emailBody,
                                                             -1,
-                                                            TicketPriority.NORMAL,
-                                                            TicketPriority.NORMAL,
+                                                            Priority.NORMAL,
+                                                            Priority.NORMAL,
                                                             null,
                                                             assign_to==null || assign_to.length()==0 ? null : assign_to,
                                                             notifyEmails.toString(),
@@ -1930,7 +1930,7 @@ final public class TicketHandler /*implements Runnable*/ {
                                                     Folder archiveFolder=store.getFolder(archiveFolderName);
                                                     try {
                                                         if (!archiveFolder.exists()) {
-                                                            MasterServer.reportWarning(new IOException("Folder does not exist: "+archiveFolderName), null);
+                                                            UserHost.reportWarning(new IOException("Folder does not exist: "+archiveFolderName), null);
                                                         } else {
                                                             folder.copyMessages(messages, archiveFolder);
                                                         }

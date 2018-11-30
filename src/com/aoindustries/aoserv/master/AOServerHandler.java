@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.MasterUser;
-import com.aoindustries.aoserv.client.SchemaTable;
+import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.schema.SchemaTable;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;

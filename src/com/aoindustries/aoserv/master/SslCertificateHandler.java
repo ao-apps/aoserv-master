@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.master.MasterUser;
-import com.aoindustries.aoserv.client.pki.SslCertificate;
+import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.pki.Certificate;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
@@ -22,9 +22,9 @@ final public class SslCertificateHandler {
 	}
 
 	public static void checkAccessCertificate(DatabaseConnection conn, RequestSource source, String action, int sslCertificate) throws IOException, SQLException {
-		MasterUser mu = MasterServer.getMasterUser(conn, source.getUsername());
+		User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu != null) {
-			if(MasterServer.getMasterServers(conn, source.getUsername()).length != 0) {
+			if(MasterServer.getUserHosts(conn, source.getUsername()).length != 0) {
 				int aoServer = getLinuxServerForCertificate(conn, sslCertificate);
 				ServerHandler.checkAccessServer(conn, source, action, aoServer);
 			}
@@ -48,7 +48,7 @@ final public class SslCertificateHandler {
 		);
 	}
 
-	public static List<SslCertificate.Check> check(
+	public static List<Certificate.Check> check(
 		DatabaseConnection conn,
 		RequestSource source,
 		int certificate

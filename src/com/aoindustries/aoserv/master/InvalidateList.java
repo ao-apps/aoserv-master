@@ -5,7 +5,7 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.util.IntArrayList;
@@ -40,7 +40,7 @@ final public class InvalidateList {
     private static final Logger logger = Logger.getLogger(InvalidateList.class.getName());
 
     /** Copy once to avoid repeated copies. */
-    final private static SchemaTable.TableID[] tableIDs = SchemaTable.TableID.values();
+    final private static Table.TableID[] tableIDs = Table.TableID.values();
     // TODO: Unused 2018-11-18: final private static int numTables = tableIDs.length;
 
     // TODO: Unused 2018-11-18: final private static String[] tableNames=new String[numTables];
@@ -51,12 +51,12 @@ final public class InvalidateList {
     public static final List<AccountingCode> allBusinesses=Collections.unmodifiableList(new ArrayList<AccountingCode>());
     public static final IntList allServers=new IntArrayList();
 
-    private final Map<SchemaTable.TableID,List<Integer>> serverLists=new EnumMap<>(SchemaTable.TableID.class);
-    private final Map<SchemaTable.TableID,List<AccountingCode>> businessLists=new EnumMap<>(SchemaTable.TableID.class);
+    private final Map<Table.TableID,List<Integer>> serverLists=new EnumMap<>(Table.TableID.class);
+    private final Map<Table.TableID,List<AccountingCode>> businessLists=new EnumMap<>(Table.TableID.class);
 
     public void addTable(
         DatabaseAccess conn,
-        SchemaTable.TableID tableID,
+        Table.TableID tableID,
         AccountingCode business,
         int server,
         boolean recurse
@@ -72,7 +72,7 @@ final public class InvalidateList {
 
     public void addTable(
         DatabaseAccess conn,
-        SchemaTable.TableID tableID,
+        Table.TableID tableID,
         Collection<AccountingCode> businesses,
         int server,
         boolean recurse
@@ -88,7 +88,7 @@ final public class InvalidateList {
 
     public void addTable(
         DatabaseAccess conn,
-        SchemaTable.TableID tableID,
+        Table.TableID tableID,
         AccountingCode business,
         IntCollection servers,
         boolean recurse
@@ -104,7 +104,7 @@ final public class InvalidateList {
 
     public void addTable(
         DatabaseAccess conn,
-        SchemaTable.TableID tableID,
+        Table.TableID tableID,
         Collection<AccountingCode> businesses,
         IntCollection servers,
         boolean recurse
@@ -141,132 +141,132 @@ final public class InvalidateList {
         if(recurse) {
             switch(tableID) {
                 case AO_SERVERS :
-                    addTable(conn, SchemaTable.TableID.FIREWALLD_ZONES, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.LINUX_SERVER_ACCOUNTS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.LINUX_SERVER_GROUPS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.MYSQL_SERVERS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.POSTGRES_SERVERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.FIREWALLD_ZONES, businesses, servers, true);
+                    addTable(conn, Table.TableID.LINUX_SERVER_ACCOUNTS, businesses, servers, true);
+                    addTable(conn, Table.TableID.LINUX_SERVER_GROUPS, businesses, servers, true);
+                    addTable(conn, Table.TableID.MYSQL_SERVERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.POSTGRES_SERVERS, businesses, servers, true);
                     break;
                 case BUSINESS_SERVERS :
-                    addTable(conn, SchemaTable.TableID.SERVERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.SERVERS, businesses, servers, true);
                     break;
                 case BUSINESSES :
-                    addTable(conn, SchemaTable.TableID.BUSINESS_PROFILES, businesses, servers, true);
+                    addTable(conn, Table.TableID.BUSINESS_PROFILES, businesses, servers, true);
                     break;
                 case CYRUS_IMAPD_BINDS :
-                    addTable(conn, SchemaTable.TableID.CYRUS_IMAPD_SERVERS, businesses, servers, false);
+                    addTable(conn, Table.TableID.CYRUS_IMAPD_SERVERS, businesses, servers, false);
                     break;
                 case CYRUS_IMAPD_SERVERS :
-                    addTable(conn, SchemaTable.TableID.CYRUS_IMAPD_BINDS, businesses, servers, false);
+                    addTable(conn, Table.TableID.CYRUS_IMAPD_BINDS, businesses, servers, false);
                     break;
                 case EMAIL_DOMAINS :
-                    addTable(conn, SchemaTable.TableID.EMAIL_ADDRESSES, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.MAJORDOMO_SERVERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.EMAIL_ADDRESSES, businesses, servers, true);
+                    addTable(conn, Table.TableID.MAJORDOMO_SERVERS, businesses, servers, true);
                     break;
                 case FAILOVER_FILE_REPLICATIONS :
-                    addTable(conn, SchemaTable.TableID.SERVERS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.NET_DEVICES, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
+                    addTable(conn, Table.TableID.SERVERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.NET_DEVICES, businesses, servers, true);
+                    addTable(conn, Table.TableID.IP_ADDRESSES, businesses, servers, true);
+                    addTable(conn, Table.TableID.NET_BINDS, businesses, servers, true);
                     break;
                 case IP_REPUTATION_LIMITER_SETS:
                     // Sets are only visible when used by at least one limiter in the same server farm
-                    addTable(conn, SchemaTable.TableID.IP_REPUTATION_SETS,         businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.IP_REPUTATION_SET_HOSTS,    businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.IP_REPUTATION_SET_NETWORKS, businesses, servers, true);
+                    addTable(conn, Table.TableID.IP_REPUTATION_SETS,         businesses, servers, true);
+                    addTable(conn, Table.TableID.IP_REPUTATION_SET_HOSTS,    businesses, servers, true);
+                    addTable(conn, Table.TableID.IP_REPUTATION_SET_NETWORKS, businesses, servers, true);
                     break;
                 case HTTPD_BINDS :
-                    addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, false);
+                    addTable(conn, Table.TableID.IP_ADDRESSES, businesses, servers, true);
+                    addTable(conn, Table.TableID.NET_BINDS, businesses, servers, false);
                     break;
                 case HTTPD_SITE_BINDS :
-                    addTable(conn, SchemaTable.TableID.HTTPD_BINDS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.HTTPD_SITE_BIND_HEADERS, businesses, servers, false);
-                    addTable(conn, SchemaTable.TableID.HTTPD_SITE_BIND_REDIRECTS, businesses, servers, false);
+                    addTable(conn, Table.TableID.HTTPD_BINDS, businesses, servers, true);
+                    addTable(conn, Table.TableID.HTTPD_SITE_BIND_HEADERS, businesses, servers, false);
+                    addTable(conn, Table.TableID.HTTPD_SITE_BIND_REDIRECTS, businesses, servers, false);
                     break;
                 case HTTPD_TOMCAT_SITES :
-                    addTable(conn, SchemaTable.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, businesses, servers, false);
+                    addTable(conn, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, businesses, servers, false);
                     break;
                 case IP_ADDRESSES :
-                    addTable(conn, SchemaTable.TableID.IpAddressMonitoring, businesses, servers, false);
+                    addTable(conn, Table.TableID.IpAddressMonitoring, businesses, servers, false);
                     break;
                 case LINUX_ACCOUNTS :
-                    addTable(conn, SchemaTable.TableID.FTP_GUEST_USERS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.USERNAMES, businesses, servers, true);
+                    addTable(conn, Table.TableID.FTP_GUEST_USERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.USERNAMES, businesses, servers, true);
                     break;
                 case LINUX_SERVER_ACCOUNTS :
-                    addTable(conn, SchemaTable.TableID.LINUX_ACCOUNTS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, businesses, servers, true);
+                    addTable(conn, Table.TableID.LINUX_ACCOUNTS, businesses, servers, true);
+                    addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, businesses, servers, true);
                     break;
                 case LINUX_SERVER_GROUPS :
-                    addTable(conn, SchemaTable.TableID.EMAIL_LISTS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.LINUX_GROUPS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.LINUX_GROUP_ACCOUNTS, businesses, servers, true);
+                    addTable(conn, Table.TableID.EMAIL_LISTS, businesses, servers, true);
+                    addTable(conn, Table.TableID.LINUX_GROUPS, businesses, servers, true);
+                    addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, businesses, servers, true);
                     break;
                 case MAJORDOMO_SERVERS :
-                    addTable(conn, SchemaTable.TableID.MAJORDOMO_LISTS, businesses, servers, true);
+                    addTable(conn, Table.TableID.MAJORDOMO_LISTS, businesses, servers, true);
                     break;
                 case MYSQL_SERVER_USERS :
-                    addTable(conn, SchemaTable.TableID.MYSQL_USERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.MYSQL_USERS, businesses, servers, true);
                     break;
                 case MYSQL_SERVERS :
-                    addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.MYSQL_DATABASES, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.MYSQL_SERVER_USERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.NET_BINDS, businesses, servers, true);
+                    addTable(conn, Table.TableID.MYSQL_DATABASES, businesses, servers, true);
+                    addTable(conn, Table.TableID.MYSQL_SERVER_USERS, businesses, servers, true);
                     break;
                 case NET_BINDS :
-                    addTable(conn, SchemaTable.TableID.HTTPD_BINDS, businesses, servers, false);
-                    addTable(conn, SchemaTable.TableID.NET_BIND_FIREWALLD_ZONES, businesses, servers, false);
+                    addTable(conn, Table.TableID.HTTPD_BINDS, businesses, servers, false);
+                    addTable(conn, Table.TableID.NET_BIND_FIREWALLD_ZONES, businesses, servers, false);
                     break;
                 case NET_BIND_FIREWALLD_ZONES :
 					// Presence of "public" firewalld zone determines compatibility "open_firewall" for clients
 					// version <= 1.80.2
-                    addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, false);
+                    addTable(conn, Table.TableID.NET_BINDS, businesses, servers, false);
                     break;
                 case NET_DEVICES :
-                    addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);
+                    addTable(conn, Table.TableID.IP_ADDRESSES, businesses, servers, true);
                     break;
                 case PACKAGE_DEFINITIONS :
-                    addTable(conn, SchemaTable.TableID.PACKAGE_DEFINITION_LIMITS, businesses, servers, true);
+                    addTable(conn, Table.TableID.PACKAGE_DEFINITION_LIMITS, businesses, servers, true);
                     break;
                 case PACKAGES :
-                    addTable(conn, SchemaTable.TableID.PACKAGE_DEFINITIONS, businesses, servers, true);
+                    addTable(conn, Table.TableID.PACKAGE_DEFINITIONS, businesses, servers, true);
                     break;
                 case POSTGRES_SERVER_USERS :
-                    addTable(conn, SchemaTable.TableID.POSTGRES_USERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.POSTGRES_USERS, businesses, servers, true);
                     break;
                 case POSTGRES_SERVERS :
-                    addTable(conn, SchemaTable.TableID.NET_BINDS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.POSTGRES_DATABASES, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.POSTGRES_SERVER_USERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.NET_BINDS, businesses, servers, true);
+                    addTable(conn, Table.TableID.POSTGRES_DATABASES, businesses, servers, true);
+                    addTable(conn, Table.TableID.POSTGRES_SERVER_USERS, businesses, servers, true);
                     break;
                 case SENDMAIL_BINDS :
-                    addTable(conn, SchemaTable.TableID.SENDMAIL_SERVERS, businesses, servers, false);
+                    addTable(conn, Table.TableID.SENDMAIL_SERVERS, businesses, servers, false);
                     break;
                 case SENDMAIL_SERVERS :
-                    addTable(conn, SchemaTable.TableID.SENDMAIL_BINDS, businesses, servers, false);
+                    addTable(conn, Table.TableID.SENDMAIL_BINDS, businesses, servers, false);
                     break;
                 case SERVERS :
-                    addTable(conn, SchemaTable.TableID.AO_SERVERS, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.IP_ADDRESSES, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.NET_DEVICES, businesses, servers, true);
-                    addTable(conn, SchemaTable.TableID.VIRTUAL_SERVERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.AO_SERVERS, businesses, servers, true);
+                    addTable(conn, Table.TableID.IP_ADDRESSES, businesses, servers, true);
+                    addTable(conn, Table.TableID.NET_DEVICES, businesses, servers, true);
+                    addTable(conn, Table.TableID.VIRTUAL_SERVERS, businesses, servers, true);
                     break;
                 case SSL_CERTIFICATES :
-                    addTable(conn, SchemaTable.TableID.SSL_CERTIFICATE_NAMES, businesses, servers, false);
-                    addTable(conn, SchemaTable.TableID.SSL_CERTIFICATE_OTHER_USES, businesses, servers, false);
+                    addTable(conn, Table.TableID.SSL_CERTIFICATE_NAMES, businesses, servers, false);
+                    addTable(conn, Table.TableID.SSL_CERTIFICATE_OTHER_USES, businesses, servers, false);
                     break;
                 case USERNAMES :
-                    addTable(conn, SchemaTable.TableID.BUSINESS_ADMINISTRATORS, businesses, servers, true);
+                    addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, businesses, servers, true);
                     break;
                 case VIRTUAL_SERVERS :
-                    addTable(conn, SchemaTable.TableID.VIRTUAL_DISKS, businesses, servers, true);
+                    addTable(conn, Table.TableID.VIRTUAL_DISKS, businesses, servers, true);
                     break;
             }
         }
     }
 
-    public List<AccountingCode> getAffectedBusinesses(SchemaTable.TableID tableID) {
+    public List<AccountingCode> getAffectedBusinesses(Table.TableID tableID) {
         List<AccountingCode> SV=businessLists.get(tableID);
         if(SV!=null || serverLists.containsKey(tableID)) {
             if(SV==null) return allBusinesses;
@@ -274,7 +274,7 @@ final public class InvalidateList {
         } else return null;
     }
 
-    public List<Integer> getAffectedServers(SchemaTable.TableID tableID) {
+    public List<Integer> getAffectedServers(Table.TableID tableID) {
         List<Integer> SV=serverLists.get(tableID);
         if(SV!=null || businessLists.containsKey(tableID)) {
             if(SV==null) return allServers;
@@ -283,7 +283,7 @@ final public class InvalidateList {
     }
 
     public void invalidateMasterCaches() {
-        for(SchemaTable.TableID tableID : tableIDs) {
+        for(Table.TableID tableID : tableIDs) {
             if(serverLists.containsKey(tableID) || businessLists.containsKey(tableID)) {
                 BusinessHandler.invalidateTable(tableID);
                 CvsHandler.invalidateTable(tableID);
@@ -303,7 +303,7 @@ final public class InvalidateList {
         }
     }
 
-    public boolean isInvalid(SchemaTable.TableID tableID) {
+    public boolean isInvalid(Table.TableID tableID) {
         return serverLists.containsKey(tableID) || businessLists.containsKey(tableID);
     }
     

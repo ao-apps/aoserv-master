@@ -6,9 +6,9 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.billing.TransactionType;
-import com.aoindustries.aoserv.client.master.AOServPermission;
+import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.payment.PaymentType;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.creditcards.AuthorizationResult;
@@ -74,7 +74,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     public static void checkAccessCreditCard(DatabaseConnection conn, RequestSource source, String action, int id) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, action, AOServPermission.Permission.get_credit_cards);
+        BusinessHandler.checkPermission(conn, source, action, Permission.Name.get_credit_cards);
         BusinessHandler.checkAccessBusiness(
             conn,
             source,
@@ -142,7 +142,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         int encryptionFrom,
         int encryptionRecipient
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "addCreditCard", AOServPermission.Permission.add_credit_card);
+        BusinessHandler.checkPermission(conn, source, "addCreditCard", Permission.Name.add_credit_card);
         BusinessHandler.checkAccessBusiness(conn, source, "addCreditCard", accounting);
         if(encryptionFrom!=-1) checkAccessEncryptionKey(conn, source, "addCreditCard", encryptionFrom);
         if(encryptionRecipient!=-1) checkAccessEncryptionKey(conn, source, "addCreditCard", encryptionRecipient);
@@ -258,7 +258,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         } else throw new SQLException("encryptedCardNumber, encryptedExpiration, encryptionFrom, and encryptionRecipient must either all be null or none null");
 
         // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARDS, accounting, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.CREDIT_CARDS, accounting, InvalidateList.allServers, false);
         return id;
     }
 
@@ -281,7 +281,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.CREDIT_CARDS,
+            Table.TableID.CREDIT_CARDS,
             CreditCardHandler.getBusinessForCreditCard(conn, id),
             InvalidateList.allServers,
             false
@@ -321,7 +321,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         InvalidateList invalidateList,
         int id
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "removeCreditCard", AOServPermission.Permission.delete_credit_card);
+        BusinessHandler.checkPermission(conn, source, "removeCreditCard", Permission.Name.delete_credit_card);
         checkAccessCreditCard(conn, source, "removeCreditCard", id);
 
         removeCreditCard(conn, invalidateList, id);
@@ -340,7 +340,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.CREDIT_CARDS,
+            Table.TableID.CREDIT_CARDS,
             business,
             BusinessHandler.getServersForBusiness(conn, business),
             false
@@ -368,7 +368,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String description
     ) throws IOException, SQLException {
         // Permission checks
-        BusinessHandler.checkPermission(conn, source, "updateCreditCard", AOServPermission.Permission.edit_credit_card);
+        BusinessHandler.checkPermission(conn, source, "updateCreditCard", Permission.Name.edit_credit_card);
         checkAccessCreditCard(conn, source, "updateCreditCard", id);
         
         // Update row
@@ -412,7 +412,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         AccountingCode accounting = getBusinessForCreditCard(conn, id);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.CREDIT_CARDS,
+            Table.TableID.CREDIT_CARDS,
             accounting,
             BusinessHandler.getServersForBusiness(conn, accounting),
             false
@@ -431,7 +431,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         int encryptionRecipient
     ) throws IOException, SQLException {
         // Permission checks
-        BusinessHandler.checkPermission(conn, source, "updateCreditCardNumberAndExpiration", AOServPermission.Permission.edit_credit_card);
+        BusinessHandler.checkPermission(conn, source, "updateCreditCardNumberAndExpiration", Permission.Name.edit_credit_card);
         checkAccessCreditCard(conn, source, "updateCreditCardNumberAndExpiration", id);
         
         if(encryptionFrom!=-1) checkAccessEncryptionKey(conn, source, "updateCreditCardNumberAndExpiration", encryptionFrom);
@@ -484,7 +484,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         AccountingCode accounting = getBusinessForCreditCard(conn, id);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.CREDIT_CARDS,
+            Table.TableID.CREDIT_CARDS,
             accounting,
             BusinessHandler.getServersForBusiness(conn, accounting),
             false
@@ -501,7 +501,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         int encryptionRecipient
     ) throws IOException, SQLException {
         // Permission checks
-        BusinessHandler.checkPermission(conn, source, "updateCreditCardExpiration", AOServPermission.Permission.edit_credit_card);
+        BusinessHandler.checkPermission(conn, source, "updateCreditCardExpiration", Permission.Name.edit_credit_card);
         checkAccessCreditCard(conn, source, "updateCreditCardExpiration", id);
         
         checkAccessEncryptionKey(conn, source, "updateCreditCardExpiration", encryptionFrom);
@@ -526,7 +526,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         AccountingCode accounting = getBusinessForCreditCard(conn, id);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.CREDIT_CARDS,
+            Table.TableID.CREDIT_CARDS,
             accounting,
             BusinessHandler.getServersForBusiness(conn, accounting),
             false
@@ -540,7 +540,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         int id
     ) throws IOException, SQLException {
         // Permission checks
-        BusinessHandler.checkPermission(conn, source, "reactivateCreditCard", AOServPermission.Permission.edit_credit_card);
+        BusinessHandler.checkPermission(conn, source, "reactivateCreditCard", Permission.Name.edit_credit_card);
         checkAccessCreditCard(conn, source, "reactivateCreditCard", id);
         
         // Update row
@@ -559,7 +559,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         AccountingCode accounting = getBusinessForCreditCard(conn, id);
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.CREDIT_CARDS,
+            Table.TableID.CREDIT_CARDS,
             accounting,
             BusinessHandler.getServersForBusiness(conn, accounting),
             false
@@ -574,7 +574,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         int id
     ) throws IOException, SQLException {
         // Permission checks
-        BusinessHandler.checkPermission(conn, source, "setCreditCardUseMonthly", AOServPermission.Permission.edit_credit_card);
+        BusinessHandler.checkPermission(conn, source, "setCreditCardUseMonthly", Permission.Name.edit_credit_card);
 
         if(id==-1) {
             // Clear only
@@ -591,7 +591,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.CREDIT_CARDS,
+            Table.TableID.CREDIT_CARDS,
             accounting,
             BusinessHandler.getServersForBusiness(conn, accounting),
             false
@@ -599,7 +599,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     /**
-     * Creates a new <code>CreditCardTransaction</code>.
+     * Creates a new <code>Payment</code>.
      */
     public static int addCreditCardTransaction(
         DatabaseConnection conn,
@@ -654,7 +654,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         long authorizationTime,
         String authorizationPrincipalName
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "addCreditCardTransaction", AOServPermission.Permission.add_credit_card_transaction);
+        BusinessHandler.checkPermission(conn, source, "addCreditCardTransaction", Permission.Name.add_credit_card_transaction);
         checkAccessCreditCardProcessor(conn, source, "addCreditCardTransaction", processor);
         BusinessHandler.checkAccessBusiness(conn, source, "addCreditCardTransaction", accounting);
         BusinessHandler.checkAccessBusiness(conn, source, "addCreditCardTransaction", creditCardAccounting);
@@ -716,7 +716,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
     }
 
     /**
-     * Creates a new <code>CreditCardTransaction</code>.
+     * Creates a new <code>Payment</code>.
      */
     public static int addCreditCardTransaction(
         DatabaseConnection conn,
@@ -876,7 +876,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         );
 
         // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
         return id;
     }
 
@@ -910,7 +910,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String captureProviderUniqueId,
         String status
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "creditCardTransactionSaleCompleted", AOServPermission.Permission.credit_card_transaction_sale_completed);
+        BusinessHandler.checkPermission(conn, source, "creditCardTransactionSaleCompleted", Permission.Name.credit_card_transaction_sale_completed);
         checkAccessCreditCardTransaction(conn, source, "creditCardTransactionSaleCompleted", id);
 		// TODO: Are the principal names required to be AOServ objects, or are they arbitrary application-specific values?
         if(capturePrincipalName!=null) {
@@ -1051,7 +1051,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         if(updated!=1) throw new SQLException("Unable to find payment.Payment with id="+id+" and status='PROCESSING'");
 
         // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
     }
 
     public static void creditCardTransactionAuthorizeCompleted(
@@ -1077,7 +1077,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String approvalCode,
         String status
     ) throws IOException, SQLException {
-        BusinessHandler.checkPermission(conn, source, "creditCardTransactionAuthorizeCompleted", AOServPermission.Permission.credit_card_transaction_authorize_completed);
+        BusinessHandler.checkPermission(conn, source, "creditCardTransactionAuthorizeCompleted", Permission.Name.credit_card_transaction_authorize_completed);
         checkAccessCreditCardTransaction(conn, source, "creditCardTransactionAuthorizeCompleted", id);
 
         String processor = getCreditCardProcessorForCreditCardTransaction(conn, id);
@@ -1178,7 +1178,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         if(updated!=1) throw new SQLException("Unable to find payment.Payment with id="+id+" and status='PROCESSING'");
 
         // Notify all clients of the update
-        invalidateList.addTable(conn, SchemaTable.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
     }
 
     private static class AutomaticPayment {

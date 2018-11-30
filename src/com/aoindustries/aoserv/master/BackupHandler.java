@@ -5,7 +5,7 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
@@ -55,7 +55,7 @@ public final class BackupHandler {
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.FILE_BACKUP_SETTINGS,
+            Table.TableID.FILE_BACKUP_SETTINGS,
             PackageHandler.getBusinessForPackage(conn, packageNum),
             server,
             false
@@ -89,7 +89,7 @@ public final class BackupHandler {
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.FILE_BACKUP_SETTINGS,
+            Table.TableID.FILE_BACKUP_SETTINGS,
             PackageHandler.getBusinessForPackage(conn, packageNum),
             server,
             false
@@ -133,7 +133,7 @@ public final class BackupHandler {
         // Notify all clients of the update
         invalidateList.addTable(
             conn,
-            SchemaTable.TableID.FILE_BACKUP_SETTINGS,
+            Table.TableID.FILE_BACKUP_SETTINGS,
             PackageHandler.getBusinessForPackage(conn, packageNum),
             server,
             false

@@ -5,9 +5,9 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.backup.FailoverFileLog;
-import com.aoindustries.aoserv.client.linux.AOServer;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.backup.FileReplicationLog;
+import com.aoindustries.aoserv.client.linux.Server;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
 import com.aoindustries.cron.CronDaemon;
@@ -49,7 +49,7 @@ final public class FailoverHandler implements CronJob {
 		boolean isSuccessful
 	) throws IOException, SQLException {
 		//String mustring = source.getUsername();
-		//MasterUser mu = MasterServer.getMasterUser(conn, mustring);
+		//User mu = MasterServer.getUser(conn, mustring);
 		//if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not access backup.FileReplicationLog.");
 
 		// The server must be an exact package match to allow adding log entries
@@ -84,7 +84,7 @@ final public class FailoverHandler implements CronJob {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.FAILOVER_FILE_LOG,
+			Table.TableID.FAILOVER_FILE_LOG,
 			ServerHandler.getBusinessesForServer(conn, server),
 			server,
 			false
@@ -116,7 +116,7 @@ final public class FailoverHandler implements CronJob {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.FAILOVER_FILE_REPLICATIONS,
+			Table.TableID.FAILOVER_FILE_REPLICATIONS,
 			ServerHandler.getBusinessesForServer(conn, server),
 			server,
 			false
@@ -174,7 +174,7 @@ final public class FailoverHandler implements CronJob {
 		if(modified) {
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.FAILOVER_FILE_SCHEDULE,
+				Table.TableID.FAILOVER_FILE_SCHEDULE,
 				ServerHandler.getBusinessesForServer(conn, server),
 				server,
 				false
@@ -252,7 +252,7 @@ final public class FailoverHandler implements CronJob {
 		if(modified) {
 			invalidateList.addTable(
 				conn,
-				SchemaTable.TableID.FILE_BACKUP_SETTINGS,
+				Table.TableID.FILE_BACKUP_SETTINGS,
 				ServerHandler.getBusinessesForServer(conn, server),
 				server,
 				false
@@ -279,7 +279,7 @@ final public class FailoverHandler implements CronJob {
 		int fromServer = getFromServerForFailoverFileReplication(conn, replication);
 		ServerHandler.checkAccessServer(conn, source, "getFailoverFileLogs", fromServer);
 
-		MasterServer.writeObjects(conn, source, out, false, new FailoverFileLog(), "select * from backup.\"FileReplicationLog\" where replication=? order by start_time desc limit ?", replication, maxRows);
+		MasterServer.writeObjects(conn, source, out, false, new FileReplicationLog(), "select * from backup.\"FileReplicationLog\" where replication=? order by start_time desc limit ?", replication, maxRows);
 	}
 
 	public static Tuple2<Long,String> getFailoverFileReplicationActivity(
@@ -351,14 +351,14 @@ final public class FailoverHandler implements CronJob {
 		}
 	}
 
-	public static AOServer.DaemonAccess requestReplicationDaemonAccess(
+	public static Server.DaemonAccess requestReplicationDaemonAccess(
 		DatabaseConnection conn,
 		RequestSource source,
 		int id
 	) throws IOException, SQLException {
 		// Security checks
 		//String username=source.getUsername();
-		//MasterUser masterUser=MasterServer.getMasterUser(conn, username);
+		//User masterUser=MasterServer.getUser(conn, username);
 		//if(masterUser==null) throw new SQLException("Only master users allowed to request daemon access.");
 		// Sometime later we might restrict certain command codes to certain users
 

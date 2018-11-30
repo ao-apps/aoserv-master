@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.linux.LinuxAccount;
-import com.aoindustries.aoserv.client.schema.SchemaTable;
+import com.aoindustries.aoserv.client.linux.User;
+import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.MySQLUserId;
 import com.aoindustries.aoserv.client.validator.PostgresUserId;
@@ -59,7 +59,7 @@ final public class UsernameHandler {
 		UserId username,
 		boolean avoidSecurityChecks
 	) throws IOException, SQLException {
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to add Username for user '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to add Username for user '"+User.MAIL+'\'');
 
 		if(!avoidSecurityChecks) {
 			PackageHandler.checkAccessPackage(conn, source, "addUsername", packageName);
@@ -82,8 +82,8 @@ final public class UsernameHandler {
 
 		// Notify all clients of the update
 		AccountingCode accounting = PackageHandler.getBusinessForPackage(conn, packageName);
-		invalidateList.addTable(conn, SchemaTable.TableID.USERNAMES, accounting, InvalidateList.allServers, false);
-		//invalidateList.addTable(conn, SchemaTable.TableID.PACKAGES, accounting, null);
+		invalidateList.addTable(conn, Table.TableID.USERNAMES, accounting, InvalidateList.allServers, false);
+		//invalidateList.addTable(conn, Table.TableID.PACKAGES, accounting, null);
 	}
 
 	public static void disableUsername(
@@ -99,16 +99,16 @@ final public class UsernameHandler {
 		if(
 			LinuxAccountHandler.isLinuxAccount(conn, username)
 			&& !LinuxAccountHandler.isLinuxAccountDisabled(conn, username)
-		) throw new SQLException("Cannot disable Username '"+username+"': LinuxAccount not disabled: "+username);
+		) throw new SQLException("Cannot disable Username '"+username+"': User not disabled: "+username);
 		try {
 			if(
 				MySQLHandler.isMySQLUser(conn, username)
 				&& !MySQLHandler.isMySQLUserDisabled(conn, MySQLUserId.valueOf(username.toString()))
-			) throw new SQLException("Cannot disable Username '"+username+"': MySQLUser not disabled: "+username);
+			) throw new SQLException("Cannot disable Username '"+username+"': User not disabled: "+username);
 			if(
 				PostgresHandler.isPostgresUser(conn, username)
 				&& !PostgresHandler.isPostgresUserDisabled(conn, PostgresUserId.valueOf(username.toString()))
-			) throw new SQLException("Cannot disable Username '"+username+"': PostgresUser not disabled: "+username);
+			) throw new SQLException("Cannot disable Username '"+username+"': User not disabled: "+username);
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}
@@ -122,7 +122,7 @@ final public class UsernameHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.USERNAMES,
+			Table.TableID.USERNAMES,
 			getBusinessForUsername(conn, username),
 			getServersForUsername(conn, username),
 			false
@@ -150,7 +150,7 @@ final public class UsernameHandler {
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
-			SchemaTable.TableID.USERNAMES,
+			Table.TableID.USERNAMES,
 			getBusinessForUsername(conn, username),
 			getServersForUsername(conn, username),
 			false
@@ -161,8 +161,8 @@ final public class UsernameHandler {
 		return conn.executeIntQuery("select coalesce(disable_log, -1) from account.\"Username\" where username=?", username);
 	}
 
-	public static void invalidateTable(SchemaTable.TableID tableID) {
-		if(tableID==SchemaTable.TableID.USERNAMES) {
+	public static void invalidateTable(Table.TableID tableID) {
+		if(tableID==Table.TableID.USERNAMES) {
 			synchronized(disabledUsernames) {
 				disabledUsernames.clear();
 			}
@@ -203,14 +203,14 @@ final public class UsernameHandler {
 		InvalidateList invalidateList,
 		UserId username
 	) throws IOException, SQLException {
-		if(username.equals(LinuxAccount.MAIL)) throw new SQLException("Not allowed to remove Username named '"+LinuxAccount.MAIL+'\'');
+		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to remove Username named '"+User.MAIL+'\'');
 
 		AccountingCode accounting = getBusinessForUsername(conn, username);
 
 		conn.executeUpdate("delete from account.\"Username\" where username=?", username);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, SchemaTable.TableID.USERNAMES, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.USERNAMES, accounting, InvalidateList.allServers, false);
 	}
 
 	public static AccountingCode getBusinessForUsername(DatabaseConnection conn, UserId username) throws IOException, SQLException {

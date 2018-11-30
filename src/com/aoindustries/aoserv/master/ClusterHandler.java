@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.linux.AOServer;
-import com.aoindustries.aoserv.client.master.MasterUser;
+import com.aoindustries.aoserv.client.linux.Server;
+import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
@@ -271,7 +271,7 @@ final public class ClusterHandler implements CronJob {
                     MasterServer.getRandom(),
                     ClusterHandler.class.getName(),
                     "runCronJob",
-                    "ClusterHandler - Find Virtual Server Mapping",
+                    "ClusterHandler - Find Virtual Host Mapping",
                     "Finding the current mapping of virtual servers onto physical servers",
                     TIMER_MAX_TIME,
                     TIMER_REMINDER_INTERVAL
@@ -293,17 +293,17 @@ final public class ClusterHandler implements CronJob {
 										final int rootPackagePkey = PackageHandler.getPKeyForPackage(database, BusinessHandler.getRootBusiness());
 										AOServDaemonConnector daemonConn = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
 										// Get the DRBD states
-										List<AOServer.DrbdReport> drbdReports = AOServer.parseDrbdReport(daemonConn.getDrbdReport());
+										List<Server.DrbdReport> drbdReports = Server.parseDrbdReport(daemonConn.getDrbdReport());
 										Set<Integer> primaryMapping = new HashSet<>(drbdReports.size()*4/3+1);
 										Set<Integer> secondaryMapping = new HashSet<>(drbdReports.size()*4/3+1);
-										for(AOServer.DrbdReport drbdReport : drbdReports) {
+										for(Server.DrbdReport drbdReport : drbdReports) {
 											// Look for primary mappings
 											if(
-												drbdReport.getLocalRole()==AOServer.DrbdReport.Role.Primary
+												drbdReport.getLocalRole()==Server.DrbdReport.Role.Primary
 												&& (
-												drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Unconfigured
-												|| drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Secondary
-												|| drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Unknown
+												drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unconfigured
+												|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Secondary
+												|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unknown
 												)
 												) {
 												primaryMapping.add(
@@ -316,11 +316,11 @@ final public class ClusterHandler implements CronJob {
 											}
 											// Look for secondary mappings
 											if(
-												drbdReport.getLocalRole()==AOServer.DrbdReport.Role.Secondary
+												drbdReport.getLocalRole()==Server.DrbdReport.Role.Secondary
 												&& (
-												drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Unconfigured
-												|| drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Primary
-												|| drbdReport.getRemoteRole()==AOServer.DrbdReport.Role.Unknown
+												drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unconfigured
+												|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Primary
+												|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unknown
 												)
 												) {
 												secondaryMapping.add(
@@ -396,7 +396,7 @@ final public class ClusterHandler implements CronJob {
     }
 
 	public static boolean isClusterAdmin(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-        MasterUser mu=MasterServer.getMasterUser(conn, source.getUsername());
+        User mu=MasterServer.getUser(conn, source.getUsername());
         return mu!=null && mu.isClusterAdmin();
     }
 
