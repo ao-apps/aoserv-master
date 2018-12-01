@@ -12,3 +12,5 @@ com.aoindustries.aoserv.master.accounting.BankTransactionType_GetTableHandler
 com.aoindustries.aoserv.master.accounting.ExpenseCategory_GetTableHandler
 com.aoindustries.aoserv.master.aosh.Command_GetTableHandler
 com.aoindustries.aoserv.master.backup.BackupPartition_GetTableHandler
+com.aoindustries.aoserv.master.backup.BackupReport_GetTableHandler
+com.aoindustries.aoserv.master.backup.BackupRetention_GetTableHandler
