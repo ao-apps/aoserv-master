@@ -79,3 +79,4 @@ com.aoindustries.aoserv.master.infrastructure.Rack_GetTableHandler
 com.aoindustries.aoserv.master.infrastructure.ServerFarm_GetTableHandler
 com.aoindustries.aoserv.master.infrastructure.VirtualDisk_GetTableHandler
 com.aoindustries.aoserv.master.infrastructure.VirtualServer_GetTableHandler
+com.aoindustries.aoserv.master.linux.DaemonAcl_GetTableHandler
