@@ -137,3 +137,6 @@ com.aoindustries.aoserv.master.reseller.Category_GetTableHandler
 com.aoindustries.aoserv.master.reseller.Reseller_GetTableHandler
 com.aoindustries.aoserv.master.schema.AoservProtocol_GetTableHandler
 com.aoindustries.aoserv.master.schema.Column_GetTableHandler
+com.aoindustries.aoserv.master.schema.ForeignKey_GetTableHandler
+com.aoindustries.aoserv.master.schema.Table_GetTableHandler
+com.aoindustries.aoserv.master.schema.Type_GetTableHandler
