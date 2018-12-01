@@ -91,6 +91,8 @@ com.aoindustries.aoserv.master.linux.UserServer_GetTableHandler
 com.aoindustries.aoserv.master.linux.UserType_GetTableHandler
 com.aoindustries.aoserv.master.master.AdministratorPermission_GetTableHandler
 com.aoindustries.aoserv.master.master.Permission_GetTableHandler
+com.aoindustries.aoserv.master.master.Process_GetTableHandler
+com.aoindustries.aoserv.master.master.ServerStat_GetTableHandler
 com.aoindustries.aoserv.master.master.User_GetTableHandler
 com.aoindustries.aoserv.master.master.UserAcl_GetTableHandler
 com.aoindustries.aoserv.master.master.UserHost_GetTableHandler
