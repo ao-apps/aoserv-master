@@ -117,3 +117,4 @@ com.aoindustries.aoserv.master.net.reputation.LimiterSet_GetTableHandler
 com.aoindustries.aoserv.master.net.reputation.Network_GetTableHandler
 com.aoindustries.aoserv.master.net.reputation.Set_GetTableHandler
 com.aoindustries.aoserv.master.payment.CountryCode_GetTableHandler
+com.aoindustries.aoserv.master.payment.CreditCard_GetTableHandler
