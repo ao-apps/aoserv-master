@@ -10,8 +10,6 @@ import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.AccountHost;
 import com.aoindustries.aoserv.client.account.Administrator;
 import com.aoindustries.aoserv.client.accounting.BankTransaction;
-import com.aoindustries.aoserv.client.aosh.Command;
-import com.aoindustries.aoserv.client.backup.BackupPartition;
 import com.aoindustries.aoserv.client.backup.BackupReport;
 import com.aoindustries.aoserv.client.backup.BackupRetention;
 import com.aoindustries.aoserv.client.backup.FileReplication;
@@ -920,79 +918,6 @@ final public class TableHandler {
 						provideProgress,
 						new Architecture(),
 						"select * from distribution.\"Architecture\""
-					);
-					break;
-				case BACKUP_PARTITIONS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new BackupPartition(),
-							"select * from backup.\"BackupPartition\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new BackupPartition(),
-							"select\n"
-							+ "  bp.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  backup.\"BackupPartition\" bp\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and (\n"
-							+ "    ms.server=bp.ao_server\n"
-							+ "    or (\n"
-							+ "      select\n"
-							+ "        ffr.id\n"
-							+ "      from\n"
-							+ "        backup.\"FileReplication\" ffr\n"
-							+ "        inner join backup.\"BackupPartition\" bp2 on ffr.backup_partition=bp2.id\n"
-							+ "      where\n"
-							+ "        ms.server=ffr.server\n"
-							+ "        and bp.ao_server=bp2.ao_server\n"
-							+ "      limit 1\n"
-							+ "    ) is not null\n"
-							+ "  )",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new BackupPartition(),
-						"select distinct\n"
-						+ "  bp.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk,\n"
-						+ "  account.\"AccountHost\" bs,\n"
-						+ "  backup.\"BackupPartition\" bp\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk.name\n"
-						+ "  and pk.accounting=bs.accounting\n"
-						+ "  and (\n"
-						+ "    bs.server=bp.ao_server\n"
-						//+ "    or (\n"
-						//+ "      select\n"
-						//+ "        ffr.id\n"
-						//+ "      from\n"
-						//+ "        backup.\"FileReplication\" ffr\n"
-						//+ "        inner join backup.\"BackupPartition\" bp2 on ffr.backup_partition=bp2.id\n"
-						//+ "      where\n"
-						//+ "        bs.server=ffr.server\n"
-						//+ "        and bp.ao_server=bp2.ao_server\n"
-						//+ "      limit 1\n"
-						//+ "    ) is not null\n"
-						+ "  )",
-						username
 					);
 					break;
 				case BACKUP_REPORTS :
