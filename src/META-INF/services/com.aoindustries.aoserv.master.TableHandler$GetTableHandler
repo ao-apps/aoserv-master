@@ -143,3 +143,5 @@ com.aoindustries.aoserv.master.schema.Type_GetTableHandler
 com.aoindustries.aoserv.master.scm.CvsRepository_GetTableHandler
 com.aoindustries.aoserv.master.signup.Option_GetTableHandler
 com.aoindustries.aoserv.master.signup.Request_GetTableHandler
+com.aoindustries.aoserv.master.ticket.Action_GetTableHandler
+com.aoindustries.aoserv.master.ticket.ActionType_GetTableHandler
