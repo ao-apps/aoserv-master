@@ -17,9 +17,6 @@ import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.Host;
-import com.aoindustries.aoserv.client.payment.Payment;
-import com.aoindustries.aoserv.client.payment.PaymentType;
-import com.aoindustries.aoserv.client.payment.Processor;
 import com.aoindustries.aoserv.client.pki.Certificate;
 import com.aoindustries.aoserv.client.pki.CertificateName;
 import com.aoindustries.aoserv.client.pki.CertificateOtherUse;
@@ -846,88 +843,6 @@ final public class TableHandler {
 							+ "  ) and bu1.accounting=br.accounting",
 							username
 						);
-					}
-					break;
-				case CREDIT_CARD_PROCESSORS :
-					if(BusinessHandler.hasPermission(conn, source, Permission.Name.get_credit_card_processors)) {
-						if(masterUser != null) {
-							assert masterServers != null;
-							if(masterServers.length == 0) MasterServer.writeObjects(
-								conn,
-								source,
-								out,
-								provideProgress,
-								new Processor(),
-								"select * from payment.\"Processor\""
-							); else {
-								MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-							}
-						} else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Processor(),
-							"select\n"
-							+ "  ccp.*\n"
-							+ "from\n"
-							+ "  account.\"Username\" un,\n"
-							+ "  billing.\"Package\" pk,\n"
-							+ TableHandler.BU1_PARENTS_JOIN
-							+ "  payment.\"Processor\" ccp\n"
-							+ "where\n"
-							+ "  un.username=?\n"
-							+ "  and un.package=pk.name\n"
-							+ "  and (\n"
-							+ TableHandler.PK_BU1_PARENTS_WHERE
-							+ "  )\n"
-							+ "  and bu1.accounting=ccp.accounting",
-							username
-						);
-					} else {
-						// No permission, return empty list
-						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-					}
-					break;
-				case CREDIT_CARD_TRANSACTIONS :
-					if(BusinessHandler.hasPermission(conn, source, Permission.Name.get_credit_card_transactions)) {
-						if(masterUser != null) {
-							assert masterServers != null;
-							if(masterServers.length == 0) MasterServer.writeObjects(
-								conn,
-								source,
-								out,
-								provideProgress,
-								new Payment(),
-								"select * from payment.\"Payment\""
-							); else {
-								MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-							}
-						} else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Payment(),
-							"select\n"
-							+ "  cct.*\n"
-							+ "from\n"
-							+ "  account.\"Username\" un,\n"
-							+ "  billing.\"Package\" pk,\n"
-							+ TableHandler.BU1_PARENTS_JOIN
-							+ "  payment.\"Payment\" cct\n"
-							+ "where\n"
-							+ "  un.username=?\n"
-							+ "  and un.package=pk.name\n"
-							+ "  and (\n"
-							+ TableHandler.PK_BU1_PARENTS_WHERE
-							+ "  )\n"
-							+ "  and bu1.accounting=cct.accounting",
-							username
-						);
-					} else {
-						// No permission, return empty list
-						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 					}
 					break;
 				case CVS_REPOSITORIES :
@@ -2208,16 +2123,6 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress
-					);
-					break;
-				case PAYMENT_TYPES :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new PaymentType(),
-						"select * from payment.\"PaymentType\""
 					);
 					break;
 				case POSTGRES_DATABASES :
