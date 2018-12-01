@@ -5,6 +5,7 @@
  */
 package com.aoindustries.aoserv.master.email;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.email.Address;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
