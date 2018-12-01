@@ -40,3 +40,8 @@ com.aoindustries.aoserv.master.distribution.SoftwareVersion_GetTableHandler
 com.aoindustries.aoserv.master.distribution.management.DistroFile_GetTableHandler
 com.aoindustries.aoserv.master.distribution.management.DistroFileType_GetTableHandler
 com.aoindustries.aoserv.master.distribution.management.DistroReportType_GetTableHandler
+com.aoindustries.aoserv.master.dns.ForbiddenZone_GetTableHandler
+com.aoindustries.aoserv.master.dns.Record_GetTableHandler
+com.aoindustries.aoserv.master.dns.RecordType_GetTableHandler
+com.aoindustries.aoserv.master.dns.TopLevelDomain_GetTableHandler
+com.aoindustries.aoserv.master.dns.Zone_GetTableHandler
