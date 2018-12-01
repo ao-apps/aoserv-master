@@ -15,7 +15,6 @@ import com.aoindustries.aoserv.client.dns.ZoneTable;
 import com.aoindustries.aoserv.client.email.InboxAttributes;
 import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.master.Process;
-import com.aoindustries.aoserv.client.master.ServerStat;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.FirewallZone;
@@ -41,29 +40,22 @@ import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.web.Location;
 import com.aoindustries.aoserv.client.web.tomcat.Context;
-import com.aoindustries.aoserv.master.account.AccountHandler;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
-import com.aoindustries.io.FifoFile;
-import com.aoindustries.io.FifoFileInputStream;
-import com.aoindustries.io.FifoFileOutputStream;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.Email;
 import com.aoindustries.net.HostAddress;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import com.aoindustries.net.Protocol;
-import com.aoindustries.sql.AOConnectionPool;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
-import com.aoindustries.util.BufferManager;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
-import com.aoindustries.util.ThreadUtility;
 import com.aoindustries.util.Tuple2;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
@@ -10043,14 +10035,14 @@ public abstract class MasterServer {
 				}
 			}
 
+			// TODO: Use ServiceLoader here, too
 			AccountCleaner.start();
-			// TODO: Use ServiceLoader
-			AccountHandler.start();
 			ClusterHandler.start();
 			CreditCardHandler.start();
 			DNSHandler.start();
 			FailoverHandler.start();
 			SignupHandler.start();
+			TableHandler.start();
 			TicketHandler.start();
 		} catch (IOException | IllegalArgumentException err) {
 			logger.log(Level.SEVERE, null, err);
@@ -10190,93 +10182,6 @@ public abstract class MasterServer {
 
 		// Let them in
 		return null;
-	}
-
-	public static String trim(String inStr) {
-		return (inStr==null?null:inStr.trim());
-	}
-
-	private static void addStat(
-		List<ServerStat> objs, 
-		String name, 
-		String value, 
-		String description
-	) {
-		name=trim(name);
-		value=trim(value);
-		description=trim(description);
-		objs.add(new ServerStat(name, value, description));
-	}
-
-	public static void writeStats(RequestSource source, CompressedDataOutputStream out, boolean provideProgress) throws IOException {
-		try {
-			// Create the list of objects first
-			List<ServerStat> objs=new ArrayList<>();
-			addStat(objs, ServerStat.BYTE_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getByteBufferCreates()), "Number of byte[] buffers created");
-			addStat(objs, ServerStat.BYTE_ARRAY_CACHE_USES, Long.toString(BufferManager.getByteBufferUses()), "Total number of byte[] buffers allocated");
-			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
-				addStat(objs, ServerStat.BYTE_ARRAY_CACHE_ZERO_FILLS, Long.toString(BufferManager.getByteBufferZeroFills()), "Total number of byte[] buffers zero-filled");
-				addStat(objs, ServerStat.BYTE_ARRAY_CACHE_COLLECTED, Long.toString(BufferManager.getByteBuffersCollected()), "Total number of byte[] buffers detected as garbage collected");
-			}
-
-			addStat(objs, ServerStat.CHAR_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getCharBufferCreates()), "Number of char[] buffers created");
-			addStat(objs, ServerStat.CHAR_ARRAY_CACHE_USES, Long.toString(BufferManager.getCharBufferUses()), "Total number of char[] buffers allocated");
-			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
-				addStat(objs, ServerStat.CHAR_ARRAY_CACHE_ZERO_FILLS, Long.toString(BufferManager.getCharBufferZeroFills()), "Total number of char[] buffers zero-filled");
-				addStat(objs, ServerStat.CHAR_ARRAY_CACHE_COLLECTED, Long.toString(BufferManager.getCharBuffersCollected()), "Total number of char[] buffers detected as garbage collected");
-			}
-
-			addStat(objs, ServerStat.DAEMON_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonConcurrency()), "Number of active daemon connections");
-			addStat(objs, ServerStat.DAEMON_CONNECTIONS, Integer.toString(DaemonHandler.getDaemonConnections()), "Current number of daemon connections");
-			addStat(objs, ServerStat.DAEMON_CONNECTS, Integer.toString(DaemonHandler.getDaemonConnects()), "Number of times connecting to daemons");
-			addStat(objs, ServerStat.DAEMON_COUNT, Integer.toString(DaemonHandler.getDaemonCount()), "Number of daemons that have been accessed");
-			addStat(objs, ServerStat.DAEMON_DOWN_COUNT, Integer.toString(DaemonHandler.getDownDaemonCount()), "Number of daemons that are currently unavailable");
-			addStat(objs, ServerStat.DAEMON_MAX_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonMaxConcurrency()), "Peak number of active daemon connections");
-			addStat(objs, ServerStat.DAEMON_POOL_SIZE, Integer.toString(DaemonHandler.getDaemonPoolSize()), "Maximum number of daemon connections");
-			addStat(objs, ServerStat.DAEMON_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(DaemonHandler.getDaemonTotalTime()), "Total time spent accessing daemons");
-			addStat(objs, ServerStat.DAEMON_TRANSACTIONS, Long.toString(DaemonHandler.getDaemonTransactions()), "Number of transactions processed by daemons");
-
-			AOConnectionPool dbPool=MasterDatabase.getDatabase().getConnectionPool();
-			addStat(objs, ServerStat.DB_CONCURRENCY, Integer.toString(dbPool.getConcurrency()), "Number of active database connections");
-			addStat(objs, ServerStat.DB_CONNECTIONS, Integer.toString(dbPool.getConnectionCount()), "Current number of database connections");
-			addStat(objs, ServerStat.DB_CONNECTS, Long.toString(dbPool.getConnects()), "Number of times connecting to the database");
-			addStat(objs, ServerStat.DB_MAX_CONCURRENCY, Integer.toString(dbPool.getMaxConcurrency()), "Peak number of active database connections");
-			addStat(objs, ServerStat.DB_POOL_SIZE, Integer.toString(dbPool.getPoolSize()), "Maximum number of database connections");
-			addStat(objs, ServerStat.DB_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(dbPool.getTotalTime()), "Total time spent accessing the database");
-			addStat(objs, ServerStat.DB_TRANSACTIONS, Long.toString(dbPool.getTransactionCount()), "Number of transactions committed by the database");
-
-			FifoFile entropyFile=RandomHandler.getFifoFile();
-			addStat(objs, ServerStat.ENTROPY_AVAIL, Long.toString(entropyFile.getLength()), "Number of bytes of entropy currently available");
-			addStat(objs, ServerStat.ENTROPY_POOLSIZE, Long.toString(entropyFile.getMaximumFifoLength()), "Maximum number of bytes of entropy");
-			FifoFileInputStream entropyIn=entropyFile.getInputStream();
-			addStat(objs, ServerStat.ENTROPY_READ_BYTES, Long.toString(entropyIn.getReadBytes()), "Number of bytes read from the entropy pool");
-			addStat(objs, ServerStat.ENTROPY_READ_COUNT, Long.toString(entropyIn.getReadCount()), "Number of reads from the entropy pool");
-			FifoFileOutputStream entropyOut=entropyFile.getOutputStream();
-			addStat(objs, ServerStat.ENTROPY_WRITE_BYTES, Long.toString(entropyOut.getWriteBytes()), "Number of bytes written to the entropy pool");
-			addStat(objs, ServerStat.ENTROPY_WRITE_COUNT, Long.toString(entropyOut.getWriteCount()), "Number of writes to the entropy pool");
-
-			addStat(objs, ServerStat.MEMORY_FREE, Long.toString(Runtime.getRuntime().freeMemory()), "Free virtual machine memory in bytes");
-			addStat(objs, ServerStat.MEMORY_TOTAL, Long.toString(Runtime.getRuntime().totalMemory()), "Total virtual machine memory in bytes");
-
-			addStat(objs, ServerStat.PROTOCOL_VERSION, StringUtility.join(AoservProtocol.Version.values(), ", "), "Supported AoservProtocol version numbers");
-
-			addStat(objs, ServerStat.REQUEST_CONCURRENCY, Integer.toString(getRequestConcurrency()), "Current number of client requests being processed");
-			addStat(objs, ServerStat.REQUEST_CONNECTIONS, Long.toString(getRequestConnections()), "Number of connections received from clients");
-			addStat(objs, ServerStat.REQUEST_MAX_CONCURRENCY, Integer.toString(getRequestMaxConcurrency()), "Peak number of client requests being processed");
-			addStat(objs, ServerStat.REQUEST_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(getRequestTotalTime()), "Total time spent processing client requests");
-			addStat(objs, ServerStat.REQUEST_TRANSACTIONS, Long.toString(getRequestTransactions()), "Number of client requests processed");
-
-			addStat(objs, ServerStat.THREAD_COUNT, Integer.toString(ThreadUtility.getThreadCount()), "Current number of virtual machine threads");
-
-			addStat(objs, ServerStat.UPTIME, StringUtility.getDecimalTimeLengthString(System.currentTimeMillis()-getStartTime()), "Amount of time the master server has been running");
-
-			writeObjects(source, out, provideProgress, objs);
-		} catch(IOException err) {
-			logger.log(Level.SEVERE, null, err);
-			out.writeByte(AoservProtocol.IO_EXCEPTION);
-			String message=err.getMessage();
-			out.writeUTF(message==null?"":message);
-		}
 	}
 
 	/**

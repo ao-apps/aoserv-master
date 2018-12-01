@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.billing.TransactionSearchCriteria;
 import com.aoindustries.aoserv.client.billing.TransactionType;
 import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
@@ -265,7 +266,7 @@ final public class TransactionHandler {
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
         User masterUser=MasterServer.getUser(conn, username);
-        com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
+        UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
         if(masterUser!=null) {
             if(masterServers.length==0) MasterServer.writeObjects(
                 conn,
@@ -334,7 +335,7 @@ final public class TransactionHandler {
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
         User masterUser=MasterServer.getUser(conn, username);
-        com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
+        UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
         StringBuilder sql;
 		final List<Object> params = new ArrayList<>();
         boolean whereDone;

@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.FifoFile;
@@ -39,10 +40,10 @@ public final class RandomHandler {
 		UserId mustring=source.getUsername();
 		User mu = MasterServer.getUser(conn, mustring);
 		if (mu!=null) {
-			com.aoindustries.aoserv.client.master.UserHost[] masterServers=MasterServer.getUserHosts(conn, mustring);
+			UserHost[] masterServers=MasterServer.getUserHosts(conn, mustring);
 			if(masterServers.length==0) isAllowed=true;
 			else {
-				for (com.aoindustries.aoserv.client.master.UserHost masterServer : masterServers) {
+				for (UserHost masterServer : masterServers) {
 					if (ServerHandler.isAOServer(conn, masterServer.getServerPKey())) {
 						isAllowed=true;
 						break;

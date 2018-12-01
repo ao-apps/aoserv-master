@@ -6,6 +6,7 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.reputation.Host;
 import com.aoindustries.aoserv.client.net.reputation.Network;
 import com.aoindustries.aoserv.client.net.reputation.Set;
@@ -421,7 +422,7 @@ final public class IpReputationSetHandler {
                 User mu = entry.getValue();
                 if(mu.isRouter()) {
                     // TODO: Filter isRouter users by server_farm
-                    for(com.aoindustries.aoserv.client.master.UserHost ms : MasterServer.getUserHosts(conn, username)) {
+                    for(UserHost ms : MasterServer.getUserHosts(conn, username)) {
                         if(hostsUpdated) {
                             invalidateList.addTable(
                                 conn,

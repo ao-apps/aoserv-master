@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.billing.Package;
 import com.aoindustries.aoserv.client.billing.Resource;
 import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.UserId;
@@ -546,7 +547,7 @@ final public class PackageHandler {
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
         User masterUser=MasterServer.getUser(conn, username);
-        com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
+        UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
         if(masterUser!=null) {
             if(masterServers.length==0) return conn.executeStringListQuery("select name from billing.\"Package\"");
             else return conn.executeStringListQuery(
@@ -589,7 +590,7 @@ final public class PackageHandler {
     ) throws IOException, SQLException {
         UserId username=source.getUsername();
         User masterUser=MasterServer.getUser(conn, username);
-        com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
+        UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
         if(masterUser!=null) {
             if(masterServers.length==0) return conn.executeIntListQuery("select id from billing.\"Package\"");
             else return conn.executeIntListQuery(

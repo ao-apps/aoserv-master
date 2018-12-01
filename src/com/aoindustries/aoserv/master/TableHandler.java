@@ -722,27 +722,7 @@ final public class TableHandler {
 		if(handler != null) {
 			handler.getTable(conn, source, out, provideProgress, tableID, masterUser, masterServers);
 		} else {
-			switch(tableID) {
-				case MASTER_PROCESSES :
-					MasterProcessManager.writeProcesses(
-						conn,
-						out,
-						provideProgress,
-						source,
-						masterUser,
-						masterServers
-					);
-					break;
-				case MASTER_SERVER_STATS :
-					MasterServer.writeStats(
-						source,
-						out,
-						provideProgress
-					);
-					break;
-				default :
-					throw new IOException("Unknown table ID: "+tableID);
-			}
+			throw new IOException("No handler registered for table ID: " + tableID);
 		}
 	}
 

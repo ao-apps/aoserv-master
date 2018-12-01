@@ -5,6 +5,7 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.master.master.Process_Manager;
 import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
@@ -87,7 +88,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 			this.in=new CompressedDataInputStream(new BufferedInputStream(socket.getInputStream()));
 			this.out=new CompressedDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 			InetAddress host=InetAddress.valueOf(socket.getInetAddress().getHostAddress());
-			process=MasterProcessManager.createProcess(
+			process=Process_Manager.createProcess(
 				host,
 				server.getProtocol(),
 				server.isSecure()
@@ -558,7 +559,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				}
 			}
 		} finally {
-			MasterProcessManager.removeProcess(process);
+			Process_Manager.removeProcess(process);
 		}
 	}
 

@@ -227,6 +227,7 @@ final public class UsernameHandler {
 		}
 	}
 
+	// TODO: Cache this lookup, since it is involved iteratively when querying master processes
 	public static AccountingCode getPackageForUsername(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,

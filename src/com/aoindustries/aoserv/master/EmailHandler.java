@@ -15,6 +15,7 @@ import com.aoindustries.aoserv.client.linux.Group;
 import com.aoindustries.aoserv.client.linux.GroupType;
 import com.aoindustries.aoserv.client.linux.UserType;
 import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.client.validator.GroupId;
@@ -593,7 +594,7 @@ final public class EmailHandler {
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
 		User masterUser=MasterServer.getUser(conn, username);
-		com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
+		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
 		if(masterUser==null || masterServers.length!=0) throw new SQLException("Only master users may add spam email messages.");
 
 		int id = conn.executeIntUpdate(
@@ -1180,7 +1181,7 @@ final public class EmailHandler {
 	) throws IOException, SQLException {
 		UserId username=source.getUsername();
 		User masterUser=MasterServer.getUser(conn, username);
-		com.aoindustries.aoserv.client.master.UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
+		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
 		if(masterUser!=null && masterServers.length==0) MasterServer.writeObjects(
 			conn,
 			source,
