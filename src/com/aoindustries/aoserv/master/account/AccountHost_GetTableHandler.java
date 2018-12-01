@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.account.AccountHost;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -22,7 +23,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class AccountHost_GetTableHandler extends TableHandler.GetTableHandlerByRole {
+public class AccountHost_GetTableHandler implements TableHandler.GetTableHandler {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -30,60 +31,68 @@ public class AccountHost_GetTableHandler extends TableHandler.GetTableHandlerByR
 	}
 
 	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			new AccountHost(),
-			"select * from account.\"AccountHost\""
-		); 
-	}
-
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			new AccountHost(),
-			"select distinct\n"
-			+ "  bs.*\n"
-			+ "from\n"
-			+ "  master.\"UserHost\" ms,\n"
-			+ "  account.\"AccountHost\" bs\n"
-			+ "where\n"
-			+ "  ms.username=?\n"
-			+ "  and ms.server=bs.server",
-			source.getUsername()
-		);
-	}
-
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			new AccountHost(),
-			"select\n"
-			+ "  bs.*\n"
-			+ "from\n"
-			+ "  account.\"Username\" un,\n"
-			+ "  billing.\"Package\" pk,\n"
-			+ TableHandler.BU1_PARENTS_JOIN
-			+ "  account.\"AccountHost\" bs\n"
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk.name\n"
-			+ "  and (\n"
-			+ TableHandler.PK_BU1_PARENTS_WHERE
-			+ "  )\n"
-			+ "  and bu1.accounting=bs.accounting",
-			source.getUsername()
-		);
+	public void getTable(
+		DatabaseConnection conn,
+		RequestSource source,
+		CompressedDataOutputStream out,
+		boolean provideProgress,
+		Table.TableID tableID,
+		User masterUser,
+		UserHost[] masterServers
+	) throws IOException, SQLException {
+		UserId username = source.getUsername();
+		if(masterUser != null) {
+			assert masterServers != null;
+			if(masterServers.length == 0) {
+				MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new AccountHost(),
+					"select * from account.\"AccountHost\""
+				); 
+			} else {
+				MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					new AccountHost(),
+					"select distinct\n"
+					+ "  bs.*\n"
+					+ "from\n"
+					+ "  master.\"UserHost\" ms,\n"
+					+ "  account.\"AccountHost\" bs\n"
+					+ "where\n"
+					+ "  ms.username=?\n"
+					+ "  and ms.server=bs.server",
+					username
+				);
+			}
+		} else {
+			MasterServer.writeObjects(
+				conn,
+				source,
+				out,
+				provideProgress,
+				new AccountHost(),
+				"select\n"
+				+ "  bs.*\n"
+				+ "from\n"
+				+ "  account.\"Username\" un,\n"
+				+ "  billing.\"Package\" pk,\n"
+				+ TableHandler.BU1_PARENTS_JOIN
+				+ "  account.\"AccountHost\" bs\n"
+				+ "where\n"
+				+ "  un.username=?\n"
+				+ "  and un.package=pk.name\n"
+				+ "  and (\n"
+				+ TableHandler.PK_BU1_PARENTS_WHERE
+				+ "  )\n"
+				+ "  and bu1.accounting=bs.accounting",
+				username
+			);
+		}
 	}
 }
