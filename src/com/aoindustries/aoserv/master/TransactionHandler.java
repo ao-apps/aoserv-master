@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -250,7 +251,7 @@ final public class TransactionHandler {
 				TransactionType.PAYMENT
             );
         } else {
-            MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
+            MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
         }
     }
 
@@ -276,7 +277,7 @@ final public class TransactionHandler {
                 new Transaction(),
                 "select * from billing.\"Transaction\" where accounting=?",
                 accounting
-            ); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
+            ); else MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
         } else MasterServer.writeObjects(
             conn,
             source,
@@ -349,7 +350,7 @@ final public class TransactionHandler {
                 );
                 whereDone=false;
             } else {
-                MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
+                MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
                 return;
             }
         } else {

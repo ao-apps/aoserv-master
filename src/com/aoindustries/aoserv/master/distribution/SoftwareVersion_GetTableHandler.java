@@ -54,13 +54,12 @@ public class SoftwareVersion_GetTableHandler implements TableHandler.GetTableHan
 			+ "  name,\n"
 			+ "  version,\n"
 			+ "  updated,\n"
-			+ "  ?,\n"
+			+ "  '"+AoservProtocol.FILTERED+"'::text,\n"
 			+ "  operating_system_version,\n"
 			+ "  disable_time,\n"
 			+ "  disable_reason\n"
 			+ "from\n"
-			+ "  distribution.\"SoftwareVersion\"",
-			AoservProtocol.FILTERED
+			+ "  distribution.\"SoftwareVersion\""
 		);
 	}
 

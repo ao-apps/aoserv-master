@@ -25,7 +25,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class DistroFile_GetTableHandler extends TableHandler.GetTableHandlerByRole {
+public class DistroFile_GetTableHandler implements TableHandler.GetTableHandlerByRole {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -33,7 +33,7 @@ public class DistroFile_GetTableHandler extends TableHandler.GetTableHandlerByRo
 	}
 
 	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+	public void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 		if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for " + TableHandler.getTableName(conn, Table.TableID.DISTRO_FILES));
 		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107)<=0) {
 			MasterServer.writeObjects(source, out, false, Collections.emptyList());
@@ -49,7 +49,7 @@ public class DistroFile_GetTableHandler extends TableHandler.GetTableHandlerByRo
 	}
 
 	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+	public void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 		// Restrict to the operating system versions accessible to this user
 		IntList osVersions = TableHandler.getOperatingSystemVersions(conn, source);
 		if(osVersions.size()==0) {
@@ -74,7 +74,7 @@ public class DistroFile_GetTableHandler extends TableHandler.GetTableHandlerByRo
 	}
 
 	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	public void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 	}
 }

@@ -92,7 +92,7 @@ public class VirtualServer_GetTableHandler implements TableHandler.GetTableHandl
 			+ "    when (\n"
 			+ "      select bs2.id from account.\"AccountHost\" bs2 where bs2.accounting=pk.accounting and bs2.server=vs.server and bs2.can_vnc_console limit 1\n"
 			+ "    ) is not null then vs.vnc_password\n"
-			+ "    else ?\n"
+			+ "    else '"+AoservProtocol.FILTERED+"'::text\n"
 			+ "  end\n"
 			+ "from\n"
 			+ "  account.\"Username\" un,\n"
@@ -111,7 +111,6 @@ public class VirtualServer_GetTableHandler implements TableHandler.GetTableHandl
 			// Allow servers it replicates to
 			//+ "    or bp.ao_server=vs.server\n"
 			+ "  )",
-			AoservProtocol.FILTERED,
 			source.getUsername()
 		);
 	}
