@@ -920,67 +920,6 @@ final public class TableHandler {
 						"select * from distribution.\"Architecture\""
 					);
 					break;
-				case BACKUP_REPORTS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new BackupReport(),
-							"select * from backup.\"BackupReport\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new BackupReport(),
-							"select\n"
-							+ "  br.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  backup.\"BackupReport\" br\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=br.server",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new BackupReport(),
-						"select\n"
-						+ "  br.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Package\" pk2,\n"
-						+ "  backup.\"BackupReport\" br\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk1.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK1_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=pk2.accounting\n"
-						+ "  and pk2.id=br.package",
-						username
-					);
-					break;
-				case BACKUP_RETENTIONS :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new BackupRetention(),
-						"select * from backup.\"BackupRetention\""
-					);
-					break;
 				case BLACKHOLE_EMAIL_ADDRESSES :
 					if(masterUser != null) {
 						assert masterServers != null;
