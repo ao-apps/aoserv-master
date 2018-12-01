@@ -131,3 +131,7 @@ com.aoindustries.aoserv.master.postgresql.Server_GetTableHandler
 com.aoindustries.aoserv.master.postgresql.User_GetTableHandler
 com.aoindustries.aoserv.master.postgresql.UserServer_GetTableHandler
 com.aoindustries.aoserv.master.postgresql.Version_GetTableHandler
+com.aoindustries.aoserv.master.reseller.Brand_GetTableHandler
+com.aoindustries.aoserv.master.reseller.BrandCategory_GetTableHandler
+com.aoindustries.aoserv.master.reseller.Category_GetTableHandler
+com.aoindustries.aoserv.master.reseller.Reseller_GetTableHandler
