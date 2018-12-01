@@ -159,3 +159,5 @@ com.aoindustries.aoserv.master.web.Site_GetTableHandler
 com.aoindustries.aoserv.master.web.StaticSite_GetTableHandler
 com.aoindustries.aoserv.master.web.VirtualHost_GetTableHandler
 com.aoindustries.aoserv.master.web.VirtualHostName_GetTableHandler
+com.aoindustries.aoserv.master.web.jboss.Site_GetTableHandler
+com.aoindustries.aoserv.master.web.jboss.Version_GetTableHandler
