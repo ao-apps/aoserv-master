@@ -70,3 +70,5 @@ com.aoindustries.aoserv.master.email.SmtpSmartHostDomain_GetTableHandler
 com.aoindustries.aoserv.master.email.SpamAssassinMode_GetTableHandler
 com.aoindustries.aoserv.master.email.SpamMessage_GetTableHandler
 com.aoindustries.aoserv.master.email.SystemAlias_GetTableHandler
+com.aoindustries.aoserv.master.ftp.GuestUser_GetTableHandler
+com.aoindustries.aoserv.master.ftp.PrivateServer_GetTableHandler
