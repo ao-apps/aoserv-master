@@ -140,3 +140,4 @@ com.aoindustries.aoserv.master.schema.Column_GetTableHandler
 com.aoindustries.aoserv.master.schema.ForeignKey_GetTableHandler
 com.aoindustries.aoserv.master.schema.Table_GetTableHandler
 com.aoindustries.aoserv.master.schema.Type_GetTableHandler
+com.aoindustries.aoserv.master.scm.CvsRepository_GetTableHandler
