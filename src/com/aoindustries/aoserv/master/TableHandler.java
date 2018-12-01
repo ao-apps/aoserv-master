@@ -12,9 +12,6 @@ import com.aoindustries.aoserv.client.account.Administrator;
 import com.aoindustries.aoserv.client.accounting.BankTransaction;
 import com.aoindustries.aoserv.client.backup.BackupReport;
 import com.aoindustries.aoserv.client.billing.Transaction;
-import com.aoindustries.aoserv.client.billing.TransactionType;
-import com.aoindustries.aoserv.client.billing.WhoisHistory;
-import com.aoindustries.aoserv.client.distribution.Architecture;
 import com.aoindustries.aoserv.client.distribution.OperatingSystem;
 import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.distribution.Software;
@@ -893,16 +890,6 @@ final public class TableHandler {
 						provideProgress,
 						new AoservProtocol(),
 						"select * from \"schema\".\"AoservProtocol\""
-					);
-					break;
-				case ARCHITECTURES :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new Architecture(),
-						"select * from distribution.\"Architecture\""
 					);
 					break;
 				case BLACKHOLE_EMAIL_ADDRESSES :
