@@ -161,3 +161,6 @@ com.aoindustries.aoserv.master.web.VirtualHost_GetTableHandler
 com.aoindustries.aoserv.master.web.VirtualHostName_GetTableHandler
 com.aoindustries.aoserv.master.web.jboss.Site_GetTableHandler
 com.aoindustries.aoserv.master.web.jboss.Version_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.Context_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.ContextDataSource_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.ContextParameter_GetTableHandler
