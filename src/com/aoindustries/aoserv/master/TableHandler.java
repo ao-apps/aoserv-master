@@ -18,10 +18,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.Host;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
-import com.aoindustries.aoserv.client.schema.Column;
-import com.aoindustries.aoserv.client.schema.ForeignKey;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.schema.Type;
 import com.aoindustries.aoserv.client.scm.CvsRepository;
 import com.aoindustries.aoserv.client.signup.Option;
 import com.aoindustries.aoserv.client.signup.Request;
@@ -58,18 +55,14 @@ import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.AbstractList;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -1968,124 +1961,6 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress
-					);
-					break;
-				case SCHEMA_FOREIGN_KEYS :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new ForeignKey(),
-						"select\n"
-						+ "  sfk.*\n"
-						+ "from\n"
-						+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
-						+ "  \"schema\".\"ForeignKey\" sfk\n"
-						+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on sfk.\"sinceVersion\"=\"sinceVersion\".version\n"
-						+ "  left join \"schema\".\"AoservProtocol\" \"lastVersion\" on sfk.\"lastVersion\"=\"lastVersion\".version\n"
-						+ "where\n"
-						+ "  client_ap.version=?\n"
-						+ "  and client_ap.created >= \"sinceVersion\".created\n"
-						+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)",
-						source.getProtocolVersion().getVersion()
-					);
-					break;
-				case SCHEMA_TABLES :
-					{
-						List<Table> clientTables=new ArrayList<>();
-						PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
-							"select\n"
-							+ "  st.id,\n"
-							+ "  st.\"name\",\n"
-							+ "  st.\"sinceVersion\",\n"
-							+ "  st.\"lastVersion\",\n"
-							+ "  st.display,\n"
-							+ "  st.\"isPublic\",\n"
-							+ "  coalesce(st.description, d.description, '') as description\n"
-							+ "from\n"
-							+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
-							+ "             \"schema\".\"Table\"                        st\n"
-							+ "  inner join \"schema\".\"Schema\"                        s on st.\"schema\"       =                s.id\n"
-							+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
-							+ "  left  join \"schema\".\"AoservProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
-							+ "  left  join (\n"
-							+ "    select\n"
-							+ "      pn.nspname, pc.relname, pd.description\n"
-							+ "    from\n"
-							+ "                 pg_catalog.pg_namespace   pn\n"
-							+ "      inner join pg_catalog.pg_class       pc on pn.oid = pc.relnamespace\n"
-							+ "      inner join pg_catalog.pg_description pd on pc.oid = pd.objoid and pd.objsubid=0\n"
-							+ "  ) d on (s.\"name\", st.\"name\") = (d.nspname, d.relname)\n"
-							+ "where\n"
-							+ "  client_ap.version=?\n"
-							+ "  and client_ap.created >= \"sinceVersion\".created\n"
-							+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
-							+ "order by\n"
-							+ "  st.id"
-						);
-						try {
-							pstmt.setString(1, source.getProtocolVersion().getVersion());
-
-							ResultSet results=pstmt.executeQuery();
-							try {
-								int clientTableID=0;
-								Table tempST=new Table();
-								while(results.next()) {
-									tempST.init(results);
-									clientTables.add(
-										new Table(
-											clientTableID++,
-											tempST.getName(),
-											tempST.getSinceVersion_version(),
-											tempST.getLastVersion_version(),
-											tempST.getDisplay(),
-											tempST.isPublic(),
-											tempST.getDescription()
-										)
-									);
-								}
-							} finally {
-								results.close();
-							}
-						} catch(SQLException err) {
-							System.err.println("Error from query: "+pstmt.toString());
-							throw err;
-						} finally {
-							pstmt.close();
-						}
-						MasterServer.writeObjects(
-							source,
-							out,
-							provideProgress,
-							clientTables
-						);
-					}
-					break;
-				case SCHEMA_TYPES :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new Type(),
-						"select\n"
-						+ "  st.id,\n"
-						+ "  st.\"name\",\n"
-						+ "  st.\"sinceVersion\",\n"
-						+ "  st.\"lastVersion\"\n"
-						+ "from\n"
-						+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
-						+ "             \"schema\".\"Type\"           st\n"
-						+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
-						+ "  left  join \"schema\".\"AoservProtocol\" \"lastVersion\"  on st.\"lastVersion\"  =  \"lastVersion\".version\n"
-						+ "where\n"
-						+ "  client_ap.version=?\n"
-						+ "  and client_ap.created >= \"sinceVersion\".created\n"
-						+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
-						+ "order by\n"
-						+ "  st.id",
-						source.getProtocolVersion().getVersion()
 					);
 					break;
 				case SIGNUP_REQUEST_OPTIONS :
