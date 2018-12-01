@@ -74,3 +74,8 @@ com.aoindustries.aoserv.master.ftp.GuestUser_GetTableHandler
 com.aoindustries.aoserv.master.ftp.PrivateServer_GetTableHandler
 com.aoindustries.aoserv.master.ftp.PrivateServer_GetTableHandler
 com.aoindustries.aoserv.master.infrastructure.PhysicalServer_GetTableHandler
+com.aoindustries.aoserv.master.infrastructure.ProcessorType_GetTableHandler
+com.aoindustries.aoserv.master.infrastructure.Rack_GetTableHandler
+com.aoindustries.aoserv.master.infrastructure.ServerFarm_GetTableHandler
+com.aoindustries.aoserv.master.infrastructure.VirtualDisk_GetTableHandler
+com.aoindustries.aoserv.master.infrastructure.VirtualServer_GetTableHandler
