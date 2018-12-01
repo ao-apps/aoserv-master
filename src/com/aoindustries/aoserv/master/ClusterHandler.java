@@ -55,7 +55,7 @@ final public class ClusterHandler implements CronJob {
     public static void start() {
         synchronized(System.out) {
             if(!started) {
-                System.out.print("Starting ClusterHandler: ");
+                System.out.print("Starting " + ClusterHandler.class.getSimpleName() + ": ");
                 CronDaemon.addCronJob(new ClusterHandler(), logger);
                 started=true;
                 System.out.println("Done");

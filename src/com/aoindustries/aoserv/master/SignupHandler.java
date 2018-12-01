@@ -151,7 +151,7 @@ final public class SignupHandler {
     public static void start() {
         synchronized(System.out) {
             if(!cronDaemonAdded) {
-                System.out.print("Starting SignupHandler: ");
+                System.out.print("Starting " + SignupHandler.class.getSimpleName() + ": ");
                 CronDaemon.addCronJob(
                     new CronJob() {
 						@Override

@@ -60,7 +60,7 @@ final public class ReportGenerator implements CronJob {
 	public static void start() {
 		synchronized(System.out) {
 			if(!started) {
-				System.out.print("Starting ReportGenerator: ");
+				System.out.print("Starting " + ReportGenerator.class.getSimpleName() + ": ");
 				CronDaemon.addCronJob(new ReportGenerator(), logger);
 				started=true;
 				System.out.println("Done");

@@ -59,7 +59,7 @@ final public class AccountCleaner implements CronJob {
     public static void start() {
         synchronized(System.out) {
             if(!started) {
-                System.out.print("Starting AccountCleaner: ");
+                System.out.print("Starting " + AccountCleaner.class.getSimpleName() + ": ");
                 CronDaemon.addCronJob(new AccountCleaner(), logger);
                 started=true;
                 System.out.println("Done");

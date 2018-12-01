@@ -64,7 +64,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         /*
         synchronized(System.out) {
             if(!started) {
-                System.out.print("Starting CreditCardHandler: ");
+                System.out.print("Starting " + CreditCardHandler.class.getSimpleName() + ": ");
                 CronDaemon.addCronJob(new CreditCardHandler(), logger);
                 started=true;
                 System.out.println("Done");

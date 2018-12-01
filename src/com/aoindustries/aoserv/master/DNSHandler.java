@@ -65,7 +65,7 @@ final public class DNSHandler implements CronJob {
 	public static void start() {
 		synchronized(System.out) {
 			if(!started) {
-				System.out.print("Starting DNSHandler: ");
+				System.out.print("Starting " + DNSHandler.class.getSimpleName() + ": ");
 				CronDaemon.addCronJob(new DNSHandler(), logger);
 				started=true;
 				System.out.println("Done");

@@ -13,12 +13,6 @@ import com.aoindustries.aoserv.client.accounting.BankTransaction;
 import com.aoindustries.aoserv.client.backup.BackupReport;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.email.SpamMessage;
-import com.aoindustries.aoserv.client.infrastructure.PhysicalServer;
-import com.aoindustries.aoserv.client.infrastructure.ProcessorType;
-import com.aoindustries.aoserv.client.infrastructure.Rack;
-import com.aoindustries.aoserv.client.infrastructure.ServerFarm;
-import com.aoindustries.aoserv.client.infrastructure.VirtualDisk;
-import com.aoindustries.aoserv.client.infrastructure.VirtualServer;
 import com.aoindustries.aoserv.client.linux.DaemonAcl;
 import com.aoindustries.aoserv.client.linux.Group;
 import com.aoindustries.aoserv.client.linux.GroupServer;
@@ -140,7 +134,7 @@ final public class TableHandler {
     public static void start() {
         synchronized(System.out) {
             if(!started) {
-                System.out.print("Starting " + TableHandler.class.getName());
+                System.out.print("Starting " + TableHandler.class.getSimpleName());
 				initGetTableHandlers(System.out);
 				started = true;
                 System.out.println(": Done");
@@ -4596,59 +4590,6 @@ final public class TableHandler {
 						"select * from payment.\"PaymentType\""
 					);
 					break;
-				case PHYSICAL_SERVERS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new PhysicalServer(),
-							"select * from infrastructure.\"PhysicalServer\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new PhysicalServer(),
-							"select\n"
-							+ "  ps.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms\n"
-							+ "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
-							+ "where\n"
-							+ "  ms.username=?",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new PhysicalServer(),
-						"select distinct\n"
-						+ "  ps.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk,\n"
-						+ "  account.\"AccountHost\" bs,\n"
-						// Allow servers it replicates to
-						//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
-						//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
-						+ "  infrastructure.\"PhysicalServer\" ps\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk.name\n"
-						+ "  and pk.accounting=bs.accounting\n"
-						+ "  and (\n"
-						+ "    bs.server=ps.server\n"
-						// Allow servers it replicates to
-						//+ "    or bp.ao_server=ps.server\n"
-						+ "  )",
-						username
-					);
-					break;
 				case POSTGRES_DATABASES :
 					if(masterUser != null) {
 						assert masterServers != null;
@@ -4886,16 +4827,6 @@ final public class TableHandler {
 						"select * from postgresql.\"Version\""
 					);
 					break;
-				case PROCESSOR_TYPES :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new ProcessorType(),
-						"select * from infrastructure.\"ProcessorType\""
-					);
-					break;
 				case PROTOCOLS :
 					MasterServer.writeObjects(
 						conn,
@@ -4904,61 +4835,6 @@ final public class TableHandler {
 						provideProgress,
 						new AppProtocol(),
 						"select * from net.\"AppProtocol\""
-					);
-					break;
-				case RACKS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Rack(),
-							"select * from infrastructure.\"Rack\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Rack(),
-							"select distinct\n"
-							+ "  ra.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms\n"
-							+ "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
-							+ "  inner join infrastructure.\"Rack\" ra on ps.rack=ra.id\n"
-							+ "where\n"
-							+ "  ms.username=?",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new Rack(),
-						"select distinct\n"
-						+ "  ra.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk,\n"
-						+ "  account.\"AccountHost\" bs,\n"
-						// Allow servers it replicates to
-						//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
-						//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
-						+ "  infrastructure.\"PhysicalServer\" ps,\n"
-						+ "  infrastructure.\"Rack\" ra\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk.name\n"
-						+ "  and pk.accounting=bs.accounting\n"
-						+ "  and (\n"
-						+ "    bs.server=ps.server\n"
-						// Allow servers it replicates to
-						//+ "    or bp.ao_server=ps.server\n"
-						+ "  ) and ps.rack=ra.id",
-						username
 					);
 					break;
 				case RESELLERS :
@@ -5202,67 +5078,6 @@ final public class TableHandler {
 						+ "order by\n"
 						+ "  st.id",
 						source.getProtocolVersion().getVersion()
-					);
-					break;
-				case SERVER_FARMS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new ServerFarm(),
-							"select * from infrastructure.\"ServerFarm\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new ServerFarm(),
-							"select distinct\n"
-							+ "  sf.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "            net.\"Host\"          se\n"
-							+ "  left join backup.\"FileReplication\" ffr on  se.id             = ffr.server\n"
-							+ "  left join backup.\"BackupPartition\" bp  on ffr.backup_partition =  bp.id\n"
-							+ "  left join net.\"Host\"          fs  on  bp.ao_server        =  fs.id,\n"
-							+ "  infrastructure.\"ServerFarm\" sf\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=se.id\n"
-							+ "  and (\n"
-							+ "    se.farm=sf.name\n"
-							+ "    or fs.farm=sf.name\n"
-							+ "  )",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new ServerFarm(),
-						"select distinct\n"
-						+ "  sf.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk,\n"
-						+ "  account.\"AccountHost\" bs,\n"
-						+ "  net.\"Host\" se,\n"
-						+ "  infrastructure.\"ServerFarm\" sf\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk.name\n"
-						+ "  and (\n"
-						+ "    (\n"
-						+ "      pk.accounting=bs.accounting\n"
-						+ "      and bs.server=se.id\n"
-						+ "      and se.farm=sf.name\n"
-						+ "    ) or pk.id=sf.owner\n"
-						+ "  )",
-						username
 					);
 					break;
 				case SERVERS :
@@ -6098,135 +5913,6 @@ final public class TableHandler {
 						provideProgress,
 						new TimeZone(),
 						"select * from linux.\"TimeZone\""
-					);
-					break;
-				case VIRTUAL_DISKS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new VirtualDisk(),
-							"select * from infrastructure.\"VirtualDisk\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new VirtualDisk(),
-							"select distinct\n"
-							+ "  vd.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms\n"
-							+ "  inner join infrastructure.\"VirtualDisk\" vd on ms.server=vd.virtual_server\n"
-							+ "where\n"
-							+ "  ms.username=?",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new VirtualDisk(),
-						"select distinct\n"
-						+ "  vd.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk,\n"
-						+ "  account.\"AccountHost\" bs,\n"
-						// Allow servers it replicates to
-						//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
-						//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
-						+ "  infrastructure.\"VirtualDisk\" vd\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk.name\n"
-						+ "  and pk.accounting=bs.accounting\n"
-						+ "  and (\n"
-						+ "    bs.server=vd.virtual_server\n"
-						// Allow servers it replicates to
-						//+ "    or bp.ao_server=vd.virtual_server\n"
-						+ "  )",
-						username
-					);
-					break;
-				case VIRTUAL_SERVERS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new VirtualServer(),
-							"select * from infrastructure.\"VirtualServer\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new VirtualServer(),
-							"select distinct\n"
-							+ "  vs.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms\n"
-							+ "  inner join infrastructure.\"VirtualServer\" vs on ms.server=vs.server\n"
-							+ "where\n"
-							+ "  ms.username=?",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new VirtualServer(),
-						"select distinct\n"
-						+ "  vs.server,\n"
-						+ "  vs.primary_ram,\n"
-						+ "  vs.primary_ram_target,\n"
-						+ "  vs.secondary_ram,\n"
-						+ "  vs.secondary_ram_target,\n"
-						+ "  vs.minimum_processor_type,\n"
-						+ "  vs.minimum_processor_architecture,\n"
-						+ "  vs.minimum_processor_speed,\n"
-						+ "  vs.minimum_processor_speed_target,\n"
-						+ "  vs.processor_cores,\n"
-						+ "  vs.processor_cores_target,\n"
-						+ "  vs.processor_weight,\n"
-						+ "  vs.processor_weight_target,\n"
-						+ "  vs.primary_physical_server_locked,\n"
-						+ "  vs.secondary_physical_server_locked,\n"
-						+ "  vs.requires_hvm,\n"
-						+ "  case\n"
-						+ "    when vs.vnc_password is null then null\n"
-						// Only provide the password when the user can connect to VNC console
-						+ "    when (\n"
-						+ "      select bs2.id from account.\"AccountHost\" bs2 where bs2.accounting=pk.accounting and bs2.server=vs.server and bs2.can_vnc_console limit 1\n"
-						+ "    ) is not null then vs.vnc_password\n"
-						+ "    else '"+AoservProtocol.FILTERED+"'::text\n"
-						+ "  end\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk,\n"
-						+ "  account.\"AccountHost\" bs,\n"
-						// Allow servers it replicates to
-						//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
-						//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
-						+ "  infrastructure.\"VirtualServer\" vs\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk.name\n"
-						+ "  and pk.accounting=bs.accounting\n"
-						+ "  and (\n"
-						+ "    bs.server=vs.server\n"
-						// Allow servers it replicates to
-						//+ "    or bp.ao_server=vs.server\n"
-						+ "  )",
-						username
 					);
 					break;
 				default :

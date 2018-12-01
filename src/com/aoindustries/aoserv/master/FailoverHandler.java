@@ -329,7 +329,7 @@ final public class FailoverHandler implements CronJob {
 	public static void start() {
 		synchronized(System.out) {
 			if(!started) {
-				System.out.print("Starting FailoverHandler: ");
+				System.out.print("Starting " + FailoverHandler.class.getSimpleName() + ": ");
 				CronDaemon.addCronJob(new FailoverHandler(), logger);
 				started=true;
 				System.out.println("Done");

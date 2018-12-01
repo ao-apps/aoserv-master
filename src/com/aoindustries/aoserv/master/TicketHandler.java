@@ -1687,7 +1687,7 @@ final public class TicketHandler /*implements Runnable*/ {
     public static void start() {
         synchronized(System.out) {
             if(!cronDaemonAdded) {
-                System.out.print("Starting TicketHandler: ");
+                System.out.print("Starting " + TicketHandler.class.getSimpleName() + ": ");
                 CronDaemon.addCronJob(
                     new CronJob() {
 						@Override
