@@ -17,7 +17,6 @@ import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.Host;
-import com.aoindustries.aoserv.client.payment.CountryCode;
 import com.aoindustries.aoserv.client.payment.CreditCard;
 import com.aoindustries.aoserv.client.payment.Payment;
 import com.aoindustries.aoserv.client.payment.PaymentType;
@@ -848,16 +847,6 @@ final public class TableHandler {
 						// No permission, return empty list
 						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 					}
-					break;
-				case COUNTRY_CODES :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new CountryCode(),
-						"select * from payment.\"CountryCode\""
-					);
 					break;
 				case CVS_REPOSITORIES :
 					if(masterUser != null) {
