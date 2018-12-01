@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
@@ -71,7 +72,7 @@ final public class MasterProcessManager {
         boolean provideProgress,
         RequestSource source,
         User masterUser,
-        com.aoindustries.aoserv.client.master.UserHost[] masterServers
+        UserHost[] masterServers
     ) throws IOException, SQLException {
         List<Process> processesCopy=new ArrayList<>(processes.size());
         synchronized(MasterProcessManager.class) {

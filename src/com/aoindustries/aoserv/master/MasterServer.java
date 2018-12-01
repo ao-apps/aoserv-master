@@ -17,6 +17,7 @@ import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.aoserv.client.master.ServerStat;
 import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.FirewallZone;
 import com.aoindustries.aoserv.client.net.reputation.Set.AddReputation;
 import com.aoindustries.aoserv.client.net.reputation.Set.ConfidenceType;
@@ -40,6 +41,7 @@ import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.web.Location;
 import com.aoindustries.aoserv.client.web.tomcat.Context;
+import com.aoindustries.aoserv.master.account.AccountHandler;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
 import com.aoindustries.io.CompressedDataInputStream;
@@ -119,7 +121,7 @@ public abstract class MasterServer {
 	private static final Object masterHostsLock = new Object();
 	private static Map<UserId,List<HostAddress>> masterHosts;
 	private static final Object masterServersLock = new Object();
-	private static Map<UserId,com.aoindustries.aoserv.client.master.UserHost[]> masterServers;
+	private static Map<UserId,UserHost[]> masterServers;
 
 	/**
 	 * The time the system started up
@@ -10042,6 +10044,8 @@ public abstract class MasterServer {
 			}
 
 			AccountCleaner.start();
+			// TODO: Use ServiceLoader
+			AccountHandler.start();
 			ClusterHandler.start();
 			CreditCardHandler.start();
 			DNSHandler.start();
@@ -10336,23 +10340,23 @@ public abstract class MasterServer {
 		for(int emailDomain : emailDomains) if(!EmailHandler.canAccessEmailDomain(conn, source, emailDomain)) throw new SQLException("Access to this hostname forbidden: Exists in email.Domain: "+hostname);
 	}
 
-	public static com.aoindustries.aoserv.client.master.UserHost[] getUserHosts(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static UserHost[] getUserHosts(DatabaseConnection conn, UserId username) throws IOException, SQLException {
 		synchronized(masterServersLock) {
 			if(masterServers==null) masterServers=new HashMap<>();
-			com.aoindustries.aoserv.client.master.UserHost[] mss=masterServers.get(username);
+			UserHost[] mss=masterServers.get(username);
 			if(mss!=null) return mss;
 			try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master.\"User\" mu, master.\"UserHost\" ms where mu.is_active and mu.username=? and mu.username=ms.username")) {
 				try {
-					List<com.aoindustries.aoserv.client.master.UserHost> v=new ArrayList<>();
+					List<UserHost> v=new ArrayList<>();
 					pstmt.setString(1, username.toString());
 					try (ResultSet results = pstmt.executeQuery()) {
 						while(results.next()) {
-							com.aoindustries.aoserv.client.master.UserHost ms=new com.aoindustries.aoserv.client.master.UserHost();
+							UserHost ms=new UserHost();
 							ms.init(results);
 							v.add(ms);
 						}
 					}
-					mss=new com.aoindustries.aoserv.client.master.UserHost[v.size()];
+					mss=new UserHost[v.size()];
 					v.toArray(mss);
 					masterServers.put(username, mss);
 					return mss;

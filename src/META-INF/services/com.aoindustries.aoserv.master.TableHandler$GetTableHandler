@@ -1,0 +1,13 @@
+com.aoindustries.aoserv.master.account.Account_GetTableHandler
+com.aoindustries.aoserv.master.account.AccountHost_GetTableHandler
+com.aoindustries.aoserv.master.account.Administrator_GetTableHandler
+com.aoindustries.aoserv.master.account.DisableLog_GetTableHandler
+com.aoindustries.aoserv.master.account.Profile_GetTableHandler
+com.aoindustries.aoserv.master.account.UsState_GetTableHandler
+com.aoindustries.aoserv.master.account.Username_GetTableHandler
+com.aoindustries.aoserv.master.accounting.Bank_GetTableHandler
+com.aoindustries.aoserv.master.accounting.BankAccount_GetTableHandler
+com.aoindustries.aoserv.master.accounting.BankTransaction_GetTableHandler
+com.aoindustries.aoserv.master.accounting.BankTransactionType_GetTableHandler
+com.aoindustries.aoserv.master.accounting.ExpenseCategory_GetTableHandler
+com.aoindustries.aoserv.master.aosh.Command_GetTableHandler

@@ -6,6 +6,7 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.master.Process;
+import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -400,11 +401,11 @@ final public class SocketServerThread extends Thread implements RequestSource {
 											out.flush();
 											isOK=false;
 										} else {
-											com.aoindustries.aoserv.client.master.UserHost[] servers=MasterServer.getUserHosts(conn, process.getEffectiveUser());
+											UserHost[] servers=MasterServer.getUserHosts(conn, process.getEffectiveUser());
 											conn.releaseConnection();
 											if(servers.length!=0) {
 												isOK=false;
-												for (com.aoindustries.aoserv.client.master.UserHost server1 : servers) {
+												for (UserHost server1 : servers) {
 													if (server1.getServerPKey() == daemonServer) {
 														isOK=true;
 														break;
