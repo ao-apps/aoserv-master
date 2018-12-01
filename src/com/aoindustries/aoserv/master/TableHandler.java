@@ -9,14 +9,7 @@ import com.aoindustries.aoserv.client.AOServWritable;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.AccountHost;
 import com.aoindustries.aoserv.client.account.Administrator;
-import com.aoindustries.aoserv.client.account.Profile;
-import com.aoindustries.aoserv.client.account.UsState;
-import com.aoindustries.aoserv.client.account.Username;
-import com.aoindustries.aoserv.client.accounting.Bank;
-import com.aoindustries.aoserv.client.accounting.BankAccount;
 import com.aoindustries.aoserv.client.accounting.BankTransaction;
-import com.aoindustries.aoserv.client.accounting.BankTransactionType;
-import com.aoindustries.aoserv.client.accounting.ExpenseCategory;
 import com.aoindustries.aoserv.client.aosh.Command;
 import com.aoindustries.aoserv.client.backup.BackupPartition;
 import com.aoindustries.aoserv.client.backup.BackupReport;
@@ -1092,63 +1085,6 @@ final public class TableHandler {
 						new BackupRetention(),
 						"select * from backup.\"BackupRetention\""
 					);
-					break;
-				case BANK_ACCOUNTS :
-					if(BankAccountHandler.isBankAccounting(conn, source)) {
-						MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new BankAccount(),
-							"select * from accounting.\"BankAccount\""
-						);
-					} else {
-						List<BankAccount> emptyList = Collections.emptyList();
-						MasterServer.writeObjects(source, out, provideProgress, emptyList);
-					}
-					break;
-				case BANK_TRANSACTIONS :
-					if(BankAccountHandler.isBankAccounting(conn, source)) {
-						MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new BankTransaction(),
-							"select\n"
-							+ "  id,\n"
-							+ "  time,\n" // Was not cast to date here while was in single object query - why?
-							+ "  account,\n"
-							+ "  processor,\n"
-							+ "  administrator,\n"
-							+ "  type,\n"
-							+ "  \"expenseCategory\",\n"
-							+ "  description,\n"
-							+ "  \"checkNo\",\n"
-							+ "  amount,\n"
-							+ "  confirmed\n"
-							+ "from accounting.\"BankTransaction\""
-						);
-					} else {
-						List<BankTransaction> emptyList = Collections.emptyList();
-						MasterServer.writeObjects(source, out, provideProgress, emptyList);
-					}
-					break;
-				case BANK_TRANSACTION_TYPES :
-					if(BankAccountHandler.isBankAccounting(conn, source)) {
-						MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new BankTransactionType(),
-							"select * from accounting.\"BankTransactionType\""
-						);
-					} else {
-						List<BankTransactionType> emptyList = Collections.emptyList();
-						MasterServer.writeObjects(source, out, provideProgress, emptyList);
-					}
 					break;
 				case BLACKHOLE_EMAIL_ADDRESSES :
 					if(masterUser != null) {
@@ -2288,21 +2224,6 @@ final public class TableHandler {
 							+ "  and bu1.accounting=ek.accounting",
 							username
 						);
-					}
-					break;
-				case EXPENSE_CATEGORIES :
-					if(BankAccountHandler.isBankAccounting(conn, source)) {
-						MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new ExpenseCategory(),
-							"select * from accounting.\"ExpenseCategory\""
-						);
-					} else {
-						List<ExpenseCategory> emptyList = Collections.emptyList();
-						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 					break;
 				case FAILOVER_FILE_LOG :
