@@ -145,3 +145,9 @@ com.aoindustries.aoserv.master.signup.Option_GetTableHandler
 com.aoindustries.aoserv.master.signup.Request_GetTableHandler
 com.aoindustries.aoserv.master.ticket.Action_GetTableHandler
 com.aoindustries.aoserv.master.ticket.ActionType_GetTableHandler
+com.aoindustries.aoserv.master.ticket.Assignment_GetTableHandler
+com.aoindustries.aoserv.master.ticket.Language_GetTableHandler
+com.aoindustries.aoserv.master.ticket.Priority_GetTableHandler
+com.aoindustries.aoserv.master.ticket.Status_GetTableHandler
+com.aoindustries.aoserv.master.ticket.Ticket_GetTableHandler
+com.aoindustries.aoserv.master.ticket.TicketType_GetTableHandler
