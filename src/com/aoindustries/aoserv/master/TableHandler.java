@@ -20,7 +20,6 @@ import com.aoindustries.aoserv.client.net.Host;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.client.web.Header;
 import com.aoindustries.aoserv.client.web.HttpdBind;
 import com.aoindustries.aoserv.client.web.HttpdServer;
 import com.aoindustries.aoserv.client.web.Location;
@@ -1051,65 +1050,6 @@ final public class TableHandler {
 						+ "  and bu1.accounting=pk2.accounting\n"
 						+ "  and pk2.name=hs.package\n"
 						+ "  and hs.id=hsal.httpd_site",
-						username
-					);
-					break;
-				case HTTPD_SITE_BIND_HEADERS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Header(),
-							"select * from web.\"Header\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Header(),
-							"select\n"
-							+ "  hsbh.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  web.\"Site\" hs,\n"
-							+ "  web.\"VirtualHost\" hsb,\n"
-							+ "  web.\"Header\" hsbh\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=hs.ao_server\n"
-							+ "  and hs.id=hsb.httpd_site\n"
-							+ "  and hsb.id=hsbh.httpd_site_bind",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new Header(),
-						"select\n"
-						+ "  hsbh.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Package\" pk2,\n"
-						+ "  web.\"Site\" hs,\n"
-						+ "  web.\"VirtualHost\" hsb,\n"
-						+ "  web.\"Header\" hsbh\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk1.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK1_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=pk2.accounting\n"
-						+ "  and pk2.name=hs.package\n"
-						+ "  and hs.id=hsb.httpd_site\n"
-						+ "  and hsb.id=hsbh.httpd_site_bind",
 						username
 					);
 					break;
