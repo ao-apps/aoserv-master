@@ -2,3 +2,4 @@ com.aoindustries.aoserv.master.account.Account_GetTableHandler
 com.aoindustries.aoserv.master.account.AccountHost_GetTableHandler
 com.aoindustries.aoserv.master.account.Administrator_GetTableHandler
 com.aoindustries.aoserv.master.account.DisableLog_GetTableHandler
+com.aoindustries.aoserv.master.account.Profile_GetTableHandler
