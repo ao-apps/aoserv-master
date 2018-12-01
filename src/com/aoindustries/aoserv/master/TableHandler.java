@@ -1150,21 +1150,6 @@ final public class TableHandler {
 						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 					break;
-				case BANKS :
-					if(BankAccountHandler.isBankAccounting(conn, source)) {
-						MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Bank(),
-							"select * from accounting.\"Bank\""
-						);
-					} else {
-						List<Bank> emptyList = Collections.emptyList();
-						MasterServer.writeObjects(source, out, provideProgress, emptyList);
-					}
-					break;
 				case BLACKHOLE_EMAIL_ADDRESSES :
 					if(masterUser != null) {
 						assert masterServers != null;
