@@ -19,7 +19,6 @@ import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.Host;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.scm.CvsRepository;
 import com.aoindustries.aoserv.client.signup.Option;
 import com.aoindustries.aoserv.client.signup.Request;
 import com.aoindustries.aoserv.client.ticket.Action;
@@ -112,6 +111,34 @@ final public class TableHandler {
 	 * The number of updates that will typically be done before the changes are committed.
 	 */
 	public static final int BATCH_COMMIT_INTERVAL=500;
+
+	/*
+	 * TODO: Use WITH RECURSIVE and no longer limit business tree depth.
+	 * 
+	 * Example query to get an account and all its parents:
+	 * 
+	 * WITH RECURSIVE account_and_up(accounting) AS (
+	 *   VALUES ('LOG_NEWRANKS_NET')
+	 * UNION ALL
+	 *   SELECT a.parent FROM
+	 *     account_and_up
+	 *     INNER JOIN account."Account" a ON account_and_up.accounting = a.accounting
+	 *   WHERE
+	 *     a.parent IS NOT NULL
+	 * )
+	 * SELECT * FROM account_and_up;
+	 *
+	 * Example query to get an account and all its subaccounts:
+	 *
+	 * WITH RECURSIVE account_and_down(accounting) AS (
+	 *   VALUES ('WOOT_WHMCS')
+	 * UNION ALL
+	 *   SELECT a.accounting FROM
+	 *     account_and_down
+	 *     INNER JOIN account."Account" a ON account_and_down.accounting = a.parent
+	 * )
+	 * SELECT * FROM account_and_down;
+	 */
 
 	/**
 	 * The joins used for the business tree.
@@ -723,63 +750,6 @@ final public class TableHandler {
 			handler.getTable(conn, source, out, provideProgress, tableID, masterUser, masterServers);
 		} else {
 			switch(tableID) {
-				case CVS_REPOSITORIES :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new CvsRepository(),
-							"select * from scm.\"CvsRepository\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new CvsRepository(),
-							"select\n"
-							+ "  cr.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  linux.\"UserServer\" lsa,\n"
-							+ "  scm.\"CvsRepository\" cr\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=lsa.ao_server\n"
-							+ "  and lsa.id=cr.linux_server_account",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new CvsRepository(),
-						"select\n"
-						+ "  cr.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un1,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Package\" pk2,\n"
-						+ "  account.\"Username\" un2,\n"
-						+ "  linux.\"UserServer\" lsa,\n"
-						+ "  scm.\"CvsRepository\" cr\n"
-						+ "where\n"
-						+ "  un1.username=?\n"
-						+ "  and un1.package=pk1.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK1_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=pk2.accounting\n"
-						+ "  and pk2.name=un2.package\n"
-						+ "  and un2.username=lsa.username\n"
-						+ "  and lsa.id=cr.linux_server_account",
-						username
-					);
-					break;
 				case HTTPD_BINDS :
 					if(masterUser != null) {
 						assert masterServers != null;
