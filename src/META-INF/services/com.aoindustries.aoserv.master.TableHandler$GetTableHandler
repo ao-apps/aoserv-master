@@ -1,2 +1,1 @@
-com.aoindustries.aoserv.master.account.Account_GetTableHandler
-com.aoindustries.aoserv.master.account.AccountHost_GetTableHandler
+com.aoindustries.aoserv.master.account.AccountGetTableHandler
