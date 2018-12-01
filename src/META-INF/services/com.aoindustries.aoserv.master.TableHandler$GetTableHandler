@@ -151,3 +151,11 @@ com.aoindustries.aoserv.master.ticket.Status_GetTableHandler
 com.aoindustries.aoserv.master.ticket.Ticket_GetTableHandler
 com.aoindustries.aoserv.master.ticket.TicketType_GetTableHandler
 com.aoindustries.aoserv.master.web.Header_GetTableHandler
+com.aoindustries.aoserv.master.web.HttpdBind_GetTableHandler
+com.aoindustries.aoserv.master.web.HttpdServer_GetTableHandler
+com.aoindustries.aoserv.master.web.Location_GetTableHandler
+com.aoindustries.aoserv.master.web.Redirect_GetTableHandler
+com.aoindustries.aoserv.master.web.Site_GetTableHandler
+com.aoindustries.aoserv.master.web.StaticSite_GetTableHandler
+com.aoindustries.aoserv.master.web.VirtualHost_GetTableHandler
+com.aoindustries.aoserv.master.web.VirtualHostName_GetTableHandler
