@@ -2977,59 +2977,6 @@ final public class TableHandler {
 						provideProgress
 					);
 					break;
-				case MYSQL_DATABASES :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Database(),
-							"select * from mysql.\"Database\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Database(),
-							"select\n"
-							+ "  md.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  mysql.\"Server\" mys,\n"
-							+ "  mysql.\"Database\" md\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=mys.ao_server\n"
-							+ "  and mys.bind=md.mysql_server",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new Database(),
-						"select\n"
-						+ "  md.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Package\" pk2,\n"
-						+ "  mysql.\"Database\" md\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk1.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK1_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=pk2.accounting\n"
-						+ "  and pk2.name=md.package",
-						username
-					);
-					break;
 				case MYSQL_DB_USERS :
 					if(masterUser != null) {
 						assert masterServers != null;
