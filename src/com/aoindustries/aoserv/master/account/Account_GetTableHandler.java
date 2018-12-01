@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class Account_GetTableHandler implements TableHandler.GetTableHandlerByRole {
+public class Account_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -30,7 +30,7 @@ public class Account_GetTableHandler implements TableHandler.GetTableHandlerByRo
 	}
 
 	@Override
-	public void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+	protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -42,7 +42,7 @@ public class Account_GetTableHandler implements TableHandler.GetTableHandlerByRo
 	}
 
 	@Override
-	public void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -64,7 +64,31 @@ public class Account_GetTableHandler implements TableHandler.GetTableHandlerByRo
 	}
 
 	@Override
-	public void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+		MasterServer.writeObjects(
+			conn,
+			source,
+			out,
+			provideProgress,
+			new Account(),
+			"WITH RECURSIVE accounts(accounting) AS (\n"
+			+ "  SELECT\n"
+			+ "    ac.*\n"
+			+ "  FROM\n"
+			+ "               account.\"Username\" un\n"
+			+ "    INNER JOIN billing.\"Package\"  pk ON un.package    = pk.name\n"
+			+ "    INNER JOIN account.\"Account\"  ac ON pk.accounting = ac.accounting\n"
+			+ "  WHERE\n"
+			+ "    un.username=?\n"
+			+ "UNION ALL\n"
+			+ "  SELECT a.* FROM\n"
+			+ "    accounts\n"
+			+ "    INNER JOIN account.\"Account\" a ON accounts.accounting = a.parent\n"
+			+ ")\n"
+			+ "SELECT * FROM accounts",
+			source.getUsername()
+		);
+		/*
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -85,5 +109,6 @@ public class Account_GetTableHandler implements TableHandler.GetTableHandlerByRo
 			+ "  )",
 			source.getUsername()
 		);
+		 */
 	}
 }
