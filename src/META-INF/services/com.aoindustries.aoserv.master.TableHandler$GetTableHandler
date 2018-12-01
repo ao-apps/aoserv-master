@@ -164,3 +164,12 @@ com.aoindustries.aoserv.master.web.jboss.Version_GetTableHandler
 com.aoindustries.aoserv.master.web.tomcat.Context_GetTableHandler
 com.aoindustries.aoserv.master.web.tomcat.ContextDataSource_GetTableHandler
 com.aoindustries.aoserv.master.web.tomcat.ContextParameter_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.JkMount_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.JkProtocol_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.PrivateTomcatSite_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.SharedTomcat_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.SharedTomcatSite_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.Site_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.Version_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.Worker_GetTableHandler
+com.aoindustries.aoserv.master.web.tomcat.WorkerName_GetTableHandler
