@@ -135,3 +135,5 @@ com.aoindustries.aoserv.master.reseller.Brand_GetTableHandler
 com.aoindustries.aoserv.master.reseller.BrandCategory_GetTableHandler
 com.aoindustries.aoserv.master.reseller.Category_GetTableHandler
 com.aoindustries.aoserv.master.reseller.Reseller_GetTableHandler
+com.aoindustries.aoserv.master.schema.AoservProtocol_GetTableHandler
+com.aoindustries.aoserv.master.schema.Column_GetTableHandler
