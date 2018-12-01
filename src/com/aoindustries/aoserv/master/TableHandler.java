@@ -7715,16 +7715,6 @@ final public class TableHandler {
 						"select * from linux.\"TimeZone\""
 					);
 					break;
-				case TRANSACTION_TYPES :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new TransactionType(),
-						"select * from billing.\"TransactionType\""
-					);
-					break;
 				case VIRTUAL_DISKS :
 					if(masterUser != null) {
 						assert masterServers != null;
@@ -7851,48 +7841,6 @@ final public class TableHandler {
 						// Allow servers it replicates to
 						//+ "    or bp.ao_server=vs.server\n"
 						+ "  )",
-						username
-					);
-					break;
-				case WHOIS_HISTORY :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) {
-							MasterServer.writeObjects(
-								conn,
-								source,
-								out,
-								provideProgress,
-								new WhoisHistory(),
-								"select id, time, accounting, zone from billing.\"WhoisHistory\""
-							);
-						} else {
-							// The servers don't need access to this information
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-						}
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new WhoisHistory(),
-						"select\n"
-						+ "  wh.id,\n"
-						+ "  wh.time,\n"
-						+ "  wh.accounting,\n"
-						+ "  wh.zone\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"WhoisHistory\" wh\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=wh.accounting",
 						username
 					);
 					break;
