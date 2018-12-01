@@ -109,3 +109,4 @@ com.aoindustries.aoserv.master.net.FirewallZone_GetTableHandler
 com.aoindustries.aoserv.master.net.Host_GetTableHandler
 com.aoindustries.aoserv.master.net.IpAddress_GetTableHandler
 com.aoindustries.aoserv.master.net.TcpRedirect_GetTableHandler
+com.aoindustries.aoserv.master.net.monitoring.IpAddressMonitoring_GetTableHandler
