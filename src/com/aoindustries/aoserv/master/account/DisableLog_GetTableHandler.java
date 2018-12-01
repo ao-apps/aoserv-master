@@ -9,7 +9,6 @@ import com.aoindustries.aoserv.client.account.DisableLog;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -23,7 +22,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class DisableLog_GetTableHandler implements TableHandler.GetTableHandler {
+public class DisableLog_GetTableHandler implements TableHandler.GetTableHandlerByRole {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -31,75 +30,67 @@ public class DisableLog_GetTableHandler implements TableHandler.GetTableHandler 
 	}
 
 	@Override
-	public void getTable(
-		DatabaseConnection conn,
-		RequestSource source,
-		CompressedDataOutputStream out,
-		boolean provideProgress,
-		Table.TableID tableID,
-		User masterUser,
-		UserHost[] masterServers
-	) throws IOException, SQLException {
-		UserId username = source.getUsername();
-		if(masterUser != null) {
-			assert masterServers != null;
-			if(masterServers.length == 0) {
-				MasterServer.writeObjects(
-					conn,
-					source,
-					out,
-					provideProgress,
-					new DisableLog(),
-					"select * from account.\"DisableLog\""
-				);
-			} else {
-				MasterServer.writeObjects(
-					conn,
-					source,
-					out,
-					provideProgress,
-					new DisableLog(),
-					"select distinct\n"
-					+ "  dl.*\n"
-					+ "from\n"
-					+ "  master.\"UserHost\" ms,\n"
-					+ "  linux.\"Server\" ao\n"
-					+ "  left join linux.\"Server\" ff on ao.server=ff.failover_server,\n"
-					+ "  account.\"AccountHost\" bs,\n"
-					+ "  account.\"DisableLog\" dl\n"
-					+ "where\n"
-					+ "  ms.username=?\n"
-					+ "  and ms.server=ao.server\n"
-					+ "  and (\n"
-					+ "    ao.server=bs.server\n"
-					+ "    or ff.server=bs.server\n"
-					+ "  ) and bs.accounting=dl.accounting",
-					username
-				);
-			}
-		} else {
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				new DisableLog(),
-				"select\n"
-				+ "  dl.*\n"
-				+ "from\n"
-				+ "  account.\"Username\" un,\n"
-				+ "  billing.\"Package\" pk,\n"
-				+ TableHandler.BU1_PARENTS_JOIN
-				+ "  account.\"DisableLog\" dl\n"
-				+ "where\n"
-				+ "  un.username=?\n"
-				+ "  and un.package=pk.name\n"
-				+ "  and (\n"
-				+ TableHandler.PK_BU1_PARENTS_WHERE
-				+ "  )\n"
-				+ "  and bu1.accounting=dl.accounting",
-				username
-			);
-		}
+	public void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+		MasterServer.writeObjects(
+			conn,
+			source,
+			out,
+			provideProgress,
+			new DisableLog(),
+			"select * from account.\"DisableLog\""
+		);
+	}
+
+	@Override
+	public void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+		MasterServer.writeObjects(
+			conn,
+			source,
+			out,
+			provideProgress,
+			new DisableLog(),
+			"select distinct\n"
+			+ "  dl.*\n"
+			+ "from\n"
+			+ "  master.\"UserHost\" ms,\n"
+			+ "  linux.\"Server\" ao\n"
+			+ "  left join linux.\"Server\" ff on ao.server=ff.failover_server,\n"
+			+ "  account.\"AccountHost\" bs,\n"
+			+ "  account.\"DisableLog\" dl\n"
+			+ "where\n"
+			+ "  ms.username=?\n"
+			+ "  and ms.server=ao.server\n"
+			+ "  and (\n"
+			+ "    ao.server=bs.server\n"
+			+ "    or ff.server=bs.server\n"
+			+ "  ) and bs.accounting=dl.accounting",
+			source.getUsername()
+		);
+	}
+
+	@Override
+	public void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+		MasterServer.writeObjects(
+			conn,
+			source,
+			out,
+			provideProgress,
+			new DisableLog(),
+			"select\n"
+			+ "  dl.*\n"
+			+ "from\n"
+			+ "  account.\"Username\" un,\n"
+			+ "  billing.\"Package\" pk,\n"
+			+ TableHandler.BU1_PARENTS_JOIN
+			+ "  account.\"DisableLog\" dl\n"
+			+ "where\n"
+			+ "  un.username=?\n"
+			+ "  and un.package=pk.name\n"
+			+ "  and (\n"
+			+ TableHandler.PK_BU1_PARENTS_WHERE
+			+ "  )\n"
+			+ "  and bu1.accounting=dl.accounting",
+			source.getUsername()
+		);
 	}
 }
