@@ -37,3 +37,6 @@ com.aoindustries.aoserv.master.distribution.Software_GetTableHandler
 com.aoindustries.aoserv.master.distribution.SoftwareCategorization_GetTableHandler
 com.aoindustries.aoserv.master.distribution.SoftwareCategory_GetTableHandler
 com.aoindustries.aoserv.master.distribution.SoftwareVersion_GetTableHandler
+com.aoindustries.aoserv.master.distribution.management.DistroFile_GetTableHandler
+com.aoindustries.aoserv.master.distribution.management.DistroFileType_GetTableHandler
+com.aoindustries.aoserv.master.distribution.management.DistroReportType_GetTableHandler
