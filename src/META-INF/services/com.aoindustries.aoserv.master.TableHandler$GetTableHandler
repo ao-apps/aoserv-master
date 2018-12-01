@@ -20,3 +20,9 @@ com.aoindustries.aoserv.master.backup.FileReplicationSchedule_GetTableHandler
 com.aoindustries.aoserv.master.backup.FileReplicationSetting_GetTableHandler
 com.aoindustries.aoserv.master.backup.MysqlReplication_GetTableHandler
 com.aoindustries.aoserv.master.billing.MonthlyCharge_GetTableHandler
+com.aoindustries.aoserv.master.billing.NoticeLog_GetTableHandler
+com.aoindustries.aoserv.master.billing.NoticeType_GetTableHandler
+com.aoindustries.aoserv.master.billing.Package_GetTableHandler
+com.aoindustries.aoserv.master.billing.PackageCategory_GetTableHandler
+com.aoindustries.aoserv.master.billing.PackageDefinition_GetTableHandler
+com.aoindustries.aoserv.master.billing.PackageDefinitionLimit_GetTableHandler
