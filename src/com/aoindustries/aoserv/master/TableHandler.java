@@ -13,7 +13,6 @@ import com.aoindustries.aoserv.client.accounting.BankTransaction;
 import com.aoindustries.aoserv.client.backup.BackupReport;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.email.SpamMessage;
-import com.aoindustries.aoserv.client.linux.DaemonAcl;
 import com.aoindustries.aoserv.client.linux.Group;
 import com.aoindustries.aoserv.client.linux.GroupServer;
 import com.aoindustries.aoserv.client.linux.GroupType;
@@ -648,36 +647,6 @@ final public class TableHandler {
 			handler.getTable(conn, source, out, provideProgress, tableID, masterUser, masterServers);
 		} else {
 			switch(tableID) {
-				case AO_SERVER_DAEMON_HOSTS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new DaemonAcl(),
-							"select * from linux.\"DaemonAcl\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new DaemonAcl(),
-							"select\n"
-							+ "  sdh.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  linux.\"DaemonAcl\" sdh\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=sdh.ao_server",
-							username
-						);
-					} else {
-						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-					}
-					break;
 				case AO_SERVERS :
 					if(masterUser != null) {
 						assert masterServers != null;
