@@ -118,3 +118,6 @@ com.aoindustries.aoserv.master.net.reputation.Network_GetTableHandler
 com.aoindustries.aoserv.master.net.reputation.Set_GetTableHandler
 com.aoindustries.aoserv.master.payment.CountryCode_GetTableHandler
 com.aoindustries.aoserv.master.payment.CreditCard_GetTableHandler
+com.aoindustries.aoserv.master.payment.Payment_GetTableHandler
+com.aoindustries.aoserv.master.payment.PaymentType_GetTableHandler
+com.aoindustries.aoserv.master.payment.Processor_GetTableHandler
