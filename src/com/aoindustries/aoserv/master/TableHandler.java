@@ -11,13 +11,6 @@ import com.aoindustries.aoserv.client.account.AccountHost;
 import com.aoindustries.aoserv.client.account.Administrator;
 import com.aoindustries.aoserv.client.accounting.BankTransaction;
 import com.aoindustries.aoserv.client.backup.BackupReport;
-import com.aoindustries.aoserv.client.billing.NoticeLog;
-import com.aoindustries.aoserv.client.billing.NoticeType;
-import com.aoindustries.aoserv.client.billing.Package;
-import com.aoindustries.aoserv.client.billing.PackageCategory;
-import com.aoindustries.aoserv.client.billing.PackageDefinition;
-import com.aoindustries.aoserv.client.billing.PackageDefinitionLimit;
-import com.aoindustries.aoserv.client.billing.Resource;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.billing.TransactionType;
 import com.aoindustries.aoserv.client.billing.WhoisHistory;
@@ -730,8 +723,7 @@ final public class TableHandler {
 							username
 						);
 					} else {
-						List<DaemonAcl> emptyList = Collections.emptyList();
-						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 					}
 					break;
 				case AO_SERVERS :
@@ -1139,8 +1131,7 @@ final public class TableHandler {
 								new Processor(),
 								"select * from payment.\"Processor\""
 							); else {
-								List<Processor> emptyList = Collections.emptyList();
-								MasterServer.writeObjects(source, out, provideProgress, emptyList);
+								MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 							}
 						} else MasterServer.writeObjects(
 							conn,
@@ -1166,8 +1157,7 @@ final public class TableHandler {
 						);
 					} else {
 						// No permission, return empty list
-						List<Processor> emptyList = Collections.emptyList();
-						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 					}
 					break;
 				case CREDIT_CARDS :
@@ -1182,8 +1172,7 @@ final public class TableHandler {
 								new CreditCard(),
 								"select * from payment.\"CreditCard\""
 							); else {
-								List<CreditCard> emptyList = Collections.emptyList();
-								MasterServer.writeObjects(source, out, provideProgress, emptyList);
+								MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 							}
 						} else MasterServer.writeObjects(
 							conn,
@@ -1209,8 +1198,7 @@ final public class TableHandler {
 						);
 					} else {
 						// No permission, return empty list
-						List<CreditCard> emptyList = Collections.emptyList();
-						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 					}
 					break;
 				case CREDIT_CARD_TRANSACTIONS :
@@ -1225,8 +1213,7 @@ final public class TableHandler {
 								new Payment(),
 								"select * from payment.\"Payment\""
 							); else {
-								List<Payment> emptyList = Collections.emptyList();
-								MasterServer.writeObjects(source, out, provideProgress, emptyList);
+								MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 							}
 						} else MasterServer.writeObjects(
 							conn,
@@ -1252,8 +1239,7 @@ final public class TableHandler {
 						);
 					} else {
 						// No permission, return empty list
-						List<Payment> emptyList = Collections.emptyList();
-						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 					}
 					break;
 				case COUNTRY_CODES :
@@ -1435,8 +1421,7 @@ final public class TableHandler {
 						if(masterServers.length == 0) {
 							if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, Table.TableID.DISTRO_FILES));
 							if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107)<=0) {
-								List<DistroFile> emptyList = Collections.emptyList();
-								MasterServer.writeObjects(source, out, false, emptyList);
+								MasterServer.writeObjects(source, out, false, Collections.emptyList());
 							} else {
 								MasterServer.fetchObjects(
 									conn,
@@ -1450,8 +1435,7 @@ final public class TableHandler {
 							// Restrict to the operating system versions accessible to this user
 							IntList osVersions=getOperatingSystemVersions(conn, source);
 							if(osVersions.size()==0) {
-								List<DistroFile> emptyList = Collections.emptyList();
-								MasterServer.writeObjects(source, out, provideProgress, emptyList);
+								MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 							} else {
 								if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, Table.TableID.DISTRO_FILES));
 								StringBuilder sql=new StringBuilder();
@@ -1471,8 +1455,7 @@ final public class TableHandler {
 							}
 						}
 					} else {
-						List<DistroFile> emptyList = Collections.emptyList();
-						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 					}
 					break;
 				case DISTRO_REPORT_TYPES :
@@ -1506,8 +1489,7 @@ final public class TableHandler {
 							new Record(),
 							"select * from dns.\"Record\""
 						); else {
-							List<Record> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else MasterServer.writeObjects(
 						conn,
@@ -1567,8 +1549,7 @@ final public class TableHandler {
 							new Zone(),
 							"select * from dns.\"Zone\""
 						); else {
-							List<Zone> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else MasterServer.writeObjects(
 						conn,
@@ -2025,8 +2006,7 @@ final public class TableHandler {
 								"select * from pki.\"EncryptionKey\""
 							);
 						} else {
-							List<EncryptionKey> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else {
 						MasterServer.writeObjects(
@@ -3712,8 +3692,7 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation limiters
-							List<LimiterClass> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else {
 						// Regular user may access the limiters for servers they have direct access to
@@ -3776,8 +3755,7 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation limiters
-							List<Set> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else {
 						// Regular user may access the limiters for servers they have direct access to
@@ -3839,8 +3817,7 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation limiters
-							List<Limiter> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else {
 						// Regular user may access the limiters for servers they have direct access to
@@ -3904,8 +3881,7 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation sets
-							List<Host> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else {
 						// Regular user may only access the hosts for their own or subaccount sets
@@ -3975,8 +3951,7 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation sets
-							List<Network> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else {
 						// Regular user may only access the networks for their own or subaccount sets
@@ -4045,8 +4020,7 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation sets
-							List<Set> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else {
 						// Regular user may access their own or subaccount sets, as well as any parent account
@@ -5645,53 +5619,6 @@ final public class TableHandler {
 						username
 					);
 					break;
-				case NOTICE_LOG :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new NoticeLog(),
-							"select * from billing.\"NoticeLog\""
-						); else {
-							List<NoticeLog> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
-						}
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new NoticeLog(),
-						"select\n"
-						+ "  nl.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"NoticeLog\" nl\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=nl.accounting",
-						username
-					);
-					break;
-				case NOTICE_TYPES :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new NoticeType(),
-						"select * from billing.\"NoticeType\""
-					);
-					break;
 				case OPERATING_SYSTEM_VERSIONS :
 					MasterServer.writeObjects(
 						conn,
@@ -5711,268 +5638,6 @@ final public class TableHandler {
 						new OperatingSystem(),
 						"select * from distribution.\"OperatingSystem\""
 					);
-					break;
-				case PACKAGE_CATEGORIES :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new PackageCategory(),
-						"select * from billing.\"PackageCategory\""
-					);
-					break;
-				case PACKAGE_DEFINITION_LIMITS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new PackageDefinitionLimit(),
-							"select * from billing.\"PackageDefinitionLimit\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new PackageDefinitionLimit(),
-							"select distinct\n"
-							+ "  pdl.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  account.\"AccountHost\" bs,\n"
-							+ "  billing.\"Package\" pk,\n"
-							+ "  billing.\"PackageDefinitionLimit\" pdl\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=bs.server\n"
-							+ "  and bs.accounting=pk.accounting\n"
-							+ "  and pk.package_definition=pdl.package_definition",
-							username
-						);
-					} else {
-						if(BusinessHandler.canSeePrices(conn, source)) {
-							MasterServer.writeObjects(
-								conn,
-								source,
-								out,
-								provideProgress,
-								new PackageDefinitionLimit(),
-								"select distinct\n"
-								+ "  pdl.*\n"
-								+ "from\n"
-								+ "  account.\"Username\" un,\n"
-								+ "  billing.\"Package\" pk1,\n"
-								+ TableHandler.BU1_PARENTS_JOIN
-								+ "  billing.\"Package\" pk2,\n"
-								+ "  billing.\"PackageDefinition\" pd,\n"
-								+ "  billing.\"PackageDefinitionLimit\" pdl\n"
-								+ "where\n"
-								+ "  un.username=?\n"
-								+ "  and un.package=pk1.name\n"
-								+ "  and (\n"
-								+ TableHandler.PK1_BU1_PARENTS_WHERE
-								+ "  )\n"
-								+ "  and bu1.accounting=pk2.accounting\n"
-								+ "  and (\n"
-								+ "    pk2.package_definition=pd.id\n"
-								+ "    or bu1.accounting=pd.accounting\n"
-								+ "  ) and pd.id=pdl.package_definition",
-								username
-							);
-						} else {
-							MasterServer.writeObjects(
-								conn,
-								source,
-								out,
-								provideProgress,
-								new PackageDefinitionLimit(),
-								"select distinct\n"
-								+ "  pdl.id,\n"
-								+ "  pdl.package_definition,\n"
-								+ "  pdl.resource,\n"
-								+ "  pdl.soft_limit,\n"
-								+ "  pdl.hard_limit,\n"
-								+ "  null,\n"
-								+ "  null\n"
-								+ "from\n"
-								+ "  account.\"Username\" un,\n"
-								+ "  billing.\"Package\" pk1,\n"
-								+ TableHandler.BU1_PARENTS_JOIN
-								+ "  billing.\"Package\" pk2,\n"
-								+ "  billing.\"PackageDefinition\" pd,\n"
-								+ "  billing.\"PackageDefinitionLimit\" pdl\n"
-								+ "where\n"
-								+ "  un.username=?\n"
-								+ "  and un.package=pk1.name\n"
-								+ "  and (\n"
-								+ TableHandler.PK1_BU1_PARENTS_WHERE
-								+ "  )\n"
-								+ "  and bu1.accounting=pk2.accounting\n"
-								+ "  and (\n"
-								+ "    pk2.package_definition=pd.id\n"
-								+ "    or bu1.accounting=pd.accounting\n"
-								+ "  ) and pd.id=pdl.package_definition",
-								username
-							);
-						}
-					}
-					break;
-				case PACKAGE_DEFINITIONS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new PackageDefinition(),
-							"select * from billing.\"PackageDefinition\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new PackageDefinition(),
-							"select distinct\n"
-							+ "  pd.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  account.\"AccountHost\" bs,\n"
-							+ "  billing.\"Package\" pk,\n"
-							+ "  billing.\"PackageDefinition\" pd\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=bs.server\n"
-							+ "  and bs.accounting=pk.accounting\n"
-							+ "  and pk.package_definition=pd.id",
-							username
-						);
-					} else {
-						if(BusinessHandler.canSeePrices(conn, source)) {
-							MasterServer.writeObjects(
-								conn,
-								source,
-								out,
-								provideProgress,
-								new PackageDefinition(),
-								"select distinct\n"
-								+ "  pd.*\n"
-								+ "from\n"
-								+ "  account.\"Username\" un,\n"
-								+ "  billing.\"Package\" pk1,\n"
-								+ TableHandler.BU1_PARENTS_JOIN
-								+ "  billing.\"Package\" pk2,\n"
-								+ "  billing.\"PackageDefinition\" pd\n"
-								+ "where\n"
-								+ "  un.username=?\n"
-								+ "  and un.package=pk1.name\n"
-								+ "  and (\n"
-								+ TableHandler.PK1_BU1_PARENTS_WHERE
-								+ "  )\n"
-								+ "  and bu1.accounting=pk2.accounting\n"
-								+ "  and (\n"
-								+ "    pk2.package_definition=pd.id\n"
-								+ "    or bu1.accounting=pd.accounting\n"
-								+ "  )",
-								username
-							);
-						} else {
-							MasterServer.writeObjects(
-								conn,
-								source,
-								out,
-								provideProgress,
-								new PackageDefinition(),
-								"select distinct\n"
-								+ "  pd.id,\n"
-								+ "  pd.accounting,\n"
-								+ "  pd.category,\n"
-								+ "  pd.name,\n"
-								+ "  pd.version,\n"
-								+ "  pd.display,\n"
-								+ "  pd.description,\n"
-								+ "  null,\n"
-								+ "  null,\n"
-								+ "  null,\n"
-								+ "  null,\n"
-								+ "  pd.active\n"
-								+ "from\n"
-								+ "  account.\"Username\" un,\n"
-								+ "  billing.\"Package\" pk1,\n"
-								+ TableHandler.BU1_PARENTS_JOIN
-								+ "  billing.\"Package\" pk2,\n"
-								+ "  billing.\"PackageDefinition\" pd\n"
-								+ "where\n"
-								+ "  un.username=?\n"
-								+ "  and un.package=pk1.name\n"
-								+ "  and (\n"
-								+ TableHandler.PK1_BU1_PARENTS_WHERE
-								+ "  )\n"
-								+ "  and bu1.accounting=pk2.accounting\n"
-								+ "  and (\n"
-								+ "    pk2.package_definition=pd.id\n"
-								+ "    or bu1.accounting=pd.accounting\n"
-								+ "  )",
-								username
-							);
-						}
-					}
-					break;
-				case PACKAGES :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Package(),
-							"select * from billing.\"Package\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Package(),
-							"select distinct\n"
-							+ "  pk.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  account.\"AccountHost\" bs,\n"
-							+ "  billing.\"Package\" pk\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=bs.server\n"
-							+ "  and bs.accounting=pk.accounting",
-							username
-						);
-					} else {
-						MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Package(),
-							"select\n"
-							+ "  pk2.*\n"
-							+ "from\n"
-							+ "  account.\"Username\" un,\n"
-							+ "  billing.\"Package\" pk1,\n"
-							+ TableHandler.BU1_PARENTS_JOIN
-							+ "  billing.\"Package\" pk2\n"
-							+ "where\n"
-							+ "  un.username=?\n"
-							+ "  and un.package=pk1.name\n"
-							+ "  and (\n"
-							+ TableHandler.PK1_BU1_PARENTS_WHERE
-							+ "  )\n"
-							+ "  and bu1.accounting=pk2.accounting",
-							username
-						);
-					}
 					break;
 				case PAYMENT_TYPES :
 					MasterServer.writeObjects(
@@ -6417,8 +6082,7 @@ final public class TableHandler {
 							new Reseller(),
 							"select * from reseller.\"Reseller\""
 						); else {
-							List<Brand> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else MasterServer.writeObjects(
 						conn,
@@ -6440,16 +6104,6 @@ final public class TableHandler {
 						+ TableHandler.PK_BU1_PARENTS_WHERE
 						+ "  ) and bu1.accounting=re.accounting",
 						username
-					);
-					break;
-				case RESOURCES :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new Resource(),
-						"select * from billing.\"Resource\""
 					);
 					break;
 				case SCHEMA_COLUMNS :
@@ -7206,8 +6860,7 @@ final public class TableHandler {
 								"select * from signup.\"Option\""
 							);
 						} else {
-							List<Option> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else {
 						MasterServer.writeObjects(
@@ -7288,8 +6941,7 @@ final public class TableHandler {
 								+ "  signup.\"Request\""
 							);
 						} else {
-							List<Request> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else {
 						MasterServer.writeObjects(
@@ -7664,8 +7316,7 @@ final public class TableHandler {
 							+ "from\n"
 							+ "  ticket.\"Action\""
 						); else {
-							List<Action> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else {
 						if(TicketHandler.isTicketAdmin(conn, source)) {
@@ -7778,8 +7429,7 @@ final public class TableHandler {
 							new Assignment(),
 							"select * from ticket.\"Assignment\""
 						); else {
-							List<Assignment> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else {
 						if(TicketHandler.isTicketAdmin(conn, source)) {
@@ -7814,8 +7464,7 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-admins don't get any assignment details
-							List<Assignment> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					}
 					break;
@@ -7830,8 +7479,7 @@ final public class TableHandler {
 							new BrandCategory(),
 							"select * from reseller.\"BrandCategory\""
 						); else {
-							List<BrandCategory> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else MasterServer.writeObjects(
 						conn,
@@ -8077,40 +7725,6 @@ final public class TableHandler {
 						"select * from billing.\"TransactionType\""
 					);
 					break;
-				case TRANSACTIONS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Transaction(),
-							"select * from billing.\"Transaction\""
-						); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new Transaction(),
-						"select\n"
-						+ "  tr.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un1,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Transaction\" tr\n"
-						+ "where\n"
-						+ "  un1.username=?\n"
-						+ "  and un1.package=pk1.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK1_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=tr.accounting",
-						username
-					);
-					break;
 				case VIRTUAL_DISKS :
 					if(masterUser != null) {
 						assert masterServers != null;
@@ -8254,8 +7868,7 @@ final public class TableHandler {
 							);
 						} else {
 							// The servers don't need access to this information
-							List<WhoisHistory> emptyList = Collections.emptyList();
-							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 						}
 					} else MasterServer.writeObjects(
 						conn,
