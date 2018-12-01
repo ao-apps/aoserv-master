@@ -5,6 +5,7 @@
  */
 package com.aoindustries.aoserv.master.accounting;
 
+import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
@@ -17,6 +18,7 @@ import com.aoindustries.io.CompressedDataOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -43,7 +45,8 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
 		if(BankAccountHandler.isBankAccounting(conn, source)) {
 			getTableAccounting(conn, source, out, provideProgress, tableID, masterUser);
 		} else {
-			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+			List<AOServObject<?,?>> emptyList = Collections.emptyList();
+			MasterServer.writeObjects(source, out, provideProgress, emptyList);
 		}
 	}
 

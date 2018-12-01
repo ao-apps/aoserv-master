@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class Command_GetTableHandler extends TableHandler.GetTableHandlerPublic {
+public class Command_GetTableHandler implements TableHandler.GetTableHandlerPublic {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -30,7 +30,7 @@ public class Command_GetTableHandler extends TableHandler.GetTableHandlerPublic 
 	}
 
 	@Override
-	protected void getTablePublic(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	public void getTablePublic(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,

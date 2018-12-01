@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class FileReplication_GetTableHandler extends TableHandler.GetTableHandlerByRole {
+public class FileReplication_GetTableHandler implements TableHandler.GetTableHandlerByRole {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -30,7 +30,7 @@ public class FileReplication_GetTableHandler extends TableHandler.GetTableHandle
 	}
 
 	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+	public void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -54,7 +54,7 @@ public class FileReplication_GetTableHandler extends TableHandler.GetTableHandle
 	}
 
 	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+	public void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -83,7 +83,7 @@ public class FileReplication_GetTableHandler extends TableHandler.GetTableHandle
 	}
 
 	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	public void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,

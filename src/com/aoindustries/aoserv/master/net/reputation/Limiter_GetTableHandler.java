@@ -23,7 +23,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class Limiter_GetTableHandler extends TableHandler.GetTableHandlerByRole {
+public class Limiter_GetTableHandler implements TableHandler.GetTableHandlerByRole {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -34,7 +34,7 @@ public class Limiter_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 	 * Admin may access all limiters.
 	 */
 	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+	public void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -52,7 +52,7 @@ public class Limiter_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 	 * @see  User#isRouter()
 	 */
 	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+	public void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 		if(masterUser.isRouter()) {
 			MasterServer.writeObjects(
 				conn,
@@ -81,7 +81,7 @@ public class Limiter_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 	 * Regular user may access the limiters for servers they have direct access to.
 	 */
 	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	public void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,

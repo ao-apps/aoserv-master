@@ -9,7 +9,6 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.ticket.Action;
-import com.aoindustries.aoserv.client.ticket.Status;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -80,7 +79,7 @@ public class Action_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				out,
 				provideProgress,
 				new Action(),
-				"select distinct\n" // TODO: distinct required?
+				"select\n"
 				+ "  ta.id,\n"
 				+ "  ta.ticket,\n"
 				+ "  ta.administrator,\n"
@@ -162,13 +161,11 @@ public class Action_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				+ TableHandler.PK1_BU1_PARENTS_WHERE
 				+ "  )\n"
 				+ "  and bu1.accounting=ti.accounting\n"
-				+ "  and ti.status not in (?,?)\n"
+				+ "  and ti.status not in ('junk', 'deleted')\n"
 				+ "  and ti.id=ta.ticket\n"
 				+ "  and ta.action_type=tat.type\n"
 				+ "  and not tat.visible_admin_only",
-				source.getUsername(),
-				Status.JUNK,
-				Status.DELETED
+				source.getUsername()
 			);
 		}
 	}
