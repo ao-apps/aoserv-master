@@ -17,7 +17,6 @@ import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.Host;
-import com.aoindustries.aoserv.client.payment.CreditCard;
 import com.aoindustries.aoserv.client.payment.Payment;
 import com.aoindustries.aoserv.client.payment.PaymentType;
 import com.aoindustries.aoserv.client.payment.Processor;
@@ -502,13 +501,13 @@ final public class TableHandler {
 		out.print(": " + GetTableHandler.class.getSimpleName() + " (" + handlerCount + " handlers for " + tableCount + " tables)");
 	}
 
-	public interface GetTableHandlerByRole extends GetTableHandler {
+	static abstract public class GetTableHandlerByRole implements GetTableHandler {
 
 		/**
 		 * Calls role-specific implementations.
 		 */
 		@Override
-		default void getTable(
+		public void getTable(
 			DatabaseConnection conn,
 			RequestSource source,
 			CompressedDataOutputStream out,
@@ -533,7 +532,7 @@ final public class TableHandler {
 		 * Handles a {@link User master user} request for the given table, with
 		 * access to all {@link Account accounts} and {@link Host hosts}.
 		 */
-		void getTableMaster(
+		abstract protected void getTableMaster(
 			DatabaseConnection conn,
 			RequestSource source,
 			CompressedDataOutputStream out,
@@ -547,7 +546,7 @@ final public class TableHandler {
 		 * access limited to a set of {@link Host hosts}.  This is the filtering
 		 * generally used by <a href="https://aoindustries.com/aoserv/daemon/">AOServ Daemon</a>.
 		 */
-		void getTableDaemon(
+		abstract protected void getTableDaemon(
 			DatabaseConnection conn,
 			RequestSource source,
 			CompressedDataOutputStream out,
@@ -562,7 +561,7 @@ final public class TableHandler {
 		 * access limited by their set of {@link Account accounts} and the
 		 * {@link Host hosts} those accounts can access (see {@link AccountHost}.
 		 */
-		void getTableAdministrator(
+		abstract protected void getTableAdministrator(
 			DatabaseConnection conn,
 			RequestSource source,
 			CompressedDataOutputStream out,
@@ -571,13 +570,13 @@ final public class TableHandler {
 		) throws IOException, SQLException;
 	}
 
-	public interface GetTableHandlerPublic extends GetTableHandler {
+	static abstract public class GetTableHandlerPublic implements GetTableHandler {
 
 		/**
 		 * Handles requests for public tables, where nothing is filtered.
 		 */
 		@Override
-		default void getTable(
+		public void getTable(
 			DatabaseConnection conn,
 			RequestSource source,
 			CompressedDataOutputStream out,
@@ -592,7 +591,131 @@ final public class TableHandler {
 		/**
 		 * Handles the request for a public table.
 		 */
-		void getTablePublic(
+		abstract protected void getTablePublic(
+			DatabaseConnection conn,
+			RequestSource source,
+			CompressedDataOutputStream out,
+			boolean provideProgress,
+			Table.TableID tableID
+		) throws IOException, SQLException;
+	}
+
+	static abstract public class GetTableHandlerPermission implements GetTableHandler {
+
+		/**
+		 * Gets the permission that is required to query this table.
+		 */
+		abstract protected Permission.Name getPermissionName();
+
+		/**
+		 * Checks if has permission, writing an empty table when does not have the permission.
+		 *
+		 * @see  BusinessHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 */
+		@Override
+		final public void getTable(
+			DatabaseConnection conn,
+			RequestSource source,
+			CompressedDataOutputStream out,
+			boolean provideProgress,
+			Table.TableID tableID,
+			User masterUser,
+			UserHost[] masterServers
+		) throws IOException, SQLException {
+			if(BusinessHandler.hasPermission(conn, source, getPermissionName())) {
+				getTableHasPermission(conn, source, out, provideProgress, tableID, masterUser, masterServers);
+			} else {
+				// No permission, write empty table
+				MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+			}
+		}
+
+		/**
+		 * Handles a request for the given table, once permission has been verified.
+		 *
+		 * @see  BusinessHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 */
+		abstract protected void getTableHasPermission(
+			DatabaseConnection conn,
+			RequestSource source,
+			CompressedDataOutputStream out,
+			boolean provideProgress,
+			Table.TableID tableID,
+			User masterUser,
+			UserHost[] masterServers
+		) throws IOException, SQLException;
+	}
+
+	static abstract public class GetTableHandlerPermissionByRole extends GetTableHandlerPermission {
+
+		/**
+		 * Calls role-specific implementations.
+		 */
+		@Override
+		protected void getTableHasPermission(
+			DatabaseConnection conn,
+			RequestSource source,
+			CompressedDataOutputStream out,
+			boolean provideProgress,
+			Table.TableID tableID,
+			User masterUser,
+			UserHost[] masterServers
+		) throws IOException, SQLException {
+			if(masterUser != null) {
+				assert masterServers != null;
+				if(masterServers.length == 0) {
+					getTableMasterHasPermission(conn, source, out, provideProgress, tableID, masterUser);
+				} else {
+					getTableDaemonHasPermission(conn, source, out, provideProgress, tableID, masterUser, masterServers);
+				}
+			} else {
+				getTableAdministratorHasPermission(conn, source, out, provideProgress, tableID);
+			}
+		}
+
+		/**
+		 * Handles a {@link User master user} request for the given table, once
+		 * permission has been verified, with access to all {@link Account accounts}
+		 * and {@link Host hosts}.
+		 *
+		 * @see  BusinessHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 */
+		abstract protected void getTableMasterHasPermission(
+			DatabaseConnection conn,
+			RequestSource source,
+			CompressedDataOutputStream out,
+			boolean provideProgress,
+			Table.TableID tableID,
+			User masterUser
+		) throws IOException, SQLException;
+
+		/**
+		 * Handles a {@link User master user} request for the given table, once
+		 * permission has been verified, with access limited to a set of
+		 * {@link Host hosts}.  This is the filtering generally used by
+		 * <a href="https://aoindustries.com/aoserv/daemon/">AOServ Daemon</a>.
+		 *
+		 * @see  BusinessHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 */
+		abstract protected void getTableDaemonHasPermission(
+			DatabaseConnection conn,
+			RequestSource source,
+			CompressedDataOutputStream out,
+			boolean provideProgress,
+			Table.TableID tableID,
+			User masterUser,
+			UserHost[] masterServers
+		) throws IOException, SQLException;
+
+		/**
+		 * Handles an {@link Administrator} request for the given table, once
+		 * permission has been verified, with access limited by their set of
+		 * {@link Account accounts} and the {@link Host hosts} those accounts
+		 * can access (see {@link AccountHost}.
+		 *
+		 * @see  BusinessHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 */
+		abstract protected void getTableAdministratorHasPermission(
 			DatabaseConnection conn,
 			RequestSource source,
 			CompressedDataOutputStream out,
@@ -759,47 +882,6 @@ final public class TableHandler {
 							+ TableHandler.PK_BU1_PARENTS_WHERE
 							+ "  )\n"
 							+ "  and bu1.accounting=ccp.accounting",
-							username
-						);
-					} else {
-						// No permission, return empty list
-						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-					}
-					break;
-				case CREDIT_CARDS :
-					if(BusinessHandler.hasPermission(conn, source, Permission.Name.get_credit_cards)) {
-						if(masterUser != null) {
-							assert masterServers != null;
-							if(masterServers.length == 0) MasterServer.writeObjects(
-								conn,
-								source,
-								out,
-								provideProgress,
-								new CreditCard(),
-								"select * from payment.\"CreditCard\""
-							); else {
-								MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-							}
-						} else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new CreditCard(),
-							"select\n"
-							+ "  cc.*\n"
-							+ "from\n"
-							+ "  account.\"Username\" un,\n"
-							+ "  billing.\"Package\" pk,\n"
-							+ TableHandler.BU1_PARENTS_JOIN
-							+ "  payment.\"CreditCard\" cc\n"
-							+ "where\n"
-							+ "  un.username=?\n"
-							+ "  and un.package=pk.name\n"
-							+ "  and (\n"
-							+ TableHandler.PK_BU1_PARENTS_WHERE
-							+ "  )\n"
-							+ "  and bu1.accounting=cc.accounting",
 							username
 						);
 					} else {
