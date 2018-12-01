@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -44,7 +45,8 @@ public class NoticeLog_GetTableHandler implements TableHandler.GetTableHandlerBy
 
 	@Override
 	public void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+		List<NoticeLog> emptyList = Collections.emptyList();
+		MasterServer.writeObjects(source, out, provideProgress, emptyList);
 	}
 
 	@Override
