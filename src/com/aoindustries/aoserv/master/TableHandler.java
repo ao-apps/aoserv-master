@@ -13,19 +13,8 @@ import com.aoindustries.aoserv.client.accounting.BankTransaction;
 import com.aoindustries.aoserv.client.backup.BackupReport;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.email.SpamMessage;
-import com.aoindustries.aoserv.client.linux.Group;
-import com.aoindustries.aoserv.client.linux.GroupServer;
-import com.aoindustries.aoserv.client.linux.GroupType;
-import com.aoindustries.aoserv.client.linux.GroupUser;
-import com.aoindustries.aoserv.client.linux.Server;
-import com.aoindustries.aoserv.client.linux.Shell;
-import com.aoindustries.aoserv.client.linux.TimeZone;
-import com.aoindustries.aoserv.client.linux.UserServer;
-import com.aoindustries.aoserv.client.linux.UserType;
-import com.aoindustries.aoserv.client.master.AdministratorPermission;
 import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.master.User;
-import com.aoindustries.aoserv.client.master.UserAcl;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.mysql.Database;
 import com.aoindustries.aoserv.client.mysql.DatabaseUser;
@@ -647,16 +636,6 @@ final public class TableHandler {
 			handler.getTable(conn, source, out, provideProgress, tableID, masterUser, masterServers);
 		} else {
 			switch(tableID) {
-				case AOSERV_PERMISSIONS :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new Permission(),
-						"select * from master.\"Permission\""
-					);
-					break;
 				case AOSERV_PROTOCOLS :
 					MasterServer.writeObjects(
 						conn,
@@ -761,66 +740,6 @@ final public class TableHandler {
 							username
 						);
 					}
-					break;
-				case BUSINESS_ADMINISTRATOR_PERMISSIONS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new AdministratorPermission(),
-							"select * from master.\"AdministratorPermission\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new AdministratorPermission(),
-							"select distinct\n"
-							+ "  bp.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  account.\"AccountHost\" bs,\n"
-							+ "  billing.\"Package\" pk,\n"
-							+ "  account.\"Username\" un,\n"
-							+ "  master.\"AdministratorPermission\" bp\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=bs.server\n"
-							+ "  and bs.accounting=pk.accounting\n"
-							+ "  and pk.name=un.package\n"
-							+ "  and un.username=bp.username",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new AdministratorPermission(),
-						"select\n"
-						+ "  bp.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un1,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Package\" pk2,\n"
-						+ "  account.\"Username\" un2,\n"
-						+ "  master.\"AdministratorPermission\" bp\n"
-						+ "where\n"
-						+ "  un1.username=?\n"
-						+ "  and un1.package=pk1.name\n"
-						+ "  and (\n"
-						+ "    un2.username=un1.username\n"
-						+ TableHandler.PK1_BU1_PARENTS_OR_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=pk2.accounting\n"
-						+ "  and pk2.name=un2.package\n"
-						+ "  and un2.username=bp.username",
-						username
-					);
 					break;
 				case CREDIT_CARD_PROCESSORS :
 					if(BusinessHandler.hasPermission(conn, source, Permission.Name.get_credit_card_processors)) {
@@ -3041,66 +2960,6 @@ final public class TableHandler {
 					);
 					break;
 				// </editor-fold>
-				case MASTER_HOSTS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new UserAcl(),
-							"select * from master.\"UserAcl\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new UserAcl(),
-							"select distinct\n"
-							+ "  mh.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  account.\"AccountHost\" bs,\n"
-							+ "  billing.\"Package\" pk,\n"
-							+ "  account.\"Username\" un,\n"
-							+ "  master.\"UserAcl\" mh\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=bs.server\n"
-							+ "  and bs.accounting=pk.accounting\n"
-							+ "  and pk.name=un.package\n"
-							+ "  and un.username=mh.username",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new UserAcl(),
-						"select\n"
-						+ "  mh.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un1,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Package\" pk2,\n"
-						+ "  account.\"Username\" un2,\n"
-						+ "  master.\"UserAcl\" mh\n"
-						+ "where\n"
-						+ "  un1.username=?\n"
-						+ "  and un1.package=pk1.name\n"
-						+ "  and (\n"
-						+ "    un2.username=un1.username\n"
-						+ TableHandler.PK1_BU1_PARENTS_OR_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=pk2.accounting\n"
-						+ "  and pk2.name=un2.package\n"
-						+ "  and un2.username=mh.username",
-						username
-					);
-					break;
 				case MASTER_PROCESSES :
 					MasterProcessManager.writeProcesses(
 						conn,
@@ -3116,120 +2975,6 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress
-					);
-					break;
-				case MASTER_SERVERS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new UserHost(),
-							"select * from master.\"UserHost\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new UserHost(),
-							"select\n"
-							+ "  ms2.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms1,\n"
-							+ "  master.\"UserHost\" ms2\n"
-							+ "where\n"
-							+ "  ms1.username=?\n"
-							+ "  and ms1.server=ms2.server",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new UserHost(),
-						"select\n"
-						+ "  ms.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un1,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Package\" pk2,\n"
-						+ "  account.\"Username\" un2,\n"
-						+ "  master.\"UserHost\" ms\n"
-						+ "where\n"
-						+ "  un1.username=?\n"
-						+ "  and un1.package=pk1.name\n"
-						+ "  and (\n"
-						+ "    un2.username=un1.username\n"
-						+ TableHandler.PK1_BU1_PARENTS_OR_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=pk2.accounting\n"
-						+ "  and pk2.name=un2.package\n"
-						+ "  and un2.username=ms.username",
-						username
-					);
-					break;
-				case MASTER_USERS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new User(),
-							"select * from master.\"User\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new User(),
-							"select distinct\n"
-							+ "  mu.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  account.\"AccountHost\" bs,\n"
-							+ "  billing.\"Package\" pk,\n"
-							+ "  account.\"Username\" un,\n"
-							+ "  master.\"User\" mu\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=bs.server\n"
-							+ "  and bs.accounting=pk.accounting\n"
-							+ "  and pk.name=un.package\n"
-							+ "  and un.username=mu.username",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new User(),
-						"select\n"
-						+ "  mu.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un1,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Package\" pk2,\n"
-						+ "  account.\"Username\" un2,\n"
-						+ "  master.\"User\" mu\n"
-						+ "where\n"
-						+ "  un1.username=?\n"
-						+ "  and un1.package=pk1.name\n"
-						+ "  and (\n"
-						+ "    un2.username=un1.username\n"
-						+ TableHandler.PK1_BU1_PARENTS_OR_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=pk2.accounting\n"
-						+ "  and pk2.name=un2.package\n"
-						+ "  and un2.username=mu.username",
-						username
 					);
 					break;
 				case MYSQL_DATABASES :
