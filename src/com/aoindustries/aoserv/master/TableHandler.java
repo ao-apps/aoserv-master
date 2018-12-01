@@ -598,7 +598,7 @@ final public class TableHandler {
 						+ "  \"lastGid\",\n"
 						+ "  sftp_umask\n"
 						+ "from\n"
-						+ "  linux.\"Host\""
+						+ "  linux.\"Server\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -634,15 +634,15 @@ final public class TableHandler {
 						+ "  ao2.sftp_umask\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
-						+ "  inner join linux.\"Host\" ao on ms.server=ao.server\n"
+						+ "  inner join linux.\"Server\" ao on ms.server=ao.server\n"
 						// Allow its failover parent
-						+ "  left join linux.\"Host\" ff on ao.failover_server=ff.server\n"
+						+ "  left join linux.\"Server\" ff on ao.failover_server=ff.server\n"
 						// Allow its failover children
-						+ "  left join linux.\"Host\" fs on ao.server=fs.failover_server\n"
+						+ "  left join linux.\"Server\" fs on ao.server=fs.failover_server\n"
 						// Allow servers it replicates to
 						+ "  left join backup.\"FileReplication\" ffr on ms.server=ffr.server\n"
 						+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
-						+ "  linux.\"Host\" ao2\n"
+						+ "  linux.\"Server\" ao2\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
 						+ "  and (\n"
@@ -697,7 +697,7 @@ final public class TableHandler {
 					// Allow servers it replicates to
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
-					+ "  linux.\"Host\" ao\n"
+					+ "  linux.\"Server\" ao\n"
 					+ "where\n"
 					+ "  un.username=?\n"
 					+ "  and un.package=pk.name\n"
@@ -1755,8 +1755,8 @@ final public class TableHandler {
 						+ "  dl.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  linux.\"Host\" ao\n"
-						+ "  left join linux.\"Host\" ff on ao.server=ff.failover_server,\n"
+						+ "  linux.\"Server\" ao\n"
+						+ "  left join linux.\"Server\" ff on ao.server=ff.failover_server,\n"
 						+ "  account.\"AccountHost\" bs,\n"
 						+ "  account.\"DisableLog\" dl\n"
 						+ "where\n"
@@ -3939,7 +3939,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new Version(),
+					new com.aoindustries.aoserv.client.web.tomcat.Version(),
 					"select * from \"web.tomcat\".\"Version\""
 				);
 				break;
@@ -4067,7 +4067,7 @@ final public class TableHandler {
 						+ "      ia2.id\n"
 						+ "    from\n"
 						+ "      master.\"UserHost\" ms\n"
-						+ "      left join linux.\"Host\" ff on ms.server=ff.failover_server,\n"
+						+ "      left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "      net.\"Device\" nd\n"
 						+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.device\n"
 						+ "    where\n"
@@ -4082,7 +4082,7 @@ final public class TableHandler {
 						+ "            from\n"
 						+ "              backup.\"FileReplication\" ffr\n"
 						+ "              inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
-						+ "              inner join linux.\"Host\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
+						+ "              inner join linux.\"Server\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
 						+ "            where\n"
 						+ "              ms.server=ffr.server\n"
 						+ "              and bp.ao_server=nd.server\n"
@@ -4188,7 +4188,7 @@ final public class TableHandler {
 						+ "      account.\"AccountHost\" bs6,\n"
 						+ "      backup.\"FileReplication\" ffr6,\n"
 						+ "      backup.\"BackupPartition\" bp6,\n"
-						+ "      linux.\"Host\" ao6,\n"
+						+ "      linux.\"Server\" ao6,\n"
 						+ "      net.\"Device\" nd6,\n"
 						+ "      net.\"IpAddress\" ia6\n"
 						+ "    where\n"
@@ -4239,7 +4239,7 @@ final public class TableHandler {
 						+ "      ia2.id\n"
 						+ "    from\n"
 						+ "      master.\"UserHost\" ms\n"
-						+ "      left join linux.\"Host\" ff on ms.server=ff.failover_server,\n"
+						+ "      left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "      net.\"Device\" nd\n"
 						+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.device\n"
 						+ "    where\n"
@@ -4254,7 +4254,7 @@ final public class TableHandler {
 						+ "            from\n"
 						+ "              backup.\"FileReplication\" ffr\n"
 						+ "              inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
-						+ "              inner join linux.\"Host\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
+						+ "              inner join linux.\"Server\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
 						+ "            where\n"
 						+ "              ms.server=ffr.server\n"
 						+ "              and bp.ao_server=nd.server\n"
@@ -4344,7 +4344,7 @@ final public class TableHandler {
 						+ "      account.\"AccountHost\" bs6,\n"
 						+ "      backup.\"FileReplication\" ffr6,\n"
 						+ "      backup.\"BackupPartition\" bp6,\n"
-						+ "      linux.\"Host\" ao6,\n"
+						+ "      linux.\"Server\" ao6,\n"
 						+ "      net.\"Device\" nd6,\n"
 						+ "      net.\"IpAddress\" ia6\n"
 						+ "    where\n"
@@ -4864,20 +4864,20 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new User(),
+						new com.aoindustries.aoserv.client.linux.User(),
 						"select * from linux.\"User\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new User(),
+						new com.aoindustries.aoserv.client.linux.User(),
 						"select distinct\n"
 						+ "  la.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  linux.\"Host\" ao\n"
-						+ "  left join linux.\"Host\" ff on ao.server=ff.failover_server,\n"
+						+ "  linux.\"Server\" ao\n"
+						+ "  left join linux.\"Server\" ff on ao.server=ff.failover_server,\n"
 						+ "  account.\"AccountHost\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un,\n"
@@ -4898,7 +4898,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new User(),
+					new com.aoindustries.aoserv.client.linux.User(),
 					"select\n"
 					+ "  la.*\n"
 					+ "from\n"
@@ -5052,7 +5052,7 @@ final public class TableHandler {
 						+ "  lg.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  linux.\"Host\" ao,\n"
+						+ "  linux.\"Server\" ao,\n"
 						+ "  account.\"AccountHost\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  linux.\"Group\" lg\n"
@@ -5122,7 +5122,7 @@ final public class TableHandler {
 						+ "  lsa.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
-						+ "  left join linux.\"Host\" ff on ms.server=ff.failover_server,\n"
+						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "  linux.\"UserServer\" lsa\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -5619,7 +5619,7 @@ final public class TableHandler {
 						+ "  md.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  mysql.\"Host\" mys,\n"
+						+ "  mysql.\"Server\" mys,\n"
 						+ "  mysql.\"Database\" md\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -5672,7 +5672,7 @@ final public class TableHandler {
 						+ "  mdu.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  mysql.\"Host\" mys,\n"
+						+ "  mysql.\"Server\" mys,\n"
 						+ "  mysql.\"Database\" md,\n"
 						+ "  mysql.\"DatabaseUser\" mdu\n"
 						+ "where\n"
@@ -5717,19 +5717,19 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new UserServer(),
+						new com.aoindustries.aoserv.client.mysql.UserServer(),
 						"select * from mysql.\"UserServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new UserServer(),
+						new com.aoindustries.aoserv.client.mysql.UserServer(),
 						"select\n"
 						+ "  msu.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms,\n"
-						+ "  mysql.\"Host\" mys,\n"
+						+ "  mysql.\"Server\" mys,\n"
 						+ "  mysql.\"UserServer\" msu\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -5742,7 +5742,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new UserServer(),
+					new com.aoindustries.aoserv.client.mysql.UserServer(),
 					 "select\n"
 					+ "  msu.id,\n"
 					+ "  msu.username,\n"
@@ -5787,7 +5787,7 @@ final public class TableHandler {
 						// Protocol conversion
 						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
 						+ "FROM\n"
-						+ "  mysql.\"Host\" ms"
+						+ "  mysql.\"Server\" ms"
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -5800,7 +5800,7 @@ final public class TableHandler {
 						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
 						+ "from\n"
 						+ "             master.\"UserHost\" uh\n"
-						+ "  INNER JOIN mysql.\"Host\"    ms ON uh.server=ms.ao_server\n"
+						+ "  INNER JOIN mysql.\"Server\"    ms ON uh.server=ms.ao_server\n"
 						+ "where\n"
 						+ "  uh.username=?",
 						username
@@ -5819,7 +5819,7 @@ final public class TableHandler {
 					+ "             account.\"Username\"    un\n"
 					+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
 					+ "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
-					+ "  INNER JOIN mysql.\"Host\"        ms ON bs.server     = ms.ao_server\n"
+					+ "  INNER JOIN mysql.\"Server\"        ms ON bs.server     = ms.ao_server\n"
 					+ "WHERE\n"
 					+ "  un.username=?",
 					username
@@ -5833,14 +5833,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new User(),
+						new com.aoindustries.aoserv.client.mysql.User(),
 						"select * from mysql.\"User\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new User(),
+						new com.aoindustries.aoserv.client.mysql.User(),
 						"select distinct\n"
 						+ "  mu.*\n"
 						+ "from\n"
@@ -5862,7 +5862,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new User(),
+					new com.aoindustries.aoserv.client.mysql.User(),
 					"select\n"
 					+ "  mu.*\n"
 					+ "from\n"
@@ -5970,7 +5970,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
 					+ "      account.\"AccountHost\" bs4,\n"
-					+ "      mysql.\"Host\" ms4\n"
+					+ "      mysql.\"Server\" ms4\n"
 					+ "    where\n"
 					+ "      un4.username=?\n"
 					+ "      and un4.package=pk4.name\n"
@@ -5983,7 +5983,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un5,\n"
 					+ "      billing.\"Package\" pk5,\n"
 					+ "      account.\"AccountHost\" bs5,\n"
-					+ "      postgresql.\"Host\" ps5\n"
+					+ "      postgresql.\"Server\" ps5\n"
 					+ "    where\n"
 					+ "      un5.username=?\n"
 					+ "      and un5.package=pk5.name\n"
@@ -6151,7 +6151,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un4,\n"
 					+ "      billing.\"Package\" pk4,\n"
 					+ "      account.\"AccountHost\" bs4,\n"
-					+ "      mysql.\"Host\" ms4\n"
+					+ "      mysql.\"Server\" ms4\n"
 					+ "    where\n"
 					+ "      un4.username=?\n"
 					+ "      and un4.package=pk4.name\n"
@@ -6164,7 +6164,7 @@ final public class TableHandler {
 					+ "      account.\"Username\" un5,\n"
 					+ "      billing.\"Package\" pk5,\n"
 					+ "      account.\"AccountHost\" bs5,\n"
-					+ "      postgresql.\"Host\" ps5\n"
+					+ "      postgresql.\"Server\" ps5\n"
 					+ "    where\n"
 					+ "      un5.username=?\n"
 					+ "      and un5.package=pk5.name\n"
@@ -6262,7 +6262,7 @@ final public class TableHandler {
 						+ "  nd.monitoring_enabled\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
-						+ "  left join linux.\"Host\" ff on ms.server=ff.failover_server,\n"
+						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "  net.\"Device\" nd\n"
 						+ "where\n"
 						+ "  ms.username=?\n"
@@ -6275,7 +6275,7 @@ final public class TableHandler {
 						+ "      from\n"
 						+ "        backup.\"FileReplication\" ffr\n"
 						+ "        inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
-						+ "        inner join linux.\"Host\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
+						+ "        inner join linux.\"Server\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
 						+ "      where\n"
 						+ "        ms.server=ffr.server\n"
 						+ "        and bp.ao_server=nd.server\n"
@@ -6314,7 +6314,7 @@ final public class TableHandler {
 					// Allow failover destinations
 					//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
 					//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
-					//+ "  left join linux.\"Host\" bpao on bp.ao_server=bpao.server,\n"
+					//+ "  left join linux.\"Server\" bpao on bp.ao_server=bpao.server,\n"
 					+ "  net.\"Device\" nd\n"
 					+ "where\n"
 					+ "  un.username=?\n"
@@ -6783,19 +6783,19 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new Database(),
+						new com.aoindustries.aoserv.client.postgresql.Database(),
 						"select * from postgresql.\"Database\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new Database(),
+						new com.aoindustries.aoserv.client.postgresql.Database(),
 						"SELECT\n"
 						+ "  pd.*\n"
 						+ "FROM\n"
 						+ "             master.\"UserHost\"     ms\n"
-						+ "  INNER JOIN postgresql.\"Host\"   ps ON ms.server = ps.ao_server\n"
+						+ "  INNER JOIN postgresql.\"Server\"   ps ON ms.server = ps.ao_server\n"
 						+ "  INNER JOIN postgresql.\"Database\" pd ON ps.bind   = pd.postgres_server\n"
 						+ "WHERE\n"
 						+ "  ms.username = ?",
@@ -6806,7 +6806,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new Database(),
+					new com.aoindustries.aoserv.client.postgresql.Database(),
 					"select\n"
 					+ "  pd.*\n"
 					+ "from\n"
@@ -6848,19 +6848,19 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new UserServer(),
+						new com.aoindustries.aoserv.client.postgresql.UserServer(),
 						"select * from postgresql.\"UserServer\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new UserServer(),
+						new com.aoindustries.aoserv.client.postgresql.UserServer(),
 						"SELECT\n"
 						+ "  psu.*\n"
 						+ "FROM\n"
 						+ "             master.\"UserHost\"       ms\n"
-						+ "  INNER JOIN postgresql.\"Host\"     ps  ON ms.server =  ps.ao_server\n"
+						+ "  INNER JOIN postgresql.\"Server\"     ps  ON ms.server =  ps.ao_server\n"
 						+ "  INNER JOIN postgresql.\"UserServer\" psu ON ps.bind   = psu.postgres_server\n"
 						+ "where\n"
 						+ "  ms.username = ?",
@@ -6871,7 +6871,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new UserServer(),
+					new com.aoindustries.aoserv.client.postgresql.UserServer(),
 					"select\n"
 					+ "  psu.id,\n"
 					+ "  psu.username,\n"
@@ -6909,7 +6909,7 @@ final public class TableHandler {
 						"SELECT\n"
 						+ "  *\n"
 						+ "FROM\n"
-						+ "  postgresql.\"Host\""
+						+ "  postgresql.\"Server\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
@@ -6920,7 +6920,7 @@ final public class TableHandler {
 						+ "  ps.*\n"
 						+ "FROM\n"
 						+ "             master.\"UserHost\"   ms\n"
-						+ "  INNER JOIN postgresql.\"Host\" ps ON ms.server = ps.ao_server\n"
+						+ "  INNER JOIN postgresql.\"Server\" ps ON ms.server = ps.ao_server\n"
 						+ "WHERE\n"
 						+ "  ms.username=?",
 						username
@@ -6937,7 +6937,7 @@ final public class TableHandler {
 					+ "             account.\"Username\"    un\n"
 					+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
 					+ "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
-					+ "  INNER JOIN postgresql.\"Host\"   ps ON bs.server     = ps.ao_server\n"
+					+ "  INNER JOIN postgresql.\"Server\"   ps ON bs.server     = ps.ao_server\n"
 					+ "WHERE\n"
 					+ "  un.username = ?",
 					username
@@ -6951,14 +6951,14 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new User(),
+						new com.aoindustries.aoserv.client.postgresql.User(),
 						"select * from postgresql.\"User\""
 					); else MasterServer.writeObjects(
 						conn,
 						source,
 						out,
 						provideProgress,
-						new User(),
+						new com.aoindustries.aoserv.client.postgresql.User(),
 						"select distinct\n"
 						+ "  pu.*\n"
 						+ "from\n"
@@ -6980,7 +6980,7 @@ final public class TableHandler {
 					source,
 					out,
 					provideProgress,
-					new User(),
+					new com.aoindustries.aoserv.client.postgresql.User(),
 					"select\n"
 					+ "  pu.*\n"
 					+ "from\n"
@@ -7870,11 +7870,11 @@ final public class TableHandler {
 						+ "  se.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
-						+ "  left join linux.\"Host\" ao on ms.server=ao.server\n"
+						+ "  left join linux.\"Server\" ao on ms.server=ao.server\n"
 						// Allow its failover parent
-						+ "  left join linux.\"Host\" ff on ao.failover_server=ff.server\n"
+						+ "  left join linux.\"Server\" ff on ao.failover_server=ff.server\n"
 						// Allow its failover children
-						+ "  left join linux.\"Host\" fs on ao.server=fs.failover_server\n"
+						+ "  left join linux.\"Server\" fs on ao.server=fs.failover_server\n"
 						// Allow servers it replicates to
 						+ "  left join backup.\"FileReplication\" ffr on ms.server=ffr.server\n"
 						+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
@@ -8869,7 +8869,7 @@ final public class TableHandler {
 						+ "  un.*\n"
 						+ "from\n"
 						+ "  master.\"UserHost\" ms\n"
-						+ "  left join linux.\"Host\" ff on ms.server=ff.failover_server,\n"
+						+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 						+ "  account.\"AccountHost\" bs,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ "  account.\"Username\" un\n"
@@ -9465,7 +9465,7 @@ final public class TableHandler {
 			+ "  se.operating_system_version\n"
 			+ "from\n"
 			+ "  master.\"UserHost\" ms,\n"
-			+ "  linux.\"Host\" ao,\n"
+			+ "  linux.\"Server\" ao,\n"
 			+ "  net.\"Host\" se,\n"
 			+ "  distribution.\"OperatingSystemVersion\" osv\n"
 			+ "where\n"

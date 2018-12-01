@@ -256,7 +256,7 @@ final public class ServerHandler {
 				+ "      select\n"
 				+ "        failover_server\n"
 				+ "      from\n"
-				+ "        linux.\"Host\"\n"
+				+ "        linux.\"Server\"\n"
 				+ "      where\n"
 				+ "        server=?\n"
 				+ "    ), -1\n"
@@ -289,7 +289,7 @@ final public class ServerHandler {
 			if(hostname == null) {
 				hostname = database.executeObjectQuery(
 					ObjectFactories.domainNameFactory,
-					"select hostname from linux.\"Host\" where server=?",
+					"select hostname from linux.\"Server\" where server=?",
 					aoServer
 				);
 				hostnamesForAOServers.put(mapKey, hostname.intern());
@@ -311,7 +311,7 @@ final public class ServerHandler {
 			Integer I = serversForAOServers.get(aoServerHostname);
 			int server;
 			if(I == null) {
-				server = conn.executeIntQuery("select server from linux.\"Host\" where hostname=?", aoServerHostname);
+				server = conn.executeIntQuery("select server from linux.\"Server\" where hostname=?", aoServerHostname);
 				serversForAOServers.put(aoServerHostname, server);
 			} else {
 				server = I;
@@ -346,7 +346,7 @@ final public class ServerHandler {
 		synchronized(aoServers) {
 			if(aoServers.containsKey(I)) return aoServers.get(I);
 			boolean isAOServer=conn.executeBooleanQuery(
-				"select (select server from linux.\"Host\" where server=?) is not null",
+				"select (select server from linux.\"Server\" where server=?) is not null",
 				id
 			);
 			aoServers.put(I, isAOServer);

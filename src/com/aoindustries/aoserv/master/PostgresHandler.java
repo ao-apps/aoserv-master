@@ -108,7 +108,7 @@ final public class PostgresHandler {
 		// If requesting PostGIS, make sure the version of PostgreSQL supports it.
 		if(
 			enable_postgis
-			&& conn.executeBooleanQuery("select pv.postgis_version is null from postgresql.\"Host\" ps inner join postgresql.\"Version\" pv on ps.version = pv.version where ps.bind = ?", postgresServer)
+			&& conn.executeBooleanQuery("select pv.postgis_version is null from postgresql.\"Server\" ps inner join postgresql.\"Version\" pv on ps.version = pv.version where ps.bind = ?", postgresServer)
 		) throw new SQLException("This version of PostgreSQL doesn't support PostGIS");
 
 		// datdba must be on the same server and not be 'mail'
@@ -126,7 +126,7 @@ final public class PostgresHandler {
 				+ "  SELECT\n"
 				+ "    pe.id\n"
 				+ "  FROM\n"
-				+ "    postgresql.\"Host\" ps\n"
+				+ "    postgresql.\"Server\" ps\n"
 				+ "    INNER JOIN postgresql.\"Encoding\" pe ON ps.version = pe.postgres_version\n"
 				+ "  WHERE\n"
 				+ "    ps.bind = ?\n"
@@ -524,7 +524,7 @@ final public class PostgresHandler {
 		int aoServer
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "isPostgresServerNameAvailable", aoServer);
-		return conn.executeBooleanQuery("SELECT NOT EXISTS (SELECT * FROM postgresql.\"Host\" WHERE \"name\" = ? AND ao_server = ?)", name, aoServer);
+		return conn.executeBooleanQuery("SELECT NOT EXISTS (SELECT * FROM postgresql.\"Server\" WHERE \"name\" = ? AND ao_server = ?)", name, aoServer);
 	}
 
 	public static boolean isPostgresServerUserPasswordSet(
@@ -639,7 +639,7 @@ final public class PostgresHandler {
 		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
 		// Remove the postgres_server_user
-		IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgresql.\"UserServer\" psu, postgresql.\"Host\" ps where psu.username=? and psu.postgres_server = ps.bind", username);
+		IntList aoServers=conn.executeIntListQuery("select ps.ao_server from postgresql.\"UserServer\" psu, postgresql.\"Server\" ps where psu.username=? and psu.postgres_server = ps.bind", username);
 		if(aoServers.size()>0) {
 			conn.executeUpdate("delete from postgresql.\"UserServer\" where username=?", username);
 			invalidateList.addTable(
@@ -798,11 +798,11 @@ final public class PostgresHandler {
 	}
 
 	public static int getAOServerForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from postgresql.\"Host\" where bind = ?", postgresServer);
+		return conn.executeIntQuery("select ao_server from postgresql.\"Server\" where bind = ?", postgresServer);
 	}
 
 	public static int getPortForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select nb.port from postgresql.\"Host\" ps, net.\"Bind\" nb where ps.bind = ? and ps.bind = nb.id", postgresServer);
+		return conn.executeIntQuery("select nb.port from postgresql.\"Server\" ps, net.\"Bind\" nb where ps.bind = ? and ps.bind = nb.id", postgresServer);
 	}
 
 	public static String getMinorVersionForPostgresServer(DatabaseConnection conn, int postgresServer) throws IOException, SQLException {
@@ -810,7 +810,7 @@ final public class PostgresHandler {
 			"SELECT\n"
 			+ "  pv.minor_version\n"
 			+ "FROM\n"
-			+ "  postgresql.\"Host\" ps\n"
+			+ "  postgresql.\"Server\" ps\n"
 			+ "  INNER JOIN postgresql.\"Version\" pv ON ps.version = pv.version\n"
 			+ "WHERE\n"
 			+ "  ps.bind = ?",
@@ -835,7 +835,7 @@ final public class PostgresHandler {
 			+ "  ps.ao_server\n"
 			+ "FROM\n"
 			+ "  postgresql.\"Database\" pd\n"
-			+ "  INNER JOIN postgresql.\"Host\" ps ON pd.postgres_server = ps.bind\n"
+			+ "  INNER JOIN postgresql.\"Server\" ps ON pd.postgres_server = ps.bind\n"
 			+ "WHERE\n"
 			+ "  pd.id=?",
 			postgresDatabase
@@ -860,7 +860,7 @@ final public class PostgresHandler {
 			+ "  ps.ao_server\n"
 			+ "FROM\n"
 			+ "  postgresql.\"UserServer\" psu\n"
-			+ "  INNER JOIN postgresql.\"Host\" ps ON psu.postgres_server = ps.bind\n"
+			+ "  INNER JOIN postgresql.\"Server\" ps ON psu.postgres_server = ps.bind\n"
 			+ "WHERE\n"
 			+ "  psu.id=?",
 			postgres_server_user

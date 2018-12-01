@@ -2747,7 +2747,7 @@ final public class HttpdHandler {
 				+ "  (\n"
 				+ "    select hostname from web.\"VirtualHostName\" where id=?\n"
 				+ "  )=(\n"
-				+ "    select hs.\"name\"||'.'||ao.hostname from web.\"Site\" hs, linux.\"Host\" ao where hs.id=? and hs.ao_server=ao.server\n"
+				+ "    select hs.\"name\"||'.'||ao.hostname from web.\"Site\" hs, linux.\"Server\" ao where hs.id=? and hs.ao_server=ao.server\n"
 				+ "  )",
 				id,
 				hs
