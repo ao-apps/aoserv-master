@@ -9,13 +9,98 @@ import com.aoindustries.aoserv.client.AOServWritable;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.AccountHost;
 import com.aoindustries.aoserv.client.account.Administrator;
+import com.aoindustries.aoserv.client.account.Profile;
+import com.aoindustries.aoserv.client.account.UsState;
+import com.aoindustries.aoserv.client.account.Username;
+import com.aoindustries.aoserv.client.accounting.Bank;
+import com.aoindustries.aoserv.client.accounting.BankAccount;
 import com.aoindustries.aoserv.client.accounting.BankTransaction;
+import com.aoindustries.aoserv.client.accounting.BankTransactionType;
+import com.aoindustries.aoserv.client.accounting.ExpenseCategory;
+import com.aoindustries.aoserv.client.aosh.Command;
+import com.aoindustries.aoserv.client.backup.BackupPartition;
 import com.aoindustries.aoserv.client.backup.BackupReport;
+import com.aoindustries.aoserv.client.backup.BackupRetention;
+import com.aoindustries.aoserv.client.backup.FileReplication;
+import com.aoindustries.aoserv.client.backup.FileReplicationLog;
+import com.aoindustries.aoserv.client.backup.FileReplicationSchedule;
+import com.aoindustries.aoserv.client.backup.FileReplicationSetting;
+import com.aoindustries.aoserv.client.backup.MysqlReplication;
+import com.aoindustries.aoserv.client.billing.MonthlyCharge;
+import com.aoindustries.aoserv.client.billing.NoticeLog;
+import com.aoindustries.aoserv.client.billing.NoticeType;
+import com.aoindustries.aoserv.client.billing.Package;
+import com.aoindustries.aoserv.client.billing.PackageCategory;
+import com.aoindustries.aoserv.client.billing.PackageDefinition;
+import com.aoindustries.aoserv.client.billing.PackageDefinitionLimit;
+import com.aoindustries.aoserv.client.billing.Resource;
 import com.aoindustries.aoserv.client.billing.Transaction;
+import com.aoindustries.aoserv.client.billing.TransactionType;
+import com.aoindustries.aoserv.client.billing.WhoisHistory;
+import com.aoindustries.aoserv.client.distribution.Architecture;
+import com.aoindustries.aoserv.client.distribution.OperatingSystem;
+import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
+import com.aoindustries.aoserv.client.distribution.Software;
+import com.aoindustries.aoserv.client.distribution.SoftwareCategorization;
+import com.aoindustries.aoserv.client.distribution.SoftwareCategory;
+import com.aoindustries.aoserv.client.distribution.SoftwareVersion;
+import com.aoindustries.aoserv.client.distribution.management.DistroFile;
+import com.aoindustries.aoserv.client.distribution.management.DistroFileType;
+import com.aoindustries.aoserv.client.distribution.management.DistroReportType;
+import com.aoindustries.aoserv.client.dns.ForbiddenZone;
+import com.aoindustries.aoserv.client.dns.Record;
+import com.aoindustries.aoserv.client.dns.RecordType;
+import com.aoindustries.aoserv.client.dns.TopLevelDomain;
+import com.aoindustries.aoserv.client.dns.Zone;
+import com.aoindustries.aoserv.client.email.Address;
+import com.aoindustries.aoserv.client.email.AttachmentBlock;
+import com.aoindustries.aoserv.client.email.AttachmentType;
+import com.aoindustries.aoserv.client.email.BlackholeAddress;
+import com.aoindustries.aoserv.client.email.CyrusImapdBind;
+import com.aoindustries.aoserv.client.email.CyrusImapdServer;
+import com.aoindustries.aoserv.client.email.Domain;
+import com.aoindustries.aoserv.client.email.Forwarding;
+import com.aoindustries.aoserv.client.email.InboxAddress;
+import com.aoindustries.aoserv.client.email.ListAddress;
+import com.aoindustries.aoserv.client.email.MajordomoList;
+import com.aoindustries.aoserv.client.email.MajordomoServer;
+import com.aoindustries.aoserv.client.email.MajordomoVersion;
+import com.aoindustries.aoserv.client.email.Pipe;
+import com.aoindustries.aoserv.client.email.PipeAddress;
+import com.aoindustries.aoserv.client.email.SendmailBind;
+import com.aoindustries.aoserv.client.email.SendmailServer;
+import com.aoindustries.aoserv.client.email.SmtpRelay;
+import com.aoindustries.aoserv.client.email.SmtpRelayType;
+import com.aoindustries.aoserv.client.email.SmtpSmartHost;
+import com.aoindustries.aoserv.client.email.SmtpSmartHostDomain;
+import com.aoindustries.aoserv.client.email.SpamAssassinMode;
 import com.aoindustries.aoserv.client.email.SpamMessage;
+import com.aoindustries.aoserv.client.email.SystemAlias;
+import com.aoindustries.aoserv.client.ftp.GuestUser;
+import com.aoindustries.aoserv.client.ftp.PrivateServer;
+import com.aoindustries.aoserv.client.infrastructure.PhysicalServer;
+import com.aoindustries.aoserv.client.infrastructure.ProcessorType;
+import com.aoindustries.aoserv.client.infrastructure.Rack;
+import com.aoindustries.aoserv.client.infrastructure.ServerFarm;
+import com.aoindustries.aoserv.client.infrastructure.VirtualDisk;
+import com.aoindustries.aoserv.client.infrastructure.VirtualServer;
+import com.aoindustries.aoserv.client.linux.DaemonAcl;
+import com.aoindustries.aoserv.client.linux.Group;
+import com.aoindustries.aoserv.client.linux.GroupServer;
+import com.aoindustries.aoserv.client.linux.GroupType;
+import com.aoindustries.aoserv.client.linux.GroupUser;
+import com.aoindustries.aoserv.client.linux.Server;
+import com.aoindustries.aoserv.client.linux.Shell;
+import com.aoindustries.aoserv.client.linux.TimeZone;
+import com.aoindustries.aoserv.client.linux.UserServer;
+import com.aoindustries.aoserv.client.linux.UserType;
+import com.aoindustries.aoserv.client.master.AdministratorPermission;
 import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.master.User;
+import com.aoindustries.aoserv.client.master.UserAcl;
 import com.aoindustries.aoserv.client.master.UserHost;
+import com.aoindustries.aoserv.client.mysql.Database;
+import com.aoindustries.aoserv.client.mysql.DatabaseUser;
 import com.aoindustries.aoserv.client.net.AppProtocol;
 import com.aoindustries.aoserv.client.net.Bind;
 import com.aoindustries.aoserv.client.net.BindFirewallZone;
@@ -120,7 +205,7 @@ final public class TableHandler {
     public static void start() {
         synchronized(System.out) {
             if(!started) {
-                System.out.print("Starting " + TableHandler.class.getSimpleName());
+                System.out.print("Starting " + TableHandler.class.getName());
 				initGetTableHandlers(System.out);
 				started = true;
                 System.out.println(": Done");
@@ -513,7 +598,7 @@ final public class TableHandler {
 			tableCount += addGetTableHandler(iter.next());
 			handlerCount ++;
 		}
-		out.print(": " + GetTableHandler.class.getSimpleName() + " (" + handlerCount + " handlers for " + tableCount + " tables)");
+		out.print(": " + GetTableHandler.class.getSimpleName() + "(" + handlerCount + " handlers for " + tableCount + " tables)");
 	}
 
 	public interface GetTableHandlerByRole extends GetTableHandler {
@@ -634,6 +719,196 @@ final public class TableHandler {
 			handler.getTable(conn, source, out, provideProgress, tableID, masterUser, masterServers);
 		} else {
 			switch(tableID) {
+				case AO_SERVER_DAEMON_HOSTS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new DaemonAcl(),
+							"select * from linux.\"DaemonAcl\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new DaemonAcl(),
+							"select\n"
+							+ "  sdh.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  linux.\"DaemonAcl\" sdh\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=sdh.ao_server",
+							username
+						);
+					} else {
+						List<DaemonAcl> emptyList = Collections.emptyList();
+						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+					}
+					break;
+				case AO_SERVERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Server(),
+							"select\n"
+							+ "  server,\n"
+							+ "  hostname,\n"
+							+ "  daemon_bind,\n"
+							+ "  daemon_key,\n"
+							+ "  pool_size,\n"
+							+ "  distro_hour,\n"
+							+ "  last_distro_time,\n"
+							+ "  failover_server,\n"
+							+ "  \"daemonDeviceId\",\n"
+							+ "  daemon_connect_bind,\n"
+							+ "  time_zone,\n"
+							+ "  jilter_bind,\n"
+							+ "  restrict_outbound_email,\n"
+							+ "  daemon_connect_address,\n"
+							+ "  failover_batch_size,\n"
+							+ "  monitoring_load_low,\n"
+							+ "  monitoring_load_medium,\n"
+							+ "  monitoring_load_high,\n"
+							+ "  monitoring_load_critical,\n"
+							+ "  \"uidMin\",\n"
+							+ "  \"gidMin\",\n"
+							+ "  \"uidMax\",\n"
+							+ "  \"gidMax\",\n"
+							+ "  \"lastUid\",\n"
+							+ "  \"lastGid\",\n"
+							+ "  sftp_umask\n"
+							+ "from\n"
+							+ "  linux.\"Server\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Server(),
+							"select distinct\n"
+							+ "  ao2.server,\n"
+							+ "  ao2.hostname,\n"
+							+ "  ao2.daemon_bind,\n"
+							+ "  ao2.daemon_key,\n"
+							+ "  ao2.pool_size,\n"
+							+ "  ao2.distro_hour,\n"
+							+ "  ao2.last_distro_time,\n"
+							+ "  ao2.failover_server,\n"
+							+ "  ao2.\"daemonDeviceId\",\n"
+							+ "  ao2.daemon_connect_bind,\n"
+							+ "  ao2.time_zone,\n"
+							+ "  ao2.jilter_bind,\n"
+							+ "  ao2.restrict_outbound_email,\n"
+							+ "  ao2.daemon_connect_address,\n"
+							+ "  ao2.failover_batch_size,\n"
+							+ "  ao2.monitoring_load_low,\n"
+							+ "  ao2.monitoring_load_medium,\n"
+							+ "  ao2.monitoring_load_high,\n"
+							+ "  ao2.monitoring_load_critical,\n"
+							+ "  ao2.\"uidMin\",\n"
+							+ "  ao2.\"gidMin\",\n"
+							+ "  ao2.\"uidMax\",\n"
+							+ "  ao2.\"gidMax\",\n"
+							+ "  ao2.\"lastUid\",\n"
+							+ "  ao2.\"lastGid\",\n"
+							+ "  ao2.sftp_umask\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms\n"
+							+ "  inner join linux.\"Server\" ao on ms.server=ao.server\n"
+							// Allow its failover parent
+							+ "  left join linux.\"Server\" ff on ao.failover_server=ff.server\n"
+							// Allow its failover children
+							+ "  left join linux.\"Server\" fs on ao.server=fs.failover_server\n"
+							// Allow servers it replicates to
+							+ "  left join backup.\"FileReplication\" ffr on ms.server=ffr.server\n"
+							+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
+							+ "  linux.\"Server\" ao2\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and (\n"
+							// Allow direct access
+							+ "    ms.server=ao2.server\n"
+							// Allow its failover parent
+							+ "    or ff.server=ao2.server\n"
+							// Allow its failover children
+							+ "    or fs.server=ao2.server\n"
+							// Allow servers it replicates to
+							+ "    or bp.ao_server=ao2.server\n"
+							+ "  )",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Server(),
+						"select distinct\n"
+						+ "  ao.server,\n"
+						+ "  ao.hostname,\n"
+						+ "  ao.daemon_bind,\n"
+						+ "  '"+AoservProtocol.FILTERED+"'::text,\n"
+						+ "  ao.pool_size,\n"
+						+ "  ao.distro_hour,\n"
+						+ "  ao.last_distro_time,\n"
+						+ "  ao.failover_server,\n"
+						+ "  ao.\"daemonDeviceId\",\n"
+						+ "  ao.daemon_connect_bind,\n"
+						+ "  ao.time_zone,\n"
+						+ "  ao.jilter_bind,\n"
+						+ "  ao.restrict_outbound_email,\n"
+						+ "  ao.daemon_connect_address,\n"
+						+ "  ao.failover_batch_size,\n"
+						+ "  ao.monitoring_load_low,\n"
+						+ "  ao.monitoring_load_medium,\n"
+						+ "  ao.monitoring_load_high,\n"
+						+ "  ao.monitoring_load_critical,\n"
+						+ "  ao.\"uidMin\",\n"
+						+ "  ao.\"gidMin\",\n"
+						+ "  ao.\"uidMax\",\n"
+						+ "  ao.\"gidMax\",\n"
+						+ "  ao.\"lastUid\",\n"
+						+ "  ao.\"lastGid\",\n"
+						+ "  ao.sftp_umask\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						// Allow servers it replicates to
+						//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
+						//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
+						+ "  linux.\"Server\" ao\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and pk.accounting=bs.accounting\n"
+						+ "  and (\n"
+						+ "    bs.server=ao.server\n"
+						// Allow servers it replicates to
+						//+ "    or bp.ao_server=ao.server\n"
+						+ "  )",
+						username
+					);
+					break;
+				case AOSERV_PERMISSIONS :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Permission(),
+						"select * from master.\"Permission\""
+					);
+					break;
 				case AOSERV_PROTOCOLS :
 					MasterServer.writeObjects(
 						conn,
@@ -642,6 +917,311 @@ final public class TableHandler {
 						provideProgress,
 						new AoservProtocol(),
 						"select * from \"schema\".\"AoservProtocol\""
+					);
+					break;
+				case AOSH_COMMANDS :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Command(),
+						"select\n"
+						+ "  ac.command,\n"
+						+ "  ac.\"sinceVersion\",\n"
+						+ "  ac.\"lastVersion\",\n"
+						+ "  st.\"name\" as \"table\",\n"
+						+ "  ac.description,\n"
+						+ "  ac.syntax\n"
+						+ "from\n"
+						+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
+						+ "                   aosh.\"Command\"              ac\n"
+						+ "  inner join \"schema\".\"AoservProtocol\" since_ap on ac.\"sinceVersion\" = since_ap.version\n"
+						+ "  left  join \"schema\".\"AoservProtocol\"  last_ap on ac.\"lastVersion\"  =  last_ap.version\n"
+						+ "  left  join \"schema\".\"Table\"                st on ac.\"table\"        =        st.id\n"
+						+ "where\n"
+						+ "  client_ap.version=?\n"
+						+ "  and client_ap.created >= since_ap.created\n"
+						+ "  and (\n"
+						+ "    last_ap.created is null\n"
+						+ "    or client_ap.created <= last_ap.created\n"
+						+ "  )",
+						source.getProtocolVersion().getVersion()
+					);
+					break;
+				case ARCHITECTURES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Architecture(),
+						"select * from distribution.\"Architecture\""
+					);
+					break;
+				case BACKUP_PARTITIONS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new BackupPartition(),
+							"select * from backup.\"BackupPartition\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new BackupPartition(),
+							"select\n"
+							+ "  bp.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  backup.\"BackupPartition\" bp\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and (\n"
+							+ "    ms.server=bp.ao_server\n"
+							+ "    or (\n"
+							+ "      select\n"
+							+ "        ffr.id\n"
+							+ "      from\n"
+							+ "        backup.\"FileReplication\" ffr\n"
+							+ "        inner join backup.\"BackupPartition\" bp2 on ffr.backup_partition=bp2.id\n"
+							+ "      where\n"
+							+ "        ms.server=ffr.server\n"
+							+ "        and bp.ao_server=bp2.ao_server\n"
+							+ "      limit 1\n"
+							+ "    ) is not null\n"
+							+ "  )",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new BackupPartition(),
+						"select distinct\n"
+						+ "  bp.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						+ "  backup.\"BackupPartition\" bp\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and pk.accounting=bs.accounting\n"
+						+ "  and (\n"
+						+ "    bs.server=bp.ao_server\n"
+						//+ "    or (\n"
+						//+ "      select\n"
+						//+ "        ffr.id\n"
+						//+ "      from\n"
+						//+ "        backup.\"FileReplication\" ffr\n"
+						//+ "        inner join backup.\"BackupPartition\" bp2 on ffr.backup_partition=bp2.id\n"
+						//+ "      where\n"
+						//+ "        bs.server=ffr.server\n"
+						//+ "        and bp.ao_server=bp2.ao_server\n"
+						//+ "      limit 1\n"
+						//+ "    ) is not null\n"
+						+ "  )",
+						username
+					);
+					break;
+				case BACKUP_REPORTS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new BackupReport(),
+							"select * from backup.\"BackupReport\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new BackupReport(),
+							"select\n"
+							+ "  br.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  backup.\"BackupReport\" br\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=br.server",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new BackupReport(),
+						"select\n"
+						+ "  br.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  backup.\"BackupReport\" br\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.id=br.package",
+						username
+					);
+					break;
+				case BACKUP_RETENTIONS :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new BackupRetention(),
+						"select * from backup.\"BackupRetention\""
+					);
+					break;
+				case BANK_ACCOUNTS :
+					if(BankAccountHandler.isBankAccounting(conn, source)) {
+						MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new BankAccount(),
+							"select * from accounting.\"BankAccount\""
+						);
+					} else {
+						List<BankAccount> emptyList = Collections.emptyList();
+						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+					}
+					break;
+				case BANK_TRANSACTIONS :
+					if(BankAccountHandler.isBankAccounting(conn, source)) {
+						MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new BankTransaction(),
+							"select\n"
+							+ "  id,\n"
+							+ "  time,\n" // Was not cast to date here while was in single object query - why?
+							+ "  account,\n"
+							+ "  processor,\n"
+							+ "  administrator,\n"
+							+ "  type,\n"
+							+ "  \"expenseCategory\",\n"
+							+ "  description,\n"
+							+ "  \"checkNo\",\n"
+							+ "  amount,\n"
+							+ "  confirmed\n"
+							+ "from accounting.\"BankTransaction\""
+						);
+					} else {
+						List<BankTransaction> emptyList = Collections.emptyList();
+						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+					}
+					break;
+				case BANK_TRANSACTION_TYPES :
+					if(BankAccountHandler.isBankAccounting(conn, source)) {
+						MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new BankTransactionType(),
+							"select * from accounting.\"BankTransactionType\""
+						);
+					} else {
+						List<BankTransactionType> emptyList = Collections.emptyList();
+						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+					}
+					break;
+				case BANKS :
+					if(BankAccountHandler.isBankAccounting(conn, source)) {
+						MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Bank(),
+							"select * from accounting.\"Bank\""
+						);
+					} else {
+						List<Bank> emptyList = Collections.emptyList();
+						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+					}
+					break;
+				case BLACKHOLE_EMAIL_ADDRESSES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new BlackholeAddress(),
+							"select * from email.\"BlackholeAddress\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new BlackholeAddress(),
+							"select\n"
+							+ "  bh.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"Domain\" ed,\n"
+							+ "  email.\"Address\" ea,\n"
+							+ "  email.\"BlackholeAddress\" bh\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ed.ao_server\n"
+							+ "  and ed.id=ea.domain\n"
+							+ "  and ea.id=bh.email_address",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new BlackholeAddress(),
+						"select\n"
+						+ "  bh.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  email.\"Domain\" ed,\n"
+						+ "  email.\"Address\" ea,\n"
+						+ "  email.\"BlackholeAddress\" bh\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=ed.package\n"
+						+ "  and ed.id=ea.domain\n"
+						+ "  and ea.id=bh.email_address",
+						username
 					);
 					break;
 				case BRANDS :
@@ -739,6 +1319,66 @@ final public class TableHandler {
 						);
 					}
 					break;
+				case BUSINESS_ADMINISTRATOR_PERMISSIONS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new AdministratorPermission(),
+							"select * from master.\"AdministratorPermission\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new AdministratorPermission(),
+							"select distinct\n"
+							+ "  bp.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  account.\"AccountHost\" bs,\n"
+							+ "  billing.\"Package\" pk,\n"
+							+ "  account.\"Username\" un,\n"
+							+ "  master.\"AdministratorPermission\" bp\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=bs.server\n"
+							+ "  and bs.accounting=pk.accounting\n"
+							+ "  and pk.name=un.package\n"
+							+ "  and un.username=bp.username",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new AdministratorPermission(),
+						"select\n"
+						+ "  bp.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  account.\"Username\" un2,\n"
+						+ "  master.\"AdministratorPermission\" bp\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ "    un2.username=un1.username\n"
+						+ PK1_BU1_PARENTS_OR_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=un2.package\n"
+						+ "  and un2.username=bp.username",
+						username
+					);
+					break;
 				case CREDIT_CARD_PROCESSORS :
 					if(BusinessHandler.hasPermission(conn, source, Permission.Name.get_credit_card_processors)) {
 						if(masterUser != null) {
@@ -751,7 +1391,8 @@ final public class TableHandler {
 								new Processor(),
 								"select * from payment.\"Processor\""
 							); else {
-								MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+								List<Processor> emptyList = Collections.emptyList();
+								MasterServer.writeObjects(source, out, provideProgress, emptyList);
 							}
 						} else MasterServer.writeObjects(
 							conn,
@@ -777,7 +1418,8 @@ final public class TableHandler {
 						);
 					} else {
 						// No permission, return empty list
-						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+						List<Processor> emptyList = Collections.emptyList();
+						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 					break;
 				case CREDIT_CARDS :
@@ -792,7 +1434,8 @@ final public class TableHandler {
 								new CreditCard(),
 								"select * from payment.\"CreditCard\""
 							); else {
-								MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+								List<CreditCard> emptyList = Collections.emptyList();
+								MasterServer.writeObjects(source, out, provideProgress, emptyList);
 							}
 						} else MasterServer.writeObjects(
 							conn,
@@ -818,7 +1461,8 @@ final public class TableHandler {
 						);
 					} else {
 						// No permission, return empty list
-						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+						List<CreditCard> emptyList = Collections.emptyList();
+						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 					break;
 				case CREDIT_CARD_TRANSACTIONS :
@@ -833,7 +1477,8 @@ final public class TableHandler {
 								new Payment(),
 								"select * from payment.\"Payment\""
 							); else {
-								MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+								List<Payment> emptyList = Collections.emptyList();
+								MasterServer.writeObjects(source, out, provideProgress, emptyList);
 							}
 						} else MasterServer.writeObjects(
 							conn,
@@ -859,7 +1504,8 @@ final public class TableHandler {
 						);
 					} else {
 						// No permission, return empty list
-						MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+						List<Payment> emptyList = Collections.emptyList();
+						MasterServer.writeObjects(source, out, provideProgress, emptyList);
 					}
 					break;
 				case COUNTRY_CODES :
@@ -929,6 +1575,695 @@ final public class TableHandler {
 						username
 					);
 					break;
+				case CYRUS_IMAPD_BINDS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new CyrusImapdBind(),
+							"select * from email.\"CyrusImapdBind\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new CyrusImapdBind(),
+							"select\n"
+							+ "  cib.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms\n"
+							+ "  inner join net.\"Bind\" nb on ms.server=nb.server\n"
+							+ "  inner join email.\"CyrusImapdBind\" cib on nb.id=cib.net_bind\n"
+							+ "where\n"
+							+ "  ms.username=?",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new CyrusImapdBind(),
+						"select\n"
+						+ "  cib.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  net.\"Bind\" nb,\n"
+						+ "  email.\"CyrusImapdBind\" cib\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=nb.package\n"
+						+ "  and nb.id=cib.net_bind",
+						username
+					);
+					break;
+				case CYRUS_IMAPD_SERVERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new CyrusImapdServer(),
+							"select * from email.\"CyrusImapdServer\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new CyrusImapdServer(),
+							"select\n"
+							+ "  cis.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms\n"
+							+ "  inner join email.\"CyrusImapdServer\" cis on ms.server=cis.ao_server\n"
+							+ "where\n"
+							+ "  ms.username=?",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new CyrusImapdServer(),
+						"select\n"
+						+ "  cis.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un\n"
+						+ "  inner join billing.\"Package\"        pk  on un.package    = pk.name\n"
+						+ "  inner join account.\"AccountHost\"    bs  on pk.accounting = bs.accounting\n"
+						+ "  inner join email.\"CyrusImapdServer\" cis on bs.server     = cis.ao_server\n"
+						+ "where\n"
+						+ "  un.username=?",
+						username
+					);
+					break;
+				case DISTRO_FILE_TYPES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new DistroFileType(),
+						"select * from \"distribution.management\".\"DistroFileType\""
+					);
+					break;
+				case DISTRO_FILES :
+					if(masterUser!=null && masterUser.isActive()) {
+						assert masterServers != null;
+						if(masterServers.length == 0) {
+							if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, Table.TableID.DISTRO_FILES));
+							if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107)<=0) {
+								List<DistroFile> emptyList = Collections.emptyList();
+								MasterServer.writeObjects(source, out, false, emptyList);
+							} else {
+								MasterServer.fetchObjects(
+									conn,
+									source,
+									out,
+									new DistroFile(),
+									"select * from \"distribution.management\".\"DistroFile\""
+								);
+							}
+						} else {
+							// Restrict to the operating system versions accessible to this user
+							IntList osVersions=getOperatingSystemVersions(conn, source);
+							if(osVersions.size()==0) {
+								List<DistroFile> emptyList = Collections.emptyList();
+								MasterServer.writeObjects(source, out, provideProgress, emptyList);
+							} else {
+								if(provideProgress) throw new SQLException("Unable to provide progress when fetching rows for "+getTableName(conn, Table.TableID.DISTRO_FILES));
+								StringBuilder sql=new StringBuilder();
+								sql.append("select * from \"distribution.management\".\"DistroFile\" where operating_system_version in (");
+								for(int c=0;c<osVersions.size();c++) {
+									if(c>0) sql.append(',');
+									sql.append(osVersions.getInt(c));
+								}
+								sql.append(')');
+								MasterServer.fetchObjects(
+									conn,
+									source,
+									out,
+									new DistroFile(),
+									sql.toString()
+								);
+							}
+						}
+					} else {
+						List<DistroFile> emptyList = Collections.emptyList();
+						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+					}
+					break;
+				case DISTRO_REPORT_TYPES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new DistroReportType(),
+						"select * from \"distribution.management\".\"DistroReportType\""
+					);
+					break;
+				case DNS_FORBIDDEN_ZONES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new ForbiddenZone(),
+						"select * from dns.\"ForbiddenZone\""
+					);
+					break;
+				case DNS_RECORDS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length==0 || masterUser.isDNSAdmin()) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Record(),
+							"select * from dns.\"Record\""
+						); else {
+							List<Record> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+						}
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Record(),
+						"select\n"
+						+ "  dr.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  dns.\"Zone\" dz,\n"
+						+ "  dns.\"Record\" dr\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=dz.package\n"
+						+ "  and dz.\"zone\"=dr.\"zone\"",
+						username
+					);
+					break;
+				case DNS_TLDS :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new TopLevelDomain(),
+						"select * from dns.\"TopLevelDomain\""
+					);
+					break;
+				case DNS_TYPES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new RecordType(),
+						"select * from dns.\"RecordType\""
+					);
+					break;
+				case DNS_ZONES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length==0 || masterUser.isDNSAdmin()) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Zone(),
+							"select * from dns.\"Zone\""
+						); else {
+							List<Zone> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+						}
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Zone(),
+						"select\n"
+						+ "  dz.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  dns.\"Zone\" dz\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=dz.package",
+						username
+					);
+					break;
+				case EMAIL_ADDRESSES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Address(),
+							"select * from email.\"Address\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Address(),
+							"select\n"
+							+ "  ea.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"Domain\" ed,\n"
+							+ "  email.\"Address\" ea\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ed.ao_server\n"
+							+ "  and ed.id=ea.domain",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Address(),
+						"select\n"
+						+ "  ea.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  email.\"Domain\" ed,\n"
+						+ "  email.\"Address\" ea\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=ed.package\n"
+						+ "  and ed.id=ea.domain",
+						username
+					);
+					break;
+				case EMAIL_ATTACHMENT_BLOCKS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new AttachmentBlock(),
+							"select * from email.\"AttachmentBlock\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new AttachmentBlock(),
+							"select\n"
+							+ "  eab.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  linux.\"UserServer\" lsa,\n"
+							+ "  email.\"AttachmentBlock\" eab\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=lsa.ao_server\n"
+							+ "  and lsa.id=eab.linux_server_account",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new AttachmentBlock(),
+						"select\n"
+						+ "  eab.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  account.\"Username\" un2,\n"
+						+ "  linux.\"UserServer\" lsa,\n"
+						+ "  email.\"AttachmentBlock\" eab\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=un2.package\n"
+						+ "  and un2.username=lsa.username\n"
+						+ "  and lsa.id=eab.linux_server_account",
+						username
+					);
+					break;
+				case EMAIL_ATTACHMENT_TYPES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new AttachmentType(),
+						"select * from email.\"AttachmentType\""
+					);
+					break;
+				case EMAIL_FORWARDING :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Forwarding(),
+							"select * from email.\"Forwarding\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Forwarding(),
+							"select\n"
+							+ "  ef.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"Domain\" ed,\n"
+							+ "  email.\"Address\" ea,\n"
+							+ "  email.\"Forwarding\" ef\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ed.ao_server\n"
+							+ "  and ed.id=ea.domain\n"
+							+ "  and ea.id=ef.email_address",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Forwarding(),
+						"select\n"
+						+ "  ef.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  email.\"Domain\" ed,\n"
+						+ "  email.\"Address\" ea,\n"
+						+ "  email.\"Forwarding\" ef\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=ed.package\n"
+						+ "  and ed.id=ea.domain\n"
+						+ "  and ea.id=ef.email_address",
+						username
+					);
+					break;
+				case EMAIL_LIST_ADDRESSES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new ListAddress(),
+							"select * from email.\"ListAddress\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new ListAddress(),
+							"select\n"
+							+ "  ela.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"Domain\" ed,\n"
+							+ "  email.\"Address\" ea,\n"
+							+ "  email.\"ListAddress\" ela\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ed.ao_server\n"
+							+ "  and ed.id=ea.domain\n"
+							+ "  and ea.id=ela.email_address",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new ListAddress(),
+						"select\n"
+						+ "  ela.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  email.\"Domain\" ed,\n"
+						+ "  email.\"Address\" ea,\n"
+						+ "  email.\"ListAddress\" ela\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=ed.package\n"
+						+ "  and ed.id=ea.domain\n"
+						+ "  and ea.id=ela.email_address",
+						username
+					);
+					break;
+				case EMAIL_LISTS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new com.aoindustries.aoserv.client.email.List(),
+							"select * from email.\"List\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new com.aoindustries.aoserv.client.email.List(),
+							"select\n"
+							+ "  el.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  linux.\"GroupServer\" lsg,\n"
+							+ "  email.\"List\" el\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=lsg.ao_server\n"
+							+ "  and lsg.id=el.linux_server_group",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new com.aoindustries.aoserv.client.email.List(),
+						"select\n"
+						+ "  el.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  linux.\"Group\" lg,\n"
+						+ "  linux.\"GroupServer\" lsg,\n"
+						+ "  email.\"List\" el\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=lg.package\n"
+						+ "  and lg.name=lsg.name\n"
+						+ "  and lsg.id=el.linux_server_group",
+						username
+					);
+					break;
+				case EMAIL_PIPE_ADDRESSES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PipeAddress(),
+							"select * from email.\"PipeAddress\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PipeAddress(),
+							"select\n"
+							+ "  epa.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"Domain\" ed,\n"
+							+ "  email.\"Address\" ea,\n"
+							+ "  email.\"PipeAddress\" epa\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ed.ao_server\n"
+							+ "  and ed.id=ea.domain\n"
+							+ "  and ea.id=epa.email_address",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new PipeAddress(),
+						"select\n"
+						+ "  epa.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  email.\"Domain\" ed,\n"
+						+ "  email.\"Address\" ea,\n"
+						+ "  email.\"PipeAddress\" epa\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=ed.package\n"
+						+ "  and ed.id=ea.domain\n"
+						+ "  and ea.id=epa.email_address",
+						username
+					);
+					break;
+				case EMAIL_PIPES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Pipe(),
+							"select * from email.\"Pipe\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Pipe(),
+							"select\n"
+							+ "  ep.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"Pipe\" ep\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ep.ao_server",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Pipe(),
+						"select\n"
+						+ "  ep.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  email.\"Pipe\" ep\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=ep.package",
+						username
+					);
+					break;
+				case EMAIL_SPAMASSASSIN_INTEGRATION_MODES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SpamAssassinMode(),
+						"select * from email.\"SpamAssassinMode\""
+					);
+					break;
 				case ENCRYPTION_KEYS :
 					if(masterUser != null) {
 						assert masterServers != null;
@@ -942,7 +2277,8 @@ final public class TableHandler {
 								"select * from pki.\"EncryptionKey\""
 							);
 						} else {
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<EncryptionKey> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else {
 						MasterServer.writeObjects(
@@ -968,6 +2304,324 @@ final public class TableHandler {
 							username
 						);
 					}
+					break;
+				case EXPENSE_CATEGORIES :
+					if(BankAccountHandler.isBankAccounting(conn, source)) {
+						MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new ExpenseCategory(),
+							"select * from accounting.\"ExpenseCategory\""
+						);
+					} else {
+						List<ExpenseCategory> emptyList = Collections.emptyList();
+						MasterServer.writeObjects(source, out, provideProgress, emptyList);
+					}
+					break;
+				case FAILOVER_FILE_LOG :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new FileReplicationLog(),
+							"select * from backup.\"FileReplicationLog\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new FileReplicationLog(),
+							"select\n"
+							+ "  ffl.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  backup.\"FileReplication\" ffr,\n"
+							+ "  backup.\"FileReplicationLog\" ffl\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ffr.server\n"
+							+ "  and ffr.id=ffl.replication",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new FileReplicationLog(),
+						"select\n"
+						+ "  ffl.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						+ "  backup.\"FileReplication\" ffr,\n"
+						+ "  backup.\"FileReplicationLog\" ffl\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and pk.accounting=bs.accounting\n"
+						+ "  and bs.server=ffr.server\n"
+						+ "  and ffr.id=ffl.replication",
+						username
+					);
+					break;
+				case FAILOVER_FILE_REPLICATIONS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new FileReplication(),
+							"select\n"
+							+ "  id,\n"
+							+ "  server,\n"
+							+ "  backup_partition,\n"
+							+ "  max_bit_rate,\n"
+							+ "  use_compression,\n"
+							+ "  retention,\n"
+							+ "  connect_address,\n"
+							+ "  host(connect_from) as connect_from,\n"
+							+ "  enabled,\n"
+							+ "  quota_gid\n"
+							+ "from\n"
+							+ "  backup.\"FileReplication\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new FileReplication(),
+							"select\n"
+							+ "  ffr.id,\n"
+							+ "  ffr.server,\n"
+							+ "  ffr.backup_partition,\n"
+							+ "  ffr.max_bit_rate,\n"
+							+ "  ffr.use_compression,\n"
+							+ "  ffr.retention,\n"
+							+ "  ffr.connect_address,\n"
+							+ "  host(ffr.connect_from) as connect_from,\n"
+							+ "  ffr.enabled,\n"
+							+ "  ffr.quota_gid\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  backup.\"FileReplication\" ffr\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ffr.server",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new FileReplication(),
+						"select\n"
+						+ "  ffr.id,\n"
+						+ "  ffr.server,\n"
+						+ "  ffr.backup_partition,\n"
+						+ "  ffr.max_bit_rate,\n"
+						+ "  ffr.use_compression,\n"
+						+ "  ffr.retention,\n"
+						+ "  ffr.connect_address,\n"
+						+ "  host(ffr.connect_from) as connect_from,\n"
+						+ "  ffr.enabled,\n"
+						+ "  ffr.quota_gid\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						+ "  backup.\"FileReplication\" ffr\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and pk.accounting=bs.accounting\n"
+						+ "  and bs.server=ffr.server",
+						username
+					);
+					break;
+				case FAILOVER_FILE_SCHEDULE :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new FileReplicationSchedule(),
+							"select * from backup.\"FileReplicationSchedule\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new FileReplicationSchedule(),
+							"select\n"
+							+ "  ffs.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  backup.\"FileReplication\" ffr,\n"
+							+ "  backup.\"FileReplicationSchedule\" ffs\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ffr.server\n"
+							+ "  and ffr.id=ffs.replication",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new FileReplicationSchedule(),
+						"select\n"
+						+ "  ffs.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						+ "  backup.\"FileReplication\" ffr,\n"
+						+ "  backup.\"FileReplicationSchedule\" ffs\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and pk.accounting=bs.accounting\n"
+						+ "  and bs.server=ffr.server\n"
+						+ "  and ffr.id=ffs.replication",
+						username
+					);
+					break;
+				case FAILOVER_MYSQL_REPLICATIONS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new MysqlReplication(),
+							"select * from backup.\"MysqlReplication\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new MysqlReplication(),
+							"select\n"
+							+ "  fmr.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  backup.\"FileReplication\" ffr,\n"
+							+ "  backup.\"MysqlReplication\" fmr\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and (\n"
+							+ "    (\n"
+							// ao_server-based
+							+ "      ms.server=fmr.ao_server\n"
+							+ "    ) or (\n"
+							// replication-based
+							+ "      ms.server=ffr.server\n"
+							+ "      and ffr.id=fmr.replication\n"
+							+ "    )\n"
+							+ "  )",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new MysqlReplication(),
+						"select distinct\n"
+						+ "  fmr.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						+ "  backup.\"FileReplication\" ffr,\n"
+						+ "  backup.\"MysqlReplication\" fmr\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and pk.accounting=bs.accounting\n"
+						+ "  and (\n"
+						+ "    (\n"
+						// ao_server-based
+						+ "      bs.server=fmr.ao_server\n"
+						+ "    ) or (\n"
+						// replication-based
+						+ "      bs.server=ffr.server\n"
+						+ "      and ffr.id=fmr.replication\n"
+						+ "    )\n"
+						+ "  )",
+						username
+					);
+					break;
+				case FILE_BACKUP_SETTINGS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new FileReplicationSetting(),
+							"select * from backup.\"FileReplicationSetting\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new FileReplicationSetting(),
+							"select\n"
+							+ "  fbs.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  backup.\"FileReplication\" ffr,\n"
+							+ "  backup.\"FileReplicationSetting\" fbs\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ffr.server\n"
+							+ "  and ffr.id=fbs.replication",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new FileReplicationSetting(),
+						"select\n"
+						+ "  fbs.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  net.\"Host\" se,\n"
+						+ "  backup.\"FileReplication\" ffr,\n"
+						+ "  backup.\"FileReplicationSetting\" fbs\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.id=se.package\n"
+						+ "  and se.id=ffr.server\n"
+						+ "  and ffr.id=fbs.replication",
+						username
+					);
 					break;
 				case FIREWALLD_ZONES :
 					if(masterUser != null) {
@@ -1013,6 +2667,65 @@ final public class TableHandler {
 						+ "  and un.package=pk.name\n"
 						+ "  and pk.accounting=bs.accounting\n"
 						+ "  and bs.server=fz.server",
+						username
+					);
+					break;
+				case FTP_GUEST_USERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new GuestUser(),
+							"select * from ftp.\"GuestUser\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new GuestUser(),
+							"select distinct\n"
+							+ "  fgu.username\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  account.\"AccountHost\" bs,\n"
+							+ "  billing.\"Package\" pk,\n"
+							+ "  account.\"Username\" un,\n"
+							+ "  ftp.\"GuestUser\" fgu\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=bs.server\n"
+							+ "  and bs.accounting=pk.accounting\n"
+							+ "  and pk.name=un.package\n"
+							+ "  and un.username=fgu.username",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new GuestUser(),
+						"select\n"
+						+ "  fgu.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  account.\"Username\" un2,\n"
+						+ "  ftp.\"GuestUser\" fgu\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=un2.package\n"
+						+ "  and un2.username=fgu.username",
 						username
 					);
 					break;
@@ -2569,7 +4282,8 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation limiters
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<LimiterClass> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else {
 						// Regular user may access the limiters for servers they have direct access to
@@ -2632,7 +4346,8 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation limiters
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<Set> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else {
 						// Regular user may access the limiters for servers they have direct access to
@@ -2694,7 +4409,8 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation limiters
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<Limiter> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else {
 						// Regular user may access the limiters for servers they have direct access to
@@ -2758,7 +4474,8 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation sets
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<Host> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else {
 						// Regular user may only access the hosts for their own or subaccount sets
@@ -2828,7 +4545,8 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation sets
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<Network> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else {
 						// Regular user may only access the networks for their own or subaccount sets
@@ -2897,7 +4615,8 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-router daemon may not access any reputation sets
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<Set> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else {
 						// Regular user may access their own or subaccount sets, as well as any parent account
@@ -2958,6 +4677,629 @@ final public class TableHandler {
 					);
 					break;
 				// </editor-fold>
+				case LINUX_ACC_ADDRESSES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new InboxAddress(),
+							"select * from email.\"InboxAddress\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new InboxAddress(),
+							"select\n"
+							+ "  laa.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"Domain\" ed,\n"
+							+ "  email.\"Address\" ea,\n"
+							+ "  email.\"InboxAddress\" laa\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ed.ao_server\n"
+							+ "  and ed.id=ea.domain\n"
+							+ "  and ea.id=laa.email_address",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new InboxAddress(),
+						"select\n"
+						+ "  laa.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  email.\"Domain\" ed,\n"
+						+ "  email.\"Address\" ea,\n"
+						+ "  email.\"InboxAddress\" laa\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=ed.package\n"
+						+ "  and ed.id=ea.domain\n"
+						+ "  and ea.id=laa.email_address",
+						username
+					);
+					break;
+				case LINUX_ACCOUNTS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new com.aoindustries.aoserv.client.linux.User(),
+							"select * from linux.\"User\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new com.aoindustries.aoserv.client.linux.User(),
+							"select distinct\n"
+							+ "  la.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  linux.\"Server\" ao\n"
+							+ "  left join linux.\"Server\" ff on ao.server=ff.failover_server,\n"
+							+ "  account.\"AccountHost\" bs,\n"
+							+ "  billing.\"Package\" pk,\n"
+							+ "  account.\"Username\" un,\n"
+							+ "  linux.\"User\" la\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ao.server\n"
+							+ "  and (\n"
+							+ "    ao.server=bs.server\n"
+							+ "    or ff.server=bs.server\n"
+							+ "  ) and bs.accounting=pk.accounting\n"
+							+ "  and pk.name=un.package\n"
+							+ "  and un.username=la.username",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new com.aoindustries.aoserv.client.linux.User(),
+						"select\n"
+						+ "  la.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  account.\"Username\" un2,\n"
+						+ "  linux.\"User\" la\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ "    un2.username='"+com.aoindustries.aoserv.client.linux.User.MAIL+"'\n"
+						+ PK1_BU1_PARENTS_OR_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=un2.package\n"
+						+ "  and un2.username=la.username",
+						username
+					);
+					break;
+				case LINUX_ACCOUNT_TYPES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new UserType(),
+						"select * from linux.\"UserType\""
+					);
+					break;
+				case LINUX_GROUP_ACCOUNTS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new GroupUser(),
+							"select * from linux.\"GroupUser\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new GroupUser(),
+							"select\n"
+							+ "  *\n"
+							+ "from\n"
+							+ "  linux.\"GroupUser\"\n"
+							+ "where\n"
+							+ "  \"group\" in (\n"
+							+ "    select\n"
+							+ "      lsg.name\n"
+							+ "      from\n"
+							+ "        master.\"UserHost\" ms1,\n"
+							+ "        linux.\"GroupServer\" lsg\n"
+							+ "      where\n"
+							+ "        ms1.username=?\n"
+							+ "        and ms1.server=lsg.ao_server\n"
+							+ "  )\n"
+							+ "  and \"user\" in (\n"
+							+ "    select\n"
+							+ "      lsa.username\n"
+							+ "      from\n"
+							+ "        master.\"UserHost\" ms2,\n"
+							+ "        linux.\"UserServer\" lsa\n"
+							+ "      where\n"
+							+ "        ms2.username=?\n"
+							+ "        and ms2.server=lsa.ao_server\n"
+							+ "  )",
+							username,
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new GroupUser(),
+						"select\n"
+						+ " *\n"
+						+ "from\n"
+						+ "  linux.\"GroupUser\"\n"
+						+ "where\n"
+						+ "  \"group\" in (\n"
+						+ "    select\n"
+						+ "      lg.name\n"
+						+ "    from\n"
+						+ "      account.\"Username\" un1,\n"
+						+ "      billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "      billing.\"Package\" pk2,\n"
+						+ "      linux.\"Group\" lg\n"
+						+ "    where\n"
+						+ "      un1.username=?\n"
+						+ "      and un1.package=pk1.name\n"
+						+ "      and (\n"
+						+ "        lg.name='"+Group.FTPONLY+"'\n"
+						+ "        or lg.name='"+Group.MAIL+"'\n"
+						+ "        or lg.name='"+Group.MAILONLY+"'\n"
+						+ PK1_BU1_PARENTS_OR_WHERE
+						+ "      )\n"
+						+ "      and bu1.accounting=pk2.accounting\n"
+						+ "      and pk2.name=lg.package\n"
+						+ "  )\n"
+						+ "  and \"user\" in (\n"
+						+ "    select\n"
+						+ "      la.username\n"
+						+ "    from\n"
+						+ "      account.\"Username\" un2,\n"
+						+ "      billing.\"Package\" pk3,\n"
+						+ BU2_PARENTS_JOIN
+						+ "      billing.\"Package\" pk4,\n"
+						+ "      account.\"Username\" un3,\n"
+						+ "      linux.\"User\" la\n"
+						+ "    where\n"
+						+ "      un2.username=?\n"
+						+ "      and un2.package=pk3.name\n"
+						+ "      and (\n"
+						+ "        un3.username='"+com.aoindustries.aoserv.client.linux.User.MAIL+"'\n"
+						+ PK3_BU2_PARENTS_OR_WHERE
+						+ "      )\n"
+						+ "      and bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+						+ "      and pk4.name=un3.package\n"
+						+ "      and un3.username=la.username\n"
+						+ "  )",
+						username,
+						username
+					);
+					break;
+				case LINUX_GROUPS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Group(),
+							"select * from linux.\"Group\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Group(),
+							"select distinct\n"
+							+ "  lg.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  linux.\"Server\" ao,\n"
+							+ "  account.\"AccountHost\" bs,\n"
+							+ "  billing.\"Package\" pk,\n"
+							+ "  linux.\"Group\" lg\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ao.server\n"
+							+ "  and ao.server=bs.server\n"
+							+ "  and bs.accounting=pk.accounting\n"
+							+ "  and pk.name=lg.package",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Group(),
+						"select\n"
+						+ "  lg.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  linux.\"Group\" lg\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ "    lg.name='"+Group.FTPONLY+"'\n"
+						+ "    or lg.name='"+Group.MAIL+"'\n"
+						+ "    or lg.name='"+Group.MAILONLY+"'\n"
+						+ PK1_BU1_PARENTS_OR_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=lg.package",
+						username
+					);
+					break;
+				case LINUX_GROUP_TYPES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new GroupType(),
+						"select * from linux.\"GroupType\""
+					);
+					break;
+				case LINUX_SERVER_ACCOUNTS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new UserServer(),
+							"select * from linux.\"UserServer\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new UserServer(),
+							"select distinct\n"
+							+ "  lsa.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms\n"
+							+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
+							+ "  linux.\"UserServer\" lsa\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and (\n"
+							+ "    ms.server=lsa.ao_server\n"
+							+ "    or ff.server=lsa.ao_server\n"
+							+ "  )",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new UserServer(),
+						"select\n"
+						+ "  lsa.id,\n"
+						+ "  lsa.username,\n"
+						+ "  lsa.ao_server,\n"
+						+ "  lsa.uid,\n"
+						+ "  lsa.home,\n"
+						+ "  lsa.autoresponder_from,\n"
+						+ "  lsa.autoresponder_subject,\n"
+						+ "  lsa.autoresponder_path,\n"
+						+ "  lsa.is_autoresponder_enabled,\n"
+						+ "  lsa.disable_log,\n"
+						+ "  case when lsa.predisable_password is null then null else '"+AoservProtocol.FILTERED+"' end,\n"
+						+ "  lsa.created,\n"
+						+ "  lsa.use_inbox,\n"
+						+ "  lsa.trash_email_retention,\n"
+						+ "  lsa.junk_email_retention,\n"
+						+ "  lsa.sa_integration_mode,\n"
+						+ "  lsa.sa_required_score,\n"
+						+ "  lsa.sa_discard_score,\n"
+						+ "  lsa.sudo\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  account.\"Username\" un2,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						+ "  linux.\"UserServer\" lsa\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ "    un2.username='"+com.aoindustries.aoserv.client.linux.User.MAIL+"'\n"
+						+ PK1_BU1_PARENTS_OR_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=un2.package\n"
+						+ "  and pk1.accounting=bs.accounting\n"
+						+ "  and un2.username=lsa.username\n"
+						+ "  and bs.server=lsa.ao_server",
+						username
+					);
+					break;
+				case LINUX_SERVER_GROUPS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new GroupServer(),
+							"select * from linux.\"GroupServer\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new GroupServer(),
+							"select\n"
+							+ "  lsg.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  linux.\"GroupServer\" lsg\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=lsg.ao_server",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new GroupServer(),
+						"select\n"
+						+ "  lsg.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  linux.\"Group\" lg,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						+ "  linux.\"GroupServer\" lsg\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ "    lg.name='"+Group.FTPONLY+"'\n"
+						+ "    or lg.name='"+Group.MAIL+"'\n"
+						+ "    or lg.name='"+Group.MAILONLY+"'\n"
+						+ PK1_BU1_PARENTS_OR_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=lg.package\n"
+						+ "  and pk1.accounting=bs.accounting\n"
+						+ "  and lg.name=lsg.name\n"
+						+ "  and bs.server=lsg.ao_server",
+						username
+					);
+					break;
+				case MAJORDOMO_LISTS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new MajordomoList(),
+							"select * from email.\"MajordomoList\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new MajordomoList(),
+							"select\n"
+							+ "  ml.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"Domain\" ed,\n"
+							+ "  email.\"MajordomoList\" ml\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ed.ao_server\n"
+							+ "  and ed.id=ml.majordomo_server",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new MajordomoList(),
+						"select\n"
+						+ "  ml.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  email.\"Domain\" ed,\n"
+						+ "  email.\"MajordomoList\" ml\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=ed.package\n"
+						+ "  and ed.id=ml.majordomo_server",
+						username
+					);
+					break;
+				case MAJORDOMO_SERVERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new MajordomoServer(),
+							"select * from email.\"MajordomoServer\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new MajordomoServer(),
+							"select\n"
+							+ "  mjs.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"Domain\" ed,\n"
+							+ "  email.\"MajordomoServer\" mjs\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ed.ao_server\n"
+							+ "  and ed.id=mjs.domain",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new MajordomoServer(),
+						"select\n"
+						+ "  ms.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  email.\"Domain\" ed,\n"
+						+ "  email.\"MajordomoServer\" ms\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=ed.package\n"
+						+ "  and ed.id=ms.domain",
+						username
+					);
+					break;
+				case MAJORDOMO_VERSIONS :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new MajordomoVersion(),
+						"select * from email.\"MajordomoVersion\""
+					);
+					break;
+				case MASTER_HOSTS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new UserAcl(),
+							"select * from master.\"UserAcl\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new UserAcl(),
+							"select distinct\n"
+							+ "  mh.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  account.\"AccountHost\" bs,\n"
+							+ "  billing.\"Package\" pk,\n"
+							+ "  account.\"Username\" un,\n"
+							+ "  master.\"UserAcl\" mh\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=bs.server\n"
+							+ "  and bs.accounting=pk.accounting\n"
+							+ "  and pk.name=un.package\n"
+							+ "  and un.username=mh.username",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new UserAcl(),
+						"select\n"
+						+ "  mh.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  account.\"Username\" un2,\n"
+						+ "  master.\"UserAcl\" mh\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ "    un2.username=un1.username\n"
+						+ PK1_BU1_PARENTS_OR_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=un2.package\n"
+						+ "  and un2.username=mh.username",
+						username
+					);
+					break;
 				case MASTER_PROCESSES :
 					MasterProcessManager.writeProcesses(
 						conn,
@@ -2973,6 +5315,453 @@ final public class TableHandler {
 						source,
 						out,
 						provideProgress
+					);
+					break;
+				case MASTER_SERVERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new UserHost(),
+							"select * from master.\"UserHost\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new UserHost(),
+							"select\n"
+							+ "  ms2.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms1,\n"
+							+ "  master.\"UserHost\" ms2\n"
+							+ "where\n"
+							+ "  ms1.username=?\n"
+							+ "  and ms1.server=ms2.server",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new UserHost(),
+						"select\n"
+						+ "  ms.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  account.\"Username\" un2,\n"
+						+ "  master.\"UserHost\" ms\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ "    un2.username=un1.username\n"
+						+ PK1_BU1_PARENTS_OR_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=un2.package\n"
+						+ "  and un2.username=ms.username",
+						username
+					);
+					break;
+				case MASTER_USERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new User(),
+							"select * from master.\"User\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new User(),
+							"select distinct\n"
+							+ "  mu.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  account.\"AccountHost\" bs,\n"
+							+ "  billing.\"Package\" pk,\n"
+							+ "  account.\"Username\" un,\n"
+							+ "  master.\"User\" mu\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=bs.server\n"
+							+ "  and bs.accounting=pk.accounting\n"
+							+ "  and pk.name=un.package\n"
+							+ "  and un.username=mu.username",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new User(),
+						"select\n"
+						+ "  mu.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  account.\"Username\" un2,\n"
+						+ "  master.\"User\" mu\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ "    un2.username=un1.username\n"
+						+ PK1_BU1_PARENTS_OR_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=un2.package\n"
+						+ "  and un2.username=mu.username",
+						username
+					);
+					break;
+				case MONTHLY_CHARGES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) {
+							MasterServer.writeObjects(
+								conn,
+								source,
+								out,
+								provideProgress,
+								new MonthlyCharge(),
+								"select * from billing.\"MonthlyCharge\""
+							);
+						} else {
+							List<MonthlyCharge> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+						}
+					} else {
+						if(BusinessHandler.canSeePrices(conn, source)) {
+							MasterServer.writeObjects(
+								conn,
+								source,
+								out,
+								provideProgress,
+								new MonthlyCharge(),
+								"select\n"
+								+ "  mc.*\n"
+								+ "from\n"
+								+ "  account.\"Username\" un,\n"
+								+ "  billing.\"Package\" pk1,\n"
+								+ TableHandler.BU1_PARENTS_JOIN
+								+ "  billing.\"Package\" pk2,\n"
+								+ "  billing.\"MonthlyCharge\" mc\n"
+								+ "where\n"
+								+ "  un.username=?\n"
+								+ "  and un.package=pk1.name\n"
+								+ "  and (\n"
+								+ TableHandler.PK1_BU1_PARENTS_WHERE
+								+ "  )\n"
+								+ "  and bu1.accounting=pk2.accounting\n"
+								+ "  and pk2.name=mc.package",
+								username
+							);
+						} else {
+							List<MonthlyCharge> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+						}
+					}
+					break;
+				case MYSQL_DATABASES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Database(),
+							"select * from mysql.\"Database\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Database(),
+							"select\n"
+							+ "  md.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  mysql.\"Server\" mys,\n"
+							+ "  mysql.\"Database\" md\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=mys.ao_server\n"
+							+ "  and mys.bind=md.mysql_server",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Database(),
+						"select\n"
+						+ "  md.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  mysql.\"Database\" md\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=md.package",
+						username
+					);
+					break;
+				case MYSQL_DB_USERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new DatabaseUser(),
+							"select * from mysql.\"DatabaseUser\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new DatabaseUser(),
+							"select\n"
+							+ "  mdu.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  mysql.\"Server\" mys,\n"
+							+ "  mysql.\"Database\" md,\n"
+							+ "  mysql.\"DatabaseUser\" mdu\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=mys.ao_server\n"
+							+ "  and mys.bind=md.mysql_server\n"
+							+ "  and md.id=mdu.mysql_database",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new DatabaseUser(),
+						"select\n"
+						+ "  mdu.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  mysql.\"Database\" md,\n"
+						+ "  mysql.\"DatabaseUser\" mdu\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=md.package\n"
+						+ "  and md.id=mdu.mysql_database",
+						username
+					);
+					break;
+				case MYSQL_SERVER_USERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new com.aoindustries.aoserv.client.mysql.UserServer(),
+							"select * from mysql.\"UserServer\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new com.aoindustries.aoserv.client.mysql.UserServer(),
+							"select\n"
+							+ "  msu.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  mysql.\"Server\" mys,\n"
+							+ "  mysql.\"UserServer\" msu\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=mys.ao_server\n"
+							+ "  and mys.bind=msu.mysql_server",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new com.aoindustries.aoserv.client.mysql.UserServer(),
+						 "select\n"
+						+ "  msu.id,\n"
+						+ "  msu.username,\n"
+						+ "  msu.mysql_server,\n"
+						+ "  msu.host,\n"
+						+ "  msu.disable_log,\n"
+						+ "  case when msu.predisable_password is null then null else '"+AoservProtocol.FILTERED+"' end,\n"
+						+ "  msu.max_questions,\n"
+						+ "  msu.max_updates\n,"
+						+ "  msu.max_connections,\n"
+						+ "  msu.max_user_connections\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  account.\"Username\" un2,\n"
+						+ "  mysql.\"UserServer\" msu\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=un2.package\n"
+						+ "  and un2.username=msu.username",
+						username
+					);
+					break;
+				case MYSQL_SERVERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new com.aoindustries.aoserv.client.mysql.Server(),
+							"SELECT\n"
+							+ "  ms.*,\n"
+							// Protocol conversion
+							+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
+							+ "FROM\n"
+							+ "  mysql.\"Server\" ms"
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new com.aoindustries.aoserv.client.mysql.Server(),
+							"SELECT\n"
+							+ "  ms.*,\n"
+							// Protocol conversion
+							+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
+							+ "from\n"
+							+ "             master.\"UserHost\" uh\n"
+							+ "  INNER JOIN mysql.\"Server\"    ms ON uh.server=ms.ao_server\n"
+							+ "where\n"
+							+ "  uh.username=?",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new com.aoindustries.aoserv.client.mysql.Server(),
+						"SELECT\n"
+						+ "  ms.*,\n"
+						// Protocol conversion
+						+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
+						+ "FROM\n"
+						+ "             account.\"Username\"    un\n"
+						+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
+						+ "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
+						+ "  INNER JOIN mysql.\"Server\"        ms ON bs.server     = ms.ao_server\n"
+						+ "WHERE\n"
+						+ "  un.username=?",
+						username
+					);
+					break;
+				case MYSQL_USERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new com.aoindustries.aoserv.client.mysql.User(),
+							"select * from mysql.\"User\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new com.aoindustries.aoserv.client.mysql.User(),
+							"select distinct\n"
+							+ "  mu.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  account.\"AccountHost\" bs,\n"
+							+ "  billing.\"Package\" pk,\n"
+							+ "  account.\"Username\" un,\n"
+							+ "  mysql.\"User\" mu\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=bs.server\n"
+							+ "  and bs.accounting=pk.accounting\n"
+							+ "  and pk.name=un.package\n"
+							+ "  and un.username=mu.username",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new com.aoindustries.aoserv.client.mysql.User(),
+						"select\n"
+						+ "  mu.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  account.\"Username\" un2,\n"
+						+ "  mysql.\"User\" mu\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=un2.package\n"
+						+ "  and un2.username=mu.username",
+						username
 					);
 					break;
 				case NET_BIND_FIREWALLD_ZONES :
@@ -3474,6 +6263,335 @@ final public class TableHandler {
 						username
 					);
 					break;
+				case NOTICE_LOG :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new NoticeLog(),
+							"select * from billing.\"NoticeLog\""
+						); else {
+							List<NoticeLog> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+						}
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new NoticeLog(),
+						"select\n"
+						+ "  nl.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"NoticeLog\" nl\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=nl.accounting",
+						username
+					);
+					break;
+				case NOTICE_TYPES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new NoticeType(),
+						"select * from billing.\"NoticeType\""
+					);
+					break;
+				case OPERATING_SYSTEM_VERSIONS :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new OperatingSystemVersion(),
+						"select * from distribution.\"OperatingSystemVersion\""
+					);
+					break;
+				case OPERATING_SYSTEMS :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new OperatingSystem(),
+						"select * from distribution.\"OperatingSystem\""
+					);
+					break;
+				case PACKAGE_CATEGORIES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new PackageCategory(),
+						"select * from billing.\"PackageCategory\""
+					);
+					break;
+				case PACKAGE_DEFINITION_LIMITS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PackageDefinitionLimit(),
+							"select * from billing.\"PackageDefinitionLimit\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PackageDefinitionLimit(),
+							"select distinct\n"
+							+ "  pdl.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  account.\"AccountHost\" bs,\n"
+							+ "  billing.\"Package\" pk,\n"
+							+ "  billing.\"PackageDefinitionLimit\" pdl\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=bs.server\n"
+							+ "  and bs.accounting=pk.accounting\n"
+							+ "  and pk.package_definition=pdl.package_definition",
+							username
+						);
+					} else {
+						if(BusinessHandler.canSeePrices(conn, source)) {
+							MasterServer.writeObjects(
+								conn,
+								source,
+								out,
+								provideProgress,
+								new PackageDefinitionLimit(),
+								"select distinct\n"
+								+ "  pdl.*\n"
+								+ "from\n"
+								+ "  account.\"Username\" un,\n"
+								+ "  billing.\"Package\" pk1,\n"
+								+ TableHandler.BU1_PARENTS_JOIN
+								+ "  billing.\"Package\" pk2,\n"
+								+ "  billing.\"PackageDefinition\" pd,\n"
+								+ "  billing.\"PackageDefinitionLimit\" pdl\n"
+								+ "where\n"
+								+ "  un.username=?\n"
+								+ "  and un.package=pk1.name\n"
+								+ "  and (\n"
+								+ TableHandler.PK1_BU1_PARENTS_WHERE
+								+ "  )\n"
+								+ "  and bu1.accounting=pk2.accounting\n"
+								+ "  and (\n"
+								+ "    pk2.package_definition=pd.id\n"
+								+ "    or bu1.accounting=pd.accounting\n"
+								+ "  ) and pd.id=pdl.package_definition",
+								username
+							);
+						} else {
+							MasterServer.writeObjects(
+								conn,
+								source,
+								out,
+								provideProgress,
+								new PackageDefinitionLimit(),
+								"select distinct\n"
+								+ "  pdl.id,\n"
+								+ "  pdl.package_definition,\n"
+								+ "  pdl.resource,\n"
+								+ "  pdl.soft_limit,\n"
+								+ "  pdl.hard_limit,\n"
+								+ "  null,\n"
+								+ "  null\n"
+								+ "from\n"
+								+ "  account.\"Username\" un,\n"
+								+ "  billing.\"Package\" pk1,\n"
+								+ TableHandler.BU1_PARENTS_JOIN
+								+ "  billing.\"Package\" pk2,\n"
+								+ "  billing.\"PackageDefinition\" pd,\n"
+								+ "  billing.\"PackageDefinitionLimit\" pdl\n"
+								+ "where\n"
+								+ "  un.username=?\n"
+								+ "  and un.package=pk1.name\n"
+								+ "  and (\n"
+								+ TableHandler.PK1_BU1_PARENTS_WHERE
+								+ "  )\n"
+								+ "  and bu1.accounting=pk2.accounting\n"
+								+ "  and (\n"
+								+ "    pk2.package_definition=pd.id\n"
+								+ "    or bu1.accounting=pd.accounting\n"
+								+ "  ) and pd.id=pdl.package_definition",
+								username
+							);
+						}
+					}
+					break;
+				case PACKAGE_DEFINITIONS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PackageDefinition(),
+							"select * from billing.\"PackageDefinition\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PackageDefinition(),
+							"select distinct\n"
+							+ "  pd.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  account.\"AccountHost\" bs,\n"
+							+ "  billing.\"Package\" pk,\n"
+							+ "  billing.\"PackageDefinition\" pd\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=bs.server\n"
+							+ "  and bs.accounting=pk.accounting\n"
+							+ "  and pk.package_definition=pd.id",
+							username
+						);
+					} else {
+						if(BusinessHandler.canSeePrices(conn, source)) {
+							MasterServer.writeObjects(
+								conn,
+								source,
+								out,
+								provideProgress,
+								new PackageDefinition(),
+								"select distinct\n"
+								+ "  pd.*\n"
+								+ "from\n"
+								+ "  account.\"Username\" un,\n"
+								+ "  billing.\"Package\" pk1,\n"
+								+ TableHandler.BU1_PARENTS_JOIN
+								+ "  billing.\"Package\" pk2,\n"
+								+ "  billing.\"PackageDefinition\" pd\n"
+								+ "where\n"
+								+ "  un.username=?\n"
+								+ "  and un.package=pk1.name\n"
+								+ "  and (\n"
+								+ TableHandler.PK1_BU1_PARENTS_WHERE
+								+ "  )\n"
+								+ "  and bu1.accounting=pk2.accounting\n"
+								+ "  and (\n"
+								+ "    pk2.package_definition=pd.id\n"
+								+ "    or bu1.accounting=pd.accounting\n"
+								+ "  )",
+								username
+							);
+						} else {
+							MasterServer.writeObjects(
+								conn,
+								source,
+								out,
+								provideProgress,
+								new PackageDefinition(),
+								"select distinct\n"
+								+ "  pd.id,\n"
+								+ "  pd.accounting,\n"
+								+ "  pd.category,\n"
+								+ "  pd.name,\n"
+								+ "  pd.version,\n"
+								+ "  pd.display,\n"
+								+ "  pd.description,\n"
+								+ "  null,\n"
+								+ "  null,\n"
+								+ "  null,\n"
+								+ "  null,\n"
+								+ "  pd.active\n"
+								+ "from\n"
+								+ "  account.\"Username\" un,\n"
+								+ "  billing.\"Package\" pk1,\n"
+								+ TableHandler.BU1_PARENTS_JOIN
+								+ "  billing.\"Package\" pk2,\n"
+								+ "  billing.\"PackageDefinition\" pd\n"
+								+ "where\n"
+								+ "  un.username=?\n"
+								+ "  and un.package=pk1.name\n"
+								+ "  and (\n"
+								+ TableHandler.PK1_BU1_PARENTS_WHERE
+								+ "  )\n"
+								+ "  and bu1.accounting=pk2.accounting\n"
+								+ "  and (\n"
+								+ "    pk2.package_definition=pd.id\n"
+								+ "    or bu1.accounting=pd.accounting\n"
+								+ "  )",
+								username
+							);
+						}
+					}
+					break;
+				case PACKAGES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Package(),
+							"select * from billing.\"Package\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Package(),
+							"select distinct\n"
+							+ "  pk.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  account.\"AccountHost\" bs,\n"
+							+ "  billing.\"Package\" pk\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=bs.server\n"
+							+ "  and bs.accounting=pk.accounting",
+							username
+						);
+					} else {
+						MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Package(),
+							"select\n"
+							+ "  pk2.*\n"
+							+ "from\n"
+							+ "  account.\"Username\" un,\n"
+							+ "  billing.\"Package\" pk1,\n"
+							+ TableHandler.BU1_PARENTS_JOIN
+							+ "  billing.\"Package\" pk2\n"
+							+ "where\n"
+							+ "  un.username=?\n"
+							+ "  and un.package=pk1.name\n"
+							+ "  and (\n"
+							+ TableHandler.PK1_BU1_PARENTS_WHERE
+							+ "  )\n"
+							+ "  and bu1.accounting=pk2.accounting",
+							username
+						);
+					}
+					break;
 				case PAYMENT_TYPES :
 					MasterServer.writeObjects(
 						conn,
@@ -3482,6 +6600,59 @@ final public class TableHandler {
 						provideProgress,
 						new PaymentType(),
 						"select * from payment.\"PaymentType\""
+					);
+					break;
+				case PHYSICAL_SERVERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PhysicalServer(),
+							"select * from infrastructure.\"PhysicalServer\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PhysicalServer(),
+							"select\n"
+							+ "  ps.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms\n"
+							+ "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
+							+ "where\n"
+							+ "  ms.username=?",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new PhysicalServer(),
+						"select distinct\n"
+						+ "  ps.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						// Allow servers it replicates to
+						//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
+						//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
+						+ "  infrastructure.\"PhysicalServer\" ps\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and pk.accounting=bs.accounting\n"
+						+ "  and (\n"
+						+ "    bs.server=ps.server\n"
+						// Allow servers it replicates to
+						//+ "    or bp.ao_server=ps.server\n"
+						+ "  )",
+						username
 					);
 					break;
 				case POSTGRES_DATABASES :
@@ -3721,6 +6892,73 @@ final public class TableHandler {
 						"select * from postgresql.\"Version\""
 					);
 					break;
+				case PRIVATE_FTP_SERVERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PrivateServer(),
+							"select * from ftp.\"PrivateServer\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PrivateServer(),
+							"select\n"
+							+ "  pfs.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  net.\"Bind\" nb,\n"
+							+ "  ftp.\"PrivateServer\" pfs\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=nb.server\n"
+							+ "  and nb.id=pfs.net_bind",
+							username
+						);
+					} else {
+						MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PrivateServer(),
+							"select\n"
+							+ "  pfs.*\n"
+							+ "from\n"
+							+ "  account.\"Username\" un,\n"
+							+ "  billing.\"Package\" pk1,\n"
+							+ TableHandler.BU1_PARENTS_JOIN
+							+ "  billing.\"Package\" pk2,\n"
+							+ "  net.\"Bind\" nb,\n"
+							+ "  ftp.\"PrivateServer\" pfs\n"
+							+ "where\n"
+							+ "  un.username=?\n"
+							+ "  and un.package=pk1.name\n"
+							+ "  and (\n"
+							+ TableHandler.PK1_BU1_PARENTS_WHERE
+							+ "  )\n"
+							+ "  and bu1.accounting=pk2.accounting\n"
+							+ "  and pk2.name=nb.package\n"
+							+ "  and nb.id=pfs.net_bind",
+							username
+						);
+					}
+					break;
+				case PROCESSOR_TYPES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new ProcessorType(),
+						"select * from infrastructure.\"ProcessorType\""
+					);
+					break;
 				case PROTOCOLS :
 					MasterServer.writeObjects(
 						conn,
@@ -3729,6 +6967,61 @@ final public class TableHandler {
 						provideProgress,
 						new AppProtocol(),
 						"select * from net.\"AppProtocol\""
+					);
+					break;
+				case RACKS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Rack(),
+							"select * from infrastructure.\"Rack\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Rack(),
+							"select distinct\n"
+							+ "  ra.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms\n"
+							+ "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
+							+ "  inner join infrastructure.\"Rack\" ra on ps.rack=ra.id\n"
+							+ "where\n"
+							+ "  ms.username=?",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Rack(),
+						"select distinct\n"
+						+ "  ra.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						// Allow servers it replicates to
+						//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
+						//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
+						+ "  infrastructure.\"PhysicalServer\" ps,\n"
+						+ "  infrastructure.\"Rack\" ra\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and pk.accounting=bs.accounting\n"
+						+ "  and (\n"
+						+ "    bs.server=ps.server\n"
+						// Allow servers it replicates to
+						//+ "    or bp.ao_server=ps.server\n"
+						+ "  ) and ps.rack=ra.id",
+						username
 					);
 					break;
 				case RESELLERS :
@@ -3742,7 +7035,8 @@ final public class TableHandler {
 							new Reseller(),
 							"select * from reseller.\"Reseller\""
 						); else {
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<Brand> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else MasterServer.writeObjects(
 						conn,
@@ -3764,6 +7058,16 @@ final public class TableHandler {
 						+ TableHandler.PK_BU1_PARENTS_WHERE
 						+ "  ) and bu1.accounting=re.accounting",
 						username
+					);
+					break;
+				case RESOURCES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Resource(),
+						"select * from billing.\"Resource\""
 					);
 					break;
 				case SCHEMA_COLUMNS :
@@ -3974,6 +7278,458 @@ final public class TableHandler {
 						source.getProtocolVersion().getVersion()
 					);
 					break;
+				case EMAIL_DOMAINS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Domain(),
+							"select * from email.\"Domain\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Domain(),
+							"select\n"
+							+ "  ed.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"Domain\" ed\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=ed.ao_server",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Domain(),
+						"select\n"
+						+ "  ed.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  email.\"Domain\" ed\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=ed.package",
+						username
+					);
+					break;
+				case EMAIL_SMTP_RELAY_TYPES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SmtpRelayType(),
+						"select * from email.\"SmtpRelayType\""
+					);
+					break;
+				case EMAIL_SMTP_RELAYS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SmtpRelay(),
+							"select * from email.\"SmtpRelay\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SmtpRelay(),
+							"select distinct\n"
+							+ "  esr.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"SmtpRelay\" esr\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and (\n"
+							+ "    esr.ao_server is null\n"
+							+ "    or ms.server=esr.ao_server\n"
+							+ "  )",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SmtpRelay(),
+						"select distinct\n"
+						+ "  esr.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  email.\"SmtpRelay\" esr\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and (\n"
+						+ "    pk2.name=esr.package\n"
+						+ "    or esr.ao_server is null\n"
+						+ "  )",
+						username
+					);
+					break;
+				case EMAIL_SMTP_SMART_HOST_DOMAINS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SmtpSmartHostDomain(),
+							"select * from email.\"SmtpSmartHostDomain\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SmtpSmartHostDomain(),
+							"select\n"
+							+ "  esshd.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  net.\"Bind\" nb,\n"
+							+ "  email.\"SmtpSmartHostDomain\" esshd\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=nb.server\n"
+							+ "  and nb.id=esshd.smart_host",
+							username
+						);
+					} else {
+						MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PrivateServer(),
+							"select\n"
+							+ "  esshd.*\n"
+							+ "from\n"
+							+ "  account.\"Username\" un,\n"
+							+ "  billing.\"Package\" pk1,\n"
+							+ TableHandler.BU1_PARENTS_JOIN
+							+ "  billing.\"Package\" pk2,\n"
+							+ "  net.\"Bind\" nb,\n"
+							+ "  email.\"SmtpSmartHostDomain\" esshd\n"
+							+ "where\n"
+							+ "  un.username=?\n"
+							+ "  and un.package=pk1.name\n"
+							+ "  and (\n"
+							+ TableHandler.PK1_BU1_PARENTS_WHERE
+							+ "  )\n"
+							+ "  and bu1.accounting=pk2.accounting\n"
+							+ "  and pk2.name=nb.package\n"
+							+ "  and nb.id=esshd.smart_host",
+							username
+						);
+					}
+					break;
+				case EMAIL_SMTP_SMART_HOSTS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SmtpSmartHost(),
+							"select * from email.\"SmtpSmartHost\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SmtpSmartHost(),
+							"select\n"
+							+ "  essh.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  net.\"Bind\" nb,\n"
+							+ "  email.\"SmtpSmartHost\" essh\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=nb.server\n"
+							+ "  and nb.id=essh.net_bind",
+							username
+						);
+					} else {
+						MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new PrivateServer(),
+							"select\n"
+							+ "  essh.*\n"
+							+ "from\n"
+							+ "  account.\"Username\" un,\n"
+							+ "  billing.\"Package\" pk1,\n"
+							+ TableHandler.BU1_PARENTS_JOIN
+							+ "  billing.\"Package\" pk2,\n"
+							+ "  net.\"Bind\" nb,\n"
+							+ "  email.\"SmtpSmartHost\" essh\n"
+							+ "where\n"
+							+ "  un.username=?\n"
+							+ "  and un.package=pk1.name\n"
+							+ "  and (\n"
+							+ TableHandler.PK1_BU1_PARENTS_WHERE
+							+ "  )\n"
+							+ "  and bu1.accounting=pk2.accounting\n"
+							+ "  and pk2.name=nb.package\n"
+							+ "  and nb.id=essh.net_bind",
+							username
+						);
+					}
+					break;
+				case SENDMAIL_BINDS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SendmailBind(),
+							"select * from email.\"SendmailBind\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SendmailBind(),
+							"select\n"
+							+ "  sb.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms\n"
+							+ "  inner join net.\"Bind\" nb on ms.server=nb.server\n"
+							+ "  inner join email.\"SendmailBind\" sb on nb.id=sb.net_bind\n"
+							+ "where\n"
+							+ "  ms.username=?",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SendmailBind(),
+						"select\n"
+						+ "  *\n"
+						+ "from\n"
+						+ "  email.\"SendmailBind\"\n"
+						+ "where\n"
+						// Allow by matching net.Bind.package
+						+ "  net_bind in (\n"
+						+ "    select\n"
+						+ "      nb.id\n"
+						+ "    from\n"
+						+ "      account.\"Username\" un1,\n"
+						+ "      billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "      billing.\"Package\" pk2,\n"
+						+ "      net.\"Bind\" nb\n"
+						+ "    where\n"
+						+ "      un1.username=?\n"
+						+ "      and un1.package=pk1.name\n"
+						+ "      and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "      )\n"
+						+ "      and bu1.accounting=pk2.accounting\n"
+						+ "      and pk2.name=nb.package\n"
+						+ "  )\n"
+						// Allow by matching email.SendmailServer.package
+						+ "  or sendmail_server in (\n"
+						+ "    select\n"
+						+ "      ss.id\n"
+						+ "    from\n"
+						+ "      account.\"Username\" un2,\n"
+						+ "      billing.\"Package\" pk3,\n"
+						+ BU2_PARENTS_JOIN
+						+ "      billing.\"Package\" pk4,\n"
+						+ "      email.\"SendmailServer\" ss\n"
+						+ "    where\n"
+						+ "      un2.username=?\n"
+						+ "      and un2.package=pk3.name\n"
+						+ "      and (\n"
+						+ PK3_BU2_PARENTS_WHERE
+						+ "      )\n"
+						+ "      and bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+						+ "      and pk4.id=ss.package\n"
+						+ "  )",
+						username,
+						username
+					);
+					break;
+				case SENDMAIL_SERVERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SendmailServer(),
+							"select * from email.\"SendmailServer\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SendmailServer(),
+							"select\n"
+							+ "  ss.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms\n"
+							+ "  inner join email.\"SendmailServer\" ss on ms.server=ss.ao_server\n"
+							+ "where\n"
+							+ "  ms.username=?",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SendmailServer(),
+						"select\n"
+						+ "  *\n"
+						+ "from\n"
+						+ "  email.\"SendmailServer\"\n"
+						+ "where\n"
+						// Allow by matching net.Bind.package
+						+ "  id in (\n"
+						+ "    select\n"
+						+ "      sb.sendmail_server\n"
+						+ "    from\n"
+						+ "      account.\"Username\" un1,\n"
+						+ "      billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "      billing.\"Package\" pk2,\n"
+						+ "      net.\"Bind\" nb,\n"
+						+ "      email.\"SendmailBind\" sb\n"
+						+ "    where\n"
+						+ "      un1.username=?\n"
+						+ "      and un1.package=pk1.name\n"
+						+ "      and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "      )\n"
+						+ "      and bu1.accounting=pk2.accounting\n"
+						+ "      and pk2.name=nb.package\n"
+						+ "      and nb.id=sb.net_bind\n"
+						+ "  )\n"
+						// Allow by matching email.SendmailServer.package
+						+ "  or id in (\n"
+						+ "    select\n"
+						+ "      ss.id\n"
+						+ "    from\n"
+						+ "      account.\"Username\" un2,\n"
+						+ "      billing.\"Package\" pk3,\n"
+						+ BU2_PARENTS_JOIN
+						+ "      billing.\"Package\" pk4,\n"
+						+ "      email.\"SendmailServer\" ss\n"
+						+ "    where\n"
+						+ "      un2.username=?\n"
+						+ "      and un2.package=pk3.name\n"
+						+ "      and (\n"
+						+ PK3_BU2_PARENTS_WHERE
+						+ "      )\n"
+						+ "      and bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
+						+ "      and pk4.id=ss.package\n"
+						+ "  )",
+						username,
+						username
+					);
+					break;
+				case SERVER_FARMS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new ServerFarm(),
+							"select * from infrastructure.\"ServerFarm\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new ServerFarm(),
+							"select distinct\n"
+							+ "  sf.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "            net.\"Host\"          se\n"
+							+ "  left join backup.\"FileReplication\" ffr on  se.id             = ffr.server\n"
+							+ "  left join backup.\"BackupPartition\" bp  on ffr.backup_partition =  bp.id\n"
+							+ "  left join net.\"Host\"          fs  on  bp.ao_server        =  fs.id,\n"
+							+ "  infrastructure.\"ServerFarm\" sf\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=se.id\n"
+							+ "  and (\n"
+							+ "    se.farm=sf.name\n"
+							+ "    or fs.farm=sf.name\n"
+							+ "  )",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new ServerFarm(),
+						"select distinct\n"
+						+ "  sf.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						+ "  net.\"Host\" se,\n"
+						+ "  infrastructure.\"ServerFarm\" sf\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and (\n"
+						+ "    (\n"
+						+ "      pk.accounting=bs.accounting\n"
+						+ "      and bs.server=se.id\n"
+						+ "      and se.farm=sf.name\n"
+						+ "    ) or pk.id=sf.owner\n"
+						+ "  )",
+						username
+					);
+					break;
 				case SERVERS :
 					if(masterUser != null) {
 						assert masterServers != null;
@@ -4045,6 +7801,16 @@ final public class TableHandler {
 						username
 					);
 					break;
+				case SHELLS :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Shell(),
+						"select * from linux.\"Shell\""
+					);
+					break;
 				case SIGNUP_REQUEST_OPTIONS :
 					if(masterUser != null) {
 						assert masterServers != null;
@@ -4058,7 +7824,8 @@ final public class TableHandler {
 								"select * from signup.\"Option\""
 							);
 						} else {
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<Option> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else {
 						MasterServer.writeObjects(
@@ -4139,7 +7906,8 @@ final public class TableHandler {
 								+ "  signup.\"Request\""
 							);
 						} else {
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<Request> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else {
 						MasterServer.writeObjects(
@@ -4201,6 +7969,16 @@ final public class TableHandler {
 							username
 						);
 					}
+					break;
+				case SPAM_EMAIL_MESSAGES :
+					if(masterUser!=null && masterServers!=null && masterServers.length==0) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SpamMessage(),
+						"select * from email.\"SpamMessage\""
+					); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
 					break;
 				case SSL_CERTIFICATE_NAMES :
 					if(masterUser != null) {
@@ -4358,6 +8136,110 @@ final public class TableHandler {
 						username
 					);
 					break;
+				case SYSTEM_EMAIL_ALIASES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SystemAlias(),
+							"select * from email.\"SystemAlias\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new SystemAlias(),
+							"select\n"
+							+ "  sea.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms,\n"
+							+ "  email.\"SystemAlias\" sea\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and ms.server=sea.ao_server",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SystemAlias(),
+						"select\n"
+						+ "  sea.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						+ "  email.\"SystemAlias\" sea\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and pk.accounting=bs.accounting\n"
+						+ "  and bs.server=sea.ao_server",
+						username
+					);
+					break;
+				case TECHNOLOGY_CLASSES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SoftwareCategory(),
+						"select * from distribution.\"SoftwareCategory\""
+					);
+					break;
+				case TECHNOLOGY_NAMES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Software(),
+						"select * from distribution.\"Software\""
+					);
+					break;
+				case TECHNOLOGIES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SoftwareCategorization(),
+						"select * from distribution.\"SoftwareCategorization\""
+					);
+					break;
+				case TECHNOLOGY_VERSIONS :
+					if(masterUser!=null) MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SoftwareVersion(),
+						"select * from distribution.\"SoftwareVersion\""
+					); else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new SoftwareVersion(),
+						"select\n"
+						+ "  id,\n"
+						+ "  name,\n"
+						+ "  version,\n"
+						+ "  updated,\n"
+						+ "  '"+AoservProtocol.FILTERED+"'::text,\n"
+						+ "  operating_system_version,\n"
+						+ "  disable_time,\n"
+						+ "  disable_reason\n"
+						+ "from\n"
+						+ "  distribution.\"SoftwareVersion\""
+					);
+					break;
 				case TICKET_ACTION_TYPES :
 					MasterServer.writeObjects(
 						conn,
@@ -4400,7 +8282,8 @@ final public class TableHandler {
 							+ "from\n"
 							+ "  ticket.\"Action\""
 						); else {
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<Action> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else {
 						if(TicketHandler.isTicketAdmin(conn, source)) {
@@ -4513,7 +8396,8 @@ final public class TableHandler {
 							new Assignment(),
 							"select * from ticket.\"Assignment\""
 						); else {
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<Assignment> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else {
 						if(TicketHandler.isTicketAdmin(conn, source)) {
@@ -4548,7 +8432,8 @@ final public class TableHandler {
 							);
 						} else {
 							// Non-admins don't get any assignment details
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<Assignment> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					}
 					break;
@@ -4563,7 +8448,8 @@ final public class TableHandler {
 							new BrandCategory(),
 							"select * from reseller.\"BrandCategory\""
 						); else {
-							MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+							List<BrandCategory> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
 						}
 					} else MasterServer.writeObjects(
 						conn,
@@ -4788,6 +8674,292 @@ final public class TableHandler {
 							);
 						}
 					}
+					break;
+				case TIME_ZONES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new TimeZone(),
+						"select * from linux.\"TimeZone\""
+					);
+					break;
+				case TRANSACTION_TYPES :
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new TransactionType(),
+						"select * from billing.\"TransactionType\""
+					);
+					break;
+				case TRANSACTIONS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Transaction(),
+							"select * from billing.\"Transaction\""
+						); else MasterServer.writeObjects(source, out, provideProgress, new ArrayList<>());
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Transaction(),
+						"select\n"
+						+ "  tr.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Transaction\" tr\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK1_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=tr.accounting",
+						username
+					);
+					break;
+				case USERNAMES :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Username(),
+							"select * from account.\"Username\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new Username(),
+							"select distinct\n"
+							+ "  un.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms\n"
+							+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
+							+ "  account.\"AccountHost\" bs,\n"
+							+ "  billing.\"Package\" pk,\n"
+							+ "  account.\"Username\" un\n"
+							+ "where\n"
+							+ "  ms.username=?\n"
+							+ "  and (\n"
+							+ "    ms.server=bs.server\n"
+							+ "    or ff.server=bs.server\n"
+							+ "  ) and bs.accounting=pk.accounting\n"
+							+ "  and pk.name=un.package",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new Username(),
+						"select\n"
+						+ "  un2.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un1,\n"
+						+ "  billing.\"Package\" pk1,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"Package\" pk2,\n"
+						+ "  account.\"Username\" un2\n"
+						+ "where\n"
+						+ "  un1.username=?\n"
+						+ "  and un1.package=pk1.name\n"
+						+ "  and (\n"
+						+ "    un2.username=un1.username\n"
+						+ "    or un2.username='"+com.aoindustries.aoserv.client.linux.User.MAIL+"'\n"
+						+ PK1_BU1_PARENTS_OR_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=pk2.accounting\n"
+						+ "  and pk2.name=un2.package",
+						username
+					);
+					break;
+				case VIRTUAL_DISKS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new VirtualDisk(),
+							"select * from infrastructure.\"VirtualDisk\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new VirtualDisk(),
+							"select distinct\n"
+							+ "  vd.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms\n"
+							+ "  inner join infrastructure.\"VirtualDisk\" vd on ms.server=vd.virtual_server\n"
+							+ "where\n"
+							+ "  ms.username=?",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new VirtualDisk(),
+						"select distinct\n"
+						+ "  vd.*\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						// Allow servers it replicates to
+						//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
+						//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
+						+ "  infrastructure.\"VirtualDisk\" vd\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and pk.accounting=bs.accounting\n"
+						+ "  and (\n"
+						+ "    bs.server=vd.virtual_server\n"
+						// Allow servers it replicates to
+						//+ "    or bp.ao_server=vd.virtual_server\n"
+						+ "  )",
+						username
+					);
+					break;
+				case VIRTUAL_SERVERS :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new VirtualServer(),
+							"select * from infrastructure.\"VirtualServer\""
+						); else MasterServer.writeObjects(
+							conn,
+							source,
+							out,
+							provideProgress,
+							new VirtualServer(),
+							"select distinct\n"
+							+ "  vs.*\n"
+							+ "from\n"
+							+ "  master.\"UserHost\" ms\n"
+							+ "  inner join infrastructure.\"VirtualServer\" vs on ms.server=vs.server\n"
+							+ "where\n"
+							+ "  ms.username=?",
+							username
+						);
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new VirtualServer(),
+						"select distinct\n"
+						+ "  vs.server,\n"
+						+ "  vs.primary_ram,\n"
+						+ "  vs.primary_ram_target,\n"
+						+ "  vs.secondary_ram,\n"
+						+ "  vs.secondary_ram_target,\n"
+						+ "  vs.minimum_processor_type,\n"
+						+ "  vs.minimum_processor_architecture,\n"
+						+ "  vs.minimum_processor_speed,\n"
+						+ "  vs.minimum_processor_speed_target,\n"
+						+ "  vs.processor_cores,\n"
+						+ "  vs.processor_cores_target,\n"
+						+ "  vs.processor_weight,\n"
+						+ "  vs.processor_weight_target,\n"
+						+ "  vs.primary_physical_server_locked,\n"
+						+ "  vs.secondary_physical_server_locked,\n"
+						+ "  vs.requires_hvm,\n"
+						+ "  case\n"
+						+ "    when vs.vnc_password is null then null\n"
+						// Only provide the password when the user can connect to VNC console
+						+ "    when (\n"
+						+ "      select bs2.id from account.\"AccountHost\" bs2 where bs2.accounting=pk.accounting and bs2.server=vs.server and bs2.can_vnc_console limit 1\n"
+						+ "    ) is not null then vs.vnc_password\n"
+						+ "    else '"+AoservProtocol.FILTERED+"'::text\n"
+						+ "  end\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ "  account.\"AccountHost\" bs,\n"
+						// Allow servers it replicates to
+						//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
+						//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
+						+ "  infrastructure.\"VirtualServer\" vs\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and pk.accounting=bs.accounting\n"
+						+ "  and (\n"
+						+ "    bs.server=vs.server\n"
+						// Allow servers it replicates to
+						//+ "    or bp.ao_server=vs.server\n"
+						+ "  )",
+						username
+					);
+					break;
+				case WHOIS_HISTORY :
+					if(masterUser != null) {
+						assert masterServers != null;
+						if(masterServers.length == 0) {
+							MasterServer.writeObjects(
+								conn,
+								source,
+								out,
+								provideProgress,
+								new WhoisHistory(),
+								"select id, time, accounting, zone from billing.\"WhoisHistory\""
+							);
+						} else {
+							// The servers don't need access to this information
+							List<WhoisHistory> emptyList = Collections.emptyList();
+							MasterServer.writeObjects(source, out, provideProgress, emptyList);
+						}
+					} else MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						new WhoisHistory(),
+						"select\n"
+						+ "  wh.id,\n"
+						+ "  wh.time,\n"
+						+ "  wh.accounting,\n"
+						+ "  wh.zone\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"WhoisHistory\" wh\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting=wh.accounting",
+						username
+					);
 					break;
 				default :
 					throw new IOException("Unknown table ID: "+tableID);
@@ -5158,7 +9330,6 @@ final public class TableHandler {
 		}
 	}
 
-	// TODO: Move to proper handler class
 	public static IntList getOperatingSystemVersions(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
 		return conn.executeIntListQuery(
 			"select distinct\n"
