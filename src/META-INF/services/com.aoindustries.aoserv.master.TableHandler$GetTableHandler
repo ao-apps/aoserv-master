@@ -45,3 +45,4 @@ com.aoindustries.aoserv.master.dns.Record_GetTableHandler
 com.aoindustries.aoserv.master.dns.RecordType_GetTableHandler
 com.aoindustries.aoserv.master.dns.TopLevelDomain_GetTableHandler
 com.aoindustries.aoserv.master.dns.Zone_GetTableHandler
+com.aoindustries.aoserv.master.email.Address_GetTableHandler
