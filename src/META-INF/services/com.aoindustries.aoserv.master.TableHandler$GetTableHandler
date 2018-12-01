@@ -72,7 +72,6 @@ com.aoindustries.aoserv.master.email.SpamMessage_GetTableHandler
 com.aoindustries.aoserv.master.email.SystemAlias_GetTableHandler
 com.aoindustries.aoserv.master.ftp.GuestUser_GetTableHandler
 com.aoindustries.aoserv.master.ftp.PrivateServer_GetTableHandler
-com.aoindustries.aoserv.master.ftp.PrivateServer_GetTableHandler
 com.aoindustries.aoserv.master.infrastructure.PhysicalServer_GetTableHandler
 com.aoindustries.aoserv.master.infrastructure.ProcessorType_GetTableHandler
 com.aoindustries.aoserv.master.infrastructure.Rack_GetTableHandler
