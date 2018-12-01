@@ -12,10 +12,6 @@ import com.aoindustries.aoserv.client.account.Administrator;
 import com.aoindustries.aoserv.client.accounting.BankTransaction;
 import com.aoindustries.aoserv.client.backup.BackupReport;
 import com.aoindustries.aoserv.client.billing.Transaction;
-import com.aoindustries.aoserv.client.dns.RecordType;
-import com.aoindustries.aoserv.client.dns.TopLevelDomain;
-import com.aoindustries.aoserv.client.dns.Zone;
-import com.aoindustries.aoserv.client.email.Address;
 import com.aoindustries.aoserv.client.email.AttachmentBlock;
 import com.aoindustries.aoserv.client.email.AttachmentType;
 import com.aoindustries.aoserv.client.email.BlackholeAddress;
@@ -1378,61 +1374,6 @@ final public class TableHandler {
 						+ "  inner join email.\"CyrusImapdServer\" cis on bs.server     = cis.ao_server\n"
 						+ "where\n"
 						+ "  un.username=?",
-						username
-					);
-					break;
-				case EMAIL_ADDRESSES :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Address(),
-							"select * from email.\"Address\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Address(),
-							"select\n"
-							+ "  ea.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  email.\"Domain\" ed,\n"
-							+ "  email.\"Address\" ea\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=ed.ao_server\n"
-							+ "  and ed.id=ea.domain",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new Address(),
-						"select\n"
-						+ "  ea.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Package\" pk2,\n"
-						+ "  email.\"Domain\" ed,\n"
-						+ "  email.\"Address\" ea\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk1.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK1_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=pk2.accounting\n"
-						+ "  and pk2.name=ed.package\n"
-						+ "  and ed.id=ea.domain",
 						username
 					);
 					break;
