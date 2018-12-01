@@ -591,7 +591,7 @@ final public class TableHandler {
 			tableCount += addGetTableHandler(iter.next());
 			handlerCount ++;
 		}
-		out.print(": " + GetTableHandler.class.getSimpleName() + "(" + handlerCount + " handlers for " + tableCount + " tables)");
+		out.print(": " + GetTableHandler.class.getSimpleName() + " (" + handlerCount + " handlers for " + tableCount + " tables)");
 	}
 
 	public interface GetTableHandlerByRole extends GetTableHandler {
@@ -910,36 +910,6 @@ final public class TableHandler {
 						provideProgress,
 						new AoservProtocol(),
 						"select * from \"schema\".\"AoservProtocol\""
-					);
-					break;
-				case AOSH_COMMANDS :
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new Command(),
-						"select\n"
-						+ "  ac.command,\n"
-						+ "  ac.\"sinceVersion\",\n"
-						+ "  ac.\"lastVersion\",\n"
-						+ "  st.\"name\" as \"table\",\n"
-						+ "  ac.description,\n"
-						+ "  ac.syntax\n"
-						+ "from\n"
-						+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
-						+ "                   aosh.\"Command\"              ac\n"
-						+ "  inner join \"schema\".\"AoservProtocol\" since_ap on ac.\"sinceVersion\" = since_ap.version\n"
-						+ "  left  join \"schema\".\"AoservProtocol\"  last_ap on ac.\"lastVersion\"  =  last_ap.version\n"
-						+ "  left  join \"schema\".\"Table\"                st on ac.\"table\"        =        st.id\n"
-						+ "where\n"
-						+ "  client_ap.version=?\n"
-						+ "  and client_ap.created >= since_ap.created\n"
-						+ "  and (\n"
-						+ "    last_ap.created is null\n"
-						+ "    or client_ap.created <= last_ap.created\n"
-						+ "  )",
-						source.getProtocolVersion().getVersion()
 					);
 					break;
 				case ARCHITECTURES :
