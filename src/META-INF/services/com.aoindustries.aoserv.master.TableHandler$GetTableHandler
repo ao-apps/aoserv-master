@@ -96,3 +96,7 @@ com.aoindustries.aoserv.master.master.User_GetTableHandler
 com.aoindustries.aoserv.master.master.UserAcl_GetTableHandler
 com.aoindustries.aoserv.master.master.UserHost_GetTableHandler
 com.aoindustries.aoserv.master.mysql.Database_GetTableHandler
+com.aoindustries.aoserv.master.mysql.DatabaseUser_GetTableHandler
+com.aoindustries.aoserv.master.mysql.Server_GetTableHandler
+com.aoindustries.aoserv.master.mysql.User_GetTableHandler
+com.aoindustries.aoserv.master.mysql.UserServer_GetTableHandler
