@@ -151,3 +151,4 @@ com.aoindustries.aoserv.master.ticket.Priority_GetTableHandler
 com.aoindustries.aoserv.master.ticket.Status_GetTableHandler
 com.aoindustries.aoserv.master.ticket.Ticket_GetTableHandler
 com.aoindustries.aoserv.master.ticket.TicketType_GetTableHandler
+com.aoindustries.aoserv.master.web.Header_GetTableHandler
