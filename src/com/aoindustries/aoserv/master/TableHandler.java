@@ -1349,57 +1349,6 @@ final public class TableHandler {
 						username
 					);
 					break;
-				case BUSINESS_PROFILES :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Profile(),
-							"select * from account.\"Profile\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new Profile(),
-							"select distinct\n"
-							+ "  bp.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  account.\"AccountHost\" bs,\n"
-							+ "  account.\"Profile\" bp\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=bs.server\n"
-							+ "  and bs.accounting=bp.accounting",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new Profile(),
-						"select\n"
-						+ "  bp.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  account.\"Profile\" bp\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=bp.accounting",
-						username
-					);
-					break;
 				case CREDIT_CARD_PROCESSORS :
 					if(BusinessHandler.hasPermission(conn, source, Permission.Name.get_credit_card_processors)) {
 						if(masterUser != null) {
