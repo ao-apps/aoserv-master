@@ -80,3 +80,13 @@ com.aoindustries.aoserv.master.infrastructure.ServerFarm_GetTableHandler
 com.aoindustries.aoserv.master.infrastructure.VirtualDisk_GetTableHandler
 com.aoindustries.aoserv.master.infrastructure.VirtualServer_GetTableHandler
 com.aoindustries.aoserv.master.linux.DaemonAcl_GetTableHandler
+com.aoindustries.aoserv.master.linux.Group_GetTableHandler
+com.aoindustries.aoserv.master.linux.GroupServer_GetTableHandler
+com.aoindustries.aoserv.master.linux.GroupType_GetTableHandler
+com.aoindustries.aoserv.master.linux.GroupUser_GetTableHandler
+com.aoindustries.aoserv.master.linux.Server_GetTableHandler
+com.aoindustries.aoserv.master.linux.Shell_GetTableHandler
+com.aoindustries.aoserv.master.linux.TimeZone_GetTableHandler
+com.aoindustries.aoserv.master.linux.User_GetTableHandler
+com.aoindustries.aoserv.master.linux.UserServer_GetTableHandler
+com.aoindustries.aoserv.master.linux.UserType_GetTableHandler
