@@ -125,3 +125,9 @@ com.aoindustries.aoserv.master.pki.Certificate_GetTableHandler
 com.aoindustries.aoserv.master.pki.CertificateName_GetTableHandler
 com.aoindustries.aoserv.master.pki.CertificateOtherUse_GetTableHandler
 com.aoindustries.aoserv.master.pki.EncryptionKey_GetTableHandler
+com.aoindustries.aoserv.master.postgresql.Database_GetTableHandler
+com.aoindustries.aoserv.master.postgresql.Encoding_GetTableHandler
+com.aoindustries.aoserv.master.postgresql.Server_GetTableHandler
+com.aoindustries.aoserv.master.postgresql.User_GetTableHandler
+com.aoindustries.aoserv.master.postgresql.UserServer_GetTableHandler
+com.aoindustries.aoserv.master.postgresql.Version_GetTableHandler
