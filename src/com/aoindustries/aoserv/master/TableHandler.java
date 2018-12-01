@@ -13,8 +13,6 @@ import com.aoindustries.aoserv.client.accounting.BankTransaction;
 import com.aoindustries.aoserv.client.backup.BackupReport;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.email.SpamMessage;
-import com.aoindustries.aoserv.client.ftp.GuestUser;
-import com.aoindustries.aoserv.client.ftp.PrivateServer;
 import com.aoindustries.aoserv.client.infrastructure.PhysicalServer;
 import com.aoindustries.aoserv.client.infrastructure.ProcessorType;
 import com.aoindustries.aoserv.client.infrastructure.Rack;
@@ -1284,65 +1282,6 @@ final public class TableHandler {
 						+ "  and un.package=pk.name\n"
 						+ "  and pk.accounting=bs.accounting\n"
 						+ "  and bs.server=fz.server",
-						username
-					);
-					break;
-				case FTP_GUEST_USERS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new GuestUser(),
-							"select * from ftp.\"GuestUser\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new GuestUser(),
-							"select distinct\n"
-							+ "  fgu.username\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  account.\"AccountHost\" bs,\n"
-							+ "  billing.\"Package\" pk,\n"
-							+ "  account.\"Username\" un,\n"
-							+ "  ftp.\"GuestUser\" fgu\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=bs.server\n"
-							+ "  and bs.accounting=pk.accounting\n"
-							+ "  and pk.name=un.package\n"
-							+ "  and un.username=fgu.username",
-							username
-						);
-					} else MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						new GuestUser(),
-						"select\n"
-						+ "  fgu.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un1,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Package\" pk2,\n"
-						+ "  account.\"Username\" un2,\n"
-						+ "  ftp.\"GuestUser\" fgu\n"
-						+ "where\n"
-						+ "  un1.username=?\n"
-						+ "  and un1.package=pk1.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK1_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=pk2.accounting\n"
-						+ "  and pk2.name=un2.package\n"
-						+ "  and un2.username=fgu.username",
 						username
 					);
 					break;
@@ -4946,63 +4885,6 @@ final public class TableHandler {
 						new Version(),
 						"select * from postgresql.\"Version\""
 					);
-					break;
-				case PRIVATE_FTP_SERVERS :
-					if(masterUser != null) {
-						assert masterServers != null;
-						if(masterServers.length == 0) MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new PrivateServer(),
-							"select * from ftp.\"PrivateServer\""
-						); else MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new PrivateServer(),
-							"select\n"
-							+ "  pfs.*\n"
-							+ "from\n"
-							+ "  master.\"UserHost\" ms,\n"
-							+ "  net.\"Bind\" nb,\n"
-							+ "  ftp.\"PrivateServer\" pfs\n"
-							+ "where\n"
-							+ "  ms.username=?\n"
-							+ "  and ms.server=nb.server\n"
-							+ "  and nb.id=pfs.net_bind",
-							username
-						);
-					} else {
-						MasterServer.writeObjects(
-							conn,
-							source,
-							out,
-							provideProgress,
-							new PrivateServer(),
-							"select\n"
-							+ "  pfs.*\n"
-							+ "from\n"
-							+ "  account.\"Username\" un,\n"
-							+ "  billing.\"Package\" pk1,\n"
-							+ TableHandler.BU1_PARENTS_JOIN
-							+ "  billing.\"Package\" pk2,\n"
-							+ "  net.\"Bind\" nb,\n"
-							+ "  ftp.\"PrivateServer\" pfs\n"
-							+ "where\n"
-							+ "  un.username=?\n"
-							+ "  and un.package=pk1.name\n"
-							+ "  and (\n"
-							+ TableHandler.PK1_BU1_PARENTS_WHERE
-							+ "  )\n"
-							+ "  and bu1.accounting=pk2.accounting\n"
-							+ "  and pk2.name=nb.package\n"
-							+ "  and nb.id=pfs.net_bind",
-							username
-						);
-					}
 					break;
 				case PROCESSOR_TYPES :
 					MasterServer.writeObjects(
