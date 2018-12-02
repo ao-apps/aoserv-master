@@ -52,15 +52,17 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class WhoisHistoryService implements MasterService, CronJob {
+final public class WhoisHistoryService implements MasterService {
 
 	private static final Logger logger = LogFactory.getLogger(WhoisHistoryService.class);
 
+	private static final boolean DEBUG = false;
+
 	@Override
 	public void start() {
-		CronDaemon.addCronJob(this, logger);
+		CronDaemon.addCronJob(cronJob, logger);
 		// Run at start-up, too
-		CronDaemon.runImmediately(this);
+		CronDaemon.runImmediately(cronJob);
 	}
 
 	// <editor-fold desc="Clean-up" defaultstate="collapsed">
@@ -128,26 +130,29 @@ final public class WhoisHistoryService implements MasterService, CronJob {
 
 	// <editor-fold desc="CronJob" defaultstate="collapsed">
 	/**
-	 * The time to sleep between lookups in millis.
+	 * The minimum time to sleep between lookups in millis.
 	 */
-	private static final int LOOKUP_SLEEP = 60 * 1000; // One minute
-
-	/**
-	 * The maximum time for a processing pass.
-	 */
-	private static final long TIMER_MAX_TIME = 20L*60*1000;
-
-	/**
-	 * The interval in which the administrators will be reminded.
-	 */
-	private static final long TIMER_REMINDER_INTERVAL = 6L*60*60*1000;
+	private static final int LOOKUP_SLEEP_MINIMUM = 10 * 1000; // 10 seconds
 
 	/**
 	 * The interval between checks.
 	 */
 	private static final long RECHECK_MILLIS = 6L * 24 * 60 * 60 * 1000; // 6 days
 
-	private static final boolean DEBUG = false;
+	/**
+	 * The target time for processing pass completion.
+	 */
+	private static final long PASS_COMPLETION_TARGET = RECHECK_MILLIS / 2; // Half the recheck time
+
+	/**
+	 * The maximum time for a processing pass.
+	 */
+	private static final long TIMER_MAX_TIME = RECHECK_MILLIS;
+
+	/**
+	 * The interval in which the administrators will be reminded.
+	 */
+	private static final long TIMER_REMINDER_INTERVAL = 24L*60*60*1000; // 1 day
 
 	/**
 	 * Runs at 6:12 am on the 1st, 7th, 13th, 19th, and 25th
@@ -163,154 +168,176 @@ final public class WhoisHistoryService implements MasterService, CronJob {
 				|| dayOfMonth==25
 			);
 
-	@Override
-	public Schedule getCronJobSchedule() {
-		return schedule;
-	}
-
-	@Override
-	public CronJobScheduleMode getCronJobScheduleMode() {
-		return CronJobScheduleMode.SKIP;
-	}
-
-	@Override
-	public String getCronJobName() {
-		return getClass().getSimpleName();
-	}
-
-	@Override
-	public int getCronJobThreadPriority() {
-		return Thread.NORM_PRIORITY-1;
-	}
-
-	// TODO: Should we fire this off manually, or at least have a way to do so when the process fails?
-	// TODO: Should there be a monthly task to make sure this process is working correctly?
-	// TODO: Do not run simply as a cron job, but rather a background process that does again based on when
-	//       last successful/failed.  This will be more robust to master server restarts and allow to
-	//       slowly work in the background.
-	// TODO: This should probably go in a dns.monitoring schema, and be watched by NOC monitoring.
-	@Override
-	public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-		try {
-			ProcessTimer timer = new ProcessTimer(
-				logger,
-				MasterServer.getRandom(),
-				getClass().getName(),
-				"runCronJob",
-				WhoisHistoryService.class.getSimpleName() + " - Whois History",
-				"Looking up whois and cleaning old records",
-				TIMER_MAX_TIME,
-				TIMER_REMINDER_INTERVAL
-			);
-			try {
-				MasterServer.executorService.submit(timer);
-
-				// Start the transaction
-				InvalidateList invalidateList = new InvalidateList();
-				DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection();
-				try {
-					boolean connRolledBack = false;
-					try {
-						/*
-						 * Remove old records first
-						 */
-						cleanup(conn, invalidateList);
-						conn.commit();
-						MasterServer.invalidateTables(invalidateList, null);
-						invalidateList.reset();
-
-						/*
-						 * The add new records
-						 */
-						// Get the set of unique accounting, zone combinations in the system
-						Set<AccountingAndZone> topLevelZones = getBusinessesAndTopLevelZones(conn);
-						conn.releaseConnection();
-
-						// Perform the whois lookups once per unique zone
-						Map<String,String> whoisCache = new HashMap<>(topLevelZones.size()*4/3+1);
-						for(AccountingAndZone aaz : topLevelZones) {
-							String accounting = aaz.getAccounting();
-							String zone = aaz.getZone();
-							// Check the last time this accounting and zone was done, avoid doing again
-							Timestamp lastChecked = conn.executeTimestampQuery(
-								Connection.TRANSACTION_READ_COMMITTED,
-								true,
-								false,
-								"SELECT \"time\" FROM billing.\"WhoisHistory\" WHERE accounting=? AND \"zone\"=? ORDER BY \"time\" DESC LIMIT 1",
-								accounting,
-								zone
-							);
-							boolean checkNow;
-							if(lastChecked == null) {
-								checkNow = true;
-								if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Never checked, checkNow: " + checkNow);
-							} else {
-								long timeSince = System.currentTimeMillis() - lastChecked.getTime();
-								checkNow = timeSince >= RECHECK_MILLIS || timeSince <= -RECHECK_MILLIS;
-								if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Last checked " + lastChecked + ", checkNow: " + checkNow);
-							}
-							if(checkNow) {
-								String whoisOutput = whoisCache.get(zone);
-								if(whoisOutput == null) {
-									try {
-										whoisOutput = getWhoisOutput(zone);
-										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Success");
-									} catch(Throwable err) {
-										whoisOutput = err.toString();
-										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Error");
-									}
-									whoisCache.put(zone, whoisOutput);
-								}
-								// update database
-								// TODO: Store a success flag, too?
-								// TODO: Store the parsed nameservers, too?  At least for when is success.
-								conn.executeUpdate(
-									"insert into billing.\"WhoisHistory\" (accounting, \"zone\", whois_output) values(?,?,?)",
-									accounting,
-									zone,
-									whoisOutput
-								);
-								invalidateList.addTable(conn, Table.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-								conn.commit();
-								conn.releaseConnection();
-								MasterServer.invalidateTables(invalidateList, null);
-								invalidateList.reset();
-								if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Completed, sleeping");
-								try {
-									Thread.sleep(LOOKUP_SLEEP);
-								} catch(InterruptedException e) {
-									logger.log(Level.WARNING, null, e);
-								}
-							}
-						}
-					} catch(RuntimeException | IOException err) {
-						if(conn.rollback()) {
-							connRolledBack=true;
-							invalidateList=null;
-						}
-						throw err;
-					} catch(SQLException err) {
-						if(conn.rollbackAndClose()) {
-							connRolledBack=true;
-							invalidateList=null;
-						}
-						throw err;
-					} finally {
-						if(!connRolledBack && !conn.isClosed()) conn.commit();
-					}
-				} finally {
-					conn.releaseConnection();
-				}
-				MasterServer.invalidateTables(invalidateList, null);
-			} finally {
-				timer.finished();
-			}
-		} catch(ThreadDeath TD) {
-			throw TD;
-		} catch(Throwable T) {
-			logger.log(Level.SEVERE, null, T);
+	private final CronJob cronJob = new CronJob() {
+		@Override
+		public Schedule getCronJobSchedule() {
+			return schedule;
 		}
-	}
+
+		@Override
+		public CronJobScheduleMode getCronJobScheduleMode() {
+			return CronJobScheduleMode.SKIP;
+		}
+
+		@Override
+		public String getCronJobName() {
+			return getClass().getSimpleName();
+		}
+
+		@Override
+		public int getCronJobThreadPriority() {
+			return Thread.NORM_PRIORITY-1;
+		}
+
+		// TODO: Should we fire this off manually, or at least have a way to do so when the process fails?
+		// TODO: Should there be a monthly task to make sure this process is working correctly?
+		// TODO: Do not run simply as a cron job, but rather a background process that does again based on when
+		//       last successful/failed.  This will be more robust to master server restarts and allow to
+		//       slowly work in the background.
+		// TODO: This should probably go in a dns.monitoring schema, and be watched by NOC monitoring.
+		@Override
+		public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+			try {
+				ProcessTimer timer = new ProcessTimer(
+					logger,
+					MasterServer.getRandom(),
+					getClass().getName(),
+					"runCronJob",
+					WhoisHistoryService.class.getSimpleName() + " - Whois History",
+					"Looking up whois and cleaning old records",
+					TIMER_MAX_TIME,
+					TIMER_REMINDER_INTERVAL
+				);
+				try {
+					MasterServer.executorService.submit(timer);
+
+					// Start the transaction
+					InvalidateList invalidateList = new InvalidateList();
+					DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection();
+					try {
+						boolean connRolledBack = false;
+						try {
+							/*
+							 * Remove old records first
+							 */
+							cleanup(conn, invalidateList);
+							conn.commit();
+							MasterServer.invalidateTables(invalidateList, null);
+							invalidateList.reset();
+
+							/*
+							 * The add new records
+							 */
+							// Get the set of unique accounting, zone combinations in the system
+							Set<AccountingAndZone> topLevelZones = getBusinessesAndTopLevelZones(conn);
+							conn.releaseConnection();
+
+							// Find the number of distinct zones
+							int zoneCount;
+							{
+								Set<String> zones = new HashSet<>();
+								for(AccountingAndZone aaz : topLevelZones) zones.add(aaz.zone);
+								zoneCount = zones.size();
+							}
+							if(zoneCount > 0) {
+								// Compute target sleep time
+								final long targetSleepTime = PASS_COMPLETION_TARGET / zoneCount;
+								if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": Target sleep time for " + zoneCount + " " + (zoneCount==1 ? "zone" : "zones") + " is " + targetSleepTime + " ms");
+								
+								// Perform the whois lookups once per unique zone
+								Map<String,String> whoisCache = new HashMap<>(topLevelZones.size()*4/3+1);
+								for(AccountingAndZone aaz : topLevelZones) {
+									String accounting = aaz.getAccounting();
+									String zone = aaz.getZone();
+									// Check the last time this accounting and zone was done, avoid doing again
+									Timestamp lastChecked = conn.executeTimestampQuery(
+										Connection.TRANSACTION_READ_COMMITTED,
+										true,
+										false,
+										"SELECT \"time\" FROM billing.\"WhoisHistory\" WHERE accounting=? AND \"zone\"=? ORDER BY \"time\" DESC LIMIT 1",
+										accounting,
+										zone
+									);
+									boolean checkNow;
+									if(lastChecked == null) {
+										checkNow = true;
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Never checked, checkNow: " + checkNow);
+									} else {
+										long timeSince = System.currentTimeMillis() - lastChecked.getTime();
+										checkNow = timeSince >= RECHECK_MILLIS || timeSince <= -RECHECK_MILLIS;
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Last checked " + lastChecked + ", checkNow: " + checkNow);
+									}
+									if(checkNow) {
+										long startTime = System.currentTimeMillis();
+										String whoisOutput = whoisCache.get(zone);
+										if(whoisOutput == null) {
+											try {
+												whoisOutput = getWhoisOutput(zone);
+												if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Success");
+											} catch(Throwable err) {
+												whoisOutput = err.toString();
+												if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Error");
+											}
+											whoisCache.put(zone, whoisOutput);
+										}
+										// update database
+										// TODO: Store a success flag, too?
+										// TODO: Store the parsed nameservers, too?  At least for when is success.
+										conn.executeUpdate(
+											"insert into billing.\"WhoisHistory\" (accounting, \"zone\", whois_output) values(?,?,?)",
+											accounting,
+											zone,
+											whoisOutput
+										);
+										invalidateList.addTable(conn, Table.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+										conn.commit();
+										conn.releaseConnection();
+										MasterServer.invalidateTables(invalidateList, null);
+										invalidateList.reset();
+										try {
+											long sleepTime = targetSleepTime - (System.currentTimeMillis() - startTime);
+											if(sleepTime < LOOKUP_SLEEP_MINIMUM) {
+												sleepTime = LOOKUP_SLEEP_MINIMUM;
+											}
+											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Completed, sleeping " + sleepTime + " ms");
+											Thread.sleep(sleepTime);
+										} catch(InterruptedException e) {
+											logger.log(Level.WARNING, null, e);
+										}
+									}
+								}
+							} else {
+								if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": No zones");
+							}
+						} catch(RuntimeException | IOException err) {
+							if(conn.rollback()) {
+								connRolledBack=true;
+								invalidateList=null;
+							}
+							throw err;
+						} catch(SQLException err) {
+							if(conn.rollbackAndClose()) {
+								connRolledBack=true;
+								invalidateList=null;
+							}
+							throw err;
+						} finally {
+							if(!connRolledBack && !conn.isClosed()) conn.commit();
+						}
+					} finally {
+						conn.releaseConnection();
+					}
+					MasterServer.invalidateTables(invalidateList, null);
+				} finally {
+					timer.finished();
+				}
+			} catch(ThreadDeath TD) {
+				throw TD;
+			} catch(Throwable T) {
+				logger.log(Level.SEVERE, null, T);
+			}
+		}
+	};
 
 	private static final String COMMAND = "/usr/bin/whois";
 
