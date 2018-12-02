@@ -376,7 +376,6 @@ final public class WhoisHistoryService implements MasterService {
 	 *
 	 * @see  ZoneTable#getHostTLD(com.aoindustries.net.DomainName, java.util.List)
 	 */
-	// TODO: And hasn't had a successful whois lookup in the last 6 days
 	private Set<AccountingAndZone> getBusinessesAndTopLevelZones(DatabaseConnection conn) throws IOException, SQLException {
 		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
 
