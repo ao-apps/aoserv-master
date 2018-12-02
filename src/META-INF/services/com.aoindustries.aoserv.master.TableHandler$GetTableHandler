@@ -7,12 +7,12 @@ com.aoindustries.aoserv.master.account.UsState_GetTableHandler
 com.aoindustries.aoserv.master.account.Username_GetTableHandler
 com.aoindustries.aoserv.master.accounting.Bank_GetTableHandler
 com.aoindustries.aoserv.master.accounting.BankAccount_GetTableHandler
-com.aoindustries.aoserv.master.accounting.BankTransaction_GetTableHandler
+com.aoindustries.aoserv.master.accounting.BankTransactionHandler$GetTable
 com.aoindustries.aoserv.master.accounting.BankTransactionType_GetTableHandler
 com.aoindustries.aoserv.master.accounting.ExpenseCategory_GetTableHandler
 com.aoindustries.aoserv.master.aosh.Command_GetTableHandler
 com.aoindustries.aoserv.master.backup.BackupPartition_GetTableHandler
-com.aoindustries.aoserv.master.backup.BackupReport_GetTableHandler
+com.aoindustries.aoserv.master.backup.BackupReportHandler$GetTable
 com.aoindustries.aoserv.master.backup.BackupRetention_GetTableHandler
 com.aoindustries.aoserv.master.backup.FileReplication_GetTableHandler
 com.aoindustries.aoserv.master.backup.FileReplicationLog_GetTableHandler
@@ -27,7 +27,7 @@ com.aoindustries.aoserv.master.billing.PackageCategory_GetTableHandler
 com.aoindustries.aoserv.master.billing.PackageDefinition_GetTableHandler
 com.aoindustries.aoserv.master.billing.PackageDefinitionLimit_GetTableHandler
 com.aoindustries.aoserv.master.billing.Resource_GetTableHandler
-com.aoindustries.aoserv.master.billing.Transaction_GetTableHandler
+com.aoindustries.aoserv.master.billing.TransactionHandler$GetTable
 com.aoindustries.aoserv.master.billing.TransactionType_GetTableHandler
 com.aoindustries.aoserv.master.billing.WhoisHistory_GetTableHandler
 com.aoindustries.aoserv.master.distribution.Architecture_GetTableHandler
@@ -68,7 +68,7 @@ com.aoindustries.aoserv.master.email.SmtpRelayType_GetTableHandler
 com.aoindustries.aoserv.master.email.SmtpSmartHost_GetTableHandler
 com.aoindustries.aoserv.master.email.SmtpSmartHostDomain_GetTableHandler
 com.aoindustries.aoserv.master.email.SpamAssassinMode_GetTableHandler
-com.aoindustries.aoserv.master.email.SpamMessage_GetTableHandler
+com.aoindustries.aoserv.master.email.SpamMessageHandler$GetTable
 com.aoindustries.aoserv.master.email.SystemAlias_GetTableHandler
 com.aoindustries.aoserv.master.ftp.GuestUser_GetTableHandler
 com.aoindustries.aoserv.master.ftp.PrivateServer_GetTableHandler

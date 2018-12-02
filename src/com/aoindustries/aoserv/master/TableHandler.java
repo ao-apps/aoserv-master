@@ -9,10 +9,6 @@ import com.aoindustries.aoserv.client.AOServWritable;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.AccountHost;
 import com.aoindustries.aoserv.client.account.Administrator;
-import com.aoindustries.aoserv.client.accounting.BankTransaction;
-import com.aoindustries.aoserv.client.backup.BackupReport;
-import com.aoindustries.aoserv.client.billing.Transaction;
-import com.aoindustries.aoserv.client.email.SpamMessage;
 import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
@@ -58,6 +54,7 @@ final public class TableHandler {
         synchronized(System.out) {
             if(!started) {
                 System.out.print("Starting " + TableHandler.class.getSimpleName());
+				initGetObjectHandlers(System.out);
 				initGetTableHandlers(System.out);
 				started = true;
                 System.out.println(": Done");
@@ -189,6 +186,69 @@ final public class TableHandler {
 			+ "        or pk3.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n"
 	;
 
+	public interface GetObjectHandler {
+		/**
+		 * Gets the set of tables handled.
+		 */
+		java.util.Set<Table.TableID> getTableIds();
+
+		/**
+		 * Handles a client request for the given table.
+		 */
+		void getObject(
+			DatabaseConnection conn,
+			RequestSource source,
+			CompressedDataInputStream in,
+			CompressedDataOutputStream out,
+			Table.TableID tableID,
+			User masterUser,
+			UserHost[] masterServers
+		) throws IOException, SQLException;
+	}
+
+	private static final ConcurrentMap<Table.TableID,GetObjectHandler> getObjectHandlers = new ConcurrentHashMap<>();
+
+	/**
+	 * This is available, but recommend registering via {@link ServiceLoader}.
+	 */
+	public static int addGetObjectHandler(GetObjectHandler handler) {
+		int numTables = 0;
+		{
+			boolean successful = false;
+			java.util.Set<Table.TableID> added = EnumSet.noneOf(Table.TableID.class);
+			try {
+				for(Table.TableID tableID : handler.getTableIds()) {
+					GetObjectHandler existing = getObjectHandlers.putIfAbsent(tableID, handler);
+					if(existing != null) throw new IllegalStateException("Handler already registered for table " + tableID + ": " + existing);
+					added.add(tableID);
+					numTables++;
+				}
+				successful = true;
+			} finally {
+				if(!successful) {
+					// Rollback partial
+					for(Table.TableID id : added) getObjectHandlers.remove(id);
+				}
+			}
+		}
+		if(numTables == 0 && logger.isLoggable(Level.WARNING)) {
+			logger.log(Level.WARNING, GetObjectHandler.class.getSimpleName() + " did not specify any tables: " + handler);
+		}
+		return numTables;
+	}
+
+	private static void initGetObjectHandlers(PrintStream out) {
+		int tableCount = 0;
+		int handlerCount = 0;
+		ServiceLoader<GetObjectHandler> loader = ServiceLoader.load(GetObjectHandler.class);
+		Iterator<GetObjectHandler> iter = loader.iterator();
+		while(iter.hasNext()) {
+			tableCount += addGetObjectHandler(iter.next());
+			handlerCount ++;
+		}
+		out.print(": " + GetObjectHandler.class.getSimpleName() + " (" + handlerCount + " handlers for " + tableCount + " tables)");
+	}
+
 	/**
 	 * Gets one object from a table.
 	 */
@@ -202,126 +262,12 @@ final public class TableHandler {
 		UserId username=source.getUsername();
 		User masterUser=MasterServer.getUser(conn, username);
 		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
-		switch(tableID) {
-			case BACKUP_REPORTS :
-			{
-				int id = in.readCompressedInt();
-				if(masterUser != null) {
-					assert masterServers != null;
-					if(masterServers.length == 0) MasterServer.writeObject(
-						conn,
-						source,
-						out,
-						new BackupReport(),
-						"select * from backup.\"BackupReport\" where id=?",
-						id
-					); else MasterServer.writeObject(
-						conn,
-						source,
-						out,
-						new BackupReport(),
-						"select\n"
-						+ "  br.*\n"
-						+ "from\n"
-						+ "  master.\"UserHost\" ms,\n"
-						+ "  backup.\"BackupReport\" br\n"
-						+ "where\n"
-						+ "  ms.username=?\n"
-						+ "  and ms.server=br.server\n"
-						+ "  and br.id=?",
-						username,
-						id
-					);
-				} else {
-					MasterServer.writeObject(
-						conn,
-						source,
-						out,
-						new BackupReport(),
-						"select\n"
-						+ "  br.*\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk1,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"Package\" pk2,\n"
-						+ "  backup.\"BackupReport\" br\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk1.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK1_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=pk2.accounting\n"
-						+ "  and pk2.id=br.package\n"
-						+ "  and br.id=?",
-						username,
-						id
-					);
-				}
-				break;
-			}
-			case BANK_TRANSACTIONS :
-				if(BankAccountHandler.isBankAccounting(conn, source)) {
-					MasterServer.writeObject(
-						conn,
-						source,
-						out,
-						new BankTransaction(),
-						"select\n"
-						+ "  id,\n"
-						+ "  time,\n" // Was cast to date here but not in full table query - why?
-						+ "  account,\n"
-						+ "  processor,\n"
-						+ "  administrator,\n"
-						+ "  type,\n"
-						+ "  \"expenseCategory\",\n"
-						+ "  description,\n"
-						+ "  \"checkNo\",\n"
-						+ "  amount,\n"
-						+ "  confirmed\n"
-						+ "from\n"
-						+ "  accounting.\"BankTransaction\"\n"
-						+ "where\n"
-						+ "  id=?",
-						in.readCompressedInt()
-					);
-				} else out.writeByte(AoservProtocol.DONE);
-				break;
-			case SPAM_EMAIL_MESSAGES :
-				{
-					int id=in.readCompressedInt();
-					if(masterUser!=null && masterServers!=null && masterServers.length==0) {
-						MasterServer.writeObject(
-							conn,
-							source,
-							out,
-							new SpamMessage(),
-							"select * from email.\"SpamMessage\" where id=?",
-							id
-						);
-					} else {
-						throw new SQLException("Only master users may access email.SpamMessage.");
-					}
-				}
-				break;
-			case TRANSACTIONS :
-				int transid=in.readCompressedInt();
-				if(TransactionHandler.canAccessTransaction(conn, source, transid)) {
-					MasterServer.writeObject(
-						conn,
-						source,
-						out,
-						new Transaction(),
-						"select * from billing.\"Transaction\" where transid=?",
-						transid
-					);
-				} else {
-					out.writeShort(AoservProtocol.DONE);
-				}
-				break;
-			default :
-				throw new IOException("Unknown table ID: "+tableID);
+
+		GetObjectHandler handler = getObjectHandlers.get(tableID);
+		if(handler != null) {
+			handler.getObject(conn, source, in, out, tableID, masterUser, masterServers);
+		} else {
+			throw new IOException("No " + GetObjectHandler.class.getSimpleName() + " registered for table ID: " + tableID);
 		}
 	}
 
@@ -467,7 +413,7 @@ final public class TableHandler {
 			}
 		}
 		if(numTables == 0 && logger.isLoggable(Level.WARNING)) {
-			logger.log(Level.WARNING, "Handler did not specify any tables: " + handler);
+			logger.log(Level.WARNING, GetTableHandler.class.getSimpleName() + " did not specify any tables: " + handler);
 		}
 		return numTables;
 	}
@@ -725,7 +671,7 @@ final public class TableHandler {
 		if(handler != null) {
 			handler.getTable(conn, source, out, provideProgress, tableID, masterUser, masterServers);
 		} else {
-			throw new IOException("No handler registered for table ID: " + tableID);
+			throw new IOException("No " + GetTableHandler.class.getSimpleName() + " registered for table ID: " + tableID);
 		}
 	}
 

@@ -1,0 +1,4 @@
+com.aoindustries.aoserv.master.accounting.BankTransactionHandler$GetObject
+com.aoindustries.aoserv.master.backup.BackupReportHandler$GetObject
+com.aoindustries.aoserv.master.billing.TransactionHandler$GetObject
+com.aoindustries.aoserv.master.email.SpamMessageHandler$GetObject
