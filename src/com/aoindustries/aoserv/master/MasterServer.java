@@ -10594,29 +10594,6 @@ public abstract class MasterServer {
 		}
 	}
 
-	/**
-	 * Performs a query and writes all rows of the result set with {@link CursorMode#AUTO} cursor selection.
-	 *
-	 * @return  The number of rows written
-	 *
-	 * @see  CursorMode#AUTO
-	 * @see  #writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
-	 *
-	 * @deprecated  Please specify {@link CursorMode}, with {@link CursorMode#SELECT} for known small tables, {@link CursorMode#FETCH} for known large tables, and {@link CursorMode#AUTO} for others
-	 */
-	@Deprecated
-	public static long writeObjects(
-		DatabaseConnection conn,
-		RequestSource source,
-		CompressedDataOutputStream out,
-		boolean provideProgress,
-		AOServObject<?,?> obj,
-		String sql,
-		Object ... params
-	) throws IOException, SQLException {
-		return writeObjects(conn, source, out, provideProgress, CursorMode.AUTO, obj, sql, params);
-	}
-
 	public static void writePenniesCheckBusiness(
 		DatabaseConnection conn,
 		RequestSource source,

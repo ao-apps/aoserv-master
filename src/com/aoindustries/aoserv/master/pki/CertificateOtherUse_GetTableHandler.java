@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.pki.CertificateOtherUse;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -36,6 +37,7 @@ public class CertificateOtherUse_GetTableHandler extends TableHandler.GetTableHa
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new CertificateOtherUse(),
 			"select * from pki.\"CertificateOtherUse\""
 		);
@@ -48,6 +50,7 @@ public class CertificateOtherUse_GetTableHandler extends TableHandler.GetTableHa
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new CertificateOtherUse(),
 			"select\n"
 			+ "  scou.*\n"
@@ -68,6 +71,7 @@ public class CertificateOtherUse_GetTableHandler extends TableHandler.GetTableHa
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new CertificateOtherUse(),
 			"select\n"
 			+ "  scou.*\n"

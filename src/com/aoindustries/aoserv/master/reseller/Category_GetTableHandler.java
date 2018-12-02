@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.reseller;
 
 import com.aoindustries.aoserv.client.reseller.Category;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -34,6 +35,7 @@ public class Category_GetTableHandler extends TableHandler.GetTableHandlerPublic
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Category(),
 			"select * from reseller.\"Category\""
 		);

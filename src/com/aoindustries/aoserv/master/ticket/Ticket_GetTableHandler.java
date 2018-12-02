@@ -11,6 +11,7 @@ import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.ticket.Status;
 import com.aoindustries.aoserv.client.ticket.Ticket;
 import com.aoindustries.aoserv.client.ticket.TicketType;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -39,6 +40,7 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			source,
 			out,
 			provideProgress,
+			CursorMode.FETCH,
 			new Ticket(),
 			"select\n"
 			+ "  id,\n"
@@ -71,6 +73,7 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			source,
 			out,
 			provideProgress,
+			CursorMode.FETCH,
 			new Ticket(),
 			"select\n"
 			+ "  ti.id,\n"
@@ -118,6 +121,7 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				source,
 				out,
 				provideProgress,
+				CursorMode.FETCH,
 				new Ticket(),
 				"select distinct\n" // TODO: distinct required?
 				+ "  ti.id,\n"
@@ -161,6 +165,7 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				source,
 				out,
 				provideProgress,
+				CursorMode.FETCH,
 				new Ticket(),
 				"select\n"
 				+ "  ti.id,\n"

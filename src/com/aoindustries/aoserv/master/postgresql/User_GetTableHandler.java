@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.postgresql;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -35,6 +36,7 @@ public class User_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new com.aoindustries.aoserv.client.postgresql.User(),
 			"select * from postgresql.\"User\""
 		);
@@ -47,6 +49,7 @@ public class User_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new com.aoindustries.aoserv.client.postgresql.User(),
 			"select distinct\n"
 			+ "  pu.*\n"
@@ -73,6 +76,7 @@ public class User_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new com.aoindustries.aoserv.client.postgresql.User(),
 			"select\n"
 			+ "  pu.*\n"

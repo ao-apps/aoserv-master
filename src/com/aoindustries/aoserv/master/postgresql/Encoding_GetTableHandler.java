@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.postgresql;
 
 import com.aoindustries.aoserv.client.postgresql.Encoding;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -34,6 +35,7 @@ public class Encoding_GetTableHandler extends TableHandler.GetTableHandlerPublic
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Encoding(),
 			"select * from postgresql.\"Encoding\""
 		);

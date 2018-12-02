@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.net;
 
 import com.aoindustries.aoserv.client.net.AppProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -20,7 +21,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class AppProtocol_GetTableHandler implements TableHandler.GetTableHandlerPublic {
+public class AppProtocol_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -28,12 +29,13 @@ public class AppProtocol_GetTableHandler implements TableHandler.GetTableHandler
 	}
 
 	@Override
-	public void getTablePublic(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	protected void getTablePublic(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new AppProtocol(),
 			"select * from net.\"AppProtocol\""
 		);

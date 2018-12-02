@@ -1187,6 +1187,7 @@ final public class EmailHandler {
 			source,
 			out,
 			provideProgress,
+			CursorMode.FETCH,
 			new SpamMessage(),
 			"select * from email.\"SpamMessage\" where email_relay=?",
 			esr

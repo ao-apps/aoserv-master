@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.web.VirtualHost;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -36,6 +37,7 @@ public class VirtualHost_GetTableHandler extends TableHandler.GetTableHandlerByR
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new VirtualHost(),
 			"select\n"
 			+ "  hsb.*,\n"
@@ -57,6 +59,7 @@ public class VirtualHost_GetTableHandler extends TableHandler.GetTableHandlerByR
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new VirtualHost(),
 			"select\n"
 			+ "  hsb.*,\n"
@@ -85,6 +88,7 @@ public class VirtualHost_GetTableHandler extends TableHandler.GetTableHandlerByR
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new VirtualHost(),
 			"select\n"
 			+ "  hsb.*,\n"

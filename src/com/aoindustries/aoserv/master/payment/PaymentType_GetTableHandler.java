@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.payment;
 
 import com.aoindustries.aoserv.client.payment.PaymentType;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -34,6 +35,7 @@ public class PaymentType_GetTableHandler extends TableHandler.GetTableHandlerPub
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new PaymentType(),
 			"select * from payment.\"PaymentType\""
 		);

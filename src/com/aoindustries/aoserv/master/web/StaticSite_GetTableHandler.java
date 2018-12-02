@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.web.StaticSite;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -36,6 +37,7 @@ public class StaticSite_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new StaticSite(),
 			"select * from web.\"StaticSite\""
 		);
@@ -48,6 +50,7 @@ public class StaticSite_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new StaticSite(),
 			"select\n"
 			+ "  hss.*\n"
@@ -70,6 +73,7 @@ public class StaticSite_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new StaticSite(),
 			"select\n"
 			+ "  hss.*\n"

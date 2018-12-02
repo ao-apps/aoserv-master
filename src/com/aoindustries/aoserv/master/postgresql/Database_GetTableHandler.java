@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.postgresql.Database;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -36,6 +37,7 @@ public class Database_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new Database(),
 			"select * from postgresql.\"Database\""
 		);
@@ -48,6 +50,7 @@ public class Database_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new Database(),
 			"SELECT\n"
 			+ "  pd.*\n"
@@ -68,6 +71,7 @@ public class Database_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new Database(),
 			"select\n"
 			+ "  pd.*\n"

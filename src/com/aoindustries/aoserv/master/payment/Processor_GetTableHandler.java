@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.payment.Processor;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -43,6 +44,7 @@ public class Processor_GetTableHandler extends TableHandler.GetTableHandlerPermi
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Processor(),
 			"select * from payment.\"Processor\""
 		);
@@ -60,6 +62,7 @@ public class Processor_GetTableHandler extends TableHandler.GetTableHandlerPermi
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Processor(),
 			"select\n"
 			+ "  ccp.*\n"

@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.email;
 
 import com.aoindustries.aoserv.client.email.AttachmentType;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -20,7 +21,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class AttachmentType_GetTableHandler implements TableHandler.GetTableHandlerPublic {
+public class AttachmentType_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -28,12 +29,13 @@ public class AttachmentType_GetTableHandler implements TableHandler.GetTableHand
 	}
 
 	@Override
-	public void getTablePublic(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	protected void getTablePublic(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new AttachmentType(),
 			"select * from email.\"AttachmentType\""
 		);

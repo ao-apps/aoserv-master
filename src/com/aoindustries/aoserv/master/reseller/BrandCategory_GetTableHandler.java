@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.reseller.BrandCategory;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -37,6 +38,7 @@ public class BrandCategory_GetTableHandler extends TableHandler.GetTableHandlerB
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new BrandCategory(),
 			"select * from reseller.\"BrandCategory\""
 		);
@@ -54,6 +56,7 @@ public class BrandCategory_GetTableHandler extends TableHandler.GetTableHandlerB
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new BrandCategory(),
 			"select\n"
 			+ "  tbc.*\n"

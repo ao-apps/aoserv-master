@@ -246,6 +246,7 @@ final public class TransactionHandler {
                 source,
                 out,
                 provideProgress,
+				CursorMode.AUTO,
                 new Transaction(),
                 "select * from billing.\"Transaction\" where type=? and payment_confirmed='W'",
 				TransactionType.PAYMENT
@@ -274,6 +275,7 @@ final public class TransactionHandler {
                 source,
                 out,
                 provideProgress,
+				CursorMode.AUTO,
                 new Transaction(),
                 "select * from billing.\"Transaction\" where accounting=?",
                 accounting
@@ -283,6 +285,7 @@ final public class TransactionHandler {
             source,
             out,
             provideProgress,
+			CursorMode.AUTO,
             new Transaction(),
             "select\n"
             + "  tr.*\n"
@@ -321,6 +324,7 @@ final public class TransactionHandler {
             source,
             out,
             provideProgress,
+			CursorMode.FETCH,
             new Transaction(),
             "select * from billing.\"Transaction\" where username=?",
             username

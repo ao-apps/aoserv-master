@@ -48,6 +48,7 @@ final public class BankAccountHandler {
 				source,
 				out,
 				provideProgress,
+				CursorMode.FETCH,
 				new BankTransaction(),
 				"select * from accounting.\"BankTransaction\" where account=?",
 				account

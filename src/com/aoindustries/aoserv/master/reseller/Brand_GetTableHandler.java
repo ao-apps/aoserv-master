@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.reseller.Brand;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -37,6 +38,7 @@ public class Brand_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Brand(),
 			"select * from reseller.\"Brand\""
 		);
@@ -52,6 +54,7 @@ public class Brand_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Brand(),
 			"select\n"
 			+ "  br.accounting,\n"
@@ -116,6 +119,7 @@ public class Brand_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Brand(),
 			"select\n"
 			+ "  br.*\n"

@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.accounting;
 import com.aoindustries.aoserv.client.accounting.BankTransactionType;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -34,6 +35,7 @@ public class BankTransactionType_GetTableHandler implements GetTableHandlerAccou
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new BankTransactionType(),
 			"select * from accounting.\"BankTransactionType\""
 		);

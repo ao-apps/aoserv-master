@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.postgresql.UserServer;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -37,6 +38,7 @@ public class UserServer_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new UserServer(),
 			"select * from postgresql.\"UserServer\""
 		);
@@ -49,6 +51,7 @@ public class UserServer_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new UserServer(),
 			"SELECT\n"
 			+ "  psu.*\n"
@@ -69,6 +72,7 @@ public class UserServer_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new UserServer(),
 			"select\n"
 			+ "  psu.id,\n"

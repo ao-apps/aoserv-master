@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.signup.Request;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -37,6 +38,7 @@ public class Request_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new Request(),
 			"select\n"
 			+ "  id\n"
@@ -93,6 +95,7 @@ public class Request_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new Request(),
 			"select\n"
 			+ "  sr.id\n"

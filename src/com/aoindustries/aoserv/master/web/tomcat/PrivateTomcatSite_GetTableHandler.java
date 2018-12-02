@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.web.tomcat.PrivateTomcatSite;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -36,6 +37,7 @@ public class PrivateTomcatSite_GetTableHandler extends TableHandler.GetTableHand
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new PrivateTomcatSite(),
 			"select * from \"web.tomcat\".\"PrivateTomcatSite\""
 		);
@@ -48,6 +50,7 @@ public class PrivateTomcatSite_GetTableHandler extends TableHandler.GetTableHand
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new PrivateTomcatSite(),
 			"select\n"
 			+ "  htss.*\n"
@@ -70,6 +73,7 @@ public class PrivateTomcatSite_GetTableHandler extends TableHandler.GetTableHand
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new PrivateTomcatSite(),
 			"select\n"
 			+ "  htss.*\n"

@@ -9,6 +9,8 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.ticket.Action;
+import com.aoindustries.aoserv.client.ticket.Status;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -38,6 +40,7 @@ public class Action_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			source,
 			out,
 			provideProgress,
+			CursorMode.FETCH,
 			new Action(),
 			"select\n"
 			+ "  id,\n"
@@ -78,8 +81,9 @@ public class Action_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				source,
 				out,
 				provideProgress,
+				CursorMode.FETCH,
 				new Action(),
-				"select\n"
+				"select distinct\n" // TODO: distinct required?
 				+ "  ta.id,\n"
 				+ "  ta.ticket,\n"
 				+ "  ta.administrator,\n"
@@ -126,6 +130,7 @@ public class Action_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				source,
 				out,
 				provideProgress,
+				CursorMode.FETCH,
 				new Action(),
 				"select\n"
 				+ "  ta.id,\n"
@@ -161,11 +166,13 @@ public class Action_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				+ TableHandler.PK1_BU1_PARENTS_WHERE
 				+ "  )\n"
 				+ "  and bu1.accounting=ti.accounting\n"
-				+ "  and ti.status not in ('junk', 'deleted')\n"
+				+ "  and ti.status not in (?,?)\n"
 				+ "  and ti.id=ta.ticket\n"
 				+ "  and ta.action_type=tat.type\n"
 				+ "  and not tat.visible_admin_only",
-				source.getUsername()
+				source.getUsername(),
+				Status.JUNK,
+				Status.DELETED
 			);
 		}
 	}

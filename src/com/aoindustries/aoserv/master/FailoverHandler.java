@@ -279,7 +279,17 @@ final public class FailoverHandler implements CronJob {
 		int fromServer = getFromServerForFailoverFileReplication(conn, replication);
 		ServerHandler.checkAccessServer(conn, source, "getFailoverFileLogs", fromServer);
 
-		MasterServer.writeObjects(conn, source, out, false, new FileReplicationLog(), "select * from backup.\"FileReplicationLog\" where replication=? order by start_time desc limit ?", replication, maxRows);
+		MasterServer.writeObjects(
+			conn,
+			source,
+			out,
+			false,
+			maxRows > CursorMode.AUTO_CURSOR_ABOVE ? CursorMode.FETCH : CursorMode.SELECT,
+			new FileReplicationLog(),
+			"select * from backup.\"FileReplicationLog\" where replication=? order by start_time desc limit ?",
+			replication,
+			maxRows
+		);
 	}
 
 	public static Tuple2<Long,String> getFailoverFileReplicationActivity(

@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -23,7 +24,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class VirtualServer_GetTableHandler implements TableHandler.GetTableHandlerByRole {
+public class VirtualServer_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -31,24 +32,26 @@ public class VirtualServer_GetTableHandler implements TableHandler.GetTableHandl
 	}
 
 	@Override
-	public void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+	protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new VirtualServer(),
 			"select * from infrastructure.\"VirtualServer\""
 		);
 	}
 
 	@Override
-	public void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new VirtualServer(),
 			"select distinct\n"
 			+ "  vs.*\n"
@@ -62,12 +65,13 @@ public class VirtualServer_GetTableHandler implements TableHandler.GetTableHandl
 	}
 
 	@Override
-	public void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new VirtualServer(),
 			"select distinct\n"
 			+ "  vs.server,\n"
@@ -92,7 +96,7 @@ public class VirtualServer_GetTableHandler implements TableHandler.GetTableHandl
 			+ "    when (\n"
 			+ "      select bs2.id from account.\"AccountHost\" bs2 where bs2.accounting=pk.accounting and bs2.server=vs.server and bs2.can_vnc_console limit 1\n"
 			+ "    ) is not null then vs.vnc_password\n"
-			+ "    else '"+AoservProtocol.FILTERED+"'::text\n"
+			+ "    else ?\n"
 			+ "  end\n"
 			+ "from\n"
 			+ "  account.\"Username\" un,\n"
@@ -111,6 +115,7 @@ public class VirtualServer_GetTableHandler implements TableHandler.GetTableHandl
 			// Allow servers it replicates to
 			//+ "    or bp.ao_server=vs.server\n"
 			+ "  )",
+			AoservProtocol.FILTERED,
 			source.getUsername()
 		);
 	}

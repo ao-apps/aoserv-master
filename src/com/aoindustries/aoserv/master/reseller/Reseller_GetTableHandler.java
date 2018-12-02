@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.reseller.Reseller;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -37,6 +38,7 @@ public class Reseller_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Reseller(),
 			"select * from reseller.\"Reseller\""
 		);
@@ -54,6 +56,7 @@ public class Reseller_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Reseller(),
 			"select\n"
 			+ "  re.*\n"

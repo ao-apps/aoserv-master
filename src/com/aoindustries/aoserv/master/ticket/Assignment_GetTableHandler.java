@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.ticket.Assignment;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -38,6 +39,7 @@ public class Assignment_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new Assignment(),
 			"select * from ticket.\"Assignment\""
 		);
@@ -57,6 +59,7 @@ public class Assignment_GetTableHandler extends TableHandler.GetTableHandlerByRo
 				source,
 				out,
 				provideProgress,
+				CursorMode.AUTO,
 				new Assignment(),
 				"select distinct\n" // TODO: distinct required?
 				+ "  ta.*\n"

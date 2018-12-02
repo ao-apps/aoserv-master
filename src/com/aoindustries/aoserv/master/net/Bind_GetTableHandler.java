@@ -14,6 +14,7 @@ import com.aoindustries.aoserv.client.net.FirewallZone;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -30,7 +31,7 @@ import java.util.Set;
  * @author  AO Industries, Inc.
  */
 // TODO: Only do inner joins for open_firewall for clients 1.80.2 and older?
-public class Bind_GetTableHandler implements TableHandler.GetTableHandlerByRole {
+public class Bind_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -38,12 +39,13 @@ public class Bind_GetTableHandler implements TableHandler.GetTableHandlerByRole 
 	}
 
 	@Override
-	public void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+	protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new Bind(),
 			"select\n"
 			+ "  nb.*,\n"
@@ -65,12 +67,13 @@ public class Bind_GetTableHandler implements TableHandler.GetTableHandlerByRole 
 	}
 
 	@Override
-	public void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new Bind(),
 			"select\n"
 			+ "  nb.id,\n"
@@ -122,13 +125,14 @@ public class Bind_GetTableHandler implements TableHandler.GetTableHandlerByRole 
 	}
 
 	@Override
-	public void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		UserId username = source.getUsername();
 		MasterServer.writeObjects(
 			conn,
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new Bind(),
 			"select\n"
 			+ "  nb.id,\n"

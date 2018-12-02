@@ -43,6 +43,7 @@ public class DistroFile_GetTableHandler extends TableHandler.GetTableHandlerByRo
 				source,
 				out,
 				provideProgress,
+				CursorMode.FETCH,
 				new DistroFile(),
 				"select * from \"distribution.management\".\"DistroFile\""
 			);

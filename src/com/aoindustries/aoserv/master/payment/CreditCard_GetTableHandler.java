@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.payment.CreditCard;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -43,6 +44,7 @@ public class CreditCard_GetTableHandler extends TableHandler.GetTableHandlerPerm
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new CreditCard(),
 			"select * from payment.\"CreditCard\""
 		);
@@ -60,6 +62,7 @@ public class CreditCard_GetTableHandler extends TableHandler.GetTableHandlerPerm
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new CreditCard(),
 			"select\n"
 			+ "  cc.*\n"

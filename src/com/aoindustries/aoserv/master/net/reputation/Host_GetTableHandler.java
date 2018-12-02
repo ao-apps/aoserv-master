@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.reputation.Host;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -23,7 +24,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class Host_GetTableHandler implements TableHandler.GetTableHandlerByRole {
+public class Host_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -34,12 +35,13 @@ public class Host_GetTableHandler implements TableHandler.GetTableHandlerByRole 
 	 * Admin may access all sets.
 	 */
 	@Override
-	public void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+	protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
 			out,
 			provideProgress,
+			CursorMode.FETCH,
 			new Host(),
 			"select * from \"net.reputation\".\"Host\""
 		);
@@ -52,13 +54,14 @@ public class Host_GetTableHandler implements TableHandler.GetTableHandlerByRole 
 	 * @see  User#isRouter()
 	 */
 	@Override
-	public void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 		if(masterUser.isRouter()) {
 			MasterServer.writeObjects(
 				conn,
 				source,
 				out,
 				provideProgress,
+				CursorMode.FETCH,
 				new com.aoindustries.aoserv.client.net.Host(),
 				"select distinct\n"
 				+ "  irsh.*\n"
@@ -84,12 +87,13 @@ public class Host_GetTableHandler implements TableHandler.GetTableHandlerByRole 
 	 * Regular user may only access the hosts for their own or subaccount sets.
 	 */
 	@Override
-	public void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
 			out,
 			provideProgress,
+			CursorMode.FETCH,
 			new Host(),
 			"select\n"
 			+ "  irsh.*\n"

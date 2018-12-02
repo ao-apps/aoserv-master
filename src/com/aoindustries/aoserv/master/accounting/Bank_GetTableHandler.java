@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.accounting;
 import com.aoindustries.aoserv.client.accounting.Bank;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -34,6 +35,7 @@ public class Bank_GetTableHandler implements GetTableHandlerAccountingOnly {
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Bank(),
 			"select * from accounting.\"Bank\""
 		);

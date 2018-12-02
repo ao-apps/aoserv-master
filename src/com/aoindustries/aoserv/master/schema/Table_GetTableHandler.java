@@ -6,6 +6,7 @@
 package com.aoindustries.aoserv.master.schema;
 
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -33,6 +34,7 @@ public class Table_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Table(),
 			"select\n"
 			+ "  ROW_NUMBER() OVER (ORDER BY st.id) - 1 as \"id\",\n"

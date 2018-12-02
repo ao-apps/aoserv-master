@@ -51,7 +51,7 @@ public enum CursorMode {
 	AUTO;
 
 	/**
-	 * The number of rows when cursors are enabled in auto mode.
+	 * The number of rows above which when cursors are enabled in auto mode.
 	 * By default, triple {@link TableHandler#RESULT_SET_BATCH_SIZE}, which avoids
 	 * round-trips to the server for tables that would result in only a few
 	 * batches.

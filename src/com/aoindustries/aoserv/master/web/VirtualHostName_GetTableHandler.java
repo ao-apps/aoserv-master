@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.web.VirtualHostName;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -36,6 +37,7 @@ public class VirtualHostName_GetTableHandler extends TableHandler.GetTableHandle
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new VirtualHostName(),
 			"select * from web.\"VirtualHostName\""
 		);
@@ -48,6 +50,7 @@ public class VirtualHostName_GetTableHandler extends TableHandler.GetTableHandle
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new VirtualHostName(),
 			"select\n"
 			+ "  hsu.*\n"
@@ -72,6 +75,7 @@ public class VirtualHostName_GetTableHandler extends TableHandler.GetTableHandle
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new VirtualHostName(),
 			"select\n"
 			+ "  hsu.*\n"

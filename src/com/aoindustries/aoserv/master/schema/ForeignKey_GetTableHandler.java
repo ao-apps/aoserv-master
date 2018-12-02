@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.schema;
 
 import com.aoindustries.aoserv.client.schema.ForeignKey;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -34,6 +35,7 @@ public class ForeignKey_GetTableHandler extends TableHandler.GetTableHandlerPubl
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new ForeignKey(),
 			"select\n"
 			+ "  sfk.*\n"

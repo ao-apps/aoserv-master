@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master.ticket;
 
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.ticket.Status;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -34,6 +35,7 @@ public class Status_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 			source,
 			out,
 			provideProgress,
+			CursorMode.SELECT,
 			new Status(),
 			"select * from ticket.\"Status\""
 		);

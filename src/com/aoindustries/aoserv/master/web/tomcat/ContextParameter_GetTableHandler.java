@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.web.tomcat.ContextParameter;
+import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -36,6 +37,7 @@ public class ContextParameter_GetTableHandler extends TableHandler.GetTableHandl
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new ContextParameter(),
 			"select * from \"web.tomcat\".\"ContextParameter\""
 		);
@@ -48,6 +50,7 @@ public class ContextParameter_GetTableHandler extends TableHandler.GetTableHandl
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new ContextParameter(),
 			"select\n"
 			+ "  htp.*\n"
@@ -72,6 +75,7 @@ public class ContextParameter_GetTableHandler extends TableHandler.GetTableHandl
 			source,
 			out,
 			provideProgress,
+			CursorMode.AUTO,
 			new ContextParameter(),
 			"select\n"
 			+ "  htp.*\n"
