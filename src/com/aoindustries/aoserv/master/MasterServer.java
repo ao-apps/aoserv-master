@@ -10508,7 +10508,7 @@ public abstract class MasterServer {
 			} finally {
 				final String closeSql = "CLOSE fetch_objects";
 				try {
-					stmt.executeQuery(closeSql);
+					stmt.executeUpdate(closeSql);
 				} catch(SQLException err) {
 					throw new WrappedSQLException(err, closeSql);
 				}
