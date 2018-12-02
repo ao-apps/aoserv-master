@@ -30,6 +30,9 @@ public class SpamMessageHandler {
 
 	private SpamMessageHandler() {}
 
+	private static final String QUERY_MASTER =
+		"select * from email.\"SpamMessage\"";
+
 	static public class GetObject implements TableHandler.GetObjectHandler {
 
 		@Override
@@ -46,7 +49,7 @@ public class SpamMessageHandler {
 					source,
 					out,
 					new SpamMessage(),
-					"select * from email.\"SpamMessage\" where id=?",
+					QUERY_MASTER + " where id=?",
 					id
 				);
 			} else {
@@ -71,7 +74,7 @@ public class SpamMessageHandler {
 				provideProgress,
 				CursorMode.FETCH,
 				new SpamMessage(),
-				"select * from email.\"SpamMessage\""
+				QUERY_MASTER
 			);
 		}
 

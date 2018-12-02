@@ -88,7 +88,7 @@ public class TransactionHandler {
 		}
 	}
 
-	static public class GetTable extends TableHandler.GetTableHandlerByRole {
+	static public class Transaction_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {
