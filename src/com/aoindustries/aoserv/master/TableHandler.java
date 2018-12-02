@@ -238,16 +238,44 @@ final public class TableHandler {
 		return numTables;
 	}
 
-	private static void initGetObjectHandlers(PrintStream out) {
+	private static void printCounts(
+		PrintStream out,
+		Class<?> type,
+		int handlerCount,
+		int tableCount
+	) {
+		out.print(type.getSimpleName());
+		out.print(" (");
+		out.print(handlerCount);
+		out.print(' ');
+		out.print(handlerCount == 1 ? "handler" : "handlers");
+		out.print(" for ");
+		out.print(tableCount);
+		out.print(' ');
+		out.print(tableCount == 1 ? "table" : "tables");
+		out.print(')');
+	}
+
+	static void initGetObjectHandlers(Iterator<GetObjectHandler> handlers, PrintStream out, boolean hideIfZero) {
 		int tableCount = 0;
 		int handlerCount = 0;
-		ServiceLoader<GetObjectHandler> loader = ServiceLoader.load(GetObjectHandler.class);
-		Iterator<GetObjectHandler> iter = loader.iterator();
-		while(iter.hasNext()) {
-			tableCount += addGetObjectHandler(iter.next());
-			handlerCount ++;
+		while(handlers.hasNext()) {
+			tableCount += addGetObjectHandler(handlers.next());
+			handlerCount++;
 		}
-		out.print(": " + GetObjectHandler.class.getSimpleName() + " (" + handlerCount + " handlers for " + tableCount + " tables)");
+		if(!hideIfZero || handlerCount != 0) {
+			out.print(": ");
+			printCounts(
+				out,
+				GetObjectHandler.class,
+				handlerCount,
+				tableCount
+			);
+		}
+	}
+
+	private static void initGetObjectHandlers(PrintStream out) {
+		initGetObjectHandlers(ServiceLoader.load(GetObjectHandler.class).iterator(), out, false);
 	}
 
 	/**
@@ -420,16 +448,26 @@ final public class TableHandler {
 		return numTables;
 	}
 
-	private static void initGetTableHandlers(PrintStream out) {
+	static void initGetTableHandlers(Iterator<GetTableHandler> handlers, PrintStream out, boolean hideIfZero) {
 		int tableCount = 0;
 		int handlerCount = 0;
-		ServiceLoader<GetTableHandler> loader = ServiceLoader.load(GetTableHandler.class);
-		Iterator<GetTableHandler> iter = loader.iterator();
-		while(iter.hasNext()) {
-			tableCount += addGetTableHandler(iter.next());
+		while(handlers.hasNext()) {
+			tableCount += addGetTableHandler(handlers.next());
 			handlerCount ++;
 		}
-		out.print(": " + GetTableHandler.class.getSimpleName() + " (" + handlerCount + " handlers for " + tableCount + " tables)");
+		if(!hideIfZero || handlerCount != 0) {
+			out.print(": ");
+			printCounts(
+				out,
+				GetTableHandler.class,
+				handlerCount,
+				tableCount
+			);
+		}
+	}
+
+	private static void initGetTableHandlers(PrintStream out) {
+		initGetTableHandlers(ServiceLoader.load(GetTableHandler.class).iterator(), out, false);
 	}
 
 	static abstract public class GetTableHandlerByRole implements GetTableHandler {

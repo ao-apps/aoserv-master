@@ -26,6 +26,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
+// TODO: TransactionService
 public class TransactionHandler {
 
 	private TransactionHandler() {}
@@ -88,7 +89,7 @@ public class TransactionHandler {
 		}
 	}
 
-	static public class Transaction_GetTableHandler extends TableHandler.GetTableHandlerByRole {
+	static public class GetTable extends TableHandler.GetTableHandlerByRole {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {

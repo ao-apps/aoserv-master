@@ -62,6 +62,7 @@ import com.aoindustries.util.StringUtility;
 import com.aoindustries.util.Tuple2;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.Date;
@@ -10107,7 +10108,7 @@ public abstract class MasterServer {
 			}
 			System.out.println(servicesToStart.size() + " " + (servicesToStart.size() == 1 ? "service" : "services") + " loaded");
 
-			List<MasterServiceEntry> failedServices = startServices(servicesToStart, true);
+			List<MasterServiceEntry> failedServices = startServices(servicesToStart, true, System.out);
 
 			// Start listening after initialization to allow all modules to be loaded
 			// TODO: Should the network protocol be a service, too?
@@ -10142,7 +10143,7 @@ public abstract class MasterServer {
 				} catch(InterruptedException e) {
 					logger.log(Level.WARNING, null, e);
 				}
-				failedServices = startServices(failedServices, false);
+				failedServices = startServices(failedServices, false, System.out);
 			}
 		} catch (IOException | IllegalArgumentException err) {
 			logger.log(Level.SEVERE, null, err);
@@ -10152,58 +10153,36 @@ public abstract class MasterServer {
 	/**
 	 * Starts the given services, returning a list of those that failed to start.
 	 */
-	private static List<MasterServiceEntry> startServices(List<MasterServiceEntry> servicesToStart, boolean isFirstStart) {
+	private static List<MasterServiceEntry> startServices(List<MasterServiceEntry> servicesToStart, boolean isFirstStart, PrintStream out) {
 		// TODO: Support starting in dependency order
-		System.out.println(isFirstStart ? "Starting services:" : "Starting failed services:");
+		out.println(isFirstStart ? "Starting services:" : "Starting failed services:");
 		List<MasterServiceEntry> failedServices = new ArrayList<>();
 		for(MasterServiceEntry serviceEntry : servicesToStart) {
 			MasterService service = serviceEntry.service;
-			System.out.print("    " + service.getClass().getName() + ": ");
+			out.print("    " + service.getClass().getName());
 			boolean started = false;
 			try {
 				service.start();
 				serviceEntry.started = true;
 				started = true;
 				// Fatal, will no retry adding handlers when exception happens on first attempt
-				initObjectHandlers(service);
-				initTableHandlers(service);
-				System.out.println("Success");
+				TableHandler.initGetObjectHandlers(service.getGetObjectHandlers().iterator(), out, true);
+				TableHandler.initGetTableHandlers(service.getGetTableHandlers().iterator(), out, true);
+				out.println(": Success");
 			} catch(Exception e) {
 				if(!started) failedServices.add(serviceEntry);
-				System.out.println(e.toString());
+				out.println(": " + e.toString());
 				logger.log(Level.SEVERE, null, e);
 			}
 		}
 		if(!failedServices.isEmpty()) {
 			if(isFirstStart) {
-				System.out.println(failedServices.size() + " failed " + (failedServices.size() == 1 ? "service" : "services") + " will be retried");
+				out.println(failedServices.size() + " failed " + (failedServices.size() == 1 ? "service" : "services") + " will be retried");
 			} else {
-				System.out.println(failedServices.size() + " failed " + (failedServices.size() == 1 ? "service remains" : "services remain"));
+				out.println(failedServices.size() + " failed " + (failedServices.size() == 1 ? "service remains" : "services remain"));
 			}
 		}
 		return failedServices;
-	}
-
-	private static void initObjectHandlers(MasterService service) {
-		int objectHandlerCount = 0;
-		for(TableHandler.GetObjectHandler handler : service.getGetObjectHandlers()) {
-			objectHandlerCount++;
-			TableHandler.addGetObjectHandler(handler);
-		}
-		if(objectHandlerCount != 0) {
-			System.out.println(objectHandlerCount + " " + TableHandler.GetObjectHandler.class.getSimpleName() + ": ");
-		}
-	}
-
-	private static void initTableHandlers(MasterService service) {
-		int tableHandlerCount = 0;
-		for(TableHandler.GetTableHandler handler : service.getGetTableHandlers()) {
-			tableHandlerCount++;
-			TableHandler.addGetTableHandler(handler);
-		}
-		if(tableHandlerCount != 0) {
-			System.out.println(tableHandlerCount + " " + TableHandler.GetTableHandler.class.getSimpleName() + ": ");
-		}
 	}
 
 	private static void removeCacheListener(RequestSource source) {

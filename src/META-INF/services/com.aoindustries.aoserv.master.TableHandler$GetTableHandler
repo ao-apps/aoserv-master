@@ -29,7 +29,6 @@ com.aoindustries.aoserv.master.billing.PackageDefinitionLimit_GetTableHandler
 com.aoindustries.aoserv.master.billing.Resource_GetTableHandler
 com.aoindustries.aoserv.master.billing.TransactionHandler$GetTable
 com.aoindustries.aoserv.master.billing.TransactionType_GetTableHandler
-com.aoindustries.aoserv.master.billing.WhoisHistory_GetTableHandler
 com.aoindustries.aoserv.master.distribution.Architecture_GetTableHandler
 com.aoindustries.aoserv.master.distribution.OperatingSystem_GetTableHandler
 com.aoindustries.aoserv.master.distribution.OperatingSystemVersion_GetTableHandler
