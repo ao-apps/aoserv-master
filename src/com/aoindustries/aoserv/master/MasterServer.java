@@ -40,6 +40,7 @@ import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.web.Location;
 import com.aoindustries.aoserv.client.web.tomcat.Context;
+import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
 import com.aoindustries.io.CompressedDataInputStream;
@@ -54,6 +55,7 @@ import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
+import com.aoindustries.util.MinimalList;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
 import com.aoindustries.util.Tuple2;
@@ -74,12 +76,16 @@ import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -99,6 +105,8 @@ import java.util.logging.Logger;
 public abstract class MasterServer {
 
 	private static final Logger logger = LogFactory.getLogger(MasterServer.class);
+
+	private static final int SERVICE_RETRY_INTERVAL = 60 * 1000; // One minute
 
 	/**
 	 * An unbounded executor for master-wide tasks.
@@ -1207,7 +1215,7 @@ public abstract class MasterServer {
 														destination,
 														ttl==Record.NO_TTL ? null : ttl
 													);
-													int id = DNSHandler.addDNSRecord(
+													int id = MasterServer.getService(DnsService.class).addDNSRecord(
 														conn,
 														source,
 														invalidateList,
@@ -1239,7 +1247,7 @@ public abstract class MasterServer {
 														ip,
 														ttl
 													);
-													DNSHandler.addDNSZone(
+													MasterServer.getService(DnsService.class).addDNSZone(
 														conn,
 														source,
 														invalidateList,
@@ -5692,7 +5700,7 @@ public abstract class MasterServer {
 												"get_whois_history_whois_output",
 												id
 											);
-											String whoisOutput = DNSHandler.getWhoisHistoryOutput(
+											String whoisOutput = MasterServer.getService(DnsService.class).getWhoisHistoryOutput(
 												conn,
 												source,
 												id
@@ -5790,7 +5798,7 @@ public abstract class MasterServer {
 												Command.IS_DNS_ZONE_AVAILABLE,
 												zone
 											);
-											boolean isAvailable = DNSHandler.isDNSZoneAvailable(
+											boolean isAvailable = MasterServer.getService(DnsService.class).isDNSZoneAvailable(
 												conn,
 												zone
 											);
@@ -6252,7 +6260,7 @@ public abstract class MasterServer {
 														Command.REMOVE_DNS_RECORD,
 														id
 													);
-													DNSHandler.removeDNSRecord(
+													MasterServer.getService(DnsService.class).removeDNSRecord(
 														conn,
 														source,
 														invalidateList,
@@ -6268,7 +6276,7 @@ public abstract class MasterServer {
 														Command.REMOVE_DNS_ZONE,
 														zone
 													);
-													DNSHandler.removeDNSZone(
+													MasterServer.getService(DnsService.class).removeDNSZone(
 														conn,
 														source,
 														invalidateList,
@@ -7164,7 +7172,7 @@ public abstract class MasterServer {
 												zone,
 												ttl
 											);
-											DNSHandler.setDNSZoneTTL(
+											MasterServer.getService(DnsService.class).setDNSZoneTTL(
 												conn,
 												source,
 												invalidateList,
@@ -9985,12 +9993,61 @@ public abstract class MasterServer {
 		}
 	}
 
+	private static class MasterServiceEntry {
+		private final MasterService service;
+		private volatile boolean started;
+		private MasterServiceEntry(MasterService service) {
+			this.service = service;
+		}
+	}
+
+	private static final ConcurrentMap<Class<? extends MasterService>,List<MasterServiceEntry>> servicesByClass = new ConcurrentHashMap<>();
+
 	/**
-	 * Runs all of the configured protocols of <code>UserHost</code>
+	 * Gets the service of the given class.  The service must be started.
+	 * If more than one started service is of the given class, there is no
+	 * guarantee which is returned.
+	 *
+	 * @throws NoServiceException when no services are of the given class
+	 * @throws ServiceNotStartedException when no services of the given class are started
+	 */
+	public static <MS extends MasterService> MS getService(Class<MS> clazz) throws MasterServiceException {
+		// Look for exact class match in a single lookup, since all classes were put into the map
+		List<MasterServiceEntry> entries = servicesByClass.get(clazz);
+		if(entries != null) {
+			for(MasterServiceEntry entry : entries) {
+				if(entry.started) {
+					return clazz.cast(entry.service);
+				}
+			}
+			throw new ServiceNotStartedException(
+				entries.size() + " failed " + (entries.size() == 1 ? "service" : "services") + " found for class: " + clazz.getName()
+			);
+		}
+		throw new NoServiceException("No service found for class: " + clazz.getName());
+	}
+
+	/**
+	 * Gets all the classes of a class that are assignable from a class.  Ha! parse that puny human.
+	 */
+	private static <T> Set<Class<? extends T>> getAllClasses(Class<T> upperBound, Class<? extends T> clazz) {
+		Set<Class<? extends T>> classes = new LinkedHashSet<>();
+		Class<?> current = clazz;
+		do {
+			if(upperBound.isAssignableFrom(current)) classes.add(current.asSubclass(upperBound));
+			for(Class<?> iface : clazz.getInterfaces()) {
+				if(upperBound.isAssignableFrom(iface)) classes.add(iface.asSubclass(upperBound));
+			}
+		} while((current = current.getSuperclass()) != null);
+		return classes;
+	}
+
+	/**
+	 * Loads and starts all {@link MasterService}.
+	 * Runs all of the configured protocols of {@link MasterServer}
 	 * processes as configured in <code>com/aoindustries/aoserv/master/aoserv-master.properties</code>.
 	 */
 	public static void main(String[] args) {
-		// Not profiled because the profiler is enabled here
 		try {
 			// Configure the SSL
 			String trustStorePath=MasterConfiguration.getSSLTruststorePath();
@@ -10010,17 +10067,50 @@ public abstract class MasterServer {
 				System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
 			}
 
-			// TODO: Use ServiceLoader here, too
+			// TODO: Convert these to MasterService
 			AccountCleaner.start();
 			ClusterHandler.start();
 			CreditCardHandler.start();
-			DNSHandler.start();
 			FailoverHandler.start();
 			SignupHandler.start();
 			TableHandler.start();
 			TicketHandler.start();
 
+			// TODO: A way to get the instance of a esrvice given its class
+			// TODO: A way to start services in dependency order
+
+			// Instantiate all services
+			System.out.print("Loading services: ");
+			List<MasterServiceEntry> servicesToStart = new ArrayList<>();
+			ServiceLoader<MasterService> loader = ServiceLoader.load(MasterService.class);
+			Iterator<MasterService> iter = loader.iterator();
+			while(iter.hasNext()) {
+				MasterService service = iter.next();
+				MasterServiceEntry entry = new MasterServiceEntry(service);
+				servicesToStart.add(entry);
+				// Add the entry under all classes of MasterService that it implements
+				Class<? extends MasterService> serviceClass = service.getClass();
+				//System.err.println("serviceClass = " + serviceClass.getName());
+				for(Class<?> clazz : getAllClasses(MasterService.class, serviceClass)) {
+					//System.err.println("clazz = " + clazz.getName());
+					Class<? extends MasterService> msClass = clazz.asSubclass(MasterService.class);
+					// Does putting this back in the concurrent map ensure others with access to the array list see updated state of the array list itself?
+					// Technically speaking, should this array list also be switched to CopyOnWriteArrayList?
+					servicesByClass.put(
+						msClass,
+						MinimalList.add(
+							servicesByClass.get(msClass),
+							entry
+						)
+					);
+				}
+			}
+			System.out.println(servicesToStart.size() + " " + (servicesToStart.size() == 1 ? "service" : "services") + " loaded");
+
+			List<MasterServiceEntry> failedServices = startServices(servicesToStart, true);
+
 			// Start listening after initialization to allow all modules to be loaded
+			// TODO: Should the network protocol be a service, too?
 			List<String> protocols=MasterConfiguration.getProtocols();
 			if(protocols.isEmpty()) throw new IllegalArgumentException("protocols is empty");
 			for(String protocol : protocols) {
@@ -10045,8 +10135,74 @@ public abstract class MasterServer {
 					}
 				}
 			}
+
+			while(!failedServices.isEmpty()) {
+				try {
+					Thread.sleep(SERVICE_RETRY_INTERVAL);
+				} catch(InterruptedException e) {
+					logger.log(Level.WARNING, null, e);
+				}
+				failedServices = startServices(failedServices, false);
+			}
 		} catch (IOException | IllegalArgumentException err) {
 			logger.log(Level.SEVERE, null, err);
+		}
+	}
+
+	/**
+	 * Starts the given services, returning a list of those that failed to start.
+	 */
+	private static List<MasterServiceEntry> startServices(List<MasterServiceEntry> servicesToStart, boolean isFirstStart) {
+		// TODO: Support starting in dependency order
+		System.out.println(isFirstStart ? "Starting services:" : "Starting failed services:");
+		List<MasterServiceEntry> failedServices = new ArrayList<>();
+		for(MasterServiceEntry serviceEntry : servicesToStart) {
+			MasterService service = serviceEntry.service;
+			System.out.print("    " + service.getClass().getName() + ": ");
+			boolean started = false;
+			try {
+				service.start();
+				serviceEntry.started = true;
+				started = true;
+				// Fatal, will no retry adding handlers when exception happens on first attempt
+				initObjectHandlers(service);
+				initTableHandlers(service);
+				System.out.println("Success");
+			} catch(Exception e) {
+				if(!started) failedServices.add(serviceEntry);
+				System.out.println(e.toString());
+				logger.log(Level.SEVERE, null, e);
+			}
+		}
+		if(!failedServices.isEmpty()) {
+			if(isFirstStart) {
+				System.out.println(failedServices.size() + " failed " + (failedServices.size() == 1 ? "service" : "services") + " will be retried");
+			} else {
+				System.out.println(failedServices.size() + " failed " + (failedServices.size() == 1 ? "service remains" : "services remain"));
+			}
+		}
+		return failedServices;
+	}
+
+	private static void initObjectHandlers(MasterService service) {
+		int objectHandlerCount = 0;
+		for(TableHandler.GetObjectHandler handler : service.getGetObjectHandlers()) {
+			objectHandlerCount++;
+			TableHandler.addGetObjectHandler(handler);
+		}
+		if(objectHandlerCount != 0) {
+			System.out.println(objectHandlerCount + " " + TableHandler.GetObjectHandler.class.getSimpleName() + ": ");
+		}
+	}
+
+	private static void initTableHandlers(MasterService service) {
+		int tableHandlerCount = 0;
+		for(TableHandler.GetTableHandler handler : service.getGetTableHandlers()) {
+			tableHandlerCount++;
+			TableHandler.addGetTableHandler(handler);
+		}
+		if(tableHandlerCount != 0) {
+			System.out.println(tableHandlerCount + " " + TableHandler.GetTableHandler.class.getSimpleName() + ": ");
 		}
 	}
 
@@ -10228,7 +10384,7 @@ public abstract class MasterServer {
 	 * @see  #checkAccessHostname(MasterDatabaseConnection,RequestSource,String,String,String[])
 	 */
 	public static void checkAccessHostname(DatabaseConnection conn, RequestSource source, String action, String hostname) throws IOException, SQLException {
-		checkAccessHostname(conn, source, action, hostname, DNSHandler.getDNSTLDs(conn));
+		checkAccessHostname(conn, source, action, hostname, MasterServer.getService(DnsService.class).getDNSTLDs(conn));
 	}
 
 	/**
@@ -10257,7 +10413,7 @@ public abstract class MasterServer {
 			"select zone from dns.\"Zone\" where zone=?",
 			zone
 		);
-		if(existingZone!=null && !DNSHandler.canAccessDNSZone(conn, source, existingZone)) throw new SQLException("Access to this hostname forbidden: Exists in dns.Zone: "+hostname);
+		if(existingZone!=null && !MasterServer.getService(DnsService.class).canAccessDNSZone(conn, source, existingZone)) throw new SQLException("Access to this hostname forbidden: Exists in dns.Zone: "+hostname);
 
 		String domain = zone.substring(0, zone.length()-1);
 

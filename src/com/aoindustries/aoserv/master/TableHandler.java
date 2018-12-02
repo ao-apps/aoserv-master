@@ -209,7 +209,8 @@ final public class TableHandler {
 	private static final ConcurrentMap<Table.TableID,GetObjectHandler> getObjectHandlers = new ConcurrentHashMap<>();
 
 	/**
-	 * This is available, but recommend registering via {@link ServiceLoader}.
+	 * This is available, but recommend registering via {@link ServiceLoader}
+	 * or {@link MasterService#getGetObjectHandlers()}.
 	 */
 	public static int addGetObjectHandler(GetObjectHandler handler) {
 		int numTables = 0;
@@ -390,7 +391,8 @@ final public class TableHandler {
 	private static final ConcurrentMap<Table.TableID,GetTableHandler> getTableHandlers = new ConcurrentHashMap<>();
 
 	/**
-	 * This is available, but recommend registering via {@link ServiceLoader}.
+	 * This is available, but recommend registering via {@link ServiceLoader}
+	 * or {@link MasterService#getGetTableHandlers()}.
 	 */
 	public static int addGetTableHandler(GetTableHandler handler) {
 		int numTables = 0;
@@ -1038,7 +1040,7 @@ final public class TableHandler {
 		}
 	}
 
-	// TODO: Move to proper handler class
+	// TODO: Move to proper service class
 	public static IntList getOperatingSystemVersions(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
 		return conn.executeIntListQuery(
 			"select distinct\n"

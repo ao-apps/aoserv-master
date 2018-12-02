@@ -11,6 +11,7 @@ import com.aoindustries.aoserv.client.net.DeviceId;
 import com.aoindustries.aoserv.client.net.IpAddress;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.NotImplementedException;
 import com.aoindustries.net.DomainName;
@@ -150,7 +151,7 @@ final public class IPAddressHandler {
 		);
 
 		// Update any DNS records that follow this IP address
-		DNSHandler.updateDhcpDnsRecords(conn, invalidateList, ipAddressId, dhcpAddress);
+		MasterServer.getService(DnsService.class).updateDhcpDnsRecords(conn, invalidateList, ipAddressId, dhcpAddress);
 	}
 
 	/**
@@ -201,7 +202,7 @@ final public class IPAddressHandler {
 		);
 
 		// Update any reverse DNS matchins this IP address
-		DNSHandler.updateReverseDnsIfExists(conn, invalidateList, ip, hostname);
+		MasterServer.getService(DnsService.class).updateReverseDnsIfExists(conn, invalidateList, ip, hostname);
 	}
 
 	public static void setIPAddressMonitoringEnabled(

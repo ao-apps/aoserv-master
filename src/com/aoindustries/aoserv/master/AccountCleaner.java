@@ -13,6 +13,7 @@ import com.aoindustries.aoserv.client.validator.GroupId;
 import com.aoindustries.aoserv.client.validator.MySQLUserId;
 import com.aoindustries.aoserv.client.validator.PostgresUserId;
 import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
@@ -356,6 +357,7 @@ final public class AccountCleaner implements CronJob {
 
                 // dns.Zone
                 {
+					DnsService dnsService = MasterServer.getService(DnsService.class);
                     List<String> dzs=conn.executeStringListQuery(
                         "select\n"
                         + "  dz.zone\n"
@@ -371,7 +373,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
 					for (String dz : dzs) {
-						DNSHandler.removeDNSZone(conn, invalidateList, dz);
+						dnsService.removeDNSZone(conn, invalidateList, dz);
 					}
                 }
 

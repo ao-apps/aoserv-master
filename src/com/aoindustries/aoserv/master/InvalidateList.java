@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntCollection;
@@ -288,7 +289,7 @@ final public class InvalidateList {
                 BusinessHandler.invalidateTable(tableID);
                 CvsHandler.invalidateTable(tableID);
                 DaemonHandler.invalidateTable(tableID);
-                DNSHandler.invalidateTable(tableID);
+                MasterServer.getService(DnsService.class).invalidateTable(tableID);
                 EmailHandler.invalidateTable(tableID);
                 HttpdHandler.invalidateTable(tableID);
                 LinuxAccountHandler.invalidateTable(tableID);

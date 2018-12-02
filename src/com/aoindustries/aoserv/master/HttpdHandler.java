@@ -24,6 +24,7 @@ import com.aoindustries.aoserv.client.web.tomcat.JkProtocol;
 import com.aoindustries.aoserv.client.web.tomcat.PrivateTomcatSite;
 import com.aoindustries.aoserv.client.web.tomcat.SharedTomcat;
 import com.aoindustries.aoserv.client.web.tomcat.Version;
+import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -912,7 +913,7 @@ final public class HttpdHandler {
 			throw new SQLException(e);
 		}
 
-		List<DomainName> tlds = DNSHandler.getDNSTLDs(conn);
+		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
 //		DomainName testURL;
 //		try {
 //			testURL = DomainName.valueOf(siteName + "." + ServerHandler.getHostnameForAOServer(conn, aoServer));
@@ -2539,7 +2540,8 @@ final public class HttpdHandler {
 		// web.VirtualHost
 		IntList httpdSiteBinds=conn.executeIntListQuery("select id from web.\"VirtualHost\" where httpd_site=?", httpdSitePKey);
 		if(httpdSiteBinds.size() > 0) {
-			List<DomainName> tlds=DNSHandler.getDNSTLDs(conn);
+			DnsService dnsService = MasterServer.getService(DnsService.class);
+			List<DomainName> tlds = dnsService.getDNSTLDs(conn);
 			SortedIntArrayList httpdBinds=new SortedIntArrayList();
 			for(int c=0;c<httpdSiteBinds.size();c++) {
 				int httpdSiteBind=httpdSiteBinds.getInt(c);
@@ -2557,7 +2559,7 @@ final public class HttpdHandler {
 					);
 					conn.executeUpdate("delete from web.\"VirtualHostName\" where id=?", httpdSiteURL);
 					invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_URLS, accounting, aoServer, false);
-					DNSHandler.removeUnusedDNSRecord(conn, invalidateList, hostname, tlds);
+					dnsService.removeUnusedDNSRecord(conn, invalidateList, hostname, tlds);
 				}
 
 				int hb=conn.executeIntQuery("select httpd_bind from web.\"VirtualHost\" where id=?", httpdSiteBind);
