@@ -39,7 +39,7 @@ public class BankTransaction_GetTableHandler implements GetTableHandlerAccountin
 			new BankTransaction(),
 			"select\n"
 			+ "  id,\n"
-			+ "  time,\n" // TODO: Was not cast to date here while was in single object query - why?
+			+ "  time,\n" // Was not cast to date here while was in single object query - why?
 			+ "  account,\n"
 			+ "  processor,\n"
 			+ "  administrator,\n"
