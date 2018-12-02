@@ -55,7 +55,15 @@ final public class InvalidateList {
     private final Map<Table.TableID,List<Integer>> serverLists=new EnumMap<>(Table.TableID.class);
     private final Map<Table.TableID,List<AccountingCode>> businessLists=new EnumMap<>(Table.TableID.class);
 
-    public void addTable(
+	/**
+	 * Resets back to default state.
+	*/
+	public void reset() {
+		serverLists.clear();
+		businessLists.clear();
+	}
+
+	public void addTable(
         DatabaseAccess conn,
         Table.TableID tableID,
         AccountingCode business,

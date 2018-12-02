@@ -40,6 +40,7 @@ import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.web.Location;
 import com.aoindustries.aoserv.client.web.tomcat.Context;
+import com.aoindustries.aoserv.master.billing.WhoisHistoryService;
 import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
@@ -76,7 +77,6 @@ import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -5700,7 +5700,7 @@ public abstract class MasterServer {
 												"get_whois_history_whois_output",
 												id
 											);
-											String whoisOutput = MasterServer.getService(DnsService.class).getWhoisHistoryOutput(
+											String whoisOutput = MasterServer.getService(WhoisHistoryService.class).getWhoisHistoryOutput(
 												conn,
 												source,
 												id
