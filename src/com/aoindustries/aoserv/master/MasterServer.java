@@ -10378,6 +10378,13 @@ public abstract class MasterServer {
 		}
 	}
 
+	/**
+	 * Writes a single object, possibly null if there is no row, from a query.
+	 * The query must result in either zero or one row.  If zero, {@code null}
+	 * is written.  If more than one row, an {@link SQLException} is thrown.
+	 *
+	 * @throws SQLException when more than one row is in the result set
+	 */
 	public static void writeObject(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -10394,9 +10401,12 @@ public abstract class MasterServer {
 				try (ResultSet results = pstmt.executeQuery()) {
 					if(results.next()) {
 						obj.init(results);
+						if(results.next()) throw new SQLException("More than one row in result set");
 						out.writeByte(AoservProtocol.NEXT);
 						obj.write(out, version);
-					} else out.writeByte(AoservProtocol.DONE);
+					} else {
+						out.writeByte(AoservProtocol.DONE);
+					}
 				}
 			} catch(SQLException err) {
 				throw new WrappedSQLException(err, pstmt);
@@ -10594,6 +10604,14 @@ public abstract class MasterServer {
 		}
 	}
 
+	/**
+	 * The query must result in precisely one row.
+	 * If zero rows, {@link NoRowException} is thrown.
+	 * If more than one row, an {@link SQLException} is thrown.
+	 *
+	 * @throws NoRowException when no rows are in the result set
+	 * @throws SQLException when more than one row is in the result set
+	 */
 	public static void writePenniesCheckBusiness(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -10602,16 +10620,20 @@ public abstract class MasterServer {
 		CompressedDataOutputStream out,
 		String sql,
 		String param1
-	) throws IOException, SQLException {
+	) throws IOException, NoRowException, SQLException {
 		BusinessHandler.checkAccessBusiness(conn, source, action, accounting);
 		try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
 			try {
 				pstmt.setString(1, param1);
 				try (ResultSet results = pstmt.executeQuery()) {
 					if(results.next()) {
+						int pennies = SQLUtility.getPennies(results.getString(1));
+						if(results.next()) throw new SQLException("More than one row in result set");
 						out.writeByte(AoservProtocol.DONE);
-						out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
-					} else throw new NoRowException();
+						out.writeCompressedInt(pennies);
+					} else {
+						throw new NoRowException();
+					}
 				}
 			} catch(SQLException err) {
 				throw new WrappedSQLException(err, pstmt);
@@ -10619,6 +10641,14 @@ public abstract class MasterServer {
 		}
 	}
 
+	/**
+	 * The query must result in precisely one row.
+	 * If zero rows, {@link NoRowException} is thrown.
+	 * If more than one row, an {@link SQLException} is thrown.
+	 *
+	 * @throws NoRowException when no rows are in the result set
+	 * @throws SQLException when more than one row is in the result set
+	 */
 	public static void writePenniesCheckBusiness(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -10628,7 +10658,7 @@ public abstract class MasterServer {
 		String sql,
 		String param1,
 		Timestamp param2
-	) throws IOException, SQLException {
+	) throws IOException, NoRowException, SQLException {
 		BusinessHandler.checkAccessBusiness(conn, source, action, accounting);
 		try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
 			try {
@@ -10636,9 +10666,13 @@ public abstract class MasterServer {
 				pstmt.setTimestamp(2, param2);
 				try (ResultSet results = pstmt.executeQuery()) {
 					if(results.next()) {
+						int pennies = SQLUtility.getPennies(results.getString(1));
+						if(results.next()) throw new SQLException("More than one row in result set");
 						out.writeByte(AoservProtocol.DONE);
-						out.writeCompressedInt(SQLUtility.getPennies(results.getString(1)));
-					} else throw new NoRowException();
+						out.writeCompressedInt(pennies);
+					} else {
+						throw new NoRowException();
+					}
 				}
 			} catch(SQLException err) {
 				throw new WrappedSQLException(err, pstmt);
