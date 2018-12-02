@@ -373,8 +373,7 @@ final public class WhoisHistoryService implements MasterService, CronJob {
 						logger.log(Level.WARNING, null, err);
 						tld = zone;
 					}
-					AccountingAndZone aaz = new AccountingAndZone(accounting, tld);
-					if(!aazs.add(aaz)) throw new AssertionError("Not DISTINCT?");
+					aazs.add(new AccountingAndZone(accounting, tld));
 				}
 				return aazs;
 			},
