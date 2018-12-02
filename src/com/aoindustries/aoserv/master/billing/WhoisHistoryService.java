@@ -207,7 +207,6 @@ final public class WhoisHistoryService implements MasterService, CronJob {
 								}
 								// update database
 								// TODO: Store a success flag, too
-								// TODO: Store the parsed nameservers, too?  At least for when is success.
 								String accounting = aaz.getAccounting();
 								conn.executeUpdate(
 									"insert into billing.\"WhoisHistory\" (accounting, zone, whois_output) values(?,?,?)",
