@@ -5,11 +5,11 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.master.master.Process_Manager;
 import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.master.master.Process_Manager;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
@@ -229,6 +229,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				long existingID=in.readLong();
 
 				switch(protocolVersion) {
+					case VERSION_1_81_19 :
 					case VERSION_1_81_18 :
 					case VERSION_1_81_17 :
 					case VERSION_1_81_16 :

@@ -15,7 +15,6 @@ import com.aoindustries.aoserv.client.dns.ZoneTable;
 import com.aoindustries.aoserv.client.email.InboxAttributes;
 import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.master.Process;
-import com.aoindustries.aoserv.client.master.ServerStat;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.FirewallZone;
@@ -45,24 +44,18 @@ import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
-import com.aoindustries.io.FifoFile;
-import com.aoindustries.io.FifoFileInputStream;
-import com.aoindustries.io.FifoFileOutputStream;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.Email;
 import com.aoindustries.net.HostAddress;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import com.aoindustries.net.Protocol;
-import com.aoindustries.sql.AOConnectionPool;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
-import com.aoindustries.util.BufferManager;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
-import com.aoindustries.util.ThreadUtility;
 import com.aoindustries.util.Tuple2;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
@@ -10071,40 +10064,75 @@ public abstract class MasterServer {
 
 	/**
 	 * Writes all rows of a results set.
+	 *
+	 * @return  The number of rows written
 	 */
-	public static <T extends AOServObject<?,?>> void writeObjects(
+	public static <T extends AOServObject<?,?>> long writeObjects(
 		RequestSource source,
 		CompressedDataOutputStream out,
 		boolean provideProgress,
 		T obj,
 		ResultSet results
 	) throws IOException, SQLException {
-		AoservProtocol.Version version=source.getProtocolVersion();
+		AoservProtocol.Version version = source.getProtocolVersion();
 
 		// Make one pass counting the rows if providing progress information
+		final long progressCount;
 		if(provideProgress) {
-			int rowCount = 0;
-			while (results.next()) rowCount++;
-			results.beforeFirst();
+			//progressCount = 0;
+			//while (results.next()) progressCount++;
+			if(results.last()) {
+				progressCount = results.getRow();
+				results.beforeFirst();
+			} else {
+				progressCount = 0;
+			}
 			out.writeByte(AoservProtocol.NEXT);
-			out.writeCompressedInt(rowCount);
+			if(version.compareTo(AoservProtocol.Version.VERSION_1_81_19) < 0) {
+				if(progressCount > CompressedDataOutputStream.MAX_COMPRESSED_INT_VALUE) {
+					throw new IOException(
+						"Too many rows to send via " + CompressedDataOutputStream.class.getSimpleName() + ".writeCompressedInt: "
+						+ progressCount + " > " + CompressedDataOutputStream.MAX_COMPRESSED_INT_VALUE
+						+ ", please upgrade to client " + AoservProtocol.Version.VERSION_1_81_19 + " or newer.");
+				}
+				out.writeCompressedInt((int)progressCount);
+			} else {
+				out.writeLong(progressCount);
+			}
+		} else {
+			progressCount = -1;
 		}
-		int writeCount = 0;
+		long rowCount = 0;
 		while(results.next()) {
 			obj.init(results);
 			out.writeByte(AoservProtocol.NEXT);
 			obj.write(out, version);
-			writeCount++;
+			rowCount++;
 		}
-		if(writeCount > TableHandler.RESULT_SET_BATCH_SIZE) {
-			logger.log(Level.WARNING, null, new SQLWarning("Warning: provideProgress==true caused non-cursor select with more than "+TableHandler.RESULT_SET_BATCH_SIZE+" rows: "+writeCount));
+		if(rowCount > CursorMode.AUTO_CURSOR_ABOVE) {
+			logger.log(
+				Level.WARNING,
+				null,
+				new SQLWarning(
+					"Warning: provideProgress==true caused non-cursor select with more than "
+					+ CursorMode.class.getSimpleName()
+					+ ".AUTO_CURSOR_ABOVE ("
+					+ CursorMode.AUTO_CURSOR_ABOVE
+					+ ") rows: "
+					+ rowCount
+				)
+			);
 		}
+		if(provideProgress && progressCount != rowCount) throw new AssertionError("progressCount != rowCount: " + progressCount + " != " + rowCount);
+		return rowCount;
 	}
 
 	/**
 	 * Writes all rows of a results set.
+	 *
+	 * @return  The number of rows written
 	 */
-	public static void writeObjects(
+	public static long writeObjects(
 		RequestSource source,
 		CompressedDataOutputStream out,
 		boolean provideProgress,
@@ -10117,7 +10145,7 @@ public abstract class MasterServer {
 			out.writeByte(AoservProtocol.NEXT);
 			out.writeCompressedInt(size);
 		}
-		int count = 0;
+		long count = 0;
 		for(AOServWritable obj : objs) {
 			count++;
 			if(count > size) throw new ConcurrentModificationException("Too many objects during iteration: " + count + " > " + size);
@@ -10125,12 +10153,15 @@ public abstract class MasterServer {
 			obj.write(out, version);
 		}
 		if(count < size) throw new ConcurrentModificationException("Too few objects during iteration: " + count + " < " + size);
+		return count;
 	}
 
 	/**
 	 * Writes all rows of a results set while synchronizing on each object.
+	 *
+	 * @return  The number of rows written
 	 */
-	public static void writeObjectsSynced(
+	public static long writeObjectsSynced(
 		RequestSource source,
 		CompressedDataOutputStream out,
 		boolean provideProgress,
@@ -10143,7 +10174,7 @@ public abstract class MasterServer {
 			out.writeByte(AoservProtocol.NEXT);
 			out.writeCompressedInt(size);
 		}
-		int count = 0;
+		long count = 0;
 		for(AOServWritable obj : objs) {
 			count++;
 			if(count > size) throw new ConcurrentModificationException("Too many objects during iteration: " + count + " > " + size);
@@ -10153,6 +10184,7 @@ public abstract class MasterServer {
 			}
 		}
 		if(count < size) throw new ConcurrentModificationException("Too few objects during iteration: " + count + " < " + size);
+		return count;
 	}
 
 	public static String authenticate(
@@ -10189,93 +10221,6 @@ public abstract class MasterServer {
 
 		// Let them in
 		return null;
-	}
-
-	public static String trim(String inStr) {
-		return (inStr==null?null:inStr.trim());
-	}
-
-	private static void addStat(
-		List<ServerStat> objs, 
-		String name, 
-		String value, 
-		String description
-	) {
-		name=trim(name);
-		value=trim(value);
-		description=trim(description);
-		objs.add(new ServerStat(name, value, description));
-	}
-
-	public static void writeStats(RequestSource source, CompressedDataOutputStream out, boolean provideProgress) throws IOException {
-		try {
-			// Create the list of objects first
-			List<ServerStat> objs=new ArrayList<>();
-			addStat(objs, ServerStat.BYTE_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getByteBufferCreates()), "Number of byte[] buffers created");
-			addStat(objs, ServerStat.BYTE_ARRAY_CACHE_USES, Long.toString(BufferManager.getByteBufferUses()), "Total number of byte[] buffers allocated");
-			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
-				addStat(objs, ServerStat.BYTE_ARRAY_CACHE_ZERO_FILLS, Long.toString(BufferManager.getByteBufferZeroFills()), "Total number of byte[] buffers zero-filled");
-				addStat(objs, ServerStat.BYTE_ARRAY_CACHE_COLLECTED, Long.toString(BufferManager.getByteBuffersCollected()), "Total number of byte[] buffers detected as garbage collected");
-			}
-
-			addStat(objs, ServerStat.CHAR_ARRAY_CACHE_CREATES, Long.toString(BufferManager.getCharBufferCreates()), "Number of char[] buffers created");
-			addStat(objs, ServerStat.CHAR_ARRAY_CACHE_USES, Long.toString(BufferManager.getCharBufferUses()), "Total number of char[] buffers allocated");
-			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
-				addStat(objs, ServerStat.CHAR_ARRAY_CACHE_ZERO_FILLS, Long.toString(BufferManager.getCharBufferZeroFills()), "Total number of char[] buffers zero-filled");
-				addStat(objs, ServerStat.CHAR_ARRAY_CACHE_COLLECTED, Long.toString(BufferManager.getCharBuffersCollected()), "Total number of char[] buffers detected as garbage collected");
-			}
-
-			addStat(objs, ServerStat.DAEMON_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonConcurrency()), "Number of active daemon connections");
-			addStat(objs, ServerStat.DAEMON_CONNECTIONS, Integer.toString(DaemonHandler.getDaemonConnections()), "Current number of daemon connections");
-			addStat(objs, ServerStat.DAEMON_CONNECTS, Integer.toString(DaemonHandler.getDaemonConnects()), "Number of times connecting to daemons");
-			addStat(objs, ServerStat.DAEMON_COUNT, Integer.toString(DaemonHandler.getDaemonCount()), "Number of daemons that have been accessed");
-			addStat(objs, ServerStat.DAEMON_DOWN_COUNT, Integer.toString(DaemonHandler.getDownDaemonCount()), "Number of daemons that are currently unavailable");
-			addStat(objs, ServerStat.DAEMON_MAX_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonMaxConcurrency()), "Peak number of active daemon connections");
-			addStat(objs, ServerStat.DAEMON_POOL_SIZE, Integer.toString(DaemonHandler.getDaemonPoolSize()), "Maximum number of daemon connections");
-			addStat(objs, ServerStat.DAEMON_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(DaemonHandler.getDaemonTotalTime()), "Total time spent accessing daemons");
-			addStat(objs, ServerStat.DAEMON_TRANSACTIONS, Long.toString(DaemonHandler.getDaemonTransactions()), "Number of transactions processed by daemons");
-
-			AOConnectionPool dbPool=MasterDatabase.getDatabase().getConnectionPool();
-			addStat(objs, ServerStat.DB_CONCURRENCY, Integer.toString(dbPool.getConcurrency()), "Number of active database connections");
-			addStat(objs, ServerStat.DB_CONNECTIONS, Integer.toString(dbPool.getConnectionCount()), "Current number of database connections");
-			addStat(objs, ServerStat.DB_CONNECTS, Long.toString(dbPool.getConnects()), "Number of times connecting to the database");
-			addStat(objs, ServerStat.DB_MAX_CONCURRENCY, Integer.toString(dbPool.getMaxConcurrency()), "Peak number of active database connections");
-			addStat(objs, ServerStat.DB_POOL_SIZE, Integer.toString(dbPool.getPoolSize()), "Maximum number of database connections");
-			addStat(objs, ServerStat.DB_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(dbPool.getTotalTime()), "Total time spent accessing the database");
-			addStat(objs, ServerStat.DB_TRANSACTIONS, Long.toString(dbPool.getTransactionCount()), "Number of transactions committed by the database");
-
-			FifoFile entropyFile=RandomHandler.getFifoFile();
-			addStat(objs, ServerStat.ENTROPY_AVAIL, Long.toString(entropyFile.getLength()), "Number of bytes of entropy currently available");
-			addStat(objs, ServerStat.ENTROPY_POOLSIZE, Long.toString(entropyFile.getMaximumFifoLength()), "Maximum number of bytes of entropy");
-			FifoFileInputStream entropyIn=entropyFile.getInputStream();
-			addStat(objs, ServerStat.ENTROPY_READ_BYTES, Long.toString(entropyIn.getReadBytes()), "Number of bytes read from the entropy pool");
-			addStat(objs, ServerStat.ENTROPY_READ_COUNT, Long.toString(entropyIn.getReadCount()), "Number of reads from the entropy pool");
-			FifoFileOutputStream entropyOut=entropyFile.getOutputStream();
-			addStat(objs, ServerStat.ENTROPY_WRITE_BYTES, Long.toString(entropyOut.getWriteBytes()), "Number of bytes written to the entropy pool");
-			addStat(objs, ServerStat.ENTROPY_WRITE_COUNT, Long.toString(entropyOut.getWriteCount()), "Number of writes to the entropy pool");
-
-			addStat(objs, ServerStat.MEMORY_FREE, Long.toString(Runtime.getRuntime().freeMemory()), "Free virtual machine memory in bytes");
-			addStat(objs, ServerStat.MEMORY_TOTAL, Long.toString(Runtime.getRuntime().totalMemory()), "Total virtual machine memory in bytes");
-
-			addStat(objs, ServerStat.PROTOCOL_VERSION, StringUtility.join(AoservProtocol.Version.values(), ", "), "Supported AoservProtocol version numbers");
-
-			addStat(objs, ServerStat.REQUEST_CONCURRENCY, Integer.toString(getRequestConcurrency()), "Current number of client requests being processed");
-			addStat(objs, ServerStat.REQUEST_CONNECTIONS, Long.toString(getRequestConnections()), "Number of connections received from clients");
-			addStat(objs, ServerStat.REQUEST_MAX_CONCURRENCY, Integer.toString(getRequestMaxConcurrency()), "Peak number of client requests being processed");
-			addStat(objs, ServerStat.REQUEST_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(getRequestTotalTime()), "Total time spent processing client requests");
-			addStat(objs, ServerStat.REQUEST_TRANSACTIONS, Long.toString(getRequestTransactions()), "Number of client requests processed");
-
-			addStat(objs, ServerStat.THREAD_COUNT, Integer.toString(ThreadUtility.getThreadCount()), "Current number of virtual machine threads");
-
-			addStat(objs, ServerStat.UPTIME, StringUtility.getDecimalTimeLengthString(System.currentTimeMillis()-getStartTime()), "Amount of time the master server has been running");
-
-			writeObjects(source, out, provideProgress, objs);
-		} catch(IOException err) {
-			logger.log(Level.SEVERE, null, err);
-			out.writeByte(AoservProtocol.IO_EXCEPTION);
-			String message=err.getMessage();
-			out.writeUTF(message==null?"":message);
-		}
 	}
 
 	/**
@@ -10459,50 +10404,14 @@ public abstract class MasterServer {
 		}
 	}
 
-	public static void fetchObjects(
-		DatabaseConnection conn,
-		RequestSource source,
-		CompressedDataOutputStream out,
-		AOServObject<?,?> obj,
-		String sql,
-		Object ... params
-	) throws IOException, SQLException {
-		AoservProtocol.Version version=source.getProtocolVersion();
-
-		Connection dbConn=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false);
-		try (PreparedStatement pstmt = dbConn.prepareStatement("declare fetch_objects cursor for "+sql)) {
-			try {
-				DatabaseConnection.setParams(dbConn, pstmt, params);
-				pstmt.executeUpdate();
-			} catch(SQLException err) {
-				throw new WrappedSQLException(err, pstmt);
-			}
-		}
-
-		String sqlString="fetch "+TableHandler.RESULT_SET_BATCH_SIZE+" from fetch_objects";
-		Statement stmt = dbConn.createStatement();
-		try {
-			while(true) {
-				int batchSize=0;
-				try (ResultSet results = stmt.executeQuery(sqlString)) {
-					while(results.next()) {
-						obj.init(results);
-						out.writeByte(AoservProtocol.NEXT);
-						obj.write(out, version);
-						batchSize++;
-					}
-				}
-				if(batchSize<TableHandler.RESULT_SET_BATCH_SIZE) break;
-			}
-		} catch(SQLException err) {
-			throw new WrappedSQLException(err, sqlString);
-		} finally {
-			stmt.executeUpdate("close fetch_objects");
-			stmt.close();
-		}
-	}
-
-	public static void writeObjects(
+	/**
+	 * Performs a query using a cursor and writes all rows of the result set.
+	 *
+	 * @return  The number of rows written
+	 *
+	 * @see  #writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
+	 */
+	private static long fetchObjects(
 		DatabaseConnection conn,
 		RequestSource source,
 		CompressedDataOutputStream out,
@@ -10511,20 +10420,201 @@ public abstract class MasterServer {
 		String sql,
 		Object ... params
 	) throws IOException, SQLException {
-		if(!provideProgress) fetchObjects(conn, source, out, obj, sql, params);
-		else {
-			Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
-			try (PreparedStatement pstmt = dbConn.prepareStatement(sql)) {
+		AoservProtocol.Version version = source.getProtocolVersion();
+
+		long progressCount;
+		long rowCount;
+		Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false);
+		try (
+			PreparedStatement pstmt = dbConn.prepareStatement(
+				"DECLARE fetch_objects "
+				+ (provideProgress ? "SCROLL" : "NO SCROLL")
+				+ " CURSOR FOR\n"
+				+ sql
+			)
+		) {
+			try {
+				DatabaseConnection.setParams(dbConn, pstmt, params);
+				pstmt.executeUpdate();
+			} catch(SQLException err) {
+				throw new WrappedSQLException(err, pstmt);
+			}
+		}
+		try (Statement stmt = dbConn.createStatement()) {
+			try {
+				final String fetchSql = "FETCH " + TableHandler.RESULT_SET_BATCH_SIZE + " FROM fetch_objects";
+
+				// Make one pass counting the rows if providing progress information
+				if(provideProgress) {
+					try {
+						progressCount = 0;
+						while(true) {
+							final int batchSize;
+							try (ResultSet results = stmt.executeQuery(fetchSql)) {
+								if(results.last()) {
+									batchSize = results.getRow();
+								} else {
+									batchSize = 0;
+								}
+							}
+							progressCount += batchSize;
+							if(batchSize < TableHandler.RESULT_SET_BATCH_SIZE) break;
+						}
+					} catch(SQLException err) {
+						throw new WrappedSQLException(err, fetchSql);
+					}
+					out.writeByte(AoservProtocol.NEXT);
+					if(version.compareTo(AoservProtocol.Version.VERSION_1_81_19) < 0) {
+						if(progressCount > CompressedDataOutputStream.MAX_COMPRESSED_INT_VALUE) {
+							throw new IOException(
+								"Too many rows to send via " + CompressedDataOutputStream.class.getSimpleName() + ".writeCompressedInt: "
+								+ progressCount + " > " + CompressedDataOutputStream.MAX_COMPRESSED_INT_VALUE
+								+ ", please upgrade to client " + AoservProtocol.Version.VERSION_1_81_19 + " or newer.");
+						}
+						out.writeCompressedInt((int)progressCount);
+					} else {
+						out.writeLong(progressCount);
+					}
+					// If progressCount is zero, no rows from query, short-cut here to avoid resetting and refetching empty results
+					if(progressCount == 0) return 0;
+					// Reset cursor
+					final String resetSql = "FETCH ABSOLUTE 0 FROM fetch_objects";
+					try {
+						stmt.executeQuery(resetSql);
+					} catch(SQLException err) {
+						throw new WrappedSQLException(err, resetSql);
+					}
+				} else {
+					progressCount = -1;
+				}
+				rowCount = 0;
 				try {
-					DatabaseConnection.setParams(dbConn, pstmt, params);
-					try (ResultSet results = pstmt.executeQuery()) {
-						writeObjects(source, out, provideProgress, obj, results);
+					while(true) {
+						int batchSize = 0;
+						try (ResultSet results = stmt.executeQuery(fetchSql)) {
+							while(results.next()) {
+								obj.init(results);
+								out.writeByte(AoservProtocol.NEXT);
+								obj.write(out, version);
+								batchSize++;
+							}
+						}
+						rowCount += batchSize;
+						if(batchSize < TableHandler.RESULT_SET_BATCH_SIZE) break;
 					}
 				} catch(SQLException err) {
-					throw new WrappedSQLException(err, pstmt);
+					throw new WrappedSQLException(err, fetchSql);
+				}
+			} finally {
+				final String closeSql = "CLOSE fetch_objects";
+				try {
+					stmt.executeQuery(closeSql);
+				} catch(SQLException err) {
+					throw new WrappedSQLException(err, closeSql);
 				}
 			}
 		}
+		if(provideProgress && progressCount != rowCount) throw new AssertionError("progressCount != rowCount: " + progressCount + " != " + rowCount);
+		return rowCount;
+	}
+
+	/**
+	 * Performs a query without cursors and writes all rows of the result set.
+	 *
+	 * @return  The number of rows written
+	 *
+	 * @see  #writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
+	 */
+	private static long selectObjects(
+		DatabaseConnection conn,
+		RequestSource source,
+		CompressedDataOutputStream out,
+		boolean provideProgress,
+		AOServObject<?,?> obj,
+		String sql,
+		Object ... params
+	) throws IOException, SQLException {
+		Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
+		try (
+			PreparedStatement pstmt = dbConn.prepareStatement(
+				sql,
+				provideProgress ? ResultSet.TYPE_SCROLL_SENSITIVE : ResultSet.TYPE_FORWARD_ONLY,
+				ResultSet.CONCUR_READ_ONLY
+			)
+		) {
+			try {
+				DatabaseConnection.setParams(dbConn, pstmt, params);
+				try (ResultSet results = pstmt.executeQuery()) {
+					return writeObjects(source, out, provideProgress, obj, results);
+				}
+			} catch(SQLException err) {
+				throw new WrappedSQLException(err, pstmt);
+			}
+		}
+	}
+
+	/**
+	 * Performs a query and writes all rows of the result set.
+	 * Calls either {@link #selectObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...) selectObjects}
+	 * or {@link #fetchObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...) fetchObjects}
+	 * based on the {@link CursorMode}.
+	 * <p>
+	 * In particular, implements the {@link CursorMode#AUTO} mode for cursor selection.
+	 * </p>
+	 *
+	 * @return  The number of rows written
+	 *
+	 * @see  CursorMode#AUTO
+	 * @see  #selectObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)}
+	 * @see  #fetchObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)}
+	 */
+	public static long writeObjects(
+		DatabaseConnection conn,
+		RequestSource source,
+		CompressedDataOutputStream out,
+		boolean provideProgress,
+		CursorMode cursorMode,
+		AOServObject<?,?> obj,
+		String sql,
+		Object ... params
+	) throws IOException, SQLException {
+		if(cursorMode == CursorMode.FETCH) {
+			return fetchObjects(conn, source, out, provideProgress, obj, sql, params);
+		} else if(cursorMode == CursorMode.SELECT) {
+			return selectObjects(conn, source, out, provideProgress, obj, sql, params);
+		} else if(cursorMode == CursorMode.AUTO) {
+			// TODO: More crafty selection here per CursorMode.AUTO description.  This is old behavior
+			if(!provideProgress) {
+				return fetchObjects(conn, source, out, provideProgress, obj, sql, params);
+			} else {
+				return selectObjects(conn, source, out, provideProgress, obj, sql, params);
+			}
+		} else {
+			throw new AssertionError("Unexpected value for cursorMode: " + cursorMode);
+		}
+	}
+
+	/**
+	 * Performs a query and writes all rows of the result set with {@link CursorMode#AUTO} cursor selection.
+	 *
+	 * @return  The number of rows written
+	 *
+	 * @see  CursorMode#AUTO
+	 * @see  #writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
+	 *
+	 * @deprecated  Please specify {@link CursorMode}, with {@link CursorMode#SELECT} for known small tables, {@link CursorMode#FETCH} for known large tables, and {@link CursorMode#AUTO} for others
+	 */
+	@Deprecated
+	public static long writeObjects(
+		DatabaseConnection conn,
+		RequestSource source,
+		CompressedDataOutputStream out,
+		boolean provideProgress,
+		AOServObject<?,?> obj,
+		String sql,
+		Object ... params
+	) throws IOException, SQLException {
+		return writeObjects(conn, source, out, provideProgress, CursorMode.AUTO, obj, sql, params);
 	}
 
 	public static void writePenniesCheckBusiness(

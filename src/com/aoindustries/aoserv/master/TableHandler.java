@@ -72,13 +72,16 @@ final public class TableHandler {
 	 * The number of rows that will be loaded into each ResultSet for large tables.
 	 * This is done to get around the fact that the PostgreSQL JDBC loads all results
 	 * into the ResultSet, causing OutOfMemoryErrors on tables with millions of rows.
+	 *
+	 * @see  CursorMode#AUTO
+	 * @see  CursorMode#AUTO_CURSOR_ABOVE
 	 */
 	public static final int RESULT_SET_BATCH_SIZE = 1000;
 
 	/**
 	 * The number of rows statements that should typically be used per update/insert/delete batch.
 	 */
-	public static final int UPDATE_BATCH_SIZEv = 1000;
+	public static final int UPDATE_BATCH_SIZE = 1000;
 
 	/**
 	 * The number of updates that will typically be done before the changes are committed.
@@ -328,7 +331,7 @@ final public class TableHandler {
 	private static final Map<UserId,int[]> rowCountsPerUsername=new HashMap<>();
 	private static final Map<UserId,long[]> expireTimesPerUsername=new HashMap<>();
 
-	private static final int MAX_ROW_COUNT_CACHE_AGE=60*60*1000;
+	static final int MAX_ROW_COUNT_CACHE_AGE = 60*60*1000; // One hour
 
 	/** Copy used to avoid multiple array copies on each access. */
 	private static final Table.TableID[] _tableIDs = Table.TableID.values();

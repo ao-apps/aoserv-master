@@ -458,11 +458,16 @@ final public class TransactionHandler {
         }
 
 		Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
-        PreparedStatement pstmt = dbConn.prepareStatement(sql.toString());
+        PreparedStatement pstmt = dbConn.prepareStatement(
+			sql.toString(),
+			provideProgress ? ResultSet.TYPE_SCROLL_SENSITIVE : ResultSet.TYPE_FORWARD_ONLY,
+			ResultSet.CONCUR_READ_ONLY
+		);
         try {
 			DatabaseConnection.setParams(dbConn, pstmt, params.toArray());
             ResultSet results = pstmt.executeQuery();
             try {
+				// TODO: Call other writeObjects, passing sql and parameters, to support cursor/fetch?
                 MasterServer.writeObjects(source, out, provideProgress, new Transaction(), results);
             } finally {
                 results.close();
