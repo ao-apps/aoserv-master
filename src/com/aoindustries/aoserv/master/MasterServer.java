@@ -10010,6 +10010,17 @@ public abstract class MasterServer {
 				System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
 			}
 
+			// TODO: Use ServiceLoader here, too
+			AccountCleaner.start();
+			ClusterHandler.start();
+			CreditCardHandler.start();
+			DNSHandler.start();
+			FailoverHandler.start();
+			SignupHandler.start();
+			TableHandler.start();
+			TicketHandler.start();
+
+			// Start listening after initialization to allow all modules to be loaded
 			List<String> protocols=MasterConfiguration.getProtocols();
 			if(protocols.isEmpty()) throw new IllegalArgumentException("protocols is empty");
 			for(String protocol : protocols) {
@@ -10034,16 +10045,6 @@ public abstract class MasterServer {
 					}
 				}
 			}
-
-			// TODO: Use ServiceLoader here, too
-			AccountCleaner.start();
-			ClusterHandler.start();
-			CreditCardHandler.start();
-			DNSHandler.start();
-			FailoverHandler.start();
-			SignupHandler.start();
-			TableHandler.start();
-			TicketHandler.start();
 		} catch (IOException | IllegalArgumentException err) {
 			logger.log(Level.SEVERE, null, err);
 		}
