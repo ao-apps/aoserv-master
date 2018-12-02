@@ -55,7 +55,6 @@ public class BankTransactionHandler {
 
 		@Override
 		public void getObject(DatabaseConnection conn, RequestSource source, CompressedDataInputStream in, CompressedDataOutputStream out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-			int id = in.readCompressedInt();
 			if(BankAccountHandler.isBankAccounting(conn, source)) {
 				MasterServer.writeObject(
 					conn,
@@ -65,7 +64,7 @@ public class BankTransactionHandler {
 					QUERY_ACCOUNTING + "\n"
 					+ "where\n"
 					+ "  id=?",
-					id
+					in.readCompressedInt()
 				);
 			} else {
 				out.writeByte(AoservProtocol.DONE);
@@ -73,7 +72,7 @@ public class BankTransactionHandler {
 		}
 	}
 
-	static public class GetTable implements GetTableHandlerAccountingOnly {
+	static public class BankTransaction_GetTableHandler implements GetTableHandlerAccountingOnly {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {
