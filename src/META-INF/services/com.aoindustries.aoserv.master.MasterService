@@ -1,3 +1,6 @@
 com.aoindustries.aoserv.master.billing.WhoisHistoryService
 com.aoindustries.aoserv.master.dns.DnsService
+com.aoindustries.aoserv.master.dns.ZoneService
 com.aoindustries.aoserv.master.email.DomainService
+com.aoindustries.aoserv.master.pki.CertificateNameService
+com.aoindustries.aoserv.master.web.VirtualHostNameService

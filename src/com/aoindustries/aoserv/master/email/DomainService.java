@@ -18,6 +18,7 @@ import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.aoserv.master.billing.WhoisHistoryDomainLocator;
+import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.net.DomainName;
@@ -118,7 +119,8 @@ public class DomainService implements MasterService, WhoisHistoryDomainLocator {
 
 	// <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
 	@Override
-	public Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(List<DomainName> tlds, DatabaseConnection conn) throws IOException, SQLException {
+	public Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
+		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
 		return conn.executeQuery(
 			(ResultSet results) -> {
 				try {
@@ -126,15 +128,15 @@ public class DomainService implements MasterService, WhoisHistoryDomainLocator {
 					while(results.next()) {
 						DomainName domain = DomainName.valueOf(results.getString(1));
 						AccountingCode accounting = AccountingCode.valueOf(results.getString(2));
-						DomainName registerableDomain;
+						DomainName registrableDomain;
 						try {
-							registerableDomain = ZoneTable.getHostTLD(domain, tlds);
+							registrableDomain = ZoneTable.getHostTLD(domain, tlds);
 						} catch(IllegalArgumentException err) {
 							logger.log(Level.WARNING, "Cannot find TLD, continuing verbatim", err);
-							registerableDomain = domain;
+							registrableDomain = domain;
 						}
-						Set<AccountingCode> accounts = map.get(registerableDomain);
-						if(accounts == null) map.put(registerableDomain, accounts = new LinkedHashSet<>());
+						Set<AccountingCode> accounts = map.get(registrableDomain);
+						if(accounts == null) map.put(registrableDomain, accounts = new LinkedHashSet<>());
 						accounts.add(accounting);
 					}
 					return map;

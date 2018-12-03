@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -105,7 +104,7 @@ public class ZoneService implements MasterService, WhoisHistoryDomainLocator {
 
 	// <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
 	@Override
-	public Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(List<DomainName> tlds, DatabaseConnection conn) throws IOException, SQLException {
+	public Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
 		return conn.executeQuery(
 			(ResultSet results) -> {
 				try {

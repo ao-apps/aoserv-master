@@ -18,6 +18,7 @@ import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.aoserv.master.billing.WhoisHistoryDomainLocator;
+import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.net.DomainName;
@@ -120,7 +121,8 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
 
 	// <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
 	@Override
-	public Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(List<DomainName> tlds, DatabaseConnection conn) throws IOException, SQLException {
+	public Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
+		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
 		return conn.executeQuery(
 			(ResultSet results) -> {
 				try {

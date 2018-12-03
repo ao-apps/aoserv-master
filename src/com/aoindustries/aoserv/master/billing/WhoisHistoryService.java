@@ -6,7 +6,6 @@
 package com.aoindustries.aoserv.master.billing;
 
 import com.aoindustries.aoserv.client.billing.WhoisHistory;
-import com.aoindustries.aoserv.client.dns.ZoneTable;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
@@ -21,7 +20,6 @@ import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.aoserv.master.ObjectFactories;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
-import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
@@ -33,14 +31,15 @@ import com.aoindustries.net.DomainName;
 import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +51,14 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
+// TODO: Also do whois history for:
+//       SmtpSmartHost?
+//       Server.hostname?
+//       CyrusImapdBind.servername
+//       CyrusImapdServer.servername
+//       SendmailServer
+//       ftp.PrivateServer.hostname
+//       IpAddress.hostname
 final public class WhoisHistoryService implements MasterService {
 
 	private static final Logger logger = LogFactory.getLogger(WhoisHistoryService.class);
@@ -75,55 +82,68 @@ final public class WhoisHistoryService implements MasterService {
 		CLEANUP_AFTER_CLOSED_ACCOUNT_NO_TRANSACTIONS = "1 year";
 
 	private static void cleanup(DatabaseConnection conn, InvalidateList invalidateList) throws IOException, SQLException {
+		Set<AccountingCode> accountsAffected = new HashSet<>();
+
 		// Open account that have balance <= $0.00 and entry is older than one year
-		int updated = conn.executeUpdate(
-			"delete from billing.\"WhoisHistory\" where id in (\n"
-			+ "  select\n"
+		List<AccountingCode> deletedGoodStanding = conn.executeObjectListUpdate(
+			ObjectFactories.accountingCodeFactory,
+			"DELETE FROM billing.\"WhoisHistory\" WHERE id IN (\n"
+			+ "  SELECT\n"
 			+ "    wh.id\n"
-			+ "  from\n"
+			+ "  FROM\n"
 			+ "               billing.\"WhoisHistory\" wh\n"
-			+ "    inner join account.\"Account\"      bu on wh.accounting = bu.accounting\n"
-			+ "    left  join billing.account_balances ab on bu.accounting = ab.accounting"
-			+ "  where\n"
+			+ "    INNER JOIN account.\"Account\"      bu ON wh.accounting = bu.accounting\n"
+			+ "    LEFT  JOIN billing.account_balances ab ON bu.accounting = ab.accounting"
+			+ "  WHERE\n"
 			// entry is older than interval
-			+ "    (now()-wh.time) > ?::interval\n"
+			+ "    (now() - wh.time) > ?::interval\n"
 			// open account
-			+ "    and bu.canceled is null\n"
+			+ "    AND bu.canceled IS NULL\n"
 			// balance is <= $0.00
-			+ "    and (ab.accounting is null or ab.balance<='0.00'::decimal(9,2))"
-			+ ")",
+			+ "    AND (ab.accounting IS NULL OR ab.balance <= '0.00'::numeric(9,2))"
+			+ ") RETURNING accounting",
 			CLEANUP_AFTER_GOOD_ACCOUNT
 		);
-		if(updated > 0) {
-			invalidateList.addTable(conn, Table.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-			if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": cleanup: Deleted good standing: " + updated);
+		if(!deletedGoodStanding.isEmpty()) {
+			accountsAffected.addAll(deletedGoodStanding);
+			if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": cleanup: Deleted good standing: " + deletedGoodStanding.size());
 		}
 
 		// Closed account that have a balance of $0.00, has not had any billing.Transaction for interval, and entry is older than interval
-		updated = conn.executeUpdate(
-			"delete from billing.\"WhoisHistory\" where id in (\n"
-			+ "  select\n"
+		List<AccountingCode> deletedCanceledZero = conn.executeObjectListUpdate(
+			ObjectFactories.accountingCodeFactory,
+			"DELETE FROM billing.\"WhoisHistory\" WHERE id IN (\n"
+			+ "  SELECT\n"
 			+ "    wh.id\n"
-			+ "  from\n"
+			+ "  FROM\n"
 			+ "               billing.\"WhoisHistory\" wh\n"
-			+ "    inner join account.\"Account\"      bu on wh.accounting = bu.accounting\n"
-			+ "    left  join billing.account_balances ab on bu.accounting = ab.accounting"
-			+ "  where\n"
+			+ "    INNER JOIN account.\"Account\"      bu ON wh.accounting = bu.accounting\n"
+			+ "    LEFT  JOIN billing.account_balances ab ON bu.accounting = ab.accounting"
+			+ "  WHERE\n"
 			// entry is older than interval
-			+ "    (now()-wh.time) > ?::interval\n"
+			+ "    (now() - wh.time) > ?::interval\n"
 			// closed account
-			+ "    and bu.canceled is not null\n"
+			+ "    AND bu.canceled IS NOT NULL\n"
 			// has not had any accounting billing.Transaction for interval
-			+ "    and (select tr.transid from billing.\"Transaction\" tr where bu.accounting=tr.accounting and tr.time>=(now() - ?::interval) limit 1) is null\n"
+			+ "    AND (SELECT tr.transid FROM billing.\"Transaction\" tr WHERE bu.accounting = tr.accounting AND tr.\"time\" >= (now() - ?::interval) LIMIT 1) IS NULL\n"
 			// balance is $0.00
-			+ "    and (ab.accounting is null or ab.balance='0.00'::decimal(9,2))"
-			+ ")",
+			+ "    AND (ab.accounting IS NULL OR ab.balance = '0.00'::numeric(9,2))"
+			+ ") RETURNING accounting",
 			CLEANUP_AFTER_CLOSED_ACCOUNT_ZERO_BALANCE,
 			CLEANUP_AFTER_CLOSED_ACCOUNT_NO_TRANSACTIONS
 		);
-		if(updated > 0) {
-			invalidateList.addTable(conn, Table.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-			if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": cleanup: Deleted canceled at zero balance: " + updated);
+		if(!deletedCanceledZero.isEmpty()) {
+			accountsAffected.addAll(deletedCanceledZero);
+			if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": cleanup: Deleted canceled at zero balance: " + deletedCanceledZero.size());
+		}
+		if(!accountsAffected.isEmpty()) {
+			invalidateList.addTable(
+				conn,
+				Table.TableID.WHOIS_HISTORY,
+				accountsAffected,
+				InvalidateList.allServers,
+				false
+			);
 		}
 	}
 	// </editor-fold>
@@ -192,8 +212,7 @@ final public class WhoisHistoryService implements MasterService {
 		// TODO: Should we fire this off manually, or at least have a way to do so when the process fails?
 		// TODO: Should there be a monthly task to make sure this process is working correctly?
 		// TODO: Do not run simply as a cron job, but rather a background process that does again based on when
-		//       last successful/failed.  This will be more robust to master server restarts and allow to
-		//       slowly work in the background.
+		//       last successful/failed.  This would be less rigidly scheduled.
 		// TODO: This should probably go in a dns.monitoring schema, and be watched by NOC monitoring.
 		@Override
 		public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
@@ -228,68 +247,113 @@ final public class WhoisHistoryService implements MasterService {
 							/*
 							 * The add new records
 							 */
-							// Get the set of unique accounting, zone combinations in the system
-							Set<AccountingAndZone> topLevelZones = getBusinessesAndTopLevelZones(conn);
+							// Get the set of unique registrable domains and accounts in the system
+							Map<DomainName,Set<AccountingCode>> registrableDomains = getWhoisHistoryDomains(conn);
 							conn.releaseConnection();
 
-							// Find the number of distinct zones
-							int zoneCount;
-							{
-								Set<String> zones = new HashSet<>();
-								for(AccountingAndZone aaz : topLevelZones) zones.add(aaz.zone);
-								zoneCount = zones.size();
-							}
-							if(zoneCount > 0) {
+							// Find the number of distinct registrable domains
+							int registrableDomainCount = registrableDomains.size();
+							if(registrableDomainCount > 0) {
 								// Compute target sleep time
-								final long targetSleepTime = PASS_COMPLETION_TARGET / zoneCount;
-								if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": Target sleep time for " + zoneCount + " " + (zoneCount==1 ? "zone" : "zones") + " is " + targetSleepTime + " ms");
-								
-								// Perform the whois lookups once per unique zone
-								Map<String,String> whoisCache = new HashMap<>(topLevelZones.size()*4/3+1);
-								for(AccountingAndZone aaz : topLevelZones) {
-									String accounting = aaz.getAccounting();
-									String zone = aaz.getZone();
-									// Check the last time this accounting and zone was done, avoid doing again
-									Timestamp lastChecked = conn.executeTimestampQuery(
-										Connection.TRANSACTION_READ_COMMITTED,
-										true,
-										false,
-										"SELECT \"time\" FROM billing.\"WhoisHistory\" WHERE accounting=? AND \"zone\"=? ORDER BY \"time\" DESC LIMIT 1",
-										accounting,
-										zone
+								final long targetSleepTime = PASS_COMPLETION_TARGET / registrableDomainCount;
+								if(DEBUG) {
+									System.out.println(
+										WhoisHistoryService.class.getSimpleName()
+										+ ": Target sleep time for "
+										+ registrableDomainCount
+										+ " registrable "
+										+ (registrableDomainCount==1 ? "domain" : "domains")
+										+ " is " + targetSleepTime + " ms"
 									);
-									boolean checkNow;
-									if(lastChecked == null) {
-										checkNow = true;
-										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Never checked, checkNow: " + checkNow);
-									} else {
-										long timeSince = System.currentTimeMillis() - lastChecked.getTime();
-										checkNow = timeSince >= RECHECK_MILLIS || timeSince <= -RECHECK_MILLIS;
-										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Last checked " + lastChecked + ", checkNow: " + checkNow);
+								}
+								
+								// Performs the whois lookup once per unique registrable domain
+								for(Map.Entry<DomainName,Set<AccountingCode>> entry : registrableDomains.entrySet()) {
+									final DomainName registrableDomain = entry.getKey();
+									final Set<AccountingCode> accounts = entry.getValue();
+									final int numAccounts = accounts.size();
+									// Lookup the last time this registrable domain was done for each account
+									final Map<AccountingCode,Timestamp> lastChecked;
+									{
+										StringBuilder sql = new StringBuilder();
+										sql.append("SELECT\n"
+											+ "  a.accounting,\n"
+											+ "  (SELECT wh.\"time\" FROM billing.\"WhoisHistory\" wh WHERE a.accounting=wh.accounting AND \"zone\"=? ORDER BY \"time\" DESC LIMIT 1) AS \"time\"\n"
+											+ "FROM\n"
+											+ "  account.\"Account\" a\n"
+											+ "WHERE\n"
+											+ "  a.accounting IN (");
+										for(int i = 0; i < numAccounts; i++) {
+											if(i != 0) sql.append(',');
+											sql.append('?');
+										}
+										sql.append(')');
+										List<Object> params = new ArrayList<>(1 + numAccounts);
+										params.add(registrableDomain + "."); // TODO: No "." once column type changed
+										params.addAll(accounts);
+										lastChecked = conn.executeQuery(
+											(ResultSet results) -> {
+												try {
+													Map<AccountingCode, Timestamp> map = new HashMap<>(numAccounts*4/3+1);
+													while(results.next()) {
+														map.put(
+															AccountingCode.valueOf(results.getString(1)),
+															results.getTimestamp(2)
+														);
+													}
+													return map;
+												} catch(ValidationException e) {
+													throw new SQLException(e);
+												}
+											},
+											sql.toString(),
+											params.toArray()
+										);
 									}
-									if(checkNow) {
+									// Find all accounts that were not checked recently, avoid doing again
+									Set<AccountingCode> accountsToCheck = new HashSet<>(numAccounts*4/3+1);
+									for(AccountingCode account : accounts) {
+										Timestamp time = lastChecked.get(account);
+										boolean checkNow;
+										if(time == null) {
+											checkNow = true;
+											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Never checked for " + account + ", checkNow: " + checkNow);
+										} else {
+											long timeSince = System.currentTimeMillis() - time.getTime();
+											checkNow = timeSince >= RECHECK_MILLIS || timeSince <= -RECHECK_MILLIS;
+											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Last checked " + time + " for " + account + ", checkNow: " + checkNow);
+										}
+										if(checkNow) accountsToCheck.add(account);
+									}
+									if(!accountsToCheck.isEmpty()) {
 										long startTime = System.currentTimeMillis();
-										String whoisOutput = whoisCache.get(zone);
-										if(whoisOutput == null) {
-											try {
-												whoisOutput = getWhoisOutput(zone);
-												if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Success");
-											} catch(Throwable err) {
-												whoisOutput = err.toString();
-												if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Error");
-											}
-											whoisCache.put(zone, whoisOutput);
+										String whoisOutput;
+										try {
+											whoisOutput = getWhoisOutput(registrableDomain);
+											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Success");
+										} catch(Throwable err) {
+											whoisOutput = err.toString();
+											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Error");
 										}
 										// update database
 										// TODO: Store a success flag, too?
 										// TODO: Store the parsed nameservers, too?  At least for when is success.
-										conn.executeUpdate(
-											"insert into billing.\"WhoisHistory\" (accounting, \"zone\", whois_output) values(?,?,?)",
-											accounting,
-											zone,
-											whoisOutput
+										// This could be a batch, but this is short and simple
+										for(AccountingCode account : accountsToCheck) {
+											conn.executeUpdate(
+												"insert into billing.\"WhoisHistory\" (accounting, \"zone\", whois_output) values(?,?,?)",
+												account,
+												registrableDomain + ".", // TODO: Do not add "." once column type changes
+												whoisOutput
+											);
+										}
+										invalidateList.addTable(
+											conn,
+											Table.TableID.WHOIS_HISTORY,
+											accountsToCheck,
+											InvalidateList.allServers,
+											false
 										);
-										invalidateList.addTable(conn, Table.TableID.WHOIS_HISTORY, InvalidateList.allBusinesses, InvalidateList.allServers, false);
 										conn.commit();
 										conn.releaseConnection();
 										MasterServer.invalidateTables(invalidateList, null);
@@ -299,7 +363,7 @@ final public class WhoisHistoryService implements MasterService {
 											if(sleepTime < LOOKUP_SLEEP_MINIMUM) {
 												sleepTime = LOOKUP_SLEEP_MINIMUM;
 											}
-											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + zone + ": Completed, sleeping " + sleepTime + " ms");
+											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Completed, sleeping " + sleepTime + " ms");
 											Thread.sleep(sleepTime);
 										} catch(InterruptedException e) {
 											logger.log(Level.WARNING, null, e);
@@ -307,7 +371,7 @@ final public class WhoisHistoryService implements MasterService {
 									}
 								}
 							} else {
-								if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": No zones");
+								if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": No registrable domains");
 							}
 						} catch(RuntimeException | IOException err) {
 							if(conn.rollback()) {
@@ -344,12 +408,12 @@ final public class WhoisHistoryService implements MasterService {
 	/**
 	 * Performs a whois lookup for a zone.  This is not cross-platform capable at this time.
 	 */
-	private static String getWhoisOutput(String zone) throws IOException {
-		if(zone.endsWith(".")) zone = zone.substring(0, zone.length() - 1);
+	private static String getWhoisOutput(DomainName registrableDomain) throws IOException {
+		String lower = registrableDomain.toLowerCase();
 		StringBuilder sb = new StringBuilder();
 		sb.append("---------- COMMAND ---------\n");
-		sb.append(COMMAND).append(" -H ").append(zone).append('\n');
-		ProcessResult result = ProcessResult.exec(COMMAND, "-H", zone);
+		sb.append(COMMAND).append(" -H ").append(lower).append('\n');
+		ProcessResult result = ProcessResult.exec(COMMAND, "-H", lower);
 		int retVal = result.getExitVal();
 		String stdout = result.getStdout();
 		String stderr = result.getStderr();
@@ -372,103 +436,22 @@ final public class WhoisHistoryService implements MasterService {
 	}
 
 	/**
-	 * Gets the set of all unique business accounting code and top level domain (zone) pairs.
-	 *
-	 * @see  ZoneTable#getHostTLD(com.aoindustries.net.DomainName, java.util.List)
+	 * Gets the set of all unique registrable domains (single domain label + public suffix) and accounts.
+	 * Merges the results of calling {@link WhoisHistoryDomainLocator#getWhoisHistoryDomains(com.aoindustries.dbc.DatabaseConnection)}
+	 * on all {@link MasterService services}.
 	 */
-	private Set<AccountingAndZone> getBusinessesAndTopLevelZones(DatabaseConnection conn) throws IOException, SQLException {
-		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
-
-		return conn.executeQuery(
-			(ResultSet results) -> {
-				Set<AccountingAndZone> aazs = new HashSet<>();
-				while(results.next()) {
-					String accounting = results.getString(1);
-					String zone = results.getString(2);
-					if(!zone.endsWith(".")) throw new SQLException("No end '.': " + zone);
-					DomainName domain;
-					try {
-						domain = DomainName.valueOf(zone.substring(0, zone.length() - 1));
-					} catch(ValidationException e) {
-						throw new SQLException(e);
-					}
-					String tld;
-					try {
-						tld = ZoneTable.getHostTLD(domain, tlds) + ".";
-					} catch(IllegalArgumentException err) {
-						logger.log(Level.WARNING, null, err);
-						tld = zone;
-					}
-					aazs.add(new AccountingAndZone(accounting, tld));
-				}
-				return aazs;
-			},
-			"select distinct\n"
-			+ "  pk.accounting as accounting,\n"
-			+ "  dz.zone as zone\n"
-			+ "from\n"
-			+ "  dns.\"Zone\" dz\n"
-			+ "  inner join billing.\"Package\" pk on dz.package=pk.name\n"
-			+ "where\n"
-			+ "  dz.zone not like '%.in-addr.arpa'\n"
-			+ "union select distinct\n"
-			+ "  pk.accounting as accounting,\n"
-			+ "  ed.domain||'.' as zone\n"
-			+ "from\n"
-			+ "  email.\"Domain\" ed\n"
-			+ "  inner join billing.\"Package\" pk on ed.package=pk.name\n"
-			+ "union select distinct\n"
-			+ "  pk.accounting as accounting,\n"
-			+ "  hsu.hostname||'.' as zone\n"
-			+ "from\n"
-			+ "  web.\"VirtualHostName\" hsu\n"
-			+ "  inner join web.\"VirtualHost\" hsb on hsu.httpd_site_bind=hsb.id\n"
-			+ "  inner join web.\"Site\" hs on hsb.httpd_site=hs.id\n"
-			+ "  inner join billing.\"Package\" pk on hs.package=pk.name\n"
-			+ "  inner join linux.\"Server\" ao on hs.ao_server=ao.server\n"
-			+ "where\n"
-			// Is not "localhost"
-			+ "  hsu.hostname!='localhost'\n"
-			// Is not the test URL
-			+ "  and hsu.hostname!=(hs.\"name\" || '.' || ao.hostname)"
-		);
-	}
-
-	private static class AccountingAndZone {
-
-		final private String accounting;
-		final private String zone;
-
-		private AccountingAndZone(String accounting, String zone) {
-			this.accounting = accounting;
-			this.zone = zone;
+	private Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
+		Map<DomainName,Set<AccountingCode>> merged = new HashMap<>();
+		for(WhoisHistoryDomainLocator locator : MasterServer.getServices(WhoisHistoryDomainLocator.class)) {
+			for(Map.Entry<DomainName,Set<AccountingCode>> entry : locator.getWhoisHistoryDomains(conn).entrySet()) {
+				DomainName registrableDomain = entry.getKey();
+				Set<AccountingCode> accounts = merged.get(registrableDomain);
+				if(accounts == null) merged.put(registrableDomain, accounts = new LinkedHashSet<>());
+				accounts.addAll(entry.getValue());
+				
+			}
 		}
-
-		public String getAccounting() {
-			return accounting;
-		}
-
-		public String getZone() {
-			return zone;
-		}
-
-		@Override
-		public int hashCode() {
-			return accounting.hashCode() ^ zone.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object O) {
-			if(O==null) return false;
-			if(!(O instanceof AccountingAndZone)) return false;
-			AccountingAndZone other = (AccountingAndZone)O;
-			return accounting.equals(other.accounting) && zone.equals(other.zone);
-		}
-
-		@Override
-		public String toString() {
-			return accounting+'|'+zone;
-		}
+		return merged;
 	}
 	// </editor-fold>
 
@@ -483,7 +466,7 @@ final public class WhoisHistoryService implements MasterService {
 	/**
 	 * Gets the whois output for the specific billing.WhoisHistory record.
 	 */
-	// TODO: Should this be a getObject handler?
+	// TODO: Should this be a getObject handler?  Or a new getColumnHandler for when certain columns are not fetched in main query?
 	public String getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int id) throws IOException, SQLException {
 		AccountingCode accounting = getBusinessForWhoisHistory(conn, id);
 		BusinessHandler.checkAccessBusiness(conn, source, "getWhoisHistoryOutput", accounting);
@@ -492,65 +475,63 @@ final public class WhoisHistoryService implements MasterService {
 
 	// <editor-fold desc="GetTableHandler" defaultstate="collapsed">
 	@Override
-	public Iterable<TableHandler.GetTableHandler> getGetTableHandlers() {
-		return Collections.singleton(
-			new TableHandler.GetTableHandlerByRole() {
+	public TableHandler.GetTableHandler startGetTableHandler() {
+		return new TableHandler.GetTableHandlerByRole() {
 
-				@Override
-				public Set<Table.TableID> getTableIds() {
-					return EnumSet.of(Table.TableID.WHOIS_HISTORY);
-				}
-
-				@Override
-				protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						CursorMode.FETCH,
-						new WhoisHistory(),
-						"select id, time, accounting, zone from billing.\"WhoisHistory\""
-					);
-				}
-
-				@Override
-				protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-					// The servers don't need access to this information
-					MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-				}
-
-				@Override
-				protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-					MasterServer.writeObjects(
-						conn,
-						source,
-						out,
-						provideProgress,
-						CursorMode.FETCH,
-						new WhoisHistory(),
-						"select\n"
-						+ "  wh.id,\n"
-						+ "  wh.time,\n"
-						+ "  wh.accounting,\n"
-						+ "  wh.zone\n"
-						+ "from\n"
-						+ "  account.\"Username\" un,\n"
-						+ "  billing.\"Package\" pk,\n"
-						+ TableHandler.BU1_PARENTS_JOIN
-						+ "  billing.\"WhoisHistory\" wh\n"
-						+ "where\n"
-						+ "  un.username=?\n"
-						+ "  and un.package=pk.name\n"
-						+ "  and (\n"
-						+ TableHandler.PK_BU1_PARENTS_WHERE
-						+ "  )\n"
-						+ "  and bu1.accounting=wh.accounting",
-						source.getUsername()
-					);
-				}
+			@Override
+			public Set<Table.TableID> getTableIds() {
+				return EnumSet.of(Table.TableID.WHOIS_HISTORY);
 			}
-		);
+
+			@Override
+			protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+				MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					CursorMode.FETCH,
+					new WhoisHistory(),
+					"select id, time, accounting, zone from billing.\"WhoisHistory\""
+				);
+			}
+
+			@Override
+			protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+				// The servers don't need access to this information
+				MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+			}
+
+			@Override
+			protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+				MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					CursorMode.FETCH,
+					new WhoisHistory(),
+					"select\n"
+					+ "  wh.id,\n"
+					+ "  wh.time,\n"
+					+ "  wh.accounting,\n"
+					+ "  wh.zone\n"
+					+ "from\n"
+					+ "  account.\"Username\" un,\n"
+					+ "  billing.\"Package\" pk,\n"
+					+ TableHandler.BU1_PARENTS_JOIN
+					+ "  billing.\"WhoisHistory\" wh\n"
+					+ "where\n"
+					+ "  un.username=?\n"
+					+ "  and un.package=pk.name\n"
+					+ "  and (\n"
+					+ TableHandler.PK_BU1_PARENTS_WHERE
+					+ "  )\n"
+					+ "  and bu1.accounting=wh.accounting",
+					source.getUsername()
+				);
+			}
+		};
 	}
 	// </editor-fold>
 }

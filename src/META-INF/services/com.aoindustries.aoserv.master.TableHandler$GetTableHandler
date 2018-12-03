@@ -120,7 +120,6 @@ com.aoindustries.aoserv.master.payment.Payment_GetTableHandler
 com.aoindustries.aoserv.master.payment.PaymentType_GetTableHandler
 com.aoindustries.aoserv.master.payment.Processor_GetTableHandler
 com.aoindustries.aoserv.master.pki.Certificate_GetTableHandler
-com.aoindustries.aoserv.master.pki.CertificateName_GetTableHandler
 com.aoindustries.aoserv.master.pki.CertificateOtherUse_GetTableHandler
 com.aoindustries.aoserv.master.pki.EncryptionKey_GetTableHandler
 com.aoindustries.aoserv.master.postgresql.Database_GetTableHandler
@@ -157,7 +156,6 @@ com.aoindustries.aoserv.master.web.Redirect_GetTableHandler
 com.aoindustries.aoserv.master.web.Site_GetTableHandler
 com.aoindustries.aoserv.master.web.StaticSite_GetTableHandler
 com.aoindustries.aoserv.master.web.VirtualHost_GetTableHandler
-com.aoindustries.aoserv.master.web.VirtualHostName_GetTableHandler
 com.aoindustries.aoserv.master.web.jboss.Site_GetTableHandler
 com.aoindustries.aoserv.master.web.jboss.Version_GetTableHandler
 com.aoindustries.aoserv.master.web.tomcat.Context_GetTableHandler

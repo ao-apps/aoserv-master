@@ -13,7 +13,6 @@ import com.aoindustries.net.DomainName;
 import com.aoindustries.tlds.TopLevelDomain;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,5 +31,5 @@ public interface WhoisHistoryDomainLocator {
 	 * @see  DnsService#getDNSTLDs(com.aoindustries.dbc.DatabaseConnection)
 	 * @see  TopLevelDomain
 	 */
-	Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(List<DomainName> tlds, DatabaseConnection conn) throws IOException, SQLException;
+	Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException;
 }

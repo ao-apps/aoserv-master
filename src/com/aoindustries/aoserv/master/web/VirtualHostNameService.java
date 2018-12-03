@@ -18,6 +18,7 @@ import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.aoserv.master.billing.WhoisHistoryDomainLocator;
+import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.net.DomainName;
@@ -126,7 +127,8 @@ public class VirtualHostNameService implements MasterService, WhoisHistoryDomain
 
 	// <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
 	@Override
-	public Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(List<DomainName> tlds, DatabaseConnection conn) throws IOException, SQLException {
+	public Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
+		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
 		return conn.executeQuery(
 			(ResultSet results) -> {
 				try {
@@ -159,7 +161,7 @@ public class VirtualHostNameService implements MasterService, WhoisHistoryDomain
 			+ "  INNER JOIN web.\"Site\"            hs  ON hsb.httpd_site      =  hs.id\n"
 			+ "  INNER JOIN billing.\"Package\"     pk  ON  hs.package         =  pk.\"name\"\n"
 			+ "  INNER JOIN linux.\"Server\"        ao  ON  hs.ao_server       =  ao.server\n"
-			+ "where\n"
+			+ "WHERE\n"
 			// Is not "localhost"
 			+ "  hsu.hostname != 'localhost'\n"
 			// Is not the test URL
