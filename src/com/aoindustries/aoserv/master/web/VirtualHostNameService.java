@@ -159,7 +159,7 @@ public class VirtualHostNameService implements MasterService, WhoisHistoryDomain
 			+ "  INNER JOIN web.\"Site\"            hs  ON hsb.httpd_site      =  hs.id\n"
 			+ "  INNER JOIN billing.\"Package\"     pk  ON  hs.package         =  pk.\"name\"\n"
 			+ "  INNER JOIN linux.\"Server\"        ao  ON  hs.ao_server       =  ao.server\n"
-			+ "WHERE\n"
+			+ "where\n"
 			// Is not "localhost"
 			+ "  hsu.hostname != 'localhost'\n"
 			// Is not the test URL

@@ -126,15 +126,15 @@ public class DomainService implements MasterService, WhoisHistoryDomainLocator {
 					while(results.next()) {
 						DomainName domain = DomainName.valueOf(results.getString(1));
 						AccountingCode accounting = AccountingCode.valueOf(results.getString(2));
-						DomainName registrableDomain;
+						DomainName registerableDomain;
 						try {
-							registrableDomain = ZoneTable.getHostTLD(domain, tlds);
+							registerableDomain = ZoneTable.getHostTLD(domain, tlds);
 						} catch(IllegalArgumentException err) {
 							logger.log(Level.WARNING, "Cannot find TLD, continuing verbatim", err);
-							registrableDomain = domain;
+							registerableDomain = domain;
 						}
-						Set<AccountingCode> accounts = map.get(registrableDomain);
-						if(accounts == null) map.put(registrableDomain, accounts = new LinkedHashSet<>());
+						Set<AccountingCode> accounts = map.get(registerableDomain);
+						if(accounts == null) map.put(registerableDomain, accounts = new LinkedHashSet<>());
 						accounts.add(accounting);
 					}
 					return map;
