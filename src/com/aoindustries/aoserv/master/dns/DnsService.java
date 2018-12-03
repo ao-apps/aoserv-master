@@ -412,6 +412,7 @@ final public class DnsService implements MasterService {
 
 	private static final Object dnstldLock=new Object();
 	private static List<DomainName> dnstldCache;
+	// TODO: Move to a TopLevelDomainService
 	public List<DomainName> getDNSTLDs(DatabaseConnection conn) throws IOException, SQLException {
 		synchronized(dnstldLock) {
 			if(dnstldCache==null) {
