@@ -43,8 +43,22 @@ public interface MasterService {
 	 * These are registered only after the handler successfully
 	 * {@link #start() starts}.
 	 */
-	default Iterable<TableHandler.GetObjectHandler> getGetObjectHandlers() {
+	default Iterable<TableHandler.GetObjectHandler> startGetObjectHandlers() {
 		return Collections.emptyList();
+	}
+
+	/**
+	 * In order the reduce the number of services listed in /META-INF/services,
+	 * a handler may provide a {@link TableHandler.GetObjectHandler}.
+	 * This is registered only after the handler successfully
+	 * {@link #start() starts}.
+	 * <p>
+	 * When not null, this is combined into a single list, after the entries
+	 * from {@link #startGetObjectHandlers()}.
+	 * </p>
+	 */
+	default TableHandler.GetObjectHandler startGetObjectHandler() {
+		return null;
 	}
 
 	/**
@@ -53,8 +67,22 @@ public interface MasterService {
 	 * These are registered only after the handler successfully
 	 * {@link #start() starts}.
 	 */
-	default Iterable<TableHandler.GetTableHandler> getGetTableHandlers() {
+	default Iterable<TableHandler.GetTableHandler> startGetTableHandlers() {
 		return Collections.emptyList();
+	}
+
+	/**
+	 * In order the reduce the number of services listed in /META-INF/services,
+	 * a handler may provide a {@link TableHandler.GetTableHandler}.
+	 * This is registered only after the handler successfully
+	 * {@link #start() starts}.
+	 * <p>
+	 * When not null, this is combined into a single list, after the entries
+	 * from {@link #startGetTableHandlers()}.
+	 * </p>
+	 */
+	default TableHandler.GetTableHandler startGetTableHandler() {
+		return null;
 	}
 
 	// TODO: Command handlers
