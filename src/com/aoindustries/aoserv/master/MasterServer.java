@@ -9999,16 +9999,15 @@ public abstract class MasterServer {
 	private static final PolymorphicMultimap<Object,MasterServiceState> serviceRegistry = new PolymorphicMultimap<>(Object.class);
 
 	/**
-	 * Gets the service of the given class.  The service must be started.
+	 * Gets a started service of the given class or interface.
 	 * If more than one started service is of the given class, there is no
 	 * guarantee which is returned.  TODO: round-robin from the registry.
 	 *
 	 * @throws NoServiceException when no services are of the given class
 	 * @throws ServiceNotStartedException when no services of the given class are started
 	 */
-	public static <T> T getService(Class<T> clazz) throws MasterServiceException {
-		// Look for exact class match in a single lookup, since all classes were put into the map
-		List<Map.Entry<T,MasterServiceState>> entries = serviceRegistry.get(clazz);
+	public static <T> T getService(Class<? extends T> clazz) throws MasterServiceException {
+		List<Map.Entry<T,MasterServiceState>> entries = serviceRegistry.getEntries(clazz);
 		if(!entries.isEmpty()) {
 			for(Map.Entry<T,MasterServiceState> entry : entries) {
 				MasterServiceState state = entry.getValue();
@@ -10022,6 +10021,47 @@ public abstract class MasterServer {
 		}
 		throw new NoServiceException("No service found for class: " + clazz.getName());
 	}
+
+	/**
+	 * Gets all started services of the given class or interface.
+	 *
+	 * @return  The list of services or an empty list when none found
+	 */
+	public static <T> List<T> getStartedServices(Class<? extends T> clazz) {
+		return serviceRegistry.getKeysFilterEntry(
+			clazz,
+			(Map.Entry<T, MasterServiceState> e) -> e.getValue().started
+		);
+	}
+
+	/**
+	 * Gets all services of the given class or interface.
+	 *
+	 * @return  The list of services or an empty list when none found
+	 *
+	 * @throws ServiceNotStartedException when a matching service is not started
+	 */
+	public static <T> List<T> getServices(Class<? extends T> clazz) throws ServiceNotStartedException {
+		// Make sure all are started
+		int[] notStartedCount = new int[1];
+		List<T> matches = serviceRegistry.getKeysFilterEntry(
+			clazz,
+			(Map.Entry<T,MasterServiceState> e) -> {
+				if(!e.getValue().started) notStartedCount[0]++;
+				// Stop storing, but continue to count, once a failed service is located
+				return notStartedCount[0] == 0;
+			}
+		);
+		int failedCount = notStartedCount[0];
+		if(failedCount != 0) {
+			throw new ServiceNotStartedException(
+				failedCount + " failed " + (failedCount == 1 ? "service" : "services") + " found for class: " + clazz.getName()
+			);
+		} else {
+			return matches;
+		}
+	}
+
 
 	/**
 	 * Loads and starts all {@link MasterService}.
@@ -10131,8 +10171,34 @@ public abstract class MasterServer {
 				serviceAndState.getElement2().started = true;
 				started = true;
 				// Fatal, will no retry adding handlers when exception happens on first attempt
-				TableHandler.initGetObjectHandlers(service.getGetObjectHandlers().iterator(), out, true);
-				TableHandler.initGetTableHandlers(service.getGetTableHandlers().iterator(), out, true);
+				{
+					Iterable<TableHandler.GetObjectHandler> handlers = service.startGetObjectHandlers();
+					TableHandler.GetObjectHandler handler = service.startGetObjectHandler();
+					if(handler != null) {
+						// Combine into a single list
+						List<TableHandler.GetObjectHandler> merged = new ArrayList<>();
+						for(TableHandler.GetObjectHandler h : handlers) {
+							merged.add(h);
+						}
+						merged.add(handler);
+						handlers = merged;
+					}
+					TableHandler.initGetObjectHandlers(handlers.iterator(), out, true);
+				}
+				{
+					Iterable<TableHandler.GetTableHandler> handlers = service.startGetTableHandlers();
+					TableHandler.GetTableHandler handler = service.startGetTableHandler();
+					if(handler != null) {
+						// Combine into a single list
+						List<TableHandler.GetTableHandler> merged = new ArrayList<>();
+						for(TableHandler.GetTableHandler h : handlers) {
+							merged.add(h);
+						}
+						merged.add(handler);
+						handlers = merged;
+					}
+					TableHandler.initGetTableHandlers(handlers.iterator(), out, true);
+				}
 				out.println(": Success");
 			} catch(Exception e) {
 				if(!started) failedServices.add(serviceAndState);
