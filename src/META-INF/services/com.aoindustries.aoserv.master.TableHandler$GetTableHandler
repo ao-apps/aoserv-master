@@ -50,7 +50,6 @@ com.aoindustries.aoserv.master.email.AttachmentType_GetTableHandler
 com.aoindustries.aoserv.master.email.BlackholeAddress_GetTableHandler
 com.aoindustries.aoserv.master.email.CyrusImapdBind_GetTableHandler
 com.aoindustries.aoserv.master.email.CyrusImapdServer_GetTableHandler
-com.aoindustries.aoserv.master.email.Domain_GetTableHandler
 com.aoindustries.aoserv.master.email.Forwarding_GetTableHandler
 com.aoindustries.aoserv.master.email.InboxAddress_GetTableHandler
 com.aoindustries.aoserv.master.email.List_GetTableHandler
