@@ -189,7 +189,7 @@ final public class WhoisHistoryService implements MasterService {
 			);
 
 	/**
-	 * When last run failed, runs hour at HH:12
+	 * When last run failed, runs hourly at HH:12
 	 */
 	private static final Schedule failedSchedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) ->
 		minute==12;
