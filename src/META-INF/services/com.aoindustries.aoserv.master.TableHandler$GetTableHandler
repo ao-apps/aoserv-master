@@ -120,6 +120,7 @@ com.aoindustries.aoserv.master.payment.Payment_GetTableHandler
 com.aoindustries.aoserv.master.payment.PaymentType_GetTableHandler
 com.aoindustries.aoserv.master.payment.Processor_GetTableHandler
 com.aoindustries.aoserv.master.pki.Certificate_GetTableHandler
+com.aoindustries.aoserv.master.pki.CertificateName_GetTableHandler
 com.aoindustries.aoserv.master.pki.CertificateOtherUse_GetTableHandler
 com.aoindustries.aoserv.master.pki.EncryptionKey_GetTableHandler
 com.aoindustries.aoserv.master.postgresql.Database_GetTableHandler
