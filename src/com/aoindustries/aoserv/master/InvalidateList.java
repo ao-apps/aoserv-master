@@ -32,6 +32,7 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
+// TODO: This should use HashSet instead of SortedArrayList
 final public class InvalidateList {
 
     /**
