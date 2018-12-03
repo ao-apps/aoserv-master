@@ -146,7 +146,7 @@ final public class TransactionHandler {
             "getAccountBalance",
             accounting,
             out,
-            "select coalesce(sum(cast((rate*quantity) as decimal(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed!='N'",
+            "select coalesce(sum(cast((rate*quantity) as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed!='N'",
             accounting.toString()
         );
     }
@@ -167,7 +167,7 @@ final public class TransactionHandler {
             "getAccountBalanceBefore",
             accounting,
             out,
-            "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from billing.\"Transaction\" where accounting=? and time<? and payment_confirmed!='N'",
+            "select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and time<? and payment_confirmed!='N'",
             accounting.toString(),
             new Timestamp(before)
         );
@@ -188,7 +188,7 @@ final public class TransactionHandler {
             "getConfirmedAccountBalance",
             accounting,
             out,
-            "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed='Y'",
+            "select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed='Y'",
             accounting.toString()
         );
     }
@@ -202,7 +202,7 @@ final public class TransactionHandler {
     ) throws IOException, SQLException {
         return SQLUtility.getPennies(
             conn.executeStringQuery(
-                "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed='Y'",
+                "select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed='Y'",
                 accounting.toString()
             )
         );
@@ -224,7 +224,7 @@ final public class TransactionHandler {
             "getConfirmedAccountBalanceBefore",
             accounting,
             out,
-            "select coalesce(sum(cast(rate*quantity as decimal(9,2))), 0) from billing.\"Transaction\" where accounting=? and time<? and payment_confirmed='Y'",
+            "select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and time<? and payment_confirmed='Y'",
             accounting.toString(),
             new Timestamp(before)
         );

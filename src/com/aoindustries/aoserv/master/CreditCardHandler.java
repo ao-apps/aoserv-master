@@ -823,7 +823,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             + "  authorization_username,\n"
             + "  authorization_principal_name,\n"
             + "  status\n"
-            + ") VALUES (?,?,?,?,?,?,?,?::decimal(9,2),?::decimal(9,2),?,?::decimal(9,2),?::decimal(9,2),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING') RETURNING id",
+            + ") VALUES (?,?,?,?,?,?,?,?::numeric(9,2),?::numeric(9,2),?,?::numeric(9,2),?::numeric(9,2),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING') RETURNING id",
             processor,
             accounting,
             groupName,
@@ -1402,7 +1402,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "  (\n"
                             + "    select\n"
                             + "      bu.accounting,\n"
-                            + "      coalesce(sum(cast((tr.rate*tr.quantity) as decimal(9,2))), 0) as balance\n"
+                            + "      coalesce(sum(cast((tr.rate*tr.quantity) as numeric(9,2))), 0) as balance\n"
                             + "    from\n"
                             + "                account.\"Account\"     bu\n"
                             + "      left join billing.\"Transaction\" tr on bu.accounting = tr.accounting\n"
@@ -1415,7 +1415,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "  (\n"
                             + "    select\n"
                             + "      bu.accounting,\n"
-                            + "      coalesce(sum(cast((tr.rate*tr.quantity) as decimal(9,2))), 0) as balance\n"
+                            + "      coalesce(sum(cast((tr.rate*tr.quantity) as numeric(9,2))), 0) as balance\n"
                             + "    from\n"
                             + "                account.\"Account\"     bu\n"
                             + "      left join billing.\"Transaction\" tr on bu.accounting = tr.accounting\n"

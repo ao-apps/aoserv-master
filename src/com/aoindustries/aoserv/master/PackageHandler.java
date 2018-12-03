@@ -847,7 +847,7 @@ final public class PackageHandler {
                 + "  ?,\n"
                 + "  ?::integer,\n"
                 + "  ?::integer,\n"
-                + "  ?::decimal(9,2),\n"
+                + "  ?::numeric(9,2),\n"
                 + "  ?\n"
                 + ")",
                 packageDefinition,
