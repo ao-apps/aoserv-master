@@ -188,10 +188,19 @@ final public class WhoisHistoryService implements MasterService {
 				|| dayOfMonth==25
 			);
 
+	/**
+	 * When last run failed, runs hour at HH:12
+	 */
+	private static final Schedule failedSchedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) ->
+		minute==12;
+
 	private final CronJob cronJob = new CronJob() {
+
+		private volatile boolean lastRunSuccessful = false;
+
 		@Override
 		public Schedule getCronJobSchedule() {
-			return schedule;
+			return lastRunSuccessful ? schedule : failedSchedule;
 		}
 
 		@Override
@@ -216,6 +225,7 @@ final public class WhoisHistoryService implements MasterService {
 		// TODO: This should probably go in a dns.monitoring schema, and be watched by NOC monitoring.
 		@Override
 		public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+			lastRunSuccessful = false;
 			try {
 				ProcessTimer timer = new ProcessTimer(
 					logger,
@@ -395,6 +405,7 @@ final public class WhoisHistoryService implements MasterService {
 				} finally {
 					timer.finished();
 				}
+				lastRunSuccessful = true;
 			} catch(ThreadDeath TD) {
 				throw TD;
 			} catch(Throwable T) {
