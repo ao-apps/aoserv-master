@@ -12,6 +12,9 @@ import java.util.Collections;
  *
  * @author  AO Industries, Inc.
  */
+// TODO: Move this, along with related stuff, to a new ao-service-manager project
+// TODO: Then monitor the service states in noc-monitor
+// TODO: Finally, use the service manager for AOServDaemon, and monitor, too
 public interface MasterService {
 
 	/**

@@ -10012,6 +10012,9 @@ public abstract class MasterServer {
 	 * @throws NoServiceException when no services are of the given class
 	 * @throws ServiceNotStartedException when no services of the given class are started
 	 */
+	// TODO: Move this craftiness to ao-lang, or own micro project?  At least the multi-class fast lookup aspect
+	// TODO: "PolymorphicMap"?
+	// TODO: Change list to CopyOnWriteArrayList, too?
 	public static <MS extends MasterService> MS getService(Class<MS> clazz) throws MasterServiceException {
 		// Look for exact class match in a single lookup, since all classes were put into the map
 		List<MasterServiceEntry> entries = servicesByClass.get(clazz);
