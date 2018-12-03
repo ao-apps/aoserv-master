@@ -426,22 +426,22 @@ final public class WhoisHistoryService implements MasterService {
 		sb.append(COMMAND).append(" -H ").append(lower).append('\n');
 		ProcessResult result = ProcessResult.exec(COMMAND, "-H", lower);
 		int retVal = result.getExitVal();
+		if(sb.charAt(sb.length()-1) != '\n') sb.append('\n');
+		// TODO: Exit status should probably be stored in the WhoisHistory table itself
+		// Or separate columns for each: command, output, error, exit status
+		sb.append("------- EXIT STATUS --------\n");
+		sb.append(retVal).append('\n');
 		String stdout = result.getStdout();
-		String stderr = result.getStderr();
 		if(!stdout.isEmpty()) {
 			if(sb.charAt(sb.length()-1) != '\n') sb.append('\n');
 			sb.append("---------- OUTPUT ----------\n");
 			sb.append(stdout);
 		}
+		String stderr = result.getStderr();
 		if(!stderr.isEmpty()) {
 			if(sb.charAt(sb.length()-1) != '\n') sb.append('\n');
 			sb.append("---------- ERROR -----------\n");
 			sb.append(stderr);
-		}
-		if(retVal != 0 && retVal != 1) {
-			if(sb.charAt(sb.length()-1) != '\n') sb.append('\n');
-			sb.append("------- EXIT STATUS --------\n");
-			sb.append("Unexpected exit status for ").append(COMMAND).append(": ").append(retVal).append('\n');
 		}
 		return sb.toString();
 	}
