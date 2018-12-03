@@ -43,7 +43,6 @@ com.aoindustries.aoserv.master.dns.ForbiddenZone_GetTableHandler
 com.aoindustries.aoserv.master.dns.Record_GetTableHandler
 com.aoindustries.aoserv.master.dns.RecordType_GetTableHandler
 com.aoindustries.aoserv.master.dns.TopLevelDomain_GetTableHandler
-com.aoindustries.aoserv.master.dns.Zone_GetTableHandler
 com.aoindustries.aoserv.master.email.Address_GetTableHandler
 com.aoindustries.aoserv.master.email.AttachmentBlock_GetTableHandler
 com.aoindustries.aoserv.master.email.AttachmentType_GetTableHandler
