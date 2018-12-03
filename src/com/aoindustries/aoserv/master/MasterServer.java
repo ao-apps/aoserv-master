@@ -56,7 +56,7 @@ import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
-import com.aoindustries.util.MinimalList;
+import com.aoindustries.util.PolymorphicMultimap;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
 import com.aoindustries.util.Tuple2;
@@ -85,8 +85,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -9994,34 +9992,28 @@ public abstract class MasterServer {
 		}
 	}
 
-	private static class MasterServiceEntry {
-		private final MasterService service;
+	private static class MasterServiceState {
 		private volatile boolean started;
-		private MasterServiceEntry(MasterService service) {
-			this.service = service;
-		}
 	}
 
-	private static final ConcurrentMap<Class<? extends MasterService>,List<MasterServiceEntry>> servicesByClass = new ConcurrentHashMap<>();
+	private static final PolymorphicMultimap<Object,MasterServiceState> serviceRegistry = new PolymorphicMultimap<>(Object.class);
 
 	/**
 	 * Gets the service of the given class.  The service must be started.
 	 * If more than one started service is of the given class, there is no
-	 * guarantee which is returned.
+	 * guarantee which is returned.  TODO: round-robin from the registry.
 	 *
 	 * @throws NoServiceException when no services are of the given class
 	 * @throws ServiceNotStartedException when no services of the given class are started
 	 */
-	// TODO: Move this craftiness to ao-lang, or own micro project?  At least the multi-class fast lookup aspect
-	// TODO: "PolymorphicMap"?
-	// TODO: Change list to CopyOnWriteArrayList, too?
-	public static <MS extends MasterService> MS getService(Class<MS> clazz) throws MasterServiceException {
+	public static <T> T getService(Class<T> clazz) throws MasterServiceException {
 		// Look for exact class match in a single lookup, since all classes were put into the map
-		List<MasterServiceEntry> entries = servicesByClass.get(clazz);
-		if(entries != null) {
-			for(MasterServiceEntry entry : entries) {
-				if(entry.started) {
-					return clazz.cast(entry.service);
+		List<Map.Entry<T,MasterServiceState>> entries = serviceRegistry.get(clazz);
+		if(!entries.isEmpty()) {
+			for(Map.Entry<T,MasterServiceState> entry : entries) {
+				MasterServiceState state = entry.getValue();
+				if(state.started) {
+					return entry.getKey();
 				}
 			}
 			throw new ServiceNotStartedException(
@@ -10029,21 +10021,6 @@ public abstract class MasterServer {
 			);
 		}
 		throw new NoServiceException("No service found for class: " + clazz.getName());
-	}
-
-	/**
-	 * Gets all the classes of a class that are assignable from a class.  Ha! parse that puny human.
-	 */
-	private static <T> Set<Class<? extends T>> getAllClasses(Class<T> upperBound, Class<? extends T> clazz) {
-		Set<Class<? extends T>> classes = new LinkedHashSet<>();
-		Class<?> current = clazz;
-		do {
-			if(upperBound.isAssignableFrom(current)) classes.add(current.asSubclass(upperBound));
-			for(Class<?> iface : clazz.getInterfaces()) {
-				if(upperBound.isAssignableFrom(iface)) classes.add(iface.asSubclass(upperBound));
-			}
-		} while((current = current.getSuperclass()) != null);
-		return classes;
 	}
 
 	/**
@@ -10085,33 +10062,18 @@ public abstract class MasterServer {
 
 			// Instantiate all services
 			System.out.print("Loading services: ");
-			List<MasterServiceEntry> servicesToStart = new ArrayList<>();
+			List<Tuple2<MasterService,MasterServiceState>> servicesToStart = new ArrayList<>();
 			ServiceLoader<MasterService> loader = ServiceLoader.load(MasterService.class);
 			Iterator<MasterService> iter = loader.iterator();
 			while(iter.hasNext()) {
 				MasterService service = iter.next();
-				MasterServiceEntry entry = new MasterServiceEntry(service);
-				servicesToStart.add(entry);
-				// Add the entry under all classes of MasterService that it implements
-				Class<? extends MasterService> serviceClass = service.getClass();
-				//System.err.println("serviceClass = " + serviceClass.getName());
-				for(Class<?> clazz : getAllClasses(MasterService.class, serviceClass)) {
-					//System.err.println("clazz = " + clazz.getName());
-					Class<? extends MasterService> msClass = clazz.asSubclass(MasterService.class);
-					// Does putting this back in the concurrent map ensure others with access to the array list see updated state of the array list itself?
-					// Technically speaking, should this array list also be switched to CopyOnWriteArrayList?
-					servicesByClass.put(
-						msClass,
-						MinimalList.add(
-							servicesByClass.get(msClass),
-							entry
-						)
-					);
-				}
+				MasterServiceState state = new MasterServiceState();
+				servicesToStart.add(new Tuple2<>(service, state));
+				serviceRegistry.put(service, state);
 			}
 			System.out.println(servicesToStart.size() + " " + (servicesToStart.size() == 1 ? "service" : "services") + " loaded");
 
-			List<MasterServiceEntry> failedServices = startServices(servicesToStart, true, System.out);
+			List<Tuple2<MasterService,MasterServiceState>> failedServices = startServices(servicesToStart, true, System.out);
 
 			// Start listening after initialization to allow all modules to be loaded
 			// TODO: Should the network protocol be a service, too?
@@ -10156,24 +10118,24 @@ public abstract class MasterServer {
 	/**
 	 * Starts the given services, returning a list of those that failed to start.
 	 */
-	private static List<MasterServiceEntry> startServices(List<MasterServiceEntry> servicesToStart, boolean isFirstStart, PrintStream out) {
+	private static List<Tuple2<MasterService,MasterServiceState>> startServices(List<Tuple2<MasterService,MasterServiceState>> servicesToStart, boolean isFirstStart, PrintStream out) {
 		// TODO: Support starting in dependency order
 		out.println(isFirstStart ? "Starting services:" : "Starting failed services:");
-		List<MasterServiceEntry> failedServices = new ArrayList<>();
-		for(MasterServiceEntry serviceEntry : servicesToStart) {
-			MasterService service = serviceEntry.service;
+		List<Tuple2<MasterService,MasterServiceState>> failedServices = new ArrayList<>();
+		for(Tuple2<MasterService,MasterServiceState> serviceAndState : servicesToStart) {
+			MasterService service = serviceAndState.getElement1();
 			out.print("    " + service.getClass().getName());
 			boolean started = false;
 			try {
 				service.start();
-				serviceEntry.started = true;
+				serviceAndState.getElement2().started = true;
 				started = true;
 				// Fatal, will no retry adding handlers when exception happens on first attempt
 				TableHandler.initGetObjectHandlers(service.getGetObjectHandlers().iterator(), out, true);
 				TableHandler.initGetTableHandlers(service.getGetTableHandlers().iterator(), out, true);
 				out.println(": Success");
 			} catch(Exception e) {
-				if(!started) failedServices.add(serviceEntry);
+				if(!started) failedServices.add(serviceAndState);
 				out.println(": " + e.toString());
 				logger.log(Level.SEVERE, null, e);
 			}
