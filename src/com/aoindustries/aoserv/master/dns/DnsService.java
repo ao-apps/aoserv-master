@@ -24,6 +24,7 @@ import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.NotImplementedException;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.InetAddress;
+import com.aoindustries.tlds.TopLevelDomain;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import java.io.IOException;
@@ -36,6 +37,7 @@ import java.util.List;
  *
  * @author  AO Industries, Inc.
  */
+// TODO: Move Zone-specific stuff into ZoneService
 final public class DnsService implements MasterService {
 
 	/**
@@ -413,6 +415,31 @@ final public class DnsService implements MasterService {
 	private static final Object dnstldLock=new Object();
 	private static List<DomainName> dnstldCache;
 	// TODO: Move to a TopLevelDomainService
+	/**
+	 * Gets the contents of the <code>dns.TopLevelDomain</code> table.  Please note
+	 * that these are only our manually configured entries, and do not contain the
+	 * full list from {@link TopLevelDomain}.
+	 * <p>
+	 * Also, this is a list of effective top-level domains, for the purposes of
+	 * domain allocation.  This means it includes things like <code>com.au</code>,
+	 * whereas the {@link TopLevelDomain} only includes <code>au</code>.
+	 * </p>
+	 * <p>
+	 * TODO: Automatically maintain this list from the {@link TopLevelDomain} source, with
+	 * an "auto" flag.  Add/remove as-needed when auto.
+	 * </p>
+	 * <p>
+	 * TODO: Have a flag "isRegistrable" that enables/disables a domain as being
+	 * allowed for use by clients.  Something marked isRegistrable and auto should never be removed?
+	 * Instead of removing auto entries, have a "removed" timestamp showing when it no longer exists?
+	 * </p>
+	 * <p>
+	 * TODO: Allow a comment on each entry, too.
+	 * </p>
+	 * <p>
+	 * TODO: This could replace ForbiddenZones by adding more specific entries, and marking as isRegistrable=false?
+	 * </p>
+	 */
 	public List<DomainName> getDNSTLDs(DatabaseConnection conn) throws IOException, SQLException {
 		synchronized(dnstldLock) {
 			if(dnstldCache==null) {
