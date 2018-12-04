@@ -8,8 +8,10 @@ package com.aoindustries.aoserv.master.billing;
 import com.aoindustries.aoserv.client.billing.WhoisHistory;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
+import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.master.BusinessHandler;
 import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.InvalidateList;
@@ -24,21 +26,24 @@ import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
+import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.dbc.NoRowException;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.lang.ProcessResult;
 import com.aoindustries.net.DomainName;
+import com.aoindustries.util.Tuple2;
 import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +63,7 @@ import java.util.logging.Logger;
 //       CyrusImapdServer.servername
 //       SendmailServer
 //       ftp.PrivateServer.hostname
-//       IpAddress.hostname
+//       IpAddress.hostname (for unmanaged servers, too?
 final public class WhoisHistoryService implements MasterService {
 
 	private static final Logger logger = LogFactory.getLogger(WhoisHistoryService.class);
@@ -87,21 +92,22 @@ final public class WhoisHistoryService implements MasterService {
 		// Open account that have balance <= $0.00 and entry is older than one year
 		List<AccountingCode> deletedGoodStanding = conn.executeObjectListUpdate(
 			ObjectFactories.accountingCodeFactory,
-			"DELETE FROM billing.\"WhoisHistory\" WHERE id IN (\n"
+			"DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
 			+ "  SELECT\n"
-			+ "    wh.id\n"
+			+ "    wha.id\n"
 			+ "  FROM\n"
-			+ "               billing.\"WhoisHistory\" wh\n"
-			+ "    INNER JOIN account.\"Account\"      bu ON wh.accounting = bu.accounting\n"
-			+ "    LEFT  JOIN billing.account_balances ab ON bu.accounting = ab.accounting"
+			+ "               billing.\"WhoisHistoryAccount\" wha\n"
+			+ "    INNER JOIN billing.\"WhoisHistory\"        wh  ON wha.\"whoisHistory\" = wh.id\n"
+			+ "    INNER JOIN account.\"Account\"             bu  ON wha.account          = bu.accounting\n"
+			+ "    LEFT  JOIN billing.account_balances        ab  ON bu.accounting        = ab.accounting\n"
 			+ "  WHERE\n"
 			// entry is older than interval
-			+ "    (now() - wh.time) > ?::interval\n"
+			+ "    (now() - wh.\"time\") > ?::interval\n"
 			// open account
 			+ "    AND bu.canceled IS NULL\n"
 			// balance is <= $0.00
-			+ "    AND (ab.accounting IS NULL OR ab.balance <= '0.00'::numeric(9,2))"
-			+ ") RETURNING accounting",
+			+ "    AND (ab.accounting IS NULL OR ab.balance <= '0.00'::numeric(9,2))\n"
+			+ ") RETURNING account",
 			CLEANUP_AFTER_GOOD_ACCOUNT
 		);
 		if(!deletedGoodStanding.isEmpty()) {
@@ -112,23 +118,24 @@ final public class WhoisHistoryService implements MasterService {
 		// Closed account that have a balance of $0.00, has not had any billing.Transaction for interval, and entry is older than interval
 		List<AccountingCode> deletedCanceledZero = conn.executeObjectListUpdate(
 			ObjectFactories.accountingCodeFactory,
-			"DELETE FROM billing.\"WhoisHistory\" WHERE id IN (\n"
+			"DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
 			+ "  SELECT\n"
-			+ "    wh.id\n"
+			+ "    wha.id\n"
 			+ "  FROM\n"
-			+ "               billing.\"WhoisHistory\" wh\n"
-			+ "    INNER JOIN account.\"Account\"      bu ON wh.accounting = bu.accounting\n"
-			+ "    LEFT  JOIN billing.account_balances ab ON bu.accounting = ab.accounting"
+			+ "               billing.\"WhoisHistoryAccount\" wha\n"
+			+ "    INNER JOIN billing.\"WhoisHistory\"        wh  ON wha.\"whoisHistory\" = wh.id\n"
+			+ "    INNER JOIN account.\"Account\"             bu  ON wha.account          = bu.accounting\n"
+			+ "    LEFT  JOIN billing.account_balances        ab  ON bu.accounting        = ab.accounting\n"
 			+ "  WHERE\n"
 			// entry is older than interval
-			+ "    (now() - wh.time) > ?::interval\n"
+			+ "    (now() - wh.\"time\") > ?::interval\n"
 			// closed account
 			+ "    AND bu.canceled IS NOT NULL\n"
 			// has not had any accounting billing.Transaction for interval
 			+ "    AND (SELECT tr.transid FROM billing.\"Transaction\" tr WHERE bu.accounting = tr.accounting AND tr.\"time\" >= (now() - ?::interval) LIMIT 1) IS NULL\n"
 			// balance is $0.00
-			+ "    AND (ab.accounting IS NULL OR ab.balance = '0.00'::numeric(9,2))"
-			+ ") RETURNING accounting",
+			+ "    AND (ab.accounting IS NULL OR ab.balance = '0.00'::numeric(9,2))\n"
+			+ ") RETURNING account",
 			CLEANUP_AFTER_CLOSED_ACCOUNT_ZERO_BALANCE,
 			CLEANUP_AFTER_CLOSED_ACCOUNT_NO_TRANSACTIONS
 		);
@@ -139,16 +146,29 @@ final public class WhoisHistoryService implements MasterService {
 		if(!accountsAffected.isEmpty()) {
 			invalidateList.addTable(
 				conn,
-				Table.TableID.WHOIS_HISTORY,
+				Table.TableID.WhoisHistoryAccount,
+				accountsAffected,
+				InvalidateList.allServers,
+				false
+			);
+			// Affects visibility, so invalidate WhoisHistory, too
+			invalidateList.addTable(
+				conn,
+				Table.TableID.WhoisHistory,
 				accountsAffected,
 				InvalidateList.allServers,
 				false
 			);
 		}
+		// Cleanup any orphaned data
+		conn.executeUpdate("DELETE FROM billing.\"WhoisHistory\" WHERE id NOT IN (SELECT \"whoisHistory\" FROM billing.\"WhoisHistoryAccount\")");
 	}
 	// </editor-fold>
 
 	// <editor-fold desc="CronJob" defaultstate="collapsed">
+
+	private static final String COMMAND = "/usr/bin/whois";
+
 	/**
 	 * The minimum time to sleep between lookups in millis.
 	 */
@@ -157,7 +177,7 @@ final public class WhoisHistoryService implements MasterService {
 	/**
 	 * The interval between checks.
 	 */
-	private static final long RECHECK_MILLIS = 6L * 24 * 60 * 60 * 1000; // 6 days
+	private static final long RECHECK_MILLIS = 7L * 24 * 60 * 60 * 1000; // 7 days
 
 	/**
 	 * The target time for processing pass completion.
@@ -175,32 +195,16 @@ final public class WhoisHistoryService implements MasterService {
 	private static final long TIMER_REMINDER_INTERVAL = 24L*60*60*1000; // 1 day
 
 	/**
-	 * Runs at 6:12 am on the 1st, 7th, 13th, 19th, and 25th
+	 * Runs hourly, 12 minutes after the hour.
 	 */
 	private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) ->
-		minute==12
-		&& hour==6
-		&& (
-			dayOfMonth==1
-				|| dayOfMonth==7
-				|| dayOfMonth==13
-				|| dayOfMonth==19
-				|| dayOfMonth==25
-			);
-
-	/**
-	 * When last run failed, runs hourly at HH:12
-	 */
-	private static final Schedule failedSchedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) ->
 		minute==12;
 
 	private final CronJob cronJob = new CronJob() {
 
-		private volatile boolean lastRunSuccessful = false;
-
 		@Override
 		public Schedule getCronJobSchedule() {
-			return lastRunSuccessful ? schedule : failedSchedule;
+			return schedule;
 		}
 
 		@Override
@@ -215,17 +219,17 @@ final public class WhoisHistoryService implements MasterService {
 
 		@Override
 		public int getCronJobThreadPriority() {
-			return Thread.NORM_PRIORITY-1;
+			return Thread.NORM_PRIORITY - 1;
 		}
 
 		// TODO: Should we fire this off manually, or at least have a way to do so when the process fails?
+		//
 		// TODO: Should there be a monthly task to make sure this process is working correctly?
-		// TODO: Do not run simply as a cron job, but rather a background process that does again based on when
-		//       last successful/failed.  This would be less rigidly scheduled.
-		// TODO: This should probably go in a dns.monitoring schema, and be watched by NOC monitoring.
+		//
+		// TODO: This should probably go in a dns.monitoring schema, and be watched by NOC monitoring, with some older
+		//       records left around for billing purposes like done here.
 		@Override
 		public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-			lastRunSuccessful = false;
 			try {
 				ProcessTimer timer = new ProcessTimer(
 					logger,
@@ -264,7 +268,8 @@ final public class WhoisHistoryService implements MasterService {
 							// Find the number of distinct registrable domains
 							int registrableDomainCount = registrableDomains.size();
 							if(registrableDomainCount > 0) {
-								// Compute target sleep time
+								// Compute target sleep time as if we have to do all, despite we will probably not do all.
+								// This keeps the scheduling such that the cron job will not slow down too much, thus having to catch-up later
 								final long targetSleepTime = PASS_COMPLETION_TARGET / registrableDomainCount;
 								if(DEBUG) {
 									System.out.println(
@@ -277,107 +282,127 @@ final public class WhoisHistoryService implements MasterService {
 									);
 								}
 								
-								// Performs the whois lookup once per unique registrable domain
-								for(Map.Entry<DomainName,Set<AccountingCode>> entry : registrableDomains.entrySet()) {
-									final DomainName registrableDomain = entry.getKey();
-									final Set<AccountingCode> accounts = entry.getValue();
-									final int numAccounts = accounts.size();
-									// Lookup the last time this registrable domain was done for each account
-									final Map<AccountingCode,Timestamp> lastChecked;
-									{
-										StringBuilder sql = new StringBuilder();
-										sql.append("SELECT\n"
-											+ "  a.accounting,\n"
-											+ "  (SELECT wh.\"time\" FROM billing.\"WhoisHistory\" wh WHERE a.accounting=wh.accounting AND \"zone\"=? ORDER BY \"time\" DESC LIMIT 1) AS \"time\"\n"
-											+ "FROM\n"
-											+ "  account.\"Account\" a\n"
-											+ "WHERE\n"
-											+ "  a.accounting IN (");
-										for(int i = 0; i < numAccounts; i++) {
-											if(i != 0) sql.append(',');
-											sql.append('?');
-										}
-										sql.append(')');
-										List<Object> params = new ArrayList<>(1 + numAccounts);
-										params.add(registrableDomain + "."); // TODO: No "." once column type changed
-										params.addAll(accounts);
-										lastChecked = conn.executeQuery(
-											(ResultSet results) -> {
-												try {
-													Map<AccountingCode, Timestamp> map = new HashMap<>(numAccounts*4/3+1);
-													while(results.next()) {
+								// Sort the domains by those never looked up first, then by their order from oldest to newest/
+								// The list is not pruned yet, because it might become time while slowly processing the list
+								// Timestamp null when never looked-up
+								Map<DomainName,Timestamp> lookupOrder;
+								{
+									// Lookup the most recent time for all previously logged registrable domains, ordered by oldest first
+									final Map<DomainName,Timestamp> lastChecked = conn.executeQuery(
+										(ResultSet results) -> {
+											try {
+												Map<DomainName, Timestamp> map = new LinkedHashMap<>(registrableDomainCount *4/3+1); // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
+												int oldNotUsedCount = 0;
+												while(results.next()) {
+													DomainName registrableDomain = DomainName.valueOf(results.getString(1));
+													if(registrableDomains.keySet().contains(registrableDomain)) {
 														map.put(
-															AccountingCode.valueOf(results.getString(1)),
+															registrableDomain,
 															results.getTimestamp(2)
 														);
+													} else {
+														oldNotUsedCount++;
 													}
-													return map;
-												} catch(ValidationException e) {
-													throw new SQLException(e);
 												}
-											},
-											sql.toString(),
-											params.toArray()
-										);
-									}
-									// Find all accounts that were not checked recently, avoid doing again
-									Set<AccountingCode> accountsToCheck = new HashSet<>(numAccounts*4/3+1);
-									for(AccountingCode account : accounts) {
-										Timestamp time = lastChecked.get(account);
-										boolean checkNow;
-										if(time == null) {
-											checkNow = true;
-											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Never checked for " + account + ", checkNow: " + checkNow);
-										} else {
-											long timeSince = System.currentTimeMillis() - time.getTime();
-											checkNow = timeSince >= RECHECK_MILLIS || timeSince <= -RECHECK_MILLIS;
-											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Last checked " + time + " for " + account + ", checkNow: " + checkNow);
-										}
-										if(checkNow) accountsToCheck.add(account);
-									}
-									if(!accountsToCheck.isEmpty()) {
-										long startTime = System.currentTimeMillis();
-										String whoisOutput;
-										try {
-											whoisOutput = getWhoisOutput(registrableDomain);
-											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Success");
-										} catch(Throwable err) {
-											whoisOutput = err.toString();
-											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Error");
-										}
-										// update database
-										// TODO: Store a success flag, too?
-										// TODO: Store the parsed nameservers, too?  At least for when is success.
-										// This could be a batch, but this is short and simple
-										for(AccountingCode account : accountsToCheck) {
-											conn.executeUpdate(
-												"insert into billing.\"WhoisHistory\" (accounting, \"zone\", whois_output) values(?,?,?)",
-												account,
-												registrableDomain + ".", // TODO: Do not add "." once column type changes
-												whoisOutput
-											);
-										}
-										invalidateList.addTable(
-											conn,
-											Table.TableID.WHOIS_HISTORY,
-											accountsToCheck,
-											InvalidateList.allServers,
-											false
-										);
-										conn.commit();
-										conn.releaseConnection();
-										MasterServer.invalidateTables(invalidateList, null);
-										invalidateList.reset();
-										try {
-											long sleepTime = targetSleepTime - (System.currentTimeMillis() - startTime);
-											if(sleepTime < LOOKUP_SLEEP_MINIMUM) {
-												sleepTime = LOOKUP_SLEEP_MINIMUM;
+												if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": Old not used now count: " + oldNotUsedCount + ", if this becomes a large value, might be worth doing a WHERE \"registrableDomain\" IN (...)");
+												return map;
+											} catch(ValidationException e) {
+												throw new SQLException(e);
 											}
-											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Completed, sleeping " + sleepTime + " ms");
-											Thread.sleep(sleepTime);
-										} catch(InterruptedException e) {
-											logger.log(Level.WARNING, null, e);
+										},
+										// TODO: We could send a WHERE "registrableDomain" IN (...), but this is less code now
+										"select \"registrableDomain\", max(\"time\") from billing.\"WhoisHistory\" group by \"registrableDomain\" order by max"
+									);
+									lookupOrder = new LinkedHashMap<>(registrableDomainCount *4/3+1);
+									for(DomainName registrableDomain : registrableDomains.keySet()) {
+										if(!lastChecked.containsKey(registrableDomain)) {
+											lookupOrder.put(registrableDomain, null);
 										}
+									}
+									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": Number never checked: " + lookupOrder.size());
+									lookupOrder.putAll(lastChecked);
+									assert registrableDomains.keySet().equals(lookupOrder.keySet());
+								}
+								// Performs the whois lookup once per unique registrable domain
+								for(Map.Entry<DomainName,Timestamp> entry : lookupOrder.entrySet()) {
+									DomainName registrableDomain = entry.getKey();
+									Timestamp time = entry.getValue();
+									boolean checkNow;
+									if(time == null) {
+										checkNow = true;
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Never checked, checkNow: " + checkNow);
+									} else {
+										long timeSince = System.currentTimeMillis() - time.getTime();
+										checkNow = timeSince >= RECHECK_MILLIS || timeSince <= -RECHECK_MILLIS;
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Last checked " + time + ", checkNow: " + checkNow);
+									}
+									// Since they are in order by time, quite once the first one to not check is found
+									if(!checkNow) {
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": checkNow is false, it is not time for any remaining in the list, breaking loop now");
+										break;
+									}
+									long startTime = System.currentTimeMillis();
+									Integer exitStatus;
+									String output;
+									String error;
+									try {
+										String lower = registrableDomain.toLowerCase();
+										ProcessResult result = ProcessResult.exec(COMMAND, "-H", lower);
+										exitStatus = result.getExitVal();
+										output = result.getStdout();
+										error = result.getStderr();
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Success");
+									} catch(Throwable err) {
+										exitStatus = null;
+										output = "";
+										error = err.toString();
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Error");
+									}
+									// update database
+									// TODO: Store the parsed nameservers, too?  At least for when is success.
+									// This could be a batch, but this is short and simple
+									int id = conn.executeIntUpdate(
+										"INSERT INTO billing.\"WhoisHistory\" (\"registrableDomain\", \"exitStatus\", \"output\", error) VALUES (?,?,?,?) RETURNING id",
+										registrableDomain,
+										exitStatus == null ? DatabaseAccess.Null.INTEGER : exitStatus,
+										output,
+										error
+									);
+									Set<AccountingCode> accounts = registrableDomains.get(registrableDomain);
+									for(AccountingCode account : accounts) {
+										conn.executeUpdate(
+											"insert into billing.\"WhoisHistoryAccount\" (\"whoisHistory\", account) values(?,?)",
+											id,
+											account
+										);
+									}
+									invalidateList.addTable(
+										conn,
+										Table.TableID.WhoisHistory,
+										accounts,
+										InvalidateList.allServers,
+										false
+									);
+									invalidateList.addTable(
+										conn,
+										Table.TableID.WhoisHistoryAccount,
+										accounts,
+										InvalidateList.allServers,
+										false
+									);
+									conn.commit();
+									conn.releaseConnection();
+									MasterServer.invalidateTables(invalidateList, null);
+									invalidateList.reset();
+									try {
+										long sleepTime = targetSleepTime - (System.currentTimeMillis() - startTime);
+										if(sleepTime < LOOKUP_SLEEP_MINIMUM) {
+											sleepTime = LOOKUP_SLEEP_MINIMUM;
+										}
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Completed, sleeping " + sleepTime + " ms");
+										Thread.sleep(sleepTime);
+									} catch(InterruptedException e) {
+										logger.log(Level.WARNING, null, e);
 									}
 								}
 							} else {
@@ -405,7 +430,6 @@ final public class WhoisHistoryService implements MasterService {
 				} finally {
 					timer.finished();
 				}
-				lastRunSuccessful = true;
 			} catch(ThreadDeath TD) {
 				throw TD;
 			} catch(Throwable T) {
@@ -413,38 +437,6 @@ final public class WhoisHistoryService implements MasterService {
 			}
 		}
 	};
-
-	private static final String COMMAND = "/usr/bin/whois";
-
-	/**
-	 * Performs a whois lookup for a zone.  This is not cross-platform capable at this time.
-	 */
-	private static String getWhoisOutput(DomainName registrableDomain) throws IOException {
-		String lower = registrableDomain.toLowerCase();
-		StringBuilder sb = new StringBuilder();
-		sb.append("---------- COMMAND ---------\n");
-		sb.append(COMMAND).append(" -H ").append(lower).append('\n');
-		ProcessResult result = ProcessResult.exec(COMMAND, "-H", lower);
-		int retVal = result.getExitVal();
-		if(sb.charAt(sb.length()-1) != '\n') sb.append('\n');
-		// TODO: Exit status should probably be stored in the WhoisHistory table itself
-		// Or separate columns for each: command, output, error, exit status
-		sb.append("------- EXIT STATUS --------\n");
-		sb.append(retVal).append('\n');
-		String stdout = result.getStdout();
-		if(!stdout.isEmpty()) {
-			if(sb.charAt(sb.length()-1) != '\n') sb.append('\n');
-			sb.append("---------- OUTPUT ----------\n");
-			sb.append(stdout);
-		}
-		String stderr = result.getStderr();
-		if(!stderr.isEmpty()) {
-			if(sb.charAt(sb.length()-1) != '\n') sb.append('\n');
-			sb.append("---------- ERROR -----------\n");
-			sb.append(stderr);
-		}
-		return sb.toString();
-	}
 
 	/**
 	 * Gets the set of all unique registrable domains (single domain label + public suffix) and accounts.
@@ -466,22 +458,118 @@ final public class WhoisHistoryService implements MasterService {
 	}
 	// </editor-fold>
 
-	private static AccountingCode getBusinessForWhoisHistory(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
-			"select accounting from billing.\"WhoisHistory\" where id=?",
-			id
-		);
-	}
-
 	/**
-	 * Gets the whois output for the specific billing.WhoisHistory record.
+	 * Gets the whois output and error for the specific billing.WhoisHistory record.
+	 *
+	 * The same filtering as {@link #startGetTableHandler()}
 	 */
-	// TODO: Should this be a getObject handler?  Or a new getColumnHandler for when certain columns are not fetched in main query?
-	public String getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int id) throws IOException, SQLException {
-		AccountingCode accounting = getBusinessForWhoisHistory(conn, id);
-		BusinessHandler.checkAccessBusiness(conn, source, "getWhoisHistoryOutput", accounting);
-		return conn.executeStringQuery("select whois_output from billing.\"WhoisHistory\" where id=?", id);
+	public Tuple2<String,String> getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int id) throws IOException, SQLException {
+		UserId username = source.getUsername();
+		User masterUser = MasterServer.getUser(conn, username);
+		if(masterUser != null) {
+			UserHost[] masterServers = MasterServer.getUserHosts(conn, source.getUsername());
+			if(masterServers.length == 0) {
+				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
+					// id is that of the associated billing.WhoisHistoryAccount
+					return conn.executeQuery(
+						(ResultSet results) -> {
+							if(results.next()) {
+								return new Tuple2<>(results.getString(1), results.getString(2));
+							} else {
+								throw new NoRowException();
+							}
+						},
+						"SELECT\n"
+						+ "  wh.\"output\",\n"
+						+ "  wh.error\n"
+						+ "FROM\n"
+						+ "  billing.\"WhoisHistory\"                   wh\n"
+						+ "  INNER JOIN billing.\"WhoisHistoryAccount\" wha ON wh.id = wha.\"whoisHistory\"\n"
+						+ "WHERE\n"
+						+ "  wha.id=?",
+						id
+					);
+				} else {
+					return conn.executeQuery(
+						(ResultSet results) -> {
+							if(results.next()) {
+								return new Tuple2<>(results.getString(1), results.getString(2));
+							} else {
+								throw new NoRowException();
+							}
+						},
+						"select \"output\", error from billing.\"WhoisHistory\" where id=?",
+						id
+					);
+				}
+			} else {
+				throw new NoRowException();
+			}
+		} else {
+			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
+				// id is that of the associated billing.WhoisHistoryAccount
+				return conn.executeQuery(
+					(ResultSet results) -> {
+						if(results.next()) {
+							return new Tuple2<>(results.getString(1), results.getString(2));
+						} else {
+							throw new NoRowException();
+						}
+					},
+					"SELECT\n"
+					+ "  wh.\"output\",\n"
+					+ "  wh.error\n"
+					+ "FROM\n"
+					+ "  account.\"Username\" un,\n"
+					+ "  billing.\"Package\" pk,\n"
+					+ TableHandler.BU1_PARENTS_JOIN
+					+ "  billing.\"WhoisHistoryAccount\" wha,\n"
+					+ "  billing.\"WhoisHistory\" wh\n"
+					+ "WHERE\n"
+					+ "  un.username=?\n"
+					+ "  AND un.package=pk.name\n"
+					+ "  AND (\n"
+					+ TableHandler.PK_BU1_PARENTS_WHERE
+					+ "  )\n"
+					+ "  AND bu1.accounting = wha.account\n"
+					+ "  AND wha.\"whoisHistory\" = wh.id\n"
+					+ "  AND wha.id=?",
+					username,
+					id
+				);
+			} else {
+				return conn.executeQuery(
+					(ResultSet results) -> {
+						if(results.next()) {
+							return new Tuple2<>(results.getString(1), results.getString(2));
+						} else {
+							throw new NoRowException();
+						}
+					},
+					"SELECT\n"
+					+ "  wh.\"output\",\n"
+					+ "  wh.error\n"
+					+ "FROM\n"
+					+ "  account.\"Username\" un,\n"
+					+ "  billing.\"Package\" pk,\n"
+					+ TableHandler.BU1_PARENTS_JOIN
+					+ "  billing.\"WhoisHistoryAccount\" wha,\n"
+					+ "  billing.\"WhoisHistory\" wh\n"
+					+ "WHERE\n"
+					+ "  un.username=?\n"
+					+ "  AND un.package=pk.name\n"
+					+ "  AND (\n"
+					+ TableHandler.PK_BU1_PARENTS_WHERE
+					+ "  )\n"
+					+ "  AND bu1.accounting = wha.account\n"
+					+ "  AND wha.\"whoisHistory\" = wh.id\n"
+					+ "  AND wh.id=?\n"
+					+ "LIMIT 1", // Might be reached through multiple accounts
+					username,
+					id
+				);
+			}
+		}
 	}
 
 	// <editor-fold desc="GetTableHandler" defaultstate="collapsed">
@@ -491,20 +579,50 @@ final public class WhoisHistoryService implements MasterService {
 
 			@Override
 			public Set<Table.TableID> getTableIds() {
-				return EnumSet.of(Table.TableID.WHOIS_HISTORY);
+				return EnumSet.of(Table.TableID.WhoisHistory);
 			}
 
 			@Override
 			protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-				MasterServer.writeObjects(
-					conn,
-					source,
-					out,
-					provideProgress,
-					CursorMode.FETCH,
-					new WhoisHistory(),
-					"select id, time, accounting, zone from billing.\"WhoisHistory\""
-				);
+				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
+					// Use join and id from WhoisHistoryAccount
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						CursorMode.FETCH,
+						new WhoisHistory(),
+						"SELECT\n"
+						+ "  wha.id,\n"
+						+ "  wh.\"registrableDomain\",\n"
+						+ "  wh.\"time\",\n"
+						+ "  wh.\"exitStatus\",\n"
+						// Protocol conversion
+						+ "  wha.account AS accounting\n"
+						+ "FROM\n"
+						+ "  billing.\"WhoisHistory\"                   wh\n"
+						+ "  INNER JOIN billing.\"WhoisHistoryAccount\" wha ON wh.id = wha.\"whoisHistory\""
+					);
+				} else {
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						CursorMode.FETCH,
+						new WhoisHistory(),
+						"select\n"
+						+ "  id,\n"
+						+ "  \"registrableDomain\",\n"
+						+ "  \"time\",\n"
+						+ "  \"exitStatus\",\n"
+						// Protocol conversion
+						+ "  null as accounting\n"
+						+ "from\n"
+						+ "  billing.\"WhoisHistory\""
+					);
+				}
 			}
 
 			@Override
@@ -515,32 +633,70 @@ final public class WhoisHistoryService implements MasterService {
 
 			@Override
 			protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-				MasterServer.writeObjects(
-					conn,
-					source,
-					out,
-					provideProgress,
-					CursorMode.FETCH,
-					new WhoisHistory(),
-					"select\n"
-					+ "  wh.id,\n"
-					+ "  wh.time,\n"
-					+ "  wh.accounting,\n"
-					+ "  wh.zone\n"
-					+ "from\n"
-					+ "  account.\"Username\" un,\n"
-					+ "  billing.\"Package\" pk,\n"
-					+ TableHandler.BU1_PARENTS_JOIN
-					+ "  billing.\"WhoisHistory\" wh\n"
-					+ "where\n"
-					+ "  un.username=?\n"
-					+ "  and un.package=pk.name\n"
-					+ "  and (\n"
-					+ TableHandler.PK_BU1_PARENTS_WHERE
-					+ "  )\n"
-					+ "  and bu1.accounting=wh.accounting",
-					source.getUsername()
-				);
+				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
+					// Use join and id from WhoisHistoryAccount
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						CursorMode.AUTO,
+						new WhoisHistory(),
+						"select\n"
+						+ "  wha.id,\n"
+						+ "  wh.\"registrableDomain\",\n"
+						+ "  wh.\"time\",\n"
+						+ "  wh.\"exitStatus\",\n"
+						// Protocol conversion
+						+ "  wha.account as accounting\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"WhoisHistoryAccount\" wha,\n"
+						+ "  billing.\"WhoisHistory\" wh\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting = wha.account\n"
+						+ "  and wha.\"whoisHistory\" = wh.id",
+						source.getUsername()
+					);
+				} else {
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						CursorMode.AUTO,
+						new WhoisHistory(),
+						"select distinct\n"
+						+ "  wh.id,\n"
+						+ "  wh.\"registrableDomain\",\n"
+						+ "  wh.\"time\",\n"
+						+ "  wh.\"exitStatus\",\n"
+						// Protocol conversion
+						+ "  null as accounting\n"
+						+ "from\n"
+						+ "  account.\"Username\" un,\n"
+						+ "  billing.\"Package\" pk,\n"
+						+ TableHandler.BU1_PARENTS_JOIN
+						+ "  billing.\"WhoisHistoryAccount\" wha,\n"
+						+ "  billing.\"WhoisHistory\" wh\n"
+						+ "where\n"
+						+ "  un.username=?\n"
+						+ "  and un.package=pk.name\n"
+						+ "  and (\n"
+						+ TableHandler.PK_BU1_PARENTS_WHERE
+						+ "  )\n"
+						+ "  and bu1.accounting = wha.account\n"
+						+ "  and wha.\"whoisHistory\" = wh.id",
+						source.getUsername()
+					);
+				}
 			}
 		};
 	}

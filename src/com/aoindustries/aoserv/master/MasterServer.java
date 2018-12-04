@@ -266,6 +266,7 @@ public abstract class MasterServer {
 	/** Copy used to avoid copying for each access. */
 	private static final Table.TableID[] tableIDs = Table.TableID.values();
 
+	// TODO: Make this an interface to leverage lambdas
 	static abstract class Response {
 
 		abstract void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException;
@@ -317,6 +318,17 @@ public abstract class MasterServer {
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeUTF(resp2);
+				}
+			};
+		}
+
+		static Response of(int resp1, String resp2, String resp3) {
+			return new Response() {
+				@Override
+				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+					out.writeByte(resp1);
+					out.writeUTF(resp2);
+					out.writeUTF(resp3);
 				}
 			};
 		}
@@ -5699,15 +5711,25 @@ public abstract class MasterServer {
 												"get_whois_history_whois_output",
 												id
 											);
-											String whoisOutput = MasterServer.getService(WhoisHistoryService.class).getWhoisHistoryOutput(
+											Tuple2<String,String> whoisOutput = MasterServer.getService(WhoisHistoryService.class).getWhoisHistoryOutput(
 												conn,
 												source,
 												id
 											);
-											resp = Response.of(
-												AoservProtocol.DONE,
-												whoisOutput
-											);
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
+												String output = whoisOutput.getElement1();
+												String error = whoisOutput.getElement2();
+												resp = Response.of(
+													AoservProtocol.DONE,
+													output.isEmpty() ? error : output
+												);
+											} else {
+												resp = Response.of(
+													AoservProtocol.DONE,
+													whoisOutput.getElement1(),
+													whoisOutput.getElement2()
+												);
+											}
 											sendInvalidateList = false;
 										}
 										break;

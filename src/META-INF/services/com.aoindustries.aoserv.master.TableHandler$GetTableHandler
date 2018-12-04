@@ -29,6 +29,7 @@ com.aoindustries.aoserv.master.billing.PackageDefinitionLimit_GetTableHandler
 com.aoindustries.aoserv.master.billing.Resource_GetTableHandler
 com.aoindustries.aoserv.master.billing.TransactionHandler$GetTable
 com.aoindustries.aoserv.master.billing.TransactionType_GetTableHandler
+com.aoindustries.aoserv.master.billing.WhoisHistoryAccount_GetTableHandler
 com.aoindustries.aoserv.master.distribution.Architecture_GetTableHandler
 com.aoindustries.aoserv.master.distribution.OperatingSystem_GetTableHandler
 com.aoindustries.aoserv.master.distribution.OperatingSystemVersion_GetTableHandler
@@ -120,7 +121,6 @@ com.aoindustries.aoserv.master.payment.Payment_GetTableHandler
 com.aoindustries.aoserv.master.payment.PaymentType_GetTableHandler
 com.aoindustries.aoserv.master.payment.Processor_GetTableHandler
 com.aoindustries.aoserv.master.pki.Certificate_GetTableHandler
-com.aoindustries.aoserv.master.pki.CertificateName_GetTableHandler
 com.aoindustries.aoserv.master.pki.CertificateOtherUse_GetTableHandler
 com.aoindustries.aoserv.master.pki.EncryptionKey_GetTableHandler
 com.aoindustries.aoserv.master.postgresql.Database_GetTableHandler

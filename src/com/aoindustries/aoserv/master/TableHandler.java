@@ -728,6 +728,10 @@ final public class TableHandler {
 		String tableName
 	) throws IOException, SQLException {
 		switch(tableName) {
+			case "billing.whois_history" :
+				// Dispatch to new name WhoisHistory, which provides compatibility
+				getTable(conn, source, clientOut, provideProgress, Table.TableID.WhoisHistory);
+				break;
 			case "mysql.mysql_reserved_words" :
 				if(
 					source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0

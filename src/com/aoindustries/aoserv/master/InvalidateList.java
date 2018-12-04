@@ -272,6 +272,9 @@ final public class InvalidateList {
                 case VIRTUAL_SERVERS :
                     addTable(conn, Table.TableID.VIRTUAL_DISKS, businesses, servers, true);
                     break;
+                case WhoisHistoryAccount :
+                    addTable(conn, Table.TableID.WhoisHistory, businesses, servers, false);
+                    break;
             }
         }
     }
