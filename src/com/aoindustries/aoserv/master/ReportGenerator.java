@@ -103,7 +103,6 @@ final public class ReportGenerator implements CronJob {
 		try {
 			ProcessTimer timer=new ProcessTimer(
 				logger,
-				MasterServer.getRandom(),
 				ReportGenerator.class.getName(),
 				"runCronJob",
 				"Backup Report Generator",

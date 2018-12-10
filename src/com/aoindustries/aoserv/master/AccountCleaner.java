@@ -101,7 +101,6 @@ final public class AccountCleaner implements CronJob {
         try {
             ProcessTimer timer=new ProcessTimer(
                 logger,
-                MasterServer.getRandom(),
                 AccountCleaner.class.getName(),
                 "runCronJob",
                 "Account Cleaner",

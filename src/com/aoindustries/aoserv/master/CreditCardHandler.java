@@ -1274,7 +1274,6 @@ final public class CreditCardHandler /*implements CronJob*/ {
         try {
             ProcessTimer timer=new ProcessTimer(
                 logger,
-                MasterServer.getRandom(),
                 CreditCardHandler.class.getName(),
                 "processAutomaticPayments",
                 "CreditCardHandler - Process Automatic Payments",

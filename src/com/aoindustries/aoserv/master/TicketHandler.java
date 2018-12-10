@@ -1801,7 +1801,6 @@ final public class TicketHandler /*implements Runnable*/ {
                         logger.log(Level.WARNING, null, err);
                     }
                     ProcessTimer timer=new ProcessTimer(
-                        MasterServer.getRandom(),
                         MasterConfiguration.getWarningSmtpServer(),
                         MasterConfiguration.getWarningEmailFrom(),
                         MasterConfiguration.getWarningEmailTo(),

@@ -233,7 +233,6 @@ final public class WhoisHistoryService implements MasterService {
 			try {
 				ProcessTimer timer = new ProcessTimer(
 					logger,
-					MasterServer.getRandom(),
 					getClass().getName(),
 					"runCronJob",
 					WhoisHistoryService.class.getSimpleName() + " - Whois History",

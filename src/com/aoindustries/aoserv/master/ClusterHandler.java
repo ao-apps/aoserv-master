@@ -268,7 +268,6 @@ final public class ClusterHandler implements CronJob {
             try {
                 ProcessTimer timer=new ProcessTimer(
                     logger,
-                    MasterServer.getRandom(),
                     ClusterHandler.class.getName(),
                     "runCronJob",
                     "ClusterHandler - Find Virtual Host Mapping",
