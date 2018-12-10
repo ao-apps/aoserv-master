@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.AOServWritable;
+import com.aoindustries.aoserv.client.account.Profile;
 import com.aoindustries.aoserv.client.aosh.Command;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.billing.TransactionSearchCriteria;
@@ -730,8 +731,20 @@ public abstract class MasterServer {
 													boolean sendInvoice=in.readBoolean();
 													String billingContact=in.readUTF().trim();
 													String billingEmail=in.readUTF().trim();
+													Profile.EmailFormat billingEmailFormat;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_20) >= 0) {
+														billingEmailFormat = in.readEnum(Profile.EmailFormat.class);
+													} else {
+														billingEmailFormat = Profile.EmailFormat.HTML;
+													}
 													String technicalContact=in.readUTF().trim();
 													String technicalEmail=in.readUTF().trim();
+													Profile.EmailFormat technicalEmailFormat;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_20) >= 0) {
+														technicalEmailFormat = in.readEnum(Profile.EmailFormat.class);
+													} else {
+														technicalEmailFormat = Profile.EmailFormat.HTML;
+													}
 													process.setCommand(
 														Command.ADD_BUSINESS_PROFILE,
 														accounting,
@@ -748,10 +761,12 @@ public abstract class MasterServer {
 														sendInvoice,
 														billingContact,
 														billingEmail,
+														billingEmailFormat,
 														technicalContact,
-														technicalEmail
+														technicalEmail,
+														technicalEmailFormat
 													);
-													int id=BusinessHandler.addBusinessProfile(
+													int id = BusinessHandler.addBusinessProfile(
 														conn,
 														source,
 														invalidateList,
@@ -769,8 +784,10 @@ public abstract class MasterServer {
 														sendInvoice,
 														billingContact,
 														billingEmail,
+														billingEmailFormat,
 														technicalContact,
-														technicalEmail
+														technicalEmail,
+														technicalEmailFormat
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,

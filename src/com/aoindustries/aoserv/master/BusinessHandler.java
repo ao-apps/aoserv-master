@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.Administrator;
+import com.aoindustries.aoserv.client.account.Profile;
 import com.aoindustries.aoserv.client.billing.NoticeLog;
 import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.master.User;
@@ -491,8 +492,10 @@ final public class BusinessHandler {
 		boolean sendInvoice,
 		String billingContact,
 		String billingEmail,
+		Profile.EmailFormat billingEmailFormat,
 		String technicalContact,
-		String technicalEmail
+		String technicalEmail,
+		Profile.EmailFormat technicalEmailFormat
 	) throws IOException, SQLException {
 		checkAccessBusiness(conn, source, "createBusinessProfile", accounting);
 
@@ -501,7 +504,7 @@ final public class BusinessHandler {
 		int priority=conn.executeIntQuery("select coalesce(max(priority)+1, 1) from account.\"Profile\" where accounting=?", accounting);
 
 		int id = conn.executeIntUpdate(
-			"INSERT INTO account.\"Profile\" VALUES (default,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?) RETURNING id",
+			"INSERT INTO account.\"Profile\" VALUES (default,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?,?,?) RETURNING id",
 			accounting.toString(),
 			priority,
 			name,
@@ -517,8 +520,10 @@ final public class BusinessHandler {
 			sendInvoice,
 			billingContact,
 			billingEmail,
+			billingEmailFormat,
 			technicalContact,
-			technicalEmail
+			technicalEmail,
+			technicalEmailFormat
 		);
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.BUSINESS_PROFILES, accounting, InvalidateList.allServers, false);
