@@ -154,9 +154,11 @@ public class TopLevelDomainService implements MasterService {
 										+ "  ?,\n"
 										+ "  ?,\n"
 										+ "  ?,\n"
+										+ "  ?,\n"
 										+ "  ?\n"
 										+ ")",
 										lastUpdatedTimestamp,
+										snapshot.isBootstrap(),
 										snapshot.getLastUpdateSuccessful(),
 										new Timestamp(snapshot.getLastSuccessfulUpdateTime()),
 										StringUtility.join(snapshot.getComments(), "\n"),
