@@ -504,7 +504,7 @@ final public class BusinessHandler {
 		int priority=conn.executeIntQuery("select coalesce(max(priority)+1, 1) from account.\"Profile\" where accounting=?", accounting);
 
 		int id = conn.executeIntUpdate(
-			"INSERT INTO account.\"Profile\" VALUES (default,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?,?,?) RETURNING id",
+			"INSERT INTO account.\"Profile\" VALUES (default,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?::account.\"Profile.EmailFormat\",?,?,?::account.\"Profile.EmailFormat\") RETURNING id",
 			accounting.toString(),
 			priority,
 			name,
