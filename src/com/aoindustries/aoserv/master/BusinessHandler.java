@@ -351,7 +351,7 @@ final public class BusinessHandler {
 			billParent
 		);
 		conn.executeUpdate(
-			"insert into account.\"AccountHost\"\n"
+			"insert into account.\"AccountHost\" (\n"
 			+ "  accounting,\n"
 			+ "  server,\n"
 			+ "  is_default,\n"
