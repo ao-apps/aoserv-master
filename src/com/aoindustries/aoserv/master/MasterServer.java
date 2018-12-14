@@ -9930,6 +9930,10 @@ public abstract class MasterServer {
 	/**
 	 * Invalidates a table by notifying all connected clients, except the client
 	 * that initiated this request.
+	 * <p>
+	 * TODO: We need a way to convert invalidations of current tables to old table mappings.
+	 * This would be the counterpart to {@link TableHandler#getOldTable(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, java.lang.String)}.
+	 * </p>
 	 */
 	public static void invalidateTables(
 		InvalidateList invalidateList,
