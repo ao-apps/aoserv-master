@@ -136,7 +136,7 @@ final public class NetBindHandler {
 						+ "    where\n"
 						+ "      nb.server=?\n"
 						+ "      and (\n"
-						+ "        ia.\"inetAddress\"=?\n"
+						+ "        ia.\"inetAddress\"=?::inet\n"
 						+ "        or nb.\"ipAddress\"=?\n"
 						+ "      )\n"
 						+ "      and nb.port=?\n"

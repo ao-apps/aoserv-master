@@ -139,7 +139,7 @@ final public class IPAddressHandler {
 		int server=getServerForIPAddress(conn, ipAddressId);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set \"inetAddress\"=? where id=?", dhcpAddress, ipAddressId);
+		conn.executeUpdate("update net.\"IpAddress\" set \"inetAddress\"=?::inet where id=?", dhcpAddress, ipAddressId);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -377,7 +377,7 @@ final public class IPAddressHandler {
 	}
 
 	public static int getWildcardIPAddress(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntQuery("select id from net.\"IpAddress\" where \"inetAddress\"=?", IpAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
+		return conn.executeIntQuery("select id from net.\"IpAddress\" where \"inetAddress\"=?::inet", IpAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
 	}
 
 	public static int getLoopbackIPAddress(DatabaseConnection conn, int serverId) throws IOException, SQLException {
@@ -388,7 +388,7 @@ final public class IPAddressHandler {
 			+ "  net.\"IpAddress\" ia,\n"
 			+ "  net.\"Device\" nd\n"
 			+ "where\n"
-			+ "  ia.\"inetAddress\"=?\n"
+			+ "  ia.\"inetAddress\"=?::inet\n"
 			+ "  and ia.device=nd.id\n"
 			+ "  and nd.server=?\n"
 			+ "limit 1",
