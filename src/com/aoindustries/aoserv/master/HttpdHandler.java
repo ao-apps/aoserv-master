@@ -80,7 +80,7 @@ final public class HttpdHandler {
 		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Host is not an Server: "+server);
 		int aoServer = server;
 		if(httpdSitePKey == -1) {
-			conn.executeIntUpdate(
+			conn.executeUpdate(
 				"INSERT INTO\n"
 				+ "  \"web.tomcat\".\"Worker\"\n"
 				+ "VALUES (\n"
@@ -113,7 +113,7 @@ final public class HttpdHandler {
 				aoServer
 			);
 		} else {
-			conn.executeIntUpdate(
+			conn.executeUpdate(
 				"INSERT INTO\n"
 				+ "  \"web.tomcat\".\"Worker\"\n"
 				+ "VALUES (\n"
@@ -2229,12 +2229,12 @@ final public class HttpdHandler {
 		PreparedStatement pstmt = conn.getConnection(
 			Connection.TRANSACTION_READ_COMMITTED,
 			true
-		).prepareStatement("select id, app_protocol from net.\"Bind\" where server=? and \"ipAddress\"=? and port=? and net_protocol=?");
+		).prepareStatement("select id, app_protocol from net.\"Bind\" where server=? and \"ipAddress\"=? and port=?::\"com.aoindustries.net\".\"Port\" and net_protocol=?::\"com.aoindustries.net\".\"Protocol\"");
 		try {
 			pstmt.setInt(1, aoServer);
 			pstmt.setInt(2, ipAddress);
 			pstmt.setInt(3, httpPort.getPort());
-			pstmt.setString(4, httpPort.getProtocol().name().toLowerCase(Locale.ROOT));
+			pstmt.setString(4, httpPort.getProtocol().name());
 			try (ResultSet results = pstmt.executeQuery()) {
 				if(results.next()) {
 					netBind=results.getInt(1);
@@ -2265,12 +2265,12 @@ final public class HttpdHandler {
 		// Allocate the net_bind, if needed
 		if(netBind == -1) {
 			netBind = conn.executeIntUpdate(
-				"INSERT INTO net.\"Bind\" VALUES (default,?,?,?,?,?,?,true) RETURNING id",
+				"INSERT INTO net.\"Bind\" VALUES (default,?,?,?,?::\"com.aoindustries.net\".\"Port\",?::\"com.aoindustries.net\".\"Protocol\",?,true) RETURNING id",
 				packageName.toString(),
 				aoServer,
 				ipAddress,
 				httpPort.getPort(),
-				httpPort.getProtocol().name().toLowerCase(Locale.ROOT),
+				httpPort.getProtocol().name(),
 				protocol
 			);
 			AccountingCode business = PackageHandler.getBusinessForPackage(conn, packageName);

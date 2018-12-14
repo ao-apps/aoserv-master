@@ -18,7 +18,6 @@ import com.aoindustries.net.Port;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -88,13 +87,13 @@ final public class NetBindHandler {
 						+ "      net.\"Bind\"\n"
 						+ "    where\n"
 						+ "      server=?\n"
-						+ "      and port=?\n"
-						+ "      and net_protocol=?\n"
+						+ "      and port=?::\"com.aoindustries.net\".\"Port\"\n"
+						+ "      and net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
 						+ "    limit 1\n"
 						+ "  ) is not null",
 						server,
 						port.getPort(),
-						port.getProtocol().name().toLowerCase(Locale.ROOT)
+						port.getProtocol().name()
 					)
 				) throw new SQLException("Bind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
 			} else if(inetAddress.isLoopback()) {
@@ -111,15 +110,15 @@ final public class NetBindHandler {
 						+ "    where\n"
 						+ "      nb.server=?\n"
 						+ "      and ia.\"inetAddress\" in (?,?)\n"
-						+ "      and nb.port=?\n"
-						+ "      and nb.net_protocol=?\n"
+						+ "      and nb.port=?::\"com.aoindustries.net\".\"Port\"\n"
+						+ "      and nb.net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
 						+ "    limit 1\n"
 						+ "  ) is not null",
 						server,
 						IpAddress.WILDCARD_IP,
 						IpAddress.LOOPBACK_IP,
 						port.getPort(),
-						port.getProtocol().name().toLowerCase(Locale.ROOT)
+						port.getProtocol().name()
 					)
 				) throw new SQLException("Bind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
 			} else {
@@ -139,15 +138,15 @@ final public class NetBindHandler {
 						+ "        ia.\"inetAddress\"=?::inet\n"
 						+ "        or nb.\"ipAddress\"=?\n"
 						+ "      )\n"
-						+ "      and nb.port=?\n"
-						+ "      and nb.net_protocol=?\n"
+						+ "      and nb.port=?::\"com.aoindustries.net\".\"Port\"\n"
+						+ "      and nb.net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
 						+ "    limit 1\n"
 						+ "  ) is not null",
 						server,
 						IpAddress.WILDCARD_IP,
 						ipAddress,
 						port.getPort(),
-						port.getProtocol().name().toLowerCase(Locale.ROOT)
+						port.getProtocol().name()
 					)
 				) throw new SQLException("Bind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
 			}
@@ -161,8 +160,8 @@ final public class NetBindHandler {
 				+ "  ?,\n"
 				+ "  ?,\n"
 				+ "  ?,\n"
-				+ "  ?,\n"
-				+ "  ?,\n"
+				+ "  ?::\"com.aoindustries.net\".\"Port\",\n"
+				+ "  ?::\"com.aoindustries.net\".\"Protocol\",\n"
 				+ "  ?,\n"
 				+ "  ?\n"
 				+ ") RETURNING id",
@@ -170,7 +169,7 @@ final public class NetBindHandler {
 				server,
 				ipAddress,
 				port.getPort(),
-				port.getProtocol().name().toLowerCase(Locale.ROOT),
+				port.getProtocol(),
 				appProtocol,
 				monitoringEnabled
 			);
@@ -226,8 +225,14 @@ final public class NetBindHandler {
 				+ "  ?,\n" // package
 				+ "  ?,\n" // server
 				+ "  ?,\n" // ipAddress
-				+ "  net.find_unused_port(?, ?, ?, ?, ?),\n" // port
-				+ "  ?,\n" // net_protocol
+				+ "  net.find_unused_port(\n"
+				+ "    ?,\n"
+				+ "    ?,\n"
+				+ "    ?::\"com.aoindustries.net\".\"Port\",\n"
+				+ "    ?::\"com.aoindustries.net\".\"Protocol\",\n"
+				+ "    ?\n"
+			    + "  ),\n" // port
+				+ "  ?::\"com.aoindustries.net\".\"Protocol\",\n" // net_protocol
 				+ "  ?,\n" // app_protocol
 				+ "  true,\n" // monitoring_enabled
 				+ "  null\n" // monitoring_parameters
@@ -238,9 +243,9 @@ final public class NetBindHandler {
 				server,
 				ipAddress,
 				minimumPort,
-				netProtocol.name().toLowerCase(Locale.ROOT),
+				netProtocol.name(),
 				appProtocol,
-				netProtocol.name().toLowerCase(Locale.ROOT),
+				netProtocol.name(),
 				appProtocol
 			);
 		}
@@ -282,14 +287,14 @@ final public class NetBindHandler {
 			+ "      where\n"
 			+ "        server=?\n"
 			+ "        and \"ipAddress\"=?\n"
-			+ "        and port=?\n"
-			+ "        and net_protocol=?\n"
+			+ "        and port=?::\"com.aoindustries.net\".\"Port\"\n"
+			+ "        and net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
 			+ "    ), -1\n"
 			+ "  )",
 			server,
 			ipAddress,
 			port.getPort(),
-			port.getProtocol().name().toLowerCase(Locale.ROOT)
+			port.getProtocol().name()
 		);
 	}
 

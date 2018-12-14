@@ -19,7 +19,6 @@ import com.aoindustries.net.InetAddress;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Locale;
 
 /**
  * The <code>IPAddressHandler</code> handles all the accesses to the <code>net.IpAddress</code> table.
@@ -302,7 +301,7 @@ final public class IPAddressHandler {
 			+ "      from\n"
 			+ "        net.\"IpAddress\" ia,\n"
 			+ "        net.\"Device\" nd\n"
-			+ "        left join net.\"Bind\" nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?\n"
+			+ "        left join net.\"Bind\" nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
 			+ "        left join web.\"HttpdBind\" hb on nb.id=hb.net_bind\n"
 			+ "        left join web.\"HttpdServer\" hs on hb.httpd_server=hs.id\n"
 			+ "      where\n"
@@ -331,7 +330,7 @@ final public class IPAddressHandler {
 			+ "      limit 1\n"
 			+ "    ), -1\n"
 			+ "  )",
-			com.aoindustries.net.Protocol.TCP.name().toLowerCase(Locale.ROOT),
+			com.aoindustries.net.Protocol.TCP.name(),
 			serverId,
 			serverId
 		);
