@@ -2468,7 +2468,7 @@ final public class HttpdHandler {
 	 * web.Site
 	 *           + web.VirtualHost
 	 *           |                + web.Header
-	 *           |                + web.Redirect
+	 *           |                + web.RewriteRule
 	 *           |                + web.VirtualHostName
 	 *           |                |               + dns.Record
 	 *           |                + web.HttpdBind
@@ -2568,7 +2568,7 @@ final public class HttpdHandler {
 			conn.executeUpdate("delete from web.\"VirtualHost\" where httpd_site=?", httpdSitePKey);
 			invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BINDS, accounting, aoServer, false);
 			invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BIND_HEADERS, accounting, aoServer, false);
-			invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BIND_REDIRECTS, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.RewriteRule, accounting, aoServer, false);
 
 			for(int c=0;c<httpdBinds.size();c++) {
 				int httpdBind=httpdBinds.getInt(c);

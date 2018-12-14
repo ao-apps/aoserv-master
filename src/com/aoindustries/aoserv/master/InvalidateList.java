@@ -192,7 +192,7 @@ final public class InvalidateList {
                 case HTTPD_SITE_BINDS :
                     addTable(conn, Table.TableID.HTTPD_BINDS, businesses, servers, true);
                     addTable(conn, Table.TableID.HTTPD_SITE_BIND_HEADERS, businesses, servers, false);
-                    addTable(conn, Table.TableID.HTTPD_SITE_BIND_REDIRECTS, businesses, servers, false);
+                    addTable(conn, Table.TableID.RewriteRule, businesses, servers, false);
                     break;
                 case HTTPD_TOMCAT_SITES :
                     addTable(conn, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, businesses, servers, false);

@@ -8,7 +8,7 @@ package com.aoindustries.aoserv.master.web;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.web.Redirect;
+import com.aoindustries.aoserv.client.web.RewriteRule;
 import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
@@ -23,11 +23,11 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class Redirect_GetTableHandler extends TableHandler.GetTableHandlerByRole {
+public class RewriteRule_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.HTTPD_SITE_BIND_REDIRECTS);
+		return EnumSet.of(Table.TableID.RewriteRule);
 	}
 
 	@Override
@@ -38,8 +38,8 @@ public class Redirect_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			out,
 			provideProgress,
 			CursorMode.AUTO,
-			new Redirect(),
-			"select * from web.\"Redirect\""
+			new RewriteRule(),
+			"select * from web.\"RewriteRule\""
 		);
 	}
 
@@ -51,19 +51,19 @@ public class Redirect_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			out,
 			provideProgress,
 			CursorMode.AUTO,
-			new Redirect(),
+			new RewriteRule(),
 			"select\n"
-			+ "  hsbr.*\n"
+			+ "  rr.*\n"
 			+ "from\n"
 			+ "  master.\"UserHost\" ms,\n"
 			+ "  web.\"Site\" hs,\n"
-			+ "  web.\"VirtualHost\" hsb,\n"
-			+ "  web.\"Redirect\" hsbr\n"
+			+ "  web.\"VirtualHost\" vh,\n"
+			+ "  web.\"RewriteRule\" rr\n"
 			+ "where\n"
 			+ "  ms.username=?\n"
 			+ "  and ms.server=hs.ao_server\n"
-			+ "  and hs.id=hsb.httpd_site\n"
-			+ "  and hsb.id=hsbr.httpd_site_bind",
+			+ "  and hs.id=vh.httpd_site\n"
+			+ "  and vh.id=rr.\"virtualHost\"",
 			source.getUsername()
 		);
 	}
@@ -76,17 +76,17 @@ public class Redirect_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			out,
 			provideProgress,
 			CursorMode.AUTO,
-			new Redirect(),
+			new RewriteRule(),
 			"select\n"
-			+ "  hsbr.*\n"
+			+ "  rr.*\n"
 			+ "from\n"
 			+ "  account.\"Username\" un,\n"
 			+ "  billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  billing.\"Package\" pk2,\n"
 			+ "  web.\"Site\" hs,\n"
-			+ "  web.\"VirtualHost\" hsb,\n"
-			+ "  web.\"Redirect\" hsbr\n"
+			+ "  web.\"VirtualHost\" vh,\n"
+			+ "  web.\"RewriteRule\" rr\n"
 			+ "where\n"
 			+ "  un.username=?\n"
 			+ "  and un.package=pk1.name\n"
@@ -95,8 +95,8 @@ public class Redirect_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			+ "  )\n"
 			+ "  and bu1.accounting=pk2.accounting\n"
 			+ "  and pk2.name=hs.package\n"
-			+ "  and hs.id=hsb.httpd_site\n"
-			+ "  and hsb.id=hsbr.httpd_site_bind",
+			+ "  and hs.id=vh.httpd_site\n"
+			+ "  and vh.id=rr.\"virtualHost\"",
 			source.getUsername()
 		);
 	}

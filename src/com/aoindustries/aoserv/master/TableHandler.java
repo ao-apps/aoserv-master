@@ -814,6 +814,10 @@ final public class TableHandler {
 				}
 				// fall-through to empty response
 				break;
+			case "web.httpd_site_bind_redirects" :
+				// Dispatch to new name RewriteRule, which provides compatibility
+				getTable(conn, source, clientOut, provideProgress, Table.TableID.RewriteRule);
+				break;
 		}
 		// Not recognized table name and version range: write empty response
 		MasterServer.writeObjects(source, clientOut, provideProgress, Collections.emptyList());
