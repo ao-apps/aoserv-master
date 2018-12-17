@@ -94,7 +94,7 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  ti.contact_emails,\n"
 			+ "  ti.contact_phone_numbers\n"
 			+ "from\n"
-			//+ "  account.\"Username\" un,\n"
+			//+ "  account.\"User\" un,\n"
 			//+ "  billing.\"Package\" pk,\n"
 			+ "  ticket.\"Ticket\" ti\n"
 			+ "where\n"
@@ -142,7 +142,7 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				+ "  ti.contact_emails,\n"
 				+ "  ti.contact_phone_numbers\n"
 				+ "from\n"
-				+ "  account.\"Username\" un,\n"
+				+ "  account.\"User\" un,\n"
 				+ "  billing.\"Package\" pk1,\n"
 				+ TableHandler.BU1_PARENTS_JOIN
 				+ "  ticket.\"Ticket\" ti\n"
@@ -186,7 +186,7 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				+ "  ti.contact_emails,\n"
 				+ "  ti.contact_phone_numbers\n"
 				+ "from\n"
-				+ "  account.\"Username\" un,\n"
+				+ "  account.\"User\" un,\n"
 				+ "  billing.\"Package\" pk1,\n"
 				+ TableHandler.BU1_PARENTS_JOIN
 				+ "  ticket.\"Ticket\" ti\n"

@@ -5,14 +5,13 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.reputation.Host;
 import com.aoindustries.aoserv.client.net.reputation.Network;
 import com.aoindustries.aoserv.client.net.reputation.Set;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
 import java.sql.Connection;
@@ -34,9 +33,8 @@ final public class IpReputationSetHandler {
     private IpReputationSetHandler() {
     }
 
-    public static AccountingCode getBusinessForIpReputationSet(DatabaseConnection conn, int ipReputationSet) throws IOException, SQLException {
-        return conn.executeObjectQuery(
-            ObjectFactories.accountingCodeFactory,
+    public static Account.Name getBusinessForIpReputationSet(DatabaseConnection conn, int ipReputationSet) throws IOException, SQLException {
+        return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
             "select accounting from \"net.reputation\".\"Set\" where id=?",
             ipReputationSet
         );
@@ -209,7 +207,7 @@ final public class IpReputationSetHandler {
         Set.AddReputation[] addReputations
     ) throws IOException, SQLException {
         // Can't add reputation to a disabled business
-        AccountingCode accounting = getBusinessForIpReputationSet(conn, ipReputationSet);
+        Account.Name accounting = getBusinessForIpReputationSet(conn, ipReputationSet);
         if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add IP reputation, business disabled: "+accounting);
 
         if(addReputations.length>0) {
@@ -417,8 +415,8 @@ final public class IpReputationSetHandler {
                 );
             }
             // Also notify routers
-            for(Map.Entry<UserId,User> entry : MasterServer.getUsers(conn).entrySet()) {
-                UserId username = entry.getKey();
+            for(Map.Entry<com.aoindustries.aoserv.client.account.User.Name,User> entry : MasterServer.getUsers(conn).entrySet()) {
+                com.aoindustries.aoserv.client.account.User.Name username = entry.getKey();
                 User mu = entry.getValue();
                 if(mu.isRouter()) {
                     // TODO: Filter isRouter users by server_farm

@@ -5,17 +5,18 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.ticket.Language;
 import com.aoindustries.aoserv.client.ticket.Priority;
 import com.aoindustries.aoserv.client.ticket.Status;
 import com.aoindustries.aoserv.client.ticket.TicketType;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.logging.QueuedHandler;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
@@ -69,7 +70,7 @@ final public class TicketLoggingHandler extends QueuedHandler {
 	@Override
 	protected void doCustomLogging(Formatter formatter, LogRecord record, String fullReport) {
 		try {
-			AccountingCode rootAccounting = BusinessHandler.getRootBusiness();
+			Account.Name rootAccounting = BusinessHandler.getRootBusiness();
 			Level level = record.getLevel();
 			// Generate the summary from level, prefix classname, method
 			StringBuilder tempSB = new StringBuilder();
@@ -152,7 +153,7 @@ final public class TicketLoggingHandler extends QueuedHandler {
 							null,
 							Status.OPEN,
 							-1,
-							"",
+							Collections.emptySet(),
 							"",
 							""
 						);

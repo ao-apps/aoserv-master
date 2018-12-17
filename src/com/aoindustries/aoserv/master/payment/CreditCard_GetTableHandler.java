@@ -67,7 +67,7 @@ public class CreditCard_GetTableHandler extends TableHandler.GetTableHandlerPerm
 			"select\n"
 			+ "  cc.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  payment.\"CreditCard\" cc\n"

@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.util.IntArrayList;
@@ -50,11 +50,11 @@ final public class InvalidateList {
     /**
      * Indicates that all servers or account.Account should receive the invalidate signal.
      */
-    public static final List<AccountingCode> allBusinesses=Collections.unmodifiableList(new ArrayList<AccountingCode>());
+    public static final List<Account.Name> allBusinesses=Collections.unmodifiableList(new ArrayList<Account.Name>());
     public static final IntList allServers=new IntArrayList();
 
     private final Map<Table.TableID,List<Integer>> serverLists=new EnumMap<>(Table.TableID.class);
-    private final Map<Table.TableID,List<AccountingCode>> businessLists=new EnumMap<>(Table.TableID.class);
+    private final Map<Table.TableID,List<Account.Name>> businessLists=new EnumMap<>(Table.TableID.class);
 
 	/**
 	 * Resets back to default state.
@@ -67,7 +67,7 @@ final public class InvalidateList {
 	public void addTable(
         DatabaseAccess conn,
         Table.TableID tableID,
-        AccountingCode business,
+        Account.Name business,
         int server,
         boolean recurse
     ) throws IOException, SQLException {
@@ -83,7 +83,7 @@ final public class InvalidateList {
     public void addTable(
         DatabaseAccess conn,
         Table.TableID tableID,
-        Collection<AccountingCode> businesses,
+        Collection<Account.Name> businesses,
         int server,
         boolean recurse
     ) throws IOException, SQLException {
@@ -99,7 +99,7 @@ final public class InvalidateList {
     public void addTable(
         DatabaseAccess conn,
         Table.TableID tableID,
-        AccountingCode business,
+        Account.Name business,
         IntCollection servers,
         boolean recurse
     ) throws IOException, SQLException {
@@ -115,7 +115,7 @@ final public class InvalidateList {
     public void addTable(
         DatabaseAccess conn,
         Table.TableID tableID,
-        Collection<AccountingCode> businesses,
+        Collection<Account.Name> businesses,
         IntCollection servers,
         boolean recurse
     ) throws IOException, SQLException {
@@ -125,9 +125,9 @@ final public class InvalidateList {
         {
             if(businesses==null || businesses==allBusinesses) businessLists.put(tableID, allBusinesses);
             else {
-                List<AccountingCode> SV=businessLists.get(tableID);
+                List<Account.Name> SV=businessLists.get(tableID);
                 if(SV==null) businessLists.put(tableID, SV=new SortedArrayList<>());
-                for(AccountingCode accounting : businesses) {
+                for(Account.Name accounting : businesses) {
                     if(accounting==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: accounting is null"));
                     else if(!SV.contains(accounting)) SV.add(accounting);
                 }
@@ -279,8 +279,8 @@ final public class InvalidateList {
         }
     }
 
-    public List<AccountingCode> getAffectedBusinesses(Table.TableID tableID) {
-        List<AccountingCode> SV=businessLists.get(tableID);
+    public List<Account.Name> getAffectedBusinesses(Table.TableID tableID) {
+        List<Account.Name> SV=businessLists.get(tableID);
         if(SV!=null || serverLists.containsKey(tableID)) {
             if(SV==null) return allBusinesses;
             return SV;
@@ -320,9 +320,9 @@ final public class InvalidateList {
         return serverLists.containsKey(tableID) || businessLists.containsKey(tableID);
     }
     
-    public static Collection<AccountingCode> getCollection(AccountingCode ... params) {
+    public static Collection<Account.Name> getCollection(Account.Name ... params) {
         if(params.length==0) return Collections.emptyList();
-        Collection<AccountingCode> coll = new ArrayList<>(params.length);
+        Collection<Account.Name> coll = new ArrayList<>(params.length);
         Collections.addAll(coll, params);
         return coll;
     }

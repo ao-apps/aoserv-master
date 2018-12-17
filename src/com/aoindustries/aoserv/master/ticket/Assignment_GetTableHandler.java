@@ -64,7 +64,7 @@ public class Assignment_GetTableHandler extends TableHandler.GetTableHandlerByRo
 				"select distinct\n" // TODO: distinct required?
 				+ "  ta.*\n"
 				+ "from\n"
-				+ "  account.\"Username\" un,\n"
+				+ "  account.\"User\" un,\n"
 				+ "  billing.\"Package\" pk1,\n"
 				+ TableHandler.BU1_PARENTS_JOIN
 				+ "  ticket.\"Ticket\" ti,\n"

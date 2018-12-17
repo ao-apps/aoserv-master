@@ -5,8 +5,6 @@
  */
 package com.aoindustries.aoserv.master.linux;
 
-import com.aoindustries.aoserv.client.linux.Group;
-import com.aoindustries.aoserv.client.linux.GroupServer;
 import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
@@ -174,7 +172,7 @@ public class Server_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  ao.\"lastGid\",\n"
 			+ "  ao.sftp_umask\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			// Allow servers it replicates to

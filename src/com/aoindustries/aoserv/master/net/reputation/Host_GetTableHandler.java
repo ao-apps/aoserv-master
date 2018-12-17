@@ -98,7 +98,7 @@ public class Host_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			"select\n"
 			+ "  irsh.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  \"net.reputation\".\"Set\" irs,\n"

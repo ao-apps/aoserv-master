@@ -5,12 +5,12 @@
  */
 package com.aoindustries.aoserv.master.email;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.dns.ZoneTable;
 import com.aoindustries.aoserv.client.email.Domain;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.LogFactory;
 import com.aoindustries.aoserv.master.MasterServer;
@@ -97,7 +97,7 @@ public class DomainService implements MasterService, WhoisHistoryDomainLocator {
 					"select\n"
 					+ "  ed.*\n"
 					+ "from\n"
-					+ "  account.\"Username\" un,\n"
+					+ "  account.\"User\" un,\n"
 					+ "  billing.\"Package\" pk1,\n"
 					+ TableHandler.BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
@@ -119,15 +119,15 @@ public class DomainService implements MasterService, WhoisHistoryDomainLocator {
 
 	// <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
 	@Override
-	public Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
+	public Map<DomainName,Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
 		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
 		return conn.executeQuery(
 			(ResultSet results) -> {
 				try {
-					Map<DomainName,Set<AccountingCode>> map = new HashMap<>();
+					Map<DomainName,Set<Account.Name>> map = new HashMap<>();
 					while(results.next()) {
 						DomainName domain = DomainName.valueOf(results.getString(1));
-						AccountingCode accounting = AccountingCode.valueOf(results.getString(2));
+						Account.Name accounting = Account.Name.valueOf(results.getString(2));
 						DomainName registrableDomain;
 						try {
 							registrableDomain = ZoneTable.getHostTLD(domain, tlds);
@@ -135,7 +135,7 @@ public class DomainService implements MasterService, WhoisHistoryDomainLocator {
 							logger.log(Level.WARNING, "Cannot find TLD, continuing verbatim", err);
 							registrableDomain = domain;
 						}
-						Set<AccountingCode> accounts = map.get(registrableDomain);
+						Set<Account.Name> accounts = map.get(registrableDomain);
 						if(accounts == null) map.put(registrableDomain, accounts = new LinkedHashSet<>());
 						accounts.add(accounting);
 					}

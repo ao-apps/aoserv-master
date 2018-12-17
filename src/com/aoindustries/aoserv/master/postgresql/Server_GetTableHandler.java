@@ -78,7 +78,7 @@ public class Server_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			"SELECT\n"
 			+ "  ps.*\n"
 			+ "FROM\n"
-			+ "             account.\"Username\"    un\n"
+			+ "             account.\"User\"        un\n"
 			+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
 			+ "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
 			+ "  INNER JOIN postgresql.\"Server\"   ps ON bs.server     = ps.ao_server\n"

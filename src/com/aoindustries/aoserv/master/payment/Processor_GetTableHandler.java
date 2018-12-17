@@ -67,7 +67,7 @@ public class Processor_GetTableHandler extends TableHandler.GetTableHandlerPermi
 			"select\n"
 			+ "  ccp.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  payment.\"Processor\" ccp\n"

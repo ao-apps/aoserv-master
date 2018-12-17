@@ -84,7 +84,7 @@ public class Server_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			// Protocol conversion
 			+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
 			+ "FROM\n"
-			+ "             account.\"Username\"    un\n"
+			+ "             account.\"User\"        un\n"
 			+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
 			+ "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
 			+ "  INNER JOIN mysql.\"Server\"        ms ON bs.server     = ms.ao_server\n"

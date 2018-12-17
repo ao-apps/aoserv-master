@@ -80,7 +80,7 @@ public class BlackholeAddress_GetTableHandler extends TableHandler.GetTableHandl
 			"select\n"
 			+ "  bh.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  billing.\"Package\" pk2,\n"

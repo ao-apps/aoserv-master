@@ -78,11 +78,11 @@ public class AttachmentBlock_GetTableHandler extends TableHandler.GetTableHandle
 			"select\n"
 			+ "  eab.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un1,\n"
+			+ "  account.\"User\" un1,\n"
 			+ "  billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  billing.\"Package\" pk2,\n"
-			+ "  account.\"Username\" un2,\n"
+			+ "  account.\"User\" un2,\n"
 			+ "  linux.\"UserServer\" lsa,\n"
 			+ "  email.\"AttachmentBlock\" eab\n"
 			+ "where\n"

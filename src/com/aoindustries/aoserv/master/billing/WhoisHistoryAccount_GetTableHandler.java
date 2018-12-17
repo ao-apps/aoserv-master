@@ -62,7 +62,7 @@ public class WhoisHistoryAccount_GetTableHandler extends TableHandler.GetTableHa
 			"select\n"
 			+ "  wha.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  billing.\"WhoisHistoryAccount\" wha\n"

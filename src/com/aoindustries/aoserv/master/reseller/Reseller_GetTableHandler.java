@@ -61,7 +61,7 @@ public class Reseller_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			"select\n"
 			+ "  re.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  reseller.\"Reseller\" re\n"

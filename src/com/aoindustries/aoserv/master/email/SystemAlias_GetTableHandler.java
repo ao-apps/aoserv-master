@@ -76,7 +76,7 @@ public class SystemAlias_GetTableHandler extends TableHandler.GetTableHandlerByR
 			"select\n"
 			+ "  sea.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			+ "  email.\"SystemAlias\" sea\n"

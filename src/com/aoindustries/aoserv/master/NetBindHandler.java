@@ -5,13 +5,12 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.net.FirewallZone;
 import com.aoindustries.aoserv.client.net.IpAddress;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.FirewalldZoneName;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
@@ -40,12 +39,12 @@ final public class NetBindHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int server,
-		AccountingCode packageName,
+		Account.Name packageName,
 		int ipAddress,
 		Port port,
 		String appProtocol,
 		boolean monitoringEnabled,
-		Set<FirewalldZoneName> firewalldZones
+		Set<FirewallZone.Name> firewalldZones
 	) throws IOException, SQLException {
 		if(
 			conn.executeBooleanQuery("select (select protocol from net.\"AppProtocol\" where protocol=?) is null", appProtocol)
@@ -174,7 +173,7 @@ final public class NetBindHandler {
 				monitoringEnabled
 			);
 		}
-		AccountingCode business = PackageHandler.getBusinessForPackage(conn, packageName);
+		Account.Name business = PackageHandler.getBusinessForPackage(conn, packageName);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.NET_BINDS,
@@ -183,7 +182,7 @@ final public class NetBindHandler {
 			false
 		);
 		if(!firewalldZones.isEmpty()) {
-			for(FirewalldZoneName firewalldZone : firewalldZones) {
+			for(FirewallZone.Name firewalldZone : firewalldZones) {
 				conn.executeUpdate(
 					"insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (\n"
 					+ "  ?,\n"
@@ -212,7 +211,7 @@ final public class NetBindHandler {
 		int ipAddress,
 		com.aoindustries.net.Protocol netProtocol,
 		String appProtocol,
-		AccountingCode pack,
+		Account.Name pack,
 		int minimumPort
 	) throws IOException, SQLException {
 		int id;
@@ -259,12 +258,11 @@ final public class NetBindHandler {
 		return id;
 	}
 
-	public static AccountingCode getBusinessForNetBind(
+	public static Account.Name getBusinessForNetBind(
 		DatabaseConnection conn,
 		int id
 	) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select pk.accounting from net.\"Bind\" nb, billing.\"Package\" pk where nb.id=? and nb.package=pk.name",
 			id
 		);
@@ -305,12 +303,11 @@ final public class NetBindHandler {
 		return conn.executeIntQuery("select server from net.\"Bind\" where id=?", id);
 	}
 
-	public static AccountingCode getPackageForNetBind(
+	public static Account.Name getPackageForNetBind(
 		DatabaseConnection conn,
 		int id
 	) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select package from net.\"Bind\" where id=?",
 			id
 		);
@@ -334,7 +331,7 @@ final public class NetBindHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
-		AccountingCode business = getBusinessForNetBind(conn, id);
+		Account.Name business = getBusinessForNetBind(conn, id);
 		int server=getServerForNetBind(conn, id);
 
 		if(conn.executeUpdate("delete from net.\"TcpRedirect\" where net_bind=?", id) > 0) {
@@ -379,7 +376,7 @@ final public class NetBindHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int id,
-		Set<FirewalldZoneName> firewalldZones
+		Set<FirewallZone.Name> firewalldZones
 	) throws IOException, SQLException {
 		PackageHandler.checkAccessPackage(conn, source, "setNetBindFirewalldZones", getPackageForNetBind(conn, id));
 
@@ -391,9 +388,8 @@ final public class NetBindHandler {
 			}
 		} else {
 			// Find the set that exists
-			Set<FirewalldZoneName> existing = conn.executeObjectCollectionQuery(
-				new HashSet<>(),
-				ObjectFactories.firewalldZoneNameFactory,
+			Set<FirewallZone.Name> existing = conn.executeObjectCollectionQuery(new HashSet<>(),
+				ObjectFactories.firewallZoneNameFactory,
 				"select\n"
 				+ "  fz.\"name\"\n"
 				+ "from\n"
@@ -404,7 +400,7 @@ final public class NetBindHandler {
 				id
 			);
 			// Delete extra
-			for(FirewalldZoneName name : existing) {
+			for(FirewallZone.Name name : existing) {
 				if(!firewalldZones.contains(name)) {
 					conn.executeUpdate(
 						"delete from net.\"BindFirewallZone\" where id=(\n"
@@ -424,7 +420,7 @@ final public class NetBindHandler {
 				}
 			}
 			// Add new
-			for(FirewalldZoneName name : firewalldZones) {
+			for(FirewallZone.Name name : firewalldZones) {
 				if(!existing.contains(name)) {
 					conn.executeUpdate(
 						"insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (\n"
@@ -440,7 +436,7 @@ final public class NetBindHandler {
 			}
 		}
 		if(updated) {
-			AccountingCode business = getBusinessForNetBind(conn, id);
+			Account.Name business = getBusinessForNetBind(conn, id);
 			invalidateList.addTable(
 				conn,
 				Table.TableID.NET_BINDS,
@@ -512,7 +508,7 @@ final public class NetBindHandler {
 				}
 			}
 			if(updated) {
-				AccountingCode business = getBusinessForNetBind(conn, id);
+				Account.Name business = getBusinessForNetBind(conn, id);
 				invalidateList.addTable(
 					conn,
 					Table.TableID.NET_BINDS,
@@ -538,7 +534,7 @@ final public class NetBindHandler {
 					FirewallZone.PUBLIC
 				) != 0
 			) {
-				AccountingCode business = getBusinessForNetBind(conn, id);
+				Account.Name business = getBusinessForNetBind(conn, id);
 				invalidateList.addTable(
 					conn,
 					Table.TableID.NET_BINDS,

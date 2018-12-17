@@ -82,7 +82,7 @@ public class PackageDefinition_GetTableHandler extends TableHandler.GetTableHand
 				"select distinct\n"
 				+ "  pd.*\n"
 				+ "from\n"
-				+ "  account.\"Username\" un,\n"
+				+ "  account.\"User\" un,\n"
 				+ "  billing.\"Package\" pk1,\n"
 				+ TableHandler.BU1_PARENTS_JOIN
 				+ "  billing.\"Package\" pk2,\n"
@@ -122,7 +122,7 @@ public class PackageDefinition_GetTableHandler extends TableHandler.GetTableHand
 				+ "  null,\n"
 				+ "  pd.active\n"
 				+ "from\n"
-				+ "  account.\"Username\" un,\n"
+				+ "  account.\"User\" un,\n"
 				+ "  billing.\"Package\" pk1,\n"
 				+ TableHandler.BU1_PARENTS_JOIN
 				+ "  billing.\"Package\" pk2,\n"

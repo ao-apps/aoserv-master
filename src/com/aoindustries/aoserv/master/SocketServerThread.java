@@ -8,7 +8,6 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.master.master.Process_Manager;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataInputStream;
@@ -159,7 +158,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	}
 
 	@Override
-	public UserId getUsername() {
+	public com.aoindustries.aoserv.client.account.User.Name getUsername() {
 		return process.getEffectiveUser();
 	}
 
@@ -200,8 +199,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
 					process.setDeamonServer(-1);
 				}
 				try {
-					process.setEffectiveUser(UserId.valueOf(in.readUTF()));
-					process.setAuthenticatedUser(UserId.valueOf(in.readUTF()));
+					process.setEffectiveUser(com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF()));
+					process.setAuthenticatedUser(com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF()));
 				} catch(ValidationException e) {
 					out.writeBoolean(false);
 					out.writeUTF(e.getLocalizedMessage());
@@ -229,6 +228,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				long existingID=in.readLong();
 
 				switch(protocolVersion) {
+					case VERSION_1_81_22 :
 					case VERSION_1_81_21 :
 					case VERSION_1_81_20 :
 					case VERSION_1_81_19 :

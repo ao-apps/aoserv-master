@@ -96,7 +96,7 @@ public class Site_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
 			+ "  ) is null as use_apache\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  billing.\"Package\" pk2,\n"

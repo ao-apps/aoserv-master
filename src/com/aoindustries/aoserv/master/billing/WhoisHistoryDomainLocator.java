@@ -5,7 +5,7 @@
  */
 package com.aoindustries.aoserv.master.billing;
 
-import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -31,5 +31,5 @@ public interface WhoisHistoryDomainLocator {
 	 * @see  DnsService#getDNSTLDs(com.aoindustries.dbc.DatabaseConnection)
 	 * @see  TopLevelDomain
 	 */
-	Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException;
+	Map<DomainName,Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException;
 }

@@ -5,12 +5,12 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.dns.Zone;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.net.DeviceId;
 import com.aoindustries.aoserv.client.net.IpAddress;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.NotImplementedException;
@@ -90,7 +90,7 @@ final public class IPAddressHandler {
 		int fromServerId=getServerForIPAddress(conn, ipAddressId);
 		ServerHandler.checkAccessServer(conn, source, "moveIPAddress", fromServerId);
 
-		AccountingCode accounting=getBusinessForIPAddress(conn, ipAddressId);
+		Account.Name accounting=getBusinessForIPAddress(conn, ipAddressId);
 
 		// Update net.IpAddress
 		int netDeviceId = conn.executeIntQuery(
@@ -134,7 +134,7 @@ final public class IPAddressHandler {
 		checkAccessIPAddress(conn, source, "setIPAddressDHCPAddress", ipAddressId);
 		if(!isDHCPAddress(conn, ipAddressId)) throw new SQLException("net.IpAddress is not DHCP-enabled: "+ipAddressId);
 
-		AccountingCode accounting=getBusinessForIPAddress(conn, ipAddressId);
+		Account.Name accounting=getBusinessForIPAddress(conn, ipAddressId);
 		int server=getServerForIPAddress(conn, ipAddressId);
 
 		// Update the table
@@ -245,7 +245,7 @@ final public class IPAddressHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int ipAddressId,
-		AccountingCode newPackage
+		Account.Name newPackage
 	) throws IOException, SQLException {
 		checkAccessIPAddress(conn, source, "setIPAddressPackage", ipAddressId);
 		PackageHandler.checkAccessPackage(conn, source, "setIPAddressPackage", newPackage);
@@ -260,10 +260,10 @@ final public class IPAddressHandler {
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
 		int ipAddressId,
-		AccountingCode newPackage
+		Account.Name newPackage
 	) throws IOException, SQLException {
-		AccountingCode oldAccounting = getBusinessForIPAddress(conn, ipAddressId);
-		AccountingCode newAccounting = PackageHandler.getBusinessForPackage(conn, newPackage);
+		Account.Name oldAccounting = getBusinessForIPAddress(conn, ipAddressId);
+		Account.Name newAccounting = PackageHandler.getBusinessForPackage(conn, newPackage);
 		int server=getServerForIPAddress(conn, ipAddressId);
 
 		// Make sure that the IP Address is not in use
@@ -336,9 +336,8 @@ final public class IPAddressHandler {
 		);
 	}
 
-	public static AccountingCode getPackageForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getPackageForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.name\n"
 			+ "from\n"
@@ -350,9 +349,8 @@ final public class IPAddressHandler {
 		);
 	}
 
-	public static AccountingCode getBusinessForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"

@@ -5,8 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -147,9 +147,8 @@ public final class BackupHandler {
         return conn.executeIntQuery("select ao_server from backup.\"BackupPartition\" where id=?", id);
     }
 
-    public static UnixPath getPathForBackupPartition(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.unixPathFactory,
+    public static PosixPath getPathForBackupPartition(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.posixPathFactory,
 			"select path from backup.\"BackupPartition\" where id=?",
 			id
 		);
@@ -163,7 +162,7 @@ public final class BackupHandler {
         int aoServer=getAOServerForBackupPartition(conn, id);
         ServerHandler.checkAccessServer(conn, source, "getBackupPartitionTotalSize", aoServer);
         if(DaemonHandler.isDaemonAvailable(aoServer)) {
-            UnixPath path=getPathForBackupPartition(conn, id);
+            PosixPath path=getPathForBackupPartition(conn, id);
             try {
                 return DaemonHandler.getDaemonConnector(conn, aoServer).getDiskDeviceTotalSize(path);
             } catch(IOException | SQLException err) {
@@ -182,7 +181,7 @@ public final class BackupHandler {
         int aoServer=getAOServerForBackupPartition(conn, id);
         ServerHandler.checkAccessServer(conn, source, "getBackupPartitionUsedSize", aoServer);
         if(DaemonHandler.isDaemonAvailable(aoServer)) {
-            UnixPath path=getPathForBackupPartition(conn, id);
+            PosixPath path=getPathForBackupPartition(conn, id);
             try {
                 return DaemonHandler.getDaemonConnector(conn, aoServer).getDiskDeviceUsedSize(path);
             } catch(IOException | SQLException err) {

@@ -106,7 +106,7 @@ public class FileReplication_GetTableHandler extends TableHandler.GetTableHandle
 			+ "  ffr.enabled,\n"
 			+ "  ffr.quota_gid\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			+ "  backup.\"FileReplication\" ffr\n"

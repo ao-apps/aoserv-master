@@ -67,7 +67,7 @@ public class Payment_GetTableHandler extends TableHandler.GetTableHandlerPermiss
 			"select\n"
 			+ "  cct.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  payment.\"Payment\" cct\n"

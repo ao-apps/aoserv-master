@@ -5,11 +5,11 @@
  */
 package com.aoindustries.aoserv.master.dns;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.dns.Zone;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.MasterService;
@@ -82,7 +82,7 @@ public class ZoneService implements MasterService, WhoisHistoryDomainLocator {
 					"select\n"
 					+ "  dz.*\n"
 					+ "from\n"
-					+ "  account.\"Username\" un,\n"
+					+ "  account.\"User\" un,\n"
 					+ "  billing.\"Package\" pk1,\n"
 					+ TableHandler.BU1_PARENTS_JOIN
 					+ "  billing.\"Package\" pk2,\n"
@@ -104,19 +104,19 @@ public class ZoneService implements MasterService, WhoisHistoryDomainLocator {
 
 	// <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
 	@Override
-	public Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
+	public Map<DomainName,Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
 		return conn.executeQuery(
 			(ResultSet results) -> {
 				try {
-					Map<DomainName,Set<AccountingCode>> map = new HashMap<>();
+					Map<DomainName,Set<Account.Name>> map = new HashMap<>();
 					while(results.next()) {
 						String zone = results.getString(1);
 						// Strip any trailing period
 						if(zone.endsWith(".")) zone = zone.substring(0, zone.length() - 1);
 						DomainName domain = DomainName.valueOf(zone);
-						AccountingCode accounting = AccountingCode.valueOf(results.getString(2));
+						Account.Name accounting = Account.Name.valueOf(results.getString(2));
 						// We consider all in dns.Zone table as registrable and use them verbatim for whois lookups
-						Set<AccountingCode> accounts = map.get(domain);
+						Set<Account.Name> accounts = map.get(domain);
 						if(accounts == null) map.put(domain, accounts = new LinkedHashSet<>());
 						accounts.add(accounting);
 					}

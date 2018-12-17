@@ -5,21 +5,18 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.backup.MysqlReplication;
+import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.mysql.Database;
 import com.aoindustries.aoserv.client.mysql.Server;
+import com.aoindustries.aoserv.client.mysql.Table_Name;
 import com.aoindustries.aoserv.client.mysql.UserServer;
 import com.aoindustries.aoserv.client.password.PasswordChecker;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.MySQLDatabaseName;
-import com.aoindustries.aoserv.client.validator.MySQLTableName;
-import com.aoindustries.aoserv.client.validator.MySQLUserId;
-import com.aoindustries.aoserv.client.validator.UnixPath;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.net.Port;
@@ -45,7 +42,7 @@ final public class MySQLHandler {
 	}
 
 	private final static Map<Integer,Boolean> disabledMySQLServerUsers=new HashMap<>();
-	private final static Map<MySQLUserId,Boolean> disabledMySQLUsers=new HashMap<>();
+	private final static Map<com.aoindustries.aoserv.client.mysql.User.Name,Boolean> disabledMySQLUsers=new HashMap<>();
 
 	public static void checkAccessMySQLDatabase(DatabaseConnection conn, RequestSource source, String action, int mysql_database) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getUsername());
@@ -88,12 +85,12 @@ final public class MySQLHandler {
 			}
 		} else {
 			// Protect by package
-			AccountingCode packageName = getPackageForMySQLServer(conn, mysql_server);
+			Account.Name packageName = getPackageForMySQLServer(conn, mysql_server);
 			PackageHandler.checkAccessPackage(conn, source, action, packageName);
 		}
 	}
 
-	public static void checkAccessMySQLUser(DatabaseConnection conn, RequestSource source, String action, MySQLUserId username) throws IOException, SQLException {
+	public static void checkAccessMySQLUser(DatabaseConnection conn, RequestSource source, String action, com.aoindustries.aoserv.client.mysql.User.Name username) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
 			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
@@ -131,9 +128,9 @@ final public class MySQLHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		MySQLDatabaseName name,
+		Database.Name name,
 		int mysqlServer,
-		AccountingCode packageName
+		Account.Name packageName
 	) throws IOException, SQLException {
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 
@@ -145,7 +142,7 @@ final public class MySQLHandler {
 		PackageHandler.checkAccessPackage(conn, source, "addMySQLDatabase", packageName);
 
 		// Find the accouting code
-		AccountingCode accounting=PackageHandler.getBusinessForPackage(conn, packageName);
+		Account.Name accounting=PackageHandler.getBusinessForPackage(conn, packageName);
 		// This sub-account must have access to the server
 		BusinessHandler.checkBusinessAccessServer(conn, source, "addMySQLDatabase", accounting, aoServer);
 
@@ -257,7 +254,7 @@ final public class MySQLHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		MySQLUserId username,
+		com.aoindustries.aoserv.client.mysql.User.Name username,
 		int mysqlServer,
 		String host
 	) throws IOException, SQLException {
@@ -282,7 +279,7 @@ final public class MySQLHandler {
 		);
 
 		// Notify all clients of the update
-		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.MYSQL_SERVER_USERS,
@@ -300,7 +297,7 @@ final public class MySQLHandler {
 		DatabaseConnection conn,
 		RequestSource source, 
 		InvalidateList invalidateList,
-		MySQLUserId username
+		com.aoindustries.aoserv.client.mysql.User.Name username
 	) throws IOException, SQLException {
 		UsernameHandler.checkAccessUsername(conn, source, "addMySQLUser", username);
 		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add User, Username disabled: "+username);
@@ -353,7 +350,7 @@ final public class MySQLHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int disableLog,
-		MySQLUserId username
+		com.aoindustries.aoserv.client.mysql.User.Name username
 	) throws IOException, SQLException {
 		if(isMySQLUserDisabled(conn, username)) throw new SQLException("User is already disabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableMySQLUser", disableLog, false);
@@ -418,7 +415,7 @@ final public class MySQLHandler {
 		if(disableLog==-1) throw new SQLException("UserServer is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableMySQLServerUser", disableLog, true);
 		checkAccessMySQLServerUser(conn, source, "enableMySQLServerUser", id);
-		MySQLUserId mu=getUsernameForMySQLServerUser(conn, id);
+		com.aoindustries.aoserv.client.mysql.User.Name mu=getUsernameForMySQLServerUser(conn, id);
 		if(isMySQLUserDisabled(conn, mu)) throw new SQLException("Unable to enable UserServer #"+id+", User not enabled: "+mu);
 
 		conn.executeUpdate(
@@ -440,7 +437,7 @@ final public class MySQLHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		MySQLUserId username
+		com.aoindustries.aoserv.client.mysql.User.Name username
 	) throws IOException, SQLException {
 		int disableLog=getDisableLogForMySQLUser(conn, username);
 		if(disableLog==-1) throw new SQLException("User is already enabled: "+username);
@@ -466,22 +463,21 @@ final public class MySQLHandler {
 	/**
 	 * Generates a unique MySQL database name.
 	 */
-	public static MySQLDatabaseName generateMySQLDatabaseName(
+	public static Database.Name generateMySQLDatabaseName(
 		DatabaseConnection conn,
 		String template_base,
 		String template_added
 	) throws IOException, SQLException {
 		// Load the entire list of mysql database names
-		Set<MySQLDatabaseName> names = conn.executeObjectCollectionQuery(
-			new HashSet<>(),
-			ObjectFactories.mySQLDatabaseNameFactory,
+		Set<Database.Name> names = conn.executeObjectCollectionQuery(new HashSet<>(),
+			ObjectFactories.mysqlDatabaseNameFactory,
 			"select name from mysql.\"Database\" group by name"
 		);
 		// Find one that is not used
 		for(int c=0;c<Integer.MAX_VALUE;c++) {
-			MySQLDatabaseName name;
+			Database.Name name;
 			try {
-				name = MySQLDatabaseName.valueOf((c==0) ? template_base : (template_base+template_added+c));
+				name = Database.Name.valueOf((c==0) ? template_base : (template_base+template_added+c));
 			} catch(ValidationException e) {
 				throw new SQLException(e.getLocalizedMessage(), e);
 			}
@@ -495,21 +491,19 @@ final public class MySQLHandler {
 		return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql.\"UserServer\" where id=?", id);
 	}
 
-	public static int getDisableLogForMySQLUser(DatabaseConnection conn, MySQLUserId username) throws IOException, SQLException {
+	public static int getDisableLogForMySQLUser(DatabaseConnection conn, com.aoindustries.aoserv.client.mysql.User.Name username) throws IOException, SQLException {
 		return conn.executeIntQuery("select coalesce(disable_log, -1) from mysql.\"User\" where username=?", username);
 	}
 
-	public static MySQLUserId getUsernameForMySQLServerUser(DatabaseConnection conn, int msu) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.mySQLUserIdFactory,
+	public static com.aoindustries.aoserv.client.mysql.User.Name getUsernameForMySQLServerUser(DatabaseConnection conn, int msu) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.mysqlUserNameFactory,
 			"select username from mysql.\"UserServer\" where id=?",
 			msu
 		);
 	}
 
-	public static MySQLDatabaseName getMySQLDatabaseName(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.mySQLDatabaseNameFactory,
+	public static Database.Name getMySQLDatabaseName(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.mysqlDatabaseNameFactory,
 			"select name from mysql.\"Database\" where id=?",
 			id
 		);
@@ -541,7 +535,7 @@ final public class MySQLHandler {
 		}
 	}
 
-	public static boolean isMySQLUser(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static boolean isMySQLUser(DatabaseConnection conn, com.aoindustries.aoserv.client.mysql.User.Name username) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
 			"select\n"
 			+ "  (\n"
@@ -557,7 +551,7 @@ final public class MySQLHandler {
 		);
 	}
 
-	public static boolean isMySQLUserDisabled(DatabaseConnection conn, MySQLUserId username) throws IOException, SQLException {
+	public static boolean isMySQLUserDisabled(DatabaseConnection conn, com.aoindustries.aoserv.client.mysql.User.Name username) throws IOException, SQLException {
 		synchronized(MySQLHandler.class) {
 			Boolean O=disabledMySQLUsers.get(username);
 			if(O!=null) return O;
@@ -573,7 +567,7 @@ final public class MySQLHandler {
 	public static boolean isMySQLDatabaseNameAvailable(
 		DatabaseConnection conn,
 		RequestSource source,
-		MySQLDatabaseName name,
+		Database.Name name,
 		int mysqlServer
 	) throws IOException, SQLException {
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
@@ -588,7 +582,7 @@ final public class MySQLHandler {
 	) throws IOException, SQLException {
 		checkAccessMySQLServerUser(conn, source, "isMySQLServerUserPasswordSet", msu);
 		if(isMySQLServerUserDisabled(conn, msu)) throw new SQLException("Unable to determine if the UserServer password is set, account disabled: "+msu);
-		MySQLUserId username=getUsernameForMySQLServerUser(conn, msu);
+		com.aoindustries.aoserv.client.mysql.User.Name username=getUsernameForMySQLServerUser(conn, msu);
 		int mysqlServer=getMySQLServerForMySQLServerUser(conn, msu);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		String password=DaemonHandler.getDaemonConnector(conn, aoServer).getEncryptedMySQLUserPassword(mysqlServer, username);
@@ -618,7 +612,7 @@ final public class MySQLHandler {
 		int id
 	) throws IOException, SQLException {
 		// Cannot remove the mysql database
-		MySQLDatabaseName dbName = getMySQLDatabaseName(conn, id);
+		Database.Name dbName = getMySQLDatabaseName(conn, id);
 		if(
 			dbName.equals(Database.MYSQL)
 			|| dbName.equals(Database.INFORMATION_SCHEMA)
@@ -629,15 +623,14 @@ final public class MySQLHandler {
 		}
 
 		// Remove the mysql_db_user entries
-		List<AccountingCode> dbUserAccounts=conn.executeObjectCollectionQuery(
-			new ArrayList<AccountingCode>(),
-			ObjectFactories.accountingCodeFactory,
+		List<Account.Name> dbUserAccounts=conn.executeObjectCollectionQuery(new ArrayList<Account.Name>(),
+			ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  mysql.\"DatabaseUser\" mdu,\n"
 			+ "  mysql.\"UserServer\" msu,\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  mdu.mysql_database=?\n"
@@ -651,7 +644,7 @@ final public class MySQLHandler {
 		if(dbUserAccounts.size()>0) conn.executeUpdate("delete from mysql.\"DatabaseUser\" where mysql_database=?", id);
 
 		// Remove the database entry
-		AccountingCode accounting = getBusinessForMySQLDatabase(conn, id);
+		Account.Name accounting = getBusinessForMySQLDatabase(conn, id);
 		int mysqlServer=getMySQLServerForMySQLDatabase(conn, id);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		conn.executeUpdate("delete from mysql.\"Database\" where id=?", id);
@@ -685,7 +678,7 @@ final public class MySQLHandler {
 		checkAccessMySQLDBUser(conn, source, "removeMySQLDBUser", id);
 
 		// Remove the mysql_db_user
-		AccountingCode accounting = getBusinessForMySQLDBUser(conn, id);
+		Account.Name accounting = getBusinessForMySQLDBUser(conn, id);
 		int mysqlServer=getMysqlServerForDatabaseUser(conn, id);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		conn.executeUpdate("delete from mysql.\"DatabaseUser\" where id=?", id);
@@ -710,7 +703,7 @@ final public class MySQLHandler {
 	) throws IOException, SQLException {
 		checkAccessMySQLServerUser(conn, source, "removeMySQLServerUser", id);
 
-		MySQLUserId username=getUsernameForMySQLServerUser(conn, id);
+		com.aoindustries.aoserv.client.mysql.User.Name username=getUsernameForMySQLServerUser(conn, id);
 		if(
 			username.equals(com.aoindustries.aoserv.client.mysql.User.ROOT)
 			|| username.equals(com.aoindustries.aoserv.client.mysql.User.MYSQL_SYS)
@@ -721,7 +714,7 @@ final public class MySQLHandler {
 		if(dbUsersExist) conn.executeUpdate("delete from mysql.\"DatabaseUser\" where mysql_server_user=?", id);
 
 		// Remove the mysql_server_user
-		AccountingCode accounting = getBusinessForMySQLServerUser(conn, id);
+		Account.Name accounting = getBusinessForMySQLServerUser(conn, id);
 		int mysqlServer=getMySQLServerForMySQLServerUser(conn, id);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		conn.executeUpdate("delete from mysql.\"UserServer\" where id=?", id);
@@ -750,7 +743,7 @@ final public class MySQLHandler {
 		DatabaseConnection conn,
 		RequestSource source, 
 		InvalidateList invalidateList,
-		MySQLUserId username
+		com.aoindustries.aoserv.client.mysql.User.Name username
 	) throws IOException, SQLException {
 		checkAccessMySQLUser(conn, source, "removeMySQLUser", username);
 
@@ -763,14 +756,14 @@ final public class MySQLHandler {
 	public static void removeMySQLUser(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		MySQLUserId username
+		com.aoindustries.aoserv.client.mysql.User.Name username
 	) throws IOException, SQLException {
 		if(
 			username.equals(com.aoindustries.aoserv.client.mysql.User.ROOT)
 			|| username.equals(com.aoindustries.aoserv.client.mysql.User.MYSQL_SYS)
 		) throw new SQLException("Not allowed to remove User for user '" + username + '\'');
 
-		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
 		// Remove the mysql_db_user
 		IntList dbUserServers=conn.executeIntListQuery(
@@ -856,7 +849,7 @@ final public class MySQLHandler {
 		if(isMySQLServerUserDisabled(conn, mysql_server_user)) throw new SQLException("Unable to set UserServer password, account disabled: "+mysql_server_user);
 
 		// Get the server, username for the user
-		MySQLUserId username=getUsernameForMySQLServerUser(conn, mysql_server_user);
+		com.aoindustries.aoserv.client.mysql.User.Name username=getUsernameForMySQLServerUser(conn, mysql_server_user);
 
 		// No setting the super user password
 		if(
@@ -961,23 +954,21 @@ final public class MySQLHandler {
 		DaemonHandler.getDaemonConnector(conn, aoServer).waitForMySQLUserRebuild();
 	}
 
-	public static AccountingCode getBusinessForMySQLDatabase(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForMySQLDatabase(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select pk.accounting from mysql.\"Database\" md, billing.\"Package\" pk where md.package=pk.name and md.id=?",
 			id
 		);
 	}
 
-	public static AccountingCode getBusinessForMySQLDBUser(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForMySQLDBUser(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  mysql.\"DatabaseUser\" mdu,\n"
 			+ "  mysql.\"UserServer\" msu,\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  mdu.id=?\n"
@@ -988,14 +979,13 @@ final public class MySQLHandler {
 		);
 	}
 
-	public static AccountingCode getBusinessForMySQLServerUser(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForMySQLServerUser(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  mysql.\"UserServer\" msu,\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  msu.username=un.username\n"
@@ -1009,7 +999,7 @@ final public class MySQLHandler {
 		return conn.executeIntQuery("select pk.id from mysql.\"Database\" md, billing.\"Package\" pk where md.id=? and md.package=pk.name", id);
 	}
 
-	public static IntList getMySQLServerUsersForMySQLUser(DatabaseConnection conn, MySQLUserId username) throws IOException, SQLException {
+	public static IntList getMySQLServerUsersForMySQLUser(DatabaseConnection conn, com.aoindustries.aoserv.client.mysql.User.Name username) throws IOException, SQLException {
 		return conn.executeIntListQuery("select id from mysql.\"UserServer\" where username=?", username);
 	}
 
@@ -1021,9 +1011,8 @@ final public class MySQLHandler {
 		return conn.executeIntQuery("select ao_server from mysql.\"Server\" where bind=?", mysqlServer);
 	}
 
-	public static AccountingCode getPackageForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getPackageForMySQLServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  nb.package\n"
 			+ "from\n"
@@ -1135,7 +1124,7 @@ final public class MySQLHandler {
 		int mysqlServer = getMySQLServerForFailoverMySQLReplication(conn, failoverMySQLReplication);
 		checkAccessMySQLServer(conn, source, "getSlaveStatus", mysqlServer);
 		int daemonServer;
-		UnixPath chrootPath;
+		PosixPath chrootPath;
 		int osv;
 		if(conn.executeBooleanQuery("select ao_server is not null from backup.\"MysqlReplication\" where id=?", failoverMySQLReplication)) {
 			// ao_server-based
@@ -1146,8 +1135,7 @@ final public class MySQLHandler {
 		} else {
 			// replication-based
 			daemonServer = conn.executeIntQuery("select bp.ao_server from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.id inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where fmr.id=?", failoverMySQLReplication);
-			UnixPath toPath = conn.executeObjectQuery(
-				ObjectFactories.unixPathFactory,
+			PosixPath toPath = conn.executeObjectQuery(ObjectFactories.posixPathFactory,
 				"select bp.path from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.id inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where fmr.id=?",
 				failoverMySQLReplication
 			);
@@ -1155,7 +1143,7 @@ final public class MySQLHandler {
 			osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
 			if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+aoServer);
 			try {
-				chrootPath = UnixPath.valueOf(toPath+"/"+ServerHandler.getHostnameForAOServer(conn, aoServer));
+				chrootPath = PosixPath.valueOf(toPath+"/"+ServerHandler.getHostnameForAOServer(conn, aoServer));
 			} catch(ValidationException e) {
 				throw new SQLException(e);
 			}
@@ -1196,7 +1184,7 @@ final public class MySQLHandler {
 		// Check access
 		checkAccessMySQLDatabase(conn, source, "getTableStatus", mysqlDatabase);
 		int daemonServer;
-		UnixPath chrootPath;
+		PosixPath chrootPath;
 		int osv;
 		int mysqlServer = getMySQLServerForMySQLDatabase(conn, mysqlDatabase);
 		if(mysqlSlave==-1) {
@@ -1218,8 +1206,7 @@ final public class MySQLHandler {
 			} else {
 				// replication-based
 				daemonServer = conn.executeIntQuery("select bp.ao_server from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.id inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where fmr.id=?", mysqlSlave);
-				UnixPath toPath = conn.executeObjectQuery(
-					ObjectFactories.unixPathFactory,
+				PosixPath toPath = conn.executeObjectQuery(ObjectFactories.posixPathFactory,
 					"select bp.path from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.id inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where fmr.id=?",
 					mysqlSlave
 				);
@@ -1227,7 +1214,7 @@ final public class MySQLHandler {
 				osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
 				if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+aoServer);
 				try {
-					chrootPath = UnixPath.valueOf(toPath+"/"+ServerHandler.getHostnameForAOServer(conn, aoServer));
+					chrootPath = PosixPath.valueOf(toPath+"/"+ServerHandler.getHostnameForAOServer(conn, aoServer));
 				} catch(ValidationException e) {
 					throw new SQLException(e);
 				}
@@ -1270,14 +1257,14 @@ final public class MySQLHandler {
 		RequestSource source,
 		int mysqlDatabase,
 		int mysqlSlave,
-		List<MySQLTableName> tableNames,
+		List<Table_Name> tableNames,
 		CompressedDataOutputStream out
 	) throws IOException, SQLException {
 		BusinessHandler.checkPermission(conn, source, "checkTables", Permission.Name.check_mysql_tables);
 		// Check access
 		checkAccessMySQLDatabase(conn, source, "checkTables", mysqlDatabase);
 		int daemonServer;
-		UnixPath chrootPath;
+		PosixPath chrootPath;
 		int osv;
 		int mysqlServer = getMySQLServerForMySQLDatabase(conn, mysqlDatabase);
 		if(mysqlSlave==-1) {
@@ -1299,8 +1286,7 @@ final public class MySQLHandler {
 			} else {
 				// replication-based
 				daemonServer = conn.executeIntQuery("select bp.ao_server from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.id inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where fmr.id=?", mysqlSlave);
-				UnixPath toPath = conn.executeObjectQuery(
-					ObjectFactories.unixPathFactory,
+				PosixPath toPath = conn.executeObjectQuery(ObjectFactories.posixPathFactory,
 					"select bp.path from backup.\"MysqlReplication\" fmr inner join backup.\"FileReplication\" ffr on fmr.replication=ffr.id inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where fmr.id=?",
 					mysqlSlave
 				);
@@ -1308,7 +1294,7 @@ final public class MySQLHandler {
 				osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
 				if(osv==-1) throw new SQLException("Unknown operating_system_version for aoServer: "+aoServer);
 				try {
-					chrootPath = UnixPath.valueOf(toPath+"/"+ServerHandler.getHostnameForAOServer(conn, aoServer));
+					chrootPath = PosixPath.valueOf(toPath+"/"+ServerHandler.getHostnameForAOServer(conn, aoServer));
 				} catch(ValidationException e) {
 					throw new SQLException(e);
 				}

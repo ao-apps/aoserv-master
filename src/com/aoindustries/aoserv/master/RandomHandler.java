@@ -8,7 +8,6 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.AOServConnector;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.FifoFile;
 import com.aoindustries.io.FifoFileInputStream;
@@ -37,7 +36,7 @@ public final class RandomHandler {
 	private static void checkAccessEntropy(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
 		boolean isAllowed=false;
 
-		UserId mustring=source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name mustring=source.getUsername();
 		User mu = MasterServer.getUser(conn, mustring);
 		if (mu!=null) {
 			UserHost[] masterServers=MasterServer.getUserHosts(conn, mustring);

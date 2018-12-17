@@ -78,7 +78,7 @@ public class SmtpSmartHostDomain_GetTableHandler extends TableHandler.GetTableHa
 			"select\n"
 			+ "  esshd.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  billing.\"Package\" pk2,\n"

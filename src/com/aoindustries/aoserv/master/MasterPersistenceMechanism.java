@@ -5,9 +5,8 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.Administrator;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.creditcards.AuthorizationResult;
 import com.aoindustries.creditcards.CaptureResult;
 import com.aoindustries.creditcards.CreditCard;
@@ -35,10 +34,10 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 	 * The username used for actions taken directly by the AOServMaster
 	 * but that must be associated with a {@link Administrator}.
 	 */
-	static final UserId MASTER_BUSINESS_ADMINISTRATOR;
+	static final com.aoindustries.aoserv.client.account.User.Name MASTER_BUSINESS_ADMINISTRATOR;
 	static {
 		try {
-			MASTER_BUSINESS_ADMINISTRATOR = UserId.valueOf("aoserv").intern();
+			MASTER_BUSINESS_ADMINISTRATOR = com.aoindustries.aoserv.client.account.User.Name.valueOf("aoserv").intern();
 		} catch(ValidationException e) {
 			throw new AssertionError("These hard-coded values are valid", e);
 		}
@@ -95,13 +94,12 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
             TransactionRequest transactionRequest = transaction.getTransactionRequest();
             CreditCard creditCard = transaction.getCreditCard();
             // Get the createdBy from the credit card persistence mechanism
-            UserId creditCardCreatedBy = conn.executeObjectQuery(
-				ObjectFactories.userIdFactory,
+            com.aoindustries.aoserv.client.account.User.Name creditCardCreatedBy = conn.executeObjectQuery(
+				ObjectFactories.userNameFactory,
 				"select created_by from payment.\"CreditCard\" where id=?::integer",
 				creditCard.getPersistenceUniqueId()
 			);
-            AccountingCode ccBusiness = conn.executeObjectQuery(
-                ObjectFactories.accountingCodeFactory,
+            Account.Name ccBusiness = conn.executeObjectQuery(ObjectFactories.accountNameFactory,
                 "select accounting from payment.\"CreditCard\" where id=?::integer",
                 creditCard.getPersistenceUniqueId()
             );

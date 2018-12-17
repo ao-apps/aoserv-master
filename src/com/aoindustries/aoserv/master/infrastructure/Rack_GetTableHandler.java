@@ -76,7 +76,7 @@ public class Rack_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			"select distinct\n"
 			+ "  ra.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			// Allow servers it replicates to

@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.AOServWritable;
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.Profile;
 import com.aoindustries.aoserv.client.aosh.Command;
 import com.aoindustries.aoserv.client.billing.Transaction;
@@ -14,31 +15,24 @@ import com.aoindustries.aoserv.client.billing.TransactionSearchCriteria;
 import com.aoindustries.aoserv.client.dns.Record;
 import com.aoindustries.aoserv.client.dns.ZoneTable;
 import com.aoindustries.aoserv.client.email.InboxAttributes;
+import com.aoindustries.aoserv.client.linux.Group;
+import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.linux.Server;
+import com.aoindustries.aoserv.client.linux.User.Gecos;
 import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
+import com.aoindustries.aoserv.client.mysql.Database;
+import com.aoindustries.aoserv.client.mysql.Table_Name;
 import com.aoindustries.aoserv.client.net.FirewallZone;
 import com.aoindustries.aoserv.client.net.reputation.Set.AddReputation;
 import com.aoindustries.aoserv.client.net.reputation.Set.ConfidenceType;
 import com.aoindustries.aoserv.client.net.reputation.Set.ReputationType;
 import com.aoindustries.aoserv.client.pki.Certificate;
+import com.aoindustries.aoserv.client.pki.HashedPassword;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.ticket.Language;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.FirewalldZoneName;
-import com.aoindustries.aoserv.client.validator.Gecos;
-import com.aoindustries.aoserv.client.validator.GroupId;
-import com.aoindustries.aoserv.client.validator.HashedPassword;
-import com.aoindustries.aoserv.client.validator.MySQLDatabaseName;
-import com.aoindustries.aoserv.client.validator.MySQLTableName;
-import com.aoindustries.aoserv.client.validator.MySQLUserId;
-import com.aoindustries.aoserv.client.validator.PostgresDatabaseName;
-import com.aoindustries.aoserv.client.validator.PostgresServerName;
-import com.aoindustries.aoserv.client.validator.PostgresUserId;
-import com.aoindustries.aoserv.client.validator.UnixPath;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.web.Location;
 import com.aoindustries.aoserv.client.web.tomcat.Context;
 import com.aoindustries.aoserv.master.billing.WhoisHistoryService;
@@ -117,11 +111,11 @@ public abstract class MasterServer {
 	 * The database values are read the first time this data is needed.
 	 */
 	private static final Object masterUsersLock = new Object();
-	private static Map<UserId,User> masterUsers;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name,User> masterUsers;
 	private static final Object masterHostsLock = new Object();
-	private static Map<UserId,List<HostAddress>> masterHosts;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name,List<HostAddress>> masterHosts;
 	private static final Object masterServersLock = new Object();
-	private static Map<UserId,UserHost[]> masterServers;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name,UserHost[]> masterServers;
 
 	/**
 	 * The time the system started up
@@ -334,15 +328,15 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response of(int resp1, AccountingCode resp2) {
+		static Response of(int resp1, Account.Name resp2) {
 			return of(resp1, resp2.toString());
 		}
 
-		static Response of(int resp1, MySQLDatabaseName resp2) {
+		static Response of(int resp1, Database.Name resp2) {
 			return of(resp1, resp2.toString());
 		}
 
-		static Response of(int resp1, PostgresDatabaseName resp2) {
+		static Response of(int resp1, com.aoindustries.aoserv.client.postgresql.Database.Name resp2) {
 			return of(resp1, resp2.toString());
 		}
 
@@ -506,7 +500,7 @@ public abstract class MasterServer {
 							final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
 							try {
 								final AoservProtocol.Version protocolVersion = source.getProtocolVersion();
-								final UserId username = source.getUsername();
+								final com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
 								boolean didInitialInvalidateAll = false;
 								while(!BusinessHandler.isBusinessAdministratorDisabled(conn, username)) {
 									InvalidateCacheEntry ice;
@@ -648,7 +642,7 @@ public abstract class MasterServer {
 										switch(tableID) {
 											case BUSINESS_ADMINISTRATORS :
 												{
-													UserId username = UserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													String name=in.readUTF().trim();
 													String title=in.readNullUTF();
 													long birthdayLong=in.readLong();
@@ -717,7 +711,7 @@ public abstract class MasterServer {
 												break;
 											case BUSINESS_PROFILES :
 												{
-													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+													Account.Name accounting = Account.Name.valueOf(in.readUTF());
 													String name=in.readUTF().trim();
 													boolean isPrivate=in.readBoolean();
 													String phone=in.readUTF().trim();
@@ -730,7 +724,16 @@ public abstract class MasterServer {
 													String zip=in.readNullUTF();
 													boolean sendInvoice=in.readBoolean();
 													String billingContact=in.readUTF().trim();
-													String billingEmail=in.readUTF().trim();
+													Set<Email> billingEmail;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_22) >= 0) {
+														int size = in.readCompressedInt();
+														billingEmail = new LinkedHashSet<>(size*4/3+1);
+														for(int i = 0; i < size; i++) {
+															billingEmail.add(Email.valueOf(in.readUTF()));
+														}
+													} else {
+														billingEmail = Profile.splitEmails(in.readUTF().trim());
+													}
 													Profile.EmailFormat billingEmailFormat;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_20) >= 0) {
 														billingEmailFormat = in.readEnum(Profile.EmailFormat.class);
@@ -738,7 +741,16 @@ public abstract class MasterServer {
 														billingEmailFormat = Profile.EmailFormat.HTML;
 													}
 													String technicalContact=in.readUTF().trim();
-													String technicalEmail=in.readUTF().trim();
+													Set<Email> technicalEmail;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_22) >= 0) {
+														int size = in.readCompressedInt();
+														technicalEmail = new LinkedHashSet<>(size*4/3+1);
+														for(int i = 0; i < size; i++) {
+															technicalEmail.add(Email.valueOf(in.readUTF()));
+														}
+													} else {
+														technicalEmail = Profile.splitEmails(in.readUTF().trim());
+													}
 													Profile.EmailFormat technicalEmailFormat;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_20) >= 0) {
 														technicalEmailFormat = in.readEnum(Profile.EmailFormat.class);
@@ -797,7 +809,7 @@ public abstract class MasterServer {
 												break;
 											case BUSINESS_SERVERS :
 												{
-													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+													Account.Name accounting = Account.Name.valueOf(in.readUTF());
 													int server=in.readCompressedInt();
 													if(
 														source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_102)>=0
@@ -825,7 +837,7 @@ public abstract class MasterServer {
 												break;
 											case BUSINESSES :
 												{
-													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+													Account.Name accounting = Account.Name.valueOf(in.readUTF());
 													String contractVersion=in.readNullUTF();
 													int defaultServer;
 													DomainName hostname;
@@ -836,7 +848,7 @@ public abstract class MasterServer {
 														defaultServer = in.readCompressedInt();
 														hostname = null;
 													}
-													AccountingCode parent = AccountingCode.valueOf(in.readUTF());
+													Account.Name parent = Account.Name.valueOf(in.readUTF());
 													boolean can_add_backup_servers=
 														source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_102)>=0
 														?in.readBoolean()
@@ -899,7 +911,7 @@ public abstract class MasterServer {
 														throw new SQLException("add_credit_card for protocol version "+AoservProtocol.Version.VERSION_1_28+" or older is no longer supported.");
 													}
 													String processorName = in.readUTF();
-													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+													Account.Name accounting = Account.Name.valueOf(in.readUTF());
 													String groupName = in.readNullUTF();
 													String cardInfo = in.readUTF().trim();
 													String providerUniqueId = in.readUTF();
@@ -999,7 +1011,7 @@ public abstract class MasterServer {
 											case CREDIT_CARD_TRANSACTIONS :
 												{
 													String processor = in.readUTF();
-													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+													Account.Name accounting = Account.Name.valueOf(in.readUTF());
 													String groupName = in.readNullUTF();
 													boolean testMode = in.readBoolean();
 													int duplicateWindow = in.readCompressedInt();
@@ -1024,9 +1036,9 @@ public abstract class MasterServer {
 													String invoiceNumber = in.readNullUTF();
 													String purchaseOrderNumber = in.readNullUTF();
 													String description = in.readNullUTF();
-													UserId creditCardCreatedBy = UserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name creditCardCreatedBy = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													String creditCardPrincipalName = in.readNullUTF();
-													AccountingCode creditCardAccounting = AccountingCode.valueOf(in.readUTF());
+													Account.Name creditCardAccounting = Account.Name.valueOf(in.readUTF());
 													String creditCardGroupName = in.readNullUTF();
 													String creditCardProviderUniqueId = in.readNullUTF();
 													String creditCardMaskedCardNumber = in.readUTF();
@@ -1160,7 +1172,7 @@ public abstract class MasterServer {
 											case CVS_REPOSITORIES :
 												{
 													int aoServer = in.readCompressedInt();
-													UnixPath path = UnixPath.valueOf(in.readUTF());
+													PosixPath path = PosixPath.valueOf(in.readUTF());
 													int lsa = in.readCompressedInt();
 													int lsg = in.readCompressedInt();
 													long mode = in.readLong();
@@ -1190,7 +1202,7 @@ public abstract class MasterServer {
 												break;
 											case DISABLE_LOG :
 												{
-													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+													Account.Name accounting = Account.Name.valueOf(in.readUTF());
 													String disableReason = in.readNullUTF();
 													process.setCommand(
 														"add_disable_log",
@@ -1264,7 +1276,7 @@ public abstract class MasterServer {
 												break;
 											case DNS_ZONES :
 												{
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
 													String zone = in.readUTF().trim();
 													InetAddress ip = InetAddress.valueOf(in.readUTF());
 													int ttl = in.readCompressedInt();
@@ -1313,7 +1325,7 @@ public abstract class MasterServer {
 												{
 													DomainName domain = DomainName.valueOf(in.readUTF());
 													int aoServer = in.readCompressedInt();
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_EMAIL_DOMAIN,
 														domain,
@@ -1380,7 +1392,7 @@ public abstract class MasterServer {
 												break;
 											case EMAIL_LISTS :
 												{
-													UnixPath path = UnixPath.valueOf(in.readUTF());
+													PosixPath path = PosixPath.valueOf(in.readUTF());
 													int linuxServerAccount = in.readCompressedInt();
 													int linuxServerGroup = in.readCompressedInt();
 													process.setCommand(
@@ -1429,7 +1441,7 @@ public abstract class MasterServer {
 												{
 													int ao_server = in.readCompressedInt();
 													String command = in.readUTF();
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_EMAIL_PIPE,
 														ao_server,
@@ -1455,7 +1467,7 @@ public abstract class MasterServer {
 													process.setPriority(Thread.NORM_PRIORITY+1);
 													currentThread.setPriority(Thread.NORM_PRIORITY+1);
 
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
 													int aoServer= in.readCompressedInt();
 													HostAddress host = HostAddress.valueOf(in.readUTF());
 													String type=in.readUTF();
@@ -1570,7 +1582,7 @@ public abstract class MasterServer {
 												break;
 											case FTP_GUEST_USERS :
 												{
-													UserId username = UserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_FTP_GUEST_USER,
 														username
@@ -1589,8 +1601,8 @@ public abstract class MasterServer {
 													String name=in.readUTF().trim();
 													int aoServer=in.readCompressedInt();
 													int version=in.readCompressedInt();
-													UserId linuxServerAccount = UserId.valueOf(in.readUTF());
-													GroupId linuxServerGroup = GroupId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name linuxServerAccount = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													Group.Name linuxServerGroup = Group.Name.valueOf(in.readUTF());
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_9) <= 0) {
 														boolean isSecure = in.readBoolean();
 														boolean isOverflow = in.readBoolean();
@@ -1626,9 +1638,9 @@ public abstract class MasterServer {
 												{
 													int aoServer=in.readCompressedInt();
 													String siteName=in.readUTF().trim();
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
-													UserId username = UserId.valueOf(in.readUTF());
-													GroupId group = GroupId.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													Group.Name group = Group.Name.valueOf(in.readUTF());
 													Email serverAdmin = Email.valueOf(in.readUTF());
 													boolean useApache=in.readBoolean();
 													int ipAddress=in.readCompressedInt();
@@ -1637,9 +1649,9 @@ public abstract class MasterServer {
 													DomainName[] altHttpHostnames = new DomainName[len];
 													for(int c=0;c<len;c++) altHttpHostnames[c] = DomainName.valueOf(in.readUTF());
 													int jBossVersion = in.readCompressedInt();
-													UnixPath contentSrc;
+													PosixPath contentSrc;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_9) <= 0) {
-														contentSrc = UnixPath.valueOf(in.readNullUTF());
+														contentSrc = PosixPath.valueOf(in.readNullUTF());
 													} else {
 														contentSrc = null;
 													}
@@ -1726,15 +1738,15 @@ public abstract class MasterServer {
 													String path = in.readUTF();
 													boolean isRegularExpression = in.readBoolean();
 													String authName = in.readUTF();
-													UnixPath authGroupFile;
+													PosixPath authGroupFile;
 													{
 														String s = in.readUTF();
-														authGroupFile = s.isEmpty() ? null : UnixPath.valueOf(s);
+														authGroupFile = s.isEmpty() ? null : PosixPath.valueOf(s);
 													}
-													UnixPath authUserFile;
+													PosixPath authUserFile;
 													{
 														String s = in.readUTF();
-														authUserFile = s.isEmpty() ? null : UnixPath.valueOf(s);
+														authUserFile = s.isEmpty() ? null : PosixPath.valueOf(s);
 													}
 													String require = in.readUTF();
 													String handler;
@@ -1803,7 +1815,7 @@ public abstract class MasterServer {
 													String className = in.readNullUTF();
 													boolean cookies = in.readBoolean();
 													boolean crossContext = in.readBoolean();
-													UnixPath docBase = UnixPath.valueOf(in.readUTF());
+													PosixPath docBase = PosixPath.valueOf(in.readUTF());
 													boolean override = in.readBoolean();
 													String path = in.readUTF().trim();
 													boolean privileged = in.readBoolean();
@@ -1811,7 +1823,7 @@ public abstract class MasterServer {
 													boolean useNaming = in.readBoolean();
 													String wrapperClass = in.readNullUTF();
 													int debug = in.readCompressedInt();
-													UnixPath workDir = UnixPath.valueOf(in.readNullUTF());
+													PosixPath workDir = PosixPath.valueOf(in.readNullUTF());
 													boolean serverXmlConfigured;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_2) <= 0) {
 														serverXmlConfigured = Context.DEFAULT_SERVER_XML_CONFIGURED;
@@ -1968,9 +1980,9 @@ public abstract class MasterServer {
 												{
 													int aoServer = in.readCompressedInt();
 													String siteName=in.readUTF().trim();
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
-													UserId username = UserId.valueOf(in.readUTF());
-													GroupId group = GroupId.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													Group.Name group = Group.Name.valueOf(in.readUTF());
 													Email serverAdmin = Email.valueOf(in.readUTF());
 													boolean useApache = in.readBoolean();
 													int ipAddress = in.readCompressedInt();
@@ -1985,9 +1997,9 @@ public abstract class MasterServer {
 													} else {
 														sharedTomcatName = in.readUTF();
 													}
-													UnixPath contentSrc;
+													PosixPath contentSrc;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_9) <= 0) {
-														contentSrc = UnixPath.valueOf(in.readNullUTF());
+														contentSrc = PosixPath.valueOf(in.readNullUTF());
 													} else {
 														contentSrc = null;
 													}
@@ -2073,9 +2085,9 @@ public abstract class MasterServer {
 												{
 													int aoServer = in.readCompressedInt();
 													String siteName = in.readUTF().trim();
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
-													UserId username = UserId.valueOf(in.readUTF());
-													GroupId group = GroupId.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													Group.Name group = Group.Name.valueOf(in.readUTF());
 													Email serverAdmin = Email.valueOf(in.readUTF());
 													boolean useApache = in.readBoolean();
 													int ipAddress = in.readCompressedInt();
@@ -2084,9 +2096,9 @@ public abstract class MasterServer {
 													DomainName[] altHttpHostnames = new DomainName[len];
 													for(int c=0;c<len;c++) altHttpHostnames[c] = DomainName.valueOf(in.readUTF());
 													int tomcatVersion = in.readCompressedInt();
-													UnixPath contentSrc;
+													PosixPath contentSrc;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_9) <= 0) {
-														contentSrc = UnixPath.valueOf(in.readNullUTF());
+														contentSrc = PosixPath.valueOf(in.readNullUTF());
 													} else {
 														contentSrc = null;
 													}
@@ -2196,8 +2208,8 @@ public abstract class MasterServer {
 												break;
 											case LINUX_ACCOUNTS :
 												{
-													UserId username = UserId.valueOf(in.readUTF());
-													GroupId primary_group = GroupId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													Group.Name primary_group = Group.Name.valueOf(in.readUTF());
 													Gecos name;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) < 0) {
 														name = Gecos.valueOf(in.readUTF());
@@ -2208,7 +2220,7 @@ public abstract class MasterServer {
 													Gecos office_phone = Gecos.valueOf(in.readNullUTF());
 													Gecos home_phone = Gecos.valueOf(in.readNullUTF());
 													String type = in.readUTF().trim();
-													UnixPath shell = UnixPath.valueOf(in.readUTF());
+													PosixPath shell = PosixPath.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_LINUX_ACCOUNT,
 														username,
@@ -2239,8 +2251,8 @@ public abstract class MasterServer {
 												break;
 											case LINUX_GROUP_ACCOUNTS :
 												{
-													GroupId groupName = GroupId.valueOf(in.readUTF());
-													UserId username = UserId.valueOf(in.readUTF());
+													Group.Name groupName = Group.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_LINUX_GROUP_ACCOUNT,
 														groupName,
@@ -2263,8 +2275,8 @@ public abstract class MasterServer {
 												break;
 											case LINUX_GROUPS :
 												{
-													GroupId groupName = GroupId.valueOf(in.readUTF());
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
+													Group.Name groupName = Group.Name.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
 													String type = in.readUTF().trim();
 													process.setCommand(
 														Command.ADD_LINUX_GROUP,
@@ -2286,9 +2298,9 @@ public abstract class MasterServer {
 												break;
 											case LINUX_SERVER_ACCOUNTS :
 												{
-													UserId username = UserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													int aoServer = in.readCompressedInt();
-													UnixPath home = UnixPath.valueOf(in.readUTF());
+													PosixPath home = PosixPath.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_LINUX_SERVER_ACCOUNT,
 														username,
@@ -2312,7 +2324,7 @@ public abstract class MasterServer {
 												break;
 											case LINUX_SERVER_GROUPS :
 												{
-													GroupId groupName = GroupId.valueOf(in.readUTF());
+													Group.Name groupName = Group.Name.valueOf(in.readUTF());
 													int aoServer = in.readCompressedInt();
 													process.setCommand(
 														Command.ADD_LINUX_SERVER_GROUP,
@@ -2382,9 +2394,9 @@ public abstract class MasterServer {
 												break;
 											case MYSQL_DATABASES :
 												{
-													MySQLDatabaseName name = MySQLDatabaseName.valueOf(in.readUTF());
+													Database.Name name = Database.Name.valueOf(in.readUTF());
 													int mysqlServer = in.readCompressedInt();
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_MYSQL_DATABASE,
 														name,
@@ -2518,7 +2530,7 @@ public abstract class MasterServer {
 												break;
 											case MYSQL_SERVER_USERS :
 												{
-													MySQLUserId username = MySQLUserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.mysql.User.Name username = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
 													int mysqlServer = in.readCompressedInt();
 													String host = in.readNullUTF();
 													process.setCommand(
@@ -2543,7 +2555,7 @@ public abstract class MasterServer {
 												break;
 											case MYSQL_USERS :
 												{
-													MySQLUserId username = MySQLUserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.mysql.User.Name username = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_MYSQL_USER,
 														username
@@ -2560,7 +2572,7 @@ public abstract class MasterServer {
 											case NET_BINDS :
 												{
 													int server = in.readCompressedInt();
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
 													int ipAddress = in.readCompressedInt();
 													Port port;
 													{
@@ -2576,7 +2588,7 @@ public abstract class MasterServer {
 													String appProtocol = in.readUTF().trim();
 													boolean monitoringEnabled;
 													int numZones;
-													Set<FirewalldZoneName> firewalldZones;
+													Set<FirewallZone.Name> firewalldZones;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_2) <= 0) {
 														boolean openFirewall = in.readBoolean();
 														if(openFirewall) {
@@ -2599,7 +2611,7 @@ public abstract class MasterServer {
 														numZones = in.readCompressedInt();
 														firewalldZones = new LinkedHashSet<>(numZones*4/3+1);
 														for(int i = 0; i < numZones; i++) {
-															FirewalldZoneName name = FirewalldZoneName.valueOf(in.readUTF());
+															FirewallZone.Name name = FirewallZone.Name.valueOf(in.readUTF());
 															if(!firewalldZones.add(name)) {
 																throw new IOException("Duplicate firewalld name: " + name);
 															}
@@ -2614,7 +2626,7 @@ public abstract class MasterServer {
 													command[5] = appProtocol;
 													command[6] = monitoringEnabled;
 													System.arraycopy(
-														firewalldZones.toArray(new FirewalldZoneName[numZones]),
+														firewalldZones.toArray(new FirewallZone.Name[numZones]),
 														0,
 														command,
 														7,
@@ -2641,7 +2653,7 @@ public abstract class MasterServer {
 												break;
 											case NOTICE_LOG :
 												{
-													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+													Account.Name accounting = Account.Name.valueOf(in.readUTF());
 													String billingContact = in.readUTF().trim();
 													String emailAddress = in.readUTF().trim();
 													int balance = in.readCompressedInt();
@@ -2672,8 +2684,8 @@ public abstract class MasterServer {
 												break;
 											case PACKAGES :
 												{
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
-													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
+													Account.Name accounting = Account.Name.valueOf(in.readUTF());
 													int packageDefinition;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_122)<=0) {
 														// Try to find a package definition owned by the source accounting with matching rates and limits
@@ -2683,7 +2695,7 @@ public abstract class MasterServer {
 														int additionalUserRate=in.readCompressedInt();
 														int popLimit=in.readCompressedInt();
 														int additionalPopRate=in.readCompressedInt();
-														AccountingCode baAccounting = UsernameHandler.getBusinessForUsername(conn, source.getUsername());
+														Account.Name baAccounting = UsernameHandler.getBusinessForUsername(conn, source.getUsername());
 														packageDefinition=PackageHandler.findActivePackageDefinition(
 															conn,
 															baAccounting,
@@ -2728,7 +2740,7 @@ public abstract class MasterServer {
 												break;
 											case PACKAGE_DEFINITIONS :
 												{
-													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+													Account.Name accounting = Account.Name.valueOf(in.readUTF());
 													String category = in.readUTF().trim();
 													String name = in.readUTF().trim();
 													String version = in.readUTF().trim();
@@ -2774,7 +2786,7 @@ public abstract class MasterServer {
 												break;
 											case POSTGRES_DATABASES :
 												{
-													PostgresDatabaseName name = PostgresDatabaseName.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.postgresql.Database.Name name = com.aoindustries.aoserv.client.postgresql.Database.Name.valueOf(in.readUTF());
 													int postgresServer = in.readCompressedInt();
 													int datdba = in.readCompressedInt();
 													int encoding = in.readCompressedInt();
@@ -2805,7 +2817,7 @@ public abstract class MasterServer {
 												break;
 											case POSTGRES_SERVER_USERS :
 												{
-													PostgresUserId username = PostgresUserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.postgresql.User.Name username = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
 													int postgresServer = in.readCompressedInt();
 													process.setCommand(
 														Command.ADD_POSTGRES_SERVER_USER,
@@ -2827,7 +2839,7 @@ public abstract class MasterServer {
 												break;
 											case POSTGRES_USERS :
 												{
-													PostgresUserId username = PostgresUserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.postgresql.User.Name username = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_POSTGRES_USER,
 														username
@@ -2843,7 +2855,7 @@ public abstract class MasterServer {
 												break;
 											case SIGNUP_REQUESTS :
 												{
-													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+													Account.Name accounting = Account.Name.valueOf(in.readUTF());
 													InetAddress ip_address = InetAddress.valueOf(in.readUTF());
 													int package_definition = in.readCompressedInt();
 													String business_name = in.readUTF();
@@ -2868,7 +2880,7 @@ public abstract class MasterServer {
 													String ba_state = in.readNullUTF();
 													String ba_country = in.readNullUTF();
 													String ba_zip = in.readNullUTF();
-													UserId ba_username = UserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name ba_username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													String billing_contact = in.readUTF();
 													String billing_email = in.readUTF();
 													boolean billing_use_monthly = in.readBoolean();
@@ -2997,25 +3009,25 @@ public abstract class MasterServer {
 												break;
 											case TICKETS :
 												{
-													AccountingCode brand;
+													Account.Name brand;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_46)>=0) {
-														brand = AccountingCode.valueOf(in.readUTF());
+														brand = Account.Name.valueOf(in.readUTF());
 													} else {
 														brand = BusinessHandler.getRootBusiness();
 													}
-													AccountingCode accounting;
+													Account.Name accounting;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_126)>=0) {
-														accounting = AccountingCode.valueOf(in.readNullUTF());
+														accounting = Account.Name.valueOf(in.readNullUTF());
 													} else {
-														AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
+														Account.Name packageName = Account.Name.valueOf(in.readUTF());
 														accounting = PackageHandler.getBusinessForPackage(conn, packageName);
 													}
 													String language = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_44)>=0 ? in.readUTF() : Language.EN;
 													int category = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_44)>=0 ? in.readCompressedInt() : -1;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) in.readUTF(); // username
 													String type = in.readUTF();
-													String fromAddress;
-													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_48)>=0) fromAddress = in.readNullUTF();
+													Email fromAddress;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_48)>=0) fromAddress = Email.valueOf(in.readNullUTF());
 													else fromAddress = null;
 													String summary = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_44)>=0 ? in.readUTF() : "(No summary)";
 													String details = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_44)>=0 ? in.readNullLongUTF() : in.readUTF();
@@ -3023,14 +3035,22 @@ public abstract class MasterServer {
 													String clientPriority=in.readUTF();
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) in.readUTF(); // adminPriority
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) in.readNullUTF(); // technology
-													String contactEmails;
+													Set<Email> contactEmails;
 													String contactPhoneNumbers;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_125)>=0) {
 														if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) in.readNullUTF(); // assignedTo
-														contactEmails=in.readUTF();
+														if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_22) >= 0) {
+															int size = in.readCompressedInt();
+															contactEmails = new LinkedHashSet<>(size*4/3+1);
+															for(int i = 0; i < size; i++) {
+																contactEmails.add(Email.valueOf(in.readUTF()));
+															}
+														} else {
+															contactEmails = Profile.splitEmails(in.readUTF().trim());
+														}
 														contactPhoneNumbers=in.readUTF();
 													} else {
-														contactEmails="";
+														contactEmails = Collections.emptySet();
 														contactPhoneNumbers="";
 													}
 													process.setCommand(
@@ -3071,9 +3091,9 @@ public abstract class MasterServer {
 												break;
 											case TRANSACTIONS :
 												{
-													AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
-													AccountingCode sourceAccounting = AccountingCode.valueOf(in.readUTF());
-													UserId business_administrator = UserId.valueOf(in.readUTF());
+													Account.Name accounting = Account.Name.valueOf(in.readUTF());
+													Account.Name sourceAccounting = Account.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name business_administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													String type = in.readUTF().trim();
 													String description = in.readUTF().trim();
 													int quantity = in.readCompressedInt();
@@ -3122,8 +3142,8 @@ public abstract class MasterServer {
 												break;
 											case USERNAMES :
 												{
-													AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
-													UserId username = UserId.valueOf(in.readUTF());
+													Account.Name packageName = Account.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_USERNAME,
 														packageName,
@@ -3229,7 +3249,7 @@ public abstract class MasterServer {
 									case ADD_SYSTEM_GROUP :
 										{
 											int aoServer = in.readCompressedInt();
-											GroupId groupName = GroupId.valueOf(in.readUTF());
+											Group.Name groupName = Group.Name.valueOf(in.readUTF());
 											int gid = in.readCompressedInt();
 											process.setCommand(
 												"add_system_group",
@@ -3255,7 +3275,7 @@ public abstract class MasterServer {
 									case ADD_SYSTEM_USER:
 										{
 											int aoServer = in.readCompressedInt();
-											UserId username = UserId.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 											int uid = in.readCompressedInt();
 											int gid = in.readCompressedInt();
 											Gecos fullName;
@@ -3278,8 +3298,8 @@ public abstract class MasterServer {
 												String s = in.readUTF();
 												homePhone = s.isEmpty() ? null : Gecos.valueOf(s);
 											}
-											UnixPath home = UnixPath.valueOf(in.readUTF());
-											UnixPath shell = UnixPath.valueOf(in.readUTF());
+											PosixPath home = PosixPath.valueOf(in.readUTF());
+											PosixPath shell = PosixPath.valueOf(in.readUTF());
 											process.setCommand(
 												"add_system_user",
 												aoServer,
@@ -3317,7 +3337,7 @@ public abstract class MasterServer {
 										break;
 									case CANCEL_BUSINESS :
 										{
-											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+											Account.Name accounting = Account.Name.valueOf(in.readUTF());
 											String cancelReason = in.readNullUTF();
 											process.setCommand(Command.CANCEL_BUSINESS, accounting, cancelReason);
 											BusinessHandler.cancelBusiness(conn, source, invalidateList, accounting, cancelReason);
@@ -3777,7 +3797,7 @@ public abstract class MasterServer {
 											switch(tableID) {
 												case BUSINESSES :
 													{
-														AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+														Account.Name accounting = Account.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_BUSINESS,
 															disableLog,
@@ -3794,7 +3814,7 @@ public abstract class MasterServer {
 													break;
 												case BUSINESS_ADMINISTRATORS :
 													{
-														UserId username = UserId.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_BUSINESS_ADMINISTRATOR,
 															disableLog,
@@ -3930,7 +3950,7 @@ public abstract class MasterServer {
 													break;
 												case LINUX_ACCOUNTS :
 													{
-														UserId username = UserId.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_LINUX_ACCOUNT,
 															disableLog,
@@ -3981,7 +4001,7 @@ public abstract class MasterServer {
 													break;
 												case MYSQL_USERS :
 													{
-														MySQLUserId username = MySQLUserId.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.mysql.User.Name username = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_MYSQL_USER,
 															disableLog,
@@ -3998,7 +4018,7 @@ public abstract class MasterServer {
 													break;
 												case PACKAGES :
 													{
-														AccountingCode name = AccountingCode.valueOf(in.readUTF());
+														Account.Name name = Account.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_PACKAGE,
 															disableLog,
@@ -4032,7 +4052,7 @@ public abstract class MasterServer {
 													break;
 												case POSTGRES_USERS :
 													{
-														PostgresUserId username = PostgresUserId.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.postgresql.User.Name username = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_POSTGRES_USER,
 															disableLog,
@@ -4049,7 +4069,7 @@ public abstract class MasterServer {
 													break;
 												case USERNAMES :
 													{
-														UserId username = UserId.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_USERNAME,
 															disableLog,
@@ -4135,7 +4155,7 @@ public abstract class MasterServer {
 											switch(tableID) {
 												case BUSINESSES :
 													{
-														AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+														Account.Name accounting = Account.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_BUSINESS,
 															accounting
@@ -4150,7 +4170,7 @@ public abstract class MasterServer {
 													break;
 												case BUSINESS_ADMINISTRATORS :
 													{
-														UserId username = UserId.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_BUSINESS_ADMINISTRATOR,
 															username
@@ -4270,7 +4290,7 @@ public abstract class MasterServer {
 													break;
 												case LINUX_ACCOUNTS :
 													{
-														UserId username = UserId.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_LINUX_ACCOUNT,
 															username
@@ -4315,7 +4335,7 @@ public abstract class MasterServer {
 													break;
 												case MYSQL_USERS :
 													{
-														MySQLUserId username = MySQLUserId.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.mysql.User.Name username = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_MYSQL_USER,
 															username
@@ -4330,7 +4350,7 @@ public abstract class MasterServer {
 													break;
 												case PACKAGES :
 													{
-														AccountingCode name = AccountingCode.valueOf(in.readUTF());
+														Account.Name name = Account.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_PACKAGE,
 															name
@@ -4360,7 +4380,7 @@ public abstract class MasterServer {
 													break;
 												case POSTGRES_USERS :
 													{
-														PostgresUserId username = PostgresUserId.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.postgresql.User.Name username = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_POSTGRES_USER,
 															username
@@ -4375,7 +4395,7 @@ public abstract class MasterServer {
 													break;
 												case USERNAMES :
 													{
-														UserId username = UserId.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_USERNAME,
 															username
@@ -4397,12 +4417,12 @@ public abstract class MasterServer {
 										break;
 									case GENERATE_ACCOUNTING_CODE :
 										{
-											AccountingCode template = AccountingCode.valueOf(in.readUTF());
+											Account.Name template = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.GENERATE_ACCOUNTING,
 												template
 											);
-											AccountingCode accounting = BusinessHandler.generateAccountingCode(
+											Account.Name accounting = BusinessHandler.generateAccountingCode(
 												conn,
 												template
 											);
@@ -4422,7 +4442,7 @@ public abstract class MasterServer {
 												template_base,
 												template_added
 											);
-											MySQLDatabaseName name = MySQLHandler.generateMySQLDatabaseName(
+											Database.Name name = MySQLHandler.generateMySQLDatabaseName(
 												conn,
 												template_base,
 												template_added
@@ -4436,12 +4456,12 @@ public abstract class MasterServer {
 										break;
 									case GENERATE_PACKAGE_NAME :
 										{
-											AccountingCode template = AccountingCode.valueOf(in.readUTF());
+											Account.Name template = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.GENERATE_PACKAGE_NAME,
 												template
 											);
-											AccountingCode name = PackageHandler.generatePackageName(
+											Account.Name name = PackageHandler.generatePackageName(
 												conn,
 												template
 											);
@@ -4461,7 +4481,7 @@ public abstract class MasterServer {
 												template_base,
 												template_added
 											);
-											PostgresDatabaseName name = PostgresHandler.generatePostgresDatabaseName(
+											com.aoindustries.aoserv.client.postgresql.Database.Name name = PostgresHandler.generatePostgresDatabaseName(
 												conn,
 												template_base,
 												template_added
@@ -4511,7 +4531,7 @@ public abstract class MasterServer {
 										break;
 									case GET_ACCOUNT_BALANCE :
 										{
-											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+											Account.Name accounting = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												"get_account_balance",
 												accounting
@@ -4528,7 +4548,7 @@ public abstract class MasterServer {
 										break;
 									case GET_ACCOUNT_BALANCE_BEFORE :
 										{
-											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+											Account.Name accounting = Account.Name.valueOf(in.readUTF());
 											long before = in.readLong();
 											process.setCommand(
 												"get_account_balance_before",
@@ -4568,7 +4588,7 @@ public abstract class MasterServer {
 										break;
 									case GET_CONFIRMED_ACCOUNT_BALANCE :
 										{
-											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+											Account.Name accounting = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												"get_confirmed_account_balance",
 												accounting
@@ -4585,7 +4605,7 @@ public abstract class MasterServer {
 										break;
 									case GET_CONFIRMED_ACCOUNT_BALANCE_BEFORE :
 										{
-											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+											Account.Name accounting = Account.Name.valueOf(in.readUTF());
 											long before = in.readLong();
 											process.setCommand(
 												"get_confirmed_account_balance_before",
@@ -4995,9 +5015,9 @@ public abstract class MasterServer {
 												mysqlSlave = -1;
 											}
 											int numTables = in.readCompressedInt();
-											List<MySQLTableName> tableNames = new ArrayList<>(numTables);
+											List<Table_Name> tableNames = new ArrayList<>(numTables);
 											for(int c=0;c<numTables;c++) {
-												tableNames.add(MySQLTableName.valueOf(in.readUTF()));
+												tableNames.add(Table_Name.valueOf(in.readUTF()));
 											}
 											process.setCommand(
 												"check_mysql_tables",
@@ -5663,7 +5683,7 @@ public abstract class MasterServer {
 									case GET_TRANSACTIONS_BUSINESS :
 										{
 											boolean provideProgress = in.readBoolean();
-											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+											Account.Name accounting = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												"get_transactions_business",
 												provideProgress,
@@ -5683,7 +5703,7 @@ public abstract class MasterServer {
 									case GET_TRANSACTIONS_BUSINESS_ADMINISTRATOR :
 										{
 											boolean provideProgress = in.readBoolean();
-											UserId username = UserId.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 											process.setCommand(
 												"get_transactions_business_administrator",
 												provideProgress,
@@ -5794,7 +5814,7 @@ public abstract class MasterServer {
 										break;*/
 									case IS_ACCOUNTING_AVAILABLE :
 										{
-											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+											Account.Name accounting = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.IS_ACCOUNTING_AVAILABLE,
 												accounting
@@ -5812,7 +5832,7 @@ public abstract class MasterServer {
 										break;
 									case IS_BUSINESS_ADMINISTRATOR_PASSWORD_SET :
 										{
-											UserId username = UserId.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.IS_BUSINESS_ADMINISTRATOR_PASSWORD_SET,
 												username
@@ -5871,7 +5891,7 @@ public abstract class MasterServer {
 										break;
 									case IS_LINUX_GROUP_NAME_AVAILABLE :
 										{
-											GroupId name = GroupId.valueOf(in.readUTF());
+											Group.Name name = Group.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.IS_LINUX_GROUP_NAME_AVAILABLE,
 												name
@@ -5943,7 +5963,7 @@ public abstract class MasterServer {
 										break;
 									case IS_MYSQL_DATABASE_NAME_AVAILABLE :
 										{
-											MySQLDatabaseName name = MySQLDatabaseName.valueOf(in.readUTF());
+											Database.Name name = Database.Name.valueOf(in.readUTF());
 											int mysqlServer = in.readCompressedInt();
 											process.setCommand(
 												Command.IS_MYSQL_DATABASE_NAME_AVAILABLE,
@@ -5985,7 +6005,7 @@ public abstract class MasterServer {
 										break;
 									case IS_PACKAGE_NAME_AVAILABLE :
 										{
-											AccountingCode name = AccountingCode.valueOf(in.readUTF());
+											Account.Name name = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.IS_PACKAGE_NAME_AVAILABLE,
 												name
@@ -6003,7 +6023,7 @@ public abstract class MasterServer {
 										break;
 									case IS_POSTGRES_DATABASE_NAME_AVAILABLE :
 										{
-											PostgresDatabaseName name = PostgresDatabaseName.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.postgresql.Database.Name name = com.aoindustries.aoserv.client.postgresql.Database.Name.valueOf(in.readUTF());
 											int postgresServer = in.readCompressedInt();
 											process.setCommand(
 												Command.IS_POSTGRES_DATABASE_NAME_AVAILABLE,
@@ -6044,7 +6064,7 @@ public abstract class MasterServer {
 										break;
 									case IS_POSTGRES_SERVER_NAME_AVAILABLE :
 										{
-											PostgresServerName name = PostgresServerName.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.postgresql.Server.Name name = com.aoindustries.aoserv.client.postgresql.Server.Name.valueOf(in.readUTF());
 											int aoServer = in.readCompressedInt();
 											process.setCommand(
 												Command.IS_POSTGRES_SERVER_NAME_AVAILABLE,
@@ -6084,7 +6104,7 @@ public abstract class MasterServer {
 										break;
 									case IS_USERNAME_AVAILABLE :
 										{
-											UserId username = UserId.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.IS_USERNAME_AVAILABLE,
 												username
@@ -6229,7 +6249,7 @@ public abstract class MasterServer {
 												break;
 											case BUSINESS_ADMINISTRATORS :
 												{
-													UserId username = UserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_BUSINESS_ADMINISTRATOR,
 														username
@@ -6472,7 +6492,7 @@ public abstract class MasterServer {
 												break;
 											case FTP_GUEST_USERS :
 												{
-													UserId username = UserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_FTP_GUEST_USER,
 														username
@@ -6632,7 +6652,7 @@ public abstract class MasterServer {
 												break;
 											case LINUX_ACCOUNTS :
 												{
-													UserId username = UserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_LINUX_ACCOUNT,
 														username
@@ -6664,7 +6684,7 @@ public abstract class MasterServer {
 												break;
 											case LINUX_GROUPS :
 												{
-													GroupId name = GroupId.valueOf(in.readUTF());
+													Group.Name name = Group.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_LINUX_GROUP,
 														name
@@ -6776,7 +6796,7 @@ public abstract class MasterServer {
 												break;
 											case MYSQL_USERS :
 												{
-													MySQLUserId username = MySQLUserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.mysql.User.Name username = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_MYSQL_USER,
 														username
@@ -6856,7 +6876,7 @@ public abstract class MasterServer {
 												break;
 											case POSTGRES_USERS :
 												{
-													PostgresUserId username = PostgresUserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.postgresql.User.Name username = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_POSTGRES_USER,
 														username
@@ -6872,7 +6892,7 @@ public abstract class MasterServer {
 												break;
 											case USERNAMES :
 												{
-													UserId username = UserId.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_USERNAME,
 														username
@@ -7044,8 +7064,8 @@ public abstract class MasterServer {
 										break;
 									case SET_BUSINESS_ACCOUNTING :
 										{
-											AccountingCode oldAccounting = AccountingCode.valueOf(in.readUTF());
-											AccountingCode newAccounting = AccountingCode.valueOf(in.readUTF());
+											Account.Name oldAccounting = Account.Name.valueOf(in.readUTF());
+											Account.Name newAccounting = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.SET_BUSINESS_ACCOUNTING,
 												oldAccounting,
@@ -7064,7 +7084,7 @@ public abstract class MasterServer {
 										break;
 									case SET_BUSINESS_ADMINISTRATOR_PASSWORD :
 										{
-											UserId username = UserId.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 											String password = in.readUTF();
 											process.setCommand(
 												Command.SET_BUSINESS_ADMINISTRATOR_PASSWORD,
@@ -7084,7 +7104,7 @@ public abstract class MasterServer {
 										break;
 									case SET_BUSINESS_ADMINISTRATOR_PROFILE :
 										{
-											UserId username = UserId.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 											String name=in.readUTF().trim();
 											String title=in.readNullUTF();
 											long birthdayLong=in.readLong();
@@ -7425,15 +7445,15 @@ public abstract class MasterServer {
 											String path = in.readUTF().trim();
 											boolean isRegularExpression = in.readBoolean();
 											String authName = in.readUTF().trim();
-											UnixPath authGroupFile;
+											PosixPath authGroupFile;
 											{
 												String s = in.readUTF().trim();
-												authGroupFile = s.isEmpty() ? null : UnixPath.valueOf(s);
+												authGroupFile = s.isEmpty() ? null : PosixPath.valueOf(s);
 											}
-											UnixPath authUserFile;
+											PosixPath authUserFile;
 											{
 												String s = in.readUTF().trim();
-												authUserFile = s.isEmpty() ? null : UnixPath.valueOf(s);
+												authUserFile = s.isEmpty() ? null : PosixPath.valueOf(s);
 											}
 											String require = in.readUTF().trim();
 											String handler;
@@ -7798,7 +7818,7 @@ public abstract class MasterServer {
 											String className = in.readNullUTF();
 											boolean cookies = in.readBoolean();
 											boolean crossContext = in.readBoolean();
-											UnixPath docBase = UnixPath.valueOf(in.readUTF());
+											PosixPath docBase = PosixPath.valueOf(in.readUTF());
 											boolean override = in.readBoolean();
 											String path = in.readUTF().trim();
 											boolean privileged = in.readBoolean();
@@ -7806,7 +7826,7 @@ public abstract class MasterServer {
 											boolean useNaming = in.readBoolean();
 											String wrapperClass = in.readNullUTF();
 											int debug = in.readCompressedInt();
-											UnixPath workDir = UnixPath.valueOf(in.readNullUTF());
+											PosixPath workDir = PosixPath.valueOf(in.readNullUTF());
 											boolean serverXmlConfigured;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_2) <= 0) {
 												serverXmlConfigured = Context.DEFAULT_SERVER_XML_CONFIGURED;
@@ -8016,7 +8036,7 @@ public abstract class MasterServer {
 									case SET_IP_ADDRESS_PACKAGE :
 										{
 											int ipAddress = in.readCompressedInt();
-											AccountingCode packageName = AccountingCode.valueOf(in.readUTF());
+											Account.Name packageName = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.SET_IP_ADDRESS_PACKAGE,
 												ipAddress,
@@ -8091,7 +8111,7 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_ACCOUNT_HOME_PHONE :
 										{
-											UserId username = UserId.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 											Gecos phone;
 											{
 												String s = in.readUTF();
@@ -8115,7 +8135,7 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_ACCOUNT_NAME :
 										{
-											UserId username = UserId.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 											Gecos fullName;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) < 0) {
 												fullName = Gecos.valueOf(in.readUTF());
@@ -8141,7 +8161,7 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_ACCOUNT_OFFICE_LOCATION :
 										{
-											UserId username = UserId.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 											Gecos location;
 											{
 												String s = in.readUTF();
@@ -8165,7 +8185,7 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_ACCOUNT_OFFICE_PHONE :
 										{
-											UserId username = UserId.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 											Gecos phone;
 											{
 												String s = in.readUTF();
@@ -8189,8 +8209,8 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_ACCOUNT_SHELL :
 										{
-											UserId username = UserId.valueOf(in.readUTF());
-											UnixPath shell = UnixPath.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+											PosixPath shell = PosixPath.valueOf(in.readUTF());
 											process.setCommand(
 												Command.SET_LINUX_ACCOUNT_SHELL,
 												username,
@@ -8448,9 +8468,9 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											int numZones = in.readCompressedInt();
-											Set<FirewalldZoneName> firewalldZones = new LinkedHashSet<>(numZones*4/3+1);
+											Set<FirewallZone.Name> firewalldZones = new LinkedHashSet<>(numZones*4/3+1);
 											for(int i = 0; i < numZones; i++) {
-												FirewalldZoneName name = FirewalldZoneName.valueOf(in.readUTF());
+												FirewallZone.Name name = FirewallZone.Name.valueOf(in.readUTF());
 												if(!firewalldZones.add(name)) {
 													throw new IOException("Duplicate firewalld name: " + name);
 												}
@@ -8459,7 +8479,7 @@ public abstract class MasterServer {
 											command[0] = Command.SET_NET_BIND_FIREWALLD_ZONES;
 											command[1] = id;
 											System.arraycopy(
-												firewalldZones.toArray(new FirewalldZoneName[numZones]),
+												firewalldZones.toArray(new FirewallZone.Name[numZones]),
 												0,
 												command,
 												2,
@@ -8682,7 +8702,16 @@ public abstract class MasterServer {
 									case SET_TICKET_CONTACT_EMAILS :
 										{
 											int ticketID = in.readCompressedInt();
-											String contactEmails = in.readUTF();
+											Set<Email> contactEmails;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_22) >= 0) {
+												int size = in.readCompressedInt();
+												contactEmails = new LinkedHashSet<>(size*4/3+1);
+												for(int i = 0; i < size; i++) {
+													contactEmails.add(Email.valueOf(in.readUTF()));
+												}
+											} else {
+												contactEmails = Profile.splitEmails(in.readUTF().trim());
+											}
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) {
 												String username=in.readUTF();
 												String comments=in.readUTF();
@@ -8730,16 +8759,16 @@ public abstract class MasterServer {
 									case SET_TICKET_BUSINESS :
 										{
 											int ticketID = in.readCompressedInt();
-											AccountingCode oldAccounting;
+											Account.Name oldAccounting;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_48)>=0) {
 												// Added old accounting to behave like atomic variable
 												String oldAccountingS = in.readUTF();
-												oldAccounting = oldAccountingS.length()==0 ? null : AccountingCode.valueOf(oldAccountingS);
+												oldAccounting = oldAccountingS.length()==0 ? null : Account.Name.valueOf(oldAccountingS);
 											} else {
 												oldAccounting = null;
 											}
 											String newAccountingS = in.readUTF();
-											AccountingCode newAccounting = newAccountingS.length()==0 ? null : AccountingCode.valueOf(newAccountingS);
+											Account.Name newAccounting = newAccountingS.length()==0 ? null : Account.Name.valueOf(newAccountingS);
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) {
 												String username = in.readUTF();
 												String comments = in.readUTF();
@@ -9200,7 +9229,7 @@ public abstract class MasterServer {
 										break;
 									case SET_CREDIT_CARD_USE_MONTHLY :
 										{
-											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+											Account.Name accounting = Account.Name.valueOf(in.readUTF());
 											int id = in.readCompressedInt();
 											process.setCommand(
 												"set_credit_card_use_monthly",
@@ -9476,7 +9505,7 @@ public abstract class MasterServer {
 									case UPDATE_PACKAGE_DEFINITION :
 										{
 											int id = in.readCompressedInt();
-											AccountingCode accounting = AccountingCode.valueOf(in.readUTF());
+											Account.Name accounting = Account.Name.valueOf(in.readUTF());
 											String category=in.readUTF();
 											String name=in.readUTF().trim();
 											String version=in.readUTF().trim();
@@ -9964,7 +9993,7 @@ public abstract class MasterServer {
 							for(Table.TableID tableID : tableIDs) {
 								int clientTableID=TableHandler.convertToClientTableID(conn, source, tableID);
 								if(clientTableID!=-1) {
-									List<AccountingCode> affectedBusinesses = invalidateList.getAffectedBusinesses(tableID);
+									List<Account.Name> affectedBusinesses = invalidateList.getAffectedBusinesses(tableID);
 									List<Integer> affectedServers = invalidateList.getAffectedServers(tableID);
 									if(
 										affectedBusinesses!=null
@@ -10400,8 +10429,8 @@ public abstract class MasterServer {
 	public static String authenticate(
 		DatabaseConnection conn,
 		String remoteHost, 
-		UserId connectAs, 
-		UserId authenticateAs, 
+		com.aoindustries.aoserv.client.account.User.Name connectAs, 
+		com.aoindustries.aoserv.client.account.User.Name authenticateAs, 
 		String password
 	) throws IOException, SQLException {
 		if(connectAs == null) return "Connection attempted with empty connect username";
@@ -10457,7 +10486,7 @@ public abstract class MasterServer {
 			zone
 		)) throw new SQLException("Access to this hostname forbidden: Exists in dns.ForbiddenZone: "+hostname);
 
-		UserId username = source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
 
 		String existingZone=conn.executeStringQuery(
 			Connection.TRANSACTION_READ_COMMITTED,
@@ -10494,7 +10523,7 @@ public abstract class MasterServer {
 		for(int emailDomain : emailDomains) if(!EmailHandler.canAccessEmailDomain(conn, source, emailDomain)) throw new SQLException("Access to this hostname forbidden: Exists in email.Domain: "+hostname);
 	}
 
-	public static UserHost[] getUserHosts(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static UserHost[] getUserHosts(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name username) throws IOException, SQLException {
 		synchronized(masterServersLock) {
 			if(masterServers==null) masterServers=new HashMap<>();
 			UserHost[] mss=masterServers.get(username);
@@ -10521,11 +10550,11 @@ public abstract class MasterServer {
 		}
 	}
 
-	public static Map<UserId,User> getUsers(DatabaseConnection conn) throws IOException, SQLException {
+	public static Map<com.aoindustries.aoserv.client.account.User.Name,User> getUsers(DatabaseConnection conn) throws IOException, SQLException {
 		synchronized(masterUsersLock) {
 			if(masterUsers==null) {
 				try (Statement stmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement()) {
-					Map<UserId,User> table=new HashMap<>();
+					Map<com.aoindustries.aoserv.client.account.User.Name,User> table=new HashMap<>();
 					ResultSet results=stmt.executeQuery("select * from master.\"User\" where is_active");
 					while(results.next()) {
 						User mu=new User();
@@ -10539,25 +10568,25 @@ public abstract class MasterServer {
 		}
 	}
 
-	public static User getUser(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static User getUser(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name username) throws IOException, SQLException {
 		return getUsers(conn).get(username);
 	}
 
 	/**
 	 * Gets the hosts that are allowed for the provided username.
 	 */
-	public static boolean isHostAllowed(DatabaseConnection conn, UserId username, String host) throws IOException, SQLException {
-		Map<UserId,List<HostAddress>> myMasterHosts;
+	public static boolean isHostAllowed(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name username, String host) throws IOException, SQLException {
+		Map<com.aoindustries.aoserv.client.account.User.Name,List<HostAddress>> myMasterHosts;
 		synchronized(masterHostsLock) {
 			if(masterHosts==null) {
 				try (Statement stmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement()) {
-					Map<UserId,List<HostAddress>> table=new HashMap<>();
+					Map<com.aoindustries.aoserv.client.account.User.Name,List<HostAddress>> table=new HashMap<>();
 					ResultSet results=stmt.executeQuery("select mh.username, mh.host from master.\"UserAcl\" mh, master.\"User\" mu where mh.username=mu.username and mu.is_active");
 					while(results.next()) {
-						UserId un;
+						com.aoindustries.aoserv.client.account.User.Name un;
 						HostAddress ho;
 						try {
-							un=UserId.valueOf(results.getString(1));
+							un=com.aoindustries.aoserv.client.account.User.Name.valueOf(results.getString(1));
 							ho=HostAddress.valueOf(results.getString(2));
 						} catch(ValidationException e) {
 							throw new SQLException(e);
@@ -10826,7 +10855,7 @@ public abstract class MasterServer {
 		DatabaseConnection conn,
 		RequestSource source,
 		String action,
-		AccountingCode accounting,
+		Account.Name accounting,
 		CompressedDataOutputStream out,
 		String sql,
 		String param1
@@ -10863,7 +10892,7 @@ public abstract class MasterServer {
 		DatabaseConnection conn,
 		RequestSource source,
 		String action,
-		AccountingCode accounting,
+		Account.Name accounting,
 		CompressedDataOutputStream out,
 		String sql,
 		String param1,

@@ -5,14 +5,13 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.billing.TransactionSearchCriteria;
 import com.aoindustries.aoserv.client.billing.TransactionType;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.sql.SQLUtility;
@@ -53,9 +52,9 @@ final public class TransactionHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        AccountingCode accounting,
-        AccountingCode sourceAccounting,
-        UserId business_administrator,
+        Account.Name accounting,
+        Account.Name sourceAccounting,
+        com.aoindustries.aoserv.client.account.User.Name business_administrator,
         String type,
         String description,
         int quantity,
@@ -96,9 +95,9 @@ final public class TransactionHandler {
         DatabaseConnection conn,
         InvalidateList invalidateList,
         Timestamp time,
-        AccountingCode accounting,
-        AccountingCode sourceAccounting,
-        UserId business_administrator,
+        Account.Name accounting,
+        Account.Name sourceAccounting,
+        com.aoindustries.aoserv.client.account.User.Name business_administrator,
         String type,
         String description,
         BigDecimal quantity,
@@ -138,7 +137,7 @@ final public class TransactionHandler {
         DatabaseConnection conn,
         RequestSource source, 
         CompressedDataOutputStream out,
-        AccountingCode accounting
+        Account.Name accounting
     ) throws IOException, SQLException {
         MasterServer.writePenniesCheckBusiness(
             conn,
@@ -158,7 +157,7 @@ final public class TransactionHandler {
         DatabaseConnection conn,
         RequestSource source, 
         CompressedDataOutputStream out, 
-        AccountingCode accounting,
+        Account.Name accounting,
         long before
     ) throws IOException, SQLException {
         MasterServer.writePenniesCheckBusiness(
@@ -180,7 +179,7 @@ final public class TransactionHandler {
         DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out,
-        AccountingCode accounting
+        Account.Name accounting
     ) throws IOException, SQLException {
         MasterServer.writePenniesCheckBusiness(
             conn,
@@ -198,7 +197,7 @@ final public class TransactionHandler {
      */
     public static int getConfirmedAccountBalance(
         DatabaseConnection conn,
-        AccountingCode accounting
+        Account.Name accounting
     ) throws IOException, SQLException {
         return SQLUtility.getPennies(
             conn.executeStringQuery(
@@ -215,7 +214,7 @@ final public class TransactionHandler {
         DatabaseConnection conn,
         RequestSource source,
         CompressedDataOutputStream out,
-        AccountingCode accounting,
+        Account.Name accounting,
         long before
     ) throws IOException, SQLException {
         MasterServer.writePenniesCheckBusiness(
@@ -264,9 +263,9 @@ final public class TransactionHandler {
         RequestSource source, 
         CompressedDataOutputStream out,
         boolean provideProgress,
-        AccountingCode accounting
+        Account.Name accounting
     ) throws IOException, SQLException {
-        UserId username=source.getUsername();
+        com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
         User masterUser=MasterServer.getUser(conn, username);
         UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
         if(masterUser!=null) {
@@ -290,7 +289,7 @@ final public class TransactionHandler {
             "select\n"
             + "  tr.*\n"
             + "from\n"
-            + "  account.\"Username\" un1,\n"
+            + "  account.\"User\" un1,\n"
             + "  billing.\"Package\" pk1,\n"
             + TableHandler.BU1_PARENTS_JOIN
             + "  billing.\"Transaction\" tr\n"
@@ -315,7 +314,7 @@ final public class TransactionHandler {
         RequestSource source, 
         CompressedDataOutputStream out,
         boolean provideProgress,
-        UserId username
+        com.aoindustries.aoserv.client.account.User.Name username
     ) throws IOException, SQLException {
         UsernameHandler.checkAccessUsername(conn, source, "getTransactionsBusinessAdministrator", source.getUsername());
 
@@ -338,7 +337,7 @@ final public class TransactionHandler {
         boolean provideProgress,
         TransactionSearchCriteria criteria
     ) throws IOException, SQLException {
-        UserId username=source.getUsername();
+        com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
         User masterUser=MasterServer.getUser(conn, username);
         UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
         StringBuilder sql;
@@ -362,7 +361,7 @@ final public class TransactionHandler {
                 "select\n"
                 + "  tr.*\n"
                 + "from\n"
-                + "  account.\"Username\" un1,\n"
+                + "  account.\"User\" un1,\n"
                 + "  billing.\"Package\" pk1,\n"
                 + TableHandler.BU1_PARENTS_JOIN
                 + "  billing.\"Transaction\" tr\n"
@@ -504,7 +503,7 @@ final public class TransactionHandler {
         int transid,
         int creditCardTransaction
     ) throws IOException, SQLException {
-        AccountingCode accounting = getBusinessForTransaction(conn, transid);
+        Account.Name accounting = getBusinessForTransaction(conn, transid);
         int updateCount = conn.executeUpdate(
             "update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='Y' where transid=? and payment_confirmed='W'",
             creditCardTransaction,
@@ -536,7 +535,7 @@ final public class TransactionHandler {
         int transid,
         int creditCardTransaction
     ) throws IOException, SQLException {
-        AccountingCode accounting = getBusinessForTransaction(conn, transid);
+        Account.Name accounting = getBusinessForTransaction(conn, transid);
 
         int updateCount = conn.executeUpdate("update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='N' where transid=? and payment_confirmed='W'", creditCardTransaction, transid);
         if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W'");
@@ -565,7 +564,7 @@ final public class TransactionHandler {
         int transid,
         int creditCardTransaction
     ) throws IOException, SQLException {
-        AccountingCode accounting = getBusinessForTransaction(conn, transid);
+        Account.Name accounting = getBusinessForTransaction(conn, transid);
 
         int updateCount = conn.executeUpdate("update billing.\"Transaction\" set credit_card_transaction=? where transid=? and payment_confirmed='W' and credit_card_transaction is null", creditCardTransaction, transid);
         if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W' and credit_card_transaction is null");
@@ -574,9 +573,8 @@ final public class TransactionHandler {
         invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
     }
 
-    public static AccountingCode getBusinessForTransaction(DatabaseConnection conn, int transid) throws IOException, SQLException {
-        return conn.executeObjectQuery(
-            ObjectFactories.accountingCodeFactory,
+    public static Account.Name getBusinessForTransaction(DatabaseConnection conn, int transid) throws IOException, SQLException {
+        return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
             "select accounting from billing.\"Transaction\" where transid=?",
             transid
         );

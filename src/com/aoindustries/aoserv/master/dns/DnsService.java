@@ -5,6 +5,7 @@
  */
 package com.aoindustries.aoserv.master.dns;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.dns.Record;
 import com.aoindustries.aoserv.client.dns.RecordType;
 import com.aoindustries.aoserv.client.dns.Zone;
@@ -12,7 +13,6 @@ import com.aoindustries.aoserv.client.dns.ZoneTable;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.net.AppProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.aoserv.master.InvalidateList;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.MasterService;
@@ -132,7 +132,7 @@ final public class DnsService implements MasterService {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		AccountingCode packageName,
+		Account.Name packageName,
 		String zone,
 		InetAddress ip,
 		int ttl
@@ -391,7 +391,7 @@ final public class DnsService implements MasterService {
 	}
 
 	/* Unused 2018-12-02:
-	public AccountingCode getBusinessForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
+	public Account.Name getBusinessForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
 			"select pk.accounting from dns.\"Record\" nr, dns.\"Zone\" nz, billing.\"Package\" pk where nr.\"zone\"=nz.\"zone\" and nz.package=pk.\"name\" and nr.id=?",
@@ -400,9 +400,8 @@ final public class DnsService implements MasterService {
 	}
 	 */
 
-	private static AccountingCode getBusinessForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	private static Account.Name getBusinessForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select pk.accounting from dns.\"Zone\" nz, billing.\"Package\" pk where nz.package=pk.name and nz.zone=?",
 			zone
 		);
@@ -461,17 +460,15 @@ final public class DnsService implements MasterService {
 		return conn.executeBooleanQuery("select (select zone from dns.\"Zone\" where zone=?) is null", zone);
 	}
 
-	private static AccountingCode getPackageForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	private static Account.Name getPackageForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select nz.package from dns.\"Record\" nr, dns.\"Zone\" nz where nr.id=? and nr.\"zone\"=nz.\"zone\"",
 			id
 		);
 	}
 
-	private static AccountingCode getPackageForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	private static Account.Name getPackageForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select package from dns.\"Zone\" where zone=?",
 			zone
 		);

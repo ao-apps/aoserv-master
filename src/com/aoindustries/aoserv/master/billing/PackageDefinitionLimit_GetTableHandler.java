@@ -82,7 +82,7 @@ public class PackageDefinitionLimit_GetTableHandler extends TableHandler.GetTabl
 				"select distinct\n"
 				+ "  pdl.*\n"
 				+ "from\n"
-				+ "  account.\"Username\" un,\n"
+				+ "  account.\"User\" un,\n"
 				+ "  billing.\"Package\" pk1,\n"
 				+ TableHandler.BU1_PARENTS_JOIN
 				+ "  billing.\"Package\" pk2,\n"
@@ -118,7 +118,7 @@ public class PackageDefinitionLimit_GetTableHandler extends TableHandler.GetTabl
 				+ "  null,\n"
 				+ "  null\n"
 				+ "from\n"
-				+ "  account.\"Username\" un,\n"
+				+ "  account.\"User\" un,\n"
 				+ "  billing.\"Package\" pk1,\n"
 				+ TableHandler.BU1_PARENTS_JOIN
 				+ "  billing.\"Package\" pk2,\n"

@@ -38,7 +38,7 @@ public class TransactionHandler {
 		"select\n"
 		+ "  tr.*\n"
 		+ "from\n"
-		+ "  account.\"Username\" un1,\n"
+		+ "  account.\"User\" un1,\n"
 		+ "  billing.\"Package\" pk1,\n"
 		+ TableHandler.BU1_PARENTS_JOIN
 		+ "  billing.\"Transaction\" tr\n"

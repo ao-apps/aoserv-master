@@ -61,7 +61,7 @@ public class EncryptionKey_GetTableHandler extends TableHandler.GetTableHandlerB
 			"select\n"
 			+ "  ek.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  pki.\"EncryptionKey\" ek\n"

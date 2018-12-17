@@ -5,7 +5,6 @@
  */
 package com.aoindustries.aoserv.master.account;
 
-import com.aoindustries.aoserv.client.account.Username;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
@@ -23,7 +22,7 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class Username_GetTableHandler extends TableHandler.GetTableHandlerByRole {
+public class User_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
@@ -38,8 +37,8 @@ public class Username_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			out,
 			provideProgress,
 			CursorMode.AUTO,
-			new Username(),
-			"select * from account.\"Username\""
+			new com.aoindustries.aoserv.client.account.User(),
+			"select * from account.\"User\""
 		);
 	}
 
@@ -51,7 +50,7 @@ public class Username_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			out,
 			provideProgress,
 			CursorMode.AUTO,
-			new Username(),
+			new com.aoindustries.aoserv.client.account.User(),
 			"select distinct\n"
 			+ "  un.*\n"
 			+ "from\n"
@@ -59,7 +58,7 @@ public class Username_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			+ "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			+ "  billing.\"Package\" pk,\n"
-			+ "  account.\"Username\" un\n"
+			+ "  account.\"User\" un\n"
 			+ "where\n"
 			+ "  ms.username=?\n"
 			+ "  and (\n"
@@ -79,15 +78,15 @@ public class Username_GetTableHandler extends TableHandler.GetTableHandlerByRole
 			out,
 			provideProgress,
 			CursorMode.AUTO,
-			new Username(),
+			new com.aoindustries.aoserv.client.account.User(),
 			"select\n"
 			+ "  un2.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un1,\n"
+			+ "  account.\"User\" un1,\n"
 			+ "  billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  billing.\"Package\" pk2,\n"
-			+ "  account.\"Username\" un2\n"
+			+ "  account.\"User\" un2\n"
 			+ "where\n"
 			+ "  un1.username=?\n"
 			+ "  and un1.package=pk1.name\n"

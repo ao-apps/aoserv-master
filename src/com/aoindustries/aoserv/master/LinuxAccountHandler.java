@@ -5,23 +5,21 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.email.SpamAssassinMode;
 import com.aoindustries.aoserv.client.linux.Group;
 import com.aoindustries.aoserv.client.linux.GroupUser;
+import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.linux.Shell;
 import com.aoindustries.aoserv.client.linux.User;
+import com.aoindustries.aoserv.client.linux.User.Gecos;
 import com.aoindustries.aoserv.client.linux.UserServer;
 import com.aoindustries.aoserv.client.linux.UserType;
 import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.password.PasswordChecker;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.Gecos;
-import com.aoindustries.aoserv.client.validator.GroupId;
-import com.aoindustries.aoserv.client.validator.UnixPath;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.web.Site;
 import com.aoindustries.aoserv.client.web.tomcat.SharedTomcat;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -62,10 +60,10 @@ final public class LinuxAccountHandler {
 	/** Default sudo setting for newly added "aoserv-xen-migration" system users. */
 	private static final String AOSERV_XEN_MIGRATION_SUDO = "ALL=(ALL) NOPASSWD: /usr/sbin/xl -t migrate-receive";
 
-	private final static Map<UserId,Boolean> disabledLinuxAccounts=new HashMap<>();
+	private final static Map<com.aoindustries.aoserv.client.linux.User.Name,Boolean> disabledLinuxAccounts=new HashMap<>();
 	private final static Map<Integer,Boolean> disabledLinuxServerAccounts=new HashMap<>();
 
-	public static void checkAccessLinuxAccount(DatabaseConnection conn, RequestSource source, String action, UserId username) throws IOException, SQLException {
+	public static void checkAccessLinuxAccount(DatabaseConnection conn, RequestSource source, String action, com.aoindustries.aoserv.client.linux.User.Name username) throws IOException, SQLException {
 		com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
 			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
@@ -94,7 +92,7 @@ final public class LinuxAccountHandler {
 		}
 	}
 
-	public static void checkAccessLinuxGroup(DatabaseConnection conn, RequestSource source, String action, GroupId name) throws IOException, SQLException {
+	public static void checkAccessLinuxGroup(DatabaseConnection conn, RequestSource source, String action, Group.Name name) throws IOException, SQLException {
 		com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getUsername());
 		if(mu!=null) {
 			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
@@ -181,14 +179,14 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		UserId username,
-		GroupId primary_group,
+		com.aoindustries.aoserv.client.linux.User.Name username,
+		Group.Name primary_group,
 		Gecos name,
 		Gecos office_location,
 		Gecos office_phone,
 		Gecos home_phone,
 		String type,
-		UnixPath shell,
+		PosixPath shell,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to add User named '"+User.MAIL+'\'');
@@ -235,8 +233,8 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		GroupId groupName,
-		AccountingCode packageName,
+		Group.Name groupName,
+		Account.Name packageName,
 		String type,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
@@ -266,8 +264,8 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		GroupId groupName,
-		UserId username,
+		Group.Name groupName,
+		com.aoindustries.aoserv.client.linux.User.Name username,
 		boolean isPrimary,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
@@ -321,9 +319,9 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		UserId username,
+		com.aoindustries.aoserv.client.linux.User.Name username,
 		int aoServer,
-		UnixPath home,
+		PosixPath home,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
 		if(username.equals(User.MAIL)) {
@@ -339,8 +337,8 @@ final public class LinuxAccountHandler {
 		// OperatingSystem settings
 		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
 		if(osv == -1) throw new SQLException("Operating system version not known for server #" + aoServer);
-		UnixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
-		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+		PosixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
+		PosixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 
 		if(home.equals(UserServer.getDefaultHomeDirectory(username))) {
 			// Make sure no conflicting /home/u/username account exists.
@@ -416,7 +414,7 @@ final public class LinuxAccountHandler {
 		}
 
 		// The primary group for this user must exist on this server
-		GroupId primaryGroup=getPrimaryLinuxGroup(conn, username, osv);
+		Group.Name primaryGroup=getPrimaryLinuxGroup(conn, username, osv);
 		int primaryLSG=getLinuxServerGroup(conn, primaryGroup, aoServer);
 		if(primaryLSG<0) throw new SQLException("Unable to find primary Linux group '"+primaryGroup+"' on Server #"+aoServer+" for Linux account '"+username+"'");
 
@@ -453,7 +451,7 @@ final public class LinuxAccountHandler {
 			SpamAssassinMode.DEFAULT_SPAMASSASSIN_INTEGRATION_MODE
 		);
 		// Notify all clients of the update
-		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.LINUX_SERVER_ACCOUNTS,
@@ -491,7 +489,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		GroupId groupName,
+		Group.Name groupName,
 		int aoServer,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
@@ -500,7 +498,7 @@ final public class LinuxAccountHandler {
 			|| groupName.equals(Group.MAIL)
 			|| groupName.equals(Group.MAILONLY)
 		) throw new SQLException("Not allowed to add GroupServer for group '"+groupName+'\'');
-		AccountingCode accounting = getBusinessForLinuxGroup(conn, groupName);
+		Account.Name accounting = getBusinessForLinuxGroup(conn, groupName);
 		if(!skipSecurityChecks) {
 			checkAccessLinuxGroup(conn, source, "addLinuxServerGroup", groupName);
 			ServerHandler.checkAccessServer(conn, source, "addLinuxServerGroup", aoServer);
@@ -540,16 +538,15 @@ final public class LinuxAccountHandler {
 	 * Gets the group name that exists on a server for the given gid
 	 * or {@code null} if the gid is not allocated to the server.
 	 */
-	public static GroupId getGroupNameByGid(
+	public static Group.Name getGroupNameByGid(
 		DatabaseConnection conn,
 		int aoServer,
 		int gid
 	) throws SQLException {
-		return conn.executeObjectQuery(
-			Connection.TRANSACTION_READ_COMMITTED,
+		return conn.executeObjectQuery(Connection.TRANSACTION_READ_COMMITTED,
 			true,
 			false,
-			ObjectFactories.groupIdFactory,
+			ObjectFactories.groupNameFactory,
 			"select name from linux.\"GroupServer\" where ao_server=? and gid=?",
 			aoServer,
 			gid
@@ -560,7 +557,7 @@ final public class LinuxAccountHandler {
 	 * Gets the username that exists on a server for the given uid
 	 * or {@code null} if the uid is not allocated to the server.
 	 */
-	public static UserId getUsernameByUid(
+	public static com.aoindustries.aoserv.client.linux.User.Name getUsernameByUid(
 		DatabaseConnection conn,
 		int aoServer,
 		int uid
@@ -569,7 +566,7 @@ final public class LinuxAccountHandler {
 			Connection.TRANSACTION_READ_COMMITTED,
 			true,
 			false,
-			ObjectFactories.userIdFactory,
+			ObjectFactories.linuxUserNameFactory,
 			"select username from linux.\"UserServer\" where ao_server=? and uid=?",
 			aoServer,
 			uid
@@ -581,7 +578,7 @@ final public class LinuxAccountHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int aoServer,
-		GroupId groupName,
+		Group.Name groupName,
 		int gid
 	) throws IOException, SQLException {
 		// This must be a master user with access to the server
@@ -594,7 +591,7 @@ final public class LinuxAccountHandler {
 		int gidMax = AOServerHandler.getGidMax(conn, aoServer);
 		// The group ID must not already exist on this server
 		{
-			GroupId existing = getGroupNameByGid(conn, aoServer, gid);
+			Group.Name existing = getGroupNameByGid(conn, aoServer, gid);
 			if(existing != null) throw new SQLException("Group #" + gid + " already exists on server #" + aoServer + ": " + existing);
 		}
 		// Must be one of the expected patterns for the servers operating system version
@@ -717,14 +714,14 @@ final public class LinuxAccountHandler {
 		/**
 		 * The set of allowed system group patterns for CentOS 7.
 		 */
-		private static final Map<UserId,SystemUser> centos7SystemUsers = new HashMap<>();
+		private static final Map<com.aoindustries.aoserv.client.linux.User.Name,SystemUser> centos7SystemUsers = new HashMap<>();
 		private static void addCentos7SystemUser(
-			UserId username,
+			com.aoindustries.aoserv.client.linux.User.Name username,
 			int uid,
-			GroupId groupName,
+			Group.Name groupName,
 			String fullName,
 			String home,
-			UnixPath shell,
+			PosixPath shell,
 			String sudo
 		) throws ValidationException {
 			if(
@@ -735,7 +732,7 @@ final public class LinuxAccountHandler {
 						uid,
 						groupName,
 						InternUtils.intern(Gecos.valueOf(fullName)), null, null, null,
-						UnixPath.valueOf(home).intern(),
+						PosixPath.valueOf(home).intern(),
 						shell,
 						sudo
 					)
@@ -800,27 +797,27 @@ final public class LinuxAccountHandler {
 			}
 		}
 
-		final UserId username;
+		final com.aoindustries.aoserv.client.linux.User.Name username;
 		final int uid;
-		final GroupId groupName;
+		final Group.Name groupName;
 		final Gecos fullName;
 		final Gecos officeLocation;
 		final Gecos officePhone;
 		final Gecos homePhone;
-		final UnixPath home;
-		final UnixPath shell;
+		final PosixPath home;
+		final PosixPath shell;
 		final String sudo;
 
 		SystemUser(
-			UserId username,
+			com.aoindustries.aoserv.client.linux.User.Name username,
 			int uid,
-			GroupId groupName,
+			Group.Name groupName,
 			Gecos fullName,
 			Gecos officeLocation,
 			Gecos officePhone,
 			Gecos homePhone,
-			UnixPath home,
-			UnixPath shell,
+			PosixPath home,
+			PosixPath shell,
 			String sudo
 		) {
 			this.username = username;
@@ -841,15 +838,15 @@ final public class LinuxAccountHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int aoServer,
-		UserId username,
+		com.aoindustries.aoserv.client.linux.User.Name username,
 		int uid,
 		int gid,
 		Gecos fullName,
 		Gecos officeLocation,
 		Gecos officePhone,
 		Gecos homePhone,
-		UnixPath home,
-		UnixPath shell
+		PosixPath home,
+		PosixPath shell
 	) throws IOException, SQLException {
 		// This must be a master user with access to the server
 		com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getUsername());
@@ -861,11 +858,11 @@ final public class LinuxAccountHandler {
 		int uidMax = AOServerHandler.getUidMax(conn, aoServer);
 		// The user ID must not already exist on this server
 		{
-			UserId existing = getUsernameByUid(conn, aoServer, uid);
+			com.aoindustries.aoserv.client.linux.User.Name existing = getUsernameByUid(conn, aoServer, uid);
 			if(existing != null) throw new SQLException("User #" + uid + " already exists on server #" + aoServer + ": " + existing);
 		}
 		// Get the group name for the requested gid
-		GroupId groupName = getGroupNameByGid(conn, aoServer, gid);
+		Group.Name groupName = getGroupNameByGid(conn, aoServer, gid);
 		if(groupName == null) throw new SQLException("Group #" + gid + " does not exist on server #" + aoServer);
 		// Must be one of the expected patterns for the servers operating system version
 		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
@@ -948,7 +945,7 @@ final public class LinuxAccountHandler {
 		int to_server
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "copyHomeDirectory", from_lsa);
-		UserId username=getUsernameForLinuxServerAccount(conn, from_lsa);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, from_lsa);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to copy User named '"+User.MAIL+'\'');
 		int from_server=getAOServerForLinuxServerAccount(conn, from_lsa);
 		int to_lsa=conn.executeIntQuery(
@@ -980,11 +977,11 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "copyLinuxServerAccountPassword", from_lsa);
 		if(isLinuxServerAccountDisabled(conn, from_lsa)) throw new SQLException("Unable to copy UserServer password, from account disabled: "+from_lsa);
-		UserId from_username=getUsernameForLinuxServerAccount(conn, from_lsa);
+		com.aoindustries.aoserv.client.linux.User.Name from_username=getUsernameForLinuxServerAccount(conn, from_lsa);
 		if(from_username.equals(User.MAIL)) throw new SQLException("Not allowed to copy the password from User named '"+User.MAIL+'\'');
 		checkAccessLinuxServerAccount(conn, source, "copyLinuxServerAccountPassword", to_lsa);
 		if(isLinuxServerAccountDisabled(conn, to_lsa)) throw new SQLException("Unable to copy UserServer password, to account disabled: "+to_lsa);
-		UserId to_username=getUsernameForLinuxServerAccount(conn, to_lsa);
+		com.aoindustries.aoserv.client.linux.User.Name to_username=getUsernameForLinuxServerAccount(conn, to_lsa);
 		if(to_username.equals(User.MAIL)) throw new SQLException("Not allowed to copy the password to User named '"+User.MAIL+'\'');
 
 		int from_server=getAOServerForLinuxServerAccount(conn, from_lsa);
@@ -1009,8 +1006,8 @@ final public class LinuxAccountHandler {
 		Tuple2<String,Integer> enc_password = DaemonHandler.getDaemonConnector(conn, from_server).getEncryptedLinuxAccountPassword(from_username);
 		DaemonHandler.getDaemonConnector(conn, to_server).setEncryptedLinuxAccountPassword(to_username, enc_password.getElement1(), enc_password.getElement2());
 
-		//AccountingCode from_accounting=UsernameHandler.getBusinessForUsername(conn, from_username);
-		//AccountingCode to_accounting=UsernameHandler.getBusinessForUsername(conn, to_username);
+		//Account.Name from_accounting=UsernameHandler.getBusinessForUsername(conn, from_username);
+		//Account.Name to_accounting=UsernameHandler.getBusinessForUsername(conn, to_username);
 	}
 
 	public static void disableLinuxAccount(
@@ -1018,7 +1015,7 @@ final public class LinuxAccountHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int disableLog,
-		UserId username
+		com.aoindustries.aoserv.client.linux.User.Name username
 	) throws IOException, SQLException {
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("linux.User is already disabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableLinuxAccount", disableLog, false);
@@ -1114,7 +1111,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		UserId username
+		com.aoindustries.aoserv.client.linux.User.Name username
 	) throws IOException, SQLException {
 		int disableLog=getDisableLogForLinuxAccount(conn, username);
 		if(disableLog==-1) throw new SQLException("linux.User is already enabled: "+username);
@@ -1147,7 +1144,7 @@ final public class LinuxAccountHandler {
 		if(disableLog==-1) throw new SQLException("linux.UserServer is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableLinuxServerAccount", disableLog, true);
 		checkAccessLinuxServerAccount(conn, source, "enableLinuxServerAccount", id);
-		UserId la=getUsernameForLinuxServerAccount(conn, id);
+		com.aoindustries.aoserv.client.linux.User.Name la=getUsernameForLinuxServerAccount(conn, id);
 		if(isLinuxAccountDisabled(conn, la)) throw new SQLException("Unable to enable UserServer #"+id+", User not enabled: "+la);
 
 		conn.executeUpdate(
@@ -1170,10 +1167,9 @@ final public class LinuxAccountHandler {
 	 */
 	public static String getAutoresponderContent(DatabaseConnection conn, RequestSource source, int lsa) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "getAutoresponderContent", lsa);
-		UserId username=getUsernameForLinuxServerAccount(conn, lsa);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, lsa);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to get the autoresponder content for User named '"+User.MAIL+'\'');
-		UnixPath path = conn.executeObjectQuery(
-			ObjectFactories.unixPathFactory,
+		PosixPath path = conn.executeObjectQuery(ObjectFactories.posixPathFactory,
 			"select autoresponder_path from linux.\"UserServer\" where id=?",
 			lsa
 		);
@@ -1192,7 +1188,7 @@ final public class LinuxAccountHandler {
 	 */
 	public static String getCronTable(DatabaseConnection conn, RequestSource source, int lsa) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "getCronTable", lsa);
-		UserId username=getUsernameForLinuxServerAccount(conn, lsa);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, lsa);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to get the cron table for User named '"+User.MAIL+'\'');
 		String type=getTypeForLinuxAccount(conn, username);
 		if(
@@ -1203,7 +1199,7 @@ final public class LinuxAccountHandler {
 		return DaemonHandler.getDaemonConnector(conn, aoServer).getCronTable(username);
 	}
 
-	public static int getDisableLogForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static int getDisableLogForLinuxAccount(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name username) throws IOException, SQLException {
 		return conn.executeIntQuery("select coalesce(disable_log, -1) from linux.\"User\" where username=?", username);
 	}
 
@@ -1223,7 +1219,7 @@ final public class LinuxAccountHandler {
 		}
 	}
 
-	public static boolean isLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static boolean isLinuxAccount(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name username) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
 			"select\n"
 			+ "  (\n"
@@ -1239,7 +1235,7 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static boolean isLinuxAccountDisabled(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static boolean isLinuxAccountDisabled(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name username) throws IOException, SQLException {
 		synchronized(LinuxAccountHandler.class) {
 			Boolean O=disabledLinuxAccounts.get(username);
 			if(O != null) return O;
@@ -1249,7 +1245,7 @@ final public class LinuxAccountHandler {
 		}
 	}
 
-	public static boolean isLinuxAccountEmailType(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static boolean isLinuxAccountEmailType(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name username) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
 			"select\n"
 			+ "  lat.is_email\n"
@@ -1274,19 +1270,18 @@ final public class LinuxAccountHandler {
 		}
 	}
 
-	public static boolean isLinuxGroupNameAvailable(DatabaseConnection conn, GroupId groupname) throws IOException, SQLException {
+	public static boolean isLinuxGroupNameAvailable(DatabaseConnection conn, Group.Name groupname) throws IOException, SQLException {
 		return conn.executeBooleanQuery("select (select name from linux.\"Group\" where name=?) is null", groupname);
 	}
 
-	public static int getLinuxServerGroup(DatabaseConnection conn, GroupId group, int aoServer) throws IOException, SQLException {
+	public static int getLinuxServerGroup(DatabaseConnection conn, Group.Name group, int aoServer) throws IOException, SQLException {
 		int id=conn.executeIntQuery("select coalesce((select id from linux.\"GroupServer\" where name=? and ao_server=?), -1)", group, aoServer);
 		if(id==-1) throw new SQLException("Unable to find GroupServer "+group+" on "+aoServer);
 		return id;
 	}
 
-	public static GroupId getPrimaryLinuxGroup(DatabaseConnection conn, UserId username, int operatingSystemVersion) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.groupIdFactory,
+	public static Group.Name getPrimaryLinuxGroup(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name username, int operatingSystemVersion) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.groupNameFactory,
 			"select\n"
 			+ "  \"group\"\n"
 			+ "from\n"
@@ -1309,7 +1304,7 @@ final public class LinuxAccountHandler {
 		int account
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "isLinuxServerAccountPasswordSet", account);
-		UserId username=getUsernameForLinuxServerAccount(conn, account);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, account);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to check if a password is set for UserServer '"+User.MAIL+'\'');
 
 		int aoServer=getAOServerForLinuxServerAccount(conn, account);
@@ -1341,7 +1336,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		UserId username
+		com.aoindustries.aoserv.client.linux.User.Name username
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "removeLinuxAccount", username);
 
@@ -1351,7 +1346,7 @@ final public class LinuxAccountHandler {
 	public static void removeLinuxAccount(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		UserId username
+		com.aoindustries.aoserv.client.linux.User.Name username
 	) throws IOException, SQLException {
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to remove User with username '"+User.MAIL+'\'');
 
@@ -1375,7 +1370,7 @@ final public class LinuxAccountHandler {
 		// Delete from the database
 		conn.executeUpdate("delete from linux.\"User\" where username=?", username);
 
-		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
 		if(ftpModified) invalidateList.addTable(conn, Table.TableID.FTP_GUEST_USERS, accounting, aoServers, false);
 		if(groupAccountModified) invalidateList.addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, accounting, aoServers, false);
@@ -1386,7 +1381,7 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		GroupId name
+		Group.Name name
 	) throws IOException, SQLException {
 		checkAccessLinuxGroup(conn, source, "removeLinuxGroup", name);
 
@@ -1396,7 +1391,7 @@ final public class LinuxAccountHandler {
 	public static void removeLinuxGroup(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		GroupId name
+		Group.Name name
 	) throws IOException, SQLException {
 		if(
 			name.equals(Group.FTPONLY)
@@ -1408,7 +1403,7 @@ final public class LinuxAccountHandler {
 		int primaryCount=conn.executeIntQuery("select count(*) from linux.\"GroupUser\" where \"group\"=? and \"isPrimary\"", name);
 		if(primaryCount>0) throw new SQLException("linux_group.name="+name+" is the primary group for "+primaryCount+" Linux "+(primaryCount==1?"account":"accounts"));
 		// Get the values for later use
-		AccountingCode accounting = getBusinessForLinuxGroup(conn, name);
+		Account.Name accounting = getBusinessForLinuxGroup(conn, name);
 		IntList aoServers=getAOServersForLinuxGroup(conn, name);
 		for(int c=0;c<aoServers.size();c++) {
 			int aoServer=aoServers.getInt(c);
@@ -1472,7 +1467,7 @@ final public class LinuxAccountHandler {
 		if (useCount>0) throw new SQLException("linux_group_account("+id+") has been used by "+useCount+" web.tomcat.SharedTomcatSite.");
 
 		// Get the values for later use
-		List<AccountingCode> accountings=getBusinessesForLinuxGroupAccount(conn, id);
+		List<Account.Name> accountings=getBusinessesForLinuxGroupAccount(conn, id);
 		IntList aoServers=getAOServersForLinuxGroupAccount(conn, id);
 		// Delete the group relations for this group
 		conn.executeUpdate("delete from linux.\"GroupUser\" where id=?", id);
@@ -1484,8 +1479,8 @@ final public class LinuxAccountHandler {
 	public static void removeUnusedAlternateLinuxGroupAccount(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		GroupId group,
-		UserId username
+		Group.Name group,
+		com.aoindustries.aoserv.client.linux.User.Name username
 	) throws IOException, SQLException {
 		int id=conn.executeIntQuery(
 			"select\n"
@@ -1539,7 +1534,7 @@ final public class LinuxAccountHandler {
 		);
 		if(id!=-1) {
 			// Get the values for later use
-			List<AccountingCode> accountings=getBusinessesForLinuxGroupAccount(conn, id);
+			List<Account.Name> accountings=getBusinessesForLinuxGroupAccount(conn, id);
 			IntList aoServers=getAOServersForLinuxGroupAccount(conn, id);
 			conn.executeUpdate("delete from linux.\"GroupUser\" where id=?", id);
 
@@ -1564,7 +1559,7 @@ final public class LinuxAccountHandler {
 		InvalidateList invalidateList,
 		int account
 	) throws IOException, SQLException {
-		UserId username=getUsernameForLinuxServerAccount(conn, account);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, account);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to remove UserServer for user '"+User.MAIL+'\'');
 
 		int aoServer = getAOServerForLinuxServerAccount(conn, account);
@@ -1605,7 +1600,7 @@ final public class LinuxAccountHandler {
 			}
 		}
 
-		AccountingCode accounting = getBusinessForLinuxServerAccount(conn, account);
+		Account.Name accounting = getBusinessForLinuxServerAccount(conn, account);
 
 		// Delete the attachment blocks
 		if(conn.executeUpdate("delete from email.\"AttachmentBlock\" where linux_server_account=?", account) > 0) {
@@ -1639,7 +1634,7 @@ final public class LinuxAccountHandler {
 		InvalidateList invalidateList,
 		int group
 	) throws IOException, SQLException {
-		GroupId groupName=getGroupNameForLinuxServerGroup(conn, group);
+		Group.Name groupName=getGroupNameForLinuxServerGroup(conn, group);
 		if(
 			groupName.equals(Group.FTPONLY)
 			|| groupName.equals(Group.MAIL)
@@ -1647,7 +1642,7 @@ final public class LinuxAccountHandler {
 		) throw new SQLException("Not allowed to remove GroupServer for group '"+groupName+"'");
 
 		// Get the server this group is on
-		AccountingCode accounting = getBusinessForLinuxServerGroup(conn, group);
+		Account.Name accounting = getBusinessForLinuxServerGroup(conn, group);
 		int aoServer=getAOServerForLinuxServerGroup(conn, group);
 		// Must not be the primary group for any UserServer on the same server
 		int primaryCount=conn.executeIntQuery(
@@ -1689,7 +1684,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "setAutoresponder", id);
 		if(isLinuxServerAccountDisabled(conn, id)) throw new SQLException("Unable to set autoresponder, UserServer disabled: "+id);
-		UserId username=getUsernameForLinuxServerAccount(conn, id);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, id);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set autoresponder for user '"+User.MAIL+'\'');
 		String type=getTypeForLinuxAccount(conn, username);
 		if(
@@ -1703,14 +1698,13 @@ final public class LinuxAccountHandler {
 			if(fromLSA!=id) throw new SQLException("((linux_acc_address.id="+from+").linux_server_account="+fromLSA+")!=((linux_server_account.id="+id+").username="+username+")");
 		}
 
-		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		int aoServer=getAOServerForLinuxServerAccount(conn, id);
-		UnixPath path;
+		PosixPath path;
 		if(content==null && !enabled) {
 			path = null;
 		} else {
-			path = conn.executeObjectQuery(
-				ObjectFactories.unixPathFactory,
+			path = conn.executeObjectQuery(ObjectFactories.posixPathFactory,
 				"select coalesce(autoresponder_path, home || '/.autorespond.txt') from linux.\"UserServer\" where id=?",
 				id
 			);
@@ -1794,7 +1788,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		checkAccessLinuxServerAccount(conn, source, "setCronTable", lsa);
 		if(isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to set cron table, UserServer disabled: "+lsa);
-		UserId username=getUsernameForLinuxServerAccount(conn, lsa);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, lsa);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the cron table for User named '"+User.MAIL+'\'');
 		String type=getTypeForLinuxAccount(conn, username);
 		if(
@@ -1809,14 +1803,14 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		UserId username,
+		com.aoindustries.aoserv.client.linux.User.Name username,
 		Gecos phone
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountHomePhone", username);
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set home phone number, User disabled: "+username);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set home phone number for user '"+User.MAIL+'\'');
 
-		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
 		conn.executeUpdate("update linux.\"User\" set home_phone=? where username=?", phone, username);
@@ -1829,14 +1823,14 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		UserId username,
+		com.aoindustries.aoserv.client.linux.User.Name username,
 		Gecos name
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountName", username);
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set full name, User disabled: "+username);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set LinuxAccountName for user '"+User.MAIL+'\'');
 
-		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
 		conn.executeUpdate("update linux.\"User\" set name=? where username=?", name, username);
@@ -1849,14 +1843,14 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		UserId username,
+		com.aoindustries.aoserv.client.linux.User.Name username,
 		Gecos location
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountOfficeLocation", username);
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set office location, User disabled: "+username);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set office location for user '"+User.MAIL+'\'');
 
-		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
 		conn.executeUpdate("update linux.\"User\" set office_location=? where username=?", location, username);
@@ -1869,14 +1863,14 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		UserId username,
+		com.aoindustries.aoserv.client.linux.User.Name username,
 		Gecos phone
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountOfficePhone", username);
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set office phone number, User disabled: "+username);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set office phone number for user '"+User.MAIL+'\'');
 
-		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
 		conn.executeUpdate("update linux.\"User\" set office_phone=? where username=?", phone, username);
@@ -1889,8 +1883,8 @@ final public class LinuxAccountHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		UserId username,
-		UnixPath shell
+		com.aoindustries.aoserv.client.linux.User.Name username,
+		PosixPath shell
 	) throws IOException, SQLException {
 		checkAccessLinuxAccount(conn, source, "setLinuxAccountOfficeShell", username);
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set shell, User disabled: "+username);
@@ -1898,7 +1892,7 @@ final public class LinuxAccountHandler {
 		String type=getTypeForLinuxAccount(conn, username);
 		if(!UserType.isAllowedShell(type, shell)) throw new SQLException("Shell '"+shell+"' not allowed for Linux accounts with the type '"+type+'\'');
 
-		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		IntList aoServers=getAOServersForLinuxAccount(conn, username);
 
 		conn.executeUpdate("update linux.\"User\" set shell=? where username=?", shell, username);
@@ -1918,7 +1912,7 @@ final public class LinuxAccountHandler {
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountPassword", id);
 		if(isLinuxServerAccountDisabled(conn, id)) throw new SQLException("Unable to set UserServer password, account disabled: "+id);
 
-		UserId username=getUsernameForLinuxServerAccount(conn, id);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, id);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set password for UserServer named '"+User.MAIL+"': "+id);
 		String type=conn.executeStringQuery("select type from linux.\"User\" where username=?", username);
 
@@ -1931,7 +1925,7 @@ final public class LinuxAccountHandler {
 			if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 		}
 
-		AccountingCode accounting = UsernameHandler.getBusinessForUsername(conn, username);
+		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		int aoServer=getAOServerForLinuxServerAccount(conn, id);
 		try {
 			DaemonHandler.getDaemonConnector(conn, aoServer).setLinuxServerAccountPassword(username, password);
@@ -1989,7 +1983,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountJunkEmailRetention", id);
-		UserId username=getUsernameForLinuxServerAccount(conn, id);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, id);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the junk email retention for User named '"+User.MAIL+'\'');
 
 		// Update the database
@@ -2024,7 +2018,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountSpamAssassinIntegrationMode", id);
-		UserId username=getUsernameForLinuxServerAccount(conn, id);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, id);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the spam assassin integration mode for User named '"+User.MAIL+'\'');
 
 		// Update the database
@@ -2052,7 +2046,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountSpamAssassinRequiredScore", id);
-		UserId username=getUsernameForLinuxServerAccount(conn, id);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, id);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the spam assassin required score for User named '"+User.MAIL+'\'');
 
 		// Update the database
@@ -2080,7 +2074,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountSpamAssassinDiscardScore", id);
-		UserId username=getUsernameForLinuxServerAccount(conn, id);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, id);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the spam assassin discard score for User named '"+User.MAIL+'\'');
 
 		// Update the database
@@ -2115,7 +2109,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountTrashEmailRetention", id);
-		UserId username=getUsernameForLinuxServerAccount(conn, id);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, id);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the trash email retention for User named '"+User.MAIL+'\'');
 
 		// Update the database
@@ -2150,7 +2144,7 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		// Security checks
 		checkAccessLinuxServerAccount(conn, source, "setLinuxServerAccountUseInbox", id);
-		UserId username=getUsernameForLinuxServerAccount(conn, id);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, id);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to set the use_inbox flag for User named '"+User.MAIL+'\'');
 
 		// Update the database
@@ -2182,7 +2176,7 @@ final public class LinuxAccountHandler {
 		DaemonHandler.getDaemonConnector(conn, aoServer).waitForLinuxAccountRebuild();
 	}
 
-	static boolean canLinuxGroupAccessServer(DatabaseConnection conn, RequestSource source, GroupId groupName, int aoServer) throws IOException, SQLException {
+	static boolean canLinuxGroupAccessServer(DatabaseConnection conn, RequestSource source, Group.Name groupName, int aoServer) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
 			"select\n"
 			+ "  (\n"
@@ -2205,7 +2199,7 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	static void checkLinuxGroupAccessServer(DatabaseConnection conn, RequestSource source, String action, GroupId groupName, int server) throws IOException, SQLException {
+	static void checkLinuxGroupAccessServer(DatabaseConnection conn, RequestSource source, String action, Group.Name groupName, int server) throws IOException, SQLException {
 		if(!canLinuxGroupAccessServer(conn, source, groupName, server)) {
 			String message=
 				"groupName="
@@ -2220,18 +2214,16 @@ final public class LinuxAccountHandler {
 		}
 	}
 
-	public static AccountingCode getBusinessForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForLinuxGroup(DatabaseConnection conn, Group.Name name) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select pk.accounting from linux.\"Group\" lg, billing.\"Package\" pk where lg.package=pk.name and lg.name=?",
 			name
 		);
 	}
 
-	public static List<AccountingCode> getBusinessesForLinuxGroupAccount(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectCollectionQuery(
-			new ArrayList<AccountingCode>(),
-			ObjectFactories.accountingCodeFactory,
+	public static List<Account.Name> getBusinessesForLinuxGroupAccount(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectCollectionQuery(new ArrayList<Account.Name>(),
+			ObjectFactories.accountNameFactory,
 		   "select\n"
 			+ "  pk1.accounting\n"
 			+ "from\n"
@@ -2244,7 +2236,7 @@ final public class LinuxAccountHandler {
 			+ "  pk2.accounting\n"
 			+ "from\n"
 			+ "  linux.\"GroupUser\" lga2\n"
-			+ "  inner join account.\"Username\" un2 on lga2.\"user\" = un2.username\n"
+			+ "  inner join account.\"User\" un2 on lga2.\"user\" = un2.username\n"
 			+ "  inner join billing.\"Package\" pk2 on un2.package=pk2.name\n"
 			+ "where\n"
 			+ "  lga2.id=?",
@@ -2253,14 +2245,13 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static AccountingCode getBusinessForLinuxServerAccount(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForLinuxServerAccount(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
 			+ "  linux.\"UserServer\" lsa,\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk\n"
 			+ "where\n"
 			+ "  lsa.id=?\n"
@@ -2270,9 +2261,8 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static AccountingCode getBusinessForLinuxServerGroup(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForLinuxServerGroup(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
@@ -2287,9 +2277,8 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static GroupId getGroupNameForLinuxServerGroup(DatabaseConnection conn, int lsgPKey) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.groupIdFactory,
+	public static Group.Name getGroupNameForLinuxServerGroup(DatabaseConnection conn, int lsgPKey) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.groupNameFactory,
 			"select name from linux.\"GroupServer\" where id=?",
 			lsgPKey
 		);
@@ -2303,11 +2292,11 @@ final public class LinuxAccountHandler {
 		return conn.executeIntQuery("select ao_server from linux.\"GroupServer\" where id=?", group);
 	}
 
-	public static IntList getAOServersForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static IntList getAOServersForLinuxAccount(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name username) throws IOException, SQLException {
 		return conn.executeIntListQuery("select ao_server from linux.\"UserServer\" where username=?", username);
 	}
 
-	public static IntList getAOServersForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
+	public static IntList getAOServersForLinuxGroup(DatabaseConnection conn, Group.Name name) throws IOException, SQLException {
 		return conn.executeIntListQuery("select ao_server from linux.\"GroupServer\" where name=?", name);
 	}
 
@@ -2331,7 +2320,7 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static String getTypeForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static String getTypeForLinuxAccount(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name username) throws IOException, SQLException {
 		return conn.executeStringQuery("select type from linux.\"User\" where username=?", username);
 	}
 
@@ -2363,7 +2352,7 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static int getLinuxServerAccount(DatabaseConnection conn, UserId username, int aoServer) throws IOException, SQLException {
+	public static int getLinuxServerAccount(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name username, int aoServer) throws IOException, SQLException {
 		int id=conn.executeIntQuery(
 			"select coalesce(\n"
 			+ "  (\n"
@@ -2383,17 +2372,16 @@ final public class LinuxAccountHandler {
 		return id;
 	}
 
-	public static IntList getLinuxServerAccountsForLinuxAccount(DatabaseConnection conn, UserId username) throws IOException, SQLException {
+	public static IntList getLinuxServerAccountsForLinuxAccount(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name username) throws IOException, SQLException {
 		return conn.executeIntListQuery("select id from linux.\"UserServer\" where username=?", username);
 	}
 
-	public static IntList getLinuxServerGroupsForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
+	public static IntList getLinuxServerGroupsForLinuxGroup(DatabaseConnection conn, Group.Name name) throws IOException, SQLException {
 		return conn.executeIntListQuery("select id from linux.\"GroupServer\" where name=?", name);
 	}
 
-	public static AccountingCode getPackageForLinuxGroup(DatabaseConnection conn, GroupId name) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getPackageForLinuxGroup(DatabaseConnection conn, Group.Name name) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  package\n"
 			+ "from\n"
@@ -2404,9 +2392,8 @@ final public class LinuxAccountHandler {
 		);
 	}
 
-	public static AccountingCode getPackageForLinuxServerGroup(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getPackageForLinuxServerGroup(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  lg.package\n"
 			+ "from\n"
@@ -2427,25 +2414,24 @@ final public class LinuxAccountHandler {
 		return conn.executeIntQuery("select uid from linux.\"UserServer\" where id=?", id);
 	}
 
-	public static UserId getLinuxAccountForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
+	public static com.aoindustries.aoserv.client.linux.User.Name getLinuxAccountForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
 		return conn.executeObjectQuery(
-			ObjectFactories.userIdFactory,
+			ObjectFactories.linuxUserNameFactory,
 			"select \"user\" from linux.\"GroupUser\" where id=?",
 			lga
 		);
 	}
 
-	public static GroupId getLinuxGroupForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.groupIdFactory,
+	public static Group.Name getLinuxGroupForLinuxGroupAccount(DatabaseConnection conn, int lga) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.groupNameFactory,
 			"select \"group\" from linux.\"GroupUser\" where id=?",
 			lga
 		);
 	}
 
-	public static UserId getUsernameForLinuxServerAccount(DatabaseConnection conn, int account) throws IOException, SQLException {
+	public static com.aoindustries.aoserv.client.linux.User.Name getUsernameForLinuxServerAccount(DatabaseConnection conn, int account) throws IOException, SQLException {
 		return conn.executeObjectQuery(
-			ObjectFactories.userIdFactory,
+			ObjectFactories.linuxUserNameFactory,
 			"select username from linux.\"UserServer\" where id=?",
 			account
 		);
@@ -2460,7 +2446,7 @@ final public class LinuxAccountHandler {
 		checkAccessLinuxServerAccount(conn, source, "comparePassword", id);
 		if(isLinuxServerAccountDisabled(conn, id)) throw new SQLException("Unable to compare password, UserServer disabled: "+id);
 
-		UserId username=getUsernameForLinuxServerAccount(conn, id);
+		com.aoindustries.aoserv.client.linux.User.Name username=getUsernameForLinuxServerAccount(conn, id);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to compare password for UserServer named '"+User.MAIL+"': "+id);
 		String type=conn.executeStringQuery("select type from linux.\"User\" where username=?", username);
 
@@ -2481,14 +2467,13 @@ final public class LinuxAccountHandler {
 		int id
 	) throws IOException, SQLException {
 		checkAccessLinuxGroupAccount(conn, source, "setPrimaryLinuxGroupAccount", id);
-		UserId username = conn.executeObjectQuery(
-			ObjectFactories.userIdFactory,
+		com.aoindustries.aoserv.client.linux.User.Name username = conn.executeObjectQuery(
+			ObjectFactories.linuxUserNameFactory,
 			"select \"user\" from linux.\"GroupUser\" where id=?",
 			id
 		);
 		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to set primary LinuxGroupUser, User disabled: "+username);
-		GroupId group = conn.executeObjectQuery(
-			ObjectFactories.groupIdFactory,
+		Group.Name group = conn.executeObjectQuery(ObjectFactories.groupNameFactory,
 			"select \"group\" from linux.\"GroupUser\" where id=?",
 			id
 		);

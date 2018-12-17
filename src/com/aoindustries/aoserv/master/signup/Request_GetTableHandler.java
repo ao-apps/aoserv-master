@@ -136,7 +136,7 @@ public class Request_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 			+ "  sr.completed_by,\n"
 			+ "  sr.completed_time\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  signup.\"Request\" sr\n"

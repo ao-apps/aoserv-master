@@ -93,7 +93,7 @@ public class Host_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			"select distinct\n"
 			+ "  se.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			// Allow servers it replicates to

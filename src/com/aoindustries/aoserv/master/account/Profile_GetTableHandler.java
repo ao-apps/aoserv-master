@@ -78,7 +78,7 @@ public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 			"select\n"
 			+ "  bp.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  account.\"Profile\" bp\n"

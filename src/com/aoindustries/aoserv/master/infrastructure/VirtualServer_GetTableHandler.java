@@ -99,7 +99,7 @@ public class VirtualServer_GetTableHandler extends TableHandler.GetTableHandlerB
 			+ "    else ?\n"
 			+ "  end\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			// Allow servers it replicates to

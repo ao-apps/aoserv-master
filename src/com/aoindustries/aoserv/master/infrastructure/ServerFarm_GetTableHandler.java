@@ -84,7 +84,7 @@ public class ServerFarm_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			"select distinct\n"
 			+ "  sf.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			+ "  net.\"Host\" se,\n"

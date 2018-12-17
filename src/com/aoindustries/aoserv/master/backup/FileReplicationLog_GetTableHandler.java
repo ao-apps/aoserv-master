@@ -78,7 +78,7 @@ public class FileReplicationLog_GetTableHandler extends TableHandler.GetTableHan
 			"select\n"
 			+ "  ffl.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			+ "  backup.\"FileReplication\" ffr,\n"

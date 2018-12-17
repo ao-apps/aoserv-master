@@ -76,7 +76,7 @@ public class AccountHost_GetTableHandler extends TableHandler.GetTableHandlerByR
 			"select\n"
 			+ "  bs.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  account.\"AccountHost\" bs\n"

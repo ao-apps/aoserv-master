@@ -7,12 +7,8 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.backup.BackupReport;
+import com.aoindustries.aoserv.client.linux.Group;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.GroupId;
-import com.aoindustries.aoserv.client.validator.MySQLUserId;
-import com.aoindustries.aoserv.client.validator.PostgresUserId;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
@@ -210,8 +206,7 @@ final public class AccountCleaner implements CronJob {
                 {
                     {
                         // look for any accounts that have been canceled but not disabled
-                        List<AccountingCode> bus = conn.executeObjectListQuery(
-							ObjectFactories.accountingCodeFactory,
+                        List<Account.Name> bus = conn.executeObjectListQuery(ObjectFactories.accountNameFactory,
                             "select accounting from account.\"Account\" where parent=? and canceled is not null and disable_log is null",
                             BusinessHandler.getRootBusiness()
                         );
@@ -220,7 +215,7 @@ final public class AccountCleaner implements CronJob {
                                 .append("The following account.Account ")
                                 .append(bus.size()==1?"has":"have")
                                 .append(" been canceled but not disabled:\n");
-							for (AccountingCode bu : bus) {
+							for (Account.Name bu : bus) {
 								message.append(bu).append('\n');
 							}
                             message.append('\n');
@@ -229,8 +224,7 @@ final public class AccountCleaner implements CronJob {
 
                     {
                         // look for any accounts that have been disabled for over two months but not canceled
-                        List<AccountingCode> bus = conn.executeObjectListQuery(
-                            ObjectFactories.accountingCodeFactory,
+                        List<Account.Name> bus = conn.executeObjectListQuery(ObjectFactories.accountNameFactory,
                             "select\n"
                             + "  bu.accounting\n"
                             + "from\n"
@@ -247,7 +241,7 @@ final public class AccountCleaner implements CronJob {
                                 .append("The following account.Account ")
                                 .append(bus.size()==1?"has":"have")
                                 .append(" been disabled for over 60 days but not canceled:\n");
-							for (AccountingCode bu : bus) {
+							for (Account.Name bu : bus) {
 								message.append(bu).append('\n');
 							}
                             message.append('\n');
@@ -277,15 +271,15 @@ final public class AccountCleaner implements CronJob {
                 // account.Administrator over CANCELED_KEEP_DAYS days
                 // remove if balance is zero and has not been used in ticket.Action or billing.Transaction
                 {
-                    List<UserId> bas=conn.executeObjectListQuery(
-						ObjectFactories.userIdFactory,
+                    List<com.aoindustries.aoserv.client.account.User.Name> bas=conn.executeObjectListQuery(
+						ObjectFactories.userNameFactory,
                         "select\n"
                         + "  ba.username\n"
                         + "from\n"
-                        + "  account.\"Administrator\"       ba\n"
-                        + "  inner join account.\"Username\" un on ba.username   = un.username\n"
-                        + "  inner join billing.\"Package\"  pk on un.package    = pk.name\n"
-                        + "  inner join account.\"Account\"  bu on pk.accounting = bu.accounting\n"
+                        + "  account.\"Administrator\"      ba\n"
+                        + "  inner join account.\"User\"    un on ba.username   = un.username\n"
+                        + "  inner join billing.\"Package\" pk on un.package    = pk.name\n"
+                        + "  inner join account.\"Account\" bu on pk.accounting = bu.accounting\n"
                         + "where\n"
                         + "  bu.canceled is not null\n"
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS + "\n"
@@ -320,8 +314,8 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select tr.transid from billing.\"Transaction\" tr where tr.username=ba.username limit 1) is null",
                         now
                     );
-					for (UserId username : bas) {
-						AccountingCode business=UsernameHandler.getBusinessForUsername(conn, username);
+					for (com.aoindustries.aoserv.client.account.User.Name username : bas) {
+						Account.Name business=UsernameHandler.getBusinessForUsername(conn, username);
 						int balance=TransactionHandler.getConfirmedAccountBalance(conn, business);
 						if(balance<=0) {
 							BusinessHandler.removeBusinessAdministrator(conn, invalidateList, username);
@@ -337,7 +331,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  scm.\"CvsRepository\" cr,\n"
                         + "  linux.\"UserServer\" lsa,\n"
-                        + "  account.\"Username\" un,\n"
+                        + "  account.\"User\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -625,13 +619,13 @@ final public class AccountCleaner implements CronJob {
 
                 // linux.User
                 {
-                    List<UserId> las=conn.executeObjectListQuery(
-						ObjectFactories.userIdFactory,
+                    List<com.aoindustries.aoserv.client.linux.User.Name> las=conn.executeObjectListQuery(
+						ObjectFactories.linuxUserNameFactory,
                         "select\n"
                         + "  la.username\n"
                         + "from\n"
                         + "  linux.\"User\" la,\n"
-                        + "  account.\"Username\" un,\n"
+                        + "  account.\"User\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -642,7 +636,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
-					for (UserId la : las) {
+					for (com.aoindustries.aoserv.client.linux.User.Name la : las) {
 						try {
 							LinuxAccountHandler.removeLinuxAccount(conn, invalidateList, la);
 						} catch (SQLException err) {
@@ -654,8 +648,7 @@ final public class AccountCleaner implements CronJob {
 
                 // linux.Group
                 {
-                    List<GroupId> lgs=conn.executeObjectListQuery(
-						ObjectFactories.groupIdFactory,
+                    List<Group.Name> lgs=conn.executeObjectListQuery(ObjectFactories.groupNameFactory,
                         "select\n"
                         + "  lg.name\n"
                         + "from\n"
@@ -669,7 +662,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
-					for (GroupId lg : lgs) {
+					for (Group.Name lg : lgs) {
 						try {
 							LinuxAccountHandler.removeLinuxGroup(conn, invalidateList, lg);
 						} catch (SQLException err) {
@@ -702,13 +695,12 @@ final public class AccountCleaner implements CronJob {
 
                 // mysql.User
                 {
-                    List<MySQLUserId> mus=conn.executeObjectListQuery(
-						ObjectFactories.mySQLUserIdFactory,
+                    List<com.aoindustries.aoserv.client.mysql.User.Name> mus=conn.executeObjectListQuery(ObjectFactories.mysqlUserNameFactory,
                         "select\n"
                         + "  mu.username\n"
                         + "from\n"
                         + "  mysql.\"User\" mu,\n"
-                        + "  account.\"Username\" un,\n"
+                        + "  account.\"User\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -719,7 +711,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
-					for (MySQLUserId mu : mus) {
+					for (com.aoindustries.aoserv.client.mysql.User.Name mu : mus) {
 						MySQLHandler.removeMySQLUser(conn, invalidateList, mu);
 					}
                 }
@@ -732,7 +724,7 @@ final public class AccountCleaner implements CronJob {
                         + "from\n"
                         + "  postgresql.\"Database\" pd,\n"
                         + "  postgresql.\"UserServer\" psu,\n"
-                        + "  account.\"Username\" un,\n"
+                        + "  account.\"User\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -751,13 +743,12 @@ final public class AccountCleaner implements CronJob {
 
                 // postgresql.User
                 {
-                    List<PostgresUserId> pus=conn.executeObjectListQuery(
-						ObjectFactories.postgresUserIdFactory,
+                    List<com.aoindustries.aoserv.client.postgresql.User.Name> pus=conn.executeObjectListQuery(ObjectFactories.postgresqlUserNameFactory,
                         "select\n"
                         + "  pu.username\n"
                         + "from\n"
                         + "  postgresql.\"User\" pu,\n"
-                        + "  account.\"Username\" un,\n"
+                        + "  account.\"User\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -768,20 +759,20 @@ final public class AccountCleaner implements CronJob {
                         + "  and (?::date-bu.canceled::date)>"+CANCELED_KEEP_DAYS,
                         now
                     );
-					for (PostgresUserId pu : pus) {
+					for (com.aoindustries.aoserv.client.postgresql.User.Name pu : pus) {
 						PostgresHandler.removePostgresUser(conn, invalidateList, pu);
 					}
                 }
 
-                // account.Username
-                // delete all closed account.Username, unless used by a business_administrator that was left behind
+                // account.User
+                // delete all closed account.User, unless used by a business_administrator that was left behind
                 {
-                    List<UserId> uns=conn.executeObjectListQuery(
-						ObjectFactories.userIdFactory,
+                    List<com.aoindustries.aoserv.client.account.User.Name> uns=conn.executeObjectListQuery(
+						ObjectFactories.userNameFactory,
                         "select\n"
                         + "  un.username\n"
                         + "from\n"
-                        + "  account.\"Username\" un,\n"
+                        + "  account.\"User\" un,\n"
                         + "  billing.\"Package\" pk,\n"
                         + "  account.\"Account\" bu\n"
                         + "where\n"
@@ -792,7 +783,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select ba.username from account.\"Administrator\" ba where ba.username=un.username) is null",
                         now
                     );
-					for (UserId un : uns) {
+					for (com.aoindustries.aoserv.client.account.User.Name un : uns) {
 						UsernameHandler.removeUsername(conn, invalidateList, un);
 					}
                 }
@@ -825,7 +816,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select pk.name from billing.\"Package\" pk where pk.disable_log=dl.id limit 1) is null\n"
                         + "  and (select psu.id from postgresql.\"UserServer\" psu where psu.disable_log=dl.id limit 1) is null\n"
                         + "  and (select pu.username from postgresql.\"User\" pu where pu.disable_log=dl.id limit 1) is null\n"
-                        + "  and (select un.username from account.\"Username\" un where un.disable_log=dl.id limit 1) is null",
+                        + "  and (select un.username from account.\"User\" un where un.disable_log=dl.id limit 1) is null",
                         now
                     );
                     for(int c=0;c<dls.size();c++) BusinessHandler.removeDisableLog(conn, invalidateList, dls.getInt(c));
@@ -851,7 +842,7 @@ final public class AccountCleaner implements CronJob {
                         );
                         for(int c=0;c<bss.size();c++) {
                             int bs = bss.getInt(c);
-                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from account.\"AccountHost\" where id=?", bs));
+                            Account.Name accounting = conn.executeObjectQuery(ObjectFactories.accountNameFactory, "select accounting from account.\"AccountHost\" where id=?", bs);
                             int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
                             if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
                         }
@@ -871,7 +862,7 @@ final public class AccountCleaner implements CronJob {
                         );
                         for(int c=0;c<bss.size();c++) {
                             int bs = bss.getInt(c);
-                            AccountingCode accounting = AccountingCode.valueOf(conn.executeStringQuery("select accounting from account.\"AccountHost\" where id=?", bs));
+                            Account.Name accounting = conn.executeObjectQuery(ObjectFactories.accountNameFactory, "select accounting from account.\"AccountHost\" where id=?", bs);
                             int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
                             if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
                         }
@@ -880,7 +871,7 @@ final public class AccountCleaner implements CronJob {
                 if(message.length()>0) {
                     logger.log(Level.WARNING, message.toString());
                 }
-            } catch(RuntimeException | ValidationException | IOException err) {
+            } catch(RuntimeException | IOException err) {
                 if(conn.rollback()) {
                     connRolledBack=true;
                     invalidateList=null;

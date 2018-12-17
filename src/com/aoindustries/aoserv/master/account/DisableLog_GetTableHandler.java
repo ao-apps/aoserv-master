@@ -83,7 +83,7 @@ public class DisableLog_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			"select\n"
 			+ "  dl.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  account.\"DisableLog\" dl\n"

@@ -8,7 +8,6 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.linux.User;
 import com.aoindustries.aoserv.client.linux.UserType;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -24,7 +23,7 @@ final public class FTPHandler {
 		DatabaseConnection conn,
 		RequestSource source, 
 		InvalidateList invalidateList,
-		UserId username
+		User.Name username
 	) throws IOException, SQLException {
 		LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "addFTPGuestUser", username);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to add FTP guest user for mail");
@@ -54,7 +53,7 @@ final public class FTPHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		UserId username
+		User.Name username
 	) throws IOException, SQLException {
 		LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "removeFTPGuestUser", username);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to remove GuestUser for user '"+User.MAIL+'\'');

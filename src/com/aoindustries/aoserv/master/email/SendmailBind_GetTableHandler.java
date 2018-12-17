@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.email.SendmailBind;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
@@ -70,7 +69,7 @@ public class SendmailBind_GetTableHandler extends TableHandler.GetTableHandlerBy
 
 	@Override
 	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		UserId username = source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -88,7 +87,7 @@ public class SendmailBind_GetTableHandler extends TableHandler.GetTableHandlerBy
 			+ "    select\n"
 			+ "      nb.id\n"
 			+ "    from\n"
-			+ "      account.\"Username\" un1,\n"
+			+ "      account.\"User\" un1,\n"
 			+ "      billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "      billing.\"Package\" pk2,\n"
@@ -107,7 +106,7 @@ public class SendmailBind_GetTableHandler extends TableHandler.GetTableHandlerBy
 			+ "    select\n"
 			+ "      ss.id\n"
 			+ "    from\n"
-			+ "      account.\"Username\" un2,\n"
+			+ "      account.\"User\" un2,\n"
 			+ "      billing.\"Package\" pk3,\n"
 			+ BU2_PARENTS_JOIN
 			+ "      billing.\"Package\" pk4,\n"

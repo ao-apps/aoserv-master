@@ -9,7 +9,6 @@ import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -50,7 +49,7 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 		Iterator<Process> I = processesCopy.iterator();
 		while(I.hasNext()) {
 			Process process = I.next();
-			UserId effectiveUser = process.getEffectiveUser();
+			com.aoindustries.aoserv.client.account.User.Name effectiveUser = process.getEffectiveUser();
 			if(
 				effectiveUser != null
 				&& UsernameHandler.canAccessUsername(conn, source, effectiveUser)

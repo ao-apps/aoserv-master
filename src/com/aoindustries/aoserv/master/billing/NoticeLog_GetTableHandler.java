@@ -61,7 +61,7 @@ public class NoticeLog_GetTableHandler extends TableHandler.GetTableHandlerByRol
 			"select\n"
 			+ "  nl.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  billing.\"NoticeLog\" nl\n"

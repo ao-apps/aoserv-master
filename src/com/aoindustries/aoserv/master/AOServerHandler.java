@@ -7,7 +7,6 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.net.InetAddress;
@@ -111,7 +110,7 @@ final public class AOServerHandler {
 		int aoServer,
 		long time
 	) throws IOException, SQLException {
-		UserId mustring = source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name mustring = source.getUsername();
 		User mu = MasterServer.getUser(conn, mustring);
 		if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not set the last distro time");
 		ServerHandler.checkAccessServer(conn, source, "setLastDistroTime", aoServer);

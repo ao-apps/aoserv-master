@@ -4,7 +4,7 @@ com.aoindustries.aoserv.master.account.Administrator_GetTableHandler
 com.aoindustries.aoserv.master.account.DisableLog_GetTableHandler
 com.aoindustries.aoserv.master.account.Profile_GetTableHandler
 com.aoindustries.aoserv.master.account.UsState_GetTableHandler
-com.aoindustries.aoserv.master.account.Username_GetTableHandler
+com.aoindustries.aoserv.master.account.User_GetTableHandler
 com.aoindustries.aoserv.master.accounting.Bank_GetTableHandler
 com.aoindustries.aoserv.master.accounting.BankAccount_GetTableHandler
 com.aoindustries.aoserv.master.accounting.BankTransactionHandler$GetTable

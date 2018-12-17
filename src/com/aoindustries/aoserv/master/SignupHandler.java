@@ -5,9 +5,9 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
+import com.aoindustries.aoserv.client.account.User;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
@@ -38,7 +38,7 @@ final public class SignupHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        AccountingCode accounting,
+        Account.Name accounting,
         InetAddress ip_address,
         int package_definition,
         String business_name,
@@ -63,7 +63,7 @@ final public class SignupHandler {
         String ba_state,
         String ba_country,
         String ba_zip,
-        UserId ba_username,
+        User.Name ba_username,
         String billing_contact,
         String billing_email,
         boolean billing_use_monthly,

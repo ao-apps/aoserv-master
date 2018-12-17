@@ -5,13 +5,12 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.billing.Package;
 import com.aoindustries.aoserv.client.billing.Resource;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -41,9 +40,9 @@ final public class PackageHandler {
     private PackageHandler() {
     }
 
-    private final static Map<AccountingCode,Boolean> disabledPackages=new HashMap<>();
+    private final static Map<Account.Name,Boolean> disabledPackages=new HashMap<>();
 
-    public static boolean canPackageAccessServer(DatabaseConnection conn, RequestSource source, AccountingCode packageName, int server) throws IOException, SQLException {
+    public static boolean canPackageAccessServer(DatabaseConnection conn, RequestSource source, Account.Name packageName, int server) throws IOException, SQLException {
         return conn.executeBooleanQuery(
             "select\n"
             + "  (\n"
@@ -64,7 +63,7 @@ final public class PackageHandler {
         );
     }
 
-    public static boolean canAccessPackage(DatabaseConnection conn, RequestSource source, AccountingCode packageName) throws IOException, SQLException {
+    public static boolean canAccessPackage(DatabaseConnection conn, RequestSource source, Account.Name packageName) throws IOException, SQLException {
         return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackage(conn, packageName));
     }
 
@@ -76,7 +75,7 @@ final public class PackageHandler {
         return BusinessHandler.canAccessBusiness(conn, source, getBusinessForPackageDefinition(conn, packageId));
     }
 
-    public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, AccountingCode packageName) throws IOException, SQLException {
+    public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, Account.Name packageName) throws IOException, SQLException {
         if(!canAccessPackage(conn, source, packageName)) {
             String message=
                 "business_administrator.username="
@@ -125,8 +124,8 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        AccountingCode packageName,
-        AccountingCode accounting,
+        Account.Name packageName,
+        Account.Name accounting,
         int packageDefinition
     ) throws IOException, SQLException {
         BusinessHandler.checkAccessBusiness(conn, source, "addPackage", accounting);
@@ -135,8 +134,8 @@ final public class PackageHandler {
         // Check the PackageDefinition rules
         checkAccessPackageDefinition(conn, source, "addPackage", packageDefinition);
         // Businesses parent must be the package definition owner
-        AccountingCode parent=BusinessHandler.getParentBusiness(conn, accounting);
-        AccountingCode packageDefinitionBusiness = getBusinessForPackageDefinition(conn, packageDefinition);
+        Account.Name parent=BusinessHandler.getParentBusiness(conn, accounting);
+        Account.Name packageDefinitionBusiness = getBusinessForPackageDefinition(conn, packageDefinition);
         if(!packageDefinitionBusiness.equals(parent)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition #"+packageDefinition+" not owned by parent Account");
         if(!isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not approved: "+packageDefinition);
         //if(!isPackageDefinitionActive(conn, packageDefinition)) throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not active: "+packageDefinition);
@@ -184,7 +183,7 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        AccountingCode accounting,
+        Account.Name accounting,
         String category,
         String name,
         String version,
@@ -250,7 +249,7 @@ final public class PackageHandler {
         int packageDefinition
     ) throws IOException, SQLException {
         checkAccessPackageDefinition(conn, source, "copyPackageDefinition", packageDefinition);
-        AccountingCode accounting = getBusinessForPackageDefinition(conn, packageDefinition);
+        Account.Name accounting = getBusinessForPackageDefinition(conn, packageDefinition);
         if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to copy PackageDefinition, Account disabled: "+accounting);
         String category=conn.executeStringQuery("select category from billing.\"PackageDefinition\" where id=?", packageDefinition);
         String name=conn.executeStringQuery("select name from billing.\"PackageDefinition\" where id=?", packageDefinition);
@@ -354,7 +353,7 @@ final public class PackageHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int packageDefinition,
-        AccountingCode accounting,
+        Account.Name accounting,
         String category,
         String name,
         String version,
@@ -421,7 +420,7 @@ final public class PackageHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int disableLog,
-        AccountingCode name
+        Account.Name name
     ) throws IOException, SQLException {
         if(isPackageDisabled(conn, name)) throw new SQLException("Package is already disabled: "+name);
         BusinessHandler.checkAccessDisableLog(conn, source, "disablePackage", disableLog, false);
@@ -440,8 +439,8 @@ final public class PackageHandler {
                 throw new SQLException("Cannot disable Package '"+name+"': Pipe not disabled: "+ep);
             }
         }
-        List<UserId> uns=UsernameHandler.getUsernamesForPackage(conn, name);
-		for (UserId username : uns) {
+        List<com.aoindustries.aoserv.client.account.User.Name> uns=UsernameHandler.getUsernamesForPackage(conn, name);
+		for (com.aoindustries.aoserv.client.account.User.Name username : uns) {
             if(!UsernameHandler.isUsernameDisabled(conn, username)) {
                 throw new SQLException("Cannot disable Package '"+name+"': Username not disabled: "+username);
             }
@@ -475,7 +474,7 @@ final public class PackageHandler {
         );
 
         // Notify all clients of the update
-        AccountingCode accounting = getBusinessForPackage(conn, name);
+        Account.Name accounting = getBusinessForPackage(conn, name);
         invalidateList.addTable(
             conn,
             Table.TableID.PACKAGES,
@@ -489,13 +488,13 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        AccountingCode name
+        Account.Name name
     ) throws IOException, SQLException {
         int disableLog=getDisableLogForPackage(conn, name);
         if(disableLog==-1) throw new SQLException("Package is already enabled: "+name);
         BusinessHandler.checkAccessDisableLog(conn, source, "enablePackage", disableLog, true);
         checkAccessPackage(conn, source, "enablePackage", name);
-        AccountingCode accounting = getBusinessForPackage(conn, name);
+        Account.Name accounting = getBusinessForPackage(conn, name);
         if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to enable Package '"+name+"', Account not enabled: "+accounting);
 
         conn.executeUpdate(
@@ -513,21 +512,20 @@ final public class PackageHandler {
         );
     }
 
-    public static AccountingCode generatePackageName(
+    public static Account.Name generatePackageName(
         DatabaseConnection conn,
-        AccountingCode template
+        Account.Name template
     ) throws IOException, SQLException {
 		// Load the entire list of package names
-		Set<AccountingCode> names = conn.executeObjectCollectionQuery(
-			new HashSet<>(),
-			ObjectFactories.accountingCodeFactory,
+		Set<Account.Name> names = conn.executeObjectCollectionQuery(new HashSet<>(),
+			ObjectFactories.accountNameFactory,
 			"select name from billing.\"Package\""
 		);
 		// Find one that is not used
 		for(int c=0;c<Integer.MAX_VALUE;c++) {
-			AccountingCode name;
+			Account.Name name;
 			try {
-				name = AccountingCode.valueOf(template.toString()+c);
+				name = Account.Name.valueOf(template.toString()+c);
 			} catch(ValidationException e) {
 				throw new SQLException(e);
 			}
@@ -537,7 +535,7 @@ final public class PackageHandler {
         throw new SQLException("Unable to find available package name for template: "+template);
     }
 
-    public static int getDisableLogForPackage(DatabaseConnection conn, AccountingCode name) throws IOException, SQLException {
+    public static int getDisableLogForPackage(DatabaseConnection conn, Account.Name name) throws IOException, SQLException {
         return conn.executeIntQuery("select coalesce(disable_log, -1) from billing.\"Package\" where name=?", name);
     }
 
@@ -545,7 +543,7 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source
     ) throws IOException, SQLException {
-        UserId username=source.getUsername();
+        com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
         User masterUser=MasterServer.getUser(conn, username);
         UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
         if(masterUser!=null) {
@@ -569,7 +567,7 @@ final public class PackageHandler {
             "select\n"
             + "  pk2.name\n"
             + "from\n"
-            + "  account.\"Username\" un,\n"
+            + "  account.\"User\" un,\n"
             + "  billing.\"Package\" pk1,\n"
             + TableHandler.BU1_PARENTS_JOIN
             + "  billing.\"Package\" pk2\n"
@@ -588,7 +586,7 @@ final public class PackageHandler {
         DatabaseConnection conn,
         RequestSource source
     ) throws IOException, SQLException {
-        UserId username=source.getUsername();
+        com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
         User masterUser=MasterServer.getUser(conn, username);
         UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
         if(masterUser!=null) {
@@ -612,7 +610,7 @@ final public class PackageHandler {
             "select\n"
             + "  pk2.id\n"
             + "from\n"
-            + "  account.\"Username\" un,\n"
+            + "  account.\"User\" un,\n"
             + "  billing.\"Package\" pk1,\n"
             + TableHandler.BU1_PARENTS_JOIN
             + "  billing.\"Package\" pk2\n"
@@ -644,7 +642,7 @@ final public class PackageHandler {
         }
     }
 
-    public static boolean isPackageDisabled(DatabaseConnection conn, AccountingCode name) throws IOException, SQLException {
+    public static boolean isPackageDisabled(DatabaseConnection conn, Account.Name name) throws IOException, SQLException {
 	    synchronized(PackageHandler.class) {
             Boolean O=disabledPackages.get(name);
             if(O!=null) return O;
@@ -654,11 +652,11 @@ final public class PackageHandler {
 	    }
     }
 
-    public static boolean isPackageNameAvailable(DatabaseConnection conn, AccountingCode packageName) throws IOException, SQLException {
+    public static boolean isPackageNameAvailable(DatabaseConnection conn, Account.Name packageName) throws IOException, SQLException {
         return conn.executeBooleanQuery("select (select id from billing.\"Package\" where name=? limit 1) is null", packageName);
     }
 
-    public static int findActivePackageDefinition(DatabaseConnection conn, AccountingCode accounting, int rate, int userLimit, int popLimit) throws IOException, SQLException {
+    public static int findActivePackageDefinition(DatabaseConnection conn, Account.Name accounting, int rate, int userLimit, int popLimit) throws IOException, SQLException {
         return conn.executeIntQuery(
             "select\n"
             + "  coalesce(\n"
@@ -694,7 +692,7 @@ final public class PackageHandler {
         return conn.executeBooleanQuery("select active from billing.\"PackageDefinition\" where id=?", packageDefinition);
     }
 
-    public static void checkPackageAccessServer(DatabaseConnection conn, RequestSource source, String action, AccountingCode packageName, int server) throws IOException, SQLException {
+    public static void checkPackageAccessServer(DatabaseConnection conn, RequestSource source, String action, Account.Name packageName, int server) throws IOException, SQLException {
         if(!canPackageAccessServer(conn, source, packageName, server)) {
             String message=
                 "package.name="
@@ -709,18 +707,17 @@ final public class PackageHandler {
         }
     }
 
-    public static AccountingCode getBusinessForPackage(DatabaseAccess database, AccountingCode packageName) throws IOException, SQLException {
+    public static Account.Name getBusinessForPackage(DatabaseAccess database, Account.Name packageName) throws IOException, SQLException {
         return getBusinessForPackage(database, getPKeyForPackage(database, packageName));
     }
 
-    private static final Map<Integer,AccountingCode> packageBusinesses=new HashMap<>();
-    public static AccountingCode getBusinessForPackage(DatabaseAccess database, int packageId) throws IOException, SQLException {
+    private static final Map<Integer,Account.Name> packageBusinesses=new HashMap<>();
+    public static Account.Name getBusinessForPackage(DatabaseAccess database, int packageId) throws IOException, SQLException {
         Integer I = packageId;
         synchronized(packageBusinesses) {
-            AccountingCode O=packageBusinesses.get(I);
+            Account.Name O=packageBusinesses.get(I);
             if(O!=null) return O;
-            AccountingCode business = database.executeObjectQuery(
-                ObjectFactories.accountingCodeFactory,
+            Account.Name business = database.executeObjectQuery(ObjectFactories.accountNameFactory,
                 "select accounting from billing.\"Package\" where id=?",
                 packageId
             );
@@ -729,14 +726,13 @@ final public class PackageHandler {
         }
     }
 
-    private static final Map<Integer,AccountingCode> packageNames=new HashMap<>();
-    public static AccountingCode getNameForPackage(DatabaseConnection conn, int packageId) throws IOException, SQLException {
+    private static final Map<Integer,Account.Name> packageNames=new HashMap<>();
+    public static Account.Name getNameForPackage(DatabaseConnection conn, int packageId) throws IOException, SQLException {
         Integer I = packageId;
         synchronized(packageNames) {
-            AccountingCode O=packageNames.get(I);
+            Account.Name O=packageNames.get(I);
             if(O!=null) return O;
-            AccountingCode name = conn.executeObjectQuery(
-				ObjectFactories.accountingCodeFactory,
+            Account.Name name = conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 				"select name from billing.\"Package\" where id=?",
 				packageId
 			);
@@ -745,8 +741,8 @@ final public class PackageHandler {
         }
     }
 
-    private static final Map<AccountingCode,Integer> packagePKeys=new HashMap<>();
-    public static int getPKeyForPackage(DatabaseAccess database, AccountingCode name) throws IOException, SQLException {
+    private static final Map<Account.Name,Integer> packagePKeys=new HashMap<>();
+    public static int getPKeyForPackage(DatabaseAccess database, Account.Name name) throws IOException, SQLException {
         synchronized(packagePKeys) {
             Integer O=packagePKeys.get(name);
             if(O!=null) return O;
@@ -756,18 +752,16 @@ final public class PackageHandler {
         }
     }
 
-    public static AccountingCode getBusinessForPackageDefinition(DatabaseConnection conn, int packageId) throws IOException, SQLException {
-        return conn.executeObjectQuery(
-            ObjectFactories.accountingCodeFactory,
+    public static Account.Name getBusinessForPackageDefinition(DatabaseConnection conn, int packageId) throws IOException, SQLException {
+        return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
             "select accounting from billing.\"PackageDefinition\" where id=?",
             packageId
         );
     }
 
-    public static List<AccountingCode> getBusinessesForPackageDefinition(DatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
-        return conn.executeObjectCollectionQuery(
-            new ArrayList<AccountingCode>(),
-            ObjectFactories.accountingCodeFactory,
+    public static List<Account.Name> getBusinessesForPackageDefinition(DatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
+        return conn.executeObjectCollectionQuery(new ArrayList<Account.Name>(),
+            ObjectFactories.accountNameFactory,
             "select distinct\n"
             + "  bu.accounting\n"
             + "from\n"
@@ -893,7 +887,7 @@ final public class PackageHandler {
         InvalidateList invalidateList,
         int id
     ) throws IOException, SQLException {
-        AccountingCode accounting = getBusinessForPackageDefinition(conn, id);
+        Account.Name accounting = getBusinessForPackageDefinition(conn, id);
         IntList servers=BusinessHandler.getServersForBusiness(conn, accounting);
         if(conn.executeUpdate("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", id)>0) {
             invalidateList.addTable(

@@ -76,7 +76,7 @@ public class FirewallZone_GetTableHandler extends TableHandler.GetTableHandlerBy
 			"select\n"
 			+ "  fz.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			+ "  net.\"FirewallZone\" fz\n"

@@ -1,11 +1,11 @@
 /*
- * Copyright 2001-2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.validator.AccountingCode;
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.io.AOPool;
 import com.aoindustries.net.InetAddress;
@@ -82,9 +82,9 @@ public final class MasterConfiguration {
         return ints;
     }
 
-    public static AccountingCode getRootBusiness() throws IOException {
+    public static Account.Name getRootBusiness() throws IOException {
         try {
-            return AccountingCode.valueOf(getProperty("aoserv.master.businesses.root"));
+            return Account.Name.valueOf(getProperty("aoserv.master.businesses.root"));
         } catch(ValidationException e) {
             throw new IOException(e.getLocalizedMessage(), e);
         }

@@ -97,7 +97,7 @@ public class VirtualHost_GetTableHandler extends TableHandler.GetTableHandlerByR
 			+ "  sc.key_file   as ssl_cert_key_file,\n"
 			+ "  sc.chain_file as ssl_cert_chain_file\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  billing.\"Package\" pk2,\n"

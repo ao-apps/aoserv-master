@@ -104,7 +104,7 @@ public class Action_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				+ "  ta.from_address,\n"
 				+ "  ta.summary\n"
 				+ "from\n"
-				+ "  account.\"Username\" un,\n"
+				+ "  account.\"User\" un,\n"
 				+ "  billing.\"Package\" pk1,\n"
 				+ TableHandler.BU1_PARENTS_JOIN
 				+ "  ticket.\"Ticket\" ti,\n"
@@ -153,7 +153,7 @@ public class Action_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				+ "  ta.from_address,\n"
 				+ "  ta.summary\n"
 				+ "from\n"
-				+ "  account.\"Username\" un,\n"
+				+ "  account.\"User\" un,\n"
 				+ "  billing.\"Package\" pk1,\n"
 				+ TableHandler.BU1_PARENTS_JOIN
 				+ "  ticket.\"Ticket\" ti,\n"

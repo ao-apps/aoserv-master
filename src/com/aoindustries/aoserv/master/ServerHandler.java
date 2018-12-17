@@ -5,12 +5,11 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.DomainName;
@@ -40,7 +39,7 @@ final public class ServerHandler {
 	private ServerHandler() {
 	}
 
-	private static Map<UserId,List<Integer>> usernameServers;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name,List<Integer>> usernameServers;
 
 	/*
 	public static int addBackupServer(
@@ -199,7 +198,7 @@ final public class ServerHandler {
 	 */
 	static List<Integer> getAllowedServers(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
 		synchronized(ServerHandler.class) {
-			UserId username=source.getUsername();
+			com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
 			if(usernameServers==null) usernameServers=new HashMap<>();
 			List<Integer> SV=usernameServers.get(username);
 			if(SV==null) {
@@ -220,7 +219,7 @@ final public class ServerHandler {
 								"select\n"
 								+ "  bs.server\n"
 								+ "from\n"
-								+ "  account.\"Username\" un,\n"
+								+ "  account.\"User\" un,\n"
 								+ "  billing.\"Package\" pk,\n"
 								+ "  account.\"AccountHost\" bs\n"
 								+ "where\n"
@@ -237,10 +236,9 @@ final public class ServerHandler {
 		}
 	}
 
-	public static List<AccountingCode> getBusinessesForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		return conn.executeObjectCollectionQuery(
-			new ArrayList<AccountingCode>(),
-			ObjectFactories.accountingCodeFactory,
+	public static List<Account.Name> getBusinessesForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
+		return conn.executeObjectCollectionQuery(new ArrayList<Account.Name>(),
+			ObjectFactories.accountNameFactory,
 			"select accounting from account.\"AccountHost\" where server=?",
 			server
 		);

@@ -5,14 +5,12 @@
  */
 package com.aoindustries.aoserv.master.billing;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.billing.WhoisHistory;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.UserId;
-import com.aoindustries.aoserv.master.BusinessHandler;
 import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.InvalidateList;
 import com.aoindustries.aoserv.master.LogFactory;
@@ -87,11 +85,10 @@ final public class WhoisHistoryService implements MasterService {
 		CLEANUP_AFTER_CLOSED_ACCOUNT_NO_TRANSACTIONS = "1 year";
 
 	private static void cleanup(DatabaseConnection conn, InvalidateList invalidateList) throws IOException, SQLException {
-		Set<AccountingCode> accountsAffected = new HashSet<>();
+		Set<Account.Name> accountsAffected = new HashSet<>();
 
 		// Open account that have balance <= $0.00 and entry is older than one year
-		List<AccountingCode> deletedGoodStanding = conn.executeObjectListUpdate(
-			ObjectFactories.accountingCodeFactory,
+		List<Account.Name> deletedGoodStanding = conn.executeObjectListUpdate(ObjectFactories.accountNameFactory,
 			"DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
 			+ "  SELECT\n"
 			+ "    wha.id\n"
@@ -116,8 +113,7 @@ final public class WhoisHistoryService implements MasterService {
 		}
 
 		// Closed account that have a balance of $0.00, has not had any billing.Transaction for interval, and entry is older than interval
-		List<AccountingCode> deletedCanceledZero = conn.executeObjectListUpdate(
-			ObjectFactories.accountingCodeFactory,
+		List<Account.Name> deletedCanceledZero = conn.executeObjectListUpdate(ObjectFactories.accountNameFactory,
 			"DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
 			+ "  SELECT\n"
 			+ "    wha.id\n"
@@ -261,7 +257,7 @@ final public class WhoisHistoryService implements MasterService {
 							 * The add new records
 							 */
 							// Get the set of unique registrable domains and accounts in the system
-							Map<DomainName,Set<AccountingCode>> registrableDomains = getWhoisHistoryDomains(conn);
+							Map<DomainName,Set<Account.Name>> registrableDomains = getWhoisHistoryDomains(conn);
 							conn.releaseConnection();
 
 							// Find the number of distinct registrable domains
@@ -367,8 +363,8 @@ final public class WhoisHistoryService implements MasterService {
 										output,
 										error
 									);
-									Set<AccountingCode> accounts = registrableDomains.get(registrableDomain);
-									for(AccountingCode account : accounts) {
+									Set<Account.Name> accounts = registrableDomains.get(registrableDomain);
+									for(Account.Name account : accounts) {
 										conn.executeUpdate(
 											"insert into billing.\"WhoisHistoryAccount\" (\"whoisHistory\", account) values(?,?)",
 											id,
@@ -442,12 +438,12 @@ final public class WhoisHistoryService implements MasterService {
 	 * Merges the results of calling {@link WhoisHistoryDomainLocator#getWhoisHistoryDomains(com.aoindustries.dbc.DatabaseConnection)}
 	 * on all {@link MasterService services}.
 	 */
-	private Map<DomainName,Set<AccountingCode>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
-		Map<DomainName,Set<AccountingCode>> merged = new HashMap<>();
+	private Map<DomainName,Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
+		Map<DomainName,Set<Account.Name>> merged = new HashMap<>();
 		for(WhoisHistoryDomainLocator locator : MasterServer.getServices(WhoisHistoryDomainLocator.class)) {
-			for(Map.Entry<DomainName,Set<AccountingCode>> entry : locator.getWhoisHistoryDomains(conn).entrySet()) {
+			for(Map.Entry<DomainName,Set<Account.Name>> entry : locator.getWhoisHistoryDomains(conn).entrySet()) {
 				DomainName registrableDomain = entry.getKey();
-				Set<AccountingCode> accounts = merged.get(registrableDomain);
+				Set<Account.Name> accounts = merged.get(registrableDomain);
 				if(accounts == null) merged.put(registrableDomain, accounts = new LinkedHashSet<>());
 				accounts.addAll(entry.getValue());
 				
@@ -463,7 +459,7 @@ final public class WhoisHistoryService implements MasterService {
 	 * The same filtering as {@link #startGetTableHandler()}
 	 */
 	public Tuple2<String,String> getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int id) throws IOException, SQLException {
-		UserId username = source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
 		User masterUser = MasterServer.getUser(conn, username);
 		if(masterUser != null) {
 			UserHost[] masterServers = MasterServer.getUserHosts(conn, source.getUsername());
@@ -519,7 +515,7 @@ final public class WhoisHistoryService implements MasterService {
 					+ "  wh.\"output\",\n"
 					+ "  wh.error\n"
 					+ "FROM\n"
-					+ "  account.\"Username\" un,\n"
+					+ "  account.\"User\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
 					+ TableHandler.BU1_PARENTS_JOIN
 					+ "  billing.\"WhoisHistoryAccount\" wha,\n"
@@ -549,7 +545,7 @@ final public class WhoisHistoryService implements MasterService {
 					+ "  wh.\"output\",\n"
 					+ "  wh.error\n"
 					+ "FROM\n"
-					+ "  account.\"Username\" un,\n"
+					+ "  account.\"User\" un,\n"
 					+ "  billing.\"Package\" pk,\n"
 					+ TableHandler.BU1_PARENTS_JOIN
 					+ "  billing.\"WhoisHistoryAccount\" wha,\n"
@@ -649,7 +645,7 @@ final public class WhoisHistoryService implements MasterService {
 						// Protocol conversion
 						+ "  wha.account as accounting\n"
 						+ "from\n"
-						+ "  account.\"Username\" un,\n"
+						+ "  account.\"User\" un,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ TableHandler.BU1_PARENTS_JOIN
 						+ "  billing.\"WhoisHistoryAccount\" wha,\n"
@@ -680,7 +676,7 @@ final public class WhoisHistoryService implements MasterService {
 						// Protocol conversion
 						+ "  null as accounting\n"
 						+ "from\n"
-						+ "  account.\"Username\" un,\n"
+						+ "  account.\"User\" un,\n"
 						+ "  billing.\"Package\" pk,\n"
 						+ TableHandler.BU1_PARENTS_JOIN
 						+ "  billing.\"WhoisHistoryAccount\" wha,\n"

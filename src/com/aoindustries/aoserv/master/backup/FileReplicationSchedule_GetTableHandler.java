@@ -78,7 +78,7 @@ public class FileReplicationSchedule_GetTableHandler extends TableHandler.GetTab
 			"select\n"
 			+ "  ffs.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			+ "  backup.\"FileReplication\" ffr,\n"

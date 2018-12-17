@@ -138,7 +138,7 @@ public class Device_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  nd.monitoring_bit_rate_critical,\n"
 			+ "  nd.monitoring_enabled\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			// Allow failover destinations

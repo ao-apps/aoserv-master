@@ -86,7 +86,7 @@ public class MysqlReplication_GetTableHandler extends TableHandler.GetTableHandl
 			"select distinct\n"
 			+ "  fmr.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			+ "  backup.\"FileReplication\" ffr,\n"

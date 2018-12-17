@@ -76,7 +76,7 @@ public class HttpdServer_GetTableHandler extends TableHandler.GetTableHandlerByR
 			"select\n"
 			+ "  hs.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			+ "  web.\"HttpdServer\" hs\n"

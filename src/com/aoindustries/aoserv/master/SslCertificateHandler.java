@@ -5,9 +5,9 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.pki.Certificate;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -33,9 +33,8 @@ final public class SslCertificateHandler {
 		}
 	}
 
-	public static AccountingCode getPackageForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getPackageForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select package from pki.\"Certificate\" where id=?",
 			certificate
 		);

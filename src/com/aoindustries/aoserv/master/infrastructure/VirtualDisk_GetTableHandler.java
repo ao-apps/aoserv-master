@@ -75,7 +75,7 @@ public class VirtualDisk_GetTableHandler extends TableHandler.GetTableHandlerByR
 			"select distinct\n"
 			+ "  vd.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			// Allow servers it replicates to

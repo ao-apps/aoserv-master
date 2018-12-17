@@ -5,6 +5,7 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.email.InboxAttributes;
 import com.aoindustries.aoserv.client.email.List;
 import com.aoindustries.aoserv.client.email.MajordomoList;
@@ -13,14 +14,11 @@ import com.aoindustries.aoserv.client.email.SmtpRelay;
 import com.aoindustries.aoserv.client.email.SpamMessage;
 import com.aoindustries.aoserv.client.linux.Group;
 import com.aoindustries.aoserv.client.linux.GroupType;
+import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.linux.UserType;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.GroupId;
-import com.aoindustries.aoserv.client.validator.UnixPath;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -99,7 +97,7 @@ final public class EmailHandler {
 		LinuxAccountHandler.checkAccessLinuxServerGroup(conn, source, action, getLinuxServerGroupForEmailList(conn, id));
 	}
 
-	public static void checkAccessEmailListPath(DatabaseConnection conn, RequestSource source, String action, int aoServer, UnixPath path) throws IOException, SQLException {
+	public static void checkAccessEmailListPath(DatabaseConnection conn, RequestSource source, String action, int aoServer, PosixPath path) throws IOException, SQLException {
 		if(
 			!List.isValidRegularPath(
 				path,
@@ -244,14 +242,14 @@ final public class EmailHandler {
 		DatabaseConnection conn,
 		RequestSource source, 
 		InvalidateList invalidateList,
-		UnixPath path,
+		PosixPath path,
 		int linuxServerAccount,
 		int linuxServerGroup
 	) throws IOException, SQLException {
 		checkAccessEmailListPath(conn, source, "addEmailList", LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, linuxServerAccount), path);
 
 		// Allow the mail user
-		UserId username=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, linuxServerAccount);
+		com.aoindustries.aoserv.client.linux.User.Name username=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, linuxServerAccount);
 		if(!username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addEmailList", linuxServerAccount);
 		// Check the group
 		LinuxAccountHandler.checkAccessLinuxServerGroup(conn, source, "addEmailList", linuxServerGroup);
@@ -267,12 +265,12 @@ final public class EmailHandler {
 	private static int addEmailList0(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		UnixPath path,
+		PosixPath path,
 		int linuxServerAccount,
 		int linuxServerGroup
 	) throws IOException, SQLException {
 		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, linuxServerAccount)) throw new SQLException("Unable to add List, UserServer disabled: "+linuxServerAccount);
-		AccountingCode packageName=LinuxAccountHandler.getPackageForLinuxServerGroup(conn, linuxServerGroup);
+		Account.Name packageName=LinuxAccountHandler.getPackageForLinuxServerGroup(conn, linuxServerGroup);
 		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add List, Package disabled: "+packageName);
 
 		// The server for both account and group must be the same
@@ -392,7 +390,7 @@ final public class EmailHandler {
 		InvalidateList invalidateList,
 		int aoServer,
 		String command,
-		AccountingCode packageName
+		Account.Name packageName
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "addEmailPipe", aoServer);
 		checkAccessEmailPipeCommand(conn, source, "addEmailPipe", command);
@@ -413,7 +411,7 @@ final public class EmailHandler {
 		InvalidateList invalidateList,
 		int aoServer,
 		String command,
-		AccountingCode packageName
+		Account.Name packageName
 	) throws IOException, SQLException {
 		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add Pipe, Package disabled: "+packageName);
 
@@ -477,7 +475,7 @@ final public class EmailHandler {
 	) throws IOException, SQLException {
 		checkAccessEmailAddress(conn, source, "addLinuxAccAddress", address);
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addLinuxAccAddress", lsa);
-		UserId username = LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, lsa);
+		com.aoindustries.aoserv.client.linux.User.Name username = LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, lsa);
 		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add email addresses to User named '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 		// TODO: Make sure they are on the same server
 
@@ -500,7 +498,7 @@ final public class EmailHandler {
 		InvalidateList invalidateList,
 		DomainName domain,
 		int aoServer,
-		AccountingCode packageName
+		Account.Name packageName
 	) throws IOException, SQLException {
 		MasterServer.checkAccessHostname(conn, source, "addEmailDomain", domain.toString());
 		ServerHandler.checkAccessServer(conn, source, "addEmailDomain", aoServer);
@@ -527,7 +525,7 @@ final public class EmailHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		AccountingCode packageName,
+		Account.Name packageName,
 		int aoServer,
 		HostAddress host,
 		String type,
@@ -592,7 +590,7 @@ final public class EmailHandler {
 		int esr,
 		String message
 	) throws IOException, SQLException {
-		UserId username=source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
 		User masterUser=MasterServer.getUser(conn, username);
 		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
 		if(masterUser==null || masterServers.length!=0) throw new SQLException("Only master users may add spam email messages.");
@@ -627,22 +625,22 @@ final public class EmailHandler {
 		checkAccessMajordomoServer(conn, source, "addMajordomoList", majordomoServer);
 
 		DomainName domainName=getDomainForEmailDomain(conn, majordomoServer);
-		UnixPath msPath;
-		UnixPath listPath;
-		UnixPath infoPath;
-		UnixPath introPath;
+		PosixPath msPath;
+		PosixPath listPath;
+		PosixPath infoPath;
+		PosixPath introPath;
 		try {
-			msPath = UnixPath.valueOf(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY+"/"+domainName);
-			listPath = UnixPath.valueOf(msPath+"/lists/"+listName);
-			infoPath = UnixPath.valueOf(listPath+".info");
-			introPath = UnixPath.valueOf(listPath+".intro");
+			msPath = PosixPath.valueOf(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY+"/"+domainName);
+			listPath = PosixPath.valueOf(msPath+"/lists/"+listName);
+			infoPath = PosixPath.valueOf(listPath+".info");
+			introPath = PosixPath.valueOf(listPath+".intro");
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
 		int aoServer=getAOServerForEmailDomain(conn, majordomoServer);
 
 		// Disabled checks
-		AccountingCode packageName=getPackageForEmailDomain(conn, majordomoServer);
+		Account.Name packageName=getPackageForEmailDomain(conn, majordomoServer);
 		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add Majordomo list, Package for Majordomo server #"+majordomoServer+" is disabled: "+packageName);
 
 		// Find the email addresses
@@ -744,7 +742,7 @@ final public class EmailHandler {
 		// Security checks
 		checkAccessEmailDomain(conn, source, "addMajordomoServer", domain);
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addMajordomoServer", lsa);
-		UserId lsaUsername=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, lsa);
+		com.aoindustries.aoserv.client.linux.User.Name lsaUsername=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, lsa);
 		if(lsaUsername.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Unable to add MajordomoServer with UserServer of '"+lsaUsername+'\'');
 		String lsaType=LinuxAccountHandler.getTypeForLinuxServerAccount(conn, lsa);
 		if(
@@ -752,7 +750,7 @@ final public class EmailHandler {
 			&& !lsaType.equals(UserType.USER)
 		) throw new SQLException("May only add Majordomo servers using Linux accounts of type '"+UserType.APPLICATION+"' or '"+UserType.USER+"', trying to use '"+lsaType+'\'');
 		LinuxAccountHandler.checkAccessLinuxServerGroup(conn, source, "addMajordomoServer", lsg);
-		GroupId lsgName=LinuxAccountHandler.getGroupNameForLinuxServerGroup(conn, lsg);
+		Group.Name lsgName=LinuxAccountHandler.getGroupNameForLinuxServerGroup(conn, lsg);
 		if(
 			lsgName.equals(Group.FTPONLY)
 			|| lsgName.equals(Group.MAIL)
@@ -772,17 +770,17 @@ final public class EmailHandler {
 		if(domainAOServer!=lsgAOServer) throw new SQLException("((email.Domain.id="+domain+").ao_server='"+domainAOServer+"')!=((linux.GroupServer.id="+lsg+").ao_server='"+lsgAOServer+"')");
 
 		// Disabled checks
-		AccountingCode packageName=getPackageForEmailDomain(conn, domain);
+		Account.Name packageName=getPackageForEmailDomain(conn, domain);
 		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add Majordomo server: Package for domain #"+domain+" is disabled: "+packageName);
 		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to add Majordomo server: UserServer disabled: "+lsa);
-		AccountingCode lgPackageName=LinuxAccountHandler.getPackageForLinuxServerGroup(conn, lsg);
+		Account.Name lgPackageName=LinuxAccountHandler.getPackageForLinuxServerGroup(conn, lsg);
 		if(PackageHandler.isPackageDisabled(conn, lgPackageName)) throw new SQLException("Unable to add Majordomo server: Package for GroupServer #"+lsg+" is disabled: "+lgPackageName);
 
 		// Create the majordomo email pipe
 		DomainName domainName=getDomainForEmailDomain(conn, domain);
-		UnixPath majordomoServerPath;
+		PosixPath majordomoServerPath;
 		try {
-			majordomoServerPath = UnixPath.valueOf(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY + "/" + domainName);
+			majordomoServerPath = PosixPath.valueOf(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY + "/" + domainName);
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
@@ -915,7 +913,7 @@ final public class EmailHandler {
 		if(disableLog==-1) throw new SQLException("List is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailList", disableLog, true);
 		checkAccessEmailList(conn, source, "enableEmailList", id);
-		AccountingCode pk=getPackageForEmailList(conn, id);
+		Account.Name pk=getPackageForEmailList(conn, id);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable List #"+id+", Package not enabled: "+pk);
 
 		conn.executeUpdate(
@@ -943,7 +941,7 @@ final public class EmailHandler {
 		if(disableLog==-1) throw new SQLException("Pipe is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailPipe", disableLog, true);
 		checkAccessEmailPipe(conn, source, "enableEmailPipe", id);
-		AccountingCode pk=getPackageForEmailPipe(conn, id);
+		Account.Name pk=getPackageForEmailPipe(conn, id);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable Pipe #"+id+", Package not enabled: "+pk);
 
 		conn.executeUpdate(
@@ -971,7 +969,7 @@ final public class EmailHandler {
 		if(disableLog==-1) throw new SQLException("SmtpRelay is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailSmtpRelay", disableLog, true);
 		checkAccessEmailSmtpRelay(conn, source, "enableEmailSmtpRelay", id);
-		AccountingCode pk=getPackageForEmailSmtpRelay(conn, id);
+		Account.Name pk=getPackageForEmailSmtpRelay(conn, id);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable SmtpRelay #"+id+", Package not enabled: "+pk);
 
 		conn.executeUpdate(
@@ -1022,7 +1020,7 @@ final public class EmailHandler {
 
 	public static IntList getEmailListsForPackage(
 		DatabaseConnection conn,
-		AccountingCode name
+		Account.Name name
 	) throws IOException, SQLException {
 		return conn.executeIntListQuery(
 			"select\n"
@@ -1041,7 +1039,7 @@ final public class EmailHandler {
 
 	public static IntList getEmailPipesForPackage(
 		DatabaseConnection conn,
-		AccountingCode name
+		Account.Name name
 	) throws IOException, SQLException {
 		return conn.executeIntListQuery("select id from email.\"Pipe\" where package=?", name);
 	}
@@ -1055,7 +1053,7 @@ final public class EmailHandler {
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "getImapFolderSizes", linux_server_account);
 		int aoServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, linux_server_account);
 		if(DaemonHandler.isDaemonAvailable(aoServer)) {
-			UserId username=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, linux_server_account);
+			com.aoindustries.aoserv.client.linux.User.Name username=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, linux_server_account);
 			try {
 				return DaemonHandler.getDaemonConnector(conn, aoServer).getImapFolderSizes(username, folderNames);
 			} catch(IOException err) {
@@ -1076,7 +1074,7 @@ final public class EmailHandler {
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "getInboxAttributes", linux_server_account);
 		int aoServer=LinuxAccountHandler.getAOServerForLinuxServerAccount(conn, linux_server_account);
 		if(DaemonHandler.isDaemonAvailable(aoServer)) {
-			UserId username=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, linux_server_account);
+			com.aoindustries.aoserv.client.linux.User.Name username=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, linux_server_account);
 			try {
 				return DaemonHandler.getDaemonConnector(conn, aoServer).getInboxAttributes(username);
 			} catch(IOException err) {
@@ -1089,7 +1087,7 @@ final public class EmailHandler {
 
 	public static IntList getEmailSmtpRelaysForPackage(
 		DatabaseConnection conn,
-		AccountingCode name
+		Account.Name name
 	) throws IOException, SQLException {
 		return conn.executeIntListQuery("select id from email.\"SmtpRelay\" where package=?", name);
 	}
@@ -1127,9 +1125,9 @@ final public class EmailHandler {
 		int id
 	) throws IOException, SQLException {
 		checkAccessEmailList(conn, source, "getMajordomoInfoFile", id);
-		UnixPath infoPath;
+		PosixPath infoPath;
 		try {
-			infoPath = UnixPath.valueOf(getPathForEmailList(conn, id)+".info");
+			infoPath = PosixPath.valueOf(getPathForEmailList(conn, id)+".info");
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
@@ -1145,9 +1143,9 @@ final public class EmailHandler {
 		int id
 	) throws IOException, SQLException {
 		checkAccessEmailList(conn, source, "getMajordomoIntroFile", id);
-		UnixPath introPath;
+		PosixPath introPath;
 		try {
-			introPath = UnixPath.valueOf(getPathForEmailList(conn, id)+".intro");
+			introPath = PosixPath.valueOf(getPathForEmailList(conn, id)+".intro");
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
@@ -1179,7 +1177,7 @@ final public class EmailHandler {
 		boolean provideProgress,
 		int esr
 	) throws IOException, SQLException {
-		UserId username=source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
 		User masterUser=MasterServer.getUser(conn, username);
 		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
 		if(masterUser!=null && masterServers.length==0) MasterServer.writeObjects(
@@ -1257,8 +1255,8 @@ final public class EmailHandler {
 
 		if(isEmailSmtpRelayDisabled(conn, id)) throw new SQLException("Unable to refresh SmtpRelay, SmtpRelay disabled: "+id);
 
-		AccountingCode packageName=getPackageForEmailSmtpRelay(conn, id);
-		AccountingCode accounting = PackageHandler.getBusinessForPackage(conn, packageName);
+		Account.Name packageName=getPackageForEmailSmtpRelay(conn, id);
+		Account.Name accounting = PackageHandler.getBusinessForPackage(conn, packageName);
 		int aoServer=getAOServerForEmailSmtpRelay(conn, id);
 		Timestamp expiration=conn.executeTimestampQuery("select expiration from email.\"SmtpRelay\" where id=?", id);
 		long exp=expiration==null?-1:expiration.getTime();
@@ -1291,7 +1289,7 @@ final public class EmailHandler {
 		checkAccessEmailAddress(conn, source, "removeBlackholeEmailAddress", bea);
 
 		// Get stuff for use after the try block
-		AccountingCode accounting = getBusinessForEmailAddress(conn, bea);
+		Account.Name accounting = getBusinessForEmailAddress(conn, bea);
 		int aoServer=getAOServerForEmailAddress(conn, bea);
 
 		// Delete from the database
@@ -1316,7 +1314,7 @@ final public class EmailHandler {
 		checkAccessEmailAddress(conn, source, "removeEmailAddress", address);
 
 		// Get stuff for use after the try block
-		AccountingCode accounting = getBusinessForEmailAddress(conn, address);
+		Account.Name accounting = getBusinessForEmailAddress(conn, address);
 		int aoServer=getAOServerForEmailAddress(conn, address);
 
 		// Delete the objects that depend on this one first
@@ -1359,7 +1357,7 @@ final public class EmailHandler {
 		checkAccessEmailAddress(conn, source, "removeEmailForwarding", ea);
 
 		// Get stuff for use after the try block
-		AccountingCode accounting = getBusinessForEmailAddress(conn, ea);
+		Account.Name accounting = getBusinessForEmailAddress(conn, ea);
 		int aoServer=getAOServerForEmailAddress(conn, ea);
 
 		// Delete from the database
@@ -1379,7 +1377,7 @@ final public class EmailHandler {
 		checkAccessEmailAddress(conn, source, "removeEmailListAddress", ea);
 
 		// Get stuff for use after the try block
-		AccountingCode accounting = getBusinessForEmailAddress(conn, ea);
+		Account.Name accounting = getBusinessForEmailAddress(conn, ea);
 		int aoServer=getAOServerForEmailAddress(conn, ea);
 
 		// Delete from the database
@@ -1406,10 +1404,9 @@ final public class EmailHandler {
 		int id
 	) throws IOException, SQLException {
 		// Get the values for later use
-		AccountingCode accounting = getBusinessForEmailList(conn, id);
+		Account.Name accounting = getBusinessForEmailList(conn, id);
 		int aoServer=getAOServerForEmailList(conn, id);
-		UnixPath path = conn.executeObjectQuery(
-			ObjectFactories.unixPathFactory,
+		PosixPath path = conn.executeObjectQuery(ObjectFactories.posixPathFactory,
 			"select path from email.\"List\" where id=?",
 			id
 		);
@@ -1516,7 +1513,7 @@ final public class EmailHandler {
 		checkAccessEmailAddress(conn, source, "removeLinuxAccAddress", ea);
 
 		// Get stuff for use after the try block
-		AccountingCode accounting = getBusinessForEmailAddress(conn, ea);
+		Account.Name accounting = getBusinessForEmailAddress(conn, ea);
 		int aoServer=getAOServerForEmailAddress(conn, ea);
 
 		// Delete from the database
@@ -1544,7 +1541,7 @@ final public class EmailHandler {
 		int id
 	) throws IOException, SQLException {
 		// Get the values for later use
-		AccountingCode accounting = getBusinessForEmailPipe(conn, id);
+		Account.Name accounting = getBusinessForEmailPipe(conn, id);
 		int aoServer=getAOServerForEmailPipe(conn, id);
 
 		// Delete the objects that depend on this one first
@@ -1580,7 +1577,7 @@ final public class EmailHandler {
 		checkAccessEmailAddress(conn, source, "removeEmailPipeAddress", ea);
 
 		// Get stuff for use after the try block
-		AccountingCode accounting = getBusinessForEmailAddress(conn, ea);
+		Account.Name accounting = getBusinessForEmailAddress(conn, ea);
 		int aoServer=getAOServerForEmailAddress(conn, ea);
 
 		// Delete from the database
@@ -1613,7 +1610,7 @@ final public class EmailHandler {
 			elaMod=false,
 			epaMod=false
 		;
-		AccountingCode accounting = getBusinessForEmailDomain(conn, id);
+		Account.Name accounting = getBusinessForEmailDomain(conn, id);
 		int aoServer=getAOServerForEmailDomain(conn, id);
 
 		// Remove any majordomo server
@@ -1719,7 +1716,7 @@ final public class EmailHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
-		AccountingCode accounting = getBusinessForEmailSmtpRelay(conn, id);
+		Account.Name accounting = getBusinessForEmailSmtpRelay(conn, id);
 		int aoServer=getAOServerForEmailSmtpRelay(conn, id);
 
 		conn.executeUpdate(
@@ -1747,7 +1744,7 @@ final public class EmailHandler {
 		InvalidateList invalidateList,
 		int domain
 	) throws IOException, SQLException {
-		AccountingCode accounting = getBusinessForEmailDomain(conn, domain);
+		Account.Name accounting = getBusinessForEmailDomain(conn, domain);
 		int aoServer=getAOServerForEmailDomain(conn, domain);
 
 		// Remove any majordomo lists
@@ -1811,33 +1808,29 @@ final public class EmailHandler {
 		);
 	}
 
-	public static AccountingCode getBusinessForEmailAddress(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForEmailAddress(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select pk.accounting from email.\"Address\" ea, email.\"Domain\" sd, billing.\"Package\" pk where ea.domain=sd.id and sd.package=pk.name and ea.id=?",
 			id
 		);
 	}
 
-	public static AccountingCode getBusinessForEmailList(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForEmailList(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select pk.accounting from email.\"List\" el, linux.\"GroupServer\" lsg, linux.\"Group\" lg, billing.\"Package\" pk where el.linux_server_group=lsg.id and lsg.name=lg.name and lg.package=pk.name and el.id=?",
 			id
 		);
 	}
 
-	public static AccountingCode getBusinessForEmailPipe(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForEmailPipe(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select pk.accounting from email.\"Pipe\" ep, billing.\"Package\" pk where ep.package=pk.name and ep.id=?",
 			id
 		);
 	}
 
-	public static AccountingCode getBusinessForEmailDomain(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForEmailDomain(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select pk.accounting from email.\"Domain\" sd, billing.\"Package\" pk where sd.package=pk.name and sd.id=?",
 			id
 		);
@@ -1851,9 +1844,8 @@ final public class EmailHandler {
 		);
 	}
 
-	public static AccountingCode getBusinessForEmailSmtpRelay(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getBusinessForEmailSmtpRelay(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select pk.accounting from email.\"SmtpRelay\" esr, billing.\"Package\" pk where esr.package=pk.name and esr.id=?",
 			id
 		);
@@ -1881,17 +1873,15 @@ final public class EmailHandler {
 		return conn.executeIntQuery("select linux_server_group from email.\"MajordomoServer\" where domain=?", domain);
 	}
 
-	public static AccountingCode getPackageForEmailDomain(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getPackageForEmailDomain(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select package from email.\"Domain\" where id=?",
 			id
 		);
 	}
 
-	public static AccountingCode getPackageForEmailList(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getPackageForEmailList(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  lg.package\n"
 			+ "from\n"
@@ -1906,25 +1896,22 @@ final public class EmailHandler {
 		);
 	}
 
-	public static AccountingCode getPackageForEmailPipe(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getPackageForEmailPipe(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select package from email.\"Pipe\" where id=?",
 			id
 		);
 	}
 
-	public static AccountingCode getPackageForEmailSmtpRelay(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+	public static Account.Name getPackageForEmailSmtpRelay(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select package from email.\"SmtpRelay\" where id=?",
 			id
 		);
 	}
 
-	public static UnixPath getPathForEmailList(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.unixPathFactory,
+	public static PosixPath getPathForEmailList(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(ObjectFactories.posixPathFactory,
 			"select path from email.\"List\" where id=?",
 			id
 		);
@@ -2050,9 +2037,9 @@ final public class EmailHandler {
 		String file
 	) throws IOException, SQLException {
 		checkAccessEmailList(conn, source, "setMajordomoInfoFile", id);
-		UnixPath infoPath;
+		PosixPath infoPath;
 		try {
-			infoPath = UnixPath.valueOf(getPathForEmailList(conn, id)+".info");
+			infoPath = PosixPath.valueOf(getPathForEmailList(conn, id)+".info");
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
@@ -2075,9 +2062,9 @@ final public class EmailHandler {
 		String file
 	) throws IOException, SQLException {
 		checkAccessEmailList(conn, source, "setMajordomoIntroFile", id);
-		UnixPath introPath;
+		PosixPath introPath;
 		try {
-			introPath = UnixPath.valueOf(getPathForEmailList(conn, id)+".intro");
+			introPath = PosixPath.valueOf(getPathForEmailList(conn, id)+".intro");
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}

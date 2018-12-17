@@ -81,11 +81,11 @@ public class UserServer_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			+ "  psu.disable_log,\n"
 			+ "  case when psu.predisable_password is null then null else ? end\n"
 			+ "from\n"
-			+ "  account.\"Username\" un1,\n"
+			+ "  account.\"User\" un1,\n"
 			+ "  billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  billing.\"Package\" pk2,\n"
-			+ "  account.\"Username\" un2,\n"
+			+ "  account.\"User\" un2,\n"
 			+ "  postgresql.\"UserServer\" psu\n"
 			+ "where\n"
 			+ "  un1.username=?\n"

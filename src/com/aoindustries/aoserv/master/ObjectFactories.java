@@ -1,19 +1,14 @@
 /*
- * Copyright 2013, 2015, 2017 by AO Industries, Inc.,
+ * Copyright 2013, 2015, 2017, 2018 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.FirewalldZoneName;
-import com.aoindustries.aoserv.client.validator.GroupId;
-import com.aoindustries.aoserv.client.validator.MySQLDatabaseName;
-import com.aoindustries.aoserv.client.validator.MySQLUserId;
-import com.aoindustries.aoserv.client.validator.PostgresDatabaseName;
-import com.aoindustries.aoserv.client.validator.PostgresUserId;
-import com.aoindustries.aoserv.client.validator.UnixPath;
-import com.aoindustries.aoserv.client.validator.UserId;
+import com.aoindustries.aoserv.client.account.Account;
+import com.aoindustries.aoserv.client.linux.Group;
+import com.aoindustries.aoserv.client.linux.PosixPath;
+import com.aoindustries.aoserv.client.net.FirewallZone;
 import com.aoindustries.dbc.ObjectFactory;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.HostAddress;
@@ -38,9 +33,9 @@ final public class ObjectFactories {
     private ObjectFactories() {
     }
 
-    public static final ObjectFactory<AccountingCode> accountingCodeFactory = (ResultSet result) -> {
+    public static final ObjectFactory<Account.Name> accountNameFactory = (ResultSet result) -> {
 		try {
-			return AccountingCode.valueOf(result.getString(1));
+			return Account.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}
@@ -54,17 +49,17 @@ final public class ObjectFactories {
 		}
 	};
 
-    public static final ObjectFactory<GroupId> groupIdFactory = (ResultSet result) -> {
+    public static final ObjectFactory<Group.Name> groupNameFactory = (ResultSet result) -> {
 		try {
-			return GroupId.valueOf(result.getString(1));
+			return Group.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}
 	};
 
-    public static final ObjectFactory<FirewalldZoneName> firewalldZoneNameFactory = (ResultSet result) -> {
+    public static final ObjectFactory<FirewallZone.Name> firewallZoneNameFactory = (ResultSet result) -> {
 		try {
-			return FirewalldZoneName.valueOf(result.getString(1));
+			return FirewallZone.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}
@@ -86,33 +81,41 @@ final public class ObjectFactories {
 		}
 	};
 
-    public static final ObjectFactory<MySQLDatabaseName> mySQLDatabaseNameFactory = (ResultSet result) -> {
+    public static final ObjectFactory<com.aoindustries.aoserv.client.linux.User.Name> linuxUserNameFactory = (ResultSet result) -> {
 		try {
-			return MySQLDatabaseName.valueOf(result.getString(1));
+			return com.aoindustries.aoserv.client.linux.User.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}
 	};
 
-    public static final ObjectFactory<MySQLUserId> mySQLUserIdFactory = (ResultSet result) -> {
+    public static final ObjectFactory<com.aoindustries.aoserv.client.mysql.Database.Name> mysqlDatabaseNameFactory = (ResultSet result) -> {
 		try {
-			return MySQLUserId.valueOf(result.getString(1));
+			return com.aoindustries.aoserv.client.mysql.Database.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}
 	};
 
-    public static final ObjectFactory<PostgresDatabaseName> postgresDatabaseNameFactory = (ResultSet result) -> {
+    public static final ObjectFactory<com.aoindustries.aoserv.client.mysql.User.Name> mysqlUserNameFactory = (ResultSet result) -> {
 		try {
-			return PostgresDatabaseName.valueOf(result.getString(1));
+			return com.aoindustries.aoserv.client.mysql.User.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}
 	};
 
-    public static final ObjectFactory<PostgresUserId> postgresUserIdFactory = (ResultSet result) -> {
+    public static final ObjectFactory<com.aoindustries.aoserv.client.postgresql.Database.Name> postgresqlDatabaseNameFactory = (ResultSet result) -> {
 		try {
-			return PostgresUserId.valueOf(result.getString(1));
+			return com.aoindustries.aoserv.client.postgresql.Database.Name.valueOf(result.getString(1));
+		} catch(ValidationException e) {
+			throw new SQLException(e.getLocalizedMessage(), e);
+		}
+	};
+
+    public static final ObjectFactory<com.aoindustries.aoserv.client.postgresql.User.Name> postgresqlUserNameFactory = (ResultSet result) -> {
+		try {
+			return com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}
@@ -129,17 +132,17 @@ final public class ObjectFactories {
 		}
 	};
 
-    public static final ObjectFactory<UserId> userIdFactory = (ResultSet result) -> {
+    public static final ObjectFactory<com.aoindustries.aoserv.client.account.User.Name> userNameFactory = (ResultSet result) -> {
 		try {
-			return UserId.valueOf(result.getString(1));
+			return com.aoindustries.aoserv.client.account.User.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}
 	};
 
-    public static final ObjectFactory<UnixPath> unixPathFactory = (ResultSet result) -> {
+    public static final ObjectFactory<PosixPath> posixPathFactory = (ResultSet result) -> {
 		try {
-			return UnixPath.valueOf(result.getString(1));
+			return PosixPath.valueOf(result.getString(1));
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}

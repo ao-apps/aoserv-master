@@ -97,7 +97,7 @@ public class Brand_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  ?,\n" // aoweb_struts_keystore_type
 			+ "  ?\n" // aoweb_struts_keystore_password
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  reseller.\"Brand\" br\n"
 			+ "where\n"
@@ -124,7 +124,7 @@ public class Brand_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			"select\n"
 			+ "  br.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  reseller.\"Brand\" br\n"

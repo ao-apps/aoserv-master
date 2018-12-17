@@ -95,7 +95,7 @@ public class LimiterSet_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			"select\n"
 			+ "  irls.*\n"
 			+ "from\n"
-			+ "             account.\"Username\"              un\n"
+			+ "             account.\"User\"                  un\n"
 			+ "  inner join billing.\"Package\"               pk   on  un.package    =   pk.name\n"
 			+ "  inner join account.\"AccountHost\"           bs   on  pk.accounting =   bs.accounting\n"
 			+ "  inner join net.\"Device\"                    nd   on  bs.server     =   nd.server\n"

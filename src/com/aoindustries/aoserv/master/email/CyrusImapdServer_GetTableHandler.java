@@ -75,7 +75,7 @@ public class CyrusImapdServer_GetTableHandler extends TableHandler.GetTableHandl
 			"select\n"
 			+ "  cis.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un\n"
+			+ "             account.\"User\"           un\n"
 			+ "  inner join billing.\"Package\"        pk  on un.package    = pk.name\n"
 			+ "  inner join account.\"AccountHost\"    bs  on pk.accounting = bs.accounting\n"
 			+ "  inner join email.\"CyrusImapdServer\" cis on bs.server     = cis.ao_server\n"

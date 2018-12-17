@@ -89,7 +89,7 @@ public class BackupPartition_GetTableHandler extends TableHandler.GetTableHandle
 			"select distinct\n"
 			+ "  bp.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ "  account.\"AccountHost\" bs,\n"
 			+ "  backup.\"BackupPartition\" bp\n"

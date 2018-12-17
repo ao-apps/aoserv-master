@@ -6,10 +6,10 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
+import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.linux.UserType;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.scm.CvsRepository;
-import com.aoindustries.aoserv.client.validator.UnixPath;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
@@ -31,7 +31,7 @@ final public class CvsHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int aoServer,
-		UnixPath path,
+		PosixPath path,
 		int lsa,
 		int lsg,
 		long mode
@@ -45,9 +45,9 @@ final public class CvsHandler {
 
 			// OperatingSystem settings
 			int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
-			UnixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
+			PosixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
 			String httpdSharedTomcatsDirStr = httpdSharedTomcatsDir.toString();
-			UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+			PosixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 			String httpdSitesDirStr = httpdSitesDir.toString();
 
 			// Integrity checks

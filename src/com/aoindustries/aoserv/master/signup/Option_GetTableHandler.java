@@ -61,7 +61,7 @@ public class Option_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			"select\n"
 			+ "  sro.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  signup.\"Request\" sr,\n"

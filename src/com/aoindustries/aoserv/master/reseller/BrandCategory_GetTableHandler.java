@@ -61,7 +61,7 @@ public class BrandCategory_GetTableHandler extends TableHandler.GetTableHandlerB
 			"select\n"
 			+ "  tbc.*\n"
 			+ "from\n"
-			+ "  account.\"Username\" un,\n"
+			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
 			+ "  reseller.\"BrandCategory\" tbc\n"

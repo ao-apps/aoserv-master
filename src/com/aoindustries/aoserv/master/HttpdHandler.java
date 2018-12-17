@@ -5,17 +5,15 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.distribution.Software;
 import com.aoindustries.aoserv.client.linux.Group;
+import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.net.AppProtocol;
 import com.aoindustries.aoserv.client.net.FirewallZone;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.client.validator.AccountingCode;
-import com.aoindustries.aoserv.client.validator.GroupId;
-import com.aoindustries.aoserv.client.validator.UnixPath;
-import com.aoindustries.aoserv.client.validator.UserId;
 import com.aoindustries.aoserv.client.web.Location;
 import com.aoindustries.aoserv.client.web.Site;
 import com.aoindustries.aoserv.client.web.tomcat.Context;
@@ -45,7 +43,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -296,8 +293,8 @@ final public class HttpdHandler {
 		String path,
 		boolean isRegularExpression,
 		String authName,
-		UnixPath authGroupFile,
-		UnixPath authUserFile,
+		PosixPath authGroupFile,
+		PosixPath authUserFile,
 		String require,
 		String handler
 	) throws IOException, SQLException {
@@ -364,7 +361,7 @@ final public class HttpdHandler {
 		String className,
 		boolean cookies,
 		boolean crossContext,
-		UnixPath docBase,
+		PosixPath docBase,
 		boolean override,
 		String path,
 		boolean privileged,
@@ -372,7 +369,7 @@ final public class HttpdHandler {
 		boolean useNaming,
 		String wrapperClass,
 		int debug,
-		UnixPath workDir,
+		PosixPath workDir,
 		boolean serverXmlConfigured
 	) throws IOException, SQLException {
 		checkAccessHttpdSite(conn, source, "addHttpdTomcatContext", tomcat_site);
@@ -392,7 +389,7 @@ final public class HttpdHandler {
 			serverXmlConfigured
 		);
 
-		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
+		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
 		int id = conn.executeIntUpdate(
@@ -630,12 +627,12 @@ final public class HttpdHandler {
 		int tomcat_site,
 		String className,
 		boolean crossContext,
-		UnixPath docBase,
+		PosixPath docBase,
 		boolean override,
 		String path,
 		boolean privileged,
 		String wrapperClass,
-		UnixPath workDir,
+		PosixPath workDir,
 		boolean serverXmlConfigured
 	) throws IOException, SQLException {
 		if(!Context.isValidDocBase(docBase)) throw new SQLException("Invalid docBase: "+docBase);
@@ -643,8 +640,8 @@ final public class HttpdHandler {
 
 		// OperatingSystem settings
 		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
-		UnixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
-		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+		PosixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
+		PosixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 
 		String docBaseStr = docBase.toString();
 		if(docBaseStr.startsWith("/home/")) {
@@ -685,8 +682,7 @@ final public class HttpdHandler {
 			LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addCvsRepository", groupLSA);
 		} else {
 			// Allow the example directories
-			List<UnixPath> tomcats = conn.executeObjectListQuery(
-				ObjectFactories.unixPathFactory,
+			List<PosixPath> tomcats = conn.executeObjectListQuery(ObjectFactories.posixPathFactory,
 				"select\n"
 				+ "  htv.install_dir || '/webapps/examples'\n"
 				+ "from\n"
@@ -705,7 +701,7 @@ final public class HttpdHandler {
 				tomcat_site
 			);
 			boolean found=false;
-			for (UnixPath tomcat : tomcats) {
+			for (PosixPath tomcat : tomcats) {
 				if (docBase.equals(tomcat)) {
 					found = true;
 					break;
@@ -728,9 +724,9 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int aoServer,
 		String siteName,
-		AccountingCode packageName,
-		UserId username,
-		GroupId group,
+		Account.Name packageName,
+		com.aoindustries.aoserv.client.linux.User.Name username,
+		Group.Name group,
 		Email serverAdmin,
 		boolean useApache,
 		int ipAddress,
@@ -779,9 +775,9 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int aoServer,
 		String siteName,
-		AccountingCode packageName,
-		UserId username,
-		GroupId group,
+		Account.Name packageName,
+		com.aoindustries.aoserv.client.linux.User.Name username,
+		Group.Name group,
 		Email serverAdmin,
 		boolean useApache,
 		int ipAddress,
@@ -904,7 +900,7 @@ final public class HttpdHandler {
 
 		PackageHandler.checkPackageAccessServer(conn, source, methodName, packageName, aoServer);
 
-		AccountingCode accounting = PackageHandler.getBusinessForPackage(conn, packageName);
+		Account.Name accounting = PackageHandler.getBusinessForPackage(conn, packageName);
 
 		Port httpPort;
 		try {
@@ -990,10 +986,10 @@ final public class HttpdHandler {
 		invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITES, accounting, aoServer, false);
 
 		// OperatingSystem settings
-		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
-		UnixPath docBase;
+		PosixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+		PosixPath docBase;
 		try {
-			docBase = UnixPath.valueOf(httpdSitesDir + "/" + siteName + "/webapps/" + Context.ROOT_DOC_BASE);
+			docBase = PosixPath.valueOf(httpdSitesDir + "/" + siteName + "/webapps/" + Context.ROOT_DOC_BASE);
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
@@ -1301,8 +1297,8 @@ final public class HttpdHandler {
 		String name,
 		int aoServer,
 		int version,
-		UserId linuxServerAccount,
-		GroupId linuxServerGroup,
+		com.aoindustries.aoserv.client.linux.User.Name linuxServerAccount,
+		Group.Name linuxServerGroup,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
 		if(!SharedTomcat.isValidSharedTomcatName(name)) throw new SQLException("Invalid shared Tomcat name: "+name);
@@ -1330,7 +1326,7 @@ final public class HttpdHandler {
 
 		int id;
 		if(isTomcat4) {
-			AccountingCode packageName=LinuxAccountHandler.getPackageForLinuxGroup(conn, linuxServerGroup);
+			Account.Name packageName=LinuxAccountHandler.getPackageForLinuxGroup(conn, linuxServerGroup);
 			int loopbackIP=IPAddressHandler.getLoopbackIPAddress(conn, aoServer);
 
 			// Allocate a Bind for the worker
@@ -1442,9 +1438,9 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int aoServer,
 		String siteName,
-		AccountingCode packageName,
-		UserId username,
-		GroupId group,
+		Account.Name packageName,
+		com.aoindustries.aoserv.client.linux.User.Name username,
+		Group.Name group,
 		Email serverAdmin,
 		boolean useApache,
 		int ipAddress,
@@ -1495,9 +1491,9 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int aoServer,
 		String siteName,
-		AccountingCode packageName,
-		UserId username,
-		GroupId group,
+		Account.Name packageName,
+		com.aoindustries.aoserv.client.linux.User.Name username,
+		Group.Name group,
 		Email serverAdmin,
 		boolean useApache,
 		int ipAddress,
@@ -1638,7 +1634,7 @@ final public class HttpdHandler {
 		if(disableLog==-1) throw new SQLException("SharedTomcat is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSharedTomcat", disableLog, true);
 		checkAccessHttpdSharedTomcat(conn, source, "enableHttpdSharedTomcat", id);
-		AccountingCode pk=getPackageForHttpdSharedTomcat(conn, id);
+		Account.Name pk=getPackageForHttpdSharedTomcat(conn, id);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable SharedTomcat #"+id+", Package not enabled: "+pk);
 		int lsa=getLinuxServerAccountForHttpdSharedTomcat(conn, id);
 		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable SharedTomcat #"+id+", UserServer not enabled: "+lsa);
@@ -1668,7 +1664,7 @@ final public class HttpdHandler {
 		if(disableLog==-1) throw new SQLException("Site is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSite", disableLog, true);
 		checkAccessHttpdSite(conn, source, "enableHttpdSite", id);
-		AccountingCode pk=getPackageForHttpdSite(conn, id);
+		Account.Name pk=getPackageForHttpdSite(conn, id);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable Site #"+id+", Package not enabled: "+pk);
 		int lsa=getLinuxServerAccountForHttpdSite(conn, id);
 		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable Site #"+id+", UserServer not enabled: "+lsa);
@@ -1726,8 +1722,8 @@ final public class HttpdHandler {
 		sorted.addAll(names);
 
 		// OperatingSystem settings
-		UnixPath httpdSharedTomcatsDirCentOS5 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
-		UnixPath httpdSharedTomcatsDirCentOS7 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
+		PosixPath httpdSharedTomcatsDirCentOS5 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
+		PosixPath httpdSharedTomcatsDirCentOS7 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
 
 		// Find one that is not used
 		String goodOne=null;
@@ -1735,11 +1731,11 @@ final public class HttpdHandler {
 			String name=template+c;
 			if(!SharedTomcat.isValidSharedTomcatName(name)) throw new SQLException("Invalid shared Tomcat name: "+name);
 			if(!sorted.contains(name)) {
-				UnixPath wwwgroupDirCentOS5;
-				UnixPath wwwgroupDirCentOS7;
+				PosixPath wwwgroupDirCentOS5;
+				PosixPath wwwgroupDirCentOS7;
 				try {
-					wwwgroupDirCentOS5 = UnixPath.valueOf(httpdSharedTomcatsDirCentOS5 + "/" + name);
-					wwwgroupDirCentOS7 = UnixPath.valueOf(httpdSharedTomcatsDirCentOS7 + "/" + name);
+					wwwgroupDirCentOS5 = PosixPath.valueOf(httpdSharedTomcatsDirCentOS5 + "/" + name);
+					wwwgroupDirCentOS7 = PosixPath.valueOf(httpdSharedTomcatsDirCentOS7 + "/" + name);
 				} catch(ValidationException e) {
 					throw new SQLException(e);
 				}
@@ -1760,8 +1756,8 @@ final public class HttpdHandler {
 						wwwgroupDirCentOS7,
 						wwwgroupDirCentOS7 + "/"
 					) == 0
-					// Must also not be found in account.Username.username
-					&& conn.executeIntQuery("select count(*) from account.\"Username\" where username=?", name) == 0
+					// Must also not be found in account.User.username
+					&& conn.executeIntQuery("select count(*) from account.\"User\" where username=?", name) == 0
 					// Must also not be found in linux.Group.name
 					&& conn.executeIntQuery("select count(*) from linux.\"Group\" where name=?", name) == 0
 				) {
@@ -1789,8 +1785,8 @@ final public class HttpdHandler {
 		sorted.addAll(names);
 
 		// OperatingSystem settings
-		UnixPath httpdSitesDirCentOS5 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
-		UnixPath httpdSitesDirCentOS7 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
+		PosixPath httpdSitesDirCentOS5 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
+		PosixPath httpdSitesDirCentOS7 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
 
 		// Find one that is not used
 		String goodOne=null;
@@ -1799,11 +1795,11 @@ final public class HttpdHandler {
 			if(!Site.isValidSiteName(name)) throw new SQLException("Invalid site name: "+name);
 			if(!sorted.contains(name)) {
 				// Must also not be found in linux.UserServer.home on CentOS 5 or CentOS 7
-				UnixPath wwwDirCentOS5;
-				UnixPath wwwDirCentOS7;
+				PosixPath wwwDirCentOS5;
+				PosixPath wwwDirCentOS7;
 				try {
-					wwwDirCentOS5 = UnixPath.valueOf(httpdSitesDirCentOS5 + "/" + name);
-					wwwDirCentOS7 = UnixPath.valueOf(httpdSitesDirCentOS7 + "/" + name);
+					wwwDirCentOS5 = PosixPath.valueOf(httpdSitesDirCentOS5 + "/" + name);
+					wwwDirCentOS7 = PosixPath.valueOf(httpdSitesDirCentOS7 + "/" + name);
 				} catch(ValidationException e) {
 					throw new SQLException(e);
 				}
@@ -1879,7 +1875,7 @@ final public class HttpdHandler {
 
 	public static IntList getHttpdSharedTomcatsForPackage(
 		DatabaseConnection conn,
-		AccountingCode name
+		Account.Name name
 	) throws IOException, SQLException {
 		return conn.executeIntListQuery(
 			"select\n"
@@ -1898,7 +1894,7 @@ final public class HttpdHandler {
 
 	public static IntList getHttpdSitesForPackage(
 		DatabaseConnection conn,
-		AccountingCode name
+		Account.Name name
 	) throws IOException, SQLException {
 		return conn.executeIntListQuery("select id from web.\"Site\" where package=?", name);
 	}
@@ -1921,12 +1917,11 @@ final public class HttpdHandler {
 		);
 	}
 
-	public static AccountingCode getBusinessForHttpdSharedTomcat(
+	public static Account.Name getBusinessForHttpdSharedTomcat(
 		DatabaseConnection conn,
 		int id
 	) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
@@ -1943,12 +1938,11 @@ final public class HttpdHandler {
 		);
 	}
 
-	public static AccountingCode getBusinessForHttpdSite(
+	public static Account.Name getBusinessForHttpdSite(
 		DatabaseConnection conn,
 		int id
 	) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
@@ -1961,12 +1955,11 @@ final public class HttpdHandler {
 		);
 	}
 
-	public static AccountingCode getBusinessForHttpdServer(
+	public static Account.Name getBusinessForHttpdServer(
 		DatabaseConnection conn,
 		int id
 	) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
@@ -2011,12 +2004,11 @@ final public class HttpdHandler {
 		);
 	}
 
-	public static AccountingCode getPackageForHttpdServer(
+	public static Account.Name getPackageForHttpdServer(
 		DatabaseConnection conn,
 		int httpdServer
 	) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.name\n"
 			+ "from\n"
@@ -2028,12 +2020,11 @@ final public class HttpdHandler {
 		);
 	}
 
-	public static AccountingCode getPackageForHttpdSharedTomcat(
+	public static Account.Name getPackageForHttpdSharedTomcat(
 		DatabaseConnection conn,
 		int id
 	) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  lg.package\n"
 			+ "from\n"
@@ -2048,12 +2039,11 @@ final public class HttpdHandler {
 		);
 	}
 
-	public static AccountingCode getPackageForHttpdSite(
+	public static Account.Name getPackageForHttpdSite(
 		DatabaseConnection conn,
 		int id
 	) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.accountingCodeFactory,
+		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select package from web.\"Site\" where id=?",
 			id
 		);
@@ -2218,7 +2208,7 @@ final public class HttpdHandler {
 	public static int getHttpdBind(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		AccountingCode packageName,
+		Account.Name packageName,
 		int aoServer,
 		int ipAddress,
 		Port httpPort,
@@ -2273,7 +2263,7 @@ final public class HttpdHandler {
 				httpPort.getProtocol().name(),
 				protocol
 			);
-			AccountingCode business = PackageHandler.getBusinessForPackage(conn, packageName);
+			Account.Name business = PackageHandler.getBusinessForPackage(conn, packageName);
 			invalidateList.addTable(
 				conn,
 				Table.TableID.NET_BINDS,
@@ -2375,7 +2365,7 @@ final public class HttpdHandler {
 			);
 		}
 		// Always invalidate these tables because adding site may grant permissions to these rows
-		AccountingCode business = PackageHandler.getBusinessForPackage(conn, packageName);
+		Account.Name business = PackageHandler.getBusinessForPackage(conn, packageName);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_BINDS,
@@ -2417,7 +2407,7 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
-		AccountingCode accounting = getBusinessForHttpdSharedTomcat(conn, id);
+		Account.Name accounting = getBusinessForHttpdSharedTomcat(conn, id);
 		int aoServer=getAOServerForHttpdSharedTomcat(conn, id);
 
 		int tomcat4Worker=conn.executeIntQuery("select coalesce(tomcat4_worker, -1) from \"web.tomcat\".\"SharedTomcat\" where id=?", id);
@@ -2492,18 +2482,18 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int httpdSitePKey
 	) throws IOException, SQLException {
-		AccountingCode accounting = getBusinessForHttpdSite(conn, httpdSitePKey);
+		Account.Name accounting = getBusinessForHttpdSite(conn, httpdSitePKey);
 		int aoServer=getAOServerForHttpdSite(conn, httpdSitePKey);
 		String siteName=conn.executeStringQuery("select \"name\" from web.\"Site\" where id=?", httpdSitePKey);
 
 		// OperatingSystem settings
 		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
-		UnixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
+		PosixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 
 		// Must not contain a CVS repository
-		UnixPath siteDir;
+		PosixPath siteDir;
 		try {
-			siteDir = UnixPath.valueOf(httpdSitesDir + "/" + siteName);
+			siteDir = PosixPath.valueOf(httpdSitesDir + "/" + siteName);
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
@@ -2704,7 +2694,7 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
-		AccountingCode accounting = getBusinessForHttpdServer(conn, id);
+		Account.Name accounting = getBusinessForHttpdServer(conn, id);
 		int aoServer = getAOServerForHttpdServer(conn, id);
 
 		// web.Site
@@ -2721,7 +2711,7 @@ final public class HttpdHandler {
 		int httpd_site=conn.executeIntQuery("select httpd_site from web.\"Location\" where id=?", id);
 		checkAccessHttpdSite(conn, source, "removeHttpdSiteAuthenticatedLocation", httpd_site);
 
-		AccountingCode accounting = getBusinessForHttpdSite(conn, httpd_site);
+		Account.Name accounting = getBusinessForHttpdSite(conn, httpd_site);
 		int aoServer=getAOServerForHttpdSite(conn, httpd_site);
 
 		conn.executeUpdate("delete from web.\"Location\" where id=?", id);
@@ -2777,7 +2767,7 @@ final public class HttpdHandler {
 		String path = conn.executeStringQuery("select path from \"web.tomcat\".\"Context\" where id=?", id);
 		if(path.isEmpty()) throw new SQLException("Not allowed to remove the default context: " + id);
 
-		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
+		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
 		if(conn.executeUpdate("delete from \"web.tomcat\".\"ContextDataSource\" where tomcat_context=?", id) > 0) {
@@ -2837,7 +2827,7 @@ final public class HttpdHandler {
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatDataSource", tomcat_site);
 
-		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
+		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
 		conn.executeUpdate("delete from \"web.tomcat\".\"ContextDataSource\" where id=?", id);
@@ -2860,7 +2850,7 @@ final public class HttpdHandler {
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "removeHttpdTomcatParameter", tomcat_site);
 
-		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
+		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
 		conn.executeUpdate("delete from \"web.tomcat\".\"ContextParameter\" where id=?", id);
@@ -2892,7 +2882,7 @@ final public class HttpdHandler {
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "updateHttpdTomcatDataSource", tomcat_site);
 
-		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
+		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
 		conn.executeUpdate(
@@ -2931,7 +2921,7 @@ final public class HttpdHandler {
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
 		checkAccessHttpdSite(conn, source, "updateHttpdTomcatParameter", tomcat_site);
 
-		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
+		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
 		conn.executeUpdate(
@@ -3162,8 +3152,8 @@ final public class HttpdHandler {
 		String path,
 		boolean isRegularExpression,
 		String authName,
-		UnixPath authGroupFile,
-		UnixPath authUserFile,
+		PosixPath authGroupFile,
+		PosixPath authUserFile,
 		String require,
 		String handler
 	) throws IOException, SQLException {
@@ -3412,7 +3402,7 @@ final public class HttpdHandler {
 			);
 		}
 		if(updateCount > 0) {
-			AccountingCode accounting = getBusinessForHttpdSite(conn, id);
+			Account.Name accounting = getBusinessForHttpdSite(conn, id);
 			invalidateList.addTable(
 				conn,
 				Table.TableID.HTTPD_SITES,
@@ -3516,7 +3506,7 @@ final public class HttpdHandler {
 				enableCgi
 			) > 0
 		) {
-			AccountingCode accounting = getBusinessForHttpdSite(conn, id);
+			Account.Name accounting = getBusinessForHttpdSite(conn, id);
 			int aoServer = getAOServerForHttpdSite(conn, id);
 			invalidateList.addTable(
 				conn,
@@ -3789,7 +3779,7 @@ final public class HttpdHandler {
 		String className,
 		boolean cookies,
 		boolean crossContext,
-		UnixPath docBase,
+		PosixPath docBase,
 		boolean override,
 		String path,
 		boolean privileged,
@@ -3797,7 +3787,7 @@ final public class HttpdHandler {
 		boolean useNaming,
 		String wrapperClass,
 		int debug,
-		UnixPath workDir,
+		PosixPath workDir,
 		boolean serverXmlConfigured
 	) throws IOException, SQLException {
 		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", id);
@@ -3818,7 +3808,7 @@ final public class HttpdHandler {
 			serverXmlConfigured
 		);
 
-		AccountingCode accounting = getBusinessForHttpdSite(conn, tomcat_site);
+		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
 		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
 
 		String oldPath=conn.executeStringQuery("select path from \"web.tomcat\".\"Context\" where id=?", id);
