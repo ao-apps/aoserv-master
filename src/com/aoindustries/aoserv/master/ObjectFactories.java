@@ -11,6 +11,7 @@ import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.net.FirewallZone;
 import com.aoindustries.dbc.ObjectFactory;
 import com.aoindustries.net.DomainName;
+import com.aoindustries.net.Email;
 import com.aoindustries.net.HostAddress;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
@@ -44,6 +45,14 @@ final public class ObjectFactories {
     public static final ObjectFactory<DomainName> domainNameFactory = (ResultSet result) -> {
 		try {
 			return DomainName.valueOf(result.getString(1));
+		} catch(ValidationException e) {
+			throw new SQLException(e.getLocalizedMessage(), e);
+		}
+	};
+
+    public static final ObjectFactory<Email> emailFactory = (ResultSet result) -> {
+		try {
+			return Email.valueOf(result.getString(1));
 		} catch(ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}

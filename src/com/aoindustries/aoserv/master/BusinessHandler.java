@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -467,7 +468,7 @@ final public class BusinessHandler {
 	}
 
 	/**
-	 * Creates a new <code>Profile</code>.
+	 * Creates a new {@link Profile}.
 	 */
 	public static int addBusinessProfile(
 		DatabaseConnection conn,
@@ -514,14 +515,22 @@ final public class BusinessHandler {
 			zip,
 			sendInvoice,
 			billingContact,
-			// TODO: Array
+			// TODO: Remove once set table validated
 			StringUtility.join(billingEmail, ", "),
 			billingEmailFormat,
 			technicalContact,
-			// TODO: Array
+			// TODO: Remove once set table validated
 			StringUtility.join(technicalEmail, ", "),
 			technicalEmailFormat
 		);
+		short index = 0;
+		for(Email email : billingEmail) {
+			conn.executeUpdate("INSERT INTO account.\"Profile.billingEmail{}\" VALUES (?,?,?)", id, index++, email);
+		}
+		index = 0;
+		for(Email email : technicalEmail) {
+			conn.executeUpdate("INSERT INTO account.\"Profile.technicalEmail{}\" VALUES (?,?,?)", id, index++, email);
+		}
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.BUSINESS_PROFILES, accounting, InvalidateList.allServers, false);
 		return id;
@@ -1506,9 +1515,20 @@ final public class BusinessHandler {
 		);
 	}
 
-	public static String getTechnicalEmail(DatabaseConnection conn, String accountingCode) throws IOException, SQLException {
-		return conn.executeStringQuery(
-			"select technical_email from account.\"Profile\" where accounting=? order by priority desc limit 1",
+	// TODO: Seems unused 20181218
+	public static Set<Email> getTechnicalEmail(DatabaseConnection conn, String accountingCode) throws IOException, SQLException {
+		return conn.executeObjectCollectionQuery(
+			new LinkedHashSet<>(),
+			ObjectFactories.emailFactory,
+			"SELECT\n"
+			+ "  technical_email\n"
+			+ "FROM\n"
+			+ "  account.\"Profile\"\n"
+			+ "WHERE\n"
+			+ "  accounting=?\n"
+			+ "ORDER BY\n"
+			+ "  priority DESC\n"
+			+ "LIMIT 1",
 			accountingCode
 		);
 	}

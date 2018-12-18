@@ -5,6 +5,7 @@
  */
 package com.aoindustries.aoserv.master.account;
 
+import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.account.Profile;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
@@ -25,6 +26,12 @@ import java.util.Set;
  */
 public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
+	private static final String COLUMNS =
+		"  ap.*,\n"
+		// Remove ::text when trying to get array with SqlType
+		+ "  ARRAY(SELECT be.\"billingEmail\"" + (AOServObject.USE_SQL_DATA ? "" : "::text") + " FROM account.\"Profile.billingEmail{}\" be WHERE ap.id = be.id ORDER BY index) AS \"billingEmail{}\",\n"
+		+ "  ARRAY(SELECT te.\"technicalEmail\"" + (AOServObject.USE_SQL_DATA ? "" : "::text") + " FROM account.\"Profile.technicalEmail{}\" te WHERE ap.id = te.id ORDER BY index) AS \"technicalEmail{}\"";
+
 	@Override
 	public Set<Table.TableID> getTableIds() {
 		return EnumSet.of(Table.TableID.BUSINESS_PROFILES);
@@ -39,10 +46,15 @@ public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 			provideProgress,
 			CursorMode.AUTO,
 			new Profile(),
-			"select * from account.\"Profile\""
+			"SELECT\n"
+			+ COLUMNS + "\n"
+			+ "FROM\n"
+			+ "  account.\"Profile\" ap"
 		);
 	}
 
+	// TODO: Does the daemon need access to the profiles?  What for?  I find no reference in the aoserv-daemon project
+	// TODO: This might be best changed once roles are defined, and not just a class of filtering by server.
 	@Override
 	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 		MasterServer.writeObjects(
@@ -52,16 +64,16 @@ public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 			provideProgress,
 			CursorMode.AUTO,
 			new Profile(),
-			"select distinct\n"
-			+ "  bp.*\n"
-			+ "from\n"
+			"SELECT DISTINCT\n"
+			+ COLUMNS + "\n"
+			+ "FROM\n"
 			+ "  master.\"UserHost\" ms,\n"
 			+ "  account.\"AccountHost\" bs,\n"
-			+ "  account.\"Profile\" bp\n"
-			+ "where\n"
-			+ "  ms.username=?\n"
-			+ "  and ms.server=bs.server\n"
-			+ "  and bs.accounting=bp.accounting",
+			+ "  account.\"Profile\" ap\n"
+			+ "WHERE\n"
+			+ "  ms.username = ?\n"
+			+ "  AND ms.server = bs.server\n"
+			+ "  AND bs.accounting = ap.accounting",
 			source.getUsername()
 		);
 	}
@@ -75,20 +87,20 @@ public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 			provideProgress,
 			CursorMode.AUTO,
 			new Profile(),
-			"select\n"
-			+ "  bp.*\n"
-			+ "from\n"
+			"SELECT\n"
+			+ COLUMNS + "\n"
+			+ "FROM\n"
 			+ "  account.\"User\" un,\n"
 			+ "  billing.\"Package\" pk,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
-			+ "  account.\"Profile\" bp\n"
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk.name\n"
-			+ "  and (\n"
+			+ "  account.\"Profile\" ap\n"
+			+ "WHERE\n"
+			+ "  un.username = ?\n"
+			+ "  AND un.package = pk.\"name\"\n"
+			+ "  AND (\n"
 			+ TableHandler.PK_BU1_PARENTS_WHERE
 			+ "  )\n"
-			+ "  and bu1.accounting=bp.accounting",
+			+ "  AND bu1.accounting = ap.accounting",
 			source.getUsername()
 		);
 	}
