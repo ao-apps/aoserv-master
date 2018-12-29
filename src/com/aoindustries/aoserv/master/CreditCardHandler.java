@@ -1152,7 +1152,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             + "  status=?::payment.\"Payment.Status\"\n"
             + "where\n"
             + "  id=?\n"
-            + "  and status='PROCESSING'",
+            + "  and status='PROCESSING'", // TODO: Use enum here instead of literal
             authorizationCommunicationResult,
             authorizationProviderErrorCode,
             authorizationErrorCode,
