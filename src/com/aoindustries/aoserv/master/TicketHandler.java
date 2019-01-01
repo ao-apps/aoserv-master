@@ -5,6 +5,7 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.master.User;
@@ -232,7 +233,9 @@ final public class TicketHandler /*implements Runnable*/ {
         int id = generateTicketId(conn);
 
         conn.executeUpdate(
-            "insert into ticket.\"Ticket\" values(?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?,?,?,?)",
+            AOServObject.USE_SQL_DATA_WRITE
+				? "insert into ticket.\"Ticket\" values(?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?,?,?,?)"
+				: "insert into ticket.\"Ticket\" values(?,?,?,?,?,?,?,?,?::\"com.aoindustries.net\".\"Email\",?,?,?,now(),?,?,?,?,?,?,?)",
             id,
             brand,
             reseller,

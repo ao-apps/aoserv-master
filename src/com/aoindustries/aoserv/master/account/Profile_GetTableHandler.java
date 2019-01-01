@@ -28,9 +28,8 @@ public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 
 	private static final String COLUMNS =
 		"  ap.*,\n"
-		// Remove ::text when trying to get array with SqlType
-		+ "  ARRAY(SELECT be.\"billingEmail\"" + (AOServObject.USE_SQL_DATA ? "" : "::text") + " FROM account.\"Profile.billingEmail{}\" be WHERE ap.id = be.id ORDER BY index) AS \"billingEmail{}\",\n"
-		+ "  ARRAY(SELECT te.\"technicalEmail\"" + (AOServObject.USE_SQL_DATA ? "" : "::text") + " FROM account.\"Profile.technicalEmail{}\" te WHERE ap.id = te.id ORDER BY index) AS \"technicalEmail{}\"";
+		+ "  ARRAY(SELECT be.\"billingEmail\"" + (AOServObject.USE_ARRAY_OF_DOMAIN ? "" : "::text") + " FROM account.\"Profile.billingEmail{}\" be WHERE ap.id = be.id ORDER BY index) AS \"billingEmail{}\",\n"
+		+ "  ARRAY(SELECT te.\"technicalEmail\"" + (AOServObject.USE_ARRAY_OF_DOMAIN ? "" : "::text") + " FROM account.\"Profile.technicalEmail{}\" te WHERE ap.id = te.id ORDER BY index) AS \"technicalEmail{}\"";
 
 	@Override
 	public Set<Table.TableID> getTableIds() {
