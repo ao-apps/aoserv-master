@@ -301,7 +301,12 @@ final public class InvalidateList {
                 BusinessHandler.invalidateTable(tableID);
                 CvsHandler.invalidateTable(tableID);
                 DaemonHandler.invalidateTable(tableID);
-                MasterServer.getService(DnsService.class).invalidateTable(tableID);
+				// TODO: Have each service register to receive invalidation signals
+				try {
+	                MasterServer.getService(DnsService.class).invalidateTable(tableID);
+				} catch(NoServiceException e) {
+					// OK when running batch credit card processing from command line
+				}
                 EmailHandler.invalidateTable(tableID);
                 HttpdHandler.invalidateTable(tableID);
                 LinuxAccountHandler.invalidateTable(tableID);
