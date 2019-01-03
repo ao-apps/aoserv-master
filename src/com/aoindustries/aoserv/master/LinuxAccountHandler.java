@@ -755,7 +755,7 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(User.GAMES,                         12, Group.USERS,             "games",                       "/usr/games",       Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.FTP,                           14, Group.FTP,               "FTP User",                    "/var/ftp",         Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.NAMED,                         25, Group.NAMED,             "Named",                       "/var/named",       Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.POSTGRES,                      26, Group.POSTGRES,          "PostgreSQL Host",           "/var/lib/pgsql",   Shell.BASH, null);
+					addCentos7SystemUser(User.POSTGRES,                      26, Group.POSTGRES,          "PostgreSQL Server",           "/var/lib/pgsql",   Shell.BASH, null);
 					addCentos7SystemUser(User.RPCUSER,                       29, Group.RPCUSER,           "RPC Service User",            "/var/lib/nfs",     Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.MYSQL,                         31, Group.MYSQL,             "MySQL server",                "/var/lib/mysql",   Shell.BASH, null);
 					addCentos7SystemUser(User.RPC,                           32, Group.RPC,               "Rpcbind Daemon",              "/var/lib/rpcbind", Shell.NOLOGIN, null);
@@ -765,7 +765,7 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(User.TSS,                           59, Group.TSS,               "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null", Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.TCPDUMP,                       72, Group.TCPDUMP,           null,                          "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.SSHD,                          74, Group.SSHD,              "Privilege-separated SSH",     "/var/empty/sshd",  Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.CYRUS,                         76, Group.MAIL,              "Cyrus IMAP Host",           "/var/lib/imap",    Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.CYRUS,                         76, Group.MAIL,              "Cyrus IMAP Server",           "/var/lib/imap",    Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.AWSTATS,                       78, Group.AWSTATS,           "AWStats Background Log Processing", "/var/opt/awstats", Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.DBUS,                          81, Group.DBUS,              "System message bus",          "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.BIRD,                          95, Group.BIRD,              "BIRD Internet Routing Daemon", "/var/opt/bird",   Shell.NOLOGIN, null);
