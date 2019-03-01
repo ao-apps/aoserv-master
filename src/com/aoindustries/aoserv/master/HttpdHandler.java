@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2014, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -2423,11 +2423,10 @@ final public class HttpdHandler {
 		);
 
 		if(tomcat4Worker!=-1) {
-			int bind = conn.executeIntQuery("select bind from \"web.tomcat\".\"Worker\" where id=?", tomcat4Worker);
 			conn.executeUpdate("delete from \"web.tomcat\".\"Worker\" where bind=?", tomcat4Worker);
 			invalidateList.addTable(conn, Table.TableID.HTTPD_WORKERS, accounting, aoServer, false);
 
-			conn.executeUpdate("delete from net.\"Bind\" where id=?", bind);
+			conn.executeUpdate("delete from net.\"Bind\" where id=?", tomcat4Worker);
 			invalidateList.addTable(conn, Table.TableID.NET_BINDS, accounting, aoServer, false);
 			invalidateList.addTable(conn, Table.TableID.NET_BIND_FIREWALLD_ZONES, accounting, aoServer, false);
 		}
