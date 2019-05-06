@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -1316,6 +1316,8 @@ final public class BusinessHandler {
 		checkAccessBusiness(conn, source, "setBusinessAccounting", oldAccounting);
 
 		conn.executeUpdate("update account.\"Account\" set accounting=? where accounting=?", newAccounting, oldAccounting);
+
+		// TODO: Update stored cards since they have "group_name" meta data matching the business name.
 
 		// Notify all clients of the update
 		Collection<Account.Name> accts=InvalidateList.getCollection(oldAccounting, newAccounting);
