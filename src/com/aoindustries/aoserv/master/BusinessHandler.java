@@ -531,6 +531,7 @@ final public class BusinessHandler {
 		for(Email email : technicalEmail) {
 			conn.executeUpdate("INSERT INTO account.\"Profile.technicalEmail{}\" VALUES (?,?,?)", id, index++, email);
 		}
+		// TODO: Update stored cards since they have "email", "phone", and "fax" from the account profile.
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.BUSINESS_PROFILES, accounting, InvalidateList.allServers, false);
 		return id;
