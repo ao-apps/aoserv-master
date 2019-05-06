@@ -173,7 +173,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
      *   <li>status</li>
      * </ol>
      *
-     * The current status must be PROCESSING.
+     * The current status must be PROCESSING or AUTHORIZED.
      */
     @Override
     public void saleCompleted(Principal principal, Transaction transaction) throws SQLException {

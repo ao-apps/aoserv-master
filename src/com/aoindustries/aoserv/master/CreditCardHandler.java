@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -1017,7 +1017,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             + "  status=?::payment.\"Payment.Status\"\n"
             + "where\n"
             + "  id=?\n"
-            + "  and status='PROCESSING'",
+            + "  and status in ('PROCESSING', 'AUTHORIZED')",
             authorizationCommunicationResult,
             authorizationProviderErrorCode,
             authorizationErrorCode,
@@ -1045,7 +1045,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             status,
             id
         );
-        if(updated!=1) throw new SQLException("Unable to find payment.Payment with id="+id+" and status='PROCESSING'");
+        if(updated!=1) throw new SQLException("Unable to find payment.Payment with id="+id+" and status in ('PROCESSING', 'AUTHORIZED')");
 
         // Notify all clients of the update
         invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
