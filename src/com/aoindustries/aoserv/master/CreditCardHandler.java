@@ -10,6 +10,7 @@ import com.aoindustries.aoserv.client.account.User;
 import com.aoindustries.aoserv.client.billing.TransactionType;
 import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.payment.PaymentType;
+import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.creditcards.AuthorizationResult;
 import com.aoindustries.creditcards.CreditCard;
@@ -349,6 +350,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
         RequestSource source,
         InvalidateList invalidateList,
         int id,
+		String cardInfo,
         String firstName,
         String lastName,
         String companyName,
@@ -367,44 +369,128 @@ final public class CreditCardHandler /*implements CronJob*/ {
         // Permission checks
         BusinessHandler.checkPermission(conn, source, "updateCreditCard", Permission.Name.edit_credit_card);
         checkAccessCreditCard(conn, source, "updateCreditCard", id);
-        
+		assert cardInfo != null || source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) < 0 : "Compatibility with older clients (before 1.82.0) that don't send any cardInfo";
+
+		updateCreditCard(
+			conn,
+			invalidateList,
+			id,
+			cardInfo,
+			firstName,
+			lastName,
+			companyName,
+			email,
+			phone,
+			fax,
+			customerTaxId,
+			streetAddress1,
+			streetAddress2,
+			city,
+			state,
+			postalCode,
+			countryCode,
+			description
+		);
+	}
+
+	public static void updateCreditCard(
+        DatabaseConnection conn,
+        InvalidateList invalidateList,
+        int id,
+		String cardInfo,
+        String firstName,
+        String lastName,
+        String companyName,
+        String email,
+        String phone,
+        String fax,
+        String customerTaxId,
+        String streetAddress1,
+        String streetAddress2,
+        String city,
+        String state,
+        String postalCode,
+        String countryCode,
+        String description
+    ) throws IOException, SQLException {
         // Update row
-        conn.executeUpdate(
-            "update\n"
-            + "  payment.\"CreditCard\"\n"
-            + "set\n"
-            + "  first_name=?,\n"
-            + "  last_name=?,\n"
-            + "  company_name=?,\n"
-            + "  email=?,\n"
-            + "  phone=?,\n"
-            + "  fax=?,\n"
-            + "  customer_tax_id=?,\n"
-            + "  street_address1=?,\n"
-            + "  street_address2=?,\n"
-            + "  city=?,\n"
-            + "  state=?,\n"
-            + "  postal_code=?,\n"
-            + "  country_code=?,\n"
-            + "  description=?\n"
-            + "where\n"
-            + "  id=?",
-            firstName,
-            lastName,
-            companyName,
-            email,
-            phone,
-            fax,
-            customerTaxId,
-            streetAddress1,
-            streetAddress2,
-            city,
-            state,
-            postalCode,
-            countryCode,
-            description,
-            id
-        );
+		if(cardInfo == null) {
+			conn.executeUpdate(
+				"update\n"
+				+ "  payment.\"CreditCard\"\n"
+				+ "set\n"
+				+ "  first_name=?,\n"
+				+ "  last_name=?,\n"
+				+ "  company_name=?,\n"
+				+ "  email=?,\n"
+				+ "  phone=?,\n"
+				+ "  fax=?,\n"
+				+ "  customer_tax_id=?,\n"
+				+ "  street_address1=?,\n"
+				+ "  street_address2=?,\n"
+				+ "  city=?,\n"
+				+ "  state=?,\n"
+				+ "  postal_code=?,\n"
+				+ "  country_code=?,\n"
+				+ "  description=?\n"
+				+ "where\n"
+				+ "  id=?",
+				firstName,
+				lastName,
+				companyName,
+				email,
+				phone,
+				fax,
+				customerTaxId,
+				streetAddress1,
+				streetAddress2,
+				city,
+				state,
+				postalCode,
+				countryCode,
+				description,
+				id
+			);
+		} else {
+			conn.executeUpdate(
+				"update\n"
+				+ "  payment.\"CreditCard\"\n"
+				+ "set\n"
+				+ "  card_info=?,\n"
+				+ "  first_name=?,\n"
+				+ "  last_name=?,\n"
+				+ "  company_name=?,\n"
+				+ "  email=?,\n"
+				+ "  phone=?,\n"
+				+ "  fax=?,\n"
+				+ "  customer_tax_id=?,\n"
+				+ "  street_address1=?,\n"
+				+ "  street_address2=?,\n"
+				+ "  city=?,\n"
+				+ "  state=?,\n"
+				+ "  postal_code=?,\n"
+				+ "  country_code=?,\n"
+				+ "  description=?\n"
+				+ "where\n"
+				+ "  id=?",
+				cardInfo,
+				firstName,
+				lastName,
+				companyName,
+				email,
+				phone,
+				fax,
+				customerTaxId,
+				streetAddress1,
+				streetAddress2,
+				city,
+				state,
+				postalCode,
+				countryCode,
+				description,
+				id
+			);
+		}
         
         Account.Name accounting = getBusinessForCreditCard(conn, id);
         invalidateList.addTable(
@@ -887,6 +973,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String authorizationErrorCode,
         String authorizationProviderErrorMessage,
         String authorizationProviderUniqueId,
+		String authorizationProviderReplacementMaskedCardNumber,
+		String authorizationReplacementMaskedCardNumber,
         String providerApprovalResult,
         String approvalResult,
         String providerDeclineReason,
@@ -918,9 +1006,6 @@ final public class CreditCardHandler /*implements CronJob*/ {
 			}
 		}
 
-        String processor = getCreditCardProcessorForCreditCardTransaction(conn, id);
-        Account.Name accounting = getBusinessForCreditCardProcessor(conn, processor);
-
         creditCardTransactionSaleCompleted(
             conn,
             invalidateList,
@@ -930,6 +1015,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
             authorizationErrorCode,
             authorizationProviderErrorMessage,
             authorizationProviderUniqueId,
+			authorizationProviderReplacementMaskedCardNumber,
+			authorizationReplacementMaskedCardNumber,
             providerApprovalResult,
             approvalResult,
             providerDeclineReason,
@@ -962,6 +1049,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String authorizationErrorCode,
         String authorizationProviderErrorMessage,
         String authorizationProviderUniqueId,
+		String authorizationProviderReplacementMaskedCardNumber,
+		String authorizationReplacementMaskedCardNumber,
         String providerApprovalResult,
         String approvalResult,
         String providerDeclineReason,
@@ -995,6 +1084,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
             + "  authorization_error_code=?::payment.\"TransactionResult.ErrorCode\",\n"
             + "  authorization_provider_error_message=?,\n"
             + "  authorization_provider_unique_id=?,\n"
+            + "  \"authorizationProviderReplacementMaskedCardNumber\"=?,\n"
+            + "  \"authorizationReplacementMaskedCardNumber\"=?,\n"
             + "  authorization_provider_approval_result=?,\n"
             + "  authorization_approval_result=?::payment.\"AuthorizationResult.ApprovalResult\",\n"
             + "  authorization_provider_decline_reason=?,\n"
@@ -1023,6 +1114,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
             authorizationErrorCode,
             authorizationProviderErrorMessage,
             authorizationProviderUniqueId,
+			authorizationProviderReplacementMaskedCardNumber,
+			authorizationReplacementMaskedCardNumber,
             providerApprovalResult,
             approvalResult,
             providerDeclineReason,
@@ -1061,6 +1154,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String authorizationErrorCode,
         String authorizationProviderErrorMessage,
         String authorizationProviderUniqueId,
+		String authorizationProviderReplacementMaskedCardNumber,
+		String authorizationReplacementMaskedCardNumber,
         String providerApprovalResult,
         String approvalResult,
         String providerDeclineReason,
@@ -1089,6 +1184,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
             authorizationErrorCode,
             authorizationProviderErrorMessage,
             authorizationProviderUniqueId,
+			authorizationProviderReplacementMaskedCardNumber,
+			authorizationReplacementMaskedCardNumber,
             providerApprovalResult,
             approvalResult,
             providerDeclineReason,
@@ -1113,6 +1210,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String authorizationErrorCode,
         String authorizationProviderErrorMessage,
         String authorizationProviderUniqueId,
+		String authorizationProviderReplacementMaskedCardNumber,
+		String authorizationReplacementMaskedCardNumber,
         String providerApprovalResult,
         String approvalResult,
         String providerDeclineReason,
@@ -1138,6 +1237,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
             + "  authorization_error_code=?::payment.\"TransactionResult.ErrorCode\",\n"
             + "  authorization_provider_error_message=?,\n"
             + "  authorization_provider_unique_id=?,\n"
+            + "  \"authorizationProviderReplacementMaskedCardNumber\"=?,\n"
+            + "  \"authorizationReplacementMaskedCardNumber\"=?,\n"
             + "  authorization_provider_approval_result=?,\n"
             + "  authorization_approval_result=?::payment.\"AuthorizationResult.ApprovalResult\",\n"
             + "  authorization_provider_decline_reason=?,\n"
@@ -1158,6 +1259,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
             authorizationErrorCode,
             authorizationProviderErrorMessage,
             authorizationProviderUniqueId,
+			authorizationProviderReplacementMaskedCardNumber,
+			authorizationReplacementMaskedCardNumber,
             providerApprovalResult,
             approvalResult,
             providerDeclineReason,

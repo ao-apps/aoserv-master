@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -15,12 +15,12 @@ import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.creditcards.TransactionResult;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.acl.Group;
 import java.sql.SQLException;
+import java.util.Objects;
 
 /**
  * Stores the information directly in the master server.  Each instance should be used only within a single database transaction.
@@ -58,7 +58,31 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 
 	@Override
 	public void updateCreditCard(Principal principal, CreditCard creditCard) throws SQLException {
-        throw new SQLException("Method not implemented for direct master server persistence.");
+		try {
+            CreditCardHandler.updateCreditCard(
+                conn,
+                invalidateList,
+				Integer.parseInt(creditCard.getPersistenceUniqueId()),
+				creditCard.getMaskedCardNumber(),
+				creditCard.getFirstName(),
+				creditCard.getLastName(),
+				creditCard.getCompanyName(),
+				creditCard.getEmail(),
+				creditCard.getPhone(),
+				creditCard.getFax(),
+				creditCard.getCustomerTaxId(),
+				creditCard.getStreetAddress1(),
+				creditCard.getStreetAddress2(),
+				creditCard.getCity(),
+				creditCard.getState(),
+				creditCard.getPostalCode(),
+				creditCard.getCountryCode(),
+				creditCard.getComments()
+            );
+            conn.commit();
+        } catch(IOException err) {
+            throw new SQLException(err);
+        }
 	}
 
 	@Override
@@ -113,11 +137,11 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 transactionRequest.getDuplicateWindow(),
                 transactionRequest.getOrderNumber(),
                 transactionRequest.getCurrency().getCurrencyCode(),
-                ObjectUtils.toString(transactionRequest.getAmount()),
-                ObjectUtils.toString(transactionRequest.getTaxAmount()),
+                Objects.toString(transactionRequest.getAmount(), null),
+                Objects.toString(transactionRequest.getTaxAmount(), null),
                 transactionRequest.getTaxExempt(),
-                ObjectUtils.toString(transactionRequest.getShippingAmount()),
-                ObjectUtils.toString(transactionRequest.getDutyAmount()),
+                Objects.toString(transactionRequest.getShippingAmount(), null),
+                Objects.toString(transactionRequest.getDutyAmount(), null),
                 transactionRequest.getShippingFirstName(),
                 transactionRequest.getShippingLastName(),
                 transactionRequest.getShippingCompanyName(),
@@ -203,6 +227,8 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 authorizationErrorCode==null ? null : authorizationErrorCode.name(),
                 authorizationResult.getProviderErrorMessage(),
                 authorizationResult.getProviderUniqueId(),
+                authorizationResult.getProviderReplacementMaskedCardNumber(),
+                authorizationResult.getReplacementMaskedCardNumber(),
                 authorizationResult.getProviderApprovalResult(),
                 approvalResult==null ? null : approvalResult.name(),
                 authorizationResult.getProviderDeclineReason(),

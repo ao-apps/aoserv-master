@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013, 2014, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2000-2013, 2014, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -1884,7 +1884,7 @@ public abstract class MasterServer {
 													int maxIdle=in.readCompressedInt();
 													int maxWait=in.readCompressedInt();
 													String validationQuery=in.readUTF();
-													if(validationQuery.length()==0) validationQuery=null;
+													if(validationQuery.length() == 0) validationQuery=null;
 													process.setCommand(
 														Command.ADD_HTTPD_TOMCAT_DATA_SOURCE,
 														tomcat_context,
@@ -1926,7 +1926,7 @@ public abstract class MasterServer {
 													String value=in.readUTF();
 													boolean override=in.readBoolean();
 													String description=in.readUTF();
-													if(description.length()==0) description=null;
+													if(description.length() == 0) description=null;
 													process.setCommand(
 														Command.ADD_HTTPD_TOMCAT_PARAMETER,
 														tomcat_context,
@@ -3349,7 +3349,7 @@ public abstract class MasterServer {
 										{
 											int ticketID=in.readCompressedInt(); 
 											String priority=in.readUTF().trim();
-											if(priority.length()==0) priority=null;
+											if(priority.length() == 0) priority=null;
 											String username=in.readUTF().trim();
 											String comments=in.readUTF().trim();
 											process.setCommand(
@@ -3639,6 +3639,15 @@ public abstract class MasterServer {
 											String authorizationErrorCode = in.readNullUTF();
 											String authorizationProviderErrorMessage = in.readNullUTF();
 											String authorizationProviderUniqueId = in.readNullUTF();
+											String authorizationProviderReplacementMaskedCardNumber;
+											String authorizationReplacementMaskedCardNumber;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
+												authorizationProviderReplacementMaskedCardNumber = in.readNullUTF();
+												authorizationReplacementMaskedCardNumber = in.readNullUTF();
+											} else {
+												authorizationProviderReplacementMaskedCardNumber = null;
+												authorizationReplacementMaskedCardNumber = null;
+											}
 											String providerApprovalResult = in.readNullUTF();
 											String approvalResult = in.readNullUTF();
 											String providerDeclineReason = in.readNullUTF();
@@ -3666,6 +3675,8 @@ public abstract class MasterServer {
 												authorizationErrorCode,
 												authorizationProviderErrorMessage,
 												authorizationProviderUniqueId,
+												authorizationProviderReplacementMaskedCardNumber,
+												authorizationReplacementMaskedCardNumber,
 												providerApprovalResult,
 												approvalResult,
 												providerDeclineReason,
@@ -3677,7 +3688,7 @@ public abstract class MasterServer {
 												providerAvsResult,
 												avsResult,
 												approvalCode,
-												captureTime==0 ? null : new java.util.Date(captureTime),
+												captureTime == 0 ? null : new java.util.Date(captureTime),
 												capturePrincipalName,
 												captureCommunicationResult,
 												captureProviderErrorCode,
@@ -3696,6 +3707,8 @@ public abstract class MasterServer {
 												authorizationErrorCode,
 												authorizationProviderErrorMessage,
 												authorizationProviderUniqueId,
+												authorizationProviderReplacementMaskedCardNumber,
+												authorizationReplacementMaskedCardNumber,
 												providerApprovalResult,
 												approvalResult,
 												providerDeclineReason,
@@ -3728,6 +3741,15 @@ public abstract class MasterServer {
 											String authorizationErrorCode = in.readNullUTF();
 											String authorizationProviderErrorMessage = in.readNullUTF();
 											String authorizationProviderUniqueId = in.readNullUTF();
+											String authorizationProviderReplacementMaskedCardNumber;
+											String authorizationReplacementMaskedCardNumber;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
+												authorizationProviderReplacementMaskedCardNumber = in.readNullUTF();
+												authorizationReplacementMaskedCardNumber = in.readNullUTF();
+											} else {
+												authorizationProviderReplacementMaskedCardNumber = null;
+												authorizationReplacementMaskedCardNumber = null;
+											}
 											String providerApprovalResult = in.readNullUTF();
 											String approvalResult = in.readNullUTF();
 											String providerDeclineReason = in.readNullUTF();
@@ -3748,6 +3770,8 @@ public abstract class MasterServer {
 												authorizationErrorCode,
 												authorizationProviderErrorMessage,
 												authorizationProviderUniqueId,
+												authorizationProviderReplacementMaskedCardNumber,
+												authorizationReplacementMaskedCardNumber,
 												providerApprovalResult,
 												approvalResult,
 												providerDeclineReason,
@@ -3771,6 +3795,8 @@ public abstract class MasterServer {
 												authorizationErrorCode,
 												authorizationProviderErrorMessage,
 												authorizationProviderUniqueId,
+												authorizationProviderReplacementMaskedCardNumber,
+												authorizationReplacementMaskedCardNumber,
 												providerApprovalResult,
 												approvalResult,
 												providerDeclineReason,
@@ -8676,7 +8702,7 @@ public abstract class MasterServer {
 										{
 											int ticketID=in.readCompressedInt(); 
 											String assignedTo=in.readUTF().trim();
-											if(assignedTo.length()==0) assignedTo=null;
+											if(assignedTo.length() == 0) assignedTo=null;
 											String username=in.readUTF().trim();
 											String comments=in.readUTF().trim();
 											process.setCommand(
@@ -8763,12 +8789,12 @@ public abstract class MasterServer {
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_48)>=0) {
 												// Added old accounting to behave like atomic variable
 												String oldAccountingS = in.readUTF();
-												oldAccounting = oldAccountingS.length()==0 ? null : Account.Name.valueOf(oldAccountingS);
+												oldAccounting = oldAccountingS.length() == 0 ? null : Account.Name.valueOf(oldAccountingS);
 											} else {
 												oldAccounting = null;
 											}
 											String newAccountingS = in.readUTF();
-											Account.Name newAccounting = newAccountingS.length()==0 ? null : Account.Name.valueOf(newAccountingS);
+											Account.Name newAccounting = newAccountingS.length() == 0 ? null : Account.Name.valueOf(newAccountingS);
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) {
 												String username = in.readUTF();
 												String comments = in.readUTF();
@@ -9304,32 +9330,39 @@ public abstract class MasterServer {
 									 case UPDATE_CREDIT_CARD :
 										{
 											int id = in.readCompressedInt();
+											String cardInfo;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
+												cardInfo = in.readUTF().trim();
+											} else {
+												cardInfo = null;
+											}
 											String firstName=in.readUTF().trim();
 											String lastName=in.readUTF().trim();
 											String companyName=in.readUTF().trim();
-											if(companyName.length()==0) companyName=null;
+											if(companyName.length() == 0) companyName=null;
 											String email=in.readUTF().trim();
-											if(email.length()==0) email=null;
+											if(email.length() == 0) email=null;
 											String phone=in.readUTF().trim();
-											if(phone.length()==0) phone=null;
+											if(phone.length() == 0) phone=null;
 											String fax=in.readUTF().trim();
-											if(fax.length()==0) fax=null;
+											if(fax.length() == 0) fax=null;
 											String customerTaxId=in.readUTF().trim();
-											if(customerTaxId.length()==0) customerTaxId=null;
+											if(customerTaxId.length() == 0) customerTaxId=null;
 											String streetAddress1=in.readUTF().trim();
 											String streetAddress2=in.readUTF().trim();
-											if(streetAddress2.length()==0) streetAddress2=null;
+											if(streetAddress2.length() == 0) streetAddress2=null;
 											String city=in.readUTF().trim();
 											String state=in.readUTF().trim();
-											if(state.length()==0) state=null;
+											if(state.length() == 0) state=null;
 											String postalCode=in.readUTF().trim();
-											if(postalCode.length()==0) postalCode=null;
+											if(postalCode.length() == 0) postalCode=null;
 											String countryCode=in.readUTF().trim();
 											String description=in.readUTF().trim();
-											if(description.length()==0) description=null;
+											if(description.length() == 0) description=null;
 											process.setCommand(
 												"update_credit_card",
 												id,
+												cardInfo,
 												firstName,
 												lastName,
 												companyName,
@@ -9350,6 +9383,7 @@ public abstract class MasterServer {
 												source,
 												invalidateList,
 												id,
+												cardInfo,
 												firstName,
 												lastName,
 												companyName,
@@ -9439,7 +9473,7 @@ public abstract class MasterServer {
 											int maxIdle=in.readCompressedInt();
 											int maxWait=in.readCompressedInt();
 											String validationQuery=in.readUTF();
-											if(validationQuery.length()==0) validationQuery=null;
+											if(validationQuery.length() == 0) validationQuery=null;
 											process.setCommand(
 												Command.UPDATE_HTTPD_TOMCAT_DATA_SOURCE,
 												id,
@@ -9479,7 +9513,7 @@ public abstract class MasterServer {
 											String value=in.readUTF();
 											boolean override=in.readBoolean();
 											String description=in.readUTF();
-											if(description.length()==0) description=null;
+											if(description.length() == 0) description=null;
 											process.setCommand(
 												Command.UPDATE_HTTPD_TOMCAT_PARAMETER,
 												id,
@@ -10001,7 +10035,7 @@ public abstract class MasterServer {
 									) {
 										boolean businessMatches;
 										int size=affectedBusinesses.size();
-										if(size==0) businessMatches=true;
+										if(size == 0) businessMatches=true;
 										else {
 											businessMatches=false;
 											for(int c=0;c<size;c++) {
@@ -10015,7 +10049,7 @@ public abstract class MasterServer {
 										// Filter by server
 										boolean serverMatches;
 										size=affectedServers.size();
-										if(size==0) serverMatches=true;
+										if(size == 0) serverMatches=true;
 										else {
 											serverMatches=false;
 											for(int c=0;c<size;c++) {
@@ -10443,7 +10477,7 @@ public abstract class MasterServer {
 		if (!isHostAllowed(conn, authenticateAs, remoteHost)) return "Connection from "+remoteHost+" as "+authenticateAs+" not allowed.";
 
 		// Authenticate the client first
-		if(password.length()==0) return "Connection attempted with empty password";
+		if(password.length() == 0) return "Connection attempted with empty password";
 
 		HashedPassword correctCrypted=BusinessHandler.getBusinessAdministrator(conn, authenticateAs).getPassword();
 		if(
