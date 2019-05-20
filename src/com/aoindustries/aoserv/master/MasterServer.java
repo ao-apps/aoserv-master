@@ -9164,27 +9164,37 @@ public abstract class MasterServer {
 									case TRANSACTION_APPROVED :
 										{
 											int transid = in.readCompressedInt();
+											int creditCardTransaction;
+											String paymentInfo;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_28)<=0) {
 												String paymentType=in.readUTF();
-												String paymentInfo=in.readNullUTF();
+												paymentInfo = in.readNullUTF();
 												String merchant=in.readNullUTF();
 												String apr_num;
 												if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_128)<0) apr_num=Integer.toString(in.readCompressedInt());
 												else apr_num=in.readUTF();
 												throw new SQLException("approve_transaction for protocol version "+AoservProtocol.Version.VERSION_1_28+" or older is no longer supported.");
+											} else {
+												creditCardTransaction = in.readCompressedInt();
+												if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
+													paymentInfo = in.readNullUTF();
+												} else {
+													paymentInfo = null;
+												}
 											}
-											int creditCardTransaction = in.readCompressedInt();
 											process.setCommand(
 												"approve_transaction",
 												transid,
-												creditCardTransaction
+												creditCardTransaction,
+												paymentInfo
 											);
 											TransactionHandler.transactionApproved(
 												conn,
 												source,
 												invalidateList,
 												transid,
-												creditCardTransaction
+												creditCardTransaction,
+												paymentInfo
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -9193,24 +9203,34 @@ public abstract class MasterServer {
 									case TRANSACTION_DECLINED :
 										{
 											int transid = in.readCompressedInt();
+											int creditCardTransaction;
+											String paymentInfo;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_28)<=0) {
 												String paymentType=in.readUTF().trim();
-												String paymentInfo=in.readNullUTF();
+												paymentInfo = in.readNullUTF();
 												String merchant=in.readNullUTF();
 												throw new SQLException("decline_transaction for protocol version "+AoservProtocol.Version.VERSION_1_28+" or older is no longer supported.");
+											} else {
+												creditCardTransaction = in.readCompressedInt();
+												if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
+													paymentInfo = in.readNullUTF();
+												} else {
+													paymentInfo = null;
+												}
 											}
-											int creditCardTransaction = in.readCompressedInt();
 											process.setCommand(
 												"decline_transaction",
 												transid,
-												creditCardTransaction
+												creditCardTransaction,
+												paymentInfo
 											);
 											TransactionHandler.transactionDeclined(
 												conn,
 												source,
 												invalidateList,
 												transid,
-												creditCardTransaction
+												creditCardTransaction,
+												paymentInfo
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -9220,17 +9240,25 @@ public abstract class MasterServer {
 										{
 											int transid = in.readCompressedInt();
 											int creditCardTransaction = in.readCompressedInt();
+											String paymentInfo;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
+												paymentInfo = in.readNullUTF();
+											} else {
+												paymentInfo = null;
+											}
 											process.setCommand(
 												"hold_transaction",
 												transid,
-												creditCardTransaction
+												creditCardTransaction,
+												paymentInfo
 											);
 											TransactionHandler.transactionHeld(
 												conn,
 												source,
 												invalidateList,
 												transid,
-												creditCardTransaction
+												creditCardTransaction,
+												paymentInfo
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;

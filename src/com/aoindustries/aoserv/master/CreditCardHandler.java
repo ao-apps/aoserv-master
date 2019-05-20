@@ -1372,16 +1372,17 @@ final public class CreditCardHandler /*implements CronJob*/ {
     private static void processAutomaticPayments(int month, int year) {
         System.err.println("DEBUG: month="+year+"-"+month);
         try {
-            ProcessTimer timer=new ProcessTimer(
-                logger,
-                CreditCardHandler.class.getName(),
-                "processAutomaticPayments",
-                "CreditCardHandler - Process Automatic Payments",
-                "Processes the automatic payments for the month",
-                TIMER_MAX_TIME,
-                TIMER_REMINDER_INTERVAL
-            );
-            try {
+            try (
+				ProcessTimer timer=new ProcessTimer(
+					logger,
+					CreditCardHandler.class.getName(),
+					"processAutomaticPayments",
+					"CreditCardHandler - Process Automatic Payments",
+					"Processes the automatic payments for the month",
+					TIMER_MAX_TIME,
+					TIMER_REMINDER_INTERVAL
+				);
+			) {
                 MasterServer.executorService.submit(timer);
 
                 // Find the beginning of the next month (for transaction search)
@@ -1660,7 +1661,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
                                         conn,
                                         invalidateList,
                                         transID,
-                                        Integer.parseInt(transaction.getPersistenceUniqueId())
+                                        Integer.parseInt(transaction.getPersistenceUniqueId()),
+										authorizationResult.getReplacementMaskedCardNumber()
                                     );
                                     conn.commit();
                                     System.out.println("    Result: Error");
@@ -1675,7 +1677,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
                                                 conn,
                                                 invalidateList,
                                                 transID,
-                                                Integer.parseInt(transaction.getPersistenceUniqueId())
+                                                Integer.parseInt(transaction.getPersistenceUniqueId()),
+												authorizationResult.getReplacementMaskedCardNumber()
                                             );
                                             conn.commit();
                                             System.out.println("    Result: Hold");
@@ -1689,7 +1692,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
                                                 conn,
                                                 invalidateList,
                                                 transID,
-                                                Integer.parseInt(transaction.getPersistenceUniqueId())
+                                                Integer.parseInt(transaction.getPersistenceUniqueId()),
+												authorizationResult.getReplacementMaskedCardNumber()
                                             );
                                             conn.commit();
                                             System.out.println("    Result: Declined");
@@ -1701,7 +1705,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
                                                 conn,
                                                 invalidateList,
                                                 transID,
-                                                Integer.parseInt(transaction.getPersistenceUniqueId())
+                                                Integer.parseInt(transaction.getPersistenceUniqueId()),
+												authorizationResult.getReplacementMaskedCardNumber()
                                             );
                                             System.out.println("    Result: Approved");
                                             break;
@@ -1732,8 +1737,6 @@ final public class CreditCardHandler /*implements CronJob*/ {
                     conn.releaseConnection();
                 }
                 /*if(invalidateList!=null)*/ MasterServer.invalidateTables(invalidateList, null);
-            } finally {
-                timer.finished();
             }
         } catch(ThreadDeath TD) {
             throw TD;

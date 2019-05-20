@@ -488,27 +488,39 @@ final public class TransactionHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int transid,
-        int creditCardTransaction
+        int creditCardTransaction,
+		String paymentInfo
     ) throws IOException, SQLException {
         BankAccountHandler.checkAccounting(conn, source, "transactionApproved");
         checkAccessTransaction(conn, source, "transactionApproved", transid);
         CreditCardHandler.checkAccessCreditCardTransaction(conn, source, "transactionApproved", creditCardTransaction);
 
-        transactionApproved(conn, invalidateList, transid, creditCardTransaction);
+        transactionApproved(conn, invalidateList, transid, creditCardTransaction, paymentInfo);
     }
 
     public static void transactionApproved(
         DatabaseConnection conn,
         InvalidateList invalidateList,
         int transid,
-        int creditCardTransaction
+        int creditCardTransaction,
+		String paymentInfo
     ) throws IOException, SQLException {
         Account.Name accounting = getBusinessForTransaction(conn, transid);
-        int updateCount = conn.executeUpdate(
-            "update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='Y' where transid=? and payment_confirmed='W'",
-            creditCardTransaction,
-            transid
-        );
+		int updateCount;
+		if(paymentInfo == null) {
+			updateCount = conn.executeUpdate(
+				"update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='Y' where transid=? and payment_confirmed='W'",
+				creditCardTransaction,
+				transid
+			);
+		} else {
+			updateCount = conn.executeUpdate(
+				"update billing.\"Transaction\" set credit_card_transaction=?, payment_info=?, payment_confirmed='Y' where transid=? and payment_confirmed='W'",
+				creditCardTransaction,
+				paymentInfo,
+				transid
+			);
+		}
         if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W'");
 
         // Notify all clients of the update
@@ -520,24 +532,40 @@ final public class TransactionHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int transid,
-        int creditCardTransaction
+        int creditCardTransaction,
+		String paymentInfo
     ) throws IOException, SQLException {
         BankAccountHandler.checkAccounting(conn, source, "transactionDeclined");
         checkAccessTransaction(conn, source, "transactionDeclined", transid);
         CreditCardHandler.checkAccessCreditCardTransaction(conn, source, "transactionApproved", creditCardTransaction);
 
-        transactionDeclined(conn, invalidateList, transid, creditCardTransaction);
+        transactionDeclined(conn, invalidateList, transid, creditCardTransaction, paymentInfo);
     }
 
     public static void transactionDeclined(
         DatabaseConnection conn,
         InvalidateList invalidateList,
         int transid,
-        int creditCardTransaction
+        int creditCardTransaction,
+		String paymentInfo
     ) throws IOException, SQLException {
         Account.Name accounting = getBusinessForTransaction(conn, transid);
 
-        int updateCount = conn.executeUpdate("update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='N' where transid=? and payment_confirmed='W'", creditCardTransaction, transid);
+		int updateCount;
+		if(paymentInfo == null) {
+	        updateCount = conn.executeUpdate(
+				"update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='N' where transid=? and payment_confirmed='W'",
+				creditCardTransaction,
+				transid
+			);
+		} else {
+	        updateCount = conn.executeUpdate(
+				"update billing.\"Transaction\" set credit_card_transaction=?, payment_info=?, payment_confirmed='N' where transid=? and payment_confirmed='W'",
+				creditCardTransaction,
+				paymentInfo,
+				transid
+			);
+		}
         if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W'");
 
         // Notify all clients of the update
@@ -549,24 +577,40 @@ final public class TransactionHandler {
         RequestSource source,
         InvalidateList invalidateList,
         int transid,
-        int creditCardTransaction
+        int creditCardTransaction,
+		String paymentInfo
     ) throws IOException, SQLException {
         BankAccountHandler.checkAccounting(conn, source, "transactionHeld");
         checkAccessTransaction(conn, source, "transactionHeld", transid);
         CreditCardHandler.checkAccessCreditCardTransaction(conn, source, "transactionHeld", creditCardTransaction);
 
-        transactionHeld(conn, invalidateList, transid, creditCardTransaction);
+        transactionHeld(conn, invalidateList, transid, creditCardTransaction, paymentInfo);
     }
 
     public static void transactionHeld(
         DatabaseConnection conn,
         InvalidateList invalidateList,
         int transid,
-        int creditCardTransaction
+        int creditCardTransaction,
+		String paymentInfo
     ) throws IOException, SQLException {
         Account.Name accounting = getBusinessForTransaction(conn, transid);
 
-        int updateCount = conn.executeUpdate("update billing.\"Transaction\" set credit_card_transaction=? where transid=? and payment_confirmed='W' and credit_card_transaction is null", creditCardTransaction, transid);
+		int updateCount;
+		if(paymentInfo == null) {
+	        updateCount = conn.executeUpdate(
+				"update billing.\"Transaction\" set credit_card_transaction=? where transid=? and payment_confirmed='W' and credit_card_transaction is null",
+				creditCardTransaction,
+				transid
+			);
+		} else {
+	        updateCount = conn.executeUpdate(
+				"update billing.\"Transaction\" set credit_card_transaction=?, payment_info=? where transid=? and payment_confirmed='W' and credit_card_transaction is null",
+				creditCardTransaction,
+				paymentInfo,
+				transid
+			);
+		}
         if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W' and credit_card_transaction is null");
 
         // Notify all clients of the update
