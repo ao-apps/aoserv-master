@@ -103,6 +103,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 		byte expirationMonth,
 		short expirationYear
 	) throws SQLException {
+		// TODO: This must be implemented for replacement expiration date support
         throw new SQLException("Method not implemented for direct master server persistence.");
     }
 
@@ -127,6 +128,10 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 "select accounting from payment.\"CreditCard\" where id=?::integer",
                 creditCard.getPersistenceUniqueId()
             );
+			Byte expirationMonth = creditCard.getExpirationMonth(); // TODO: 2.0: Nullable Byte
+			if(expirationMonth == CreditCard.UNKNOWN_EXPRIATION_MONTH) expirationMonth = null;
+			Short expirationYear = creditCard.getExpirationYear(); // TODO: 2.0: Nullable Short
+			if(expirationYear == CreditCard.UNKNOWN_EXPRIATION_YEAR) expirationYear = null;
             int id = CreditCardHandler.addCreditCardTransaction(
                 conn,
                 invalidateList,
@@ -162,6 +167,8 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 creditCard.getGroupName(),
                 creditCard.getProviderUniqueId(),
                 creditCard.getMaskedCardNumber(),
+				expirationMonth,
+				expirationYear,
                 creditCard.getFirstName(),
                 creditCard.getLastName(),
                 creditCard.getCompanyName(),
@@ -229,6 +236,9 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 authorizationResult.getProviderUniqueId(),
                 authorizationResult.getProviderReplacementMaskedCardNumber(),
                 authorizationResult.getReplacementMaskedCardNumber(),
+                authorizationResult.getProviderReplacementExpiration(),
+                authorizationResult.getReplacementExpirationMonth(),
+                authorizationResult.getReplacementExpirationYear(),
                 authorizationResult.getProviderApprovalResult(),
                 approvalResult==null ? null : approvalResult.name(),
                 authorizationResult.getProviderDeclineReason(),

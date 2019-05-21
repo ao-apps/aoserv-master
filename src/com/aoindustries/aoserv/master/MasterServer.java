@@ -914,6 +914,15 @@ public abstract class MasterServer {
 													Account.Name accounting = Account.Name.valueOf(in.readUTF());
 													String groupName = in.readNullUTF();
 													String cardInfo = in.readUTF().trim();
+													Byte expirationMonth;
+													Short expirationYear;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
+														expirationMonth = in.readByte();
+														expirationYear = in.readShort();
+													} else {
+														expirationMonth = null;
+														expirationYear = null;
+													}
 													String providerUniqueId = in.readUTF();
 													String firstName = in.readUTF().trim();
 													String lastName = in.readUTF().trim();
@@ -931,17 +940,17 @@ public abstract class MasterServer {
 													String principalName = in.readNullUTF();
 													String description = in.readNullUTF();
 													String encryptedCardNumber;
-													String encryptedExpiration;
 													int encryptionFrom;
 													int encryptionRecipient;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) {
 														encryptedCardNumber = null;
-														encryptedExpiration = null;
 														encryptionFrom = -1;
 														encryptionRecipient = -1;
 													} else {
 														encryptedCardNumber = in.readNullUTF();
-														encryptedExpiration = in.readNullUTF();
+														if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) < 0) {
+															String encryptedExpiration = in.readNullUTF();
+														}
 														encryptionFrom = in.readCompressedInt();
 														encryptionRecipient = in.readCompressedInt();
 													}
@@ -952,6 +961,8 @@ public abstract class MasterServer {
 														accounting,
 														groupName,
 														cardInfo,
+														expirationMonth==null ? null : AoservProtocol.FILTERED,
+														expirationYear==null ? null : AoservProtocol.FILTERED,
 														providerUniqueId,
 														firstName,
 														lastName,
@@ -969,7 +980,6 @@ public abstract class MasterServer {
 														principalName,
 														description,
 														encryptedCardNumber==null ? null : AoservProtocol.FILTERED,
-														encryptedExpiration==null ? null : AoservProtocol.FILTERED,
 														encryptionFrom==-1 ? null : encryptionFrom,
 														encryptionRecipient==-1 ? null : encryptionRecipient
 													);
@@ -981,6 +991,8 @@ public abstract class MasterServer {
 														accounting,
 														groupName,
 														cardInfo,
+														expirationMonth,
+														expirationYear,
 														providerUniqueId,
 														firstName,
 														lastName,
@@ -998,7 +1010,6 @@ public abstract class MasterServer {
 														principalName,
 														description,
 														encryptedCardNumber,
-														encryptedExpiration,
 														encryptionFrom,
 														encryptionRecipient
 													);
@@ -1042,6 +1053,15 @@ public abstract class MasterServer {
 													String creditCardGroupName = in.readNullUTF();
 													String creditCardProviderUniqueId = in.readNullUTF();
 													String creditCardMaskedCardNumber = in.readUTF();
+													Byte creditCard_expirationMonth;
+													Short creditCard_expirationYear;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
+														creditCard_expirationMonth = in.readBoolean() ? in.readByte() : null; // TODO: in.readNullByte()
+														creditCard_expirationYear = in.readBoolean() ? in.readShort() : null; // TODO: in.readNullShort()
+													} else {
+														creditCard_expirationMonth = null;
+														creditCard_expirationYear = null;
+													}
 													String creditCardFirstName = in.readUTF();
 													String creditCardLastName = in.readUTF();
 													String creditCardCompanyName = in.readNullUTF();
@@ -1093,6 +1113,8 @@ public abstract class MasterServer {
 														creditCardGroupName,
 														creditCardProviderUniqueId,
 														creditCardMaskedCardNumber,
+														creditCard_expirationMonth==null ? null : AoservProtocol.FILTERED,
+														creditCard_expirationYear==null ? null : AoservProtocol.FILTERED,
 														creditCardFirstName,
 														creditCardLastName,
 														creditCardCompanyName,
@@ -1146,6 +1168,8 @@ public abstract class MasterServer {
 														creditCardGroupName,
 														creditCardProviderUniqueId,
 														creditCardMaskedCardNumber,
+														creditCard_expirationMonth,
+														creditCard_expirationYear,
 														creditCardFirstName,
 														creditCardLastName,
 														creditCardCompanyName,
@@ -3639,14 +3663,23 @@ public abstract class MasterServer {
 											String authorizationErrorCode = in.readNullUTF();
 											String authorizationProviderErrorMessage = in.readNullUTF();
 											String authorizationProviderUniqueId = in.readNullUTF();
-											String authorizationProviderReplacementMaskedCardNumber;
-											String authorizationReplacementMaskedCardNumber;
+											String authorizationResult_providerReplacementMaskedCardNumber;
+											String authorizationResult_replacementMaskedCardNumber;
+											String authorizationResult_providerReplacementExpiration;
+											Byte authorizationResult_replacementExpirationMonth;
+											Short authorizationResult_replacementExpirationYear;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
-												authorizationProviderReplacementMaskedCardNumber = in.readNullUTF();
-												authorizationReplacementMaskedCardNumber = in.readNullUTF();
+												authorizationResult_providerReplacementMaskedCardNumber = in.readNullUTF();
+												authorizationResult_replacementMaskedCardNumber = in.readNullUTF();
+												authorizationResult_providerReplacementExpiration = in.readNullUTF();
+												authorizationResult_replacementExpirationMonth = in.readBoolean() ? in.readByte() : null; // TODO: in.readNullByte()
+												authorizationResult_replacementExpirationYear = in.readBoolean() ? in.readShort() : null; // TODO: in.readNullShort()
 											} else {
-												authorizationProviderReplacementMaskedCardNumber = null;
-												authorizationReplacementMaskedCardNumber = null;
+												authorizationResult_providerReplacementMaskedCardNumber = null;
+												authorizationResult_replacementMaskedCardNumber = null;
+												authorizationResult_providerReplacementExpiration = null;
+												authorizationResult_replacementExpirationMonth = null;
+												authorizationResult_replacementExpirationYear = null;
 											}
 											String providerApprovalResult = in.readNullUTF();
 											String approvalResult = in.readNullUTF();
@@ -3675,8 +3708,11 @@ public abstract class MasterServer {
 												authorizationErrorCode,
 												authorizationProviderErrorMessage,
 												authorizationProviderUniqueId,
-												authorizationProviderReplacementMaskedCardNumber,
-												authorizationReplacementMaskedCardNumber,
+												authorizationResult_providerReplacementMaskedCardNumber,
+												authorizationResult_replacementMaskedCardNumber,
+												authorizationResult_providerReplacementExpiration==null ? null : AoservProtocol.FILTERED,
+												authorizationResult_replacementExpirationMonth==null ? null : AoservProtocol.FILTERED,
+												authorizationResult_replacementExpirationYear==null ? null : AoservProtocol.FILTERED,
 												providerApprovalResult,
 												approvalResult,
 												providerDeclineReason,
@@ -3707,8 +3743,11 @@ public abstract class MasterServer {
 												authorizationErrorCode,
 												authorizationProviderErrorMessage,
 												authorizationProviderUniqueId,
-												authorizationProviderReplacementMaskedCardNumber,
-												authorizationReplacementMaskedCardNumber,
+												authorizationResult_providerReplacementMaskedCardNumber,
+												authorizationResult_replacementMaskedCardNumber,
+												authorizationResult_providerReplacementExpiration,
+												authorizationResult_replacementExpirationMonth,
+												authorizationResult_replacementExpirationYear,
 												providerApprovalResult,
 												approvalResult,
 												providerDeclineReason,
@@ -3741,14 +3780,23 @@ public abstract class MasterServer {
 											String authorizationErrorCode = in.readNullUTF();
 											String authorizationProviderErrorMessage = in.readNullUTF();
 											String authorizationProviderUniqueId = in.readNullUTF();
-											String authorizationProviderReplacementMaskedCardNumber;
-											String authorizationReplacementMaskedCardNumber;
+											String authorizationResult_providerReplacementMaskedCardNumber;
+											String authorizationResult_replacementMaskedCardNumber;
+											String authorizationResult_providerReplacementExpiration;
+											Byte authorizationResult_replacementExpirationMonth;
+											Short authorizationResult_replacementExpirationYear;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
-												authorizationProviderReplacementMaskedCardNumber = in.readNullUTF();
-												authorizationReplacementMaskedCardNumber = in.readNullUTF();
+												authorizationResult_providerReplacementMaskedCardNumber = in.readNullUTF();
+												authorizationResult_replacementMaskedCardNumber = in.readNullUTF();
+												authorizationResult_providerReplacementExpiration = in.readNullUTF();
+												authorizationResult_replacementExpirationMonth = in.readBoolean() ? in.readByte() : null; // TODO: in.readNullByte()
+												authorizationResult_replacementExpirationYear = in.readBoolean() ? in.readShort() : null; // TODO: in.readNullShort()
 											} else {
-												authorizationProviderReplacementMaskedCardNumber = null;
-												authorizationReplacementMaskedCardNumber = null;
+												authorizationResult_providerReplacementMaskedCardNumber = null;
+												authorizationResult_replacementMaskedCardNumber = null;
+												authorizationResult_providerReplacementExpiration = null;
+												authorizationResult_replacementExpirationMonth = null;
+												authorizationResult_replacementExpirationYear = null;
 											}
 											String providerApprovalResult = in.readNullUTF();
 											String approvalResult = in.readNullUTF();
@@ -3770,8 +3818,11 @@ public abstract class MasterServer {
 												authorizationErrorCode,
 												authorizationProviderErrorMessage,
 												authorizationProviderUniqueId,
-												authorizationProviderReplacementMaskedCardNumber,
-												authorizationReplacementMaskedCardNumber,
+												authorizationResult_providerReplacementMaskedCardNumber,
+												authorizationResult_replacementMaskedCardNumber,
+												authorizationResult_providerReplacementExpiration==null ? null : AoservProtocol.FILTERED,
+												authorizationResult_replacementExpirationMonth==null ? null : AoservProtocol.FILTERED,
+												authorizationResult_replacementExpirationYear==null ? null : AoservProtocol.FILTERED,
 												providerApprovalResult,
 												approvalResult,
 												providerDeclineReason,
@@ -3795,8 +3846,11 @@ public abstract class MasterServer {
 												authorizationErrorCode,
 												authorizationProviderErrorMessage,
 												authorizationProviderUniqueId,
-												authorizationProviderReplacementMaskedCardNumber,
-												authorizationReplacementMaskedCardNumber,
+												authorizationResult_providerReplacementMaskedCardNumber,
+												authorizationResult_replacementMaskedCardNumber,
+												authorizationResult_providerReplacementExpiration,
+												authorizationResult_replacementExpirationMonth,
+												authorizationResult_replacementExpirationYear,
 												providerApprovalResult,
 												approvalResult,
 												providerDeclineReason,
@@ -9435,16 +9489,28 @@ public abstract class MasterServer {
 										{
 											int id = in.readCompressedInt();
 											String maskedCardNumber = in.readUTF();
+											Byte expirationMonth;
+											Short expirationYear;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
+												expirationMonth = in.readByte();
+												expirationYear = in.readShort();
+											} else {
+												expirationMonth = null;
+												expirationYear = null;
+											}
 											String encryptedCardNumber = in.readNullUTF();
-											String encryptedExpiration = in.readNullUTF();
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) < 0) {
+												String encryptedExpiration = in.readNullUTF();
+											}
 											int encryptionFrom = in.readCompressedInt();
 											int encryptionRecipient = in.readCompressedInt();
 											process.setCommand(
 												"update_credit_card_number_and_expiration",
 												id,
 												maskedCardNumber,
+												expirationMonth==null ? null : AoservProtocol.FILTERED,
+												expirationYear==null ? null : AoservProtocol.FILTERED,
 												encryptedCardNumber==null ? null : AoservProtocol.FILTERED,
-												encryptedExpiration==null ? null : AoservProtocol.FILTERED,
 												encryptionFrom==-1 ? null : encryptionFrom,
 												encryptionRecipient==-1 ? null : encryptionRecipient
 											);
@@ -9454,8 +9520,9 @@ public abstract class MasterServer {
 												invalidateList,
 												id,
 												maskedCardNumber,
+												expirationMonth,
+												expirationYear,
 												encryptedCardNumber,
-												encryptedExpiration,
 												encryptionFrom,
 												encryptionRecipient
 											);
@@ -9466,24 +9533,31 @@ public abstract class MasterServer {
 									case UPDATE_CREDIT_CARD_EXPIRATION :
 										{
 											int id = in.readCompressedInt();
-											String encryptedExpiration = in.readUTF();
-											int encryptionFrom = in.readCompressedInt();
-											int encryptionRecipient = in.readCompressedInt();
+											Byte expirationMonth;
+											Short expirationYear;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
+												expirationMonth = in.readByte();
+												expirationYear = in.readShort();
+											} else {
+												expirationMonth = null;
+												expirationYear = null;
+												String encryptedExpiration = in.readUTF();
+												int encryptionFrom = in.readCompressedInt();
+												int encryptionRecipient = in.readCompressedInt();
+											}
 											process.setCommand(
 												"update_credit_card_expiration",
 												id,
-												AoservProtocol.FILTERED,
-												encryptionFrom,
-												encryptionRecipient
+												expirationMonth==null ? null : AoservProtocol.FILTERED,
+												expirationYear==null ? null : AoservProtocol.FILTERED
 											);
 											CreditCardHandler.updateCreditCardExpiration(
 												conn,
 												source,
 												invalidateList,
 												id,
-												encryptedExpiration,
-												encryptionFrom,
-												encryptionRecipient
+												expirationMonth,
+												expirationYear
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;

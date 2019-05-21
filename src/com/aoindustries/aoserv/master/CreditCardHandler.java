@@ -18,7 +18,9 @@ import com.aoindustries.creditcards.CreditCardProcessor;
 import com.aoindustries.creditcards.MerchantServicesProviderFactory;
 import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
+import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.math.SafeMath;
 import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
@@ -38,7 +40,7 @@ import java.util.logging.Logger;
  * The <code>CreditCardHandler</code> handles all the accesses to the <code>payment.CreditCard</code> table.
  *
  * TODO: Deactivate immediately on expired card
- * TODO: Retry failed cards on the 7th and 14th, then deactivate.
+ * TODO: Retry failed cards on the 7th and 14th, then deactivate?  See newly documented account billing policy.
  *
  * @author  AO Industries, Inc.
  */
@@ -121,7 +123,9 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String processorName,
         Account.Name accounting,
         String groupName,
-        String cardInfo,
+        String cardInfo, // TODO: Rename maskedCardNumber
+		Byte expirationMonth,
+		Short expirationYear,
         String providerUniqueId,
         String firstName,
         String lastName,
@@ -139,7 +143,6 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String principalName,
         String description,
         String encryptedCardNumber,
-        String encryptedExpiration,
         int encryptionFrom,
         int encryptionRecipient
     ) throws IOException, SQLException {
@@ -149,13 +152,15 @@ final public class CreditCardHandler /*implements CronJob*/ {
         if(encryptionRecipient!=-1) checkAccessEncryptionKey(conn, source, "addCreditCard", encryptionRecipient);
 
         int id;
-        if(encryptedCardNumber==null && encryptedExpiration==null && encryptionFrom==-1 && encryptionRecipient==-1) {
+        if(encryptedCardNumber==null && encryptionFrom==-1 && encryptionRecipient==-1) {
 	        id = conn.executeIntUpdate(
                 "INSERT INTO payment.\"CreditCard\" (\n"
 				+ "  processor_id,\n"
 				+ "  accounting,\n"
 				+ "  group_name,\n"
 				+ "  card_info,\n"
+				+ "  \"expirationMonth\",\n"
+				+ "  \"expirationYear\",\n"
 				+ "  provider_unique_id,\n"
 				+ "  first_name,\n"
 				+ "  last_name,\n"
@@ -173,11 +178,13 @@ final public class CreditCardHandler /*implements CronJob*/ {
 				+ "  created_by,\n"
 				+ "  principal_name,\n"
 				+ "  description\n"
-				+ ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id",
+				+ ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id",
                 processorName,
                 accounting,
                 groupName,
                 cardInfo,
+				expirationMonth == null ? DatabaseAccess.Null.SMALLINT : expirationMonth.shortValue(),
+				expirationYear == null ? DatabaseAccess.Null.SMALLINT : expirationYear,
                 providerUniqueId,
                 firstName,
                 lastName,
@@ -196,13 +203,15 @@ final public class CreditCardHandler /*implements CronJob*/ {
                 principalName,
                 description
             );
-        } else if(encryptedCardNumber!=null && encryptedExpiration!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
+        } else if(encryptedCardNumber!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
 	        id = conn.executeIntUpdate(
                 "INSERT INTO payment.\"CreditCard\" (\n"
 				+ "  processor_id,\n"
 				+ "  accounting,\n"
 				+ "  group_name,\n"
 				+ "  card_info,\n"
+				+ "  \"expirationMonth\",\n"
+				+ "  \"expirationYear\",\n"
 				+ "  provider_unique_id,\n"
 				+ "  first_name,\n"
 				+ "  last_name,\n"
@@ -223,15 +232,14 @@ final public class CreditCardHandler /*implements CronJob*/ {
 				+ "  description,\n"
 				+ "  encrypted_card_number,\n"
 				+ "  encryption_card_number_from,\n"
-				+ "  encryption_card_number_recipient,\n"
-				+ "  encrypted_expiration,\n"
-				+ "  encryption_expiration_from,\n"
-				+ "  encryption_expiration_recipient\n"
-				+ ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id",
+				+ "  encryption_card_number_recipient\n"
+				+ ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id",
                 processorName,
                 accounting,
                 groupName,
                 cardInfo,
+				expirationMonth == null ? DatabaseAccess.Null.SMALLINT : expirationMonth.shortValue(),
+				expirationYear == null ? DatabaseAccess.Null.SMALLINT : expirationYear,
                 providerUniqueId,
                 firstName,
                 lastName,
@@ -251,12 +259,9 @@ final public class CreditCardHandler /*implements CronJob*/ {
                 description,
                 encryptedCardNumber,
                 encryptionFrom,
-                encryptionRecipient,
-                encryptedExpiration,
-                encryptionFrom,
                 encryptionRecipient
             );
-        } else throw new SQLException("encryptedCardNumber, encryptedExpiration, encryptionFrom, and encryptionRecipient must either all be null or none null");
+        } else throw new SQLException("encryptedCardNumber, encryptionFrom, and encryptionRecipient must either all be null or none null");
 
         // Notify all clients of the update
         invalidateList.addTable(conn, Table.TableID.CREDIT_CARDS, accounting, InvalidateList.allServers, false);
@@ -508,8 +513,9 @@ final public class CreditCardHandler /*implements CronJob*/ {
         InvalidateList invalidateList,
         int id,
         String maskedCardNumber,
+		Byte expirationMonth,
+		Short expirationYear,
         String encryptedCardNumber,
-        String encryptedExpiration,
         int encryptionFrom,
         int encryptionRecipient
     ) throws IOException, SQLException {
@@ -520,49 +526,48 @@ final public class CreditCardHandler /*implements CronJob*/ {
         if(encryptionFrom!=-1) checkAccessEncryptionKey(conn, source, "updateCreditCardNumberAndExpiration", encryptionFrom);
         if(encryptionRecipient!=-1) checkAccessEncryptionKey(conn, source, "updateCreditCardNumberAndExpiration", encryptionRecipient);
 
-        if(encryptedCardNumber==null && encryptedExpiration==null && encryptionFrom==-1 && encryptionRecipient==-1) {
+        if(encryptedCardNumber==null && encryptionFrom==-1 && encryptionRecipient==-1) {
             // Update row
             conn.executeUpdate(
                 "update\n"
                 + "  payment.\"CreditCard\"\n"
                 + "set\n"
                 + "  card_info=?,\n"
+                + "  \"expirationMonth\"=?,\n"
+                + "  \"expirationYear\"=?,\n"
                 + "  encrypted_card_number=null,\n"
                 + "  encryption_card_number_from=null,\n"
-                + "  encryption_card_number_recipient=null,\n"
-                + "  encrypted_expiration=null,\n"
-                + "  encryption_expiration_from=null,\n"
-                + "  encryption_expiration_recipient=null\n"
+                + "  encryption_card_number_recipient=null\n"
                 + "where\n"
                 + "  id=?",
                 maskedCardNumber,
+				expirationMonth == null ? DatabaseAccess.Null.SMALLINT : expirationMonth.shortValue(),
+				expirationYear == null ? DatabaseAccess.Null.SMALLINT : expirationYear,
                 id
             );
-        } else if(encryptedCardNumber!=null && encryptedExpiration!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
+        } else if(encryptedCardNumber!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
             // Update row
             conn.executeUpdate(
                 "update\n"
                 + "  payment.\"CreditCard\"\n"
                 + "set\n"
                 + "  card_info=?,\n"
+                + "  \"expirationMonth\"=?,\n"
+                + "  \"expirationYear\"=?,\n"
                 + "  encrypted_card_number=?,\n"
                 + "  encryption_card_number_from=?,\n"
-                + "  encryption_card_number_recipient=?,\n"
-                + "  encrypted_expiration=?,\n"
-                + "  encryption_expiration_from=?,\n"
-                + "  encryption_expiration_recipient=?\n"
+                + "  encryption_card_number_recipient=?\n"
                 + "where\n"
                 + "  id=?",
                 maskedCardNumber,
+				expirationMonth == null ? DatabaseAccess.Null.SMALLINT : expirationMonth.shortValue(),
+				expirationYear == null ? DatabaseAccess.Null.SMALLINT : expirationYear,
                 encryptedCardNumber,
                 encryptionFrom,
                 encryptionRecipient,
-                encryptedExpiration,
-                encryptionFrom,
-                encryptionRecipient,
                 id
             );
-        } else throw new SQLException("encryptedCardNumber, encryptedExpiration, encryptionFrom, and encryptionRecipient must either all be null or none null");
+        } else throw new SQLException("encryptedCardNumber, encryptionFrom, and encryptionRecipient must either all be null or none null");
 
         Account.Name accounting = getBusinessForCreditCard(conn, id);
         invalidateList.addTable(
@@ -579,30 +584,24 @@ final public class CreditCardHandler /*implements CronJob*/ {
         RequestSource source,
         InvalidateList invalidateList,
         int id,
-        String encryptedExpiration,
-        int encryptionFrom,
-        int encryptionRecipient
+		Byte expirationMonth,
+		Short expirationYear
     ) throws IOException, SQLException {
         // Permission checks
         BusinessHandler.checkPermission(conn, source, "updateCreditCardExpiration", Permission.Name.edit_credit_card);
         checkAccessCreditCard(conn, source, "updateCreditCardExpiration", id);
-        
-        checkAccessEncryptionKey(conn, source, "updateCreditCardExpiration", encryptionFrom);
-        checkAccessEncryptionKey(conn, source, "updateCreditCardExpiration", encryptionRecipient);
 
         // Update row
         conn.executeUpdate(
             "update\n"
             + "  payment.\"CreditCard\"\n"
             + "set\n"
-            + "  encrypted_expiration=?,\n"
-            + "  encryption_expiration_from=?,\n"
-            + "  encryption_expiration_recipient=?\n"
+			+ "  \"expirationMonth\"=?,\n"
+			+ "  \"expirationYear\"=?\n"
             + "where\n"
             + "  id=?",
-            encryptedExpiration,
-            encryptionFrom,
-            encryptionRecipient,
+			expirationMonth == null ? DatabaseAccess.Null.SMALLINT : expirationMonth.shortValue(),
+			expirationYear == null ? DatabaseAccess.Null.SMALLINT : expirationYear,
             id
         );
 
@@ -720,6 +719,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String creditCardGroupName,
         String creditCardProviderUniqueId,
         String creditCardMaskedCardNumber,
+		Byte creditCard_expirationMonth,
+		Short creditCard_expirationYear,
         String creditCardFirstName,
         String creditCardLastName,
         String creditCardCompanyName,
@@ -777,7 +778,9 @@ final public class CreditCardHandler /*implements CronJob*/ {
             creditCardAccounting,
             creditCardGroupName,
             creditCardProviderUniqueId,
-            creditCardMaskedCardNumber,
+			creditCardMaskedCardNumber,
+			creditCard_expirationMonth,
+			creditCard_expirationYear,
             creditCardFirstName,
             creditCardLastName,
             creditCardCompanyName,
@@ -836,6 +839,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String creditCardGroupName,
         String creditCardProviderUniqueId,
         String creditCardMaskedCardNumber,
+		Byte creditCard_expirationMonth,
+		Short creditCard_expirationYear,
         String creditCardFirstName,
         String creditCardLastName,
         String creditCardCompanyName,
@@ -888,6 +893,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
             + "  credit_card_group_name,\n"
             + "  credit_card_provider_unique_id,\n"
             + "  credit_card_masked_card_number,\n"
+            + "  \"creditCard.expirationMonth\",\n"
+            + "  \"creditCard.expirationYear\",\n"
             + "  credit_card_first_name,\n"
             + "  credit_card_last_name,\n"
             + "  credit_card_company_name,\n"
@@ -906,7 +913,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
             + "  authorization_username,\n"
             + "  authorization_principal_name,\n"
             + "  status\n"
-            + ") VALUES (?,?,?,?,?,?,?,?::numeric(9,2),?::numeric(9,2),?,?::numeric(9,2),?::numeric(9,2),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING') RETURNING id",
+            + ") VALUES (?,?,?,?,?,?,?,?::numeric(9,2),?::numeric(9,2),?,?::numeric(9,2),?::numeric(9,2),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING') RETURNING id",
             processor,
             accounting,
             groupName,
@@ -939,6 +946,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
             creditCardGroupName,
             creditCardProviderUniqueId,
             creditCardMaskedCardNumber,
+			creditCard_expirationMonth == null ? DatabaseAccess.Null.SMALLINT : creditCard_expirationMonth.shortValue(),
+			creditCard_expirationYear == null ? DatabaseAccess.Null.SMALLINT : creditCard_expirationYear,
             creditCardFirstName,
             creditCardLastName,
             creditCardCompanyName,
@@ -973,8 +982,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String authorizationErrorCode,
         String authorizationProviderErrorMessage,
         String authorizationProviderUniqueId,
-		String authorizationProviderReplacementMaskedCardNumber,
-		String authorizationReplacementMaskedCardNumber,
+		String authorizationResult_providerReplacementMaskedCardNumber,
+		String authorizationResult_replacementMaskedCardNumber,
+		String authorizationResult_providerReplacementExpiration,
+		Byte authorizationResult_replacementExpirationMonth,
+		Short authorizationResult_replacementExpirationYear,
         String providerApprovalResult,
         String approvalResult,
         String providerDeclineReason,
@@ -1015,8 +1027,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
             authorizationErrorCode,
             authorizationProviderErrorMessage,
             authorizationProviderUniqueId,
-			authorizationProviderReplacementMaskedCardNumber,
-			authorizationReplacementMaskedCardNumber,
+			authorizationResult_providerReplacementMaskedCardNumber,
+			authorizationResult_replacementMaskedCardNumber,
+			authorizationResult_providerReplacementExpiration,
+			authorizationResult_replacementExpirationMonth,
+			authorizationResult_replacementExpirationYear,
             providerApprovalResult,
             approvalResult,
             providerDeclineReason,
@@ -1049,8 +1064,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String authorizationErrorCode,
         String authorizationProviderErrorMessage,
         String authorizationProviderUniqueId,
-		String authorizationProviderReplacementMaskedCardNumber,
-		String authorizationReplacementMaskedCardNumber,
+		String authorizationResult_providerReplacementMaskedCardNumber,
+		String authorizationResult_replacementMaskedCardNumber,
+		String authorizationResult_providerReplacementExpiration,
+		Byte authorizationResult_replacementExpirationMonth,
+		Short authorizationResult_replacementExpirationYear,
         String providerApprovalResult,
         String approvalResult,
         String providerDeclineReason,
@@ -1084,8 +1102,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
             + "  authorization_error_code=?::\"com.aoindustries.creditcards\".\"TransactionResult.ErrorCode\",\n"
             + "  authorization_provider_error_message=?,\n"
             + "  authorization_provider_unique_id=?,\n"
-            + "  \"authorizationProviderReplacementMaskedCardNumber\"=?,\n"
-            + "  \"authorizationReplacementMaskedCardNumber\"=?,\n"
+            + "  \"authorizationResult.providerReplacementMaskedCardNumber\"=?,\n"
+            + "  \"authorizationResult.replacementMaskedCardNumber\"=?,\n"
+            + "  \"authorizationResult.providerReplacementExpiration\"=?,\n"
+            + "  \"authorizationResult.replacementExpirationMonth\"=?,\n"
+            + "  \"authorizationResult.replacementExpirationYear\"=?,\n"
             + "  authorization_provider_approval_result=?,\n"
             + "  authorization_approval_result=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.ApprovalResult\",\n"
             + "  authorization_provider_decline_reason=?,\n"
@@ -1114,8 +1135,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
             authorizationErrorCode,
             authorizationProviderErrorMessage,
             authorizationProviderUniqueId,
-			authorizationProviderReplacementMaskedCardNumber,
-			authorizationReplacementMaskedCardNumber,
+			authorizationResult_providerReplacementMaskedCardNumber,
+			authorizationResult_replacementMaskedCardNumber,
+			authorizationResult_providerReplacementExpiration,
+			authorizationResult_replacementExpirationMonth == null ? DatabaseAccess.Null.SMALLINT : authorizationResult_replacementExpirationMonth.shortValue(),
+			authorizationResult_replacementExpirationYear == null ? DatabaseAccess.Null.SMALLINT : authorizationResult_replacementExpirationYear,
             providerApprovalResult,
             approvalResult,
             providerDeclineReason,
@@ -1154,8 +1178,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String authorizationErrorCode,
         String authorizationProviderErrorMessage,
         String authorizationProviderUniqueId,
-		String authorizationProviderReplacementMaskedCardNumber,
-		String authorizationReplacementMaskedCardNumber,
+		String authorizationResult_providerReplacementMaskedCardNumber,
+		String authorizationResult_replacementMaskedCardNumber,
+		String authorizationResult_providerReplacementExpiration,
+		Byte authorizationResult_replacementExpirationMonth,
+		Short authorizationResult_replacementExpirationYear,
         String providerApprovalResult,
         String approvalResult,
         String providerDeclineReason,
@@ -1184,8 +1211,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
             authorizationErrorCode,
             authorizationProviderErrorMessage,
             authorizationProviderUniqueId,
-			authorizationProviderReplacementMaskedCardNumber,
-			authorizationReplacementMaskedCardNumber,
+			authorizationResult_providerReplacementMaskedCardNumber,
+			authorizationResult_replacementMaskedCardNumber,
+			authorizationResult_providerReplacementExpiration,
+			authorizationResult_replacementExpirationMonth,
+			authorizationResult_replacementExpirationYear,
             providerApprovalResult,
             approvalResult,
             providerDeclineReason,
@@ -1210,8 +1240,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
         String authorizationErrorCode,
         String authorizationProviderErrorMessage,
         String authorizationProviderUniqueId,
-		String authorizationProviderReplacementMaskedCardNumber,
-		String authorizationReplacementMaskedCardNumber,
+		String authorizationResult_providerReplacementMaskedCardNumber,
+		String authorizationResult_replacementMaskedCardNumber,
+		String authorizationResult_providerReplacementExpiration,
+		Byte authorizationResult_replacementExpirationMonth,
+		Short authorizationResult_replacementExpirationYear,
         String providerApprovalResult,
         String approvalResult,
         String providerDeclineReason,
@@ -1237,9 +1270,12 @@ final public class CreditCardHandler /*implements CronJob*/ {
             + "  authorization_error_code=?::\"com.aoindustries.creditcards\".\"TransactionResult.ErrorCode\",\n"
             + "  authorization_provider_error_message=?,\n"
             + "  authorization_provider_unique_id=?,\n"
-            + "  \"authorizationProviderReplacementMaskedCardNumber\"=?,\n"
-            + "  \"authorizationReplacementMaskedCardNumber\"=?,\n"
-            + "  authorization_provider_approval_result=?,\n"
+            + "  \"authorizationResult.providerReplacementMaskedCardNumber\"=?,\n"
+            + "  \"authorizationResult.replacementMaskedCardNumber\"=?,\n"
+            + "  \"authorizationResult.providerReplacementExpiration\"=?,\n"
+            + "  \"authorizationResult.replacementExpirationMonth\"=?,\n"
+            + "  \"authorizationResult.replacementExpirationYear\"=?,\n"
+			+ "  authorization_provider_approval_result=?,\n"
             + "  authorization_approval_result=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.ApprovalResult\",\n"
             + "  authorization_provider_decline_reason=?,\n"
             + "  authorization_decline_reason=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.DeclineReason\",\n"
@@ -1259,8 +1295,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
             authorizationErrorCode,
             authorizationProviderErrorMessage,
             authorizationProviderUniqueId,
-			authorizationProviderReplacementMaskedCardNumber,
-			authorizationReplacementMaskedCardNumber,
+			authorizationResult_providerReplacementMaskedCardNumber,
+			authorizationResult_replacementMaskedCardNumber,
+			authorizationResult_providerReplacementExpiration,
+			authorizationResult_replacementExpirationMonth == null ? DatabaseAccess.Null.SMALLINT : authorizationResult_replacementExpirationMonth.shortValue(),
+			authorizationResult_replacementExpirationYear == null ? DatabaseAccess.Null.SMALLINT : authorizationResult_replacementExpirationYear,
             providerApprovalResult,
             approvalResult,
             providerDeclineReason,
@@ -1286,6 +1325,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
         final private BigDecimal amount;
         final private int ccPkey;
         final private String ccCardInfo;
+		final private Byte ccExpirationMonth;
+		final private Short ccExpirationYear;
         final private String ccPrincipalName;
         final private String ccGroupName;
         final private String ccProviderUniqueId;
@@ -1315,6 +1356,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
             BigDecimal amount,
             int ccPkey,
             String ccCardInfo,
+			Byte ccExpirationMonth,
+			Short ccExpirationYear,
             String ccPrincipalName,
             String ccGroupName,
             String ccProviderUniqueId,
@@ -1343,6 +1386,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
             this.amount = amount;
             this.ccPkey = ccPkey;
             this.ccCardInfo = ccCardInfo;
+			this.ccExpirationMonth = ccExpirationMonth;
+			this.ccExpirationYear = ccExpirationYear;
             this.ccPrincipalName = ccPrincipalName;
             this.ccGroupName = ccGroupName;
             this.ccProviderUniqueId = ccProviderUniqueId;
@@ -1428,14 +1473,18 @@ final public class CreditCardHandler /*implements CronJob*/ {
 											) {
 												BigDecimal amount = endofmonth.compareTo(current)<=0 ? endofmonth : current;
 												total = total.add(amount);
+												Byte expirationMonth = SafeMath.castByte(results.getShort(6));
+												if(results.wasNull()) expirationMonth = null;
+												Short expirationYear = results.getShort(7);
+												if(results.wasNull()) expirationYear = null;
 												list.add(
 													new AutomaticPayment(
 														accounting,
 														amount,
 														results.getInt(4),
 														results.getString(5),
-														results.getString(6),
-														results.getString(7),
+														expirationMonth,
+														expirationYear,
 														results.getString(8),
 														results.getString(9),
 														results.getString(10),
@@ -1456,7 +1505,9 @@ final public class CreditCardHandler /*implements CronJob*/ {
 														results.getString(25),
 														results.getString(26),
 														results.getString(27),
-														results.getString(28)
+														results.getString(28),
+														results.getString(29),
+														results.getString(30)
 													)
 												);
 											}
@@ -1474,6 +1525,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             + "  current.balance as current,\n"
                             + "  cc.id,\n"
                             + "  cc.card_info,\n"
+                            + "  cc.\"expirationMonth\",\n"
+                            + "  cc.\"expirationYear\",\n"
                             + "  cc.principal_name,\n"
                             + "  cc.group_name,\n"
                             + "  cc.provider_unique_id,\n"
@@ -1560,11 +1613,23 @@ final public class CreditCardHandler /*implements CronJob*/ {
                             // Add as pending transaction
                             String paymentTypeName;
                             String cardInfo = automaticPayment.ccCardInfo;
-                            if(cardInfo.startsWith("34") || cardInfo.startsWith("37")) {
+							// TODO: Use some sort of shared API for this
+                            if(
+								cardInfo.startsWith("34")
+								|| cardInfo.startsWith("37")
+								|| cardInfo.startsWith("3" + CreditCard.UNKNOWN_DIGIT)
+							) {
                                 paymentTypeName = PaymentType.AMEX;
                             } else if(cardInfo.startsWith("60")) {
                                 paymentTypeName = PaymentType.DISCOVER;
-                            } else if(cardInfo.startsWith("51") || cardInfo.startsWith("52") || cardInfo.startsWith("53") || cardInfo.startsWith("54") || cardInfo.startsWith("55")) {
+                            } else if(
+								cardInfo.startsWith("51")
+								|| cardInfo.startsWith("52")
+								|| cardInfo.startsWith("53")
+								|| cardInfo.startsWith("54")
+								|| cardInfo.startsWith("55")
+								|| cardInfo.startsWith("5" + CreditCard.UNKNOWN_DIGIT)
+							) {
                                 paymentTypeName = PaymentType.MASTERCARD;
                             } else if(cardInfo.startsWith("4")) {
                                 paymentTypeName = PaymentType.VISA;
@@ -1594,29 +1659,29 @@ final public class CreditCardHandler /*implements CronJob*/ {
                                 null,
                                 null,
                                 new TransactionRequest(
-                                    false,
+                                    false, // testMode
                                     InetAddress.getLocalHost().getHostAddress(),
-                                    120,
-                                    Integer.toString(transID),
+                                    120, // duplicateWindow
+                                    Integer.toString(transID), // orderNumber
                                     Currency.getInstance("USD"),
                                     automaticPayment.amount,
-                                    null,
-                                    false,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    false,
-                                    null,
-                                    null,
-                                    null,
+                                    null, // taxAmount
+                                    false, // taxExempt
+                                    null, // shippingAmount
+                                    null, // dutyAmount
+                                    null, // shippingFirstName
+                                    null, // shippingLastName
+                                    null, // shippingCompanyName
+                                    null, // shippingStreetAddress1
+                                    null, // shippingStreetAddress2
+                                    null, // shippingCity
+                                    null, // shippingState
+                                    null, // shippingPostalCode
+                                    null, // shippingCountryCode
+                                    false, // emailCustomer
+                                    null, // merchantEmail
+                                    null, // invoiceNumber
+                                    null, // purchaseOrderNumber
                                     "Monthly automatic billing"
                                 ),
                                 new CreditCard(
@@ -1625,18 +1690,18 @@ final public class CreditCardHandler /*implements CronJob*/ {
                                     automaticPayment.ccGroupName,
                                     automaticPayment.ccpProviderId,
                                     automaticPayment.ccProviderUniqueId,
-                                    null,
+                                    null, // cardNumber
                                     automaticPayment.ccCardInfo,
-                                    (byte)-1,
-                                    (short)-1,
-                                    null,
+                                    automaticPayment.ccExpirationMonth == null ? CreditCard.UNKNOWN_EXPRIATION_MONTH : automaticPayment.ccExpirationMonth,
+                                    automaticPayment.ccExpirationYear == null ? CreditCard.UNKNOWN_EXPRIATION_YEAR : automaticPayment.ccExpirationYear,
+                                    null, // cardCode
                                     automaticPayment.ccFirstName,
                                     automaticPayment.ccLastName,
                                     automaticPayment.ccCompanyName,
                                     automaticPayment.ccEmail,
                                     automaticPayment.ccPhone,
                                     automaticPayment.ccFax,
-                                    null,
+                                    null, // customerId
                                     automaticPayment.ccCustomerTaxId,
                                     automaticPayment.ccStreetAddress1,
                                     automaticPayment.ccStreetAddress2,
