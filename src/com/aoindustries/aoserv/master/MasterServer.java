@@ -1056,8 +1056,8 @@ public abstract class MasterServer {
 													Byte creditCard_expirationMonth;
 													Short creditCard_expirationYear;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
-														creditCard_expirationMonth = in.readBoolean() ? in.readByte() : null; // TODO: in.readNullByte()
-														creditCard_expirationYear = in.readBoolean() ? in.readShort() : null; // TODO: in.readNullShort()
+														creditCard_expirationMonth = in.readNullByte();
+														creditCard_expirationYear = in.readNullShort();
 													} else {
 														creditCard_expirationMonth = null;
 														creditCard_expirationYear = null;
@@ -3672,8 +3672,8 @@ public abstract class MasterServer {
 												authorizationResult_providerReplacementMaskedCardNumber = in.readNullUTF();
 												authorizationResult_replacementMaskedCardNumber = in.readNullUTF();
 												authorizationResult_providerReplacementExpiration = in.readNullUTF();
-												authorizationResult_replacementExpirationMonth = in.readBoolean() ? in.readByte() : null; // TODO: in.readNullByte()
-												authorizationResult_replacementExpirationYear = in.readBoolean() ? in.readShort() : null; // TODO: in.readNullShort()
+												authorizationResult_replacementExpirationMonth = in.readNullByte();
+												authorizationResult_replacementExpirationYear = in.readNullShort();
 											} else {
 												authorizationResult_providerReplacementMaskedCardNumber = null;
 												authorizationResult_replacementMaskedCardNumber = null;
@@ -3789,8 +3789,8 @@ public abstract class MasterServer {
 												authorizationResult_providerReplacementMaskedCardNumber = in.readNullUTF();
 												authorizationResult_replacementMaskedCardNumber = in.readNullUTF();
 												authorizationResult_providerReplacementExpiration = in.readNullUTF();
-												authorizationResult_replacementExpirationMonth = in.readBoolean() ? in.readByte() : null; // TODO: in.readNullByte()
-												authorizationResult_replacementExpirationYear = in.readBoolean() ? in.readShort() : null; // TODO: in.readNullShort()
+												authorizationResult_replacementExpirationMonth = in.readNullByte();
+												authorizationResult_replacementExpirationYear = in.readNullShort();
 											} else {
 												authorizationResult_providerReplacementMaskedCardNumber = null;
 												authorizationResult_replacementMaskedCardNumber = null;
