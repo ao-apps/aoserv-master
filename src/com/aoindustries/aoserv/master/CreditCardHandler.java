@@ -591,6 +591,16 @@ final public class CreditCardHandler /*implements CronJob*/ {
         BusinessHandler.checkPermission(conn, source, "updateCreditCardExpiration", Permission.Name.edit_credit_card);
         checkAccessCreditCard(conn, source, "updateCreditCardExpiration", id);
 
+		updateCreditCardExpiration(conn, invalidateList, id, expirationMonth, expirationYear);
+	}
+
+	public static void updateCreditCardExpiration(
+        DatabaseConnection conn,
+        InvalidateList invalidateList,
+        int id,
+		Byte expirationMonth,
+		Short expirationYear
+    ) throws IOException, SQLException {
         // Update row
         conn.executeUpdate(
             "update\n"

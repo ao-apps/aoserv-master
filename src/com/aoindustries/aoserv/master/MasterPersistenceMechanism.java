@@ -103,8 +103,18 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 		byte expirationMonth,
 		short expirationYear
 	) throws SQLException {
-		// TODO: This must be implemented for replacement expiration date support
-        throw new SQLException("Method not implemented for direct master server persistence.");
+		try {
+            CreditCardHandler.updateCreditCardExpiration(
+                conn,
+                invalidateList,
+				Integer.parseInt(creditCard.getPersistenceUniqueId()),
+				expirationMonth,
+				expirationYear
+            );
+            conn.commit();
+        } catch(IOException err) {
+            throw new SQLException(err);
+        }
     }
 
     @Override
