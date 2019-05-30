@@ -930,6 +930,12 @@ public abstract class MasterServer {
 													String email = in.readNullUTF();
 													String phone = in.readNullUTF();
 													String fax = in.readNullUTF();
+													String customerId;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_1) >= 0) {
+														customerId = in.readNullUTF();
+													} else {
+														customerId = null;
+													}
 													String customerTaxId = in.readNullUTF();
 													String streetAddress1 = in.readUTF();
 													String streetAddress2 = in.readNullUTF();
@@ -970,6 +976,7 @@ public abstract class MasterServer {
 														email,
 														phone,
 														fax,
+														customerId,
 														customerTaxId,
 														streetAddress1,
 														streetAddress2,
@@ -1000,6 +1007,7 @@ public abstract class MasterServer {
 														email,
 														phone,
 														fax,
+														customerId,
 														customerTaxId,
 														streetAddress1,
 														streetAddress2,
@@ -1068,6 +1076,12 @@ public abstract class MasterServer {
 													String creditCardEmail = in.readNullUTF();
 													String creditCardPhone = in.readNullUTF();
 													String creditCardFax = in.readNullUTF();
+													String creditCardCustomerId;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_1) >= 0) {
+														creditCardCustomerId = in.readNullUTF();
+													} else {
+														creditCardCustomerId = null;
+													}
 													String creditCardCustomerTaxId = in.readNullUTF();
 													String creditCardStreetAddress1 = in.readUTF();
 													String creditCardStreetAddress2 = in.readNullUTF();
@@ -1121,6 +1135,7 @@ public abstract class MasterServer {
 														creditCardEmail,
 														creditCardPhone,
 														creditCardFax,
+														creditCardCustomerId,
 														creditCardCustomerTaxId,
 														creditCardStreetAddress1,
 														creditCardStreetAddress2,
@@ -1176,6 +1191,7 @@ public abstract class MasterServer {
 														creditCardEmail,
 														creditCardPhone,
 														creditCardFax,
+														creditCardCustomerId,
 														creditCardCustomerTaxId,
 														creditCardStreetAddress1,
 														creditCardStreetAddress2,
@@ -9428,6 +9444,13 @@ public abstract class MasterServer {
 											if(phone.length() == 0) phone=null;
 											String fax=in.readUTF().trim();
 											if(fax.length() == 0) fax=null;
+											String customerId;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_1) >= 0) {
+												customerId = in.readUTF().trim();
+												if(customerId.length() == 0) customerId = null;
+											} else {
+												customerId = null;
+											}
 											String customerTaxId=in.readUTF().trim();
 											if(customerTaxId.length() == 0) customerTaxId=null;
 											String streetAddress1=in.readUTF().trim();
@@ -9451,6 +9474,7 @@ public abstract class MasterServer {
 												email,
 												phone,
 												fax,
+												customerId,
 												customerTaxId,
 												streetAddress1,
 												streetAddress2,
@@ -9472,6 +9496,7 @@ public abstract class MasterServer {
 												email,
 												phone,
 												fax,
+												customerId,
 												customerTaxId,
 												streetAddress1,
 												streetAddress2,
