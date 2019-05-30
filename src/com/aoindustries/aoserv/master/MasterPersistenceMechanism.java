@@ -15,11 +15,16 @@ import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.creditcards.TransactionResult;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.dbc.ObjectFactory;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.acl.Group;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -43,6 +48,73 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 		}
 	}
 
+	private static final String COLUMNS =
+		  "  cc.id                 AS \"persistenceUniqueId\",\n"
+		+ "  cc.principal_name     AS \"principalName\",\n"
+		+ "  cc.group_name         AS \"groupName\",\n"
+		+ "  cc.processor_id       AS \"providerId\",\n"
+		+ "  cc.provider_unique_id AS \"providerUniqueId\",\n"
+		+ "  cc.card_info          AS \"maskedCardNumber\",\n"
+		+ "  cc.\"expirationMonth\",\n"
+		+ "  cc.\"expirationYear\",\n"
+		+ "  cc.first_name         AS \"firstName\",\n"
+		+ "  cc.last_name          AS \"lastName\",\n"
+		+ "  cc.company_name       AS \"companyName\",\n"
+		+ "  cc.email,\n"
+		+ "  cc.phone,\n"
+		+ "  cc.fax,\n"
+		+ "  cc.\"customerId\",\n"
+		+ "  cc.customer_tax_id    AS \"customerTaxId\",\n"
+		+ "  cc.street_address1    AS \"streetAddress1\",\n"
+		+ "  cc.street_address2    AS \"streetAddress2\",\n"
+		+ "  cc.city,\n"
+		+ "  cc.state,\n"
+		+ "  cc.postal_code        AS \"postalCode\",\n"
+		+ "  cc.country_code       AS \"countryCode\",\n"
+		+ "  cc.description        AS \"comments\"";
+
+	// TODO: 2.0: Nullable Byte
+	private static byte getExpirationMonth(ResultSet result, String columnLabel) throws SQLException {
+		byte expirationMonth = result.getByte(columnLabel);
+		if(result.wasNull()) return CreditCard.UNKNOWN_EXPRIATION_MONTH;
+		return expirationMonth;
+	}
+
+	// TODO: 2.0: Nullable Short
+	private static short getExpirationYear(ResultSet result, String columnLabel) throws SQLException {
+		short expirationYear = result.getShort(columnLabel);
+		if(result.wasNull()) return CreditCard.UNKNOWN_EXPRIATION_YEAR;
+		return expirationYear;
+	}
+
+	private static final ObjectFactory<CreditCard> creditCardObjectFactory = (ResultSet result) -> new CreditCard(
+		Integer.toString(result.getInt("persistenceUniqueId")),
+		result.getString("principalName"),
+		result.getString("groupName"),
+		result.getString("providerId"),
+		result.getString("providerUniqueId"),
+		null, // cardNumber
+		result.getString("maskedCardNumber"),
+		getExpirationMonth(result, "expirationMonth"),
+		getExpirationYear(result, "expirationYear"),
+		null, // cardCode
+		result.getString("firstName"),
+		result.getString("lastName"),
+		result.getString("companyName"),
+		result.getString("email"),
+		result.getString("phone"),
+		result.getString("fax"),
+		result.getString("customerId"),
+		result.getString("customerTaxId"),
+		result.getString("streetAddress1"),
+		result.getString("streetAddress2"),
+		result.getString("city"),
+		result.getString("state"),
+		result.getString("postalCode"),
+		result.getString("countryCode"),
+		result.getString("comments")
+	);
+
 	final private DatabaseConnection conn;
     final private InvalidateList invalidateList;
 
@@ -55,6 +127,86 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
     public String storeCreditCard(Principal principal, CreditCard creditCard) throws SQLException {
         throw new SQLException("Method not implemented for direct master server persistence.");
     }
+
+	@Override
+	public CreditCard getCreditCard(Principal principal, String persistenceUniqueId) throws SQLException {
+		int id;
+		try {
+			id = Integer.parseInt(persistenceUniqueId);
+		} catch(NumberFormatException e) {
+			return null;
+		}
+		return conn.executeObjectQuery(
+			Connection.TRANSACTION_READ_COMMITTED,
+			true,
+			false,
+			creditCardObjectFactory,
+			"SELECT\n"
+			+ COLUMNS + "\n"
+			+ "FROM\n"
+			+ "             payment.\"CreditCard\" cc\n"
+			+ "  INNER JOIN payment.\"Processor\"  ccp ON cc.processor_id = ccp.provider_id\n"
+			+ "WHERE\n"
+			+ "  cc.id = ?\n"
+			+ "  AND ccp.enabled\n"
+			+ "ORDER BY\n"
+			+ "  cc.accounting,\n"
+			+ "  cc.created",
+			id
+		);
+	}
+
+	@Override
+	public Map<String, CreditCard> getCreditCards(Principal principal) throws SQLException {
+		return conn.executeQuery(
+			(ResultSet results) -> {
+				Map<String, CreditCard> map = new LinkedHashMap<>();
+				while(results.next()) {
+					CreditCard copy = creditCardObjectFactory.createObject(results);
+					String persistenceUniqueId = copy.getPersistenceUniqueId();
+					if(map.put(persistenceUniqueId, copy) != null) throw new SQLException("Duplicate persistenceUniqueId: " + persistenceUniqueId);
+				}
+				return map;
+			},
+			"SELECT\n"
+			+ COLUMNS + "\n"
+			+ "FROM\n"
+			+ "             payment.\"CreditCard\" cc\n"
+			+ "  INNER JOIN payment.\"Processor\"  ccp ON cc.processor_id = ccp.provider_id\n"
+			+ "WHERE\n"
+			+ "  ccp.enabled\n"
+			+ "ORDER BY\n"
+			+ "  cc.accounting,\n"
+			+ "  cc.created"
+		);
+	}
+
+	@Override
+	public Map<String, CreditCard> getCreditCards(Principal principal, String providerId) throws SQLException {
+		return conn.executeQuery(
+			(ResultSet results) -> {
+				Map<String, CreditCard> map = new LinkedHashMap<>();
+				while(results.next()) {
+					CreditCard copy = creditCardObjectFactory.createObject(results);
+					String persistenceUniqueId = copy.getPersistenceUniqueId();
+					if(map.put(persistenceUniqueId, copy) != null) throw new SQLException("Duplicate persistenceUniqueId: " + persistenceUniqueId);
+				}
+				return map;
+			},
+			"SELECT\n"
+			+ COLUMNS + "\n"
+			+ "FROM\n"
+			+ "             payment.\"CreditCard\" cc\n"
+			+ "  INNER JOIN payment.\"Processor\"  ccp ON cc.processor_id = ccp.provider_id\n"
+			+ "WHERE\n"
+			+ "  cc.processor_id = ?\n"
+			+ "  AND ccp.enabled\n"
+			+ "ORDER BY\n"
+			+ "  cc.accounting,\n"
+			+ "  cc.created",
+			providerId
+		);
+	}
 
 	@Override
 	public void updateCreditCard(Principal principal, CreditCard creditCard) throws SQLException {
@@ -70,6 +222,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 				creditCard.getEmail(),
 				creditCard.getPhone(),
 				creditCard.getFax(),
+				creditCard.getCustomerId(),
 				creditCard.getCustomerTaxId(),
 				creditCard.getStreetAddress1(),
 				creditCard.getStreetAddress2(),
@@ -185,6 +338,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 creditCard.getEmail(),
                 creditCard.getPhone(),
                 creditCard.getFax(),
+                creditCard.getCustomerId(),
                 creditCard.getCustomerTaxId(),
                 creditCard.getStreetAddress1(),
                 creditCard.getStreetAddress2(),
