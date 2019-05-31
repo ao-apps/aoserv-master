@@ -11,6 +11,7 @@ import com.aoindustries.creditcards.AuthorizationResult;
 import com.aoindustries.creditcards.CaptureResult;
 import com.aoindustries.creditcards.CreditCard;
 import com.aoindustries.creditcards.PersistenceMechanism;
+import com.aoindustries.creditcards.TokenizedCreditCard;
 import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.creditcards.TransactionResult;
@@ -188,8 +189,8 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 				Map<String, CreditCard> map = new LinkedHashMap<>();
 				while(results.next()) {
 					CreditCard copy = creditCardObjectFactory.createObject(results);
-					String persistenceUniqueId = copy.getPersistenceUniqueId();
-					if(map.put(persistenceUniqueId, copy) != null) throw new SQLException("Duplicate persistenceUniqueId: " + persistenceUniqueId);
+					String providerUniqueId = copy.getProviderUniqueId();
+					if(map.put(providerUniqueId, copy) != null) throw new SQLException("Duplicate providerUniqueId: " + providerUniqueId);
 				}
 				return map;
 			},
@@ -389,6 +390,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
             TransactionResult.CommunicationResult captureCommunicationResult = captureResult.getCommunicationResult();
             TransactionResult.ErrorCode captureErrorCode = captureResult.getErrorCode();
 
+			TokenizedCreditCard tokenizedCreditCard = authorizationResult.getTokenizedCreditCard();
             CreditCardHandler.creditCardTransactionSaleCompleted(
                 conn,
                 invalidateList,
@@ -398,11 +400,11 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 authorizationErrorCode==null ? null : authorizationErrorCode.name(),
                 authorizationResult.getProviderErrorMessage(),
                 authorizationResult.getProviderUniqueId(),
-                authorizationResult.getProviderReplacementMaskedCardNumber(),
-                authorizationResult.getReplacementMaskedCardNumber(),
-                authorizationResult.getProviderReplacementExpiration(),
-                authorizationResult.getReplacementExpirationMonth(),
-                authorizationResult.getReplacementExpirationYear(),
+                tokenizedCreditCard == null ? null : tokenizedCreditCard.getProviderReplacementMaskedCardNumber(),
+                tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementMaskedCardNumber(),
+                tokenizedCreditCard == null ? null : tokenizedCreditCard.getProviderReplacementExpiration(),
+                tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementExpirationMonth(),
+                tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementExpirationYear(),
                 authorizationResult.getProviderApprovalResult(),
                 approvalResult==null ? null : approvalResult.name(),
                 authorizationResult.getProviderDeclineReason(),
