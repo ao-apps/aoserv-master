@@ -20,6 +20,10 @@ import com.aoindustries.creditcards.MerchantServicesProviderFactory;
 import com.aoindustries.creditcards.TokenizedCreditCard;
 import com.aoindustries.creditcards.Transaction;
 import com.aoindustries.creditcards.TransactionRequest;
+import com.aoindustries.cron.CronDaemon;
+import com.aoindustries.cron.CronJob;
+import com.aoindustries.cron.CronJobScheduleMode;
+import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.SysExits;
@@ -28,6 +32,7 @@ import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.sql.ResultSet;
@@ -41,7 +46,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The <code>CreditCardHandler</code> handles all the accesses to the <code>payment.CreditCard</code> table.
+ * The {@link CreditCardHandler} handles all the accesses to the <code>payment.CreditCard</code> table.
  *
  * TODO: Deactivate immediately on expired card
  * TODO: Retry failed cards on the 7th and 14th, then deactivate?  See newly documented account billing policy.
@@ -65,19 +70,18 @@ final public class CreditCardHandler /*implements CronJob*/ {
 	 */
 	private static final long TIMER_REMINDER_INTERVAL=2L*60*60*1000;
 
-	//private static boolean started=false;
+	private static boolean started=false;
 
 	public static void start() {
-		/*
 		synchronized(System.out) {
 			if(!started) {
 				System.out.print("Starting " + CreditCardHandler.class.getSimpleName() + ": ");
-				CronDaemon.addCronJob(new CreditCardHandler(), logger);
+				CronDaemon.addCronJob(synchronizeStoredCardsCronJob, logger);
+				CronDaemon.runImmediately(synchronizeStoredCardsCronJob);
 				started=true;
 				System.out.println("Done");
 			}
 		}
-		*/
 	}
 
 	public static void checkAccessCreditCard(DatabaseConnection conn, RequestSource source, String action, int id) throws IOException, SQLException {
@@ -1852,96 +1856,136 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		}
 	}
 
-	// TODO: Call from a CronJob, too.  Log any warnings as a warning ticket.  Once at system start-up, too?
-	private static void synchronizeStoredCards(PrintWriter verboseOut, PrintWriter infoOut, PrintWriter warningOut, boolean dryRun) {
-		try {
-			try (
-				ProcessTimer timer = new ProcessTimer(
-					logger,
-					CreditCardHandler.class.getName(),
-					"synchronizeStoredCards",
-					"CreditCardHandler - Synchronize Stored Cards",
-					"Synchronizes any updated masked card numbers or expiration dates from the payment providers back to local persistence",
-					TIMER_MAX_TIME,
-					TIMER_REMINDER_INTERVAL
-				);
-			) {
-				MasterServer.executorService.submit(timer);
+	// TODO: Synchronize should become its own service, once we've moved this handler into the new service architecture
+	private static void synchronizeStoredCards(PrintWriter verboseOut, PrintWriter infoOut, PrintWriter warningOut, boolean dryRun) throws IOException, SQLException {
+		try (
+			ProcessTimer timer = new ProcessTimer(
+				logger,
+				CreditCardHandler.class.getName(),
+				"synchronizeStoredCards",
+				"CreditCardHandler - Synchronize Stored Cards",
+				"Synchronizes any updated masked card numbers or expiration dates from the payment providers back to local persistence",
+				TIMER_MAX_TIME,
+				TIMER_REMINDER_INTERVAL
+			);
+		) {
+			MasterServer.executorService.submit(timer);
 
-				// Start the transaction
-				InvalidateList invalidateList = new InvalidateList();
-				DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection();
+			// Start the transaction
+			InvalidateList invalidateList = new InvalidateList();
+			DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection();
+			try {
+				boolean connRolledBack = false;
 				try {
-					boolean connRolledBack = false;
-					try {
-						if(infoOut != null) infoOut.println(CreditCardHandler.class.getSimpleName() + ".synchronizeStoredCards: Synchronizing stored cards");
+					if(infoOut != null) infoOut.println(CreditCardHandler.class.getSimpleName() + ".synchronizeStoredCards: Synchronizing stored cards");
 
-						// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
-						List<MerchantServicesProvider> providers = conn.executeObjectListQuery(
-							(ResultSet result) -> {
-								try {
-									return MerchantServicesProviderFactory.getMerchantServicesProvider(
-										result.getString("providerId"),
-										result.getString("className"),
-										result.getString("param1"),
-										result.getString("param2"),
-										result.getString("param3"),
-										result.getString("param4")
-									);
-								} catch(ReflectiveOperationException e) {
-									throw new SQLException(e.getLocalizedMessage(), e);
-								}
-							},
-							"SELECT\n"
-							+ "  provider_id AS \"providerId\",\n"
-							+ "  class_name  AS \"className\",\n"
-							+ "  param1,\n"
-							+ "  param2,\n"
-							+ "  param3,\n"
-							+ "  param4\n"
-							+ "FROM\n"
-							+ "  payment.\"Processor\"\n"
-							+ "WHERE\n"
-							+ "  enabled\n"
-							+ "ORDER BY\n"
-							+ "  provider_id"
-						);
-						if(infoOut != null) infoOut.println(CreditCardHandler.class.getSimpleName() + ".synchronizeStoredCards: Found " + providers.size() + " enabled " + (providers.size() == 1 ? "payment processor" : "payment processors"));
+					// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
+					List<MerchantServicesProvider> providers = conn.executeObjectListQuery(
+						(ResultSet result) -> {
+							try {
+								return MerchantServicesProviderFactory.getMerchantServicesProvider(
+									result.getString("providerId"),
+									result.getString("className"),
+									result.getString("param1"),
+									result.getString("param2"),
+									result.getString("param3"),
+									result.getString("param4")
+								);
+							} catch(ReflectiveOperationException e) {
+								throw new SQLException(e.getLocalizedMessage(), e);
+							}
+						},
+						"SELECT\n"
+						+ "  provider_id AS \"providerId\",\n"
+						+ "  class_name  AS \"className\",\n"
+						+ "  param1,\n"
+						+ "  param2,\n"
+						+ "  param3,\n"
+						+ "  param4\n"
+						+ "FROM\n"
+						+ "  payment.\"Processor\"\n"
+						+ "WHERE\n"
+						+ "  enabled\n"
+						+ "ORDER BY\n"
+						+ "  provider_id"
+					);
+					if(infoOut != null) infoOut.println(CreditCardHandler.class.getSimpleName() + ".synchronizeStoredCards: Found " + providers.size() + " enabled " + (providers.size() == 1 ? "payment processor" : "payment processors"));
 
-						// Find all the stored cards
-						MasterPersistenceMechanism masterPersistenceMechanism = new MasterPersistenceMechanism(conn, invalidateList);
+					// Find all the stored cards
+					MasterPersistenceMechanism masterPersistenceMechanism = new MasterPersistenceMechanism(conn, invalidateList);
 
-						// Only need to create the persistence once per DB transaction
-						for(MerchantServicesProvider provider : providers) {
-							CreditCardProcessor processor = new CreditCardProcessor(provider, masterPersistenceMechanism);
-							processor.synchronizeStoredCards(null, verboseOut, infoOut, warningOut, dryRun);
-						}
-					} catch(RuntimeException err) {
-						if(conn.rollback()) {
-							connRolledBack=true;
-							// invalidateList=null; Not cleared because some commits happen during processing
-						}
-						throw err;
-					} catch(SQLException err) {
-						if(conn.rollbackAndClose()) {
-							connRolledBack=true;
-							// invalidateList=null; Not cleared because some commits happen during processing
-						}
-						throw err;
-					} finally {
-						if(!connRolledBack && !conn.isClosed()) conn.commit();
+					// Only need to create the persistence once per DB transaction
+					for(MerchantServicesProvider provider : providers) {
+						CreditCardProcessor processor = new CreditCardProcessor(provider, masterPersistenceMechanism);
+						processor.synchronizeStoredCards(null, verboseOut, infoOut, warningOut, dryRun);
 					}
+				} catch(RuntimeException err) {
+					if(conn.rollback()) {
+						connRolledBack=true;
+						// invalidateList=null; Not cleared because some commits happen during processing
+					}
+					throw err;
+				} catch(SQLException err) {
+					if(conn.rollbackAndClose()) {
+						connRolledBack=true;
+						// invalidateList=null; Not cleared because some commits happen during processing
+					}
+					throw err;
 				} finally {
-					conn.releaseConnection();
+					if(!connRolledBack && !conn.isClosed()) conn.commit();
 				}
-				/*if(invalidateList!=null)*/ MasterServer.invalidateTables(invalidateList, null);
+			} finally {
+				conn.releaseConnection();
 			}
-		} catch(ThreadDeath TD) {
-			throw TD;
-		} catch(Throwable T) {
-			logger.log(Level.SEVERE, null, T);
+			/*if(invalidateList!=null)*/ MasterServer.invalidateTables(invalidateList, null);
 		}
 	}
+
+	/**
+	 * Runs at 11:34 pm daily.
+	 */
+	private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) ->
+		hour == 23 && minute == 34;
+
+	private static final CronJob synchronizeStoredCardsCronJob = new CronJob() {
+		@Override
+		public Schedule getCronJobSchedule() {
+			return schedule;
+		}
+
+		@Override
+		public CronJobScheduleMode getCronJobScheduleMode() {
+			return CronJobScheduleMode.SKIP;
+		}
+
+		@Override
+		public String getCronJobName() {
+			return CreditCardHandler.class.getSimpleName() + ".synchronizeStoredCards";
+		}
+
+		@Override
+		public int getCronJobThreadPriority() {
+			return Thread.NORM_PRIORITY - 2;
+		}
+
+		@Override
+		public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+			StringWriter warningBuffer = new StringWriter();
+			try (PrintWriter warningOut = new PrintWriter(warningBuffer)) {
+				synchronizeStoredCards(null, null, warningOut, false);
+				StringBuffer buff = warningBuffer.getBuffer();
+				if(buff.length() != 0) {
+					// Generate warning ticket
+					logger.log(Level.WARNING, buff.toString());
+				}
+			} catch(ThreadDeath TD) {
+				throw TD;
+			} catch(Throwable T) {
+				// Log failure in ticket
+				logger.log(Level.SEVERE, null, T);
+			}
+		}
+	};
 
 	public static void main(String[] args) {
 		int exitStatus;
@@ -1966,14 +2010,22 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		}
 		if(command != null) {
 			if("synchronize".equals(command)) {
-				PrintWriter out = new PrintWriter(System.out, true);
-				synchronizeStoredCards(
-					verbose ? out : null,
-					quiet ? null : out,
-					new PrintWriter(System.err, true),
-					dryRun
-				);
-				exitStatus = 0;
+				try {
+					PrintWriter out = new PrintWriter(System.out, true);
+					synchronizeStoredCards(
+						verbose ? out : null,
+						quiet ? null : out,
+						new PrintWriter(System.err, true),
+						dryRun
+					);
+					exitStatus = 0;
+				} catch(IOException e) {
+					e.printStackTrace(System.err);
+					exitStatus = SysExits.EX_IOERR;
+				} catch(SQLException e) {
+					e.printStackTrace(System.err);
+					exitStatus = SysExits.EX_DATAERR;
+				}
 			} else {
 				// Not y10k compliant
 				if(command.length()==7) {
