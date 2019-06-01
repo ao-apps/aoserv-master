@@ -1689,7 +1689,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 								new BigDecimal("1.000"),
 								automaticPayment.amount.negate(),
 								paymentTypeName,
-								cardInfo,
+								CreditCard.getCardNumberDisplay(cardInfo),
 								automaticPayment.ccpProviderId,
 								com.aoindustries.aoserv.client.billing.Transaction.WAITING_CONFIRMATION
 							);
@@ -1769,7 +1769,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 										invalidateList,
 										transID,
 										Integer.parseInt(transaction.getPersistenceUniqueId()),
-										tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementMaskedCardNumber()
+										tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
 									);
 									conn.commit();
 									System.out.println("    Result: Error");
@@ -1785,7 +1785,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 												invalidateList,
 												transID,
 												Integer.parseInt(transaction.getPersistenceUniqueId()),
-												tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementMaskedCardNumber()
+												tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
 											);
 											conn.commit();
 											System.out.println("    Result: Hold");
@@ -1801,7 +1801,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 												invalidateList,
 												transID,
 												Integer.parseInt(transaction.getPersistenceUniqueId()),
-												tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementMaskedCardNumber()
+												tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
 											);
 											conn.commit();
 											System.out.println("    Result: Declined");
@@ -1815,7 +1815,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 												invalidateList,
 												transID,
 												Integer.parseInt(transaction.getPersistenceUniqueId()),
-												tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementMaskedCardNumber()
+												tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
 											);
 											System.out.println("    Result: Approved");
 											break;
