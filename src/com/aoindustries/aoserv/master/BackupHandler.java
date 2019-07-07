@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2002-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -164,7 +165,9 @@ public final class BackupHandler {
         if(DaemonHandler.isDaemonAvailable(aoServer)) {
             PosixPath path=getPathForBackupPartition(conn, id);
             try {
-                return DaemonHandler.getDaemonConnector(conn, aoServer).getDiskDeviceTotalSize(path);
+				AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+				conn.releaseConnection();
+                return daemonConnector.getDiskDeviceTotalSize(path);
             } catch(IOException | SQLException err) {
                 DaemonHandler.flagDaemonAsDown(aoServer);
                 logger.log(Level.SEVERE, "id="+id+", path="+path+", aoServer="+aoServer, err);
@@ -183,7 +186,9 @@ public final class BackupHandler {
         if(DaemonHandler.isDaemonAvailable(aoServer)) {
             PosixPath path=getPathForBackupPartition(conn, id);
             try {
-                return DaemonHandler.getDaemonConnector(conn, aoServer).getDiskDeviceUsedSize(path);
+				AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+				conn.releaseConnection();
+                return daemonConnector.getDiskDeviceUsedSize(path);
             } catch(IOException | SQLException err) {
                 DaemonHandler.flagDaemonAsDown(aoServer);
                 logger.log(Level.SEVERE, "id="+id+", path="+path+", aoServer="+aoServer, err);

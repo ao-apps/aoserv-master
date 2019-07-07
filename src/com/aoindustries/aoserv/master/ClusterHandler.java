@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013, 2014, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2009-2013, 2014, 2015, 2016, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -290,9 +290,10 @@ final public class ClusterHandler implements CronJob {
 								for(int c=0;c<10;c++) {
 									try {
 										final int rootPackagePkey = PackageHandler.getPKeyForPackage(database, BusinessHandler.getRootBusiness());
-										AOServDaemonConnector daemonConn = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
+										AOServDaemonConnector daemonConnnector = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
+										// database.releaseConnection();
 										// Get the DRBD states
-										List<Server.DrbdReport> drbdReports = Server.parseDrbdReport(daemonConn.getDrbdReport());
+										List<Server.DrbdReport> drbdReports = Server.parseDrbdReport(daemonConnnector.getDrbdReport());
 										Set<Integer> primaryMapping = new HashSet<>(drbdReports.size()*4/3+1);
 										Set<Integer> secondaryMapping = new HashSet<>(drbdReports.size()*4/3+1);
 										for(Server.DrbdReport drbdReport : drbdReports) {
@@ -300,11 +301,11 @@ final public class ClusterHandler implements CronJob {
 											if(
 												drbdReport.getLocalRole()==Server.DrbdReport.Role.Primary
 												&& (
-												drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unconfigured
-												|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Secondary
-												|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unknown
+													drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unconfigured
+													|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Secondary
+													|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unknown
 												)
-												) {
+											) {
 												primaryMapping.add(
 													ServerHandler.getServerForPackageAndName(
 														database,
@@ -317,11 +318,11 @@ final public class ClusterHandler implements CronJob {
 											if(
 												drbdReport.getLocalRole()==Server.DrbdReport.Role.Secondary
 												&& (
-												drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unconfigured
-												|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Primary
-												|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unknown
+													drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unconfigured
+													|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Primary
+													|| drbdReport.getRemoteRole()==Server.DrbdReport.Role.Unknown
 												)
-												) {
+											) {
 												secondaryMapping.add(
 													ServerHandler.getServerForPackageAndName(
 														database,
@@ -332,7 +333,7 @@ final public class ClusterHandler implements CronJob {
 											}
 										}
 										// Get the auto-start list
-										Set<String> autoStartList = daemonConn.getXenAutoStartLinks();
+										Set<String> autoStartList = daemonConnnector.getXenAutoStartLinks();
 										Set<Integer> autoMapping = new HashSet<>(autoStartList.size()*4/3+1);
 										for(String serverName : autoStartList) {
 											autoMapping.add(

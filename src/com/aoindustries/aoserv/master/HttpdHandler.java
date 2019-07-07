@@ -22,6 +22,7 @@ import com.aoindustries.aoserv.client.web.tomcat.JkProtocol;
 import com.aoindustries.aoserv.client.web.tomcat.PrivateTomcatSite;
 import com.aoindustries.aoserv.client.web.tomcat.SharedTomcat;
 import com.aoindustries.aoserv.client.web.tomcat.Version;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseAccess.Null;
@@ -251,10 +252,13 @@ final public class HttpdHandler {
 		int httpdServer
 	) throws IOException, SQLException {
 		checkAccessHttpdServer(conn, source, "getHttpdServerConcurrency", httpdServer);
-		return DaemonHandler.getDaemonConnector(
+
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
 			conn,
 			getAOServerForHttpdServer(conn, httpdServer)
-		).getHttpdServerConcurrency(httpdServer);
+		);
+		conn.releaseConnection();
+		return daemonConnector.getHttpdServerConcurrency(httpdServer);
 	}
 
 	/**
@@ -2157,7 +2161,9 @@ final public class HttpdHandler {
 		int aoServer=getAOServerForHttpdSite(conn, tomcat_site);
 
 		// Contact the daemon and start the JVM
-		return DaemonHandler.getDaemonConnector(conn, aoServer).startJVM(tomcat_site);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.startJVM(tomcat_site);
 	}
 
 	/**
@@ -2189,7 +2195,9 @@ final public class HttpdHandler {
 		int aoServer=getAOServerForHttpdSite(conn, tomcat_site);
 
 		// Contact the daemon and start the JVM
-		return DaemonHandler.getDaemonConnector(conn, aoServer).stopJVM(tomcat_site);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.stopJVM(tomcat_site);
 	}
 
 	/**
@@ -2202,7 +2210,9 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "waitForHttpdSiteRebuild", aoServer);
 		ServerHandler.waitForInvalidates(aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).waitForHttpdSiteRebuild();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.waitForHttpdSiteRebuild();
 	}
 
 	public static int getHttpdBind(
@@ -2947,7 +2957,9 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_apache");
 		if(!canControl) throw new SQLException("Not allowed to restart Apache on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).restartApache();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.restartApache();
 	}
 
 	public static void setHttpdSharedTomcatIsManual(
@@ -4087,7 +4099,9 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_apache");
 		if(!canControl) throw new SQLException("Not allowed to start Apache on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).startApache();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.startApache();
 	}
 
 	public static void stopApache(
@@ -4097,7 +4111,9 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_apache");
 		if(!canControl) throw new SQLException("Not allowed to stop Apache on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).stopApache();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.stopApache();
 	}
 
 	public static void getAWStatsFile(
@@ -4110,14 +4126,12 @@ final public class HttpdHandler {
 	) throws IOException, SQLException {
 		checkAccessHttpdSite(conn, source, "getAWStatsFile", id);
 
-		DaemonHandler.getDaemonConnector(
+		String siteName = getSiteNameForHttpdSite(conn, id);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
 			conn,
 			getAOServerForHttpdSite(conn, id)
-		).getAWStatsFile(
-			getSiteNameForHttpdSite(conn, id),
-			path,
-			queryString,
-			out
 		);
+		conn.releaseConnection();
+		daemonConnector.getAWStatsFile(siteName, path, queryString, out);
 	}
 }

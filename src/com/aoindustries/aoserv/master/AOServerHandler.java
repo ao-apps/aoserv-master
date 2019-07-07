@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013, 2014, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2003-2013, 2014, 2015, 2016, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.net.InetAddress;
@@ -89,7 +90,9 @@ final public class AOServerHandler {
 		try {
 			if(DaemonHandler.isDaemonAvailable(aoServer)) {
 				try {
-					DaemonHandler.getDaemonConnector(conn, aoServer).getMrtgFile(filename, out);
+					AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+					conn.releaseConnection();
+					daemonConnector.getMrtgFile(filename, out);
 				} catch(IOException err) {
 					DaemonHandler.flagDaemonAsDown(aoServer);
 					throw new IOException("Host Unavailable", err);
@@ -138,7 +141,9 @@ final public class AOServerHandler {
 		User mu=MasterServer.getUser(conn, source.getUsername());
 		if(mu==null) throw new SQLException("Only master users may start distribution verifications: "+source.getUsername());
 		ServerHandler.checkAccessServer(conn, source, "startDistro", aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).startDistro(includeUser);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.startDistro(includeUser);
 	}
 
 	public static void restartCron(
@@ -148,7 +153,9 @@ final public class AOServerHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_cron");
 		if(!canControl) throw new SQLException("Not allowed to restart Cron on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).restartCron();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.restartCron();
 	}
 
 	public static void startCron(
@@ -158,7 +165,9 @@ final public class AOServerHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_cron");
 		if(!canControl) throw new SQLException("Not allowed to start Cron on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).startCron();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.startCron();
 	}
 
 	public static void stopCron(
@@ -168,7 +177,9 @@ final public class AOServerHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_cron");
 		if(!canControl) throw new SQLException("Not allowed to stop Cron on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).stopCron();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.stopCron();
 	}
 
 	public static void restartXfs(
@@ -178,7 +189,9 @@ final public class AOServerHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xfs");
 		if(!canControl) throw new SQLException("Not allowed to restart XFS on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).restartXfs();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.restartXfs();
 	}
 
 	public static void startXfs(
@@ -188,7 +201,9 @@ final public class AOServerHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xfs");
 		if(!canControl) throw new SQLException("Not allowed to start XFS on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).startXfs();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.startXfs();
 	}
 
 	public static void stopXfs(
@@ -198,7 +213,9 @@ final public class AOServerHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xfs");
 		if(!canControl) throw new SQLException("Not allowed to stop XFS on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).stopXfs();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.stopXfs();
 	}
 
 	public static void restartXvfb(
@@ -208,7 +225,9 @@ final public class AOServerHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xvfb");
 		if(!canControl) throw new SQLException("Not allowed to restart Xvfb on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).restartXvfb();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.restartXvfb();
 	}
 
 	public static void startXvfb(
@@ -218,7 +237,9 @@ final public class AOServerHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xvfb");
 		if(!canControl) throw new SQLException("Not allowed to start Xvfb on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).startXvfb();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.startXvfb();
 	}
 
 	public static void stopXvfb(
@@ -228,88 +249,118 @@ final public class AOServerHandler {
 	) throws IOException, SQLException {
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_xvfb");
 		if(!canControl) throw new SQLException("Not allowed to stop Xvfb on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).stopXvfb();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.stopXvfb();
 	}
 
 	public static String get3wareRaidReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "get3wareRaidReport", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).get3wareRaidReport();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.get3wareRaidReport();
 	}
 
 	public static String getUpsStatus(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "getUpsStatus", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getUpsStatus();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getUpsStatus();
 	}
 
 	public static String getMdStatReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "getMdStatReport", aoServer);
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getMdStatReport();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getMdStatReport();
 	}
 
 	public static String getMdMismatchReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "getMdMismatchReport", aoServer);
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getMdMismatchReport();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getMdMismatchReport();
 	}
 
 	public static String getDrbdReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "getDrbdReport", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getDrbdReport();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getDrbdReport();
 	}
 
 	public static String[] getLvmReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "getLvmReport", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getLvmReport();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getLvmReport();
 	}
 
 	public static String getHddTempReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "getHddTempReport", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getHddTempReport();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getHddTempReport();
 	}
 
 	public static String getHddModelReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "getHddModelReport", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getHddModelReport();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getHddModelReport();
 	}
 
 	public static String getFilesystemsCsvReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "getFilesystemsCsvReport", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getFilesystemsCsvReport();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getFilesystemsCsvReport();
 	}
 
 	public static String getLoadAvgReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "getLoadAvgReport", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getLoadAvgReport();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getLoadAvgReport();
 	}
 
 	public static String getMemInfoReport(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "getMemInfoReport", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getMemInfoReport();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getMemInfoReport();
 	}
 
 	public static String checkPort(DatabaseConnection conn, RequestSource source, int aoServer, InetAddress ipAddress, Port port, String appProtocol, String monitoringParameters) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "checkPort", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).checkPort(ipAddress, port, appProtocol, monitoringParameters);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.checkPort(ipAddress, port, appProtocol, monitoringParameters);
 	}
 
 	public static String checkSmtpBlacklist(DatabaseConnection conn, RequestSource source, int aoServer, InetAddress sourceIp, InetAddress connectIp) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "checkSmtpBlacklist", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).checkSmtpBlacklist(sourceIp, connectIp);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.checkSmtpBlacklist(sourceIp, connectIp);
 	}
 
 	public static long getSystemTimeMillis(DatabaseConnection conn, RequestSource source, int aoServer) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "getSystemTimeMillis", aoServer);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getSystemTimeMillis();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getSystemTimeMillis();
 	}
 }

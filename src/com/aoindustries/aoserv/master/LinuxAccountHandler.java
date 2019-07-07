@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -22,6 +22,7 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.web.Site;
 import com.aoindustries.aoserv.client.web.tomcat.SharedTomcat;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.util.IntList;
@@ -961,7 +962,10 @@ final public class LinuxAccountHandler {
 			&& !type.equals(UserType.FTPONLY)
 		) throw new SQLException("Not allowed to copy LinuxAccounts of type '"+type+"', username="+username);
 
-		long byteCount=DaemonHandler.getDaemonConnector(conn, from_server).copyHomeDirectory(username, DaemonHandler.getDaemonConnector(conn, to_server));
+		AOServDaemonConnector fromDaemonConnector = DaemonHandler.getDaemonConnector(conn, from_server);
+		AOServDaemonConnector toDaemonConnector = DaemonHandler.getDaemonConnector(conn, to_server);
+		conn.releaseConnection();
+		long byteCount = fromDaemonConnector.copyHomeDirectory(username, toDaemonConnector);
 		return byteCount;
 	}
 
@@ -1003,8 +1007,11 @@ final public class LinuxAccountHandler {
 			&& !to_type.equals(UserType.FTPONLY)
 		) throw new SQLException("Not allowed to copy passwords to LinuxAccounts of type '"+to_type+"', username="+to_username);
 
-		Tuple2<String,Integer> enc_password = DaemonHandler.getDaemonConnector(conn, from_server).getEncryptedLinuxAccountPassword(from_username);
-		DaemonHandler.getDaemonConnector(conn, to_server).setEncryptedLinuxAccountPassword(to_username, enc_password.getElement1(), enc_password.getElement2());
+		AOServDaemonConnector fromDemonConnector = DaemonHandler.getDaemonConnector(conn, from_server);
+		AOServDaemonConnector toDaemonConnector = DaemonHandler.getDaemonConnector(conn, to_server);
+		conn.releaseConnection();
+		Tuple2<String,Integer> enc_password = fromDemonConnector.getEncryptedLinuxAccountPassword(from_username);
+		toDaemonConnector.setEncryptedLinuxAccountPassword(to_username, enc_password.getElement1(), enc_password.getElement2());
 
 		//Account.Name from_accounting=UsernameHandler.getBusinessForUsername(conn, from_username);
 		//Account.Name to_accounting=UsernameHandler.getBusinessForUsername(conn, to_username);
@@ -1178,7 +1185,9 @@ final public class LinuxAccountHandler {
 			content="";
 		} else {
 			int aoServer = getAOServerForLinuxServerAccount(conn, lsa);
-			content = DaemonHandler.getDaemonConnector(conn, aoServer).getAutoresponderContent(path);
+			AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+			conn.releaseConnection();
+			content = daemonConnector.getAutoresponderContent(path);
 		}
 		return content;
 	}
@@ -1196,7 +1205,9 @@ final public class LinuxAccountHandler {
 		) throw new SQLException("Not allowed to get the cron table for LinuxAccounts of type '"+type+"', username="+username);
 		int aoServer=getAOServerForLinuxServerAccount(conn, lsa);
 
-		return DaemonHandler.getDaemonConnector(conn, aoServer).getCronTable(username);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		return daemonConnector.getCronTable(username);
 	}
 
 	public static int getDisableLogForLinuxAccount(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name username) throws IOException, SQLException {
@@ -1308,7 +1319,9 @@ final public class LinuxAccountHandler {
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to check if a password is set for UserServer '"+User.MAIL+'\'');
 
 		int aoServer=getAOServerForLinuxServerAccount(conn, account);
-		String crypted = DaemonHandler.getDaemonConnector(conn, aoServer).getEncryptedLinuxAccountPassword(username).getElement1();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		String crypted = daemonConnector.getEncryptedLinuxAccountPassword(username).getElement1();
 		return crypted.length() >= 2 && !User.NO_PASSWORD_CONFIG_VALUE.equals(crypted);
 	}
 
@@ -1322,7 +1335,9 @@ final public class LinuxAccountHandler {
 		int aoServer=getAOServerForLinuxServerAccount(conn, account);
 		if(DaemonHandler.isDaemonAvailable(aoServer)) {
 			try {
-				return DaemonHandler.getDaemonConnector(conn, aoServer).isProcmailManual(account) ? AoservProtocol.TRUE : AoservProtocol.FALSE;
+				AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+				conn.releaseConnection();
+				return daemonConnector.isProcmailManual(account) ? AoservProtocol.TRUE : AoservProtocol.FALSE;
 			} catch(IOException err) {
 				DaemonHandler.flagDaemonAsDown(aoServer);
 				return AoservProtocol.SERVER_DOWN;
@@ -1763,15 +1778,11 @@ final public class LinuxAccountHandler {
 		}
 
 		// Store the content on the server
-		if(path!=null) DaemonHandler.getDaemonConnector(
-			conn,
-			aoServer
-		).setAutoresponderContent(
-			path,
-			content==null?"":content,
-			uid,
-			gid
-		);
+		if(path!=null) {
+			AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+			conn.releaseConnection();
+			daemonConnector.setAutoresponderContent(path, content==null?"":content, uid, gid);
+		}
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_ACCOUNTS, accounting, aoServer, false);
@@ -1796,7 +1807,9 @@ final public class LinuxAccountHandler {
 		) throw new SQLException("Not allowed to set the cron table for LinuxAccounts of type '"+type+"', username="+username);
 		int aoServer=getAOServerForLinuxServerAccount(conn, lsa);
 
-		DaemonHandler.getDaemonConnector(conn, aoServer).setCronTable(username, cronTable);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.setCronTable(username, cronTable);
 	}
 
 	public static void setLinuxAccountHomePhone(
@@ -1928,7 +1941,9 @@ final public class LinuxAccountHandler {
 		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 		int aoServer=getAOServerForLinuxServerAccount(conn, id);
 		try {
-			DaemonHandler.getDaemonConnector(conn, aoServer).setLinuxServerAccountPassword(username, password);
+			AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+			conn.releaseConnection();
+			daemonConnector.setLinuxServerAccountPassword(username, password);
 		} catch(IOException | SQLException err) {
 			System.err.println("Unable to set linux account password for "+username+" on "+aoServer);
 			throw err;
@@ -2173,7 +2188,9 @@ final public class LinuxAccountHandler {
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "waitForLinuxAccountRebuild", aoServer);
 		ServerHandler.waitForInvalidates(aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).waitForLinuxAccountRebuild();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.waitForLinuxAccountRebuild();
 	}
 
 	static boolean canLinuxGroupAccessServer(DatabaseConnection conn, RequestSource source, Group.Name groupName, int aoServer) throws IOException, SQLException {
@@ -2454,10 +2471,12 @@ final public class LinuxAccountHandler {
 		if(!UserType.canSetPassword(type)) throw new SQLException("Passwords may not be compared for UserType="+type);
 
 		// Perform the password comparison
-		return DaemonHandler.getDaemonConnector(
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
 			conn,
 			getAOServerForLinuxServerAccount(conn, id)
-		).compareLinuxAccountPassword(username, password);
+		);
+		conn.releaseConnection();
+		return daemonConnector.compareLinuxAccountPassword(username, password);
 	}
 
 	public static void setPrimaryLinuxGroupAccount(

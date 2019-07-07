@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -335,7 +335,9 @@ final public class DaemonHandler {
 		}
 
 		// Send the key to the daemon
-		getDaemonConnector(conn, aoServer).grantDaemonAccess(key, daemonCommandCode, param1, param2, param3, param4);
+		AOServDaemonConnector daemonConnector = getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.grantDaemonAccess(key, daemonCommandCode, param1, param2, param3, param4);
 
 		return new Server.DaemonAccess(
 			getDaemonConnectorProtocol(conn, aoServer),

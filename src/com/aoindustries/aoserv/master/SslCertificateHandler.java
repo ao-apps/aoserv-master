@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.pki.Certificate;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -54,8 +55,11 @@ final public class SslCertificateHandler {
 	) throws IOException, SQLException {
 		// Check access
 		checkAccessCertificate(conn, source, "check", certificate);
-		return DaemonHandler.getDaemonConnector(conn,
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
+			conn,
 			getLinuxServerForCertificate(conn, certificate)
-		).checkSslCertificate(certificate);
+		);
+		conn.releaseConnection();
+		return daemonConnector.checkSslCertificate(certificate);
 	}
 }

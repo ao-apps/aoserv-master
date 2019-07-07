@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -17,6 +17,7 @@ import com.aoindustries.aoserv.client.mysql.UserServer;
 import com.aoindustries.aoserv.client.password.PasswordChecker;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.net.Port;
@@ -393,7 +394,9 @@ final public class MySQLHandler {
 
 		int mysqlServer=getMySQLServerForMySQLDatabase(conn, dbPKey);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).dumpMySQLDatabase(
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.dumpMySQLDatabase(
 			dbPKey,
 			gzip,
 			(long dumpSize) -> {
@@ -585,7 +588,9 @@ final public class MySQLHandler {
 		com.aoindustries.aoserv.client.mysql.User.Name username=getUsernameForMySQLServerUser(conn, msu);
 		int mysqlServer=getMySQLServerForMySQLServerUser(conn, msu);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-		String password=DaemonHandler.getDaemonConnector(conn, aoServer).getEncryptedMySQLUserPassword(mysqlServer, username);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		String password = daemonConnector.getEncryptedMySQLUserPassword(mysqlServer, username);
 		return !com.aoindustries.aoserv.client.mysql.User.NO_PASSWORD_DB_VALUE.equals(password);
 	}
 
@@ -867,10 +872,9 @@ final public class MySQLHandler {
 		// Contact the daemon for the update
 		int mysqlServer=getMySQLServerForMySQLServerUser(conn, mysql_server_user);
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
-		DaemonHandler.getDaemonConnector(
-			conn,
-			aoServer
-		).setMySQLUserPassword(mysqlServer, username, password);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.setMySQLUserPassword(mysqlServer, username, password);
 	}
 
 	public static void setMySQLServerUserPredisablePassword(
@@ -915,7 +919,9 @@ final public class MySQLHandler {
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "waitForMySQLDatabaseRebuild", aoServer);
 		ServerHandler.waitForInvalidates(aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).waitForMySQLDatabaseRebuild();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.waitForMySQLDatabaseRebuild();
 	}
 
 	/**
@@ -928,7 +934,9 @@ final public class MySQLHandler {
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "waitForMySQLDBUserRebuild", aoServer);
 		ServerHandler.waitForInvalidates(aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).waitForMySQLDBUserRebuild();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.waitForMySQLDBUserRebuild();
 	}
 
 	public static void waitForMySQLServerRebuild(
@@ -938,7 +946,9 @@ final public class MySQLHandler {
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "waitForMySQLServerRebuild", aoServer);
 		ServerHandler.waitForInvalidates(aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).waitForMySQLServerRebuild();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.waitForMySQLServerRebuild();
 	}
 
 	/**
@@ -951,7 +961,9 @@ final public class MySQLHandler {
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "waitForMySQLUserRebuild", aoServer);
 		ServerHandler.waitForInvalidates(aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).waitForMySQLUserRebuild();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.waitForMySQLUserRebuild();
 	}
 
 	public static Account.Name getBusinessForMySQLDatabase(DatabaseConnection conn, int id) throws IOException, SQLException {
@@ -1067,7 +1079,9 @@ final public class MySQLHandler {
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_mysql");
 		if(!canControl) throw new SQLException("Not allowed to restart MySQL on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).restartMySQL(mysqlServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.restartMySQL(mysqlServer);
 	}
 
 	public static void startMySQL(
@@ -1078,7 +1092,9 @@ final public class MySQLHandler {
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_mysql");
 		if(!canControl) throw new SQLException("Not allowed to start MySQL on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).startMySQL(mysqlServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.startMySQL(mysqlServer);
 	}
 
 	public static void stopMySQL(
@@ -1089,7 +1105,9 @@ final public class MySQLHandler {
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_mysql");
 		if(!canControl) throw new SQLException("Not allowed to stop MySQL on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).stopMySQL(mysqlServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.stopMySQL(mysqlServer);
 	}
 
 	public static void getMasterStatus(
@@ -1102,9 +1120,9 @@ final public class MySQLHandler {
 		// Check access
 		checkAccessMySQLServer(conn, source, "getMasterStatus", mysqlServer);
 		int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
-		Server.MasterStatus masterStatus = DaemonHandler.getDaemonConnector(conn, aoServer).getMySQLMasterStatus(
-			mysqlServer
-		);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		Server.MasterStatus masterStatus = daemonConnector.getMySQLMasterStatus(mysqlServer);
 		if(masterStatus==null) out.writeByte(AoservProtocol.DONE);
 		else {
 			out.writeByte(AoservProtocol.NEXT);
@@ -1148,11 +1166,10 @@ final public class MySQLHandler {
 				throw new SQLException(e);
 			}
 		}
-		MysqlReplication.SlaveStatus slaveStatus = DaemonHandler.getDaemonConnector(conn, daemonServer).getMySQLSlaveStatus(
-			chrootPath,
-			osv,
-			getPortForMySQLServer(conn, mysqlServer)
-		);
+		Port port = getPortForMySQLServer(conn, mysqlServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, daemonServer);
+		conn.releaseConnection();
+		MysqlReplication.SlaveStatus slaveStatus = daemonConnector.getMySQLSlaveStatus(chrootPath, osv, port);
 		if(slaveStatus==null) out.writeByte(AoservProtocol.DONE);
 		else {
 			out.writeByte(AoservProtocol.NEXT);
@@ -1220,12 +1237,11 @@ final public class MySQLHandler {
 				}
 			}
 		}
-		List<Database.TableStatus> tableStatuses = DaemonHandler.getDaemonConnector(conn, daemonServer).getMySQLTableStatus(
-			chrootPath,
-			osv,
-			getPortForMySQLServer(conn, mysqlServer),
-			getMySQLDatabaseName(conn, mysqlDatabase)
-		);
+		Port port = getPortForMySQLServer(conn, mysqlServer);
+		Database.Name databaseName = getMySQLDatabaseName(conn, mysqlDatabase);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, daemonServer);
+		conn.releaseConnection();
+		List<Database.TableStatus> tableStatuses = daemonConnector.getMySQLTableStatus(chrootPath, osv, port, databaseName);
 		out.writeByte(AoservProtocol.NEXT);
 		int size = tableStatuses.size();
 		out.writeCompressedInt(size);
@@ -1300,13 +1316,11 @@ final public class MySQLHandler {
 				}
 			}
 		}
-		List<Database.CheckTableResult> checkTableResults = DaemonHandler.getDaemonConnector(conn, daemonServer).checkMySQLTables(
-			chrootPath,
-			osv,
-			getPortForMySQLServer(conn, mysqlServer),
-			getMySQLDatabaseName(conn, mysqlDatabase),
-			tableNames
-		);
+		Port port = getPortForMySQLServer(conn, mysqlServer);
+		Database.Name databaseName = getMySQLDatabaseName(conn, mysqlDatabase);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, daemonServer);
+		conn.releaseConnection();
+		List<Database.CheckTableResult> checkTableResults = daemonConnector.checkMySQLTables(chrootPath, osv, port, databaseName, tableNames);
 		out.writeByte(AoservProtocol.NEXT);
 		int size = checkTableResults.size();
 		out.writeCompressedInt(size);

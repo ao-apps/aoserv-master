@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.backup.FileReplicationLog;
 import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
@@ -306,7 +307,9 @@ final public class FailoverHandler implements CronJob {
 		int toServer = BackupHandler.getAOServerForBackupPartition(conn, backupPartition);
 
 		// Contact the server
-		return DaemonHandler.getDaemonConnector(conn, toServer).getFailoverFileReplicationActivity(replication);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, toServer);
+		conn.releaseConnection();
+		return daemonConnector.getFailoverFileReplicationActivity(replication);
 	}
 
 	/**

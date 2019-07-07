@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -12,6 +12,7 @@ import com.aoindustries.aoserv.client.password.PasswordChecker;
 import com.aoindustries.aoserv.client.postgresql.Database;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.util.IntList;
@@ -311,7 +312,9 @@ final public class PostgresHandler {
 		checkAccessPostgresDatabase(conn, source, "dumpPostgresDatabase", dbPKey);
 
 		int aoServer=getAOServerForPostgresDatabase(conn, dbPKey);
-		DaemonHandler.getDaemonConnector(conn, aoServer).dumpPostgresDatabase(
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.dumpPostgresDatabase(
 			dbPKey,
 			gzip,
 			(long dumpSize) -> {
@@ -532,7 +535,9 @@ final public class PostgresHandler {
 		com.aoindustries.aoserv.client.postgresql.User.Name username=getUsernameForPostgresServerUser(conn, psu);
 
 		int aoServer=getAOServerForPostgresServerUser(conn, psu);
-		String password=DaemonHandler.getDaemonConnector(conn, aoServer).getPostgresUserPassword(psu);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		String password=daemonConnector.getPostgresUserPassword(psu);
 		return !com.aoindustries.aoserv.client.postgresql.User.NO_PASSWORD_DB_VALUE.equals(password);
 	}
 
@@ -684,7 +689,9 @@ final public class PostgresHandler {
 		}
 
 		// Contact the daemon for the update
-		DaemonHandler.getDaemonConnector(conn, aoServer).setPostgresUserPassword(postgres_server_user, password);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.setPostgresUserPassword(postgres_server_user, password);
 	}
 
 	public static void setPostgresServerUserPredisablePassword(
@@ -724,7 +731,9 @@ final public class PostgresHandler {
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "waitForPostgresDatabaseRebuild", aoServer);
 		ServerHandler.waitForInvalidates(aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresDatabaseRebuild();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.waitForPostgresDatabaseRebuild();
 	}
 
 	public static void waitForPostgresServerRebuild(
@@ -734,7 +743,9 @@ final public class PostgresHandler {
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "waitForPostgresServerRebuild", aoServer);
 		ServerHandler.waitForInvalidates(aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresServerRebuild();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.waitForPostgresServerRebuild();
 	}
 
 	public static void waitForPostgresUserRebuild(
@@ -744,7 +755,9 @@ final public class PostgresHandler {
 	) throws IOException, SQLException {
 		ServerHandler.checkAccessServer(conn, source, "waitForPostgresUserRebuild", aoServer);
 		ServerHandler.waitForInvalidates(aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).waitForPostgresUserRebuild();
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.waitForPostgresUserRebuild();
 	}
 
 	public static Account.Name getBusinessForPostgresDatabase(DatabaseConnection conn, int id) throws IOException, SQLException {
@@ -868,7 +881,9 @@ final public class PostgresHandler {
 		int aoServer=getAOServerForPostgresServer(conn, postgresServer);
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_postgresql");
 		if(!canControl) throw new SQLException("Not allowed to restart PostgreSQL on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).restartPostgres(postgresServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.restartPostgres(postgresServer);
 	}
 
 	public static void startPostgreSQL(
@@ -879,7 +894,9 @@ final public class PostgresHandler {
 		int aoServer=getAOServerForPostgresServer(conn, postgresServer);
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_postgresql");
 		if(!canControl) throw new SQLException("Not allowed to start PostgreSQL on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).startPostgreSQL(postgresServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.startPostgreSQL(postgresServer);
 	}
 
 	public static void stopPostgreSQL(
@@ -890,7 +907,9 @@ final public class PostgresHandler {
 		int aoServer=getAOServerForPostgresServer(conn, postgresServer);
 		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_postgresql");
 		if(!canControl) throw new SQLException("Not allowed to stop PostgreSQL on "+aoServer);
-		DaemonHandler.getDaemonConnector(conn, aoServer).stopPostgreSQL(postgresServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.stopPostgreSQL(postgresServer);
 	}
 
 	private PostgresHandler() {}

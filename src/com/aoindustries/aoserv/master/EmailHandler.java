@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -314,13 +314,12 @@ final public class EmailHandler {
 		);
 
 		// Create the empty list file
-		DaemonHandler.getDaemonConnector(conn, accountAOServer).setEmailListFile(
-			path,
-			"",
-			LinuxAccountHandler.getUIDForLinuxServerAccount(conn, linuxServerAccount),
-			LinuxAccountHandler.getGIDForLinuxServerGroup(conn, linuxServerGroup),
-			path.toString().startsWith(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY.toString()+'/')?0644:0640
-		);
+		int uid = LinuxAccountHandler.getUIDForLinuxServerAccount(conn, linuxServerAccount);
+		int gid = LinuxAccountHandler.getGIDForLinuxServerGroup(conn, linuxServerGroup);
+		int mode = path.toString().startsWith(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY.toString() + '/') ? 0644 : 0640;
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, accountAOServer);
+		conn.releaseConnection();
+		daemonConnector.setEmailListFile(path, "", uid, gid, mode);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -709,23 +708,14 @@ final public class EmailHandler {
 		);
 
 		// Create the empty info and intro files
-		AOServDaemonConnector daemonConn=DaemonHandler.getDaemonConnector(conn, aoServer);
-		int uid=LinuxAccountHandler.getUIDForLinuxServerAccount(conn, lsa);
-		int gid=LinuxAccountHandler.getGIDForLinuxServerGroup(conn, lsg);
-		daemonConn.setEmailListFile(
-			infoPath,
-			MajordomoList.getDefaultInfoFile(domainName, listName),
-			uid,
-			gid,
-			0664
-		);
-		daemonConn.setEmailListFile(
-			introPath,
-			MajordomoList.getDefaultIntroFile(domainName, listName),
-			uid,
-			gid,
-			0664
-		);
+		String file = MajordomoList.getDefaultInfoFile(domainName, listName);
+		String introFile = MajordomoList.getDefaultIntroFile(domainName, listName);
+		int uid = LinuxAccountHandler.getUIDForLinuxServerAccount(conn, lsa);
+		int gid = LinuxAccountHandler.getGIDForLinuxServerGroup(conn, lsg);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.setEmailListFile(infoPath, file, uid, gid, 0664);
+		daemonConnector.setEmailListFile(introPath, introFile, uid, gid, 0664);
 
 		return id;
 	}
@@ -1005,10 +995,14 @@ final public class EmailHandler {
 		int id
 	) throws IOException, SQLException {
 		checkAccessEmailList(conn, source, "getEmailListAddressList", id);
-		return DaemonHandler.getDaemonConnector(
+
+		PosixPath path = getPathForEmailList(conn, id);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
 			conn,
 			getAOServerForEmailList(conn, id)
-		).getEmailListFile(getPathForEmailList(conn, id));
+		);
+		conn.releaseConnection();
+		return daemonConnector.getEmailListFile(path);
 	}
 
 	public static IntList getEmailListsForLinuxServerAccount(
@@ -1055,7 +1049,9 @@ final public class EmailHandler {
 		if(DaemonHandler.isDaemonAvailable(aoServer)) {
 			com.aoindustries.aoserv.client.linux.User.Name username=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, linux_server_account);
 			try {
-				return DaemonHandler.getDaemonConnector(conn, aoServer).getImapFolderSizes(username, folderNames);
+				AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+				conn.releaseConnection();
+				return daemonConnector.getImapFolderSizes(username, folderNames);
 			} catch(IOException err) {
 				logger.log(Level.SEVERE, "linux_server_account="+linux_server_account+", aoServer="+aoServer+", username="+username+", folderNames="+folderNames, err);
 				DaemonHandler.flagDaemonAsDown(aoServer);
@@ -1076,7 +1072,9 @@ final public class EmailHandler {
 		if(DaemonHandler.isDaemonAvailable(aoServer)) {
 			com.aoindustries.aoserv.client.linux.User.Name username=LinuxAccountHandler.getUsernameForLinuxServerAccount(conn, linux_server_account);
 			try {
-				return DaemonHandler.getDaemonConnector(conn, aoServer).getInboxAttributes(username);
+				AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+				conn.releaseConnection();
+				return daemonConnector.getInboxAttributes(username);
 			} catch(IOException err) {
 				logger.log(Level.SEVERE, "linux_server_account="+linux_server_account+", aoServer="+aoServer+", username="+username, err);
 				DaemonHandler.flagDaemonAsDown(aoServer);
@@ -1131,10 +1129,12 @@ final public class EmailHandler {
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
-		return DaemonHandler.getDaemonConnector(
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
 			conn,
 			getAOServerForEmailList(conn, id)
-		).getEmailListFile(infoPath);
+		);
+		conn.releaseConnection();
+		return daemonConnector.getEmailListFile(infoPath);
 	}
 
 	public static String getMajordomoIntroFile(
@@ -1149,10 +1149,12 @@ final public class EmailHandler {
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
-		return DaemonHandler.getDaemonConnector(
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
 			conn,
 			getAOServerForEmailList(conn, id)
-		).getEmailListFile(introPath);
+		);
+		conn.releaseConnection();
+		return daemonConnector.getEmailListFile(introPath);
 	}
 
 	public static int getMajordomoServer(
@@ -1500,7 +1502,9 @@ final public class EmailHandler {
 		invalidateList.addTable(conn, Table.TableID.EMAIL_LISTS, accounting, aoServer, false);
 
 		// Remove the list file from the server
-		DaemonHandler.getDaemonConnector(conn, aoServer).removeEmailList(path);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		conn.releaseConnection();
+		daemonConnector.removeEmailList(path);
 	}
 
 	public static void removeLinuxAccAddress(
@@ -1796,16 +1800,17 @@ final public class EmailHandler {
 		String addresses
 	) throws IOException, SQLException {
 		checkAccessEmailList(conn, source, "setEmailListAddressList", id);
-		DaemonHandler.getDaemonConnector(
+
+		PosixPath path = getPathForEmailList(conn, id);
+		int uid = LinuxAccountHandler.getUIDForLinuxServerAccount(conn, getLinuxServerAccountForEmailList(conn, id));
+		int gid = LinuxAccountHandler.getGIDForLinuxServerGroup(conn, getLinuxServerGroupForEmailList(conn, id));
+		int mode = isMajordomoList(conn, id)?0644:0640;
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
 			conn,
 			getAOServerForEmailList(conn, id)
-		).setEmailListFile(
-			getPathForEmailList(conn, id),
-			addresses,
-			LinuxAccountHandler.getUIDForLinuxServerAccount(conn, getLinuxServerAccountForEmailList(conn, id)),
-			LinuxAccountHandler.getGIDForLinuxServerGroup(conn, getLinuxServerGroupForEmailList(conn, id)),
-			isMajordomoList(conn, id)?0644:0640
 		);
+		conn.releaseConnection();
+		daemonConnector.setEmailListFile(path, addresses, uid, gid, mode);
 	}
 
 	public static Account.Name getBusinessForEmailAddress(DatabaseConnection conn, int id) throws IOException, SQLException {
@@ -2043,16 +2048,14 @@ final public class EmailHandler {
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
-		DaemonHandler.getDaemonConnector(
+		int uid = LinuxAccountHandler.getUIDForLinuxServerAccount(conn, getLinuxServerAccountForEmailList(conn, id));
+		int gid = LinuxAccountHandler.getGIDForLinuxServerGroup(conn, getLinuxServerGroupForEmailList(conn, id));
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
 			conn,
 			getAOServerForEmailList(conn, id)
-		).setEmailListFile(
-			infoPath,
-			file,
-			LinuxAccountHandler.getUIDForLinuxServerAccount(conn, getLinuxServerAccountForEmailList(conn, id)),
-			LinuxAccountHandler.getGIDForLinuxServerGroup(conn, getLinuxServerGroupForEmailList(conn, id)),
-			0664
 		);
+		conn.releaseConnection();
+		daemonConnector.setEmailListFile(infoPath, file, uid, gid, 0664);
 	}
 
 	public static void setMajordomoIntroFile(
@@ -2068,15 +2071,13 @@ final public class EmailHandler {
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
-		DaemonHandler.getDaemonConnector(
+		int uid = LinuxAccountHandler.getUIDForLinuxServerAccount(conn, getLinuxServerAccountForEmailList(conn, id));
+		int gid = LinuxAccountHandler.getGIDForLinuxServerGroup(conn, getLinuxServerGroupForEmailList(conn, id));
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
 			conn,
 			getAOServerForEmailList(conn, id)
-		).setEmailListFile(
-			introPath,
-			file,
-			LinuxAccountHandler.getUIDForLinuxServerAccount(conn, getLinuxServerAccountForEmailList(conn, id)),
-			LinuxAccountHandler.getGIDForLinuxServerGroup(conn, getLinuxServerGroupForEmailList(conn, id)),
-			0664
 		);
+		conn.releaseConnection();
+		daemonConnector.setEmailListFile(introPath, file, uid, gid, 0664);
 	}
 }

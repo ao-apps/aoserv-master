@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, 2013, 2014, 2015, 2018 by AO Industries, Inc.,
+ * Copyright 2012, 2013, 2014, 2015, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.master.Permission;
+import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
 import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
@@ -95,7 +96,10 @@ final public class VirtualServerHandler {
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		return DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).createVirtualServer(ServerHandler.getNameForServer(conn, virtualServer));
+		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
+		conn.releaseConnection();
+		return daemonConnector.createVirtualServer(virtualServerName);
 	}
 
 	public static String rebootVirtualServer(
@@ -112,7 +116,10 @@ final public class VirtualServerHandler {
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		return DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).rebootVirtualServer(ServerHandler.getNameForServer(conn, virtualServer));
+		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
+		conn.releaseConnection();
+		return daemonConnector.rebootVirtualServer(virtualServerName);
 	}
 
 	public static String shutdownVirtualServer(
@@ -129,7 +136,10 @@ final public class VirtualServerHandler {
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		return DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).shutdownVirtualServer(ServerHandler.getNameForServer(conn, virtualServer));
+		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
+		conn.releaseConnection();
+		return daemonConnector.shutdownVirtualServer(virtualServerName);
 	}
 
 	public static String destroyVirtualServer(
@@ -146,7 +156,10 @@ final public class VirtualServerHandler {
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		return DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).destroyVirtualServer(ServerHandler.getNameForServer(conn, virtualServer));
+		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
+		conn.releaseConnection();
+		return daemonConnector.destroyVirtualServer(virtualServerName);
 	}
 
 	public static String pauseVirtualServer(
@@ -163,7 +176,10 @@ final public class VirtualServerHandler {
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		return DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).pauseVirtualServer(ServerHandler.getNameForServer(conn, virtualServer));
+		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
+		conn.releaseConnection();
+		return daemonConnector.pauseVirtualServer(virtualServerName);
 	}
 
 	public static String unpauseVirtualServer(
@@ -180,7 +196,10 @@ final public class VirtualServerHandler {
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		return DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).unpauseVirtualServer(ServerHandler.getNameForServer(conn, virtualServer));
+		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
+		conn.releaseConnection();
+		return daemonConnector.unpauseVirtualServer(virtualServerName);
 	}
 
 	public static int getVirtualServerStatus(
@@ -194,7 +213,10 @@ final public class VirtualServerHandler {
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		return DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).getVirtualServerStatus(ServerHandler.getNameForServer(conn, virtualServer));
+		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
+		conn.releaseConnection();
+		return daemonConnector.getVirtualServerStatus(virtualServerName);
 	}
 
 	public static long verifyVirtualDisk(
@@ -218,16 +240,12 @@ final public class VirtualServerHandler {
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		int secondaryPhysicalServer = ClusterHandler.getSecondaryPhysicalServer(virtualServer);
 		// Begin verification, getting Unix time in seconds
-		long lastVerified = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer).verifyVirtualDisk(
-			virtualServerName,
-			device
-		);
+		AOServDaemonConnector primaryDaemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
+		AOServDaemonConnector secondaryDaemonConnector = DaemonHandler.getDaemonConnector(conn, secondaryPhysicalServer);
+		conn.releaseConnection();
+		long lastVerified = primaryDaemonConnector.verifyVirtualDisk(virtualServerName, device);
 		// Update the verification time on the secondary
-		DaemonHandler.getDaemonConnector(conn, secondaryPhysicalServer).updateVirtualDiskLastVerified(
-			virtualServerName,
-			device,
-			lastVerified
-		);
+		secondaryDaemonConnector.updateVirtualDiskLastVerified(virtualServerName, device, lastVerified);
 		// Return as Java timestamp
 		return lastVerified * 1000;
 	}
