@@ -142,6 +142,10 @@ final public class PostgresHandler {
 		// This sub-account must have access to the server
 		BusinessHandler.checkBusinessAccessServer(conn, source, "addPostgresDatabase", accounting, aoServer);
 
+		if(Database.isSpecial(name)) {
+			throw new SQLException("Not allowed to add a special PostgreSQL database: " + name);
+		}
+
 		// Add the entry to the database
 		int id = conn.executeIntUpdate(
 			"INSERT INTO\n"
@@ -184,6 +188,9 @@ final public class PostgresHandler {
 		com.aoindustries.aoserv.client.postgresql.User.Name username, 
 		int postgresServer
 	) throws IOException, SQLException {
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(username)) {
+			throw new SQLException("Not allowed to add a special PostgreSQL user: " + username);
+		}
 		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add UserServer for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
 		checkAccessPostgresUser(conn, source, "addPostgresServerUser", username);
@@ -219,6 +226,9 @@ final public class PostgresHandler {
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.postgresql.User.Name username
 	) throws IOException, SQLException {
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(username)) {
+			throw new SQLException("Not allowed to add a special PostgreSQL user: " + username);
+		}
 		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add User for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 		UsernameHandler.checkAccessUsername(conn, source, "addPostgresUser", username);
 		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add User, Username disabled: "+username);
@@ -568,18 +578,7 @@ final public class PostgresHandler {
 			"select \"name\" from postgresql.\"Database\" where id=?",
 			id
 		);
-		if(
-			// Note: This list matches Database.getCannotRemoveReasons
-			// Templates
-			name.equals(Database.TEMPLATE0)
-			|| name.equals(Database.TEMPLATE1)
-			// Monitoring
-			|| name.equals(Database.POSTGRESMON)
-			// AO Platform Components
-			|| name.equals(Database.AOINDUSTRIES)
-			|| name.equals(Database.AOSERV)
-			|| name.equals(Database.AOWEB)
-		) {
+		if(Database.isSpecial(name)) {
 			throw new SQLException("Not allowed to drop a special PostgreSQL database: " + name);
 		}
 		// Remove the database entry
@@ -609,14 +608,7 @@ final public class PostgresHandler {
 		checkAccessPostgresServerUser(conn, source, "removePostgresServerUser", id);
 
 		com.aoindustries.aoserv.client.postgresql.User.Name username = getUsernameForPostgresServerUser(conn, id);
-		if(
-			// Note: This list matches UserServer.getCannotRemoveReasons
-			username.equals(com.aoindustries.aoserv.client.postgresql.User.POSTGRES)
-			|| username.equals(com.aoindustries.aoserv.client.postgresql.User.POSTGRESMON)
-			|| username.equals(com.aoindustries.aoserv.client.postgresql.User.AOADMIN)
-			|| username.equals(com.aoindustries.aoserv.client.postgresql.User.AOSERV_APP)
-			|| username.equals(com.aoindustries.aoserv.client.postgresql.User.AOWEB_APP)
-		) {
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(username)) {
 			throw new SQLException("Not allowed to remove a special PostgreSQL user: " + username);
 		}
 
@@ -663,7 +655,9 @@ final public class PostgresHandler {
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.postgresql.User.Name username
 	) throws IOException, SQLException {
-		if(username.equals(com.aoindustries.aoserv.client.postgresql.User.POSTGRES)) throw new SQLException("Not allowed to remove User named '"+com.aoindustries.aoserv.client.postgresql.User.POSTGRES+'\'');
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(username)) {
+			throw new SQLException("Not allowed to remove a special PostgreSQL user: " + username);
+		}
 		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
 		// Remove the postgres_server_user
