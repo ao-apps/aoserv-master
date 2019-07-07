@@ -563,6 +563,25 @@ final public class PostgresHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
+		Database.Name name = conn.executeObjectQuery(
+			ObjectFactories.postgresqlDatabaseNameFactory,
+			"select \"name\" from postgresql.\"Database\" where id=?",
+			id
+		);
+		if(
+			// Note: This list matches Database.getCannotRemoveReasons
+			// Templates
+			name.equals(Database.TEMPLATE0)
+			|| name.equals(Database.TEMPLATE1)
+			// Monitoring
+			|| name.equals(Database.POSTGRESMON)
+			// AO Platform Components
+			|| name.equals(Database.AOINDUSTRIES)
+			|| name.equals(Database.AOSERV)
+			|| name.equals(Database.AOWEB)
+		) {
+			throw new SQLException("Not allowed to drop a special PostgreSQL database: " + name);
+		}
 		// Remove the database entry
 		Account.Name accounting = getBusinessForPostgresDatabase(conn, id);
 		int aoServer=getAOServerForPostgresDatabase(conn, id);
@@ -589,8 +608,17 @@ final public class PostgresHandler {
 	) throws IOException, SQLException {
 		checkAccessPostgresServerUser(conn, source, "removePostgresServerUser", id);
 
-		com.aoindustries.aoserv.client.postgresql.User.Name username=getUsernameForPostgresServerUser(conn, id);
-		if(username.equals(com.aoindustries.aoserv.client.postgresql.User.POSTGRES)) throw new SQLException("Not allowed to remove User for user '"+com.aoindustries.aoserv.client.postgresql.User.POSTGRES+'\'');
+		com.aoindustries.aoserv.client.postgresql.User.Name username = getUsernameForPostgresServerUser(conn, id);
+		if(
+			// Note: This list matches UserServer.getCannotRemoveReasons
+			username.equals(com.aoindustries.aoserv.client.postgresql.User.POSTGRES)
+			|| username.equals(com.aoindustries.aoserv.client.postgresql.User.POSTGRESMON)
+			|| username.equals(com.aoindustries.aoserv.client.postgresql.User.AOADMIN)
+			|| username.equals(com.aoindustries.aoserv.client.postgresql.User.AOSERV_APP)
+			|| username.equals(com.aoindustries.aoserv.client.postgresql.User.AOWEB_APP)
+		) {
+			throw new SQLException("Not allowed to remove a special PostgreSQL user: " + username);
+		}
 
 		// Get the details for later use
 		int aoServer=getAOServerForPostgresServerUser(conn, id);
