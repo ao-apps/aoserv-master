@@ -280,6 +280,7 @@ final public class FailoverHandler implements CronJob {
 		int fromServer = getFromServerForFailoverFileReplication(conn, replication);
 		ServerHandler.checkAccessServer(conn, source, "getFailoverFileLogs", fromServer);
 
+		// TODO: release conn before writing to out
 		MasterServer.writeObjects(
 			conn,
 			source,

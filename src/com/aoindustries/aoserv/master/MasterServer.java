@@ -3553,6 +3553,7 @@ public abstract class MasterServer {
 												source,
 												sslCertificate
 											);
+											conn.releaseConnection();
 											out.writeByte(AoservProtocol.NEXT);
 											int size = results.size();
 											out.writeCompressedInt(size);
@@ -5003,6 +5004,7 @@ public abstract class MasterServer {
 												numBytes
 											);
 											byte[] bytes = RandomHandler.getMasterEntropy(conn, source, numBytes);
+											conn.releaseConnection();
 											out.writeByte(AoservProtocol.DONE);
 											out.writeCompressedInt(bytes.length);
 											for(int c=0;c<bytes.length;c++) out.writeByte(bytes[c]);
@@ -5613,6 +5615,7 @@ public abstract class MasterServer {
 														"from",
 														clientTableID
 													);
+													conn.releaseConnection();
 													writeObjects(source, out, provideProgress, Collections.emptyList());
 												}
 											} else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -43,6 +43,7 @@ final public class BankAccountHandler {
 		String account
 	) throws IOException, SQLException {
 		if(isBankAccounting(conn, source)) {
+			// TODO: release conn before writing to out
 			MasterServer.writeObjects(
 				conn,
 				source,
@@ -55,6 +56,7 @@ final public class BankAccountHandler {
 			);
 		} else {
 			List<BankTransaction> emptyList = Collections.emptyList();
+			conn.releaseConnection();
 			MasterServer.writeObjects(source, out, provideProgress, emptyList);
 		}
 	}

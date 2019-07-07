@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -293,6 +293,7 @@ final public class TableHandler {
 
 		GetObjectHandler handler = getObjectHandlers.get(tableID);
 		if(handler != null) {
+			// TODO: release conn before writing to out
 			handler.getObject(conn, source, in, out, tableID, masterUser, masterServers);
 		} else {
 			throw new IOException("No " + GetObjectHandler.class.getSimpleName() + " registered for table ID: " + tableID);
@@ -708,6 +709,7 @@ final public class TableHandler {
 
 		GetTableHandler handler = getTableHandlers.get(tableID);
 		if(handler != null) {
+			// TODO: release conn before writing to out
 			handler.getTable(conn, source, out, provideProgress, tableID, masterUser, masterServers);
 		} else {
 			throw new IOException("No " + GetTableHandler.class.getSimpleName() + " registered for table ID: " + tableID);
@@ -722,14 +724,14 @@ final public class TableHandler {
 	public static void getOldTable(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream clientOut,
+		CompressedDataOutputStream out,
 		boolean provideProgress,
 		String tableName
 	) throws IOException, SQLException {
 		switch(tableName) {
 			case "billing.whois_history" :
 				// Dispatch to new name WhoisHistory, which provides compatibility
-				getTable(conn, source, clientOut, provideProgress, Table.TableID.WhoisHistory);
+				getTable(conn, source, out, provideProgress, Table.TableID.WhoisHistory);
 				break;
 			case "mysql.mysql_reserved_words" :
 				if(
@@ -737,9 +739,10 @@ final public class TableHandler {
 					&& source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
 				) {
 					com.aoindustries.aoserv.client.mysql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.mysql.Server.ReservedWord.values();
+					conn.releaseConnection();
 					MasterServer.writeObjects(
 						source,
-						clientOut,
+						out,
 						provideProgress,
 						new AbstractList<AOServWritable>() {
 							@Override
@@ -765,9 +768,10 @@ final public class TableHandler {
 				) {
 					// Send in lowercase
 					com.aoindustries.net.Protocol[] netProtocols = com.aoindustries.net.Protocol.values();
+					conn.releaseConnection();
 					MasterServer.writeObjects(
 						source,
-						clientOut,
+						out,
 						provideProgress,
 						new AbstractList<AOServWritable>() {
 							@Override
@@ -792,9 +796,10 @@ final public class TableHandler {
 					&& source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
 				) {
 					com.aoindustries.aoserv.client.postgresql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.postgresql.Server.ReservedWord.values();
+					conn.releaseConnection();
 					MasterServer.writeObjects(
 						source,
-						clientOut,
+						out,
 						provideProgress,
 						new AbstractList<AOServWritable>() {
 							@Override
@@ -815,11 +820,12 @@ final public class TableHandler {
 				break;
 			case "web.httpd_site_bind_redirects" :
 				// Dispatch to new name RewriteRule, which provides compatibility
-				getTable(conn, source, clientOut, provideProgress, Table.TableID.RewriteRule);
+				getTable(conn, source, out, provideProgress, Table.TableID.RewriteRule);
 				break;
 		}
 		// Not recognized table name and version range: write empty response
-		MasterServer.writeObjects(source, clientOut, provideProgress, Collections.emptyList());
+		conn.releaseConnection();
+		MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 	}
 
 	public static void invalidate(

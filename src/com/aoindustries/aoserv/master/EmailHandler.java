@@ -1182,16 +1182,21 @@ final public class EmailHandler {
 		com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
 		User masterUser=MasterServer.getUser(conn, username);
 		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
-		if(masterUser!=null && masterServers.length==0) MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.FETCH,
-			new SpamMessage(),
-			"select * from email.\"SpamMessage\" where email_relay=?",
-			esr
-		); else throw new SQLException("Only master users may access email.SpamMessage.");
+		if(masterUser!=null && masterServers.length==0) {
+			// TODO: release conn before writing to out
+			MasterServer.writeObjects(
+				conn,
+				source,
+				out,
+				provideProgress,
+				CursorMode.FETCH,
+				new SpamMessage(),
+				"select * from email.\"SpamMessage\" where email_relay=?",
+				esr
+			);
+		} else {
+			throw new SQLException("Only master users may access email.SpamMessage.");
+		}
 	}
 
 	public static void invalidateTable(Table.TableID tableID) {
