@@ -571,13 +571,14 @@ final public class PostgresHandler {
 		int psu
 	) throws IOException, SQLException {
 		checkAccessPostgresServerUser(conn, source, "isPostgresServerUserPasswordSet", psu);
-		if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to determine if UserServer password is set, account disabled: "+psu);
-		//com.aoindustries.aoserv.client.postgresql.User.Name username=getUsernameForPostgresServerUser(conn, psu);
+		com.aoindustries.aoserv.client.postgresql.User.Name username = getUsernameForPostgresServerUser(conn, psu);
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(username)) throw new SQLException("Refusing to check if passwords set on special user: " + username);
+		if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to determine if UserServer password is set, account disabled: " + psu);
 
-		int aoServer=getAOServerForPostgresServerUser(conn, psu);
+		int aoServer = getAOServerForPostgresServerUser(conn, psu);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
 		conn.releaseConnection();
-		String password=daemonConnector.getPostgresUserPassword(psu);
+		String password = daemonConnector.getPostgresUserPassword(psu);
 		return !com.aoindustries.aoserv.client.postgresql.User.NO_PASSWORD_DB_VALUE.equals(password);
 	}
 

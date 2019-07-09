@@ -615,10 +615,12 @@ final public class MySQLHandler {
 		int msu
 	) throws IOException, SQLException {
 		checkAccessMySQLServerUser(conn, source, "isMySQLServerUserPasswordSet", msu);
-		if(isMySQLServerUserDisabled(conn, msu)) throw new SQLException("Unable to determine if the UserServer password is set, account disabled: "+msu);
-		com.aoindustries.aoserv.client.mysql.User.Name username=getUsernameForMySQLServerUser(conn, msu);
-		int mysqlServer=getMySQLServerForMySQLServerUser(conn, msu);
-		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
+		com.aoindustries.aoserv.client.mysql.User.Name username = getUsernameForMySQLServerUser(conn, msu);
+		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(username)) throw new SQLException("Refusing to check if passwords set on special user: " + username);
+		if(isMySQLServerUserDisabled(conn, msu)) throw new SQLException("Unable to determine if the UserServer password is set, account disabled: " + msu);
+		
+		int mysqlServer = getMySQLServerForMySQLServerUser(conn, msu);
+		int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
 		conn.releaseConnection();
 		String password = daemonConnector.getEncryptedMySQLUserPassword(mysqlServer, username);
