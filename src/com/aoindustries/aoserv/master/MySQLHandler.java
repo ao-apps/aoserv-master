@@ -133,6 +133,10 @@ final public class MySQLHandler {
 		int mysqlServer,
 		Account.Name packageName
 	) throws IOException, SQLException {
+		if(Database.isSpecial(name)) {
+			throw new SQLException("Refusing to add special database: " + name);
+		}
+
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 
 		PackageHandler.checkPackageAccessServer(conn, source, "addMySQLDatabase", packageName, aoServer);
@@ -259,24 +263,27 @@ final public class MySQLHandler {
 		int mysqlServer,
 		String host
 	) throws IOException, SQLException {
+		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(username)) {
+			throw new SQLException("Refusing to add special user: " + username);
+		}
+		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add UserServer for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+
 		checkAccessMySQLUser(conn, source, "addMySQLServerUser", username);
 		if(isMySQLUserDisabled(conn, username)) throw new SQLException("Unable to add UserServer, User disabled: "+username);
-		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add UserServer for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		ServerHandler.checkAccessServer(conn, source, "addMySQLServerUser", aoServer);
 		// This sub-account must have access to the server
 		UsernameHandler.checkUsernameAccessServer(conn, source, "addMySQLServerUser", username, aoServer);
 
-		boolean isSystemUser = username.equals(com.aoindustries.aoserv.client.mysql.User.ROOT) || username.equals(com.aoindustries.aoserv.client.mysql.User.MYSQL_SYS);
 		int id = conn.executeIntUpdate(
 			"INSERT INTO mysql.\"UserServer\" VALUES(default,?,?,?,null,null,?,?,?,?) RETURNING id",
 			username,
 			mysqlServer,
 			host,
-			isSystemUser ? UserServer.UNLIMITED_QUESTIONS        : UserServer.DEFAULT_MAX_QUESTIONS,
-			isSystemUser ? UserServer.UNLIMITED_UPDATES          : UserServer.DEFAULT_MAX_UPDATES,
-			isSystemUser ? UserServer.UNLIMITED_CONNECTIONS      : UserServer.DEFAULT_MAX_CONNECTIONS,
-			isSystemUser ? UserServer.UNLIMITED_USER_CONNECTIONS : UserServer.DEFAULT_MAX_USER_CONNECTIONS
+			UserServer.DEFAULT_MAX_QUESTIONS,
+			UserServer.DEFAULT_MAX_UPDATES,
+			UserServer.DEFAULT_MAX_CONNECTIONS,
+			UserServer.DEFAULT_MAX_USER_CONNECTIONS
 		);
 
 		// Notify all clients of the update
@@ -300,9 +307,13 @@ final public class MySQLHandler {
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.mysql.User.Name username
 	) throws IOException, SQLException {
+		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(username)) {
+			throw new SQLException("Refusing to add special user: " + username);
+		}
+		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add User for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+
 		UsernameHandler.checkAccessUsername(conn, source, "addMySQLUser", username);
 		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add User, Username disabled: "+username);
-		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add User for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
 		conn.executeUpdate(
 			"insert into mysql.\"User\"(username) values(?)",
@@ -326,9 +337,14 @@ final public class MySQLHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isMySQLServerUserDisabled(conn, id)) throw new SQLException("UserServer is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableMySQLServerUser", disableLog, false);
 		checkAccessMySQLServerUser(conn, source, "disableMySQLServerUser", id);
+
+		com.aoindustries.aoserv.client.mysql.User.Name mu = getUsernameForMySQLServerUser(conn, id);
+		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(mu)) {
+			throw new SQLException("Refusing to disable special user: " + mu);
+		}
+		if(isMySQLServerUserDisabled(conn, id)) throw new SQLException("UserServer is already disabled: "+id);
 
 		conn.executeUpdate(
 			"update mysql.\"UserServer\" set disable_log=? where id=?",
@@ -353,9 +369,15 @@ final public class MySQLHandler {
 		int disableLog,
 		com.aoindustries.aoserv.client.mysql.User.Name username
 	) throws IOException, SQLException {
-		if(isMySQLUserDisabled(conn, username)) throw new SQLException("User is already disabled: "+username);
+		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(username)) {
+			throw new SQLException("Refusing to disable special user: " + username);
+		}
+
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableMySQLUser", disableLog, false);
 		checkAccessMySQLUser(conn, source, "disableMySQLUser", username);
+
+		if(isMySQLUserDisabled(conn, username)) throw new SQLException("User is already disabled: "+username);
+
 		IntList msus=getMySQLServerUsersForMySQLUser(conn, username);
 		for(int c=0;c<msus.size();c++) {
 			int msu=msus.getInt(c);
@@ -418,7 +440,11 @@ final public class MySQLHandler {
 		if(disableLog==-1) throw new SQLException("UserServer is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableMySQLServerUser", disableLog, true);
 		checkAccessMySQLServerUser(conn, source, "enableMySQLServerUser", id);
-		com.aoindustries.aoserv.client.mysql.User.Name mu=getUsernameForMySQLServerUser(conn, id);
+
+		com.aoindustries.aoserv.client.mysql.User.Name mu = getUsernameForMySQLServerUser(conn, id);
+		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(mu)) {
+			throw new SQLException("Refusing to enable special user: " + mu);
+		}
 		if(isMySQLUserDisabled(conn, mu)) throw new SQLException("Unable to enable UserServer #"+id+", User not enabled: "+mu);
 
 		conn.executeUpdate(
@@ -442,10 +468,15 @@ final public class MySQLHandler {
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.mysql.User.Name username
 	) throws IOException, SQLException {
+		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(username)) {
+			throw new SQLException("Refusing to enable special user: " + username);
+		}
+
+		UsernameHandler.checkAccessUsername(conn, source, "enableMySQLUser", username);
 		int disableLog=getDisableLogForMySQLUser(conn, username);
 		if(disableLog==-1) throw new SQLException("User is already enabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableMySQLUser", disableLog, true);
-		UsernameHandler.checkAccessUsername(conn, source, "enableMySQLUser", username);
+
 		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable User '"+username+"', Username not enabled: "+username);
 
 		conn.executeUpdate(
@@ -616,19 +647,14 @@ final public class MySQLHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
-		// Cannot remove the mysql database
-		Database.Name dbName = getMySQLDatabaseName(conn, id);
-		if(
-			dbName.equals(Database.MYSQL)
-			|| dbName.equals(Database.INFORMATION_SCHEMA)
-			|| dbName.equals(Database.PERFORMANCE_SCHEMA)
-			|| dbName.equals(Database.SYS)
-		) {
-			throw new SQLException("Not allowed to remove the database named '" + dbName + '\'');
+		Database.Name name = getMySQLDatabaseName(conn, id);
+		if(Database.isSpecial(name)) {
+			throw new SQLException("Refusing to remove special database: " + name);
 		}
 
 		// Remove the mysql_db_user entries
-		List<Account.Name> dbUserAccounts=conn.executeObjectCollectionQuery(new ArrayList<Account.Name>(),
+		List<Account.Name> dbUserAccounts = conn.executeObjectCollectionQuery(
+			new ArrayList<>(),
 			ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
@@ -646,12 +672,12 @@ final public class MySQLHandler {
 			+ "  pk.accounting",
 			id
 		);
-		if(dbUserAccounts.size()>0) conn.executeUpdate("delete from mysql.\"DatabaseUser\" where mysql_database=?", id);
+		if(!dbUserAccounts.isEmpty()) conn.executeUpdate("delete from mysql.\"DatabaseUser\" where mysql_database=?", id);
 
 		// Remove the database entry
 		Account.Name accounting = getBusinessForMySQLDatabase(conn, id);
-		int mysqlServer=getMySQLServerForMySQLDatabase(conn, id);
-		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
+		int mysqlServer = getMySQLServerForMySQLDatabase(conn, id);
+		int aoServer = getAOServerForMySQLServer(conn, mysqlServer);
 		conn.executeUpdate("delete from mysql.\"Database\" where id=?", id);
 
 		// Notify all clients of the update
@@ -662,7 +688,7 @@ final public class MySQLHandler {
 			aoServer,
 			false
 		);
-		if(dbUserAccounts.size()>0) invalidateList.addTable(
+		if(!dbUserAccounts.isEmpty()) invalidateList.addTable(
 			conn,
 			Table.TableID.MYSQL_DB_USERS,
 			dbUserAccounts,
@@ -708,11 +734,10 @@ final public class MySQLHandler {
 	) throws IOException, SQLException {
 		checkAccessMySQLServerUser(conn, source, "removeMySQLServerUser", id);
 
-		com.aoindustries.aoserv.client.mysql.User.Name username=getUsernameForMySQLServerUser(conn, id);
-		if(
-			username.equals(com.aoindustries.aoserv.client.mysql.User.ROOT)
-			|| username.equals(com.aoindustries.aoserv.client.mysql.User.MYSQL_SYS)
-		) throw new SQLException("Not allowed to remove UserServer for user '" + username + '\'');
+		com.aoindustries.aoserv.client.mysql.User.Name mu = getUsernameForMySQLServerUser(conn, id);
+		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(mu)) {
+			throw new SQLException("Refusing to remove special user: " + mu);
+		}
 
 		// Remove the mysql_db_user
 		boolean dbUsersExist=conn.executeBooleanQuery("select (select id from mysql.\"DatabaseUser\" where mysql_server_user=? limit 1) is not null", id);
@@ -763,11 +788,9 @@ final public class MySQLHandler {
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.mysql.User.Name username
 	) throws IOException, SQLException {
-		if(
-			username.equals(com.aoindustries.aoserv.client.mysql.User.ROOT)
-			|| username.equals(com.aoindustries.aoserv.client.mysql.User.MYSQL_SYS)
-		) throw new SQLException("Not allowed to remove User for user '" + username + '\'');
-
+		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(username)) {
+			throw new SQLException("Refusing to remove special user: " + username);
+		}
 		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
 		// Remove the mysql_db_user
@@ -853,19 +876,15 @@ final public class MySQLHandler {
 		checkAccessMySQLServerUser(conn, source, "setMySQLServerUserPassword", mysql_server_user);
 		if(isMySQLServerUserDisabled(conn, mysql_server_user)) throw new SQLException("Unable to set UserServer password, account disabled: "+mysql_server_user);
 
-		// Get the server, username for the user
-		com.aoindustries.aoserv.client.mysql.User.Name username=getUsernameForMySQLServerUser(conn, mysql_server_user);
-
-		// No setting the super user password
-		if(
-			username.equals(com.aoindustries.aoserv.client.mysql.User.ROOT)
-			|| username.equals(com.aoindustries.aoserv.client.mysql.User.MYSQL_SYS)
-		) throw new SQLException("The MySQL " + username + " password may not be set.");
+		com.aoindustries.aoserv.client.mysql.User.Name mu = getUsernameForMySQLServerUser(conn, mysql_server_user);
+		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(mu)) {
+			throw new SQLException("Refusing to set the password for a special user: " + mu);
+		}
 
 		// Perform the password check here, too.
 		if(password!=null && password.length()==0) password=com.aoindustries.aoserv.client.mysql.User.NO_PASSWORD;
 		if(password!=com.aoindustries.aoserv.client.mysql.User.NO_PASSWORD) {
-			List<PasswordChecker.Result> results = com.aoindustries.aoserv.client.mysql.User.checkPassword(username, password);
+			List<PasswordChecker.Result> results = com.aoindustries.aoserv.client.mysql.User.checkPassword(mu, password);
 			if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 		}
 
@@ -874,7 +893,7 @@ final public class MySQLHandler {
 		int aoServer=getAOServerForMySQLServer(conn, mysqlServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
 		conn.releaseConnection();
-		daemonConnector.setMySQLUserPassword(mysqlServer, username, password);
+		daemonConnector.setMySQLUserPassword(mysqlServer, mu, password);
 	}
 
 	public static void setMySQLServerUserPredisablePassword(
@@ -885,6 +904,12 @@ final public class MySQLHandler {
 		String password
 	) throws IOException, SQLException {
 		checkAccessMySQLServerUser(conn, source, "setMySQLServerUserPredisablePassword", msu);
+
+		com.aoindustries.aoserv.client.mysql.User.Name mu = getUsernameForMySQLServerUser(conn, msu);
+		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(mu)) {
+			throw new SQLException("May not disable special MySQL user: " + mu);
+		}
+
 		if(password==null) {
 			if(isMySQLServerUserDisabled(conn, msu)) throw new SQLException("Unable to clear UserServer predisable password, account disabled: "+msu);
 		} else {

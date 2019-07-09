@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -122,30 +122,32 @@ final public class InvalidateList {
         // TODO: Unused 2018-11-18: if(tableNames[tableID.ordinal()]==null) tableNames[tableID.ordinal()]=TableHandler.getTableName(conn, tableID);
 
         // Add to the business lists
-        {
-            if(businesses==null || businesses==allBusinesses) businessLists.put(tableID, allBusinesses);
-            else {
-                List<Account.Name> SV=businessLists.get(tableID);
-                if(SV==null) businessLists.put(tableID, SV=new SortedArrayList<>());
-                for(Account.Name accounting : businesses) {
-                    if(accounting==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: accounting is null"));
-                    else if(!SV.contains(accounting)) SV.add(accounting);
-                }
-            }
-        }
+		if(businesses==null || businesses==allBusinesses) {
+			businessLists.put(tableID, allBusinesses);
+		} else {
+			if(!businesses.isEmpty()) {
+				List<Account.Name> SV = businessLists.get(tableID);
+				// TODO: Just use HashSet here
+				if(SV == null) businessLists.put(tableID, SV = new SortedArrayList<>());
+				for(Account.Name accounting : businesses) {
+					if(accounting == null) logger.log(Level.WARNING, null, new RuntimeException("Warning: accounting is null"));
+					else if(!SV.contains(accounting)) SV.add(accounting);
+				}
+			}
+		}
 
         // Add to the server lists
-        {
-            if(servers==null || servers==allServers) serverLists.put(tableID, allServers);
-            else {
-                List<Integer> SV=serverLists.get(tableID);
-                if(SV==null) serverLists.put(tableID, SV=new SortedArrayList<>());
-                for(Integer id : servers) {
-                    if(id==null) logger.log(Level.WARNING, null, new RuntimeException("Warning: id is null"));
-                    else if(!SV.contains(id)) SV.add(id);
-                }
-            }
-        }
+		if(servers==null || servers==allServers) {
+			serverLists.put(tableID, allServers);
+		} else if(!servers.isEmpty()) {
+			List<Integer> SV = serverLists.get(tableID);
+			// TODO: Just use HashSet here
+			if(SV == null) serverLists.put(tableID, SV = new SortedArrayList<>());
+			for(Integer id : servers) {
+				if(id == null) logger.log(Level.WARNING, null, new RuntimeException("Warning: id is null"));
+				else if(!SV.contains(id)) SV.add(id);
+			}
+		}
 
         // Recursively invalidate those tables who's filters might have been effected
         if(recurse) {
@@ -281,18 +283,20 @@ final public class InvalidateList {
 
     public List<Account.Name> getAffectedBusinesses(Table.TableID tableID) {
         List<Account.Name> SV=businessLists.get(tableID);
-        if(SV!=null || serverLists.containsKey(tableID)) {
-            if(SV==null) return allBusinesses;
-            return SV;
-        } else return null;
+        if(SV != null || serverLists.containsKey(tableID)) {
+            return (SV == null) ? allBusinesses : SV;
+        } else {
+			return null;
+		}
     }
 
     public List<Integer> getAffectedServers(Table.TableID tableID) {
         List<Integer> SV=serverLists.get(tableID);
-        if(SV!=null || businessLists.containsKey(tableID)) {
-            if(SV==null) return allServers;
-            return SV;
-        } else return null;
+        if(SV != null || businessLists.containsKey(tableID)) {
+            return (SV == null) ? allServers : SV;
+        } else {
+			return null;
+		}
     }
 
     public void invalidateMasterCaches() {

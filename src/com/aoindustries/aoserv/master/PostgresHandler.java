@@ -103,6 +103,10 @@ final public class PostgresHandler {
 		int encoding,
 		boolean enable_postgis
 	) throws IOException, SQLException {
+		if(Database.isSpecial(name)) {
+			throw new SQLException("Refusing to add special database: " + name);
+		}
+
 		// If requesting PostGIS, make sure the version of PostgreSQL supports it.
 		if(
 			enable_postgis
@@ -141,10 +145,6 @@ final public class PostgresHandler {
 		UsernameHandler.checkAccessUsername(conn, source, "addPostgresDatabase", datdbaUsername);
 		// This sub-account must have access to the server
 		BusinessHandler.checkBusinessAccessServer(conn, source, "addPostgresDatabase", accounting, aoServer);
-
-		if(Database.isSpecial(name)) {
-			throw new SQLException("Not allowed to add a special PostgreSQL database: " + name);
-		}
 
 		// Add the entry to the database
 		int id = conn.executeIntUpdate(
@@ -189,7 +189,7 @@ final public class PostgresHandler {
 		int postgresServer
 	) throws IOException, SQLException {
 		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(username)) {
-			throw new SQLException("Not allowed to add a special PostgreSQL user: " + username);
+			throw new SQLException("Refusing to add special user: " + username);
 		}
 		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add UserServer for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
@@ -227,9 +227,10 @@ final public class PostgresHandler {
 		com.aoindustries.aoserv.client.postgresql.User.Name username
 	) throws IOException, SQLException {
 		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(username)) {
-			throw new SQLException("Not allowed to add a special PostgreSQL user: " + username);
+			throw new SQLException("Refusing to add special user: " + username);
 		}
 		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add User for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+
 		UsernameHandler.checkAccessUsername(conn, source, "addPostgresUser", username);
 		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to add User, Username disabled: "+username);
 
@@ -255,9 +256,14 @@ final public class PostgresHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isPostgresServerUserDisabled(conn, id)) throw new SQLException("UserServer is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disablePostgresServerUser", disableLog, false);
 		checkAccessPostgresServerUser(conn, source, "disablePostgresServerUser", id);
+
+		com.aoindustries.aoserv.client.postgresql.User.Name pu = getUsernameForPostgresServerUser(conn, id);
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(pu)) {
+			throw new SQLException("Refusing to disable special user: " + pu);
+		}
+		if(isPostgresServerUserDisabled(conn, id)) throw new SQLException("UserServer is already disabled: "+id);
 
 		conn.executeUpdate(
 			"update postgresql.\"UserServer\" set disable_log=? where id=?",
@@ -282,9 +288,15 @@ final public class PostgresHandler {
 		int disableLog,
 		com.aoindustries.aoserv.client.postgresql.User.Name username
 	) throws IOException, SQLException {
-		if(isPostgresUserDisabled(conn, username)) throw new SQLException("User is already disabled: "+username);
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(username)) {
+			throw new SQLException("Refusing to disable special user: " + username);
+		}
+
 		BusinessHandler.checkAccessDisableLog(conn, source, "disablePostgresUser", disableLog, false);
 		checkAccessPostgresUser(conn, source, "disablePostgresUser", username);
+
+		if(isPostgresUserDisabled(conn, username)) throw new SQLException("User is already disabled: "+username);
+
 		IntList psus=getPostgresServerUsersForPostgresUser(conn, username);
 		for(int c=0;c<psus.size();c++) {
 			int psu=psus.getInt(c);
@@ -346,7 +358,11 @@ final public class PostgresHandler {
 		if(disableLog==-1) throw new SQLException("UserServer is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enablePostgresServerUser", disableLog, true);
 		checkAccessPostgresServerUser(conn, source, "enablePostgresServerUser", id);
-		com.aoindustries.aoserv.client.postgresql.User.Name pu=getUsernameForPostgresServerUser(conn, id);
+
+		com.aoindustries.aoserv.client.postgresql.User.Name pu = getUsernameForPostgresServerUser(conn, id);
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(pu)) {
+			throw new SQLException("Refusing to enable special user: " + pu);
+		}
 		if(isPostgresUserDisabled(conn, pu)) throw new SQLException("Unable to enable UserServer #"+id+", User not enabled: "+pu);
 
 		conn.executeUpdate(
@@ -370,10 +386,15 @@ final public class PostgresHandler {
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.postgresql.User.Name username
 	) throws IOException, SQLException {
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(username)) {
+			throw new SQLException("Refusing to enable special user: " + username);
+		}
+
+		UsernameHandler.checkAccessUsername(conn, source, "enablePostgresUser", username);
 		int disableLog=getDisableLogForPostgresUser(conn, username);
 		if(disableLog==-1) throw new SQLException("User is already enabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enablePostgresUser", disableLog, true);
-		UsernameHandler.checkAccessUsername(conn, source, "enablePostgresUser", username);
+
 		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable User '"+username+"', Username not enabled: "+username);
 
 		conn.executeUpdate(
@@ -431,7 +452,8 @@ final public class PostgresHandler {
 	}
 
 	public static com.aoindustries.aoserv.client.postgresql.User.Name getUsernameForPostgresServerUser(DatabaseConnection conn, int psu) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.postgresqlUserNameFactory,
+		return conn.executeObjectQuery(
+			ObjectFactories.postgresqlUserNameFactory,
 			"select username from postgresql.\"UserServer\" where id=?",
 			psu
 		);
@@ -542,7 +564,7 @@ final public class PostgresHandler {
 	) throws IOException, SQLException {
 		checkAccessPostgresServerUser(conn, source, "isPostgresServerUserPasswordSet", psu);
 		if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to determine if UserServer password is set, account disabled: "+psu);
-		com.aoindustries.aoserv.client.postgresql.User.Name username=getUsernameForPostgresServerUser(conn, psu);
+		//com.aoindustries.aoserv.client.postgresql.User.Name username=getUsernameForPostgresServerUser(conn, psu);
 
 		int aoServer=getAOServerForPostgresServerUser(conn, psu);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
@@ -565,6 +587,17 @@ final public class PostgresHandler {
 		removePostgresDatabase(conn, invalidateList, id);
 	}
 
+	public static Database.Name getNameForPostgresDatabase(
+		DatabaseConnection conn,
+		int id
+	) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.postgresqlDatabaseNameFactory,
+			"select \"name\" from postgresql.\"Database\" where id=?",
+			id
+		);
+	}
+
 	/**
 	 * Removes a Database from the system.
 	 */
@@ -573,13 +606,9 @@ final public class PostgresHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
-		Database.Name name = conn.executeObjectQuery(
-			ObjectFactories.postgresqlDatabaseNameFactory,
-			"select \"name\" from postgresql.\"Database\" where id=?",
-			id
-		);
+		Database.Name name = getNameForPostgresDatabase(conn, id);
 		if(Database.isSpecial(name)) {
-			throw new SQLException("Not allowed to drop a special PostgreSQL database: " + name);
+			throw new SQLException("Refusing to remove special database: " + name);
 		}
 		// Remove the database entry
 		Account.Name accounting = getBusinessForPostgresDatabase(conn, id);
@@ -607,9 +636,9 @@ final public class PostgresHandler {
 	) throws IOException, SQLException {
 		checkAccessPostgresServerUser(conn, source, "removePostgresServerUser", id);
 
-		com.aoindustries.aoserv.client.postgresql.User.Name username = getUsernameForPostgresServerUser(conn, id);
-		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(username)) {
-			throw new SQLException("Not allowed to remove a special PostgreSQL user: " + username);
+		com.aoindustries.aoserv.client.postgresql.User.Name pu = getUsernameForPostgresServerUser(conn, id);
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(pu)) {
+			throw new SQLException("Refusing to remove special user: " + pu);
 		}
 
 		// Get the details for later use
@@ -656,7 +685,7 @@ final public class PostgresHandler {
 		com.aoindustries.aoserv.client.postgresql.User.Name username
 	) throws IOException, SQLException {
 		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(username)) {
-			throw new SQLException("Not allowed to remove a special PostgreSQL user: " + username);
+			throw new SQLException("Refusing to remove special user: " + username);
 		}
 		Account.Name accounting = UsernameHandler.getBusinessForUsername(conn, username);
 
@@ -697,16 +726,17 @@ final public class PostgresHandler {
 		checkAccessPostgresServerUser(conn, source, "setPostgresServerUserPassword", postgres_server_user);
 		if(isPostgresServerUserDisabled(conn, postgres_server_user)) throw new SQLException("Unable to set UserServer password, account disabled: "+postgres_server_user);
 
+		com.aoindustries.aoserv.client.postgresql.User.Name pu = getUsernameForPostgresServerUser(conn, postgres_server_user);
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(pu)) {
+			throw new SQLException("Refusing to set the password for a special user: " + pu);
+		}
+
 		// Get the server for the user
 		int aoServer=getAOServerForPostgresServerUser(conn, postgres_server_user);
-		com.aoindustries.aoserv.client.postgresql.User.Name username=getUsernameForPostgresServerUser(conn, postgres_server_user);
-
-		// No setting the super user password
-		if(username.equals(com.aoindustries.aoserv.client.postgresql.User.POSTGRES)) throw new SQLException("The PostgreSQL "+com.aoindustries.aoserv.client.postgresql.User.POSTGRES+" password may not be set.");
 
 		// Perform the password check here, too.
 		if(password!=com.aoindustries.aoserv.client.postgresql.User.NO_PASSWORD) {
-			List<PasswordChecker.Result> results = com.aoindustries.aoserv.client.postgresql.User.checkPassword(username, password);
+			List<PasswordChecker.Result> results = com.aoindustries.aoserv.client.postgresql.User.checkPassword(pu, password);
 			if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 		}
 
@@ -724,6 +754,12 @@ final public class PostgresHandler {
 		String password
 	) throws IOException, SQLException {
 		checkAccessPostgresServerUser(conn, source, "setPostgresServerUserPredisablePassword", psu);
+
+		com.aoindustries.aoserv.client.postgresql.User.Name pu = getUsernameForPostgresServerUser(conn, psu);
+		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(pu)) {
+			throw new SQLException("May not disable special PostgreSQL user: " + pu);
+		}
+
 		if(password==null) {
 			if(isPostgresServerUserDisabled(conn, psu)) throw new SQLException("Unable to clear UserServer predisable password, account disabled: "+psu);
 		} else {
