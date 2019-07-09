@@ -422,9 +422,9 @@ final public class PackageHandler {
         int disableLog,
         Account.Name name
     ) throws IOException, SQLException {
-        if(isPackageDisabled(conn, name)) throw new SQLException("Package is already disabled: "+name);
         BusinessHandler.checkAccessDisableLog(conn, source, "disablePackage", disableLog, false);
         checkAccessPackage(conn, source, "disablePackage", name);
+        if(isPackageDisabled(conn, name)) throw new SQLException("Package is already disabled: "+name);
         IntList hsts=HttpdHandler.getHttpdSharedTomcatsForPackage(conn, name);
         for(int c=0;c<hsts.size();c++) {
             int hst=hsts.getInt(c);

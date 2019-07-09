@@ -180,10 +180,10 @@ final public class CvsHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isCvsRepositoryDisabled(conn, id)) throw new SQLException("CvsRepository is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableCvsRepository", disableLog, false);
 		int lsa=getLinuxServerAccountForCvsRepository(conn, id);
 		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "disableCvsRepository", lsa);
+		if(isCvsRepositoryDisabled(conn, id)) throw new SQLException("CvsRepository is already disabled: "+id);
 
 		conn.executeUpdate(
 			"update scm.\"CvsRepository\" set disable_log=? where id=?",

@@ -1546,9 +1546,9 @@ final public class HttpdHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isHttpdSharedTomcatDisabled(conn, id)) throw new SQLException("SharedTomcat is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableHttpdSharedTomcat", disableLog, false);
 		checkAccessHttpdSharedTomcat(conn, source, "disableHttpdSharedTomcat", id);
+		if(isHttpdSharedTomcatDisabled(conn, id)) throw new SQLException("SharedTomcat is already disabled: "+id);
 
 		conn.executeUpdate(
 			"update \"web.tomcat\".\"SharedTomcat\" set disable_log=? where id=?",
@@ -1573,9 +1573,9 @@ final public class HttpdHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isHttpdSiteDisabled(conn, id)) throw new SQLException("Site is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableHttpdSite", disableLog, false);
 		checkAccessHttpdSite(conn, source, "disableHttpdSite", id);
+		if(isHttpdSiteDisabled(conn, id)) throw new SQLException("Site is already disabled: "+id);
 		IntList httpdSiteBinds=getHttpdSiteBindsForHttpdSite(conn, id);
 		for(int c=0;c<httpdSiteBinds.size();c++) {
 			int hsb=httpdSiteBinds.getInt(c);
@@ -1607,10 +1607,10 @@ final public class HttpdHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isHttpdSiteBindDisabled(conn, id)) throw new SQLException("VirtualHost is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableHttpdSiteBind", disableLog, false);
 		int httpdSite=conn.executeIntQuery("select httpd_site from web.\"VirtualHost\" where id=?", id);
 		checkAccessHttpdSite(conn, source, "disableHttpdSiteBind", httpdSite);
+		if(isHttpdSiteBindDisabled(conn, id)) throw new SQLException("VirtualHost is already disabled: "+id);
 
 		conn.executeUpdate(
 			"update web.\"VirtualHost\" set disable_log=? where id=?",

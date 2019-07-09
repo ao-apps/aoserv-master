@@ -90,9 +90,9 @@ final public class UsernameHandler {
 		int disableLog,
 		User.Name username
 	) throws IOException, SQLException {
-		if(isUsernameDisabled(conn, username)) throw new SQLException("Username is already disabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableUsername", disableLog, false);
 		checkAccessUsername(conn, source, "disableUsername", username);
+		if(isUsernameDisabled(conn, username)) throw new SQLException("Username is already disabled: "+username);
 		String un = username.toString();
 		if(com.aoindustries.aoserv.client.linux.User.Name.validate(un).isValid()) {
 			com.aoindustries.aoserv.client.linux.User.Name linuxUsername;

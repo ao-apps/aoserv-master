@@ -690,10 +690,10 @@ final public class BusinessHandler {
 		int disableLog,
 		Account.Name accounting
 	) throws IOException, SQLException {
-		if(isBusinessDisabled(conn, accounting)) throw new SQLException("Account is already disabled: "+accounting);
-		if(accounting.equals(getRootBusiness())) throw new SQLException("Not allowed to disable the root business: "+accounting);
 		checkAccessDisableLog(conn, source, "disableBusiness", disableLog, false);
 		checkAccessBusiness(conn, source, "disableBusiness", accounting);
+		if(isBusinessDisabled(conn, accounting)) throw new SQLException("Account is already disabled: "+accounting);
+		if(accounting.equals(getRootBusiness())) throw new SQLException("Not allowed to disable the root business: "+accounting);
 		List<Account.Name> packages=getPackagesForBusiness(conn, accounting);
 		for (Account.Name packageName : packages) {
 			if(!PackageHandler.isPackageDisabled(conn, packageName)) {
@@ -718,9 +718,9 @@ final public class BusinessHandler {
 		int disableLog,
 		com.aoindustries.aoserv.client.account.User.Name username
 	) throws IOException, SQLException {
-		if(isBusinessAdministratorDisabled(conn, username)) throw new SQLException("Administrator is already disabled: "+username);
 		checkAccessDisableLog(conn, source, "disableBusinessAdministrator", disableLog, false);
 		UsernameHandler.checkAccessUsername(conn, source, "disableBusinessAdministrator", username);
+		if(isBusinessAdministratorDisabled(conn, username)) throw new SQLException("Administrator is already disabled: "+username);
 
 		conn.executeUpdate(
 			"update account.\"Administrator\" set disable_log=? where username=?",

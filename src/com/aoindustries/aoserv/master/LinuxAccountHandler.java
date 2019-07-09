@@ -1024,9 +1024,9 @@ final public class LinuxAccountHandler {
 		int disableLog,
 		com.aoindustries.aoserv.client.linux.User.Name username
 	) throws IOException, SQLException {
-		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("linux.User is already disabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableLinuxAccount", disableLog, false);
 		checkAccessLinuxAccount(conn, source, "disableLinuxAccount", username);
+		if(isLinuxAccountDisabled(conn, username)) throw new SQLException("linux.User is already disabled: "+username);
 		IntList lsas=getLinuxServerAccountsForLinuxAccount(conn, username);
 		for(int c=0;c<lsas.size();c++) {
 			int lsa=lsas.getInt(c);
@@ -1058,9 +1058,9 @@ final public class LinuxAccountHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isLinuxServerAccountDisabled(conn, id)) throw new SQLException("linux.UserServer is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableLinuxServerAccount", disableLog, false);
 		checkAccessLinuxServerAccount(conn, source, "disableLinuxServerAccount", id);
+		if(isLinuxServerAccountDisabled(conn, id)) throw new SQLException("linux.UserServer is already disabled: "+id);
 
 		int aoServer = getAOServerForLinuxServerAccount(conn, id);
 		int uidMin = AOServerHandler.getUidMin(conn, aoServer);

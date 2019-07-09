@@ -819,9 +819,9 @@ final public class EmailHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isEmailListDisabled(conn, id)) throw new SQLException("List is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableEmailList", disableLog, false);
 		checkAccessEmailList(conn, source, "disableEmailList", id);
+		if(isEmailListDisabled(conn, id)) throw new SQLException("List is already disabled: "+id);
 
 		conn.executeUpdate(
 			"update email.\"List\" set disable_log=? where id=?",
@@ -846,9 +846,9 @@ final public class EmailHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isEmailPipeDisabled(conn, id)) throw new SQLException("Pipe is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableEmailPipe", disableLog, false);
 		checkAccessEmailPipe(conn, source, "disableEmailPipe", id);
+		if(isEmailPipeDisabled(conn, id)) throw new SQLException("Pipe is already disabled: "+id);
 
 		conn.executeUpdate(
 			"update email.\"Pipe\" set disable_log=? where id=?",
@@ -873,9 +873,9 @@ final public class EmailHandler {
 		int disableLog,
 		int id
 	) throws IOException, SQLException {
-		if(isEmailSmtpRelayDisabled(conn, id)) throw new SQLException("SmtpRelay is already disabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "disableEmailSmtpRelay", disableLog, false);
 		checkAccessEmailSmtpRelay(conn, source, "disableEmailSmtpRelay", id);
+		if(isEmailSmtpRelayDisabled(conn, id)) throw new SQLException("SmtpRelay is already disabled: "+id);
 
 		conn.executeUpdate(
 			"update email.\"SmtpRelay\" set disable_log=? where id=?",
