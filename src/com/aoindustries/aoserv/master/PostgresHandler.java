@@ -354,10 +354,10 @@ final public class PostgresHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
+		checkAccessPostgresServerUser(conn, source, "enablePostgresServerUser", id);
 		int disableLog=getDisableLogForPostgresServerUser(conn, id);
 		if(disableLog==-1) throw new SQLException("UserServer is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enablePostgresServerUser", disableLog, true);
-		checkAccessPostgresServerUser(conn, source, "enablePostgresServerUser", id);
 
 		com.aoindustries.aoserv.client.postgresql.User.Name pu = getUsernameForPostgresServerUser(conn, id);
 		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(pu)) {
@@ -445,6 +445,14 @@ final public class PostgresHandler {
 
 	public static int getDisableLogForPostgresUser(DatabaseConnection conn, com.aoindustries.aoserv.client.postgresql.User.Name username) throws IOException, SQLException {
 		return conn.executeIntQuery("select coalesce(disable_log, -1) from postgresql.\"User\" where username=?", username);
+	}
+
+	public static Database.Name getNameForPostgresDatabase(DatabaseConnection conn, int id) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.postgresqlDatabaseNameFactory,
+			"select \"name\" from postgresql.\"Database\" where id=?",
+			id
+		);
 	}
 
 	public static IntList getPostgresServerUsersForPostgresUser(DatabaseConnection conn, com.aoindustries.aoserv.client.postgresql.User.Name username) throws IOException, SQLException {
@@ -585,17 +593,6 @@ final public class PostgresHandler {
 		checkAccessPostgresDatabase(conn, source, "removePostgresDatabase", id);
 
 		removePostgresDatabase(conn, invalidateList, id);
-	}
-
-	public static Database.Name getNameForPostgresDatabase(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
-		return conn.executeObjectQuery(
-			ObjectFactories.postgresqlDatabaseNameFactory,
-			"select \"name\" from postgresql.\"Database\" where id=?",
-			id
-		);
 	}
 
 	/**

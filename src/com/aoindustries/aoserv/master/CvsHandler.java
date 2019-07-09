@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2002-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -207,11 +207,11 @@ final public class CvsHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
+		int lsa = getLinuxServerAccountForCvsRepository(conn, id);
+		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "enableCvsRepository", lsa);
 		int disableLog=getDisableLogForCvsRepository(conn, id);
 		if(disableLog==-1) throw new SQLException("CvsRepository is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableCvsRepository", disableLog, true);
-		int lsa=getLinuxServerAccountForCvsRepository(conn, id);
-		LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "enableCvsRepository", lsa);
 		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable CvsRepository #"+id+", UserServer not enabled: "+lsa);
 
 		conn.executeUpdate(

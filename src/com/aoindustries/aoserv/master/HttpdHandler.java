@@ -1634,10 +1634,10 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
+		checkAccessHttpdSharedTomcat(conn, source, "enableHttpdSharedTomcat", id);
 		int disableLog=getDisableLogForHttpdSharedTomcat(conn, id);
 		if(disableLog==-1) throw new SQLException("SharedTomcat is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSharedTomcat", disableLog, true);
-		checkAccessHttpdSharedTomcat(conn, source, "enableHttpdSharedTomcat", id);
 		Account.Name pk=getPackageForHttpdSharedTomcat(conn, id);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable SharedTomcat #"+id+", Package not enabled: "+pk);
 		int lsa=getLinuxServerAccountForHttpdSharedTomcat(conn, id);
@@ -1664,10 +1664,10 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
+		checkAccessHttpdSite(conn, source, "enableHttpdSite", id);
 		int disableLog=getDisableLogForHttpdSite(conn, id);
 		if(disableLog==-1) throw new SQLException("Site is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSite", disableLog, true);
-		checkAccessHttpdSite(conn, source, "enableHttpdSite", id);
 		Account.Name pk=getPackageForHttpdSite(conn, id);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable Site #"+id+", Package not enabled: "+pk);
 		int lsa=getLinuxServerAccountForHttpdSite(conn, id);
@@ -1694,11 +1694,11 @@ final public class HttpdHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
+		int hs=getHttpdSiteForHttpdSiteBind(conn, id);
+		checkAccessHttpdSite(conn, source, "enableHttpdSiteBind", hs);
 		int disableLog=getDisableLogForHttpdSiteBind(conn, id);
 		if(disableLog==-1) throw new SQLException("VirtualHost is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSiteBind", disableLog, true);
-		int hs=getHttpdSiteForHttpdSiteBind(conn, id);
-		checkAccessHttpdSite(conn, source, "enableHttpdSiteBind", hs);
 		if(isHttpdSiteDisabled(conn, hs)) throw new SQLException("Unable to enable VirtualHost #"+id+", Site not enabled: "+hs);
 
 		conn.executeUpdate(

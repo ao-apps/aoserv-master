@@ -740,7 +740,6 @@ final public class BusinessHandler {
 		Account.Name accounting
 	) throws IOException, SQLException {
 		checkAccessBusiness(conn, source, "enableBusiness", accounting);
-
 		int disableLog=getDisableLogForBusiness(conn, accounting);
 		if(disableLog==-1) throw new SQLException("Account is already enabled: "+accounting);
 		checkAccessDisableLog(conn, source, "enableBusiness", disableLog, true);
@@ -762,10 +761,10 @@ final public class BusinessHandler {
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.account.User.Name username
 	) throws IOException, SQLException {
+		UsernameHandler.checkAccessUsername(conn, source, "enableBusinessAdministrator", username);
 		int disableLog=getDisableLogForBusinessAdministrator(conn, username);
 		if(disableLog==-1) throw new SQLException("Administrator is already enabled: "+username);
 		checkAccessDisableLog(conn, source, "enableBusinessAdministrator", disableLog, true);
-		UsernameHandler.checkAccessUsername(conn, source, "enableBusinessAdministrator", username);
 
 		conn.executeUpdate(
 			"update account.\"Administrator\" set disable_log=null where username=?",

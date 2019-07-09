@@ -899,10 +899,10 @@ final public class EmailHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
+		checkAccessEmailList(conn, source, "enableEmailList", id);
 		int disableLog=getDisableLogForEmailList(conn, id);
 		if(disableLog==-1) throw new SQLException("List is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailList", disableLog, true);
-		checkAccessEmailList(conn, source, "enableEmailList", id);
 		Account.Name pk=getPackageForEmailList(conn, id);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable List #"+id+", Package not enabled: "+pk);
 
@@ -927,10 +927,10 @@ final public class EmailHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
+		checkAccessEmailPipe(conn, source, "enableEmailPipe", id);
 		int disableLog=getDisableLogForEmailPipe(conn, id);
 		if(disableLog==-1) throw new SQLException("Pipe is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailPipe", disableLog, true);
-		checkAccessEmailPipe(conn, source, "enableEmailPipe", id);
 		Account.Name pk=getPackageForEmailPipe(conn, id);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable Pipe #"+id+", Package not enabled: "+pk);
 
@@ -955,10 +955,10 @@ final public class EmailHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
+		checkAccessEmailSmtpRelay(conn, source, "enableEmailSmtpRelay", id);
 		int disableLog=getDisableLogForEmailSmtpRelay(conn, id);
 		if(disableLog==-1) throw new SQLException("SmtpRelay is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableEmailSmtpRelay", disableLog, true);
-		checkAccessEmailSmtpRelay(conn, source, "enableEmailSmtpRelay", id);
 		Account.Name pk=getPackageForEmailSmtpRelay(conn, id);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable SmtpRelay #"+id+", Package not enabled: "+pk);
 

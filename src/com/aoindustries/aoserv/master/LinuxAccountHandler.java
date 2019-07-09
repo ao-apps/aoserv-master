@@ -1120,10 +1120,10 @@ final public class LinuxAccountHandler {
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.linux.User.Name username
 	) throws IOException, SQLException {
+		checkAccessLinuxAccount(conn, source, "enableLinuxAccount", username);
 		int disableLog=getDisableLogForLinuxAccount(conn, username);
 		if(disableLog==-1) throw new SQLException("linux.User is already enabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableLinuxAccount", disableLog, true);
-		checkAccessLinuxAccount(conn, source, "enableLinuxAccount", username);
 		if(UsernameHandler.isUsernameDisabled(conn, username)) throw new SQLException("Unable to enable User '"+username+"', Username not enabled: "+username);
 
 		conn.executeUpdate(
@@ -1147,10 +1147,10 @@ final public class LinuxAccountHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
+		checkAccessLinuxServerAccount(conn, source, "enableLinuxServerAccount", id);
 		int disableLog=getDisableLogForLinuxServerAccount(conn, id);
 		if(disableLog==-1) throw new SQLException("linux.UserServer is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableLinuxServerAccount", disableLog, true);
-		checkAccessLinuxServerAccount(conn, source, "enableLinuxServerAccount", id);
 		com.aoindustries.aoserv.client.linux.User.Name la=getUsernameForLinuxServerAccount(conn, id);
 		if(isLinuxAccountDisabled(conn, la)) throw new SQLException("Unable to enable UserServer #"+id+", User not enabled: "+la);
 

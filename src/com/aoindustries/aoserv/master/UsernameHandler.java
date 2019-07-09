@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -152,10 +152,10 @@ final public class UsernameHandler {
 		InvalidateList invalidateList,
 		User.Name username
 	) throws IOException, SQLException {
+		checkAccessUsername(conn, source, "enableUsername", username);
 		int disableLog=getDisableLogForUsername(conn, username);
 		if(disableLog==-1) throw new SQLException("Username is already enabled: "+username);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableUsername", disableLog, true);
-		checkAccessUsername(conn, source, "enableUsername", username);
 		Account.Name pk=getPackageForUsername(conn, username);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable Username '"+username+"', Package not enabled: "+pk);
 

@@ -436,10 +436,10 @@ final public class MySQLHandler {
 		InvalidateList invalidateList,
 		int id
 	) throws IOException, SQLException {
+		checkAccessMySQLServerUser(conn, source, "enableMySQLServerUser", id);
 		int disableLog=getDisableLogForMySQLServerUser(conn, id);
 		if(disableLog==-1) throw new SQLException("UserServer is already enabled: "+id);
 		BusinessHandler.checkAccessDisableLog(conn, source, "enableMySQLServerUser", disableLog, true);
-		checkAccessMySQLServerUser(conn, source, "enableMySQLServerUser", id);
 
 		com.aoindustries.aoserv.client.mysql.User.Name mu = getUsernameForMySQLServerUser(conn, id);
 		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(mu)) {
